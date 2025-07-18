@@ -1,0 +1,292 @@
+import React from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
+import { useBasket } from "../hooks/useBasket"
+import { 
+  Sprout, 
+  Home, 
+  Search, 
+  Plus, 
+  BarChart3, 
+  Heart, 
+  Gift, 
+  Church, 
+  User, 
+  LogOut,
+  Menu,
+  X,
+  HandHeart,
+  ShoppingCart
+} from "lucide-react"
+import { Button } from "./ui/button"
+import { Badge } from "./ui/badge"
+
+export default function Layout({ children }) {
+  const { user, logout } = useAuth()
+  const { getTotalItems } = useBasket()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  
+  const handleLogout = () => {
+    logout()
+    navigate("/")
+  }
+  
+  const navigation = [
+    { name: "dashboard", href: "/dashboard", icon: Home },
+    { name: "community orchards", href: "/browse-orchards", icon: Search },
+    { name: "create orchard", href: "/create-orchard", icon: Plus },
+    { name: "my orchards", href: "/my-orchards", icon: BarChart3 },
+    { name: "tithing", href: "/tithing", icon: HandHeart },
+    { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
+  ]
+  
+  const isActive = (href) => location.pathname === href
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-warning/10">
+      {/* Navigation Header */}
+      <header className="bg-card/90 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Link to="/dashboard" className="flex items-center space-x-3 group">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
+                <img 
+                  src="/logo2.jpeg" 
+                  alt="sow2grow logo" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-primary font-playfair">
+                  sow2grow
+                </h1>
+                <p className="text-xs text-muted-foreground">364yhvh community farm</p>
+              </div>
+            </Link>
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-2">
+              {navigation.map((item, index) => {
+                const Icon = item.icon
+                
+                // Color coordination with page content using semantic tokens
+                const getNavColor = (navItem) => {
+                  switch (navItem.name) {
+                    case "dashboard":
+                      return "from-success/20 to-success/30 border-success/30 text-success shadow-success/20"
+                    case "community orchards":
+                      return "from-destructive/20 to-destructive/30 border-destructive/30 text-destructive shadow-destructive/20"
+                    case "create orchard":
+                      return "from-success/20 to-success/30 border-success/30 text-success shadow-success/20"
+                    case "my orchards":
+                      return "from-info/20 to-info/30 border-info/30 text-info shadow-info/20"
+                    case "tithing":
+                      return "from-warning/20 to-warning/30 border-warning/30 text-warning shadow-warning/20"
+                    case "free-will gifting":
+                      return "from-accent/20 to-accent/30 border-accent/30 text-accent-foreground shadow-accent/20"
+                    default:
+                      return "from-muted/20 to-muted/30 border-muted/30 text-muted-foreground shadow-muted/20"
+                  }
+                }
+                
+                const colorClass = getNavColor(item)
+                
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-2 
+                      bg-gradient-to-b ${colorClass} 
+                      shadow-inner hover:shadow-lg hover:scale-105 active:shadow-sm active:scale-95
+                      ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-ring' : ''}
+                      min-w-[120px] text-center justify-center
+                    `}
+                    style={{
+                      boxShadow: isActive(item.href) 
+                        ? 'inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.15)' 
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                )
+              })}
+            </nav>
+            
+            {/* User Menu */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-3">
+                {/* Basket Icon */}
+                <Link
+                  to="/basket"
+                  className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {getTotalItems() > 0 && (
+                    <Badge className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                      {getTotalItems()}
+                    </Badge>
+                  )}
+                </Link>
+                
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors p-2 rounded-lg hover:bg-accent"
+                >
+                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-border">
+                    {user?.profile_picture ? (
+                      <img 
+                        src={user.profile_picture} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                        <User className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <span>{user?.first_name} {user?.last_name}</span>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+              
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-card border-t border-border">
+              {navigation.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
+                      isActive(item.href)
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-primary hover:bg-accent"
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.name}</span>
+                  </Link>
+                )
+              })}
+              
+              <div className="pt-4 mt-4 border-t border-border">
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-border">
+                    {user?.profile_picture ? (
+                      <img 
+                        src={user.profile_picture} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                        <User className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <span>Profile</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 w-full text-left"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
+      
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+      
+      {/* Footer */}
+      <footer className="bg-card/90 backdrop-blur-sm border-t border-border mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
+                  <img 
+                    src="/logo2.jpeg" 
+                    alt="sow2grow logo" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-primary font-playfair">
+                    sow2grow
+                  </h3>
+                  <p className="text-xs text-muted-foreground">364yhvh community farm</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                A biblical community giving platform where growers create orchards and bestowers help them grow and stand up together.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-4">Community</h4>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Faith-based giving</p>
+                <p>• Mutual community support</p>
+                <p>• Biblical principles</p>
+                <p>• Transparent platform</p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-4">Scripture</h4>
+              <blockquote className="text-sm text-muted-foreground italic">
+                "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
+                <br />
+                <cite className="text-primary font-semibold">- Luke 6:38</cite>
+              </blockquote>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+            <p>&copy; 2024 364yhvh Community Farm. Built with love for the community.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
