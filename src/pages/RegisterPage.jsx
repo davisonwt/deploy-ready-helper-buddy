@@ -367,7 +367,7 @@ export default function RegisterPage() {
                 ) : (
                   <div className="flex items-center justify-center">
                     <Sprout className="h-5 w-5 mr-2" />
-                    <span>Join the Community</span>
+                    <span>Become a sower and bestower</span>
                   </div>
                 )}
               </Button>
