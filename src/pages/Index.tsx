@@ -265,7 +265,7 @@ const Index = () => {
                 }}
               >
                 <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed 1 mp4.mp4" 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4" 
                   type="video/mp4" 
                 />
                 Your browser does not support the video tag.
