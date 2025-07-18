@@ -377,29 +377,40 @@ const Index = () => {
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
-            {/* MP4 Holder Video - Emerging from underneath */}
-            <div className="relative overflow-hidden mt-[-60px] mb-12 z-10">
-              <div className="video-emerging transform translate-y-12
-                            transition-all duration-700 ease-out delay-600
-                            hover:translate-y-0 hover:scale-105
-                            shadow-xl hover:shadow-2xl">
-                <video
-                  className="w-full h-screen object-cover rounded-lg
-                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  poster="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=1920&h=1080&fit=crop"
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%20main%20mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            </div>
+             {/* MP4 Holder Video - With 3D Effects */}
+             <div className="relative mb-6 transform-gpu">
+               <div className="video-container relative z-20 transform 
+                             perspective-1000 
+                             hover:scale-105 
+                             transition-all duration-500 ease-out
+                             shadow-2xl 
+                             hover:shadow-3xl
+                             rotate-x-2
+                             translate-y-[-15px]">
+                 <video
+                   className="w-full h-screen object-cover rounded-lg
+                            shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                            hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                            transition-shadow duration-500"
+                   autoPlay
+                   muted
+                   loop
+                   playsInline
+                   poster="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=1920&h=1080&fit=crop"
+                 >
+                   <source 
+                     src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%20main%20mp4.mp4" 
+                     type="video/mp4" 
+                   />
+                   Your browser does not support the video tag.
+                 </video>
+                 {/* 3D depth effect */}
+                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
+               </div>
+               
+               {/* Underneath shadow effect */}
+               <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+             </div>
             
             {/* Fourth Seeds Strip with 3D Lifted Effect */}
             <div className="relative mb-6 transform-gpu">
