@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, User, MapPin, Phone, Globe } from "lucide-react"
-import sow2growLogo from "../assets/sow2grow-logo.jpg"
 import { countries } from "../data/countries"
 import CurrencySelector from "../components/CurrencySelector"
 import { supabase } from "@/integrations/supabase/client"
@@ -145,7 +144,7 @@ export default function RegisterPage() {
                 <div className="flex justify-center mb-6">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-green-100">
                     <img 
-                      src={sow2growLogo} 
+                      src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/logo.jpeg" 
                       alt="sow2grow logo" 
                       className="w-full h-full object-cover"
                     />
