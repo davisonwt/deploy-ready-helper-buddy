@@ -248,13 +248,21 @@ const Index = () => {
               </video>
             </div>
             
-            {/* Video Placeholder 2 */}
+            {/* Seeds 2 Video */}
             <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
-              <div className="absolute inset-0 w-full h-full bg-gray-700 rounded-lg">
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-white text-xl">Video Placeholder 2</span>
-                </div>
-              </div>
+              <video
+                className="w-full h-full object-cover rounded-lg"
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4v" 
+                  type="video/mp4" 
+                />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
 
