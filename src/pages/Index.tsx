@@ -534,9 +534,12 @@ const Index = () => {
                </div>
              </div>
              
-             {/* Harvesters Section */}
-             <div className="text-center relative mt-12">
-               <h2 className="text-4xl font-bold text-green-800 mb-8">Harvesters</h2>
+              {/* Harvesters Section */}
+              <div className="text-center relative mt-12">
+                <p className="text-2xl md:text-3xl font-bold text-green-700 mb-6 leading-tight">
+                  those who water and or add compost to your orchard by choosing to grow what you sow.
+                </p>
+                <h2 className="text-4xl font-bold text-green-800 mb-8">Harvesters</h2>
                
                {/* Harvesters Strip with 3D Effects */}
                <div className="relative mb-6 transform-gpu">
@@ -587,14 +590,6 @@ const Index = () => {
                                 hover:shadow-3xl
                                 rotate-x-2
                                 translate-y-[-15px]">
-                     {/* Text Overlay */}
-                     <div className="absolute inset-0 z-30 flex items-center justify-center">
-                       <div className="text-center px-8">
-                         <p className="text-3xl md:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                           those who water and or add compost to your orchard by choosing to grow what you sow.
-                         </p>
-                       </div>
-                     </div>
                      <video
                        className="w-full h-screen object-cover rounded-lg
                                 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
