@@ -309,8 +309,8 @@ const Index = () => {
                 {/* 3D depth effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
                 
-                {/* Flickering Arrow overlapping this strip and pointing down */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+                {/* Flickering Arrow overlapping this strip and pointing down into next video */}
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 z-50">
                   <div className="flickering-arrow">
                     <svg 
                       className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
