@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
@@ -447,7 +448,7 @@ const Index = () => {
              <div className="text-center relative mt-12">
                <h2 className="text-4xl font-bold text-green-800 mb-8">Bestowers</h2>
                
-               {/* Bestowers Strip with 3D Effects */}
+               {/* Bestowers Strip with 3D Effects - FIXED URL */}
                <div className="relative mb-6 transform-gpu">
                  <div className="seeds-strip-container relative z-20 transform 
                                perspective-1000 
@@ -468,9 +469,12 @@ const Index = () => {
                       loop
                       playsInline
                       poster="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1920&h=350&fit=crop"
+                      onError={(e) => console.error('Bestowers strip video error:', e)}
+                      onLoadStart={() => console.log('Bestowers strip video loading started')}
+                      onCanPlay={() => console.log('Bestowers strip video can play')}
                     >
                       <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20main%20mp4.mp4" 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20strip%20mp4.mp4" 
                         type="video/mp4" 
                       />
                       Your browser does not support the video tag.
@@ -483,7 +487,7 @@ const Index = () => {
                  <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
                </div>
                
-               {/* Bestowers Video Placeholder with 3D Effects */}
+               {/* Bestowers Main Video with 3D Effects - ADDED VIDEO URL */}
                <div className="relative mb-12 transform-gpu">
                  <div className="video-container relative z-20 transform 
                                perspective-1000 
@@ -503,9 +507,12 @@ const Index = () => {
                      loop
                      playsInline
                      poster="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1920&h=1080&fit=crop"
+                     onError={(e) => console.error('Bestowers main video error:', e)}
+                     onLoadStart={() => console.log('Bestowers main video loading started')}
+                     onCanPlay={() => console.log('Bestowers main video can play')}
                    >
                      <source 
-                       src="" 
+                       src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20main%20mp4.mp4" 
                        type="video/mp4" 
                      />
                      Your browser does not support the video tag.
