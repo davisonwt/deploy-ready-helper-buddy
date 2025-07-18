@@ -38,24 +38,18 @@ const Index = () => {
       {/* Hero Section with Video Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Video Background */}
-        <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center">
+        <div className="absolute inset-0 w-full h-full bg-black">
           <video 
-            key="hero-video-v2"
+            key="hero-video-v3"
             autoPlay 
             loop 
             muted 
             playsInline
             controls={false}
-            style={{
-              width: 'auto',
-              height: 'auto',
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'none'
-            }}
+            className="w-full h-full object-cover"
           >
             <source 
-              src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?v=2" 
+              src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?v=3" 
               type="video/mp4" 
             />
             Your browser does not support the video tag.
