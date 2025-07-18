@@ -216,8 +216,22 @@ const Index = () => {
           {/* Seeds Section */}
           <div className="text-center">
             <h2 className="text-4xl font-bold text-green-800 mb-8">Seeds</h2>
-            <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center mb-6">
-              <span className="text-gray-600">seeds video strip</span>
+            <div className="bg-black rounded-lg h-64 flex items-center justify-center mb-6 overflow-hidden">
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                controls={false}
+                className="w-full h-full object-cover rounded-lg"
+                src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/seed%20strip.mp4"
+                onError={(e) => {
+                  console.log('Seeds video error:', e);
+                  e.currentTarget.style.display = 'none';
+                }}
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
             <p className="text-lg text-green-700 max-w-3xl mx-auto">
               ...into a home for anyone of our harvesters. it is born from purpose, ready to be sown.
