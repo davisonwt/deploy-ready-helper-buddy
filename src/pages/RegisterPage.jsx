@@ -359,17 +359,11 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-green-600 via-blue-600 to-green-600 hover:from-green-700 hover:via-blue-700 hover:to-green-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-green-300"
               >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                    <span>Creating Your Account...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Sprout className="h-5 w-5 mr-2" />
-                    <span>Become a sower and bestower</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-center">
+                  {loading && <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>}
+                  <Sprout className="h-5 w-5 mr-2" />
+                  <span>Become a sower and bestower</span>
+                </div>
               </Button>
             </form>
             
