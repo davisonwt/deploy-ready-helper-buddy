@@ -390,9 +390,10 @@ const Index = () => {
                   muted
                   loop
                   playsInline
+                  poster="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=1920&h=1080&fit=crop"
                 >
                   <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos//orchards%20main%20mp4.mp4" 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%20main%20mp4.mp4" 
                     type="video/mp4" 
                   />
                   Your browser does not support the video tag.
