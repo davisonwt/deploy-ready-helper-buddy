@@ -1,23 +1,27 @@
+/* App-specific styles that complement the design system */
+
+/* Root container - removed fixed width to be more responsive */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
 }
 
+/* Logo styling using design system colors */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  transition: filter 300ms ease;
 }
 
+.logo:hover {
+  filter: drop-shadow(0 0 2em hsl(var(--success) / 0.6));
+}
+
+.logo.community:hover {
+  filter: drop-shadow(0 0 2em hsl(var(--warning) / 0.6));
+}
+
+/* Logo animation */
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -28,15 +32,60 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
+  .logo-spin {
     animation: logo-spin infinite 20s linear;
   }
 }
 
-.card {
-  padding: 2em;
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  .logo-spin {
+    animation: none;
+  }
 }
 
-.read-the-docs {
-  color: #888;
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Enhanced focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  transition: outline-color 0.2s ease;
+}
+
+/* Text selection using design system colors */
+::selection {
+  background: hsl(var(--success) / 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Card styles that work with the design system */
+.app-card {
+  padding: 2em;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  color: hsl(var(--card-foreground));
+}
+
+/* Helper text using muted colors */
+.helper-text {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
 }
