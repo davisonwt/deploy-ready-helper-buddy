@@ -4,7 +4,12 @@ import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, User, MapPin, Phone } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, User, MapPin, Phone, Globe } from "lucide-react"
+import { countries } from "../data/countries"
+import CurrencySelector from "../components/CurrencySelector"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -14,7 +19,8 @@ export default function RegisterPage() {
     firstName: "",
     lastName: "",
     location: "",
-    phone: ""
+    phone: "",
+    currency: "USD"
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -23,6 +29,7 @@ export default function RegisterPage() {
   
   const { register } = useAuth()
   const navigate = useNavigate()
+  const { toast } = useToast()
   
   const handleChange = (e) => {
     setFormData({
@@ -56,11 +63,46 @@ export default function RegisterPage() {
         first_name: formData.firstName,
         last_name: formData.lastName,
         location: formData.location,
-        phone: formData.phone
+        phone: formData.phone,
+        currency: formData.currency
       })
       
       if (result.success) {
-        navigate("/dashboard")
+        // Send welcome email to user
+        try {
+          await supabase.functions.invoke('send-welcome-email', {
+            body: {
+              email: formData.email,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+            }
+          })
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError)
+        }
+
+        // Send admin notification
+        try {
+          await supabase.functions.invoke('send-admin-notification', {
+            body: {
+              email: formData.email,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              location: formData.location,
+              phone: formData.phone,
+              currency: formData.currency
+            }
+          })
+        } catch (notificationError) {
+          console.error('Failed to send admin notification:', notificationError)
+        }
+
+        toast({
+          title: "Welcome to sow2grow! 🌱",
+          description: "Please check your email to verify your account before continuing.",
+        })
+        
+        navigate("/")
       } else {
         setError(result.error || "Registration failed")
       }
@@ -98,9 +140,10 @@ export default function RegisterPage() {
           <div className="bg-gradient-to-r from-green-600 via-blue-600 to-green-600 p-1">
             <div className="bg-white/95 rounded-t-lg">
               <CardHeader className="text-center pb-8 pt-8">
+                {/* Logo placeholder */}
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500 via-blue-500 to-green-600 rounded-full flex items-center justify-center shadow-xl ring-4 ring-green-100 animate-pulse">
-                    <Sprout className="h-10 w-10 text-white" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-green-500 via-blue-500 to-green-600 rounded-2xl flex items-center justify-center shadow-2xl ring-4 ring-green-100 animate-pulse">
+                    <Sprout className="h-12 w-12 text-white" />
                   </div>
                 </div>
                 <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-700 to-blue-700 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
@@ -146,8 +189,8 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                      placeholder="Enter first name"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        placeholder="Enter first name"
                       required
                     />
                   </div>
@@ -165,8 +208,8 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                      placeholder="Enter last name"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        placeholder="Enter last name"
                       required
                     />
                   </div>
@@ -185,8 +228,8 @@ export default function RegisterPage() {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-blue-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                    placeholder="your@email.com"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-blue-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      placeholder="your@email.com"
                     required
                   />
                 </div>
@@ -195,19 +238,22 @@ export default function RegisterPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="location" className="text-sm font-semibold text-amber-700">
-                    Location <span className="text-amber-500 font-normal">(Optional)</span>
+                    Country <span className="text-amber-500 font-normal">(Optional)</span>
                   </label>
                   <div className="relative group">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors" />
-                    <input
-                      id="location"
-                      name="location"
-                      type="text"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-amber-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                      placeholder="City, Country"
-                    />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors z-10" />
+                    <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
+                      <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-amber-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                        <SelectValue placeholder="Select your country" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {countries.map((country) => (
+                          <SelectItem key={country.code} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -223,10 +269,42 @@ export default function RegisterPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-purple-800 hover:border-gray-300 shadow-sm hover:shadow-md"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-purple-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="+1234567890"
                     />
                   </div>
+                </div>
+              </div>
+              
+              {/* Currency Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-indigo-700">
+                  Preferred Currency
+                </label>
+                <div className="relative group">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors z-10" />
+                  <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                    <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-indigo-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">🇺🇸 USD - US Dollar</SelectItem>
+                      <SelectItem value="EUR">🇪🇺 EUR - Euro</SelectItem>
+                      <SelectItem value="GBP">🇬🇧 GBP - British Pound</SelectItem>
+                      <SelectItem value="CAD">🇨🇦 CAD - Canadian Dollar</SelectItem>
+                      <SelectItem value="AUD">🇦🇺 AUD - Australian Dollar</SelectItem>
+                      <SelectItem value="JPY">🇯🇵 JPY - Japanese Yen</SelectItem>
+                      <SelectItem value="CHF">🇨🇭 CHF - Swiss Franc</SelectItem>
+                      <SelectItem value="CNY">🇨🇳 CNY - Chinese Yuan</SelectItem>
+                      <SelectItem value="INR">🇮🇳 INR - Indian Rupee</SelectItem>
+                      <SelectItem value="BRL">🇧🇷 BRL - Brazilian Real</SelectItem>
+                      <SelectItem value="ZAR">🇿🇦 ZAR - South African Rand</SelectItem>
+                      <SelectItem value="MXN">🇲🇽 MXN - Mexican Peso</SelectItem>
+                      <SelectItem value="KRW">🇰🇷 KRW - South Korean Won</SelectItem>
+                      <SelectItem value="SGD">🇸🇬 SGD - Singapore Dollar</SelectItem>
+                      <SelectItem value="NZD">🇳🇿 NZD - New Zealand Dollar</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
@@ -242,8 +320,8 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                    placeholder="Create a secure password"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      placeholder="Create a secure password"
                     required
                   />
                   <button
@@ -268,8 +346,8 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md"
-                    placeholder="Confirm your password"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      placeholder="Confirm your password"
                     required
                   />
                   <button
