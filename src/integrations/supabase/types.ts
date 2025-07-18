@@ -166,6 +166,86 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_config: {
+        Row: {
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          bank_swift_code: string | null
+          business_email: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          bank_swift_code?: string | null
+          business_email?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bank_account_name?: string
+          bank_account_number?: string
+          bank_name?: string
+          bank_swift_code?: string | null
+          business_email?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          bestowal_id: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          id: string
+          payment_method: string
+          payment_provider_id: string | null
+          provider_response: Json | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          bestowal_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_method: string
+          payment_provider_id?: string | null
+          provider_response?: Json | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          bestowal_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_method?: string
+          payment_provider_id?: string | null
+          provider_response?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
