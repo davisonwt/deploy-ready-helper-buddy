@@ -231,7 +231,10 @@ const Index = () => {
                             rotate-x-5
                             translate-y-[-20px]">
                 <video
-                  className="w-full h-64 object-cover rounded-lg border-0 outline-0"
+                  className="w-full h-64 object-cover rounded-lg 
+                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                           transition-shadow duration-500 border-0 outline-0"
                   style={{ aspectRatio: '1920/350' }}
                   autoPlay
                   muted
@@ -244,6 +247,8 @@ const Index = () => {
                   />
                   Your browser does not support the video tag.
                 </video>
+                {/* 3D depth effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
               </div>
               
               {/* Underneath shadow effect */}
