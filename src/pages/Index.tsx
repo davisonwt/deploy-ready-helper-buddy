@@ -40,7 +40,7 @@ const Index = () => {
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full bg-black">
           <video 
-            key="hero-video-v3"
+            key={`hero-video-${Date.now()}`}
             autoPlay 
             loop 
             muted 
