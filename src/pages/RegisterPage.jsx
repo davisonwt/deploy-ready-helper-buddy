@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, User, MapPin, Phone, Globe } from "lucide-react"
+import sow2growLogo from "../assets/sow2grow-logo.jpg"
 import { countries } from "../data/countries"
 import CurrencySelector from "../components/CurrencySelector"
 import { supabase } from "@/integrations/supabase/client"
@@ -140,10 +141,14 @@ export default function RegisterPage() {
           <div className="bg-gradient-to-r from-green-600 via-blue-600 to-green-600 p-1">
             <div className="bg-white/95 rounded-t-lg">
               <CardHeader className="text-center pb-8 pt-8">
-                {/* Logo placeholder */}
+                {/* Logo */}
                 <div className="flex justify-center mb-6">
-                  <div className="w-24 h-24 bg-gradient-to-br from-green-500 via-blue-500 to-green-600 rounded-2xl flex items-center justify-center shadow-2xl ring-4 ring-green-100 animate-pulse">
-                    <Sprout className="h-12 w-12 text-white" />
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-green-100">
+                    <img 
+                      src={sow2growLogo} 
+                      alt="sow2grow logo" 
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
                 <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-700 to-blue-700 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
