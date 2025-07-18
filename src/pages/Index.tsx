@@ -665,10 +665,10 @@ const Index = () => {
             <div className="text-center">
               <h3 className="text-3xl font-bold text-green-800 mb-8">tithing</h3>
               <div className="space-y-4 mb-8">
-                <p className="text-green-700">Scriptural tithing</p>
-                <p className="text-green-700">Community support</p>
-                <p className="text-green-700">Faith-based giving</p>
-                <p className="text-green-700">Sacred stewardship</p>
+                <p className="text-green-700">scriptural tithing</p>
+                <p className="text-green-700">community support</p>
+                <p className="text-green-700">faith-based giving</p>
+                <p className="text-green-700">sacred stewardship</p>
               </div>
               <Link to="/tithing">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full">
@@ -681,10 +681,10 @@ const Index = () => {
             <div className="text-center">
               <h3 className="text-3xl font-bold text-green-800 mb-8">free-will gifting</h3>
               <div className="space-y-4 mb-8">
-                <p className="text-green-700">Voluntary giving</p>
-                <p className="text-green-700">Heart-led donations</p>
-                <p className="text-green-700">Community blessing</p>
-                <p className="text-green-700">Generous spirit</p>
+                <p className="text-green-700">voluntary giving</p>
+                <p className="text-green-700">heart-led donations</p>
+                <p className="text-green-700">community blessing</p>
+                <p className="text-green-700">generous spirit</p>
               </div>
               <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
                 let it rain over the community
