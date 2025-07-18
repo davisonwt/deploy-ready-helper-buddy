@@ -19,7 +19,7 @@ import {
   Crown,
   Zap
 } from "lucide-react"
-import { getCachedOrchard, navigateToOrchard } from "../lib/orchardNavigation"
+import { fetchOrchard } from "../api/orchards"
 
 export default function OrchardCreatedPage() {
   const navigate = useNavigate()
@@ -47,43 +47,27 @@ export default function OrchardCreatedPage() {
       return;
     }
 
-    // Try to get orchard from cache first
-    const cachedOrchard = getCachedOrchard(orchardId);
-    if (cachedOrchard) {
-      console.log("✅ Found cached orchard data");
-      setOrchard(cachedOrchard);
-      setLoading(false);
-      return;
-    }
-
-    // If not in cache, fetch from API
-    const fetchOrchard = async () => {
+    // Fetch orchard data directly from API
+    const loadOrchardData = async () => {
       try {
         console.log("📡 Fetching orchard from API:", orchardId);
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/orchards/${orchardId}`);
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          console.log("✅ Orchard fetched successfully");
-          setOrchard(result.data);
-        } else {
-          console.error("💥 Failed to fetch orchard:", result);
-          navigate("/my-orchards");
-        }
+        const orchardData = await fetchOrchard(orchardId);
+        console.log("✅ Orchard fetched successfully");
+        setOrchard(orchardData);
       } catch (error) {
         console.error("💥 Error fetching orchard:", error);
-        navigate("/my-orchards");
+        navigate("/browse-orchards");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchOrchard();
+    loadOrchardData();
   }, [orchardId, success, navigate])
 
   const handleViewOrchard = () => {
     console.log("🔍 Navigating to view orchard");
-    navigateToOrchard(orchard.id, 'orchard-created-view');
+    navigate(`/orchards/${orchard.id}`);
   }
 
   const handleViewMyOrchards = () => {
