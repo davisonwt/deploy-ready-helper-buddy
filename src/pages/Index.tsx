@@ -465,8 +465,16 @@ const Index = () => {
                                shadow-2xl 
                                hover:shadow-3xl
                                rotate-x-5
-                               translate-y-[-20px]">
-                    <video
+                                translate-y-[-20px]">
+                     {/* Text Overlay */}
+                     <div className="absolute inset-0 z-30 flex items-center justify-center">
+                       <div className="text-center px-8">
+                         <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                           ...they make it rain!
+                         </p>
+                       </div>
+                     </div>
+                     <video
                       className="w-full h-64 object-cover rounded-lg 
                                shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
                                hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
