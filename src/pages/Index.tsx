@@ -577,43 +577,51 @@ const Index = () => {
                  <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
                </div>
                
-               {/* Harvesters Video with 3D Effects */}
-               <div className="relative mb-12 transform-gpu">
-                 <div className="video-container relative z-20 transform 
-                               perspective-1000 
-                               hover:scale-105 
-                               transition-all duration-500 ease-out
-                               shadow-2xl 
-                               hover:shadow-3xl
-                               rotate-x-2
-                               translate-y-[-15px]">
-                    <video
-                      className="w-full h-screen object-cover rounded-lg
-                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                               transition-shadow duration-500"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
-                      onError={(e) => console.error('Harvesters main video error:', e)}
-                      onLoadStart={() => console.log('Harvesters main video loading started')}
-                      onCanPlay={() => console.log('Harvesters main video can play')}
-                    >
-                       <source 
-                         src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
-                         type="video/mp4" 
-                       />
-                      Your browser does not support the video tag.
-                    </video>
-                   {/* 3D depth effect */}
-                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-                 </div>
-                 
-                 {/* Underneath shadow effect */}
-                 <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
-               </div>
+                {/* Harvesters Video with 3D Effects - Text Overlay */}
+                <div className="relative mb-12 transform-gpu">
+                  <div className="video-container relative z-20 transform 
+                                perspective-1000 
+                                hover:scale-105 
+                                transition-all duration-500 ease-out
+                                shadow-2xl 
+                                hover:shadow-3xl
+                                rotate-x-2
+                                translate-y-[-15px]">
+                     {/* Text Overlay */}
+                     <div className="absolute inset-0 z-30 flex items-center justify-center">
+                       <div className="text-center px-8">
+                         <p className="text-3xl md:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                           those who water and or add compost to your orchard by choosing to grow what you sow.
+                         </p>
+                       </div>
+                     </div>
+                     <video
+                       className="w-full h-screen object-cover rounded-lg
+                                shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                                hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                                transition-shadow duration-500"
+                       autoPlay
+                       muted
+                       loop
+                       playsInline
+                       poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
+                       onError={(e) => console.error('Harvesters main video error:', e)}
+                       onLoadStart={() => console.log('Harvesters main video loading started')}
+                       onCanPlay={() => console.log('Harvesters main video can play')}
+                     >
+                        <source 
+                          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
+                          type="video/mp4" 
+                        />
+                       Your browser does not support the video tag.
+                     </video>
+                    {/* 3D depth effect */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
+                  </div>
+                  
+                  {/* Underneath shadow effect */}
+                  <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+                </div>
              </div>
               
               {/* Underneath shadow effect */}
