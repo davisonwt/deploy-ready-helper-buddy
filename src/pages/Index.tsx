@@ -441,7 +441,12 @@ const Index = () => {
                 </video>
                 {/* 3D depth effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
-              </div>
+             </div>
+             
+             {/* Bestowers Section */}
+             <div className="text-center relative mt-12">
+               <h2 className="text-4xl font-bold text-green-800 mb-8">Bestowers</h2>
+             </div>
               
               {/* Underneath shadow effect */}
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
