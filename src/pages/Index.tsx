@@ -11,15 +11,6 @@ import {
 } from "lucide-react";
 
 const Index = () => {
-  useEffect(() => {
-    // Force page reload once to clear video cache
-    const hasReloaded = sessionStorage.getItem('videoReloaded');
-    if (!hasReloaded) {
-      sessionStorage.setItem('videoReloaded', 'true');
-      window.location.reload();
-    }
-  }, []);
-
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -49,18 +40,19 @@ const Index = () => {
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full bg-black">
           <video 
-            key={`hero-video-${Date.now()}`}
+            key={Math.random().toString(36)}
             autoPlay 
             loop 
             muted 
             playsInline
             controls={false}
             className="w-full h-full object-cover"
+            src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?cache=${Math.random()}&t=${Date.now()}`}
+            onError={(e) => {
+              console.log('Video error:', e);
+              e.currentTarget.style.display = 'none';
+            }}
           >
-            <source 
-              src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?t=${Date.now()}`}
-              type="video/mp4" 
-            />
             Your browser does not support the video tag.
           </video>
         </div>
