@@ -1,0 +1,189 @@
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
+import { Heart, Users, Target, TrendingUp, Gift } from 'lucide-react';
+
+const BestowalUI = ({ orchard, onBestow }) => {
+  const [selectedPockets, setSelectedPockets] = useState([]);
+  const [selectedAmount, setSelectedAmount] = useState(null);
+  const [currency, setCurrency] = useState('USD');
+
+  // Mock data - replace with actual orchard data
+  const orchardData = orchard || {
+    title: "Community Garden Project",
+    description: "Help us grow fresh vegetables for local families",
+    target: 10000,
+    current: 6500,
+    supporters: 45,
+    pockets: 100,
+    filledPockets: 65,
+    pocketValue: 100
+  };
+
+  const progress = (orchardData.current / orchardData.target) * 100;
+  const remainingPockets = orchardData.pockets - orchardData.filledPockets;
+
+  // Generate pocket grid
+  const pockets = Array.from({ length: orchardData.pockets }, (_, i) => ({
+    id: i + 1,
+    filled: i < orchardData.filledPockets,
+    value: orchardData.pocketValue
+  }));
+
+  const handlePocketSelect = (pocketId) => {
+    const pocket = pockets.find(p => p.id === pocketId);
+    if (pocket.filled) return;
+
+    setSelectedPockets(prev => {
+      if (prev.includes(pocketId)) {
+        return prev.filter(id => id !== pocketId);
+      } else {
+        return [...prev, pocketId];
+      }
+    });
+  };
+
+  const handleAmountSelect = (amount) => {
+    setSelectedAmount(amount);
+    setSelectedPockets([]);
+  };
+
+  const handleBestow = () => {
+    const amount = selectedAmount || (selectedPockets.length * orchardData.pocketValue);
+    if (amount > 0) {
+      onBestow?.(amount, currency);
+    }
+  };
+
+  const totalAmount = selectedAmount || (selectedPockets.length * orchardData.pocketValue);
+
+  return (
+    <div className="bestowal-ui">
+      {/* Orchard Header */}
+      <div className="orchard-header">
+        <h2 className="text-2xl font-bold text-foreground mb-2">{orchardData.title}</h2>
+        <p className="text-muted-foreground">{orchardData.description}</p>
+      </div>
+
+      {/* Orchard Stats */}
+      <div className="orchard-stats">
+        <Card className="stat-card border-success/20">
+          <CardContent className="p-3 text-center">
+            <Target className="h-5 w-5 text-success mx-auto mb-1" />
+            <div className="font-bold text-foreground">${orchardData.target.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">Target</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="stat-card border-info/20">
+          <CardContent className="p-3 text-center">
+            <TrendingUp className="h-5 w-5 text-info mx-auto mb-1" />
+            <div className="font-bold text-foreground">${orchardData.current.toLocaleString()}</div>
+            <div className="text-xs text-muted-foreground">Raised</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="stat-card border-warning/20">
+          <CardContent className="p-3 text-center">
+            <Users className="h-5 w-5 text-warning mx-auto mb-1" />
+            <div className="font-bold text-foreground">{orchardData.supporters}</div>
+            <div className="text-xs text-muted-foreground">Supporters</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="stat-card border-harvest/20">
+          <CardContent className="p-3 text-center">
+            <Gift className="h-5 w-5 text-harvest mx-auto mb-1" />
+            <div className="font-bold text-foreground">{remainingPockets}</div>
+            <div className="text-xs text-muted-foreground">Available</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="progress-bar">
+        <Progress value={progress} className="h-3" />
+        <div className="flex justify-between text-sm text-muted-foreground mt-1">
+          <span>{progress.toFixed(1)}% funded</span>
+          <span>${(orchardData.target - orchardData.current).toLocaleString()} to go</span>
+        </div>
+      </div>
+
+      {/* Pocket Info */}
+      <div className="pocket-info">
+        <h3 className="font-semibold text-info mb-2">How Pockets Work</h3>
+        <p className="text-sm text-muted-foreground">
+          Each pocket represents ${orchardData.pocketValue} towards this orchard. 
+          Select available pockets to make your bestowal, or choose a custom amount below.
+        </p>
+      </div>
+
+      {/* Pocket Grid */}
+      <div className="pocket-grid">
+        {pockets.map((pocket) => (
+          <button
+            key={pocket.id}
+            className={`pocket-button ${
+              pocket.filled 
+                ? 'bg-success text-success-foreground border-success' 
+                : selectedPockets.includes(pocket.id)
+                ? 'bg-warning text-warning-foreground border-warning'
+                : 'bg-background border-border hover:border-success'
+            }`}
+            onClick={() => handlePocketSelect(pocket.id)}
+            disabled={pocket.filled}
+          >
+            <span className="pocket-number">{pocket.id}</span>
+            <span className="pocket-amount">${pocket.value}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Quick Amount Selection */}
+      <div className="amount-grid">
+        {[100, 250, 500, 1000].map((amount) => (
+          <button
+            key={amount}
+            className={`amount-btn ${selectedAmount === amount ? 'active' : ''}`}
+            onClick={() => handleAmountSelect(amount)}
+          >
+            ${amount}
+          </button>
+        ))}
+      </div>
+
+      {/* Payment Options */}
+      <div className="payment-options">
+        {totalAmount > 0 && (
+          <div className="mb-4 p-4 bg-success/10 border border-success/20 rounded-lg">
+            <div className="flex items-center justify-center gap-2 text-success">
+              <Heart className="h-5 w-5" />
+              <span className="font-semibold">
+                Your Bestowal: ${totalAmount} {currency}
+              </span>
+            </div>
+            {selectedPockets.length > 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {selectedPockets.length} pocket{selectedPockets.length !== 1 ? 's' : ''} selected
+              </p>
+            )}
+          </div>
+        )}
+        
+        <Button
+          onClick={handleBestow}
+          disabled={totalAmount === 0}
+          className="w-full bg-success hover:bg-success/90 text-success-foreground"
+          size="lg"
+        >
+          <Gift className="h-5 w-5 mr-2" />
+          Bestow ${totalAmount || 0}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default BestowalUI;

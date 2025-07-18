@@ -119,5 +119,92 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+        "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+        "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+        monospace;
+  }
+}
+
+@layer components {
+  /* BestowalUI Components */
+  .bestowal-ui {
+    @apply bg-card rounded-lg shadow-lg p-6 border border-border;
+  }
+
+  .orchard-header {
+    @apply mb-6;
+  }
+
+  .orchard-stats {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-3 mb-4;
+  }
+
+  .stat-card {
+    @apply p-3 rounded-lg border;
+  }
+
+  .progress-bar {
+    @apply mb-4;
+  }
+
+  .pocket-info {
+    @apply mb-4 p-4 bg-info/10 border border-info/20 rounded-lg;
+  }
+
+  .pocket-grid {
+    @apply grid grid-cols-4 md:grid-cols-8 gap-2 mb-6;
+  }
+
+  .pocket-button {
+    @apply relative p-3 rounded-lg border-2 transition-all duration-200 font-semibold text-xs min-h-[60px] flex flex-col items-center justify-center;
+  }
+
+  .pocket-button:hover:not(:disabled) {
+    @apply transform scale-105;
+  }
+
+  .pocket-button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .pocket-number {
+    @apply text-lg font-bold;
+  }
+
+  .pocket-amount {
+    @apply text-xs mt-1;
+  }
+
+  .payment-options {
+    @apply text-center;
+  }
+
+  .orchard-page {
+    @apply max-w-4xl mx-auto p-6;
+  }
+
+  .back-btn {
+    @apply px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors mt-4;
+  }
+
+  /* Legacy amount grid for backward compatibility */
+  .amount-grid {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-3 my-4;
+  }
+
+  .amount-btn {
+    @apply px-4 py-2 rounded-lg border-2 border-border hover:border-success transition-all duration-200 font-semibold bg-background hover:bg-success/10;
+  }
+
+  .amount-btn.active {
+    @apply border-success bg-success/10 text-success;
   }
 }
