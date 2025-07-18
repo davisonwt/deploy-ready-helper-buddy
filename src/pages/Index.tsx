@@ -229,9 +229,15 @@ const Index = () => {
                 controls={false}
                 className="w-full h-full object-contain rounded-lg"
                 src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed%20strip%20mp4.mp4"
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23000'/%3E%3C/svg%3E"
                 onError={(e) => {
                   console.log('Seeds video error:', e);
-                  e.currentTarget.style.display = 'none';
+                  const target = e.currentTarget;
+                  target.style.display = 'none';
+                  const fallback = document.createElement('div');
+                  fallback.className = 'w-full h-full bg-green-100 flex items-center justify-center text-green-800';
+                  fallback.innerHTML = '<p>Video loading...</p>';
+                  target.parentNode?.appendChild(fallback);
                 }}
               >
                 Your browser does not support the video tag.
