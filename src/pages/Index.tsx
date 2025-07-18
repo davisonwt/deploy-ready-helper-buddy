@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
@@ -268,11 +269,11 @@ const Index = () => {
                 onError={() => {
                   // Show error message in placeholder
                   const placeholder = document.querySelector('.bg-gray-700 span');
-                  if (placeholder) placeholder.textContent = 'Video failed to load - Check: seeds 1 mp4.mp4';
+                  if (placeholder) placeholder.textContent = 'Video failed to load - Check: seeds 2 mp4.mp4';
                 }}
               >
                 <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4" 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
                   type="video/mp4" 
                 />
                 Your browser does not support the video tag.
