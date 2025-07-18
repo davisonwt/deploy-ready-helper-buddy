@@ -223,7 +223,7 @@ const Index = () => {
                 muted 
                 playsInline
                 controls={false}
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
                 src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/seed%20strip.mp4"
                 onError={(e) => {
                   console.log('Seeds video error:', e);
