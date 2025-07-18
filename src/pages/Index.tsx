@@ -250,18 +250,25 @@ const Index = () => {
             
             {/* Seeds 2 Video */}
             <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
+              {/* Fallback placeholder - shows by default */}
+              <div className="absolute inset-0 w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">Loading Video 2...</span>
+              </div>
               <video
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-cover rounded-lg relative z-10"
                 autoPlay
                 muted
                 loop
                 playsInline
-                onError={(e) => {
-                  // Hide video and show fallback if it fails to load
-                  const video = e.currentTarget as HTMLVideoElement;
-                  const fallback = video.nextElementSibling as HTMLElement;
-                  video.style.display = 'none';
-                  if (fallback) fallback.style.display = 'flex';
+                onLoadedData={() => {
+                  // Hide placeholder when video loads
+                  const placeholder = document.querySelector('.bg-gray-700');
+                  if (placeholder) (placeholder as HTMLElement).style.display = 'none';
+                }}
+                onError={() => {
+                  // Show error message in placeholder
+                  const placeholder = document.querySelector('.bg-gray-700 span');
+                  if (placeholder) placeholder.textContent = 'Video failed to load - Check: seeds 1 mp4.mp4';
                 }}
               >
                 <source 
@@ -270,10 +277,6 @@ const Index = () => {
                 />
                 Your browser does not support the video tag.
               </video>
-              {/* Fallback placeholder */}
-              <div className="absolute inset-0 w-full h-full bg-gray-700 rounded-lg hidden items-center justify-center">
-                <span className="text-white text-xl">Video Placeholder 2 - Check filename in storage</span>
-              </div>
             </div>
           </div>
 
