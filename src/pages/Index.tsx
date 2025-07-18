@@ -47,7 +47,7 @@ const Index = () => {
             playsInline
             controls={false}
             className="w-full h-full object-cover"
-            src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?cache=${Math.random()}&t=${Date.now()}`}
+            src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
             onError={(e) => {
               console.log('Video error:', e);
               e.currentTarget.style.display = 'none';
