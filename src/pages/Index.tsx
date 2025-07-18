@@ -256,13 +256,24 @@ const Index = () => {
                 muted
                 loop
                 playsInline
+                onError={(e) => {
+                  // Hide video and show fallback if it fails to load
+                  const video = e.currentTarget as HTMLVideoElement;
+                  const fallback = video.nextElementSibling as HTMLElement;
+                  video.style.display = 'none';
+                  if (fallback) fallback.style.display = 'flex';
+                }}
               >
                 <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed 1 mp4" 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed 1 mp4.mp4" 
                   type="video/mp4" 
                 />
                 Your browser does not support the video tag.
               </video>
+              {/* Fallback placeholder */}
+              <div className="absolute inset-0 w-full h-full bg-gray-700 rounded-lg hidden items-center justify-center">
+                <span className="text-white text-xl">Video Placeholder 2 - Check filename in storage</span>
+              </div>
             </div>
           </div>
 
