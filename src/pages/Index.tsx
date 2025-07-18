@@ -314,15 +314,15 @@ const Index = () => {
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
-            {/* Flickering Arrow positioned absolutely outside container */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: 'calc(100% - 120px)' }}>
+            {/* Flickering Arrow positioned over the second strip pointing down to second video */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 z-50" style={{ top: '200px' }}>
               <div className="flickering-arrow">
                 <svg 
                   className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
                   fill="currentColor" 
                   viewBox="0 0 24 24"
                 >
-                  <path d="M12 2l-8 8h5v12h6V10h5L12 2z"/>
+                  <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
                 </svg>
               </div>
             </div>
