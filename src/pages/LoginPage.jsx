@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Seedling, Sparkles } from "lucide-react"
+import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -94,7 +94,7 @@ export default function LoginPage() {
               Enter Your Orchard
             </CardTitle>
             <Badge variant="secondary" className="bg-secondary/80 text-secondary-foreground border-border/50">
-              <Seedling className="h-3 w-3 mr-1" />
+              <Sprout className="h-3 w-3 mr-1" />
               364yhvh Community Farm
             </Badge>
           </CardHeader>
