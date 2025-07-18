@@ -197,7 +197,7 @@ const Index = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-blue-700">Visit different farm stalls</span>
+                    <span className="text-blue-700">visit different farm stalls</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
