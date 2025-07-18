@@ -270,6 +270,33 @@ const Index = () => {
               </div>
             </div>
             
+            {/* Second Seeds Strip with 3D Lifted Effect */}
+            <div className="relative mb-6 transform-gpu">
+              <div className="seeds-strip-container relative z-20 transform 
+                            perspective-1000 
+                            hover:scale-105 
+                            transition-all duration-500 ease-out
+                            shadow-2xl 
+                            hover:shadow-3xl
+                            rotate-x-5
+                            translate-y-[-20px]">
+                <img 
+                  src={seedsStrip}
+                  alt="Seeds and sprouting plants"
+                  className="w-full h-64 object-cover rounded-lg 
+                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                           transition-shadow duration-500"
+                  style={{ aspectRatio: '1920/350' }}
+                />
+                {/* 3D depth effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
+              </div>
+              
+              {/* Underneath shadow effect */}
+              <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
+            </div>
+            
             {/* Seeds 2 Video - Emerging from underneath */}
             <div className="relative overflow-hidden mt-[-60px] mb-12 z-10">
               <div className="video-emerging transform translate-y-12
