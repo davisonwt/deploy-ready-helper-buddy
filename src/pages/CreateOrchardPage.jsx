@@ -1,0 +1,821 @@
+import React, { useState, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
+import { useCurrency } from "../hooks/useCurrency"
+import { useOrchards } from "../hooks/useOrchards"
+import { useFileUpload } from "../hooks/useFileUpload"
+import { Button } from "../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import { Input } from "../components/ui/input"
+import { Textarea } from "../components/ui/textarea"
+import { 
+  Plus, 
+  Sprout, 
+  DollarSign, 
+  MapPin, 
+  Clock, 
+  Heart, 
+  Users,
+  Calculator,
+  Sparkles,
+  Camera,
+  Image,
+  Video,
+  Upload,
+  X,
+  Loader2
+} from "lucide-react"
+
+export default function CreateOrchardPage({ isEdit = false }) {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { currency } = useCurrency()
+  const { createOrchard, updateOrchard, fetchOrchardById } = useOrchards()
+  const { uploadFile, uploadMultipleFiles, uploading } = useFileUpload()
+  
+  const [loadingData, setLoadingData] = useState(isEdit)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    category: "",
+    orchard_type: "standard",
+    seed_value: "",
+    pocket_price: "150",
+    location: "",
+    why_needed: "",
+    how_it_helps: "",
+    community_impact: "",
+    expected_completion: "",
+    features: "",
+    video_url: "",
+    currency: currency || "USD"
+  })
+  
+  const [selectedImages, setSelectedImages] = useState([])
+  const [selectedVideo, setSelectedVideo] = useState(null)
+  
+  // Update currency when user's preferred currency changes
+  useEffect(() => {
+    if (currency) {
+      setFormData(prev => ({
+        ...prev,
+        currency: currency
+      }))
+    }
+  }, [currency])
+  
+  // Load existing orchard data if editing
+  useEffect(() => {
+    if (isEdit && id) {
+      loadOrchardData()
+    }
+  }, [isEdit, id])
+  
+  const loadOrchardData = async () => {
+    try {
+      setLoadingData(true)
+      const result = await fetchOrchardById(id)
+      
+      if (result.success) {
+        const orchard = result.data
+        setFormData({
+          title: orchard.title || "",
+          description: orchard.description || "",
+          category: orchard.category || "",
+          orchard_type: orchard.orchard_type || "standard",
+          seed_value: orchard.original_seed_value?.toString() || "",
+          pocket_price: orchard.pocket_price?.toString() || "150",
+          location: orchard.location || "",
+          why_needed: orchard.why_needed || "",
+          how_it_helps: orchard.how_it_helps || "",
+          community_impact: orchard.community_impact || "",
+          expected_completion: orchard.expected_completion || "",
+          features: orchard.features ? orchard.features.join(", ") : "",
+          video_url: orchard.video_url || "",
+          currency: orchard.currency || currency || "USD"
+        })
+        
+        // Handle existing images
+        if (orchard.images && orchard.images.length > 0) {
+          setSelectedImages(orchard.images.map((img, index) => ({
+            id: index,
+            url: img,
+            preview: img,
+            isExisting: true
+          })))
+        }
+      } else {
+        setError("Failed to load orchard data")
+      }
+    } catch (error) {
+      setError("Failed to load orchard data")
+      console.error("Load orchard error:", error)
+    } finally {
+      setLoadingData(false)
+    }
+  }
+  
+  const categories = [
+    "The Gift of Technology",
+    "The Gift of Vehicles", 
+    "The Gift of Property",
+    "The Gift of Energy",
+    "The Gift of Wellness",
+    "The Gift of Tools",
+    "The Gift of Services",
+    "The Gift of Innovation",
+    "The Gift of Electronics",
+    "The Gift of Appliances"
+  ]
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError("")
+
+    try {
+      // Validation
+      if (!user?.id) {
+        throw new Error("You must be logged in to create an orchard")
+      }
+
+      if (!formData.title || !formData.description || !formData.seed_value) {
+        throw new Error("Please fill in all required fields")
+      }
+
+      // Upload images first
+      let imageUrls = []
+      const newImages = selectedImages.filter(img => !img.isExisting && img.file)
+      const existingImages = selectedImages.filter(img => img.isExisting).map(img => img.url)
+      
+      if (newImages.length > 0) {
+        const imageFiles = newImages.map(img => img.file)
+        const uploadResult = await uploadMultipleFiles(imageFiles, 'orchard-images', 'images/')
+        
+        if (uploadResult.success) {
+          imageUrls = uploadResult.data.map(item => item.url)
+        }
+      }
+      
+      // Combine existing and new image URLs
+      const allImageUrls = [...existingImages, ...imageUrls]
+
+      // Upload video if present
+      let videoUrl = formData.video_url
+      if (selectedVideo && selectedVideo.file) {
+        const videoUploadResult = await uploadFile(selectedVideo.file, 'orchard-videos', 'videos/')
+        if (videoUploadResult.success) {
+          videoUrl = videoUploadResult.data.url
+        }
+      }
+
+      // Calculate financial breakdown
+      const originalSeedValue = parseFloat(formData.seed_value) || 0
+      const pocketPrice = parseFloat(formData.pocket_price) || 150
+      const breakdown = getSeedValueBreakdown()
+      const finalSeedValue = breakdown ? breakdown.final : originalSeedValue
+
+      // Prepare orchard data
+      const orchardData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category || "General",
+        orchard_type: formData.orchard_type,
+        seed_value: finalSeedValue,
+        original_seed_value: originalSeedValue,
+        tithing_amount: breakdown ? breakdown.tithing : 0,
+        payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
+        pocket_price: pocketPrice,
+        location: formData.location?.trim() || "",
+        currency: formData.currency || currency || "USD",
+        why_needed: formData.why_needed?.trim() || "",
+        how_it_helps: formData.how_it_helps?.trim() || "",
+        community_impact: formData.community_impact?.trim() || "",
+        expected_completion: formData.expected_completion?.trim() || "",
+        features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
+        images: allImageUrls,
+        video_url: videoUrl
+      }
+
+      // Create or update orchard
+      let result
+      if (isEdit) {
+        result = await updateOrchard(id, orchardData)
+      } else {
+        result = await createOrchard(orchardData)
+      }
+
+      if (result.success) {
+        if (isEdit) {
+          navigate("/my-orchards")
+        } else {
+          navigate(`/orchard/${result.data.id}`)
+        }
+      } else {
+        throw new Error(result.error || `Failed to ${isEdit ? 'update' : 'create'} orchard`)
+      }
+
+    } catch (err) {
+      console.error("Orchard submission error:", err)
+      setError(err.message || `Failed to ${isEdit ? 'update' : 'create'} orchard`)
+    } finally {
+      setSaving(false)
+    }
+  }
+  
+  const calculatePockets = () => {
+    const finalSeedValue = calculateFinalSeedValue()
+    const pocketPrice = parseFloat(formData.pocket_price)
+    if (finalSeedValue && pocketPrice) {
+      return Math.ceil(finalSeedValue / pocketPrice)
+    }
+    return 0
+  }
+
+  const calculateFinalSeedValue = () => {
+    const originalSeedValue = parseFloat(formData.seed_value) || 0
+    if (originalSeedValue === 0) return 0
+    
+    const tithingAmount = originalSeedValue * 0.10
+    const baseAmountWithTithing = originalSeedValue + tithingAmount
+    const paymentProcessingFee = baseAmountWithTithing * 0.06
+    const finalSeedValue = baseAmountWithTithing + paymentProcessingFee
+    return finalSeedValue
+  }
+
+  const getSeedValueBreakdown = () => {
+    const originalSeedValue = parseFloat(formData.seed_value) || 0
+    if (originalSeedValue === 0) return null
+    
+    const tithingAmount = originalSeedValue * 0.10
+    const baseAmountWithTithing = originalSeedValue + tithingAmount
+    const paymentProcessingFee = baseAmountWithTithing * 0.06
+    const finalSeedValue = baseAmountWithTithing + paymentProcessingFee
+    
+    return {
+      original: originalSeedValue,
+      tithing: tithingAmount,
+      baseWithTithing: baseAmountWithTithing,
+      paymentProcessing: paymentProcessingFee,
+      final: finalSeedValue
+    }
+  }
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length > 3) {
+      setError("You can only upload up to 3 images")
+      return
+    }
+    
+    const validImages = files.filter(file => file.type.startsWith('image/'))
+    if (validImages.length !== files.length) {
+      setError("Please upload only image files")
+      return
+    }
+    
+    const imagePromises = validImages.map((file, index) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          resolve({
+            id: Date.now() + index,
+            file,
+            preview: e.target.result,
+            isExisting: false
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+    
+    Promise.all(imagePromises).then(images => {
+      setSelectedImages(images)
+      setError("")
+    })
+  }
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    if (!file.type.startsWith('video/')) {
+      setError("Please upload a video file")
+      return
+    }
+    
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Video file is too large. Maximum size is 50MB.")
+      return
+    }
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setSelectedVideo({
+        file,
+        preview: e.target.result,
+        isExisting: false
+      })
+      setError("")
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeImage = (index) => {
+    const newImages = selectedImages.filter((_, i) => i !== index)
+    setSelectedImages(newImages)
+  }
+
+  const removeVideo = () => {
+    setSelectedVideo(null)
+  }
+  
+  // Loading state for fetching data
+  if (loadingData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-green-100 flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-md border border-white/20 shadow-2xl text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-green-800 mb-2">Loading orchard data...</h2>
+          <p className="text-gray-600">Please wait while we fetch your orchard details</p>
+        </div>
+      </div>
+    )
+  }
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-green-100 p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-green-200 shadow-2xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+                <Sprout className="h-8 w-8 text-white animate-pulse" />
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-green-800 mb-4" style={{ 
+              fontFamily: "Playfair Display, serif"
+            }}>
+              {isEdit ? "Edit Your Orchard" : "Plant a New Seed"}
+            </h1>
+            <p className="text-lg text-green-600 max-w-2xl mx-auto">
+              {isEdit ? "Update your orchard details and grow your community support" : "Create a new orchard in your farm stall within the sow2grow community farm."} 
+              Share your need with the community and watch it grow with their support.
+            </p>
+            <Badge className="mt-4 bg-green-500 text-white">
+              <Plus className="h-3 w-3 mr-1" />
+              6-Step Creation Process
+            </Badge>
+          </div>
+        </div>
+      
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Basic Information */}
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Sprout className="h-5 w-5" />
+                Step 1: Basic Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Orchard Title *
+                  </label>
+                  <Input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., 2019 Toyota Corolla"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-green-200 shadow-xl z-50">
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <Textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Describe what this orchard is for..."
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="inline h-4 w-4 mr-1" />
+                    Location
+                  </label>
+                  <Input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder="City, Country"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Clock className="inline h-4 w-4 mr-1" />
+                    Timeline
+                  </label>
+                  <Input
+                    type="text"
+                    name="expected_completion"
+                    value={formData.expected_completion}
+                    onChange={handleChange}
+                    placeholder="e.g., Need by March 2024"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Orchard Type Selection */}
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Sprout className="h-5 w-5" />
+                Step 2: Orchard Type
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Choose your orchard type:
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div 
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      formData.orchard_type === 'standard' 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-300 hover:border-green-400'
+                    }`}
+                    onClick={() => setFormData(prev => ({ ...prev, orchard_type: 'standard' }))}
+                  >
+                    <div className="flex items-center mb-2">
+                      <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                        formData.orchard_type === 'standard' ? 'bg-green-500 border-green-500' : 'border-gray-400'
+                      }`}></div>
+                      <h3 className="font-semibold text-gray-800">Standard Orchard</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">For larger seeds (over $100)</p>
+                    <p className="text-xs text-gray-500">Divided into R150 pockets for multiple supporters</p>
+                  </div>
+                  
+                  <div 
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      formData.orchard_type === 'full_value' 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-300 hover:border-green-400'
+                    }`}
+                    onClick={() => setFormData(prev => ({ ...prev, orchard_type: 'full_value' }))}
+                  >
+                    <div className="flex items-center mb-2">
+                      <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
+                        formData.orchard_type === 'full_value' ? 'bg-green-500 border-green-500' : 'border-gray-400'
+                      }`}></div>
+                      <h3 className="font-semibold text-gray-800">Full Value Orchard</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">For smaller seeds ($1 - $100)</p>
+                    <p className="text-xs text-gray-500">Single pocket with full seed value + fees</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Financial Details */}
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Step 3: Financial Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <DollarSign className="inline h-4 w-4 mr-1" />
+                    Total Seed Value (R) *
+                  </label>
+                  <Input
+                    type="number"
+                    name="seed_value"
+                    value={formData.seed_value}
+                    onChange={handleChange}
+                    placeholder="e.g., 18000"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Pocket Price (R)
+                  </label>
+                  <Input
+                    type="number"
+                    name="pocket_price"
+                    value={formData.pocket_price}
+                    onChange={handleChange}
+                    placeholder="150"
+                  />
+                </div>
+              </div>
+              
+              {formData.seed_value && (
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-800 mb-4 text-lg">
+                    <Calculator className="inline h-5 w-5 mr-2" />
+                    Financial Breakdown & Pocket Calculation
+                  </h4>
+                  
+                  {(() => {
+                    const breakdown = getSeedValueBreakdown()
+                    if (!breakdown) return null
+                    
+                    return (
+                      <div className="space-y-4">
+                        {/* Financial Breakdown */}
+                        <div className="bg-white p-4 rounded-lg border border-green-100">
+                          <h5 className="font-medium text-gray-800 mb-3">Seed Value Calculation:</h5>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Original Seed Value:</span>
+                              <span className="font-medium">R{breakdown.original.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-amber-700">
+                              <span>+ 10% Tithing (yhvh364 gosat's):</span>
+                              <span className="font-medium">R{breakdown.tithing.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-blue-700">
+                              <span>+ 6% Payment Processing Fee:</span>
+                              <span className="font-medium">R{breakdown.paymentProcessing.toFixed(2)}</span>
+                            </div>
+                            <div className="border-t border-gray-200 pt-2 mt-2">
+                              <div className="flex justify-between font-bold text-green-800">
+                                <span>Final Seed Value:</span>
+                                <span>R{breakdown.final.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Pocket Calculation */}
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="bg-white p-3 rounded-lg border border-green-100">
+                            <div className="text-2xl font-bold text-green-800">{calculatePockets()}</div>
+                            <div className="text-sm text-green-600">Total Pockets</div>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-green-100">
+                            <div className="text-2xl font-bold text-green-800">R{formData.pocket_price}</div>
+                            <div className="text-sm text-green-600">Per Pocket</div>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border border-green-100">
+                            <div className="text-2xl font-bold text-green-800">R{breakdown.final.toFixed(2)}</div>
+                            <div className="text-sm text-green-600">Final Value</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Purpose & Impact */}
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Heart className="h-5 w-5" />
+                Step 4: Purpose & Impact
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Why is this needed? *
+                </label>
+                <Textarea
+                  name="why_needed"
+                  value={formData.why_needed}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Explain why this orchard is important for you..."
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Community Impact *
+                </label>
+                <Textarea
+                  name="community_impact"
+                  value={formData.community_impact}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="How will this benefit the community?"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Features (comma-separated)
+                </label>
+                <Input
+                  type="text"
+                  name="features"
+                  value={formData.features}
+                  onChange={handleChange}
+                  placeholder="e.g., Reliable, Fuel efficient, Low maintenance"
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Media Upload */}
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-green-800 flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Step 5: Media Upload
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Help the community see your need! Upload 1-3 photos and optionally a video to showcase your orchard.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Image className="inline h-4 w-4 mr-1" />
+                  Images (1-3 photos)
+                </label>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      max="3"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Click to upload images or drag and drop</p>
+                      <p className="text-xs text-gray-500">PNG, JPG, JPEG up to 5MB each (max 3 images)</p>
+                    </label>
+                  </div>
+                  
+                  {/* Image Previews */}
+                  {selectedImages.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {selectedImages.map((image, index) => (
+                        <div key={image.id || index} className="relative group">
+                          <img
+                            src={image.preview || image.url}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                            {image.isExisting ? 'Existing' : (image.file?.name || 'Image')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Video Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Video className="inline h-4 w-4 mr-1" />
+                  Video (Optional)
+                </label>
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors">
+                    <input
+                      type="file"
+                      id="video-upload"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                    />
+                    <label htmlFor="video-upload" className="cursor-pointer">
+                      <Video className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Click to upload a video or drag and drop</p>
+                      <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
+                    </label>
+                  </div>
+                  
+                  {/* Video Preview */}
+                  {selectedVideo && (
+                    <div className="relative group">
+                      <video
+                        src={selectedVideo.preview}
+                        controls
+                        className="w-full h-48 rounded-lg border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeVideo}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        {selectedVideo.isExisting ? 'Existing' : (selectedVideo.file?.name || 'Video')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
+          {/* Submit Button */}
+          <div className="text-center">
+            <Button
+              type="submit"
+              size="xl"
+              variant="default"
+              disabled={saving || uploading}
+              className="px-12 py-6 text-xl font-bold bg-green-600 hover:bg-green-700 text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+            >
+              {saving || uploading ? (
+                <div className="flex items-center">
+                  <Loader2 className="animate-spin h-6 w-6 mr-3" />
+                  {uploading ? "Uploading files..." : (isEdit ? "Updating orchard..." : "Creating orchard...")}
+                </div>
+              ) : (
+                <>
+                  <Sprout className="h-6 w-6 mr-3" />
+                  {isEdit ? "Update Orchard 🌱" : "Plant Your Seed 🌱"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

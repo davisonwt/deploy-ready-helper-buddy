@@ -14,16 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bestowals: {
+        Row: {
+          amount: number
+          bestower_id: string
+          created_at: string
+          currency: string
+          id: string
+          message: string | null
+          orchard_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string
+          pocket_numbers: number[] | null
+          pockets_count: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bestower_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          orchard_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          pocket_numbers?: number[] | null
+          pockets_count: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bestower_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          orchard_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          pocket_numbers?: number[] | null
+          pockets_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bestowals_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orchards: {
+        Row: {
+          category: string
+          community_impact: string | null
+          completion_rate: number | null
+          created_at: string
+          currency: string
+          description: string
+          expected_completion: string | null
+          features: string[] | null
+          filled_pockets: number
+          how_it_helps: string | null
+          id: string
+          images: string[] | null
+          location: string | null
+          orchard_type: Database["public"]["Enums"]["orchard_type"]
+          original_seed_value: number
+          payment_processing_fee: number
+          pocket_price: number
+          seed_value: number
+          status: Database["public"]["Enums"]["orchard_status"]
+          supporters: number
+          tithing_amount: number
+          title: string
+          total_pockets: number | null
+          updated_at: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          video_url: string | null
+          views: number
+          why_needed: string | null
+        }
+        Insert: {
+          category: string
+          community_impact?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          currency?: string
+          description: string
+          expected_completion?: string | null
+          features?: string[] | null
+          filled_pockets?: number
+          how_it_helps?: string | null
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          orchard_type?: Database["public"]["Enums"]["orchard_type"]
+          original_seed_value: number
+          payment_processing_fee?: number
+          pocket_price?: number
+          seed_value: number
+          status?: Database["public"]["Enums"]["orchard_status"]
+          supporters?: number
+          tithing_amount?: number
+          title: string
+          total_pockets?: number | null
+          updated_at?: string
+          user_id: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          video_url?: string | null
+          views?: number
+          why_needed?: string | null
+        }
+        Update: {
+          category?: string
+          community_impact?: string | null
+          completion_rate?: number | null
+          created_at?: string
+          currency?: string
+          description?: string
+          expected_completion?: string | null
+          features?: string[] | null
+          filled_pockets?: number
+          how_it_helps?: string | null
+          id?: string
+          images?: string[] | null
+          location?: string | null
+          orchard_type?: Database["public"]["Enums"]["orchard_type"]
+          original_seed_value?: number
+          payment_processing_fee?: number
+          pocket_price?: number
+          seed_value?: number
+          status?: Database["public"]["Enums"]["orchard_status"]
+          supporters?: number
+          tithing_amount?: number
+          title?: string
+          total_pockets?: number | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          video_url?: string | null
+          views?: number
+          why_needed?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          location: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          location?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          location?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_orchard_views: {
+        Args: { orchard_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
+      orchard_type: "standard" | "full_value"
+      verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +345,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
+      orchard_type: ["standard", "full_value"],
+      verification_status: ["pending", "verified", "rejected"],
+    },
   },
 } as const
