@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -11,6 +11,15 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  useEffect(() => {
+    // Force page reload once to clear video cache
+    const hasReloaded = sessionStorage.getItem('videoReloaded');
+    if (!hasReloaded) {
+      sessionStorage.setItem('videoReloaded', 'true');
+      window.location.reload();
+    }
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
