@@ -249,6 +249,13 @@ const Index = () => {
               </video>
             </div>
             
+            
+            {/* Video Placeholder */}
+            <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
+              <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                <span className="text-white text-xl">Video Placeholder - Add MP4 Here</span>
+              </div>
+            </div>
           </div>
 
           {/* Orchards Section */}
