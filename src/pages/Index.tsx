@@ -619,10 +619,9 @@ const Index = () => {
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
                   </div>
                   
-                   {/* Underneath shadow effect */}
-                   <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
-                 </div>
-               </div>
+                  {/* Underneath shadow effect */}
+                  <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -659,15 +658,15 @@ const Index = () => {
                 <p className="text-green-700">Community blessing</p>
                 <p className="text-green-700">Generous spirit</p>
               </div>
-               <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
-                 let it rain over the community
-               </Button>
-             </div>
-           </div>
-         </div>
-       </section>
-     </div>
-   );
- };
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
+                let it rain over the community
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
 
- export default Index;
+export default Index;
