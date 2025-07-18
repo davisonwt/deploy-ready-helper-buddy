@@ -189,7 +189,7 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.firstName}
                       onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                         placeholder="Enter first name"
                       required
                     />
@@ -208,7 +208,7 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.lastName}
                       onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                         placeholder="Enter last name"
                       required
                     />
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-blue-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="your@email.com"
                     required
                   />
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                   <div className="relative group">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors z-10" />
                     <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
-                      <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-amber-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                      <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                         <SelectValue placeholder="Select your country" />
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
@@ -263,15 +263,15 @@ export default function RegisterPage() {
                   </label>
                   <div className="relative group">
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-purple-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
-                      placeholder="+1234567890"
-                    />
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        placeholder="+1234567890"
+                      />
                   </div>
                 </div>
               </div>
@@ -284,7 +284,7 @@ export default function RegisterPage() {
                 <div className="relative group">
                   <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors z-10" />
                   <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                    <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-indigo-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                    <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
@@ -320,7 +320,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="Create a secure password"
                     required
                   />
@@ -346,7 +346,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-green-800 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="Confirm your password"
                     required
                   />
@@ -380,9 +380,9 @@ export default function RegisterPage() {
             </form>
             
             <div className="mt-8 text-center">
-              <p className="text-blue-600">
+              <p className="text-royal-purple">
                 Already part of our community?{" "}
-                <Link to="/login" className="text-green-600 hover:text-green-500 font-semibold transition-colors hover:underline">
+                <Link to="/login" className="text-cyan-accent hover:text-cyan-accent/80 font-semibold transition-colors hover:underline">
                   Sign In Here
                 </Link>
               </p>

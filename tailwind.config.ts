@@ -77,7 +77,12 @@ export default {
 				harvest: {
 					DEFAULT: 'hsl(var(--harvest))',
 					foreground: 'hsl(var(--harvest-foreground))'
-				}
+				},
+				// Custom colors for registration form
+				'olive-green': 'hsl(var(--olive-green))',
+				'golden-brown': 'hsl(var(--golden-brown))',
+				'royal-purple': 'hsl(var(--royal-purple))',
+				'cyan-accent': 'hsl(var(--cyan-accent))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
