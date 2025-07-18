@@ -672,8 +672,7 @@ const Index = () => {
               </div>
               <Link to="/tithing">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full">
-                  <span className="block">let it rain over the 'gosat'</span>
-                  <span className="block text-sm">(gosat - guardians of the set-apart tabernacle)</span>
+                  let it rain over the 'gosat'
                 </Button>
               </Link>
             </div>
