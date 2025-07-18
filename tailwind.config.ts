@@ -73,6 +73,10 @@ export default {
 				info: {
 					DEFAULT: 'hsl(var(--info))',
 					foreground: 'hsl(var(--info-foreground))'
+				},
+				harvest: {
+					DEFAULT: 'hsl(var(--harvest))',
+					foreground: 'hsl(var(--harvest-foreground))'
 				}
 			},
 			borderRadius: {

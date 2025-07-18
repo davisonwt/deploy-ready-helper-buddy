@@ -60,6 +60,8 @@ All colors MUST be HSL.
     --warning-foreground: 26 83.3% 14.1%;
     --info: 199.89 89.47% 49.8%;
     --info-foreground: 210 40% 98%;
+    --harvest: 16.2 84.5% 55.1%;
+    --harvest-foreground: 210 40% 98%;
   }
 
   .dark {
@@ -105,6 +107,8 @@ All colors MUST be HSL.
     --warning-foreground: 26 83.3% 14.1%;
     --info: 199.89 89.47% 49.8%;
     --info-foreground: 210 40% 98%;
+    --harvest: 16.2 84.5% 55.1%;
+    --harvest-foreground: 210 40% 98%;
   }
 }
 
