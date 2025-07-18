@@ -37,12 +37,21 @@ const Index = () => {
 
       {/* Hero Section with Video Background */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Video Background */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source 
+            src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4" 
+            type="video/mp4" 
+          />
+        </video>
         {/* Video Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 to-green-900/50 z-10"></div>
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat" 
-          style={{backgroundImage: "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')"}}
-        ></div>
         
         <div className="relative z-20 text-center max-w-6xl mx-auto px-4">
           <div className="mb-8">
