@@ -5,7 +5,6 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { ScrollArea } from "../components/ui/scroll-area"
 import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
@@ -256,14 +255,16 @@ export default function RegisterPage() {
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px]">
-                      <ScrollArea className="h-[200px]">
-                        {countries.map((country) => (
-                          <SelectItem key={country.code} value={country.name}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </ScrollArea>
+                    <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg z-50">
+                      {countries.map((country) => (
+                        <SelectItem 
+                          key={country.code} 
+                          value={country.name}
+                          className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
+                        >
+                          {country.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -276,24 +277,22 @@ export default function RegisterPage() {
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px]">
-                      <ScrollArea className="h-[200px]">
-                        <SelectItem value="USD">USD - US Dollar</SelectItem>
-                        <SelectItem value="EUR">EUR - Euro</SelectItem>
-                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                        <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
-                        <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
-                        <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
-                        <SelectItem value="CHF">CHF - Swiss Franc</SelectItem>
-                        <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
-                        <SelectItem value="INR">INR - Indian Rupee</SelectItem>
-                        <SelectItem value="BRL">BRL - Brazilian Real</SelectItem>
-                        <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
-                        <SelectItem value="MXN">MXN - Mexican Peso</SelectItem>
-                        <SelectItem value="KRW">KRW - South Korean Won</SelectItem>
-                        <SelectItem value="SGD">SGD - Singapore Dollar</SelectItem>
-                        <SelectItem value="NZD">NZD - New Zealand Dollar</SelectItem>
-                      </ScrollArea>
+                    <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectItem value="USD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">USD - US Dollar</SelectItem>
+                      <SelectItem value="EUR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">EUR - Euro</SelectItem>
+                      <SelectItem value="GBP" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">GBP - British Pound</SelectItem>
+                      <SelectItem value="CAD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CAD - Canadian Dollar</SelectItem>
+                      <SelectItem value="AUD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">AUD - Australian Dollar</SelectItem>
+                      <SelectItem value="JPY" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">JPY - Japanese Yen</SelectItem>
+                      <SelectItem value="CHF" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CHF - Swiss Franc</SelectItem>
+                      <SelectItem value="CNY" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CNY - Chinese Yuan</SelectItem>
+                      <SelectItem value="INR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">INR - Indian Rupee</SelectItem>
+                      <SelectItem value="BRL" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">BRL - Brazilian Real</SelectItem>
+                      <SelectItem value="ZAR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">ZAR - South African Rand</SelectItem>
+                      <SelectItem value="MXN" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">MXN - Mexican Peso</SelectItem>
+                      <SelectItem value="KRW" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">KRW - South Korean Won</SelectItem>
+                      <SelectItem value="SGD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">SGD - Singapore Dollar</SelectItem>
+                      <SelectItem value="NZD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">NZD - New Zealand Dollar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
