@@ -413,7 +413,7 @@ const Index = () => {
                <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
              </div>
             
-            {/* Fourth Seeds Strip with 3D Lifted Effect */}
+            {/* Fourth Seeds Strip with 3D Lifted Effect - Community Text Overlay */}
             <div className="relative mb-6 transform-gpu">
               <div className="seeds-strip-container relative z-20 transform 
                             perspective-1000 
@@ -423,6 +423,14 @@ const Index = () => {
                             hover:shadow-3xl
                             rotate-x-5
                             translate-y-[-20px]">
+                {/* Text Overlay */}
+                <div className="absolute inset-0 z-30 flex items-center justify-center">
+                  <div className="text-center px-8">
+                    <p className="text-2xl md:text-3xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                      our community members act as your online outlets; making tiktok, placing orders, and cultivating your gift into global fruit.
+                    </p>
+                  </div>
+                </div>
                 <video
                   className="w-full h-64 object-cover rounded-lg 
                            shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
