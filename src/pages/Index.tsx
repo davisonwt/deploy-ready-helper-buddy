@@ -270,9 +270,9 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Seeds 2 Video - Also emerging */}
-            <div className="relative overflow-hidden mt-[-20px] z-10">
-              <div className="video-emerging transform translate-y-4
+            {/* Seeds 2 Video - Emerging from underneath */}
+            <div className="relative overflow-hidden mt-[-60px] mb-12 z-10">
+              <div className="video-emerging transform translate-y-12
                             transition-all duration-700 ease-out delay-200
                             hover:translate-y-0 hover:scale-105
                             shadow-xl hover:shadow-2xl">
@@ -295,6 +295,29 @@ const Index = () => {
                 >
                   <source 
                     src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            
+            {/* Deeds 1 Video - Emerging from underneath */}
+            <div className="relative overflow-hidden mt-[-40px] z-10">
+              <div className="video-emerging transform translate-y-8
+                            transition-all duration-700 ease-out delay-400
+                            hover:translate-y-0 hover:scale-105
+                            shadow-xl hover:shadow-2xl">
+                <video
+                  className="w-full h-screen object-cover rounded-lg
+                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                >
+                  <source 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/deeds 1 mp4.mp4" 
                     type="video/mp4" 
                   />
                   Your browser does not support the video tag.
