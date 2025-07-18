@@ -312,6 +312,22 @@ const Index = () => {
               
               {/* Underneath shadow effect */}
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
+              
+              {/* Flickering Arrow at bottom of strip overlapping next video */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 z-30">
+                <div className="animate-pulse">
+                  <svg 
+                    className="w-12 h-12 text-white drop-shadow-2xl animate-bounce" 
+                    fill="currentColor" 
+                    viewBox="0 0 24 24"
+                    style={{
+                      animation: "bounce 1s infinite, pulse 2s infinite"
+                    }}
+                  >
+                    <path d="M12 4l-8 8h5v8h6v-8h5l-8-8z"/>
+                  </svg>
+                </div>
+              </div>
             </div>
             
             {/* Seeds 2 Video - Emerging from underneath */}
