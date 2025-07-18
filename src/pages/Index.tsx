@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -7,10 +7,17 @@ import {
   Heart, 
   Users, 
   Gift,
-  TreePine
+   TreePine
 } from "lucide-react";
+import { LogoProcessor } from "../components/LogoProcessor";
 
 const Index = () => {
+  const [logoUrl, setLogoUrl] = useState('/lovable-uploads/87465dc5-ad33-4bb5-8eac-1f34ac94a2bb.png');
+
+  const handleProcessedLogo = (newLogoUrl: string) => {
+    setLogoUrl(newLogoUrl);
+  };
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -19,11 +26,11 @@ const Index = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <div className="flex items-center justify-center">
-                <img 
-                  src="/lovable-uploads/87465dc5-ad33-4bb5-8eac-1f34ac94a2bb.png" 
-                  alt="sow2grow logo" 
-                  className="w-[90px] h-[90px] object-contain"
-                />
+                 <img 
+                   src={logoUrl} 
+                   alt="sow2grow logo" 
+                   className="w-[90px] h-[90px] object-contain"
+                 />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-green-800">sow2grow</h1>
@@ -276,13 +283,18 @@ const Index = () => {
                 <p className="text-green-700">Community blessing</p>
                 <p className="text-green-700">Generous spirit</p>
               </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
-                let it rain over the community
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+               <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
+                 let it rain over the community
+               </Button>
+             </div>
+           </div>
+           
+           {/* Logo Processor - Temporary */}
+           <div className="mt-16 max-w-md mx-auto">
+             <LogoProcessor onProcessedLogo={handleProcessedLogo} />
+           </div>
+         </div>
+       </section>
     </div>
   );
 };
