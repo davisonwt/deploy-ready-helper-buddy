@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectScrollUpButton, SelectScrollDownButton } from "../components/ui/select"
 import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
@@ -255,7 +255,8 @@ export default function RegisterPage() {
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg z-50">
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectScrollUpButton />
                       {countries.map((country) => (
                         <SelectItem 
                           key={country.code} 
@@ -265,6 +266,7 @@ export default function RegisterPage() {
                           {country.name}
                         </SelectItem>
                       ))}
+                      <SelectScrollDownButton />
                     </SelectContent>
                   </Select>
                 </div>
@@ -277,7 +279,8 @@ export default function RegisterPage() {
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px] bg-white border border-gray-200 shadow-lg z-50">
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                      <SelectScrollUpButton />
                       <SelectItem value="USD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">USD - US Dollar</SelectItem>
                       <SelectItem value="EUR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">EUR - Euro</SelectItem>
                       <SelectItem value="GBP" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">GBP - British Pound</SelectItem>
@@ -293,6 +296,7 @@ export default function RegisterPage() {
                       <SelectItem value="KRW" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">KRW - South Korean Won</SelectItem>
                       <SelectItem value="SGD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">SGD - Singapore Dollar</SelectItem>
                       <SelectItem value="NZD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">NZD - New Zealand Dollar</SelectItem>
+                      <SelectScrollDownButton />
                     </SelectContent>
                   </Select>
                 </div>
