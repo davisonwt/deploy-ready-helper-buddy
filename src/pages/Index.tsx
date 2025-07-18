@@ -336,6 +336,11 @@ const Index = () => {
                 </video>
               </div>
             </div>
+          </div>
+
+          {/* Orchards Section */}
+          <div className="text-center relative">
+            <h2 className="text-4xl font-bold text-green-800 mb-8">Orchards</h2>
             
             {/* Third Seeds Strip with 3D Lifted Effect */}
             <div className="relative mb-6 transform-gpu">
@@ -413,7 +418,6 @@ const Index = () => {
               {/* Underneath shadow effect */}
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
-            
             
             {/* Deeds 1 Video - Emerging from underneath */}
             <div className="relative overflow-hidden mt-[-40px] z-10">
