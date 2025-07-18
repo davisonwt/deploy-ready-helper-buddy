@@ -544,10 +544,10 @@ const Index = () => {
                      loop
                      playsInline
                    >
-                     <source 
-                       src="" 
-                       type="video/mp4" 
-                     />
+                      <source 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20strip%20mp4.mp4" 
+                        type="video/mp4" 
+                      />
                      Your browser does not support the video tag.
                    </video>
                    {/* 3D depth effect */}
@@ -579,10 +579,10 @@ const Index = () => {
                      playsInline
                      poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
                    >
-                     <source 
-                       src="" 
-                       type="video/mp4" 
-                     />
+                      <source 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
+                        type="video/mp4" 
+                      />
                      Your browser does not support the video tag.
                    </video>
                    {/* 3D depth effect */}
