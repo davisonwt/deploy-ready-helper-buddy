@@ -309,6 +309,19 @@ const Index = () => {
                   />
                   {/* 3D depth effect */}
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
+                  
+                  {/* Flickering Arrow at bottom of strip extending into video below */}
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 z-[999]">
+                    <div className="flickering-arrow">
+                      <svg 
+                        className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Underneath shadow effect */}
@@ -344,19 +357,6 @@ const Index = () => {
                     />
                     Your browser does not support the video tag.
                   </video>
-                </div>
-              </div>
-              
-              {/* Flickering Arrow overlaying BOTH the second strip AND second video */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[999]">
-                <div className="flickering-arrow">
-                  <svg 
-                    className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
-                    fill="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
-                  </svg>
                 </div>
               </div>
             </div>
