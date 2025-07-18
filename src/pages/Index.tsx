@@ -457,22 +457,23 @@ const Index = () => {
                                hover:shadow-3xl
                                rotate-x-5
                                translate-y-[-20px]">
-                   <video
-                     className="w-full h-64 object-cover rounded-lg 
-                              shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                              hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                              transition-shadow duration-500"
-                     style={{ aspectRatio: '1920/350' }}
-                     autoPlay
-                     muted
-                     loop
-                     playsInline
-                   >
-                     <source 
-                       src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20strip%20mp4.mp4" 
-                       type="video/mp4" 
-                     />
-                     Your browser does not support the video tag.
+                    <video
+                      className="w-full h-64 object-cover rounded-lg 
+                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                               transition-shadow duration-500"
+                      style={{ aspectRatio: '1920/350' }}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      poster="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1920&h=350&fit=crop"
+                    >
+                      <source 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20strip%20mp4.mp4" 
+                        type="video/mp4" 
+                      />
+                      Your browser does not support the video tag.
                    </video>
                    {/* 3D depth effect */}
                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
