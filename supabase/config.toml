@@ -1,1 +1,54 @@
 project_id = "zuwkgasbkpjlxzsjzumu"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+port = 54327
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+port = 54328
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://zuwkgasbkpjlxzsjzumu.supabase.co"]
+jwt_expiry = 3600
+
+[functions]
+enabled = true
+
+[functions.create-paypal-order]
+verify_jwt = true
+
+[functions.capture-paypal-payment]
+verify_jwt = false
+
+[functions.create-stripe-payment]
+verify_jwt = true
+
+[functions.create-eft-payment]
+verify_jwt = true
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-admin-notification]
+verify_jwt = false

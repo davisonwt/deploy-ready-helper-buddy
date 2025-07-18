@@ -1,0 +1,400 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { 
+  X, 
+  CreditCard, 
+  Building2, 
+  Loader2, 
+  CheckCircle, 
+  AlertCircle,
+  Copy,
+  ExternalLink 
+} from 'lucide-react';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '../hooks/use-toast';
+
+const PaymentModal = ({ 
+  isOpen, 
+  onClose, 
+  amount, 
+  currency = 'USD', 
+  orchardId, 
+  pocketsCount = 0, 
+  pocketNumbers = [],
+  orchardTitle = "Orchard"
+}) => {
+  const [selectedMethod, setSelectedMethod] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [eftDetails, setEftDetails] = useState(null);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const { toast } = useToast();
+
+  const paymentMethods = [
+    {
+      id: 'paypal',
+      name: 'PayPal',
+      icon: '💳',
+      description: 'Pay with your PayPal account',
+      color: 'bg-blue-50 border-blue-200 text-blue-800',
+    },
+    {
+      id: 'stripe',
+      name: 'Credit/Debit Card',
+      icon: <CreditCard className="h-5 w-5" />,
+      description: 'Visa, Mastercard, American Express',
+      color: 'bg-purple-50 border-purple-200 text-purple-800',
+    },
+    {
+      id: 'eft',
+      name: 'Bank Transfer (EFT)',
+      icon: <Building2 className="h-5 w-5" />,
+      description: 'Direct bank transfer',
+      color: 'bg-green-50 border-green-200 text-green-800',
+    }
+  ];
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && !processing) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, processing, onClose]);
+
+  const handlePayPalPayment = async () => {
+    try {
+      setProcessing(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-paypal-order', {
+        body: {
+          amount,
+          currency,
+          orchardId,
+          pocketsCount,
+          pocketNumbers,
+        },
+      });
+
+      if (error) throw error;
+
+      // Open PayPal in new tab
+      window.open(data.approvalUrl, '_blank');
+      
+      toast({
+        title: "PayPal Payment",
+        description: "Complete your payment in the PayPal window",
+      });
+
+      // Close modal and mark as completed
+      setPaymentCompleted(true);
+      setTimeout(() => {
+        onClose();
+        setPaymentCompleted(false);
+      }, 2000);
+
+    } catch (error) {
+      console.error('PayPal payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate PayPal payment",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleStripePayment = async () => {
+    try {
+      setProcessing(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-stripe-payment', {
+        body: {
+          amount,
+          currency,
+          orchardId,
+          pocketsCount,
+          pocketNumbers,
+        },
+      });
+
+      if (error) throw error;
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+
+    } catch (error) {
+      console.error('Stripe payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate card payment",
+        variant: "destructive",
+      });
+      setProcessing(false);
+    }
+  };
+
+  const handleEftPayment = async () => {
+    try {
+      setProcessing(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-eft-payment', {
+        body: {
+          amount,
+          currency,
+          orchardId,
+          pocketsCount,
+          pocketNumbers,
+        },
+      });
+
+      if (error) throw error;
+
+      setEftDetails(data);
+      
+      toast({
+        title: "EFT Payment Instructions",
+        description: "Your payment reference has been generated",
+      });
+
+    } catch (error) {
+      console.error('EFT payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to generate EFT details",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePayment = () => {
+    switch (selectedMethod) {
+      case 'paypal':
+        handlePayPalPayment();
+        break;
+      case 'stripe':
+        handleStripePayment();
+        break;
+      case 'eft':
+        handleEftPayment();
+        break;
+      default:
+        toast({
+          title: "Select Payment Method",
+          description: "Please choose a payment method to continue",
+          variant: "destructive",
+        });
+    }
+  };
+
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!processing ? onClose : undefined}
+      />
+      
+      {/* Modal */}
+      <Card className="relative w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50 shadow-2xl">
+        <CardHeader className="relative">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl text-foreground">Complete Your Bestowal</CardTitle>
+              <p className="text-muted-foreground mt-1">
+                {currency} {amount} for {orchardTitle}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={!processing ? onClose : undefined}
+              disabled={processing}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Payment Summary */}
+          <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-muted-foreground">Amount</span>
+              <span className="font-semibold text-foreground">{currency} {amount}</span>
+            </div>
+            {pocketsCount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Pockets</span>
+                <span className="text-sm text-foreground">{pocketsCount} selected</span>
+              </div>
+            )}
+          </div>
+
+          {/* EFT Details Display */}
+          {eftDetails && (
+            <div className="space-y-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-green-800">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-semibold">EFT Payment Details</span>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Bank:</span>
+                  <span className="font-medium">{eftDetails.bankDetails.bankName}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Account Name:</span>
+                  <span className="font-medium">{eftDetails.bankDetails.accountName}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Account Number:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{eftDetails.bankDetails.accountNumber}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(eftDetails.bankDetails.accountNumber, 'Account number')}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Swift Code:</span>
+                  <span className="font-medium">{eftDetails.bankDetails.swiftCode}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Reference:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-green-800">{eftDetails.referenceNumber}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(eftDetails.referenceNumber, 'Reference number')}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs text-green-700">
+                {eftDetails.instructions.map((instruction, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <span>•</span>
+                    <span>{instruction}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={onClose}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Got It
+              </Button>
+            </div>
+          )}
+
+          {/* Payment Method Selection */}
+          {!eftDetails && (
+            <>
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">Choose Payment Method</h3>
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <div
+                      key={method.id}
+                      className={`
+                        p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                        ${selectedMethod === method.id 
+                          ? method.color + ' border-current' 
+                          : 'bg-background border-border hover:border-primary/30'
+                        }
+                      `}
+                      onClick={() => setSelectedMethod(method.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-lg">
+                          {typeof method.icon === 'string' ? method.icon : method.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">{method.name}</div>
+                          <div className="text-sm text-muted-foreground">{method.description}</div>
+                        </div>
+                        {selectedMethod === method.id && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={processing}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handlePayment}
+                  disabled={!selectedMethod || processing}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : paymentCompleted ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    `Pay ${currency} ${amount}`
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default PaymentModal;

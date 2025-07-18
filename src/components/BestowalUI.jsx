@@ -4,11 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Heart, Users, Target, TrendingUp, Gift } from 'lucide-react';
+import PaymentModal from './PaymentModal';
 
 const BestowalUI = ({ orchard, onBestow }) => {
   const [selectedPockets, setSelectedPockets] = useState([]);
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [currency, setCurrency] = useState('USD');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Mock data - replace with actual orchard data
   const orchardData = orchard || {
@@ -53,8 +55,15 @@ const BestowalUI = ({ orchard, onBestow }) => {
   const handleBestow = () => {
     const amount = selectedAmount || (selectedPockets.length * orchardData.pocketValue);
     if (amount > 0) {
-      onBestow?.(amount, currency);
+      setShowPaymentModal(true);
     }
+  };
+
+  const handlePaymentComplete = () => {
+    setShowPaymentModal(false);
+    setSelectedPockets([]);
+    setSelectedAmount(null);
+    onBestow?.(totalAmount, currency, selectedPockets);
   };
 
   const totalAmount = selectedAmount || (selectedPockets.length * orchardData.pocketValue);
@@ -182,6 +191,19 @@ const BestowalUI = ({ orchard, onBestow }) => {
           Bestow ${totalAmount || 0}
         </Button>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        amount={totalAmount}
+        currency={currency}
+        orchardId={orchard?.id}
+        pocketsCount={selectedPockets.length}
+        pocketNumbers={selectedPockets}
+        orchardTitle={orchardData.title}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </div>
   );
 };

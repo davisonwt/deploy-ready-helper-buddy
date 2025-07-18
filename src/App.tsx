@@ -20,6 +20,8 @@ import OrchardErrorPage from "./pages/OrchardErrorPage";
 import TithingPage from "./pages/TithingPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -202,6 +204,10 @@ const App = () => (
                   </Layout>
                 </ProtectedRoute>
               } />
+              
+              {/* Payment Routes */}
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
               
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
