@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
@@ -218,59 +217,89 @@ const Index = () => {
       <section className="py-20 bg-gradient-to-b from-green-50 to-white">
         <div className="max-w-6xl mx-auto px-4 space-y-20">
           {/* Seeds Section */}
-          <div className="text-center">
+          <div className="text-center relative">
             <h2 className="text-4xl font-bold text-green-800 mb-8">Seeds</h2>
-            <div className="bg-black rounded-lg h-64 flex items-center justify-center mb-6 overflow-hidden">
-              <img 
-                src={seedsStrip}
-                alt="Seeds and sprouting plants"
-                className="w-full h-full object-cover rounded-lg"
-                style={{ aspectRatio: '1920/350' }}
-              />
-            </div>
             
-            {/* Video Placeholder */}
-            <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
-              <video
-                className="w-full h-full object-cover rounded-lg"
-                autoPlay
-                muted
-                loop
-                playsInline
-              >
-                <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4" 
-                  type="video/mp4" 
+            {/* Seeds Strip with 3D Lifted Effect */}
+            <div className="relative mb-6 transform-gpu">
+              <div className="seeds-strip-container relative z-20 transform 
+                            perspective-1000 
+                            hover:scale-105 
+                            transition-all duration-500 ease-out
+                            shadow-2xl 
+                            hover:shadow-3xl
+                            rotate-x-5
+                            translate-y-[-20px]">
+                <img 
+                  src={seedsStrip}
+                  alt="Seeds and sprouting plants"
+                  className="w-full h-64 object-cover rounded-lg 
+                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                           transition-shadow duration-500"
+                  style={{ aspectRatio: '1920/350' }}
                 />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-            
-            
-            {/* Seeds 2 Video */}
-            <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
-              {/* Text Overlay */}
-              <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <div className="text-center px-8">
-                  <p className="text-4xl md:text-6xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
-                    ...into a home for anyone of our harvesters.{" "}
-                    <span className="text-green-300">it is born from purpose, ready to be sown.</span>
-                  </p>
-                </div>
+                {/* 3D depth effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
               </div>
-              <video
-                className="w-full h-full object-cover rounded-lg"
-                autoPlay
-                muted
-                loop
-                playsInline
-              >
-                <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
-                  type="video/mp4" 
-                />
-                Your browser does not support the video tag.
-              </video>
+              
+              {/* Underneath shadow effect */}
+              <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
+            </div>
+            
+            {/* First Video - Emerging from underneath */}
+            <div className="relative overflow-hidden mt-[-40px] mb-12 z-10">
+              <div className="video-emerging transform translate-y-8 
+                            transition-all duration-700 ease-out
+                            hover:translate-y-0 hover:scale-105
+                            shadow-xl hover:shadow-2xl">
+                <video
+                  className="w-full h-screen object-cover rounded-lg 
+                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                >
+                  <source 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+            
+            {/* Seeds 2 Video - Also emerging */}
+            <div className="relative overflow-hidden mt-[-20px] z-10">
+              <div className="video-emerging transform translate-y-4
+                            transition-all duration-700 ease-out delay-200
+                            hover:translate-y-0 hover:scale-105
+                            shadow-xl hover:shadow-2xl">
+                {/* Text Overlay */}
+                <div className="absolute inset-0 z-20 flex items-center justify-center">
+                  <div className="text-center px-8">
+                    <p className="text-4xl md:text-6xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                      ...into a home for anyone of our harvesters.{" "}
+                      <span className="text-green-300">it is born from purpose, ready to be sown.</span>
+                    </p>
+                  </div>
+                </div>
+                <video
+                  className="w-full h-screen object-cover rounded-lg
+                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                >
+                  <source 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             </div>
           </div>
 
