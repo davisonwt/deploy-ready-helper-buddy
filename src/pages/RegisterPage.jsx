@@ -218,11 +218,11 @@ export default function RegisterPage() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-semibold text-blue-700">
-                  Email Address
-                </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-semibold text-blue-700">
+                    Email Address
+                  </label>
                   <input
                     id="email"
                     name="email"
@@ -232,6 +232,21 @@ export default function RegisterPage() {
                       className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="your@email.com"
                     required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="text-sm font-semibold text-purple-700">
+                    Phone <span className="text-purple-500 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    placeholder="+1234567890"
                   />
                 </div>
               </div>
@@ -255,32 +270,11 @@ export default function RegisterPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-semibold text-purple-700">
-                    Phone <span className="text-purple-500 font-normal">(Optional)</span>
+                  <label className="text-sm font-semibold text-indigo-700">
+                    Preferred Currency
                   </label>
-                  <div className="space-y-2">
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
-                        placeholder="+1234567890"
-                      />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Currency Selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-indigo-700">
-                  Preferred Currency
-                </label>
-                <div className="space-y-2">
                   <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
