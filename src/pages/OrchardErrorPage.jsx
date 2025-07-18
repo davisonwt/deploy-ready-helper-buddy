@@ -20,7 +20,7 @@ import {
   Loader2,
   TreePine
 } from "lucide-react";
-import { loadOrchard, clearOrchardCache } from "../lib/orchardLoader";
+import { fetchOrchard } from "../api/orchards";
 
 export default function OrchardErrorPage() {
   const { orchardId } = useParams();
@@ -57,17 +57,14 @@ export default function OrchardErrorPage() {
     try {
       console.log(`🔄 Retry attempt ${retryCount + 1} for orchard ${orchardId}`);
       
-      // Clear cache before retry
-      clearOrchardCache(orchardId);
+      // Try to load orchard again using fetchOrchard
+      const orchard = await fetchOrchard(orchardId);
       
-      // Try to load orchard again
-      const orchard = await loadOrchard(orchardId);
-      
-      if (!orchard._isFallback && orchard.status !== 'unavailable') {
+      if (orchard && orchard.status === 'active') {
         console.log('✅ Retry successful, redirecting...');
         window.location.href = `/orchards/${orchardId}?retry=${retryCount + 1}&success=true`;
       } else {
-        console.warn('⚠️ Retry failed, still getting fallback data');
+        console.warn('⚠️ Retry failed, orchard not available');
         setLoading(false);
       }
     } catch (error) {
@@ -77,8 +74,8 @@ export default function OrchardErrorPage() {
   };
 
   const handleClearCacheAndRetry = () => {
-    console.log('🗑️ Clearing all orchard cache');
-    clearOrchardCache(); // Clear all cache
+    console.log('🗑️ Clearing browser cache');
+    // Clear browser cache
     localStorage.removeItem('orchardCache');
     sessionStorage.clear();
     handleRetry();
