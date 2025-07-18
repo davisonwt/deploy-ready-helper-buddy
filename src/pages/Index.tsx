@@ -665,7 +665,7 @@ const Index = () => {
             <div className="text-center">
               <h3 className="text-3xl font-bold text-green-800 mb-8">tithing</h3>
               <div className="space-y-4 mb-8">
-                <p className="text-green-700">Biblical tithing</p>
+                <p className="text-green-700">Scriptural tithing</p>
                 <p className="text-green-700">Community support</p>
                 <p className="text-green-700">Faith-based giving</p>
                 <p className="text-green-700">Sacred stewardship</p>
