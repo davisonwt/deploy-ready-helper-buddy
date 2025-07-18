@@ -533,23 +533,27 @@ const Index = () => {
                                hover:shadow-3xl
                                rotate-x-5
                                translate-y-[-20px]">
-                   <video
-                     className="w-full h-64 object-cover rounded-lg 
-                              shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                              hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                              transition-shadow duration-500"
-                     style={{ aspectRatio: '1920/350' }}
-                     autoPlay
-                     muted
-                     loop
-                     playsInline
-                   >
+                    <video
+                      className="w-full h-64 object-cover rounded-lg 
+                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                               transition-shadow duration-500"
+                      style={{ aspectRatio: '1920/350' }}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=350&fit=crop"
+                      onError={(e) => console.error('Harvesters strip video error:', e)}
+                      onLoadStart={() => console.log('Harvesters strip video loading started')}
+                      onCanPlay={() => console.log('Harvesters strip video can play')}
+                    >
                       <source 
                         src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20strip%20mp4.mp4" 
                         type="video/mp4" 
                       />
-                     Your browser does not support the video tag.
-                   </video>
+                      Your browser does not support the video tag.
+                    </video>
                    {/* 3D depth effect */}
                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
                  </div>
@@ -568,23 +572,26 @@ const Index = () => {
                                hover:shadow-3xl
                                rotate-x-2
                                translate-y-[-15px]">
-                   <video
-                     className="w-full h-screen object-cover rounded-lg
-                              shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                              hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                              transition-shadow duration-500"
-                     autoPlay
-                     muted
-                     loop
-                     playsInline
-                     poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
-                   >
-                      <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
-                        type="video/mp4" 
-                      />
-                     Your browser does not support the video tag.
-                   </video>
+                    <video
+                      className="w-full h-screen object-cover rounded-lg
+                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                               transition-shadow duration-500"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      poster="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&h=1080&fit=crop"
+                      onError={(e) => console.error('Harvesters main video error:', e)}
+                      onLoadStart={() => console.log('Harvesters main video loading started')}
+                      onCanPlay={() => console.log('Harvesters main video can play')}
+                    >
+                       <source 
+                         src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/harvesters%20main%20mp4.mp4" 
+                         type="video/mp4" 
+                       />
+                      Your browser does not support the video tag.
+                    </video>
                    {/* 3D depth effect */}
                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
                  </div>
