@@ -315,16 +315,13 @@ const Index = () => {
               
               {/* Flickering Arrow at bottom of strip overlapping next video */}
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 z-30">
-                <div className="animate-pulse">
+                <div className="flickering-arrow">
                   <svg 
-                    className="w-12 h-12 text-white drop-shadow-2xl animate-bounce" 
+                    className="w-16 h-16 text-yellow-400 drop-shadow-2xl" 
                     fill="currentColor" 
                     viewBox="0 0 24 24"
-                    style={{
-                      animation: "bounce 1s infinite, pulse 2s infinite"
-                    }}
                   >
-                    <path d="M12 4l-8 8h5v8h6v-8h5l-8-8z"/>
+                    <path d="M12 2l-8 8h5v12h6V10h5L12 2z"/>
                   </svg>
                 </div>
               </div>

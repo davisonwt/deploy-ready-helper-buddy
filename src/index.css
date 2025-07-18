@@ -268,4 +268,24 @@ All colors MUST be HSL.
     z-index: -1;
     filter: blur(15px);
   }
+
+  /* Flickering Arrow Animation */
+  .flickering-arrow {
+    animation: flicker 0.5s infinite alternate, bounce 2s infinite ease-in-out;
+  }
+
+  @keyframes flicker {
+    0% {
+      opacity: 1;
+      filter: brightness(1) drop-shadow(0 0 10px currentColor);
+    }
+    50% {
+      opacity: 0.3;
+      filter: brightness(0.7) drop-shadow(0 0 5px currentColor);
+    }
+    100% {
+      opacity: 1;
+      filter: brightness(1.2) drop-shadow(0 0 15px currentColor);
+    }
+  }
 }
