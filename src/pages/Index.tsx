@@ -392,7 +392,7 @@ const Index = () => {
                   playsInline
                 >
                   <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchard main mp4.mp4" 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/placeholder-orchard-main.mp4" 
                     type="video/mp4" 
                   />
                   Your browser does not support the video tag.
