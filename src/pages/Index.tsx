@@ -230,15 +230,23 @@ const Index = () => {
                             hover:shadow-3xl
                             rotate-x-5
                             translate-y-[-20px]">
-                <img 
-                  src={seedsStrip}
-                  alt="Seeds and sprouting plants"
+                <video
                   className="w-full h-64 object-cover rounded-lg 
                            shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
                            hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
                            transition-shadow duration-500"
                   style={{ aspectRatio: '1920/350' }}
-                />
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                >
+                  <source 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds strip 1 8sec.mp4" 
+                    type="video/mp4" 
+                  />
+                  Your browser does not support the video tag.
+                </video>
                 {/* 3D depth effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
               </div>
