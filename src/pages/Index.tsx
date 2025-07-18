@@ -623,6 +623,35 @@ const Index = () => {
                   <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
                 </div>
               </div>
+              
+              {/* Floating Scripture Strip */}
+              <div className="relative mt-16 mb-12 transform-gpu">
+                <div className="floating-strip relative z-20 transform 
+                              perspective-1000 
+                              hover:scale-105 
+                              transition-all duration-500 ease-out
+                              shadow-xl 
+                              hover:shadow-2xl
+                              translate-y-[-10px]
+                              animate-pulse">
+                  <div className="bg-green-100 rounded-lg p-8 text-center border border-green-200
+                                shadow-[0_15px_30px_-5px_rgba(34,197,94,0.3)]
+                                hover:shadow-[0_20px_40px_-5px_rgba(34,197,94,0.4)]
+                                transition-shadow duration-500">
+                    <p className="text-2xl md:text-3xl font-bold text-green-800 mb-4 leading-tight">
+                      "I planted, apollos watered, but elohiym gave the growth."
+                    </p>
+                    <p className="text-lg text-green-600 font-semibold italic">
+                      1 Corinthians 3:6
+                    </p>
+                  </div>
+                  {/* Floating effect shadow */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-green-100/20 rounded-lg blur-sm"></div>
+                </div>
+                
+                {/* Underneath floating shadow effect */}
+                <div className="absolute top-4 left-4 right-4 h-20 bg-green-300/20 rounded-lg blur-lg z-10"></div>
+              </div>
             </div>
           </div>
         </div>
