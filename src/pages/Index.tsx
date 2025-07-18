@@ -19,11 +19,12 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center bg-transparent">
                  <img 
                    src="/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png" 
                    alt="sow2grow logo" 
-                   className="w-[90px] h-[90px] object-contain"
+                   className="w-[90px] h-[90px] object-contain bg-transparent"
+                   style={{ backgroundColor: 'transparent' }}
                  />
               </div>
               <div>
