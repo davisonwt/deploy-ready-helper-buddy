@@ -49,7 +49,7 @@ const Index = () => {
             className="w-full h-full object-cover"
           >
             <source 
-              src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?v=3" 
+              src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4?t=${Date.now()}`}
               type="video/mp4" 
             />
             Your browser does not support the video tag.
