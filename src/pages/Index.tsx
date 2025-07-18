@@ -249,36 +249,6 @@ const Index = () => {
               </video>
             </div>
             
-            {/* Seeds 2 Video */}
-            <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
-              {/* Fallback placeholder - shows by default */}
-              <div className="absolute inset-0 w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl">Loading Video 2...</span>
-              </div>
-              <video
-                className="w-full h-full object-cover rounded-lg relative z-10"
-                autoPlay
-                muted
-                loop
-                playsInline
-                onLoadedData={() => {
-                  // Hide placeholder when video loads
-                  const placeholder = document.querySelector('.bg-gray-700');
-                  if (placeholder) (placeholder as HTMLElement).style.display = 'none';
-                }}
-                onError={() => {
-                  // Show error message in placeholder
-                  const placeholder = document.querySelector('.bg-gray-700 span');
-                  if (placeholder) placeholder.textContent = 'Video failed to load - Check: seeds 2 mp4.mp4';
-                }}
-              >
-                <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
-                  type="video/mp4" 
-                />
-                Your browser does not support the video tag.
-              </video>
-            </div>
           </div>
 
           {/* Orchards Section */}
