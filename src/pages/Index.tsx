@@ -515,14 +515,14 @@ const Index = () => {
                      loop
                      playsInline
                      poster="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1920&h=1080&fit=crop"
-                     onError={(e) => console.error('Bestowers main video error:', e)}
-                     onLoadStart={() => console.log('Bestowers main video loading started')}
-                     onCanPlay={() => console.log('Bestowers main video can play')}
-                   >
-                     <source 
-                       src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20main%20mp4.mp4" 
-                       type="video/mp4" 
-                     />
+                      onError={(e) => console.error('Harvesters main video error:', e)}
+                      onLoadStart={() => console.log('Harvesters main video loading started')}
+                      onCanPlay={() => console.log('Harvesters main video can play')}
+                    >
+                      <source 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos//harvesters%20main%20mp4.mp4" 
+                        type="video/mp4" 
+                      />
                      Your browser does not support the video tag.
                    </video>
                    {/* 3D depth effect */}
