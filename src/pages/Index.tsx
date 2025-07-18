@@ -314,19 +314,6 @@ const Index = () => {
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
-            {/* Flickering Arrow positioned to overlap both strip and video below */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 z-[100]" style={{ top: '-100px' }}>
-              <div className="flickering-arrow">
-                <svg 
-                  className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
-                  fill="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
-                </svg>
-              </div>
-            </div>
-            
             {/* Seeds 2 Video - Emerging from underneath */}
             <div className="relative overflow-hidden mt-[-60px] mb-12 z-10">
               <div className="video-emerging transform translate-y-12
@@ -356,6 +343,19 @@ const Index = () => {
                   />
                   Your browser does not support the video tag.
                 </video>
+              </div>
+            </div>
+            
+            {/* Flickering Arrow overlaying BOTH the second strip AND second video */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 z-[999]" style={{ top: '50%' }}>
+              <div className="flickering-arrow">
+                <svg 
+                  className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
+                </svg>
               </div>
             </div>
           </div>
