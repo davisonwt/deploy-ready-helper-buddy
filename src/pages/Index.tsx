@@ -18,11 +18,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <img 
                   src="/lovable-uploads/87465dc5-ad33-4bb5-8eac-1f34ac94a2bb.png" 
                   alt="sow2grow logo" 
-                  className="w-[216px] h-[216px] object-contain"
+                  className="w-[90px] h-[90px] object-contain"
                 />
               </div>
               <div>
