@@ -228,9 +228,6 @@ const Index = () => {
                 style={{ aspectRatio: '1920/350' }}
               />
             </div>
-            <p className="text-lg text-green-700 max-w-3xl mx-auto">
-              ...into a home for anyone of our harvesters. it is born from purpose, ready to be sown.
-            </p>
             
             {/* Seeds 11a Video */}
             <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
