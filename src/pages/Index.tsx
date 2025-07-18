@@ -470,7 +470,7 @@ const Index = () => {
                       poster="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1920&h=350&fit=crop"
                     >
                       <source 
-                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20strip%20mp4.mp4" 
+                        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/bestowers%20main%20mp4.mp4" 
                         type="video/mp4" 
                       />
                       Your browser does not support the video tag.
