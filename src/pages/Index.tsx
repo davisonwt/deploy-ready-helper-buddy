@@ -43,8 +43,7 @@ const Index = () => {
           loop 
           muted 
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ aspectRatio: '16/9' }}
+          className="absolute inset-0 w-full h-full object-contain"
         >
           <source 
             src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/hero%20background%20mp4.mp4" 
