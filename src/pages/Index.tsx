@@ -243,7 +243,7 @@ const Index = () => {
                   playsInline
                 >
                   <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds strip 1 8sec.mp4" 
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds%20strip%202aa%20mp4.mp4" 
                     type="video/mp4" 
                   />
                   Your browser does not support the video tag.
