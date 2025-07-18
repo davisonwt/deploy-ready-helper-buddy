@@ -252,6 +252,15 @@ const Index = () => {
             
             {/* Seeds 2 Video */}
             <div className="relative h-screen flex items-center justify-center overflow-hidden mt-12">
+              {/* Text Overlay */}
+              <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="text-center px-8">
+                  <p className="text-4xl md:text-6xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                    ...into a home for anyone of our harvesters.{" "}
+                    <span className="text-green-300">it is born from purpose, ready to be sown.</span>
+                  </p>
+                </div>
+              </div>
               <video
                 className="w-full h-full object-cover rounded-lg"
                 autoPlay
