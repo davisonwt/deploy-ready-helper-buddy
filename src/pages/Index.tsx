@@ -258,7 +258,7 @@ const Index = () => {
                 playsInline
               >
                 <source 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4v" 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed 1 mp4" 
                   type="video/mp4" 
                 />
                 Your browser does not support the video tag.
