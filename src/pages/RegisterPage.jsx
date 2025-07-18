@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { Sprout, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
@@ -299,13 +299,14 @@ export default function RegisterPage() {
                   Password
                 </label>
                 <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center pr-12"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Create a secure password"
                     required
                   />
@@ -324,13 +325,14 @@ export default function RegisterPage() {
                   Confirm Password
                 </label>
                 <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center pr-12"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Confirm your password"
                     required
                   />
