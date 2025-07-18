@@ -5,8 +5,25 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
+
+// Pages that exist
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import BrowseOrchardsPage from "./pages/BrowseOrchardsPage";
+import AnimatedOrchardPage from "./pages/AnimatedOrchardPage";
+import CreateOrchardPage from "./pages/CreateOrchardPage";
+import OrchardCreatedPage from "./pages/OrchardCreatedPage";
+import OrchardPage from "./pages/OrchardPage";
+import OrchardErrorPage from "./pages/OrchardErrorPage";
+import TithingPage from "./pages/TithingPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import ProfilePage from "./pages/ProfilePage";
+
+// Components
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -19,8 +36,174 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public Routes */}
               <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/start-your-journey" element={<RegisterPage />} />
+              
+              {/* Dashboard Routes - redirect to browse orchards for now */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/regrow-access" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Orchard Routes */}
+              <Route path="/browse-orchards" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/orchards/:orchardId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrchardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Legacy orchard route redirect */}
+              <Route path="/orchard/:orchardId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrchardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/animated-orchard/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AnimatedOrchardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/orchard-error/:orchardId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrchardErrorPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Orchard Management Routes */}
+              <Route path="/create-orchard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CreateOrchardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/plant-new-seed" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CreateOrchardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/edit-orchard/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CreateOrchardPage isEdit={true} />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/orchard-created" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrchardCreatedPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* My Orchards - redirect to browse for now */}
+              <Route path="/my-orchards" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Financial Routes */}
+              <Route path="/tithing" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TithingPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/tithing-2" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TithingPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Placeholder routes - redirect to browse orchards */}
+              <Route path="/free-will-gifting" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/basket" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/app-flow" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BrowseOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* User Routes */}
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/analytics" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminAnalyticsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
