@@ -43,6 +43,8 @@ const Index = () => {
           loop 
           muted 
           playsInline
+          width="1280"
+          height="720"
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source 
