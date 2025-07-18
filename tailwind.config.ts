@@ -82,7 +82,8 @@ export default {
 				'olive-green': 'hsl(var(--olive-green))',
 				'golden-brown': 'hsl(var(--golden-brown))',
 				'royal-purple': 'hsl(var(--royal-purple))',
-				'cyan-accent': 'hsl(var(--cyan-accent))'
+				'cyan-accent': 'hsl(var(--cyan-accent))',
+				'light-beige': 'hsl(var(--light-beige))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

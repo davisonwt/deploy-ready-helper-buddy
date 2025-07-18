@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
                 <div className="flex justify-center">
                   <Badge className="bg-gradient-to-r from-green-600 to-blue-600 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
-                    🌱 sow2grow • community farm stall
+                    sow2grow • community farm stall
                   </Badge>
                 </div>
               </CardHeader>
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.firstName}
                       onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                         placeholder="Enter first name"
                       required
                     />
@@ -208,7 +208,7 @@ export default function RegisterPage() {
                       type="text"
                       value={formData.lastName}
                       onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                         placeholder="Enter last name"
                       required
                     />
@@ -228,7 +228,7 @@ export default function RegisterPage() {
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="your@email.com"
                     required
                   />
@@ -243,7 +243,7 @@ export default function RegisterPage() {
                   <div className="relative group">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-amber-500 transition-colors z-10" />
                     <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
-                      <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                      <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                         <SelectValue placeholder="Select your country" />
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
@@ -269,7 +269,7 @@ export default function RegisterPage() {
                         type="tel"
                         value={formData.phone}
                         onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                         placeholder="+1234567890"
                       />
                   </div>
@@ -284,25 +284,25 @@ export default function RegisterPage() {
                 <div className="relative group">
                   <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors z-10" />
                   <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                    <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                    <SelectTrigger className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">🇺🇸 USD - US Dollar</SelectItem>
-                      <SelectItem value="EUR">🇪🇺 EUR - Euro</SelectItem>
-                      <SelectItem value="GBP">🇬🇧 GBP - British Pound</SelectItem>
-                      <SelectItem value="CAD">🇨🇦 CAD - Canadian Dollar</SelectItem>
-                      <SelectItem value="AUD">🇦🇺 AUD - Australian Dollar</SelectItem>
-                      <SelectItem value="JPY">🇯🇵 JPY - Japanese Yen</SelectItem>
-                      <SelectItem value="CHF">🇨🇭 CHF - Swiss Franc</SelectItem>
-                      <SelectItem value="CNY">🇨🇳 CNY - Chinese Yuan</SelectItem>
-                      <SelectItem value="INR">🇮🇳 INR - Indian Rupee</SelectItem>
-                      <SelectItem value="BRL">🇧🇷 BRL - Brazilian Real</SelectItem>
-                      <SelectItem value="ZAR">🇿🇦 ZAR - South African Rand</SelectItem>
-                      <SelectItem value="MXN">🇲🇽 MXN - Mexican Peso</SelectItem>
-                      <SelectItem value="KRW">🇰🇷 KRW - South Korean Won</SelectItem>
-                      <SelectItem value="SGD">🇸🇬 SGD - Singapore Dollar</SelectItem>
-                      <SelectItem value="NZD">🇳🇿 NZD - New Zealand Dollar</SelectItem>
+                      <SelectItem value="USD">USD - US Dollar</SelectItem>
+                      <SelectItem value="EUR">EUR - Euro</SelectItem>
+                      <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                      <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                      <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                      <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
+                      <SelectItem value="CHF">CHF - Swiss Franc</SelectItem>
+                      <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
+                      <SelectItem value="INR">INR - Indian Rupee</SelectItem>
+                      <SelectItem value="BRL">BRL - Brazilian Real</SelectItem>
+                      <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
+                      <SelectItem value="MXN">MXN - Mexican Peso</SelectItem>
+                      <SelectItem value="KRW">KRW - South Korean Won</SelectItem>
+                      <SelectItem value="SGD">SGD - Singapore Dollar</SelectItem>
+                      <SelectItem value="NZD">NZD - New Zealand Dollar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -320,7 +320,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="Create a secure password"
                     required
                   />
@@ -346,7 +346,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-golden-brown hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                       placeholder="Confirm your password"
                     required
                   />
