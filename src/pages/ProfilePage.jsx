@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react"
 import { useAuth } from "../hooks/useAuth"
-import { useApi } from "../hooks/useApi"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -40,7 +39,6 @@ import {
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
-  const api = useApi()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadingPicture, setUploadingPicture] = useState(false)
@@ -103,23 +101,12 @@ export default function ProfilePage() {
       reader.onload = async (e) => {
         const base64Data = e.target.result
         
-        // Validate with backend
-        try {
-          const response = await api.post('/users/validate-profile-picture', {
-            profile_picture: base64Data
-          })
-          
-          if (response.data.success) {
-            setFormData(prev => ({
-              ...prev,
-              profile_picture: base64Data
-            }))
-            setPictureError("")
-          }
-        } catch (error) {
-          setPictureError(error.response?.data?.detail || "Failed to validate image")
-        }
-        
+        // Set the image directly (simplified without backend validation)
+        setFormData(prev => ({
+          ...prev,
+          profile_picture: base64Data
+        }))
+        setPictureError("")
         setUploadingPicture(false)
       }
       
@@ -136,37 +123,34 @@ export default function ProfilePage() {
   }
   
   const validateSocialLinks = async () => {
-    const socialLinks = {
-      tiktok: formData.tiktok_url,
-      instagram: formData.instagram_url,
-      facebook: formData.facebook_url,
-      twitter: formData.twitter_url,
-      youtube: formData.youtube_url
+    // Simplified validation without backend API
+    const errors = {}
+    
+    // Basic URL validation for social links
+    const urlPattern = /^https?:\/\/.+/
+    
+    if (formData.tiktok_url && !urlPattern.test(formData.tiktok_url)) {
+      errors.tiktok = "Please enter a valid TikTok URL"
     }
     
-    try {
-      const response = await api.post('/users/validate-social-links', {
-        social_links: socialLinks
-      })
-      
-      if (response.data.success) {
-        const validation = response.data.data.validation_results
-        const errors = {}
-        
-        Object.keys(validation).forEach(platform => {
-          if (!validation[platform].valid) {
-            errors[platform] = validation[platform].error
-          }
-        })
-        
-        setSocialLinksError(errors)
-        return Object.keys(errors).length === 0
-      }
-      return false
-    } catch (error) {
-      console.error("Social links validation error:", error)
-      return false
+    if (formData.instagram_url && !urlPattern.test(formData.instagram_url)) {
+      errors.instagram = "Please enter a valid Instagram URL"
     }
+    
+    if (formData.facebook_url && !urlPattern.test(formData.facebook_url)) {
+      errors.facebook = "Please enter a valid Facebook URL"
+    }
+    
+    if (formData.twitter_url && !urlPattern.test(formData.twitter_url)) {
+      errors.twitter = "Please enter a valid Twitter URL"
+    }
+    
+    if (formData.youtube_url && !urlPattern.test(formData.youtube_url)) {
+      errors.youtube = "Please enter a valid YouTube URL"
+    }
+    
+    setSocialLinksError(errors)
+    return Object.keys(errors).length === 0
   }
   
   const handleSave = async () => {
