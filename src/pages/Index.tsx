@@ -22,7 +22,7 @@ const Index = () => {
                 <img 
                   src="/lovable-uploads/87465dc5-ad33-4bb5-8eac-1f34ac94a2bb.png" 
                   alt="sow2grow logo" 
-                  className="w-[30px] h-[30px] object-contain"
+                  className="w-[72px] h-[72px] object-contain"
                 />
               </div>
               <div>
