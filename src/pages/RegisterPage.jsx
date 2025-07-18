@@ -107,9 +107,11 @@ export default function RegisterPage() {
                   Join the Community
                 </CardTitle>
                 <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
-                <Badge className="bg-gradient-to-r from-green-100 to-blue-100 text-green-800 border-green-200 px-4 py-2 text-sm font-semibold shadow-md">
-                  🌱 sow2grow • community farm stall
-                </Badge>
+                <div className="flex justify-center">
+                  <Badge className="bg-gradient-to-r from-green-600 to-blue-600 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
+                    🌱 sow2grow • community farm stall
+                  </Badge>
+                </div>
               </CardHeader>
             </div>
           </div>
