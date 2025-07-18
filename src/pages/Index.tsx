@@ -51,6 +51,8 @@ const Index = () => {
             loop 
             muted 
             playsInline
+            webkit-playsinline="true"
+            preload="metadata"
             controls={false}
             className="w-full h-full object-cover"
             src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
@@ -222,9 +224,11 @@ const Index = () => {
                 loop 
                 muted 
                 playsInline
+                webkit-playsinline="true"
+                preload="metadata"
                 controls={false}
                 className="w-full h-full object-contain rounded-lg"
-                src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/videos/seed%20strip.mp4"
+                src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed%20strip%20mp4.mp4"
                 onError={(e) => {
                   console.log('Seeds video error:', e);
                   e.currentTarget.style.display = 'none';
