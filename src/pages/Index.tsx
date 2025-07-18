@@ -391,8 +391,9 @@ const Index = () => {
                   loop
                   playsInline
                 >
+                  {/* Placeholder for orchard main mp4 - awaiting upload */}
                   <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/placeholder-orchard-main.mp4" 
+                    src="" 
                     type="video/mp4" 
                   />
                   Your browser does not support the video tag.
