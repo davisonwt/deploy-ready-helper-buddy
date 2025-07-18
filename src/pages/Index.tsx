@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -9,15 +9,9 @@ import {
   Gift,
    TreePine
 } from "lucide-react";
-import { LogoProcessor } from "../components/LogoProcessor";
+
 
 const Index = () => {
-  const [logoUrl, setLogoUrl] = useState('/lovable-uploads/87465dc5-ad33-4bb5-8eac-1f34ac94a2bb.png');
-
-  const handleProcessedLogo = (newLogoUrl: string) => {
-    setLogoUrl(newLogoUrl);
-  };
-
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -27,7 +21,7 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center justify-center">
                  <img 
-                   src={logoUrl} 
+                   src="/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png" 
                    alt="sow2grow logo" 
                    className="w-[90px] h-[90px] object-contain"
                  />
@@ -287,11 +281,6 @@ const Index = () => {
                  let it rain over the community
                </Button>
              </div>
-           </div>
-           
-           {/* Logo Processor - Temporary */}
-           <div className="mt-16 max-w-md mx-auto">
-             <LogoProcessor onProcessedLogo={handleProcessedLogo} />
            </div>
          </div>
        </section>
