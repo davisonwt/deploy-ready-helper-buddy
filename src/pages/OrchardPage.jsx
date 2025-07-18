@@ -22,16 +22,19 @@ import {
   Bookmark
 } from "lucide-react";
 import BestowalUI from '../components/BestowalUI';
-import { fetchOrchard } from '../api/orchards';
+import { fetchOrchard, createBestowal, incrementOrchardViews } from '../api/orchards';
+import { useAuth } from '../hooks/useAuth';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [orchard, setOrchard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [bestowLoading, setBestowLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -42,6 +45,9 @@ const OrchardPage = () => {
       try {
         const data = await fetchOrchard(orchardId);
         setOrchard(data);
+        
+        // Increment view count
+        incrementOrchardViews(orchardId);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -52,9 +58,40 @@ const OrchardPage = () => {
     loadOrchard();
   }, [orchardId]);
 
-  const handleBestow = async (amount, currency) => {
-    // Your bestowal logic here
-    console.log(`Bestowing ${amount} ${currency} upon orchard ${orchard.title}`);
+  const handleBestow = async (amount, currency, selectedPockets = []) => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/login');
+      return;
+    }
+
+    setBestowLoading(true);
+    try {
+      const bestowalData = {
+        orchard_id: orchardId,
+        bestower_id: user.id,
+        amount: amount,
+        currency: currency || 'USD',
+        pockets_count: selectedPockets.length,
+        pocket_numbers: selectedPockets,
+        payment_status: 'pending'
+      };
+
+      await createBestowal(bestowalData);
+      
+      // Show success message (you might want to use a toast here)
+      console.log(`✅ Bestowal of ${amount} ${currency} created successfully!`);
+      
+      // Optionally refresh the orchard data to show updated stats
+      const updatedOrchard = await fetchOrchard(orchardId);
+      setOrchard(updatedOrchard);
+      
+    } catch (error) {
+      console.error('Failed to create bestowal:', error);
+      // Handle error (show toast, etc.)
+    } finally {
+      setBestowLoading(false);
+    }
   };
 
   const handleShare = () => {
