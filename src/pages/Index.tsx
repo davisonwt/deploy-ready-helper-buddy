@@ -9,6 +9,7 @@ import {
   Gift,
    TreePine
 } from "lucide-react";
+import seedsStrip from '@/assets/seeds-strip.jpg';
 
 
 const Index = () => {
@@ -219,30 +220,12 @@ const Index = () => {
           <div className="text-center">
             <h2 className="text-4xl font-bold text-green-800 mb-8">Seeds</h2>
             <div className="bg-black rounded-lg h-64 flex items-center justify-center mb-6 overflow-hidden">
-              <video 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                webkit-playsinline
-                preload="auto"
-                controls={false}
+              <img 
+                src={seedsStrip}
+                alt="Seeds and sprouting plants"
                 className="w-full h-full object-cover rounded-lg"
-                onLoadStart={() => console.log('Video load started')}
-                onCanPlay={() => console.log('Video can play')}
-                onError={(e) => {
-                  console.log('Seeds video error details:', {
-                    error: e.currentTarget.error,
-                    networkState: e.currentTarget.networkState,
-                    readyState: e.currentTarget.readyState,
-                    src: e.currentTarget.src
-                  });
-                }}
-              >
-                <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed strip mp4.mp4" type="video/mp4" />
-                <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed%20strip%20mp4.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+                style={{ aspectRatio: '1920/350' }}
+              />
             </div>
             <p className="text-lg text-green-700 max-w-3xl mx-auto">
               ...into a home for anyone of our harvesters. it is born from purpose, ready to be sown.
