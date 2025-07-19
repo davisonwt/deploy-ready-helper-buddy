@@ -69,20 +69,23 @@ export default function RegisterPage() {
       if (result.success) {
         // Send welcome email to user
         try {
-          await supabase.functions.invoke('send-welcome-email', {
+          console.log('Attempting to send welcome email...')
+          const emailResult = await supabase.functions.invoke('send-welcome-email', {
             body: {
               email: formData.email,
               firstName: formData.firstName,
               lastName: formData.lastName,
             }
           })
+          console.log('Welcome email result:', emailResult)
         } catch (emailError) {
           console.error('Failed to send welcome email:', emailError)
         }
 
         // Send admin notification
         try {
-          await supabase.functions.invoke('send-admin-notification', {
+          console.log('Attempting to send admin notification...')
+          const notificationResult = await supabase.functions.invoke('send-admin-notification', {
             body: {
               email: formData.email,
               firstName: formData.firstName,
@@ -92,6 +95,7 @@ export default function RegisterPage() {
               currency: formData.currency
             }
           })
+          console.log('Admin notification result:', notificationResult)
         } catch (notificationError) {
           console.error('Failed to send admin notification:', notificationError)
         }
