@@ -656,6 +656,16 @@ const Index = () => {
                          </p>
                        </div>
                      </div>
+                     
+                     {/* Start Your Journey Button - Bottom Right */}
+                     <div className="absolute bottom-8 right-8 z-40">
+                       <Link to="/register">
+                         <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                           <Heart className="w-5 h-5 mr-2" />
+                           start your journey
+                         </Button>
+                       </Link>
+                     </div>
                      <video
                        className="w-full h-screen object-cover rounded-lg
                                 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
