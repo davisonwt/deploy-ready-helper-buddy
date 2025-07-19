@@ -26,11 +26,11 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, firstName, lastName, location, phone, currency }: AdminNotificationRequest = await req.json();
 
-    // Admin email - you should set this in your environment variables
-    const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@sow2grow.com";
+    // Send to gosats@sow2grow.online for all call-to-action notifications
+    const adminEmail = "gosats@sow2grow.online";
 
     const emailResponse = await resend.emails.send({
-      from: "sow2grow System <notifications@resend.dev>",
+      from: "Sow2Grow <sow@sow2grow.online>",
       to: [adminEmail],
       subject: "🚨 New Farm Stall Owner Registered!",
       html: `

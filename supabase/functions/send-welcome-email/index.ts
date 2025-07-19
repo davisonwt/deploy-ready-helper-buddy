@@ -23,10 +23,11 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, firstName, lastName }: WelcomeEmailRequest = await req.json();
 
-    const emailResponse = await resend.emails.send({
-      from: "sow2grow <onboarding@resend.dev>",
+    // Send welcome email to user
+    const userEmailResponse = await resend.emails.send({
+      from: "Sow2Grow <sow@sow2grow.online>",
       to: [email],
-      subject: "Welcome to sow2grow - Your Farm Stall Awaits! 🌱",
+      subject: "Welcome to Sow2Grow - Verify Your Email",
       html: `
         <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #22c55e, #3b82f6); padding: 40px 20px;">
           <div style="background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
@@ -36,21 +37,24 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #22c55e, #3b82f6); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
                 <span style="color: white; font-size: 32px;">🌱</span>
               </div>
-              <h1 style="color: #22c55e; font-size: 28px; margin: 0; font-weight: bold;">Welcome to sow2grow</h1>
-              <p style="color: #6b7280; font-size: 16px; margin: 10px 0 0;">The 364yhvh Community Farm Mall</p>
+              <h1 style="color: #22c55e; font-size: 28px; margin: 0; font-weight: bold;">Welcome to Sow2Grow</h1>
+              <p style="color: #6b7280; font-size: 16px; margin: 10px 0 0;">A branch of 364yhvh digital farm</p>
             </div>
 
             <!-- Welcome Message -->
             <div style="text-align: center; margin-bottom: 40px;">
               <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Welcome ${firstName} ${lastName}! 🎉</h2>
               <p style="color: #4b5563; font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
-                <strong>Congratulations!</strong> You are now the guardian of your own farm stall within our community farm mall.
+                Welcome to Sow2Grow, a branch of 364yhvh digital farm.
+              </p>
+              <p style="color: #4b5563; font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
+                Please verify your email address and become the owner of your own farmstall within our mall.
               </p>
               
               <div style="background: linear-gradient(135deg, #dcfce7, #dbeafe); border-radius: 15px; padding: 25px; margin: 30px 0;">
                 <h3 style="color: #16a34a; margin: 0 0 15px; font-size: 20px;">🌾 Your Journey Begins Now</h3>
                 <p style="color: #059669; margin: 0; font-size: 16px; line-height: 1.5;">
-                  As a farm stall guardian, you're part of a growing community that believes in abundance, sharing, and mutual support. Your stall is ready to flourish!
+                  As a farmstall owner, you're part of a growing community that believes in abundance, sharing, and mutual support. Your stall is ready to flourish!
                 </p>
               </div>
             </div>
@@ -76,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
                   </div>
                   <div>
                     <h4 style="color: #1f2937; margin: 0 0 5px; font-size: 16px;">Complete Your Profile</h4>
-                    <p style="color: #6b7280; margin: 0; font-size: 14px;">Add your details and preferences to personalize your farm stall experience.</p>
+                    <p style="color: #6b7280; margin: 0; font-size: 14px;">Add your details and preferences to personalize your farmstall experience.</p>
                   </div>
                 </div>
                 
@@ -86,25 +90,17 @@ const handler = async (req: Request): Promise<Response> => {
                   </div>
                   <div>
                     <h4 style="color: #1f2937; margin: 0 0 5px; font-size: 16px;">Explore the Community</h4>
-                    <p style="color: #6b7280; margin: 0; font-size: 14px;">Discover other farm stalls and start your journey of giving and receiving.</p>
+                    <p style="color: #6b7280; margin: 0; font-size: 14px;">Discover other farmstalls and start your journey of giving and receiving.</p>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Scripture Quote -->
-            <div style="background: linear-gradient(135deg, #fef3c7, #fed7d7); border-radius: 15px; padding: 25px; text-align: center; margin-bottom: 30px;">
-              <p style="color: #92400e; font-style: italic; font-size: 16px; margin: 0 0 10px; line-height: 1.5;">
-                "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
-              </p>
-              <p style="color: #b45309; font-weight: bold; font-size: 14px; margin: 0;">— Luke 6:38</p>
             </div>
 
             <!-- Call to Action -->
             <div style="text-align: center;">
               <a href="${Deno.env.get("SITE_URL") || "https://your-app-url.com"}" 
                  style="display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-bottom: 20px;">
-                🌱 Visit Your Farm Stall
+                🌱 Visit Your Farmstall
               </a>
             </div>
 
@@ -120,9 +116,62 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Welcome email sent successfully:", emailResponse);
+    // Send notification to admin
+    const adminEmailResponse = await resend.emails.send({
+      from: "Sow2Grow <sow@sow2grow.online>",
+      to: ["gosats@sow2grow.org"],
+      subject: "New Sower and Bestower Registered",
+      html: `
+        <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
+          <div style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 30px;">
+              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #22c55e, #3b82f6); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 24px;">🌱</span>
+              </div>
+              <h1 style="color: #1f2937; font-size: 24px; margin: 0;">New Sower and Bestower!</h1>
+              <p style="color: #6b7280; margin: 10px 0 0;">You have a new sower and bestower</p>
+            </div>
 
-    return new Response(JSON.stringify(emailResponse), {
+            <!-- User Details -->
+            <div style="background: #f8fafc; border-radius: 10px; padding: 25px; margin-bottom: 25px;">
+              <h3 style="color: #1f2937; margin: 0 0 20px; font-size: 18px;">👤 New Member Details:</h3>
+              
+              <div style="display: grid; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280; font-weight: 500;">Name:</span>
+                  <span style="color: #1f2937; font-weight: 600;">${firstName} ${lastName}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                  <span style="color: #6b7280; font-weight: 500;">Email:</span>
+                  <span style="color: #1f2937; font-weight: 600;">${email}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                  <span style="color: #6b7280; font-weight: 500;">Registration Time:</span>
+                  <span style="color: #1f2937; font-weight: 600;">${new Date().toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                Sow2Grow Admin Notification System<br>
+                <em>Growing our community one stall at a time 🌾</em>
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+
+    console.log("User email sent successfully:", userEmailResponse);
+    console.log("Admin email sent successfully:", adminEmailResponse);
+
+    return new Response(JSON.stringify({ userEmail: userEmailResponse, adminEmail: adminEmailResponse }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
