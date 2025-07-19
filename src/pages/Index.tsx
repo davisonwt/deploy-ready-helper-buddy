@@ -313,9 +313,9 @@ const Index = () => {
               <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
-            {/* Seeds 2 Video - Emerging from underneath */}
-            <div className="relative overflow-hidden mt-[-60px] mb-12 z-10">
-              <div className="video-emerging transform translate-y-12
+            {/* Seeds 2 Video - Emerging from underneath the strip above */}
+            <div className="relative overflow-hidden mt-[-40px] mb-12 z-10">
+              <div className="video-emerging transform translate-y-8
                             transition-all duration-700 ease-out delay-200
                             hover:translate-y-0 hover:scale-105
                             shadow-xl hover:shadow-2xl">
