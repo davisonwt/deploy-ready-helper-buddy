@@ -191,19 +191,19 @@ const Index = () => {
                 <h3 className="text-2xl font-bold mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
                 <div className="space-y-4 text-left">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
                     <span style={{ color: '#EF9967' }}>browse the farm mall</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
                     <span style={{ color: '#EF9967' }}>visit different farm stalls</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
                     <span style={{ color: '#EF9967' }}>bestow support to projects</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
                     <span style={{ color: '#EF9967' }}>build community connections</span>
                   </div>
                 </div>
