@@ -416,7 +416,7 @@ const Index = () => {
             </div>
             
             {/* MP4 Holder Video - With 3D Effects - Now emerges from strip above */}
-            <div className="relative mb-6 transform-gpu mt-[-60px]">
+            <div className="relative mb-2 transform-gpu mt-[-60px]">
               <div className="video-container relative z-20 transform 
                             perspective-1000 
                             hover:scale-105 
@@ -451,7 +451,7 @@ const Index = () => {
             </div>
             
             {/* Fourth Seeds Strip with 3D Lifted Effect - Community Text Overlay */}
-            <div className="relative mb-6 transform-gpu">
+            <div className="relative mb-6 transform-gpu mt-[-80px]">
               <div className="seeds-strip-container relative z-20 transform 
                             perspective-1000 
                             hover:scale-105 
