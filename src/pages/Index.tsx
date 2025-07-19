@@ -370,7 +370,7 @@ const Index = () => {
 
           {/* Orchards Section */}
           <div className="text-center relative">
-            <h2 className="text-4xl font-bold text-green-800 mb-8">Orchards</h2>
+            <h2 className="text-4xl font-bold mb-8" style={{ color: '#A5E3E0' }}>Orchards</h2>
             
             {/* Third Seeds Strip with 3D Lifted Effect */}
             <div className="relative mb-6 transform-gpu">
