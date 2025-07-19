@@ -164,7 +164,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-16 items-start">
             <div className="space-y-8">
               <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-100">
-                <h3 className="text-2xl font-bold text-green-800 mb-6">sower (farm stall owners)</h3>
+                <h3 className="text-2xl font-bold mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
                 <div className="space-y-4 text-left">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
