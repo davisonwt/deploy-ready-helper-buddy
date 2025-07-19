@@ -328,6 +328,20 @@ const Index = () => {
                     </p>
                   </div>
                 </div>
+                
+                {/* Flickering Arrow */}
+                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-30">
+                  <div className="flickering-arrow">
+                    <svg 
+                      className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
+                    </svg>
+                  </div>
+                </div>
+                
                 <video
                   className="w-full h-screen object-cover rounded-lg
                            shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
