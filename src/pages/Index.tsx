@@ -589,7 +589,7 @@ const Index = () => {
              
               {/* Harvesters Section */}
               <div className="text-center relative mt-12">
-                <h2 className="text-4xl font-bold text-green-800 mb-8">Harvesters</h2>
+                <h2 className="text-4xl font-bold mb-8" style={{ color: '#cfac94' }}>Harvesters</h2>
                
                {/* Harvesters Strip with 3D Effects */}
                <div className="relative mb-6 transform-gpu">
