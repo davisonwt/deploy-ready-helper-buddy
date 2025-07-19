@@ -119,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send notification to admin
     const adminEmailResponse = await resend.emails.send({
       from: "Sow2Grow <sow@sow2grow.org>",
-      to: ["gosats@sow2grow.org"],
+      to: ["new@sow2grow.org"],
       subject: "New Sower and Bestower Registered",
       html: `
         <div style="font-family: 'Arial', sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">

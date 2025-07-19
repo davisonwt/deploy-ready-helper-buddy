@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { email, firstName, lastName, location, phone, currency }: AdminNotificationRequest = await req.json();
 
     // Send to gosats@sow2grow.online for all call-to-action notifications
-    const adminEmail = "gosats@sow2grow.online";
+    const adminEmail = "new@sow2grow.org";
 
     const emailResponse = await resend.emails.send({
       from: "Sow2Grow <sow@sow2grow.org>",
