@@ -330,7 +330,7 @@ const Index = () => {
                 </div>
                 
                 {/* Flickering Arrow */}
-                <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-30">
+                <div className="absolute top-10 left-1/2 transform -translate-x-1/2 z-30">
                   <div className="flickering-arrow">
                     <svg 
                       className="w-20 h-20 text-yellow-400 drop-shadow-2xl filter drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]" 
