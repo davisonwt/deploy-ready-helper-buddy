@@ -91,12 +91,12 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/register">
+            <a href="mailto:new@sow2grow.org">
               <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
                 <Heart className="w-5 h-5 mr-2" />
                 start your journey
               </Button>
-            </Link>
+            </a>
             <Link to="/browse-orchards">
               <Button size="lg" variant="outline" className="border-white/30 text-blue-500 hover:bg-white/10 hover:text-blue-500 px-8 py-4 text-lg rounded-full backdrop-blur-sm">
                 <TreePine className="w-5 h-5 mr-2" />
@@ -731,11 +731,11 @@ const Index = () => {
                 <p className="text-green-700">faith-based giving</p>
                 <p className="text-green-700">sacred stewardship</p>
               </div>
-              <Link to="/tithing">
+              <a href="mailto:rain@sow2grow.org">
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full">
-                  let it rain over the 'gosat'
+                  let it rain
                 </Button>
-              </Link>
+              </a>
             </div>
 
             {/* Free-will Gifting */}
@@ -747,9 +747,46 @@ const Index = () => {
                 <p className="text-green-700">community blessing</p>
                 <p className="text-green-700">generous spirit</p>
               </div>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
-                let it rain over the community
-              </Button>
+              <a href="mailto:free-will@sow2grow.org">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-full">
+                  give free-will gift
+                </Button>
+              </a>
+            </div>
+          </div>
+          
+          {/* Additional Actions */}
+          <div className="grid md:grid-cols-2 gap-16 mt-16">
+            {/* Tithing */}
+            <div className="text-center">
+              <h3 className="text-3xl font-bold text-green-800 mb-8">tithing support</h3>
+              <div className="space-y-4 mb-8">
+                <p className="text-green-700">scriptural support</p>
+                <p className="text-green-700">community tithing</p>
+                <p className="text-green-700">faithful stewardship</p>
+                <p className="text-green-700">blessed giving</p>
+              </div>
+              <a href="mailto:tithing@sow2grow.org">
+                <Button className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-full">
+                  give tithing
+                </Button>
+              </a>
+            </div>
+
+            {/* New Orchard */}
+            <div className="text-center">
+              <h3 className="text-3xl font-bold text-green-800 mb-8">new orchard</h3>
+              <div className="space-y-4 mb-8">
+                <p className="text-green-700">plant new seeds</p>
+                <p className="text-green-700">grow community</p>
+                <p className="text-green-700">cultivate purpose</p>
+                <p className="text-green-700">harvest abundance</p>
+              </div>
+              <a href="mailto:newseed@sow2grow.org">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-full">
+                  sow seed into new orchard
+                </Button>
+              </a>
             </div>
           </div>
         </div>
