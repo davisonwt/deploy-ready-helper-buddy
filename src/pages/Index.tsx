@@ -491,7 +491,7 @@ const Index = () => {
              
              {/* Bestowers Section */}
              <div className="text-center relative mt-12">
-               <h2 className="text-4xl font-bold text-green-800 mb-8">Bestowers</h2>
+               <h2 className="text-4xl font-bold mb-8" style={{ color: '#F6C1B2' }}>Bestowers</h2>
                
                {/* Bestowers Strip with 3D Effects - FIXED URL */}
                <div className="relative mb-6 transform-gpu">
