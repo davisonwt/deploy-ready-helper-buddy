@@ -91,12 +91,12 @@ const Index = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/register">
+            <a href="mailto:new@sow2grow.org">
               <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
                 <Heart className="w-5 h-5 mr-2" />
                 start your journey
               </Button>
-            </Link>
+            </a>
             <Link to="/browse-orchards">
               <Button size="lg" variant="outline" className="border-white/30 text-blue-500 hover:bg-white/10 hover:text-blue-500 px-8 py-4 text-lg rounded-full backdrop-blur-sm">
                 <TreePine className="w-5 h-5 mr-2" />
