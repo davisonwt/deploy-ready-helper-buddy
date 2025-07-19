@@ -98,7 +98,7 @@ export default function RegisterPage() {
 
         toast({
           title: "Welcome to sow2grow! 🌱",
-          description: "Please check your email to verify your account before continuing.",
+          description: "Please check your email inbox",
         })
         
         navigate("/")
