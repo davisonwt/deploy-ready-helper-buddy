@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
     const adminEmail = "gosats@sow2grow.online";
 
     const emailResponse = await resend.emails.send({
-      from: "Sow2Grow <sow@sow2grow.online>",
+      from: "Sow2Grow <onboarding@resend.dev>", // Temporary - change back to sow@sow2grow.online when domain is verified
       to: [adminEmail],
       subject: "🚨 New Farm Stall Owner Registered!",
       html: `

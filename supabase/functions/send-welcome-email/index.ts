@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send welcome email to user
     const userEmailResponse = await resend.emails.send({
-      from: "Sow2Grow <sow@sow2grow.online>",
+      from: "Sow2Grow <onboarding@resend.dev>", // Temporary - change back to sow@sow2grow.online when domain is verified
       to: [email],
       subject: "Welcome to Sow2Grow - Verify Your Email",
       html: `
@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send notification to admin
     const adminEmailResponse = await resend.emails.send({
-      from: "Sow2Grow <sow@sow2grow.online>",
+      from: "Sow2Grow <onboarding@resend.dev>", // Temporary - change back to sow@sow2grow.online when domain is verified
       to: ["gosats@sow2grow.org"],
       subject: "New Sower and Bestower Registered",
       html: `
