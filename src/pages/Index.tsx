@@ -157,7 +157,7 @@ const Index = () => {
       <section className="py-20 bg-gradient-to-b from-white to-green-50">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
-          <p className="text-xl text-green-700 mb-16 italic">
+          <p className="text-xl mb-16 italic" style={{ color: '#BCC4E9' }}>
             roots receive, branches share; one grove, one people, one prayer.
           </p>
           
