@@ -167,19 +167,19 @@ const Index = () => {
                 <h3 className="text-2xl font-bold mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
                 <div className="space-y-4 text-left">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
                     <span style={{ color: '#D3B8A1' }}>get your own farm stall</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
                     <span style={{ color: '#D3B8A1' }}>create multiple orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
                     <span style={{ color: '#D3B8A1' }}>sow into your own orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
                     <span style={{ color: '#D3B8A1' }}>receive community support</span>
                   </div>
                 </div>
