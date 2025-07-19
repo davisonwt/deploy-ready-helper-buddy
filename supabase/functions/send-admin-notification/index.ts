@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
     const adminEmail = "gosats@sow2grow.online";
 
     const emailResponse = await resend.emails.send({
-      from: "Sow2Grow <sow@sow2grow.online>",
+      from: "Sow2Grow <sow@sow2grow.org>",
       to: [adminEmail],
       subject: "🚨 New Farm Stall Owner Registered!",
       html: `
