@@ -156,7 +156,7 @@ const Index = () => {
       {/* How it Works Section */}
       <section className="py-20 bg-gradient-to-b from-white to-green-50">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-green-800 mb-8">How s2g farm mall works</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
           <p className="text-xl text-green-700 mb-16 italic">
             roots receive, branches share; one grove, one people, one prayer.
           </p>
