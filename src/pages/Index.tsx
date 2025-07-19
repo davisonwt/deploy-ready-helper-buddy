@@ -218,7 +218,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto px-4 space-y-20">
           {/* Seeds Section */}
           <div className="text-center relative">
-            <h2 className="text-4xl font-bold text-green-800 mb-8">Seeds</h2>
+            <h2 className="text-4xl font-bold mb-8" style={{ color: '#D69759' }}>Seeds</h2>
             
             {/* Seeds Strip with 3D Lifted Effect */}
             <div className="relative mb-6 transform-gpu">
