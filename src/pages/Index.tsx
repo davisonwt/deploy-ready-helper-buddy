@@ -782,7 +782,7 @@ const Index = () => {
                 <p className="text-green-700">cultivate purpose</p>
                 <p className="text-green-700">harvest abundance</p>
               </div>
-              <a href="mailto:newseed@sow2grow.org">
+              <a href="mailto:new@sow2grow.org">
                 <Button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-full">
                   sow seed into new orchard
                 </Button>
