@@ -168,19 +168,19 @@ const Index = () => {
                 <div className="space-y-4 text-left">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-green-700">get your own farm stall</span>
+                    <span style={{ color: '#D3B8A1' }}>get your own farm stall</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-green-700">create multiple orchards</span>
+                    <span style={{ color: '#D3B8A1' }}>create multiple orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-green-700">sow into your own orchards</span>
+                    <span style={{ color: '#D3B8A1' }}>sow into your own orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-green-700">receive community support</span>
+                    <span style={{ color: '#D3B8A1' }}>receive community support</span>
                   </div>
                 </div>
               </div>
