@@ -45,6 +45,12 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Subject:', subject);
     console.log('From:', from);
 
+    // Use port 465 for SSL/TLS connection
+    const conn = await Deno.connectTls({
+      hostname: host,
+      port: 465, // Force SSL port for Brevo
+    });
+
     // Create email message
     const boundary = `----formdata-${Date.now()}`;
     
@@ -64,12 +70,6 @@ const handler = async (req: Request): Promise<Response> => {
       '',
       `--${boundary}--`
     ].join('\r\n');
-
-    // Send email via SMTP using TLS
-    const conn = await Deno.connectTls({
-      hostname: host,
-      port: parseInt(port),
-    });
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
