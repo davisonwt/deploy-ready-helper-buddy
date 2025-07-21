@@ -34,9 +34,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid BREVO_SMTP secret format. Expected JSON.');
     }
 
-    const { server, port, username, password } = smtpConfig;
+    const { host, port, username, password } = smtpConfig;
 
-    if (!server || !port || !username || !password) {
+    if (!host || !port || !username || !password) {
       throw new Error('Missing required SMTP configuration in BREVO_SMTP secret');
     }
 
@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via SMTP
     const conn = await Deno.connect({
-      hostname: server,
+      hostname: host,
       port: parseInt(port),
     });
 
@@ -87,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
       let response = await sendCommand('');
       console.log('Initial response:', response);
 
-      response = await sendCommand(`EHLO ${server}`);
+      response = await sendCommand(`EHLO ${host}`);
       console.log('EHLO response:', response);
 
       response = await sendCommand('STARTTLS');
