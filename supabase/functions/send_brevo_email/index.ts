@@ -65,8 +65,8 @@ const handler = async (req: Request): Promise<Response> => {
       `--${boundary}--`
     ].join('\r\n');
 
-    // Send email via SMTP
-    const conn = await Deno.connect({
+    // Send email via SMTP using TLS
+    const conn = await Deno.connectTls({
       hostname: host,
       port: parseInt(port),
     });
@@ -84,18 +84,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       // SMTP conversation
-      let response = await sendCommand('');
-      console.log('Initial response:', response);
-
-      response = await sendCommand(`EHLO ${host}`);
+      let response = await sendCommand(`EHLO ${host}`);
       console.log('EHLO response:', response);
 
-      response = await sendCommand('STARTTLS');
-      console.log('STARTTLS response:', response);
-
-      // For TLS, we need to upgrade the connection
-      // This is a simplified version - in production you might need proper TLS handling
-      
       response = await sendCommand(`AUTH LOGIN`);
       console.log('AUTH LOGIN response:', response);
 
