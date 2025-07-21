@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.send-admin-notification]
 verify_jwt = false
+
+[functions.send_brevo_email]
+verify_jwt = false
