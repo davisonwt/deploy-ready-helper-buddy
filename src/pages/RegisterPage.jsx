@@ -70,11 +70,33 @@ export default function RegisterPage() {
         // Send welcome email to user
         try {
           console.log('Attempting to send welcome email...')
-          const emailResult = await supabase.functions.invoke('send-welcome-email', {
+          const emailResult = await supabase.functions.invoke('send_brevo_email', {
             body: {
-              email: formData.email,
-              firstName: formData.firstName,
-              lastName: formData.lastName,
+              to: [formData.email],
+              subject: "Welcome!",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fffe;">
+                  <h1 style="color: #059669; text-align: center; margin-bottom: 30px;">Welcome to sow2grow! 🌱</h1>
+                  <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <h2 style="color: #065f46;">Hello ${formData.firstName}!</h2>
+                    <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                      Thank you for joining our community farm! We're excited to have you as part of the sow2grow family.
+                    </p>
+                    <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+                      You're now ready to start your journey as a sower and bestower in our 364yhvh community farm.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="${window.location.origin}" style="background: linear-gradient(to right, #059669, #2563eb, #059669); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                        Start Exploring
+                      </a>
+                    </div>
+                    <p style="color: #6b7280; font-style: italic; text-align: center; margin-top: 30px;">
+                      "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap." - Luke 6:38
+                    </p>
+                  </div>
+                </div>
+              `,
+              from: "shalom@sow2grow.org"
             }
           })
           console.log('Welcome email result:', emailResult)
