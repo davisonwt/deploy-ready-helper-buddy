@@ -78,6 +78,10 @@ export default {
 					DEFAULT: 'hsl(var(--harvest))',
 					foreground: 'hsl(var(--harvest-foreground))'
 				},
+				login: {
+					DEFAULT: 'hsl(var(--login))',
+					foreground: 'hsl(var(--login-foreground))'
+				},
 				// Custom colors for registration form
 				'olive-green': 'hsl(var(--olive-green))',
 				'golden-brown': 'hsl(var(--golden-brown))',

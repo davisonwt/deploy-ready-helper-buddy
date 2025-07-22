@@ -70,6 +70,8 @@ All colors MUST be HSL.
     --info-foreground: 210 40% 98%;
     --harvest: 16.2 84.5% 55.1%;
     --harvest-foreground: 210 40% 98%;
+    --login: 328 88% 35%;
+    --login-foreground: 210 40% 98%;
   }
 
   .dark {
@@ -117,6 +119,8 @@ All colors MUST be HSL.
     --info-foreground: 210 40% 98%;
     --harvest: 16.2 84.5% 55.1%;
     --harvest-foreground: 210 40% 98%;
+    --login: 328 88% 35%;
+    --login-foreground: 210 40% 98%;
   }
 }
 

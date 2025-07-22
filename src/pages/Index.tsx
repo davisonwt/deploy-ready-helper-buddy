@@ -34,7 +34,7 @@ const Index = () => {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <Button variant="default" className="bg-green-600 hover:bg-green-700">login</Button>
+              <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
             </div>
           </div>
         </div>
