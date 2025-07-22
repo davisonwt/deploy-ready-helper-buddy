@@ -175,12 +175,12 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-green-700 to-blue-700 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
-                  Join the Community
+                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                  Join the sow2grow Community
                 </CardTitle>
                 <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
                 <div className="flex justify-center">
-                  <Badge className="bg-gradient-to-r from-green-600 to-blue-600 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
+                  <Badge className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
                     sow2grow • community farm stall
                   </Badge>
                 </div>
@@ -383,7 +383,7 @@ export default function RegisterPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-green-600 via-blue-600 to-green-600 hover:from-green-700 hover:via-blue-700 hover:to-green-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-green-300"
+                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-300"
               >
                 <div className="flex items-center justify-center">
                   {loading && <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>}

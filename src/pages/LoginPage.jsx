@@ -42,24 +42,24 @@ export default function LoginPage() {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-green-200/30 to-emerald-200/30 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "4s" }}></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-amber-200/30 to-yellow-200/30 rounded-full animate-bounce shadow-lg" style={{ animationDuration: "3s", animationDelay: "1s" }}></div>
-        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-gradient-to-br from-green-300/20 to-teal-300/20 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "5s", animationDelay: "2s" }}></div>
-        <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full animate-ping shadow-md" style={{ animationDuration: "6s", animationDelay: "3s" }}></div>
-        <div className="absolute bottom-20 right-10 w-20 h-20 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full animate-pulse shadow-lg" style={{ animationDuration: "7s", animationDelay: "4s" }}></div>
+        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "4s" }}></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-green-200/30 rounded-full animate-bounce shadow-lg" style={{ animationDuration: "3s", animationDelay: "1s" }}></div>
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-amber-200/20 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "5s", animationDelay: "2s" }}></div>
+        <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-blue-300/20 rounded-full animate-ping shadow-md" style={{ animationDuration: "6s", animationDelay: "3s" }}></div>
+        <div className="absolute bottom-20 right-10 w-20 h-20 bg-green-300/20 rounded-full animate-pulse shadow-lg" style={{ animationDuration: "7s", animationDelay: "4s" }}></div>
       </div>
       
-      <div className={`relative z-10 w-full max-w-md transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <div className={`relative z-10 w-full max-w-lg transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Enhanced back button */}
         <Link 
           to="/" 
-          className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-all duration-300 hover:scale-105 font-medium group"
+          className="inline-flex items-center text-blue-700 hover:text-blue-600 mb-6 transition-all duration-300 hover:scale-105 font-medium group bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg"
         >
           <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-          Back to Farm
+          Back to sow2grow
         </Link>
         
         {/* Welcome message for community */}
@@ -74,26 +74,26 @@ export default function LoginPage() {
               <span className="text-sm text-purple-700 font-medium">Support</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
-            Welcome Back to Your Farm
+          <h1 className="text-2xl font-bold text-blue-600 mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+            Welcome Back to sow2grow
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Join your fellow sowers and bestowers in cultivating abundance together
+            Enter your orchard and continue sowing & bestowing
           </p>
         </div>
         
-        <Card className="bg-card/95 backdrop-blur-sm border-border shadow-2xl transition-all duration-500 hover:shadow-3xl">
+        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl transition-all duration-500 hover:shadow-3xl">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-xl relative overflow-hidden group">
-                <Sprout className="h-10 w-10 text-primary-foreground transition-all duration-500 group-hover:scale-110" />
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center shadow-xl relative overflow-hidden group">
+                <Sprout className="h-10 w-10 text-white transition-all duration-500 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
-            <CardTitle className="text-xl text-card-foreground mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+            <CardTitle className="text-xl text-blue-700 mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
               Enter Your Orchard
             </CardTitle>
-            <Badge variant="secondary" className="bg-secondary/80 text-secondary-foreground border-border/50">
+            <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0">
               <Sprout className="h-3 w-3 mr-1" />
               364yhvh Community Farm
             </Badge>
@@ -108,8 +108,8 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-foreground flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-primary" />
+                <label htmlFor="email" className="text-sm font-medium text-blue-700 flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-blue-500" />
                   Username
                 </label>
                 <div className="relative group">
@@ -118,18 +118,18 @@ export default function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-primary/50"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md"
                     placeholder="your@email.com"
                     required
                   />
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/5 to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-foreground flex items-center">
-                  <Lock className="h-4 w-4 mr-2 text-primary" />
-                  Sacred Passphrase
+                <label htmlFor="password" className="text-sm font-medium text-green-700 flex items-center">
+                  <Lock className="h-4 w-4 mr-2 text-green-500" />
+                  Password
                 </label>
                 <div className="relative group">
                   <input
@@ -137,7 +137,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-primary/50 pr-12"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md pr-12"
                     placeholder="Enter your password"
                     required
                   />
@@ -148,18 +148,18 @@ export default function LoginPage() {
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-green-400/5 to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
               </div>
               
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"
+                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"
                 disabled={loading}
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Entering Your Orchard...
                   </div>
                 ) : (
@@ -174,7 +174,7 @@ export default function LoginPage() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-sm text-primary hover:text-primary/80 transition-colors duration-200"
+                  className="text-sm text-blue-600 hover:text-blue-500 transition-colors duration-200"
                   onClick={() => {/* TODO: Implement forgot password */}}
                 >
                   Forgot Password?
@@ -198,7 +198,7 @@ export default function LoginPage() {
               <Link to="/register">
                 <Button 
                   variant="outline" 
-                  className="border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 font-medium"
+                  className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-all duration-300 hover:scale-105 font-medium"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Join Our Community
