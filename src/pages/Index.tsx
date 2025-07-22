@@ -34,8 +34,6 @@ const Index = () => {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <Button variant="ghost" className="text-green-700">join community</Button>
-              <Button variant="outline" className="border-green-200 text-green-700">community orchards</Button>
               <Button variant="default" className="bg-green-600 hover:bg-green-700">login</Button>
             </div>
           </div>
@@ -95,12 +93,6 @@ const Index = () => {
               <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
                 <Heart className="w-5 h-5 mr-2" />
                 start your journey
-              </Button>
-            </Link>
-            <Link to="/browse-orchards">
-              <Button size="lg" variant="outline" className="border-white/30 text-blue-500 hover:bg-white/10 hover:text-blue-500 px-8 py-4 text-lg rounded-full backdrop-blur-sm">
-                <TreePine className="w-5 h-5 mr-2" />
-                community orchards
               </Button>
             </Link>
           </div>
