@@ -84,10 +84,13 @@ export default function LoginPage() {
         
         <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl transition-all duration-500 hover:shadow-3xl">
           <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center shadow-xl relative overflow-hidden group">
-                <Sprout className="h-10 w-10 text-white transition-all duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="flex justify-center mb-6">
+              <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-blue-100">
+                <img 
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/logo.jpeg" 
+                  alt="sow2grow logo" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             <CardTitle className="text-xl text-blue-700 mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
