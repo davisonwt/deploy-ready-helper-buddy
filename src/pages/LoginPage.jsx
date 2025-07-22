@@ -110,7 +110,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-primary" />
-                  Community Email
+                  Username
                 </label>
                 <div className="relative group">
                   <input
@@ -165,10 +165,21 @@ export default function LoginPage() {
                 ) : (
                   <div className="flex items-center">
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Enter Your Orchard
+                    Sow or Bestow
                   </div>
                 )}
               </Button>
+              
+              {/* Forgot Password */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors duration-200"
+                  onClick={() => {/* TODO: Implement forgot password */}}
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </form>
             
             <div className="relative">
