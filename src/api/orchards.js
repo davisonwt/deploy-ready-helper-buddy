@@ -4,15 +4,7 @@ export const fetchOrchard = async (orchardId) => {
   try {
     const { data, error } = await supabase
       .from('orchards')
-      .select(`
-        *,
-        profiles!orchards_user_id_fkey(
-          first_name,
-          last_name,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select(`*`)
       .eq('id', orchardId)
       .eq('status', 'active')
       .single();
@@ -36,15 +28,7 @@ export const fetchOrchards = async (filters = {}) => {
   try {
     let query = supabase
       .from('orchards')
-      .select(`
-        *,
-        profiles!orchards_user_id_fkey(
-          first_name,
-          last_name,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select(`*`)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 
@@ -106,15 +90,7 @@ export const fetchBestowals = async (orchardId) => {
   try {
     const { data, error } = await supabase
       .from('bestowals')
-      .select(`
-        *,
-        profiles!bestowals_bestower_id_fkey(
-          first_name,
-          last_name,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select(`*`)
       .eq('orchard_id', orchardId)
       .eq('payment_status', 'completed')
       .order('created_at', { ascending: false });
