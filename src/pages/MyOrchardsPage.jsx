@@ -19,7 +19,9 @@ import {
   Calendar,
   DollarSign,
   Edit,
-  Share2
+  Share2,
+  MapPin,
+  Heart
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 
@@ -66,13 +68,17 @@ export default function MyOrchardsPage() {
   }, [user])
 
   useEffect(() => {
-    // Filter user's orchards
-    let filtered = orchards.filter(orchard => orchard.user_id === user?.id)
+    // Filter user's orchards with better error handling
+    let filtered = orchards.filter(orchard => {
+      // Ensure we only show orchards that belong to the current user
+      return orchard.user_id === user?.id
+    })
     
     if (searchTerm) {
       filtered = filtered.filter(orchard => 
-        orchard.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orchard.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        orchard.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orchard.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orchard.category?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     
@@ -94,7 +100,7 @@ export default function MyOrchardsPage() {
 
   const getTotalRaised = () => {
     return userOrchards.reduce((sum, orchard) => 
-      sum + (orchard.filled_pockets * orchard.pocket_value || 0), 0
+      sum + ((orchard.filled_pockets || 0) * (orchard.pocket_price || 0)), 0
     )
   }
 
@@ -269,6 +275,33 @@ export default function MyOrchardsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userOrchards.map((orchard) => (
               <Card key={orchard.id} className="bg-nav-orchards/10 backdrop-blur-sm border-nav-orchards/30 hover:shadow-lg transition-all">
+                <div className="relative">
+                  {orchard.images?.[0] ? (
+                    <img 
+                      src={orchard.images[0]} 
+                      alt={orchard.title}
+                      className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-nav-orchards/30 to-nav-orchards/50 rounded-t-lg flex items-center justify-center">
+                      <TreePine className="h-12 w-12 text-orange-600" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4">
+                    <Badge 
+                      variant={orchard.status === 'active' ? 'default' : 'secondary'}
+                      className={orchard.status === 'active' ? 'bg-nav-orchards text-orange-700' : ''}
+                    >
+                      {orchard.status}
+                    </Badge>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-orange-100 text-orange-700 border-0">
+                      {orchard.category}
+                    </Badge>
+                  </div>
+                </div>
+                
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -282,18 +315,23 @@ export default function MyOrchardsPage() {
                           <Users className="h-4 w-4 mr-1" />
                           {orchard.supporters || 0}
                         </span>
+                        {orchard.location && (
+                          <span className="flex items-center">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {orchard.location}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <Badge 
-                      variant={orchard.status === 'active' ? 'default' : 'secondary'}
-                      className={orchard.status === 'active' ? 'bg-nav-orchards text-orange-700' : ''}
-                    >
-                      {orchard.status}
-                    </Badge>
                   </div>
                 </CardHeader>
+                
                 <CardContent>
                   <div className="space-y-4">
+                    <p className="text-orange-600 text-sm line-clamp-2">
+                      {orchard.description}
+                    </p>
+                    
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-orange-600">Progress</span>
@@ -310,14 +348,14 @@ export default function MyOrchardsPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-orange-600">Raised:</span>
                       <span className="font-medium text-orange-700">
-                        {formatCurrency(orchard.filled_pockets * orchard.pocket_value || 0)}
+                        {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
                       </span>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-orange-600">Goal:</span>
                       <span className="font-medium text-orange-700">
-                        {formatCurrency(orchard.total_pockets * orchard.pocket_value || 0)}
+                        {formatCurrency((orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
                       </span>
                     </div>
                     
@@ -328,13 +366,13 @@ export default function MyOrchardsPage() {
                     
                     <div className="flex gap-2 pt-2">
                       <Link to={`/orchards/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700">
+                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10">
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
                       </Link>
                       <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700">
+                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10">
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
@@ -346,7 +384,7 @@ export default function MyOrchardsPage() {
                           const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                           navigator.clipboard.writeText(url)
                         }}
-                        className="border-nav-orchards/30 text-orange-700"
+                        className="border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10"
                       >
                         <Share2 className="h-4 w-4" />
                       </Button>
