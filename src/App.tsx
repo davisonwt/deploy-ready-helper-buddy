@@ -22,6 +22,7 @@ import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelledPage from "./pages/PaymentCancelledPage";
+import DashboardPage from "./pages/DashboardPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -44,11 +45,11 @@ const App = () => (
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/start-your-journey" element={<RegisterPage />} />
               
-              {/* Dashboard Routes - redirect to browse orchards for now */}
+              {/* Dashboard Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Layout>
-                    <BrowseOrchardsPage />
+                    <DashboardPage />
                   </Layout>
                 </ProtectedRoute>
               } />
