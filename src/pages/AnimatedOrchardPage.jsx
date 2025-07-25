@@ -103,6 +103,10 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
     const fetchOrchard = async () => {
       try {
         setLoading(true);
+        // Clear cache first to get fresh data
+        if (window.__orchardLoader) {
+          window.__orchardLoader.clear(id);
+        }
         const orchardData = await loadOrchard(id);
         
         if (orchardData && !orchardData._isFallback) {

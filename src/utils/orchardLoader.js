@@ -18,14 +18,7 @@ export async function loadOrchard(orchardId) {
 
     const { data, error } = await supabase
       .from('orchards')
-      .select(`
-        *,
-        profiles!profile_id (
-          first_name,
-          last_name,
-          avatar_url
-        )
-      `)
+      .select(`*`)
       .eq('id', orchardId)
       .single();
 
@@ -45,38 +38,23 @@ export async function loadOrchard(orchardId) {
     const completionRate = totalPockets > 0 ? (filledPockets / totalPockets) * 100 : 0;
     const supportersCount = new Set(completedBestowals.map(b => b.user_id)).size;
 
-    // Validate required fields and create normalized structure
+    // Use the actual database field names
     const validatedData = {
-      id: data.id,
+      ...data,
+      // Ensure essential fields exist
       title: data.title || 'Untitled Orchard',
       description: data.description || 'No description available',
-      category: data.category || 'General',
-      currency: 'USD', // Default currency
-      seed_value: parseFloat(data.goal_amount) || 0,
-      pocket_price: 150, // Standard pocket price
-      total_pockets: totalPockets,
-      filled_pockets: filledPockets,
-      completion_rate: Math.round(completionRate * 10) / 10, // Round to 1 decimal
-      views: 0, // Not tracked in current schema
-      supporters: supportersCount,
-      status: data.status || 'active',
-      created_at: data.created_at || new Date().toISOString(),
-      updated_at: data.updated_at || new Date().toISOString(),
-      user_id: data.user_id,
-      location: 'Unknown', // Not in current schema
-      images: data.image_url ? [data.image_url] : [],
-      pockets: data.pocket_numbers || [],
-      // User profile information
-      user_profile: data.profiles ? {
-        first_name: data.profiles.first_name,
-        last_name: data.profiles.last_name,
-        avatar_url: data.profiles.avatar_url,
-        email: data.profiles.email
-      } : null,
-      // Bestowal information
-      bestowals: completedBestowals,
-      current_amount: totalAmount,
-      goal_amount: parseFloat(data.goal_amount) || 0,
+      currency: data.currency || 'USD',
+      seed_value: data.seed_value || 0,
+      pocket_price: data.pocket_price || 150,
+      total_pockets: data.total_pockets || 0,
+      filled_pockets: data.filled_pockets || 0,
+      completion_rate: data.completion_rate || 0,
+      views: data.views || 0,
+      supporters: data.supporters || 0,
+      images: data.images || [],
+      features: data.features || [],
+      location: data.location || 'Unknown',
       // Additional validation fields
       _loaded: true,
       _loadedAt: new Date().toISOString(),
