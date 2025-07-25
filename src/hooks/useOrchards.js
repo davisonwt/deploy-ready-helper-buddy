@@ -15,15 +15,7 @@ export function useOrchards() {
 
       let query = supabase
         .from('orchards')
-        .select(`
-          *,
-          profiles!orchards_user_id_fkey (
-            first_name,
-            last_name,
-            display_name,
-            location
-          )
-        `)
+        .select(`*`)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
 
@@ -59,16 +51,7 @@ export function useOrchards() {
 
       const { data, error: fetchError } = await supabase
         .from('orchards')
-        .select(`
-          *,
-          profiles!orchards_user_id_fkey (
-            first_name,
-            last_name,
-            display_name,
-            location,
-            avatar_url
-          )
-        `)
+        .select(`*`)
         .eq('id', id)
         .single()
 
@@ -164,14 +147,7 @@ export function useOrchards() {
     try {
       const { data, error } = await supabase
         .from('bestowals')
-        .select(`
-          *,
-          profiles!bestowals_bestower_profile_id_fkey (
-            first_name,
-            last_name,
-            display_name
-          )
-        `)
+        .select(`*`)
         .eq('orchard_id', orchardId)
         .eq('payment_status', 'completed')
         .order('created_at', { ascending: false })
