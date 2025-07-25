@@ -12,8 +12,17 @@ const BestowalUI = ({ orchard, onBestow }) => {
   const [currency, setCurrency] = useState('USD');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Mock data - replace with actual orchard data
-  const orchardData = orchard || {
+  // Map real orchard data to expected format
+  const orchardData = orchard ? {
+    title: orchard.title || "Orchard Project",
+    description: orchard.description || "Help support this orchard",
+    target: orchard.seed_value || orchard.original_seed_value || 0,
+    current: (orchard.filled_pockets || 0) * (orchard.pocket_price || 0),
+    supporters: orchard.supporters || 0,
+    pockets: orchard.total_pockets || 0,
+    filledPockets: orchard.filled_pockets || 0,
+    pocketValue: orchard.pocket_price || 0
+  } : {
     title: "Community Garden Project",
     description: "Help us grow fresh vegetables for local families",
     target: 10000,
