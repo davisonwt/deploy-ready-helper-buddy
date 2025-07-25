@@ -48,6 +48,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
     orchard_type: "standard",
     seed_value: "",
     pocket_price: "150",
+    number_of_pockets: "1", // New field for full value orchards
     location: "",
     why_needed: "",
     how_it_helps: "",
@@ -214,7 +215,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
         original_seed_value: originalSeedValue,
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
-        pocket_price: pocketPrice,
+        pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
+        total_pockets: calculatePockets(),
         location: formData.location?.trim() || "",
         currency: formData.currency || currency || "USD",
         why_needed: formData.why_needed?.trim() || "",
@@ -253,12 +255,18 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
   
   const calculatePockets = () => {
-    const finalSeedValue = calculateFinalSeedValue()
-    const pocketPrice = parseFloat(formData.pocket_price)
-    if (finalSeedValue && pocketPrice) {
-      return Math.ceil(finalSeedValue / pocketPrice)
+    if (formData.orchard_type === 'full_value') {
+      // For full value orchards, use the specified number of pockets
+      return parseInt(formData.number_of_pockets) || 1
+    } else {
+      // For standard orchards, calculate based on seed value / pocket price
+      const finalSeedValue = calculateFinalSeedValue()
+      const pocketPrice = parseFloat(formData.pocket_price)
+      if (finalSeedValue && pocketPrice) {
+        return Math.ceil(finalSeedValue / pocketPrice)
+      }
+      return 0
     }
-    return 0
   }
 
   const calculateFinalSeedValue = () => {
@@ -560,8 +568,30 @@ export default function CreateOrchardPage({ isEdit = false }) {
                       <h3 className="font-semibold text-gray-800">Full Value Orchard</h3>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">For smaller seeds ($1 - $100)</p>
-                    <p className="text-xs text-gray-500">Single pocket with full seed value + fees</p>
+                    <p className="text-xs text-gray-500">Each pocket contains the full seed value + fees</p>
                   </div>
+                </div>
+                
+                {/* Number of Pockets for Full Value Orchard */}
+                {formData.orchard_type === 'full_value' && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Pockets
+                    </label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={formData.number_of_pockets}
+                      onChange={(e) => setFormData(prev => ({ ...prev, number_of_pockets: e.target.value }))}
+                      placeholder="Enter number of pockets (1-10)"
+                      className="border-green-300 focus:border-green-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Each pocket will contain the full seed value (${formData.seed_value || 0}) + fees
+                    </p>
+                  </div>
+                )}
                 </div>
               </div>
             </CardContent>
