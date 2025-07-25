@@ -44,11 +44,11 @@ All colors MUST be HSL.
   --gradient-warm: linear-gradient(135deg, hsl(var(--s2g-amber)), hsl(var(--s2g-brown)));
   --gradient-hero: linear-gradient(135deg, hsl(var(--s2g-blue)), hsl(var(--s2g-green)));
   
-  /* Navigation Colors - Pastel colors for navigation buttons */
-  --nav-dashboard: 155 100% 87%; /* #9bf6ff */
-  --nav-community: 128 100% 81%; /* #caffbf */
-  --nav-create: 60 100% 85%; /* #fdffb6 */
-  --nav-orchards: 35 100% 84%; /* #ffd6a5 */
+  /* Navigation Colors - Pastel Palette */
+  --nav-dashboard: 188 100% 87%; /* #9bf6ff */
+  --nav-community: 137 100% 87%; /* #caffbf */
+  --nav-create: 54 100% 85%; /* #fdffb6 */
+  --nav-my: 36 100% 83%; /* #ffd6a5 */
   --nav-tithing: 0 100% 84%; /* #ffadad */
   --nav-gifting: 235 74% 76%; /* #8093f1 */
   

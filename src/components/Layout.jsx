@@ -82,7 +82,7 @@ export default function Layout({ children }) {
                     case "create orchard":
                       return "bg-nav-create/80 hover:bg-nav-create border-nav-create text-yellow-700 shadow-nav-create/30"
                     case "my orchards":
-                      return "bg-nav-orchards/80 hover:bg-nav-orchards border-nav-orchards text-orange-700 shadow-nav-orchards/30"
+                      return "bg-nav-my/80 hover:bg-nav-my border-nav-my text-orange-700 shadow-nav-my/30"
                     case "tithing":
                       return "bg-nav-tithing/80 hover:bg-nav-tithing border-nav-tithing text-red-700 shadow-nav-tithing/30"
                     case "free-will gifting":
