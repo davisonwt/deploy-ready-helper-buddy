@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Input } from "../components/ui/input"
+import { Progress } from "../components/ui/progress"
 import { 
   Search, Heart, Eye, MapPin, TrendingUp, 
   Calendar, Users, Filter, Grid, List,
-  RefreshCw, Loader2, Sprout, User
+  RefreshCw, Loader2, Sprout, User, TreePine
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
+import { supabase } from "@/integrations/supabase/client"
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
@@ -24,13 +26,33 @@ export default function BrowseOrchardsPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState("grid")
 
-  // Safely fetch orchards without using the problematic hook
+  // Fetch orchards from Supabase
   const fetchOrchards = async () => {
     try {
       setLoading(true)
       setError(null)
-      // For now, show mock data to prevent errors
-      setOrchards([])
+      
+      const { data, error } = await supabase
+        .from('orchards')
+        .select(`
+          *,
+          profiles:user_id (
+            first_name,
+            last_name,
+            display_name,
+            location
+          )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching orchards:', error)
+        setError('Failed to load orchards')
+        return
+      }
+
+      setOrchards(data || [])
     } catch (err) {
       setError('Failed to load orchards')
       console.error('Error:', err)
@@ -51,44 +73,48 @@ export default function BrowseOrchardsPage() {
   const processedOrchards = useMemo(() => {
     return orchards.map(orchard => ({
       ...orchard,
-      title: orchard.title || "Untitled Orchard",
-      category: orchard.category || "General",
-      grower: orchard.profiles?.display_name || 
-              `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim() ||
-              'Anonymous',
-      location: orchard.location || orchard.profiles?.location || 'Unknown Location',
-      progress: orchard.completion_rate || 0
+      completion_percentage: orchard.total_pockets 
+        ? Math.round((orchard.filled_pockets / orchard.total_pockets) * 100)
+        : 0,
+      raised_amount: (orchard.filled_pockets || 0) * (orchard.pocket_price || 0),
+      goal_amount: (orchard.total_pockets || 0) * (orchard.pocket_price || 0),
+      grower_name: orchard.profiles?.display_name || 
+                   `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim() || 
+                   'Anonymous Grower',
+      main_image: orchard.images?.[0] || null
     }))
   }, [orchards])
 
-  // Filter and sort orchards
+  // Filtered and sorted orchards
   const filteredOrchards = useMemo(() => {
-    let results = [...processedOrchards]
-    
+    let results = processedOrchards
+
+    // Filter by search term
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      results = results.filter(o => 
-        o.title.toLowerCase().includes(term) || 
-        o.description?.toLowerCase().includes(term) ||
-        o.grower?.toLowerCase().includes(term)
+      results = results.filter(orchard =>
+        orchard.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orchard.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orchard.grower_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        orchard.location?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-    
+
+    // Filter by category
     if (selectedCategory !== "all") {
-      results = results.filter(o => o.category === selectedCategory)
+      results = results.filter(orchard => orchard.category === selectedCategory)
     }
-    
-    // Sort orchards
+
+    // Sort results
     results.sort((a, b) => {
       switch (sortBy) {
-        case "newest":
+        case 'newest':
           return new Date(b.created_at) - new Date(a.created_at)
-        case "oldest":
+        case 'oldest':
           return new Date(a.created_at) - new Date(b.created_at)
-        case "progress":
-          return b.progress - a.progress
-        case "amount":
-          return (b.seed_value || 0) - (a.seed_value || 0)
+        case 'progress':
+          return (b.completion_percentage || 0) - (a.completion_percentage || 0)
+        case 'amount':
+          return (b.goal_amount || 0) - (a.goal_amount || 0)
         default:
           return 0
       }
@@ -295,14 +321,113 @@ export default function BrowseOrchardsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-green-600">Orchards will appear here once the data loading is fixed.</p>
-            <Link to="/create-orchard">
-              <Button className="mt-4 bg-nav-community hover:bg-nav-community/90 text-green-700">
-                <Sprout className="h-4 w-4 mr-2" />
-                Create Your First Orchard
-              </Button>
-            </Link>
+          <div className={`grid gap-6 ${
+            viewMode === "grid" 
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+              : "grid-cols-1 max-w-4xl mx-auto"
+          }`}>
+            {filteredOrchards.map((orchard) => (
+              <Card key={orchard.id} className="bg-nav-community/10 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group">
+                <div className="relative">
+                  {orchard.main_image ? (
+                    <img 
+                      src={orchard.main_image} 
+                      alt={orchard.title}
+                      className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-nav-community/30 to-nav-community/50 rounded-t-lg flex items-center justify-center">
+                      <TreePine className="h-12 w-12 text-green-600" />
+                    </div>
+                  )}
+                  <div className="absolute top-4 right-4">
+                    <Badge className="bg-nav-community/90 text-green-700 border-0">
+                      {orchard.category}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg text-green-700 mb-2 line-clamp-2">
+                        {orchard.title}
+                      </CardTitle>
+                      <div className="flex items-center space-x-4 text-sm text-green-600">
+                        <span className="flex items-center">
+                          <User className="h-4 w-4 mr-1" />
+                          {orchard.grower_name}
+                        </span>
+                        {orchard.location && (
+                          <span className="flex items-center">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {orchard.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-green-600 text-sm line-clamp-3">
+                      {orchard.description}
+                    </p>
+                    
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-green-600">Progress</span>
+                        <span className="text-sm font-medium text-green-700">
+                          {orchard.completion_percentage}%
+                        </span>
+                      </div>
+                      <Progress 
+                        value={orchard.completion_percentage} 
+                        className="h-2"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-green-600">Raised:</span>
+                        <p className="font-medium text-green-700">
+                          {formatAmount(orchard.raised_amount)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-green-600">Goal:</span>
+                        <p className="font-medium text-green-700">
+                          {formatAmount(orchard.goal_amount)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm text-green-500">
+                      <span className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        {orchard.views || 0} views
+                      </span>
+                      <span className="flex items-center">
+                        <Users className="h-4 w-4 mr-1" />
+                        {orchard.supporters || 0} supporters
+                      </span>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <Link to={`/orchards/${orchard.id}`} className="flex-1">
+                        <Button 
+                          className="w-full bg-nav-community hover:bg-nav-community/90 text-green-700 font-medium"
+                        >
+                          <Heart className="h-4 w-4 mr-2" />
+                          Bestow into this Orchard
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>

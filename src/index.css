@@ -87,7 +87,22 @@ All colors MUST be HSL.
     --harvest-foreground: 210 40% 98%;
     --login: 328 88% 35%;
     --login-foreground: 210 40% 98%;
-  }
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
   .dark {
     --background: 222.2 84% 4.9%;
