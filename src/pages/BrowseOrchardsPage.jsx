@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { Link } from "react-router-dom"
+import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -8,12 +9,13 @@ import { Input } from "../components/ui/input"
 import { 
   Search, Heart, Eye, MapPin, TrendingUp, 
   Calendar, Users, Filter, Grid, List,
-  RefreshCw, Loader2, Sprout
+  RefreshCw, Loader2, Sprout, User
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
 import { useOrchards } from "../hooks/useOrchards"
 
 export default function BrowseOrchardsPage() {
+  const { user } = useAuth()
   const { formatAmount } = useCurrency()
   const { orchards: rawOrchards, loading, error, fetchOrchards } = useOrchards()
   const [searchTerm, setSearchTerm] = useState("")
@@ -94,36 +96,57 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-amber/10 to-s2g-green/10">
+    <div className="min-h-screen bg-gradient-to-br from-nav-community/20 via-background to-nav-community/10">
+      {/* Welcome Section with Profile Picture */}
+      <div className="bg-nav-community/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-community/30 shadow-lg mb-8">
+        <div className="flex items-center space-x-6">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
+            {user?.profile_picture ? (
+              <img 
+                src={user.profile_picture} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
+                <User className="h-10 w-10 text-green-700" />
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-green-700">
+              Community Orchards, {user?.first_name || 'Friend'}!
+            </h1>
+            <p className="text-green-600 text-lg">
+              Discover and support orchards in our community
+            </p>
+            <p className="text-green-500 text-sm mt-1">
+              Preferred Currency: {user?.preferred_currency || 'USD'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <img 
-              src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-              alt="sow2grow logo" 
-              className="w-20 h-20 object-contain bg-transparent"
-              style={{ backgroundColor: 'transparent' }}
-            />
-          </div>
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-s2g-green to-s2g-blue rounded-full flex items-center justify-center shadow-lg">
-              <Sprout className="h-8 w-8 text-white animate-pulse" />
+            <div className="w-16 h-16 bg-nav-community/30 rounded-full flex items-center justify-center shadow-lg">
+              <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-s2g-brown mb-4" style={{ fontFamily: "Playfair Display, serif" }}>
-            Community Orchards
-          </h1>
-          <p className="text-lg text-s2g-brown/70 max-w-2xl mx-auto mb-6">
-            Discover and support orchards in our community. Every bestowal helps dreams grow! 🌱
+          <h2 className="text-2xl font-bold text-green-700 mb-4">
+            Browse Community Orchards
+          </h2>
+          <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">
+            Every bestowal helps dreams grow! 🌱
           </p>
           <div className="flex justify-center">
             <Button 
               variant="outline" 
               onClick={handleRefresh}
               disabled={loading}
-              className="border-s2g-green text-s2g-green hover:bg-s2g-green/10"
+              className="border-nav-community text-green-700 hover:bg-nav-community/10"
             >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -136,7 +159,7 @@ export default function BrowseOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-white/95 backdrop-blur-sm border-s2g-green/30 shadow-lg mb-8 hover:shadow-xl transition-all">
+        <Card className="bg-nav-community/10 backdrop-blur-sm border-nav-community/30 shadow-lg mb-8 hover:shadow-xl transition-all">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">

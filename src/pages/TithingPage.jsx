@@ -1,290 +1,254 @@
-import React, { useState } from "react"
-import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
+import React, { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { 
-  Church, 
   Heart, 
   DollarSign, 
   Calendar, 
-  BookOpen, 
-  Star,
+  User,
+  Church,
   Gift,
+  Star,
   Sparkles,
   HandHeart
 } from "lucide-react"
 
 export default function TithingPage() {
+  const { user } = useAuth()
   const [amount, setAmount] = useState("")
   const [frequency, setFrequency] = useState("monthly")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Handle tithing submission logic here
+      console.log('Tithing submission:', { amount, frequency, message })
+      setMessage("Thank you for your faithful tithing!")
+    } catch (error) {
+      setMessage("There was an error processing your tithing.")
+    } finally {
       setLoading(false)
-      alert("Thank you for your faithful tithing! Your gift has been processed.")
-    }, 2000)
+    }
   }
-  
+
   const suggestedAmounts = [50, 100, 200, 500, 1000]
-  
+
   return (
-    <div className="relative min-h-screen">
-      {/* Full Background Video */}
-      <div className="fixed inset-0 w-full h-full z-0">
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          className="w-full h-full object-cover"
-        >
-          <source src="/tithing 1280x720.mp4" type="video/mp4" />
-          <div className="w-full h-full bg-gradient-to-br from-warning/5 via-harvest/5 to-warning/10"></div>
-        </video>
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-      </div>
-      
-      {/* Content over video */}
-      <div className="relative z-10 py-8">
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="bg-black/40 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-white/20 shadow-2xl">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-warning to-harvest rounded-full flex items-center justify-center shadow-lg">
-                <HandHeart className="h-8 w-8 text-warning-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-nav-tithing/20 via-background to-nav-tithing/10">
+      {/* Welcome Section with Profile Picture */}
+      <div className="bg-nav-tithing/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-tithing/30 shadow-lg mb-8">
+        <div className="flex items-center space-x-6">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-tithing shadow-lg">
+            {user?.profile_picture ? (
+              <img 
+                src={user.profile_picture} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-nav-tithing to-nav-tithing/80 flex items-center justify-center">
+                <User className="h-10 w-10 text-red-700" />
               </div>
-            </div>
-            <h1 className="text-4xl font-bold mb-4 text-white" style={{ 
-              fontFamily: "Playfair Display, serif",
-              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)'
-            }}>
-              Tithing
+            )}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-red-700">
+              Tithing, {user?.first_name || 'Friend'}!
             </h1>
-            <p className="text-lg max-w-2xl mx-auto text-white/90" style={{
-              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)'
-            }}>
-              Honor ELOHIYM with your first fruits and support YHVH364 GOSATs through faithful tithing
+            <p className="text-red-600 text-lg">
+              Honor God with your faithful giving
             </p>
-            <Badge className="mt-4 bg-warning/80 text-warning-foreground border border-warning/50 backdrop-blur-sm">
-              <HandHeart className="h-3 w-3 mr-1" />
-              YHVH364 GOSATs Ministry
-            </Badge>
+            <p className="text-red-500 text-sm mt-1">
+              Preferred Currency: {user?.preferred_currency || 'USD'}
+            </p>
           </div>
         </div>
-        
-        {/* Scripture Section */}
-        <Card className="bg-card/90 backdrop-blur-sm border-warning/20 shadow-xl">
-          <CardContent className="p-8 text-center">
-            <BookOpen className="h-8 w-8 text-warning mx-auto mb-4" />
-            <blockquote className="text-xl text-foreground italic mb-4 leading-relaxed">
-              "Bring the whole tithe into the storehouse, that there may be food in my house. 
-              Test me in this, says YHVH Almighty, and see if I will not throw open the floodgates of heaven 
-              and pour out so much blessing that there will not be room enough to store it."
-            </blockquote>
-            <cite className="text-warning font-semibold">- Malachi 3:10</cite>
-          </CardContent>
-        </Card>
-        
-        {/* Tithing Form */}
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="p-4 bg-nav-tithing/30 rounded-full">
+              <HandHeart className="h-12 w-12 text-red-700" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-red-700 mb-2">Faithful Tithing</h2>
+          <p className="text-red-600 max-w-2xl mx-auto">
+            "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says the Lord Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
+          {/* Tithing Form */}
+          <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                Your Tithing Gift
+              <CardTitle className="flex items-center text-red-700">
+                <Church className="h-5 w-5 mr-2" />
+                Set Up Your Tithe
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    <DollarSign className="inline h-4 w-4 mr-1" />
-                    Amount (R)
-                  </label>
-                  <input
+                  <Label htmlFor="amount" className="text-red-700">
+                    Tithe Amount ({user?.preferred_currency || 'USD'})
+                  </Label>
+                  <Input
+                    id="amount"
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full px-4 py-3 border border-white/30 bg-white/10 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-warning focus:border-transparent text-lg text-white placeholder-white/70"
                     placeholder="Enter amount"
-                    required
+                    className="border-nav-tithing/30 focus:border-nav-tithing"
                   />
-                  
-                  <div className="mt-3 grid grid-cols-5 gap-2">
-                    {suggestedAmounts.map((suggestedAmount) => (
+                </div>
+
+                <div>
+                  <Label className="text-red-700">Suggested Amounts</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {suggestedAmounts.map((suggAmount) => (
                       <Button
-                        key={suggestedAmount}
+                        key={suggAmount}
                         type="button"
-                        variant="outline"
+                        variant={amount === suggAmount.toString() ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setAmount(suggestedAmount.toString())}
-                        className="border-white/30 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
+                        onClick={() => setAmount(suggAmount.toString())}
+                        className={amount === suggAmount.toString() ? 'bg-nav-tithing text-red-700' : 'border-nav-tithing/30 text-red-700'}
                       >
-                        R{suggestedAmount}
+                        ${suggAmount}
                       </Button>
                     ))}
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    <Calendar className="inline h-4 w-4 mr-1" />
-                    Frequency
-                  </label>
-                  <select
-                    value={frequency}
-                    onChange={(e) => setFrequency(e.target.value)}
-                    className="w-full px-4 py-3 border border-white/30 bg-white/10 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-warning focus:border-transparent text-white"
-                  >
-                    <option value="once" className="text-foreground bg-background">One-time gift</option>
-                    <option value="weekly" className="text-foreground bg-background">Weekly</option>
-                    <option value="monthly" className="text-foreground bg-background">Monthly</option>
-                    <option value="quarterly" className="text-foreground bg-background">Quarterly</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Additional Message (Optional)
-                  </label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows="3"
-                    className="w-full px-4 py-3 border border-white/30 bg-white/10 backdrop-blur-sm rounded-lg focus:ring-2 focus:ring-warning focus:border-transparent text-white placeholder-white/70"
-                    placeholder="Share your heart with the ministry..."
-                  />
-                </div>
-                
-                {amount && (
-                  <div className="bg-warning/20 border border-warning/50 rounded-lg p-4 backdrop-blur-sm">
-                    <p className="text-sm text-white">
-                      The biblical tithe is 10% of your income. This is a guideline, but ELOHIYM loves a cheerful giver
-                    </p>
+                  <Label className="text-red-700">Frequency</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {['weekly', 'monthly', 'yearly'].map((freq) => (
+                      <Button
+                        key={freq}
+                        type="button"
+                        variant={frequency === freq ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setFrequency(freq)}
+                        className={frequency === freq ? 'bg-nav-tithing text-red-700' : 'border-nav-tithing/30 text-red-700'}
+                      >
+                        {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                      </Button>
+                    ))}
                   </div>
-                )}
-                
+                </div>
+
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-warning to-harvest hover:from-warning/90 hover:to-harvest/90 text-warning-foreground"
+                  disabled={loading || !amount}
+                  className="w-full bg-nav-tithing hover:bg-nav-tithing/90 text-red-700"
                 >
                   {loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-warning-foreground mr-2"></div>
-                      Processing...
-                    </div>
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-700 border-t-transparent mr-2" />
+                      Processing Tithe...
+                    </>
                   ) : (
                     <>
-                      <Sparkles className="h-5 w-5 mr-2" />
-                      Give Tithe ({frequency})
+                      <Heart className="h-4 w-4 mr-2" />
+                      Give Tithe
                     </>
                   )}
                 </Button>
+
+                {message && (
+                  <div className="p-4 bg-nav-tithing/20 border border-nav-tithing/30 rounded-lg">
+                    <p className="text-red-700 text-center">{message}</p>
+                  </div>
+                )}
               </form>
             </CardContent>
           </Card>
-          
-          {/* Tithing Info */}
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                The Blessing of Tithing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                  <Star className="h-5 w-5 text-warning mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-white">Honoring ELOHIYM</h4>
-                    <p className="text-sm text-white/90">Tithing is a way to honor ELOHIYM with our firstfruits and acknowledge His provision</p>
+
+          {/* Information & Scripture */}
+          <div className="space-y-6">
+            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+              <CardHeader>
+                <CardTitle className="flex items-center text-red-700">
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Why We Tithe
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 text-sm text-red-600">
+                  <div className="flex items-start space-x-2">
+                    <Heart className="h-4 w-4 mt-0.5 text-red-500" />
+                    <p>Tithing is an act of worship and obedience to God</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <Gift className="h-4 w-4 mt-0.5 text-red-500" />
+                    <p>It supports the work of the church and ministry</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <Star className="h-4 w-4 mt-0.5 text-red-500" />
+                    <p>God promises to bless faithful givers</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <Church className="h-4 w-4 mt-0.5 text-red-500" />
+                    <p>It helps build God's kingdom on earth</p>
                   </div>
                 </div>
-                
-                <div className="flex items-start gap-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                  <Star className="h-5 w-5 text-warning mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-white">Supporting Ministry</h4>
-                    <p className="text-sm text-white/90">Your tithes support YHVH364 GOSATs ministry and help spread ELOHIYM&apos;s word</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+              <CardHeader>
+                <CardTitle className="flex items-center text-red-700">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Tithing Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-red-600">This Month</span>
+                    <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
+                      $0
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-red-600">This Year</span>
+                    <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
+                      $0
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-red-600">Total Given</span>
+                    <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
+                      $0
+                    </Badge>
                   </div>
                 </div>
-                
-                <div className="flex items-start gap-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                  <Star className="h-5 w-5 text-warning mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-white">Receiving Blessing</h4>
-                    <p className="text-sm text-white/90">ELOHIYM promises to bless those who faithfully tithe and give generously</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                  <Star className="h-5 w-5 text-warning mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-white">Building Faith</h4>
-                    <p className="text-sm text-white/90">Tithing helps build our faith and trust in ELOHIYM&apos;s provision</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-warning/10 border border-warning/20 p-4 rounded-lg">
-                <h4 className="font-semibold text-warning mb-2">Traditional Tithe Amount</h4>
-                <p className="text-sm text-white/80">
-                  The biblical tithe is 10% of your income. This is a guideline, but ELOHIYM loves a cheerful giver 
-                  regardless of the amount.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+              <CardContent className="p-6">
+                <blockquote className="text-red-600 italic text-center">
+                  "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver."
+                  <br />
+                  <cite className="text-red-700 font-semibold not-italic">- 2 Corinthians 9:7</cite>
+                </blockquote>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        
-        {/* Ministry Information */}
-        <Card className="bg-card/90 backdrop-blur-sm border-warning/20 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-warning text-center">
-              About YHVH364 GOSATs Ministry
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-foreground mb-6">
-              YHVH364 GOSATs ministry is dedicated to spreading ELOHIYM&apos;s word and supporting the community through 
-              biblical teachings and practical help. Your tithes help fund ministry activities, community outreach, 
-              and the growth of the 364YHVH Community Farm.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-warning/10 border border-warning/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <BookOpen className="h-6 w-6 text-warning" />
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Biblical Teaching</h4>
-                <p className="text-sm text-muted-foreground">Spreading ELOHIYM&apos;s word through teaching and discipleship</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-warning/10 border border-warning/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Heart className="h-6 w-6 text-warning" />
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Community Care</h4>
-                <p className="text-sm text-muted-foreground">Supporting families and individuals in need</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-warning/10 border border-warning/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Church className="h-6 w-6 text-warning" />
-                </div>
-                <h4 className="font-semibold text-foreground mb-1">Ministry Growth</h4>
-                <p className="text-sm text-muted-foreground">Expanding the reach of ELOHIYM&apos;s love and grace</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
-    </div>
     </div>
   )
 }

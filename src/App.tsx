@@ -23,6 +23,8 @@ import ProfilePage from "./pages/ProfilePage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import DashboardPage from "./pages/DashboardPage";
+import MyOrchardsPage from "./pages/MyOrchardsPage";
+import FreeWillGiftingPage from "./pages/FreeWillGiftingPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -137,11 +139,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* My Orchards - redirect to browse for now */}
+              {/* My Orchards */}
               <Route path="/my-orchards" element={
                 <ProtectedRoute>
                   <Layout>
-                    <BrowseOrchardsPage />
+                    <MyOrchardsPage />
                   </Layout>
                 </ProtectedRoute>
               } />
@@ -163,11 +165,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Placeholder routes - redirect to browse orchards */}
+              {/* Free Will Gifting */}
               <Route path="/free-will-gifting" element={
                 <ProtectedRoute>
                   <Layout>
-                    <BrowseOrchardsPage />
+                    <FreeWillGiftingPage />
                   </Layout>
                 </ProtectedRoute>
               } />
