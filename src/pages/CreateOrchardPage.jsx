@@ -25,7 +25,8 @@ import {
   Video,
   Upload,
   X,
-  Loader2
+  Loader2,
+  User
 } from "lucide-react"
 
 export default function CreateOrchardPage({ isEdit = false }) {
@@ -358,35 +359,54 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-amber/10 to-s2g-green/10 p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-nav-create/20 via-background to-nav-create/10">
+      {/* Welcome Section with Profile Picture */}
+      <div className="bg-nav-create/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-create/30 shadow-lg mb-8">
+        <div className="flex items-center space-x-6">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-create shadow-lg">
+            {user?.profile_picture ? (
+              <img 
+                src={user.profile_picture} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-nav-create to-nav-create/80 flex items-center justify-center">
+                <User className="h-10 w-10 text-yellow-700" />
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-yellow-700">
+              {isEdit ? "Edit Orchard" : "Create New Orchard"}, {user?.first_name || 'Friend'}!
+            </h1>
+            <p className="text-yellow-600 text-lg">
+              {isEdit ? "Update your orchard details" : "Plant a new seed in our community"}
+            </p>
+            <p className="text-yellow-500 text-sm mt-1">
+              Preferred Currency: {user?.preferred_currency || 'USD'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto space-y-8 px-4">
         {/* Header */}
         <div className="text-center">
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-s2g-green/30 shadow-2xl">
-            {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <img 
-                src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-                alt="sow2grow logo" 
-                className="w-20 h-20 object-contain bg-transparent"
-                style={{ backgroundColor: 'transparent' }}
-              />
-            </div>
+          <div className="bg-nav-create/10 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-nav-create/30 shadow-2xl">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-s2g-green to-s2g-blue rounded-full flex items-center justify-center shadow-lg">
-                <Sprout className="h-8 w-8 text-white animate-pulse" />
+              <div className="w-16 h-16 bg-nav-create/30 rounded-full flex items-center justify-center shadow-lg">
+                <Sprout className="h-8 w-8 text-yellow-700 animate-pulse" />
               </div>
             </div>
-            <h1 className="text-4xl font-bold text-s2g-brown mb-4" style={{ 
-              fontFamily: "Playfair Display, serif"
-            }}>
+            <h2 className="text-2xl font-bold text-yellow-700 mb-4">
               {isEdit ? "Edit Your Orchard" : "Plant a New Seed"}
-            </h1>
-            <p className="text-lg text-s2g-brown/70 max-w-2xl mx-auto">
+            </h2>
+            <p className="text-lg text-yellow-600 max-w-2xl mx-auto">
               {isEdit ? "Update your orchard details and grow your community support" : "Create a new orchard in your farm stall within the sow2grow community farm."} 
               Share your need with the community and watch it grow with their support.
             </p>
-            <Badge className="mt-4 bg-s2g-green text-white">
+            <Badge className="mt-4 bg-nav-create text-yellow-700">
               <Plus className="h-3 w-3 mr-1" />
               6-Step Creation Process
             </Badge>
