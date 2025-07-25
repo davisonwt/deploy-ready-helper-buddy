@@ -89,7 +89,7 @@ export default function Layout({ children }) {
                     key={item.name}
                     to={item.href}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-2 
-                      hover:scale-105 active:scale-95 min-w-[120px] text-center justify-center
+                      hover:scale-105 active:scale-95 w-[140px] h-[44px] text-center justify-center
                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500' : ''}
                     `}
                     style={{
