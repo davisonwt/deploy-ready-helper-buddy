@@ -438,14 +438,13 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
     }
   }
   
-  // Safety check for orchard data
-  if (!orchard || typeof orchard !== 'object') {
-    console.log("⚠️ OrchardPage: Invalid orchard data, showing loading state");
+  // Loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
         <div className="text-center">
           <div className="mb-4">
-            <Loader2 className="h-12 w-12 animate-spin text-green-600 mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           </div>
           <h2 className="text-xl font-semibold text-green-800 mb-2">
             Loading Orchard
@@ -455,19 +454,11 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
           </p>
         </div>
       </div>
-    );
-  }
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-      </div>
     )
   }
-  
-  if (!orchard) {
+
+  // Safety check for orchard data
+  if (!orchard || typeof orchard !== 'object') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 mb-4">
@@ -483,7 +474,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
           Back to Browse Orchards
         </Button>
       </div>
-    )
+    );
   }
 
   // 🚨 EMERGENCY MODE FALLBACK UI
