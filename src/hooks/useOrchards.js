@@ -17,7 +17,7 @@ export function useOrchards() {
         .from('orchards')
         .select(`
           *,
-          profiles:user_id (
+          profiles:profile_id (
             first_name,
             last_name,
             display_name,
@@ -61,7 +61,7 @@ export function useOrchards() {
         .from('orchards')
         .select(`
           *,
-          profiles:user_id (
+          profiles:profile_id (
             first_name,
             last_name,
             display_name,

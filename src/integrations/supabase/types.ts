@@ -89,6 +89,7 @@ export type Database = {
           original_seed_value: number
           payment_processing_fee: number
           pocket_price: number
+          profile_id: string
           seed_value: number
           status: Database["public"]["Enums"]["orchard_status"]
           supporters: number
@@ -120,6 +121,7 @@ export type Database = {
           original_seed_value: number
           payment_processing_fee?: number
           pocket_price?: number
+          profile_id: string
           seed_value: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
@@ -151,6 +153,7 @@ export type Database = {
           original_seed_value?: number
           payment_processing_fee?: number
           pocket_price?: number
+          profile_id?: string
           seed_value?: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
@@ -164,7 +167,15 @@ export type Database = {
           views?: number
           why_needed?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orchards_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_config: {
         Row: {

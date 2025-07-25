@@ -36,7 +36,7 @@ export default function BrowseOrchardsPage() {
         .from('orchards')
         .select(`
           *,
-          profiles:user_id (
+          profiles:profile_id (
             first_name,
             last_name,
             display_name,
