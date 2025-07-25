@@ -17,7 +17,8 @@ import {
   DollarSign,
   Plus,
   Eye,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 
@@ -89,40 +90,33 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-blue/10 to-s2g-amber/20">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-lg border-b border-s2g-green/20 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {/* Logo */}
-              <div className="flex items-center justify-center bg-transparent">
-                <img 
-                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-                  alt="sow2grow logo" 
-                  className="w-12 h-12 object-contain bg-transparent"
-                  style={{ backgroundColor: 'transparent' }}
-                />
+    <div className="min-h-screen bg-gradient-to-br from-nav-dashboard/20 via-background to-nav-dashboard/10">
+      {/* Welcome Section with Profile Picture */}
+      <div className="bg-nav-dashboard/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-dashboard/30 shadow-lg mb-8">
+        <div className="flex items-center space-x-6">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
+            {user?.profile_picture ? (
+              <img 
+                src={user.profile_picture} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
+                <User className="h-10 w-10 text-slate-700" />
               </div>
-              <Avatar className="h-12 w-12 ring-2 ring-s2g-green/30">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-s2g-green to-s2g-blue text-white">
-                  {getInitials(user?.user_metadata?.first_name, user?.user_metadata?.last_name)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold text-s2g-brown">
-                  Welcome back, {user?.user_metadata?.first_name || 'Grower'}!
-                </h1>
-                <p className="text-s2g-brown/70">Here's what's growing in your garden</p>
-              </div>
-            </div>
-            <Link to="/create-orchard">
-              <Button className="bg-gradient-to-r from-s2g-green to-s2g-blue hover:from-s2g-green/90 hover:to-s2g-blue/90 text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Plant New Seed
-              </Button>
-            </Link>
+            )}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-700">
+              Welcome back, {user?.first_name || 'Friend'}!
+            </h1>
+            <p className="text-slate-600 text-lg">
+              Ready to grow your orchard today?
+            </p>
+            <p className="text-slate-500 text-sm mt-1">
+              Preferred Currency: {user?.preferred_currency || 'USD'}
+            </p>
           </div>
         </div>
       </div>
@@ -130,50 +124,50 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm border-s2g-green/30 hover:shadow-lg transition-all">
+          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-s2g-brown/70">My Orchards</p>
-                  <p className="text-2xl font-bold text-s2g-brown">{stats.totalOrchards}</p>
+                  <p className="text-sm font-medium text-slate-600">My Orchards</p>
+                  <p className="text-2xl font-bold text-slate-700">{stats.totalOrchards}</p>
                 </div>
-                <TreePine className="h-8 w-8 text-s2g-green" />
+                <TreePine className="h-8 w-8 text-slate-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/90 backdrop-blur-sm border-s2g-blue/30 hover:shadow-lg transition-all">
+          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-s2g-brown/70">Total Raised</p>
-                  <p className="text-2xl font-bold text-s2g-brown">{formatCurrency(stats.totalRaised)}</p>
+                  <p className="text-sm font-medium text-slate-600">Total Raised</p>
+                  <p className="text-2xl font-bold text-slate-700">{formatCurrency(stats.totalRaised)}</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-s2g-blue" />
+                <TrendingUp className="h-8 w-8 text-slate-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/90 backdrop-blur-sm border-s2g-amber/30 hover:shadow-lg transition-all">
+          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-s2g-brown/70">My Bestowals</p>
-                  <p className="text-2xl font-bold text-s2g-brown">{stats.totalBestowals}</p>
+                  <p className="text-sm font-medium text-slate-600">My Bestowals</p>
+                  <p className="text-2xl font-bold text-slate-700">{stats.totalBestowals}</p>
                 </div>
-                <Heart className="h-8 w-8 text-s2g-amber" />
+                <Heart className="h-8 w-8 text-slate-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/90 backdrop-blur-sm border-s2g-purple/30 hover:shadow-lg transition-all">
+          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-s2g-brown/70">Total Supported</p>
-                  <p className="text-2xl font-bold text-s2g-brown">{formatCurrency(stats.totalSupported)}</p>
+                  <p className="text-sm font-medium text-slate-600">Total Supported</p>
+                  <p className="text-2xl font-bold text-slate-700">{formatCurrency(stats.totalSupported)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-s2g-purple" />
+                <DollarSign className="h-8 w-8 text-slate-600" />
               </div>
             </CardContent>
           </Card>

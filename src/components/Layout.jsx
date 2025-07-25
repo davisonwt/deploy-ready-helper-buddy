@@ -54,16 +54,16 @@ export default function Layout({ children }) {
             <Link to="/dashboard" className="flex items-center space-x-3 group">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
                 <img 
-                  src="/logo2.jpeg" 
+                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
                   alt="sow2grow logo" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover bg-transparent"
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-primary font-playfair">
+                <h1 className="text-xl font-bold text-s2g-green font-playfair">
                   sow2grow
                 </h1>
-                <p className="text-xs text-muted-foreground">364yhvh community farm</p>
+                <p className="text-xs text-s2g-blue">364yhvh community farm</p>
               </div>
             </Link>
             
@@ -76,17 +76,17 @@ export default function Layout({ children }) {
                 const getNavColor = (navItem) => {
                   switch (navItem.name) {
                     case "dashboard":
-                      return "from-success/20 to-success/30 border-success/30 text-success shadow-success/20"
+                      return "bg-nav-dashboard/80 hover:bg-nav-dashboard border-nav-dashboard text-slate-700 shadow-nav-dashboard/30"
                     case "community orchards":
-                      return "from-destructive/20 to-destructive/30 border-destructive/30 text-destructive shadow-destructive/20"
+                      return "bg-nav-community/80 hover:bg-nav-community border-nav-community text-green-700 shadow-nav-community/30"
                     case "create orchard":
-                      return "from-success/20 to-success/30 border-success/30 text-success shadow-success/20"
+                      return "bg-nav-create/80 hover:bg-nav-create border-nav-create text-yellow-700 shadow-nav-create/30"
                     case "my orchards":
-                      return "from-info/20 to-info/30 border-info/30 text-info shadow-info/20"
+                      return "bg-nav-orchards/80 hover:bg-nav-orchards border-nav-orchards text-orange-700 shadow-nav-orchards/30"
                     case "tithing":
-                      return "from-warning/20 to-warning/30 border-warning/30 text-warning shadow-warning/20"
+                      return "bg-nav-tithing/80 hover:bg-nav-tithing border-nav-tithing text-red-700 shadow-nav-tithing/30"
                     case "free-will gifting":
-                      return "from-accent/20 to-accent/30 border-accent/30 text-accent-foreground shadow-accent/20"
+                      return "bg-nav-gifting/80 hover:bg-nav-gifting border-nav-gifting text-purple-700 shadow-nav-gifting/30"
                     default:
                       return "from-muted/20 to-muted/30 border-muted/30 text-muted-foreground shadow-muted/20"
                   }
@@ -99,7 +99,7 @@ export default function Layout({ children }) {
                     key={item.name}
                     to={item.href}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-2 
-                      bg-gradient-to-b ${colorClass} 
+                      ${colorClass} 
                       shadow-inner hover:shadow-lg hover:scale-105 active:shadow-sm active:scale-95
                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-ring' : ''}
                       min-w-[120px] text-center justify-center
@@ -243,18 +243,18 @@ export default function Layout({ children }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
-                  <img 
-                    src="/logo2.jpeg" 
-                    alt="sow2grow logo" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
+                <img 
+                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                  alt="sow2grow logo" 
+                  className="w-full h-full object-cover bg-transparent"
+                />
+              </div>
                 <div>
-                  <h3 className="text-lg font-bold text-primary font-playfair">
+                  <h3 className="text-lg font-bold text-s2g-green font-playfair">
                     sow2grow
                   </h3>
-                  <p className="text-xs text-muted-foreground">364yhvh community farm</p>
+                  <p className="text-xs text-s2g-blue">364yhvh community farm</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">

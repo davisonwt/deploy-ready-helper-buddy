@@ -443,6 +443,30 @@ export default function ProfilePage() {
                 
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-primary" />
+                    Preferred Currency
+                  </label>
+                  {editing ? (
+                    <select
+                      name="preferred_currency"
+                      value={formData.preferred_currency}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="CAD">CAD ($)</option>
+                      <option value="AUD">AUD ($)</option>
+                      <option value="ZAR">ZAR (R)</option>
+                    </select>
+                  ) : (
+                    <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.preferred_currency || "USD"}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                     <User className="h-4 w-4 text-primary" />
                     Last Name
                   </label>

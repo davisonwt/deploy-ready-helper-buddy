@@ -94,7 +94,14 @@ export default {
 				'golden-brown': 'hsl(var(--golden-brown))',
 				'royal-purple': 'hsl(var(--royal-purple))',
 				'cyan-accent': 'hsl(var(--cyan-accent))',
-				'light-beige': 'hsl(var(--light-beige))'
+				'light-beige': 'hsl(var(--light-beige))',
+				// Navigation Colors
+				'nav-dashboard': 'hsl(var(--nav-dashboard))',
+				'nav-community': 'hsl(var(--nav-community))',
+				'nav-create': 'hsl(var(--nav-create))',
+				'nav-orchards': 'hsl(var(--nav-orchards))',
+				'nav-tithing': 'hsl(var(--nav-tithing))',
+				'nav-gifting': 'hsl(var(--nav-gifting))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
