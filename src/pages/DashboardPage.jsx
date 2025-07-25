@@ -24,7 +24,7 @@ import { formatCurrency } from '../utils/formatters'
 export default function DashboardPage() {
   const { user } = useAuth()
   const { orchards, loading: orchardsLoading, fetchOrchards } = useOrchards()
-  const { bestowals, loading: bestowalsLoading, fetchBestowals } = useBestowals()
+  const { getUserBestowals, loading: bestowalsLoading } = useBestowals()
   const [userOrchards, setUserOrchards] = useState([])
   const [userBestowals, setUserBestowals] = useState([])
   const [stats, setStats] = useState({
@@ -40,7 +40,13 @@ export default function DashboardPage() {
       fetchOrchards({ user_id: user.id })
       
       // Fetch user's bestowals
-      fetchBestowals({ bestower_id: user.id })
+      const fetchUserBestowals = async () => {
+        const result = await getUserBestowals()
+        if (result.success) {
+          setUserBestowals(result.data)
+        }
+      }
+      fetchUserBestowals()
     }
   }, [user])
 
@@ -64,9 +70,6 @@ export default function DashboardPage() {
     })
   }, [orchards, userBestowals, user])
 
-  useEffect(() => {
-    setUserBestowals(bestowals.filter(bestowal => bestowal.bestower_id === user?.id))
-  }, [bestowals, user])
 
   const getInitials = (firstName, lastName) => {
     return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase()
