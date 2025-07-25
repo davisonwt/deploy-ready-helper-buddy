@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           amount: number
           bestower_id: string
+          bestower_profile_id: string | null
           created_at: string
           currency: string
           id: string
@@ -33,6 +34,7 @@ export type Database = {
         Insert: {
           amount: number
           bestower_id: string
+          bestower_profile_id?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -48,6 +50,7 @@ export type Database = {
         Update: {
           amount?: number
           bestower_id?: string
+          bestower_profile_id?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -61,6 +64,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bestowals_bestower_profile_id_fkey"
+            columns: ["bestower_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bestowals_orchard_id_fkey"
             columns: ["orchard_id"]
