@@ -99,7 +99,7 @@ export default {
 				'nav-dashboard': 'hsl(var(--nav-dashboard))',
 				'nav-community': 'hsl(var(--nav-community))',
 				'nav-create': 'hsl(var(--nav-create))',
-				'nav-orchards': 'hsl(var(--nav-orchards))',
+				'nav-my': 'hsl(var(--nav-my))',
 				'nav-tithing': 'hsl(var(--nav-tithing))',
 				'nav-gifting': 'hsl(var(--nav-gifting))'
 			},
