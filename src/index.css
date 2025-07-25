@@ -45,12 +45,12 @@ All colors MUST be HSL.
   --gradient-hero: linear-gradient(135deg, hsl(var(--s2g-blue)), hsl(var(--s2g-green)));
   
   /* Navigation Colors - Pastel Palette */
-  --nav-dashboard: 188 100% 80%; /* #9bf6ff */
-  --nav-community: 137 100% 87%; /* #caffbf */
-  --nav-create: 62 100% 86%; /* #fdffb6 */
-  --nav-my: 33 100% 82%; /* #ffd6a5 */
-  --nav-tithing: 0 100% 84%; /* #ffadad */
-  --nav-gifting: 230 81% 72%; /* #8093f1 */
+  --nav-dashboard: 187 100% 80%; /* #9bf6ff - light cyan */
+  --nav-community: 137 100% 87%; /* #caffbf - light green */
+  --nav-create: 62 100% 86%; /* #fdffb6 - light yellow */
+  --nav-my: 33 100% 82%; /* #ffd6a5 - light orange */
+  --nav-tithing: 0 100% 84%; /* #ffadad - light red */
+  --nav-gifting: 230 81% 72%; /* #8093f1 - light purple */
   
   /* Custom colors for registration form */
   --olive-green: 60 30% 45%;

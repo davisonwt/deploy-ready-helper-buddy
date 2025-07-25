@@ -76,19 +76,19 @@ export default function Layout({ children }) {
                 const getNavColor = (navItem) => {
                   switch (navItem.name) {
                     case "dashboard":
-                      return "bg-nav-dashboard/80 hover:bg-nav-dashboard border-nav-dashboard text-slate-700 shadow-nav-dashboard/30"
+                      return "bg-nav-dashboard hover:bg-nav-dashboard/90 border-nav-dashboard text-slate-800 shadow-nav-dashboard/30"
                     case "community orchards":
-                      return "bg-nav-community/80 hover:bg-nav-community border-nav-community text-green-700 shadow-nav-community/30"
+                      return "bg-nav-community hover:bg-nav-community/90 border-nav-community text-green-800 shadow-nav-community/30"
                     case "create orchard":
-                      return "bg-nav-create/80 hover:bg-nav-create border-nav-create text-yellow-700 shadow-nav-create/30"
+                      return "bg-nav-create hover:bg-nav-create/90 border-nav-create text-yellow-800 shadow-nav-create/30"
                     case "my orchards":
-                      return "bg-nav-my/80 hover:bg-nav-my border-nav-my text-orange-700 shadow-nav-my/30"
+                      return "bg-nav-my hover:bg-nav-my/90 border-nav-my text-orange-800 shadow-nav-my/30"
                     case "tithing":
-                      return "bg-nav-tithing/80 hover:bg-nav-tithing border-nav-tithing text-red-700 shadow-nav-tithing/30"
+                      return "bg-nav-tithing hover:bg-nav-tithing/90 border-nav-tithing text-red-800 shadow-nav-tithing/30"
                     case "free-will gifting":
-                      return "bg-nav-gifting/80 hover:bg-nav-gifting border-nav-gifting text-purple-700 shadow-nav-gifting/30"
+                      return "bg-nav-gifting hover:bg-nav-gifting/90 border-nav-gifting text-purple-800 shadow-nav-gifting/30"
                     default:
-                      return "from-muted/20 to-muted/30 border-muted/30 text-muted-foreground shadow-muted/20"
+                      return "bg-muted hover:bg-muted/80 border-muted text-muted-foreground shadow-muted/20"
                   }
                 }
                 
