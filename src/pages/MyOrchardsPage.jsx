@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link } from 'react-router-dom'
 import { 
   TreePine, 
@@ -28,6 +29,35 @@ export default function MyOrchardsPage() {
   const [userOrchards, setUserOrchards] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+
+  // Categories list - same as other pages
+  const categories = [
+    "The Gift of Accessories", 
+    "The Gift of Adventure Packages",
+    "The Gift of Appliances",
+    "The Gift of Art",
+    "The Gift of Bees",
+    "The Gift of Courses",
+    "The Gift of Custom Made",
+    "The Gift of DIY",
+    "The Gift of Electronics",
+    "The Gift of Energy",
+    "The Gift of Food",
+    "The Gift of Free-will Gifting",
+    "The Gift of Innovation",
+    "The Gift of Kitchenware",
+    "The Gift of Music",
+    "The Gift of Nourishment",
+    "The Gift of Pay as You Go",
+    "The Gift of Property",
+    "The Gift of Services",
+    "The Gift of Technology",
+    "The Gift of Tithing",
+    "The Gift of Tools",
+    "The Gift of Vehicles",
+    "The Gift of Wellness"
+  ]
 
   useEffect(() => {
     if (user) {
@@ -49,9 +79,13 @@ export default function MyOrchardsPage() {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(orchard => orchard.status === statusFilter)
     }
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(orchard => orchard.category === selectedCategory)
+    }
     
     setUserOrchards(filtered)
-  }, [orchards, user, searchTerm, statusFilter])
+  }, [orchards, user, searchTerm, statusFilter, selectedCategory])
 
   const getCompletionPercentage = (orchard) => {
     if (!orchard.total_pockets) return 0
@@ -76,30 +110,48 @@ export default function MyOrchardsPage() {
     <div className="min-h-screen bg-gradient-to-br from-nav-orchards/20 via-background to-nav-orchards/10">
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-orchards/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-orchards/30 shadow-lg mb-8">
-        <div className="flex items-center space-x-6">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-orchards shadow-lg">
-            {user?.profile_picture ? (
-              <img 
-                src={user.profile_picture} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-nav-orchards to-nav-orchards/80 flex items-center justify-center">
-                <User className="h-10 w-10 text-orange-700" />
-              </div>
-            )}
+        <div className="flex items-center justify-between space-x-6">
+          <div className="flex items-center space-x-6">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-orchards shadow-lg">
+              {user?.profile_picture ? (
+                <img 
+                  src={user.profile_picture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-nav-orchards to-nav-orchards/80 flex items-center justify-center">
+                  <User className="h-10 w-10 text-orange-700" />
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-orange-700">
+                My Orchards, {user?.first_name || 'Friend'}!
+              </h1>
+              <p className="text-orange-600 text-lg">
+                Manage and track your growing orchards
+              </p>
+              <p className="text-orange-500 text-sm mt-1">
+                Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-orange-700">
-              My Orchards, {user?.first_name || 'Friend'}!
-            </h1>
-            <p className="text-orange-600 text-lg">
-              Manage and track your growing orchards
-            </p>
-            <p className="text-orange-500 text-sm mt-1">
-              Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
-            </p>
+          <div className="min-w-[200px]">
+            <label className="block text-sm font-medium text-orange-700 mb-2">Filter by Category</label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="border-nav-orchards/30 focus:border-nav-orchards bg-white">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border-nav-orchards/30 z-50">
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
