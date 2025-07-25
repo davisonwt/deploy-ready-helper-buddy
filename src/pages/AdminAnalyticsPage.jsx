@@ -34,14 +34,17 @@ export default function AdminAnalyticsPage() {
   const [analytics, setAnalytics] = useState(null)
   
   const categories = [
-    "The Gift of Art",
     "The Gift of Accessories", 
     "The Gift of Adventure Packages",
     "The Gift of Appliances",
+    "The Gift of Art",
+    "The Gift of Bees",
+    "The Gift of Courses",
     "The Gift of Custom Made",
     "The Gift of DIY",
     "The Gift of Electronics",
     "The Gift of Energy",
+    "The Gift of Food",
     "The Gift of Free-will Gifting",
     "The Gift of Innovation",
     "The Gift of Kitchenware",
@@ -54,7 +57,7 @@ export default function AdminAnalyticsPage() {
     "The Gift of Tithing",
     "The Gift of Tools",
     "The Gift of Vehicles",
-    "The Gift of Wellness",
+    "The Gift of Wellness"
   ]
   
   // Fetch analytics data from Supabase

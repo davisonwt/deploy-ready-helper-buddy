@@ -123,16 +123,30 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
   
   const categories = [
-    "The Gift of Technology",
-    "The Gift of Vehicles", 
-    "The Gift of Property",
-    "The Gift of Energy",
-    "The Gift of Wellness",
-    "The Gift of Tools",
-    "The Gift of Services",
-    "The Gift of Innovation",
+    "The Gift of Accessories", 
+    "The Gift of Adventure Packages",
+    "The Gift of Appliances",
+    "The Gift of Art",
+    "The Gift of Bees",
+    "The Gift of Courses",
+    "The Gift of Custom Made",
+    "The Gift of DIY",
     "The Gift of Electronics",
-    "The Gift of Appliances"
+    "The Gift of Energy",
+    "The Gift of Food",
+    "The Gift of Free-will Gifting",
+    "The Gift of Innovation",
+    "The Gift of Kitchenware",
+    "The Gift of Music",
+    "The Gift of Nourishment",
+    "The Gift of Pay as You Go",
+    "The Gift of Property",
+    "The Gift of Services",
+    "The Gift of Technology",
+    "The Gift of Tithing",
+    "The Gift of Tools",
+    "The Gift of Vehicles",
+    "The Gift of Wellness"
   ]
   
   const handleChange = (e) => {
