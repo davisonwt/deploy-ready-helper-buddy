@@ -72,60 +72,30 @@ export default function Layout({ children }) {
               {navigation.map((item, index) => {
                 const Icon = item.icon
                 
-                // Color coordination with page content using semantic tokens
-                const getNavColor = (navItem) => {
-                  switch (navItem.name) {
-                    case "dashboard":
-                      return "text-slate-800 border-2 shadow-inner hover:shadow-lg" 
-                    case "community orchards":
-                      return "text-green-800 border-2 shadow-inner hover:shadow-lg"
-                    case "create orchard":
-                      return "text-yellow-800 border-2 shadow-inner hover:shadow-lg"
-                    case "my orchards":
-                      return "text-orange-800 border-2 shadow-inner hover:shadow-lg"
-                    case "tithing":
-                      return "text-red-800 border-2 shadow-inner hover:shadow-lg"
-                    case "free-will gifting":
-                      return "text-purple-800 border-2 shadow-inner hover:shadow-lg"
-                    default:
-                      return "bg-muted hover:bg-muted/80 border-muted text-muted-foreground shadow-muted/20"
-                  }
+                // Direct color mapping
+                const buttonColors = {
+                  "dashboard": { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' },
+                  "community orchards": { bg: '#caffbf', border: '#caffbf', text: '#166534' },
+                  "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
+                  "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
+                  "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
+                  "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' }
                 }
                 
-                const getNavStyle = (navItem) => {
-                  switch (navItem.name) {
-                    case "dashboard":
-                      return { backgroundColor: '#9bf6ff', borderColor: '#9bf6ff' }
-                    case "community orchards":
-                      return { backgroundColor: '#caffbf', borderColor: '#caffbf' }
-                    case "create orchard":
-                      return { backgroundColor: '#fdffb6', borderColor: '#fdffb6' }
-                    case "my orchards":
-                      return { backgroundColor: '#ffd6a5', borderColor: '#ffd6a5' }
-                    case "tithing":
-                      return { backgroundColor: '#ffadad', borderColor: '#ffadad' }
-                    case "free-will gifting":
-                      return { backgroundColor: '#8093f1', borderColor: '#8093f1' }
-                    default:
-                      return {}
-                  }
-                }
-                
-                const colorClass = getNavColor(item)
-                const navStyle = getNavStyle(item)
+                const colors = buttonColors[item.name] || { bg: '#f1f5f9', border: '#e2e8f0', text: '#64748b' }
                 
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 
-                      ${colorClass} 
-                      hover:scale-105 active:shadow-sm active:scale-95
-                      ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-ring' : ''}
-                      min-w-[120px] text-center justify-center
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-2 
+                      hover:scale-105 active:scale-95 min-w-[120px] text-center justify-center
+                      ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500' : ''}
                     `}
                     style={{
-                      ...navStyle,
+                      backgroundColor: colors.bg,
+                      borderColor: colors.border,
+                      color: colors.text,
                       boxShadow: isActive(item.href) 
                         ? 'inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.15)' 
                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
