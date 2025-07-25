@@ -76,35 +76,56 @@ export default function Layout({ children }) {
                 const getNavColor = (navItem) => {
                   switch (navItem.name) {
                     case "dashboard":
-                      return "bg-nav-dashboard hover:bg-nav-dashboard/90 border-nav-dashboard text-slate-800 shadow-nav-dashboard/30"
+                      return "text-slate-800 border-2 shadow-inner hover:shadow-lg" 
                     case "community orchards":
-                      return "bg-nav-community hover:bg-nav-community/90 border-nav-community text-green-800 shadow-nav-community/30"
+                      return "text-green-800 border-2 shadow-inner hover:shadow-lg"
                     case "create orchard":
-                      return "bg-nav-create hover:bg-nav-create/90 border-nav-create text-yellow-800 shadow-nav-create/30"
+                      return "text-yellow-800 border-2 shadow-inner hover:shadow-lg"
                     case "my orchards":
-                      return "bg-nav-my hover:bg-nav-my/90 border-nav-my text-orange-800 shadow-nav-my/30"
+                      return "text-orange-800 border-2 shadow-inner hover:shadow-lg"
                     case "tithing":
-                      return "bg-nav-tithing hover:bg-nav-tithing/90 border-nav-tithing text-red-800 shadow-nav-tithing/30"
+                      return "text-red-800 border-2 shadow-inner hover:shadow-lg"
                     case "free-will gifting":
-                      return "bg-nav-gifting hover:bg-nav-gifting/90 border-nav-gifting text-purple-800 shadow-nav-gifting/30"
+                      return "text-purple-800 border-2 shadow-inner hover:shadow-lg"
                     default:
                       return "bg-muted hover:bg-muted/80 border-muted text-muted-foreground shadow-muted/20"
                   }
                 }
                 
+                const getNavStyle = (navItem) => {
+                  switch (navItem.name) {
+                    case "dashboard":
+                      return { backgroundColor: '#9bf6ff', borderColor: '#9bf6ff' }
+                    case "community orchards":
+                      return { backgroundColor: '#caffbf', borderColor: '#caffbf' }
+                    case "create orchard":
+                      return { backgroundColor: '#fdffb6', borderColor: '#fdffb6' }
+                    case "my orchards":
+                      return { backgroundColor: '#ffd6a5', borderColor: '#ffd6a5' }
+                    case "tithing":
+                      return { backgroundColor: '#ffadad', borderColor: '#ffadad' }
+                    case "free-will gifting":
+                      return { backgroundColor: '#8093f1', borderColor: '#8093f1' }
+                    default:
+                      return {}
+                  }
+                }
+                
                 const colorClass = getNavColor(item)
+                const navStyle = getNavStyle(item)
                 
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-2 
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 
                       ${colorClass} 
-                      shadow-inner hover:shadow-lg hover:scale-105 active:shadow-sm active:scale-95
+                      hover:scale-105 active:shadow-sm active:scale-95
                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-ring' : ''}
                       min-w-[120px] text-center justify-center
                     `}
                     style={{
+                      ...navStyle,
                       boxShadow: isActive(item.href) 
                         ? 'inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.15)' 
                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
