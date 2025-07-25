@@ -192,7 +192,7 @@ export default function DashboardPage() {
                   <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't planted any seeds yet</p>
                   <Link to="/create-orchard">
-                    <Button>Plant Your First Seed</Button>
+                    <Button style={{ backgroundColor: '#fdffb6', borderColor: '#fdffb6', color: '#a16207' }}>Plant Your First Seed</Button>
                   </Link>
                 </div>
               ) : (
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                   <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't made any bestowals yet</p>
                   <Link to="/browse-orchards">
-                    <Button>Discover Orchards</Button>
+                    <Button style={{ backgroundColor: '#caffbf', borderColor: '#caffbf', color: '#166534' }}>Discover Orchards</Button>
                   </Link>
                 </div>
               ) : (
@@ -291,7 +291,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to="/create-orchard">
-                <Button className="w-full h-20 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600">
+                <Button className="w-full h-20" style={{ backgroundColor: '#fdffb6', borderColor: '#fdffb6', color: '#a16207' }}>
                   <div className="text-center">
                     <Plus className="h-6 w-6 mx-auto mb-2" />
                     <span>Plant New Seed</span>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
               </Link>
               
               <Link to="/browse-orchards">
-                <Button variant="outline" className="w-full h-20">
+                <Button className="w-full h-20" style={{ backgroundColor: '#caffbf', borderColor: '#caffbf', color: '#166534' }}>
                   <div className="text-center">
                     <TreePine className="h-6 w-6 mx-auto mb-2" />
                     <span>Browse Orchards</span>
