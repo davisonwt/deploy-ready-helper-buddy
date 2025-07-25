@@ -20,19 +20,10 @@ export async function loadOrchard(orchardId) {
       .from('orchards')
       .select(`
         *,
-        profiles!orchards_user_id_fkey (
+        profiles!profile_id (
           first_name,
           last_name,
-          avatar_url,
-          email
-        ),
-        bestowals (
-          id,
-          amount,
-          pocket_numbers,
-          status,
-          created_at,
-          user_id
+          avatar_url
         )
       `)
       .eq('id', orchardId)

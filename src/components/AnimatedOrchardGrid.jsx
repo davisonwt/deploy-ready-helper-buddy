@@ -143,18 +143,19 @@ export function AnimatedOrchardGrid({
         status.isSparkling && "animate-pulse ring-2 ring-warning/50"
       )
     } else if (status.isSelected) {
-      // Green with heart for selected pockets
+      // Green background with heart for selected pockets
       return cn(
         baseClasses,
-        "bg-gradient-to-br from-green-400 to-green-600 border-green-700 shadow-md",
+        "bg-[hsl(var(--s2g-green))] border-green-700 border-2 text-white",
+        "flex items-center justify-center",
         status.isAnimating && "animate-bounce scale-110"
       )
     } else {
       // Light brown with dark brown edge for available pockets
       return cn(
         baseClasses,
-        "bg-gradient-to-br from-amber-200 to-amber-300 border-amber-800 border-2",
-        "hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-600 hover:border-blue-700 hover:shadow-lg transition-all duration-200",
+        "bg-[hsl(var(--s2g-beige))] border-[hsl(var(--s2g-brown))] border-2",
+        "hover:bg-[hsl(var(--s2g-blue))] hover:border-blue-700 hover:shadow-lg transition-all duration-200",
         !interactive && "cursor-default"
       )
     }
@@ -205,11 +206,11 @@ export function AnimatedOrchardGrid({
       <div className="text-center mb-6">
         <div className="flex justify-center items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gradient-to-br from-amber-200 to-amber-300 border-2 border-amber-800 rounded-full"></div>
+            <div className="w-4 h-4 bg-[hsl(var(--s2g-beige))] border-2 border-[hsl(var(--s2g-brown))] rounded-full"></div>
             <span>Available</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-green-600 border-2 border-green-700 rounded-full"></div>
+            <div className="w-4 h-4 bg-[hsl(var(--s2g-green))] border-2 border-green-700 rounded-full"></div>
             <span>Selected</span>
           </div>
           <div className="flex items-center gap-2">
