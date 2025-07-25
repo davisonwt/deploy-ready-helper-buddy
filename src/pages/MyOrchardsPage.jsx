@@ -63,7 +63,7 @@ export default function MyOrchardsPage() {
 
   useEffect(() => {
     if (user) {
-      fetchOrchards({ user_id: user.id })
+      fetchOrchards()
     }
   }, [user])
 

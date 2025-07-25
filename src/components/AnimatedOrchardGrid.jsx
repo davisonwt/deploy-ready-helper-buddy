@@ -154,7 +154,7 @@ export function AnimatedOrchardGrid({
       return cn(
         baseClasses,
         "bg-gradient-to-br from-amber-200 to-amber-300 border-amber-800 border-2",
-        "hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-600 hover:border-blue-700 hover:shadow-lg",
+        "hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-600 hover:border-blue-700 hover:shadow-lg transition-all duration-200",
         !interactive && "cursor-default"
       )
     }
