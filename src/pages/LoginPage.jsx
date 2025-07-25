@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
   
-  const { login } = useAuth()
+  const { login, loginAnonymously } = useAuth()
   const navigate = useNavigate()
   
   useEffect(() => {
@@ -30,9 +30,28 @@ export default function LoginPage() {
       const result = await login(email, password)
       
       if (result.success) {
-        navigate("/browse-orchards")
+        navigate("/dashboard")
       } else {
         setError(result.error || "Login failed")
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGuestAccess = async () => {
+    setLoading(true)
+    setError("")
+    
+    try {
+      const result = await loginAnonymously()
+      
+      if (result.success) {
+        navigate("/dashboard")
+      } else {
+        setError(result.error || "Guest access failed")
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -194,19 +213,37 @@ export default function LoginPage() {
               </div>
             </div>
             
-            <div className="text-center">
+            <div className="text-center space-y-3">
               <p className="text-sm text-muted-foreground mb-3">
                 Ready to start sowing and bestowing?
               </p>
-              <Link to="/register">
+              <div className="flex flex-col gap-2">
+                <Link to="/register">
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-all duration-300 hover:scale-105 font-medium"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Join Our Community
+                  </Button>
+                </Link>
+                
                 <Button 
-                  variant="outline" 
-                  className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-all duration-300 hover:scale-105 font-medium"
+                  variant="ghost" 
+                  onClick={handleGuestAccess}
+                  disabled={loading}
+                  className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-300 text-sm"
                 >
-                  <Users className="h-4 w-4 mr-2" />
-                  Join Our Community
+                  {loading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600 mr-2"></div>
+                      Accessing as Guest...
+                    </div>
+                  ) : (
+                    <>Continue as Guest</>
+                  )}
                 </Button>
-              </Link>
+              </div>
             </div>
             
             <div className="pt-4 border-t border-border">
