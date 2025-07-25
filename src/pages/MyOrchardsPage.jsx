@@ -65,7 +65,7 @@ export default function MyOrchardsPage() {
     if (user) {
       fetchOrchards()
     }
-  }, [user])
+  }, [user, fetchOrchards])
 
   useEffect(() => {
     // Filter user's orchards with better error handling
