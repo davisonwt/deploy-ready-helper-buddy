@@ -15,6 +15,7 @@ export function AnimatedOrchardGrid({
 }) {
   const [animatingPockets, setAnimatingPockets] = useState(new Set())
   const [sparklingPockets, setSparklingPockets] = useState(new Set())
+  const [compostingPockets, setCompostingPockets] = useState(new Set())
   
   // Generate grid layout
   const generateGrid = () => {
@@ -93,12 +94,14 @@ export function AnimatedOrchardGrid({
     const isSelected = selectedPockets.includes(pocketNumber)
     const isAnimating = animatingPockets.has(pocketNumber)
     const isSparkling = sparklingPockets.has(pocketNumber)
+    const isComposting = compostingPockets.has(pocketNumber)
     
     return {
       isTaken: !!takenPocket,
       isSelected,
       isAnimating,
       isSparkling,
+      isComposting,
       takenPocket,
       growthStage: takenPocket ? getGrowthStage(takenPocket.daysGrowing) : null,
     }
@@ -120,7 +123,7 @@ export function AnimatedOrchardGrid({
           return <Sprout className="h-3 w-3 text-success" />
       }
     } else if (status.isSelected) {
-      return <Heart className="h-4 w-4 text-destructive" />
+      return <Heart className="h-4 w-4 text-white fill-white" />
     } else if (showNumbers) {
       return <span className="text-xs font-medium text-muted-foreground">{pocketNumber}</span>
     }
@@ -132,7 +135,7 @@ export function AnimatedOrchardGrid({
     const baseClasses = "relative w-8 h-8 rounded-full border-2 transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95"
     
     if (status.isTaken) {
-      // Success colors for taken pockets
+      // Success colors for taken pockets (keep original styling)
       return cn(
         baseClasses,
         "bg-gradient-to-br from-success/60 to-success border-success",
@@ -140,17 +143,18 @@ export function AnimatedOrchardGrid({
         status.isSparkling && "animate-pulse ring-2 ring-warning/50"
       )
     } else if (status.isSelected) {
-      // Info colors for selected pockets
+      // Green with heart for selected pockets
       return cn(
         baseClasses,
-        "bg-gradient-to-br from-info/60 to-info border-info shadow-md",
+        "bg-gradient-to-br from-green-400 to-green-600 border-green-700 shadow-md",
         status.isAnimating && "animate-bounce scale-110"
       )
     } else {
-      // Warning colors for available pockets
+      // Light brown with dark brown edge for available pockets
       return cn(
         baseClasses,
-        "bg-gradient-to-br from-warning/60 to-warning border-warning hover:border-info hover:bg-gradient-to-br hover:from-info/40 hover:to-info/60 hover:shadow-md",
+        "bg-gradient-to-br from-amber-200 to-amber-300 border-amber-800 border-2",
+        "hover:bg-gradient-to-br hover:from-blue-400 hover:to-blue-600 hover:border-blue-700 hover:shadow-lg",
         !interactive && "cursor-default"
       )
     }
@@ -162,6 +166,18 @@ export function AnimatedOrchardGrid({
     const status = getPocketStatus(pocketNumber)
     if (status.isTaken) return
     
+    // Trigger compost animation for new selections
+    if (!status.isSelected) {
+      setCompostingPockets(prev => new Set([...prev, pocketNumber]))
+      setTimeout(() => {
+        setCompostingPockets(prev => {
+          const updated = new Set(prev)
+          updated.delete(pocketNumber)
+          return updated
+        })
+      }, 1500)
+    }
+    
     onPocketClick?.(pocketNumber)
   }
   
@@ -169,10 +185,18 @@ export function AnimatedOrchardGrid({
     if (status.isTaken) {
       return `Pocket ${pocketNumber} - ${status.takenPocket.bestower} - ${status.takenPocket.daysGrowing} days growing (${status.growthStage})`
     } else if (status.isSelected) {
-      return `Pocket ${pocketNumber} - Selected (R${pocketPrice})`
+      return `Pocket ${pocketNumber} - Selected (${formatCurrency(pocketPrice)})`
     } else {
-      return `Pocket ${pocketNumber} - Available (R${pocketPrice})`
+      return `Pocket ${pocketNumber} - Available (${formatCurrency(pocketPrice)})`
     }
+  }
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount)
   }
   
   return (
@@ -181,11 +205,11 @@ export function AnimatedOrchardGrid({
       <div className="text-center mb-6">
         <div className="flex justify-center items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gradient-to-br from-warning/60 to-warning border-2 border-warning rounded-full"></div>
+            <div className="w-4 h-4 bg-gradient-to-br from-amber-200 to-amber-300 border-2 border-amber-800 rounded-full"></div>
             <span>Available</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gradient-to-br from-info/60 to-info border-2 border-info rounded-full"></div>
+            <div className="w-4 h-4 bg-gradient-to-br from-green-400 to-green-600 border-2 border-green-700 rounded-full"></div>
             <span>Selected</span>
           </div>
           <div className="flex items-center gap-2">
@@ -229,6 +253,40 @@ export function AnimatedOrchardGrid({
                     {/* Pulse Effect for New Selections */}
                     {status.isAnimating && (
                       <div className="absolute inset-0 rounded-lg bg-destructive/50 animate-ping"></div>
+                    )}
+                    
+                    {/* Compost Falling Animation */}
+                    {status.isComposting && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        {[...Array(8)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute compost-particle"
+                            style={{
+                              left: `${15 + i * 8}%`,
+                              top: '-15px',
+                              width: '3px',
+                              height: '3px',
+                              backgroundColor: '#92400e', // brown-700
+                              borderRadius: '50%',
+                              animationDelay: `${i * 0.05}s`,
+                              boxShadow: '0 0 2px rgba(146, 64, 14, 0.6)'
+                            }}
+                          />
+                        ))}
+                        {/* Dust cloud effect */}
+                        <div
+                          className="absolute w-6 h-6 bg-amber-600/20 rounded-full"
+                          style={{
+                            top: '25px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            animation: 'scale-in 0.8s ease-out 0.7s forwards',
+                            opacity: 0,
+                            animationFillMode: 'forwards'
+                          }}
+                        />
+                      </div>
                     )}
                     
                     {/* Growth Progress Ring */}

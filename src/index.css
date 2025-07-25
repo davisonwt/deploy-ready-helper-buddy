@@ -97,6 +97,26 @@ All colors MUST be HSL.
   overflow: hidden;
 }
 
+/* Compost falling animation */
+@keyframes compost-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(15px) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(40px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.compost-particle {
+  animation: compost-fall 1.5s ease-out forwards;
+}
+
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
