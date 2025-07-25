@@ -20,7 +20,7 @@ export async function loadOrchard(orchardId) {
       .from('orchards')
       .select(`
         *,
-        profiles!orchards_profile_id_fkey (
+        profiles!profile_id (
           first_name,
           last_name,
           avatar_url

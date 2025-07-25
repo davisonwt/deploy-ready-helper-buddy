@@ -106,30 +106,9 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
         const orchardData = await loadOrchard(id);
         
         if (orchardData && !orchardData._isFallback) {
-          // Transform Supabase data to match expected format
-          const transformedOrchard = {
-            ...orchardData,
-            grower: orchardData.profiles?.first_name || 'Unknown',
-            grower_full_name: `${orchardData.profiles?.first_name || ''} ${orchardData.profiles?.last_name || ''}`.trim() || 'Unknown User',
-            // Use the actual data from database instead of overriding
-            seed_value: orchardData.seed_value,
-            pocket_price: orchardData.pocket_price,
-            total_pockets: orchardData.total_pockets,
-            filled_pockets: orchardData.filled_pockets,
-            completion_rate: orchardData.completion_rate,
-            supporters: orchardData.supporters,
-            views: orchardData.views,
-            images: orchardData.images || [],
-            features: orchardData.features || [],
-            why_needed: orchardData.why_needed || orchardData.description,
-            community_impact: orchardData.community_impact || orchardData.description,
-            timeline: orchardData.expected_completion || 'As needed',
-            verification_status: orchardData.verification_status || 'verified',
-            location: orchardData.location || 'Unknown'
-          };
-          
-          setOrchard(transformedOrchard);
-          console.log('🌱 Orchard set successfully:', transformedOrchard);
+          // Use the real orchard data directly without overriding it
+          setOrchard(orchardData);
+          console.log('🌱 Orchard set successfully:', orchardData);
           
           // Load taken pockets from bestowals
           const completedBestowals = orchardData.bestowals?.filter(b => b.status === 'completed') || [];
