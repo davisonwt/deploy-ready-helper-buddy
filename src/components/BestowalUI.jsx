@@ -138,26 +138,7 @@ const BestowalUI = ({ orchard, onBestow }) => {
         </p>
       </div>
 
-      {/* Pocket Grid */}
-      <div className="pocket-grid">
-        {pockets.map((pocket) => (
-          <button
-            key={pocket.id}
-            className={`pocket-button ${
-              pocket.filled 
-                ? 'bg-success text-success-foreground border-success' 
-                : selectedPockets.includes(pocket.id)
-                ? 'bg-warning text-warning-foreground border-warning'
-                : 'bg-background border-border hover:border-success'
-            }`}
-            onClick={() => handlePocketSelect(pocket.id)}
-            disabled={pocket.filled}
-          >
-            <span className="pocket-number">{pocket.id}</span>
-            <span className="pocket-amount">${pocket.value}</span>
-          </button>
-        ))}
-      </div>
+      {/* Note: Pocket grid is handled by AnimatedOrchardGrid component */}
 
       {/* Quick Amount Selection */}
       <div className="amount-grid">
