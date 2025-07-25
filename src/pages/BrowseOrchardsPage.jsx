@@ -164,32 +164,12 @@ export default function BrowseOrchardsPage() {
               <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
             </div>
           </div>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-green-700 mb-4">
-                Browse Community Orchards
-              </h2>
-              <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">
-                Every bestowal helps dreams grow! 🌱
-              </p>
-            </div>
-            <div className="min-w-[200px]">
-              <label className="block text-sm font-medium text-green-700 mb-2">Filter by Category</label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="border-nav-community/30 focus:border-nav-community bg-white">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-nav-community/30 z-50">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold text-green-700 mb-4">
+            Browse Community Orchards
+          </h2>
+          <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">
+            Every bestowal helps dreams grow! 🌱
+          </p>
           <div className="flex justify-center">
             <Button 
               variant="outline" 
@@ -222,6 +202,23 @@ export default function BrowseOrchardsPage() {
                     className="pl-10 border-nav-community/30 focus:border-nav-community"
                   />
                 </div>
+              </div>
+              
+              <div className="min-w-[150px]">
+                <label className="block text-sm font-medium text-green-700 mb-2">Category</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="border-nav-community/30 focus:border-nav-community bg-white">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-nav-community/30 z-50">
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="min-w-[120px]">
