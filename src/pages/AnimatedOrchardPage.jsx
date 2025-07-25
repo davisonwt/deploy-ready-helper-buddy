@@ -129,6 +129,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
           };
           
           setOrchard(transformedOrchard);
+          console.log('🌱 Orchard set successfully:', transformedOrchard);
           
           // Load taken pockets from bestowals
           const completedBestowals = orchardData.bestowals?.filter(b => b.status === 'completed') || [];
