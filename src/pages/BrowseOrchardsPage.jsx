@@ -415,7 +415,7 @@ export default function BrowseOrchardsPage() {
                     </div>
                     
                     <div className="flex gap-2 pt-2">
-                      <Link to={`/orchards/${orchard.id}`} className="flex-1">
+                      <Link to={`/animated-orchard/${orchard.id}`} className="flex-1">
                         <Button 
                           className="w-full bg-nav-community hover:bg-nav-community/90 text-green-700 font-medium"
                         >
