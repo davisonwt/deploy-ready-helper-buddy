@@ -274,10 +274,16 @@ export default function CreateOrchardPage({ isEdit = false }) {
     if (originalSeedValue === 0) return 0
     
     const tithingAmount = originalSeedValue * 0.10
-    const baseAmountWithTithing = originalSeedValue + tithingAmount
-    const paymentProcessingFee = baseAmountWithTithing * 0.06
-    const finalSeedValue = baseAmountWithTithing + paymentProcessingFee
-    return finalSeedValue
+    const paymentProcessingFee = originalSeedValue * 0.066
+    
+    // For full value orchards, multiply by number of pockets since each pocket gets full value
+    if (formData.orchard_type === 'full_value') {
+      const numberOfPockets = parseInt(formData.number_of_pockets) || 1
+      return (originalSeedValue + tithingAmount + paymentProcessingFee) * numberOfPockets
+    }
+    
+    // For standard orchards, just add fees once
+    return originalSeedValue + tithingAmount + paymentProcessingFee
   }
 
   const getSeedValueBreakdown = () => {
@@ -571,7 +577,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
                     <p className="text-xs text-gray-500">Each pocket contains the full seed value + fees</p>
                   </div>
                 </div>
-                
                 {/* Number of Pockets for Full Value Orchard */}
                 {formData.orchard_type === 'full_value' && (
                   <div className="mt-4">
@@ -592,7 +597,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
                     </p>
                   </div>
                 )}
-                </div>
               </div>
             </CardContent>
           </Card>
