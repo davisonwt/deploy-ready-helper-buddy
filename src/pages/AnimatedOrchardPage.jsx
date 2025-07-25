@@ -730,11 +730,12 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
               </CardHeader>
               <CardContent className="p-8">
                 <AnimatedOrchardGrid 
-                  totalPockets={orchard.total_pockets || 0}
-                  pocketPrice={orchard.pocket_price || 150}
+                  totalPockets={orchard.total_pockets || 195}
+                  pocketPrice={orchard.pocket_price || 1500}
                   selectedPockets={selectedPockets}
                   onPocketClick={(pocketNumber) => {
                     console.log(`🌱 Pocket ${pocketNumber} clicked!`);
+                    console.log(`🌱 Orchard total_pockets: ${orchard.total_pockets}, pocket_price: ${orchard.pocket_price}`);
                     handlePocketClick(pocketNumber);
                   }}
                   takenPockets={takenPockets}
