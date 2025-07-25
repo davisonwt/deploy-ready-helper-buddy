@@ -18,17 +18,31 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-  --primary: 222.2 47.4% 11.2%;
+  /* sow2grow brand colors - matching landing page */
+  --primary: 142 76% 36%;  /* Green from landing page */
   --primary-foreground: 210 40% 98%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 199 89% 50%;  /* Blue from landing page */
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 210 40% 96.1%;
+  --muted: 60 8% 94%;  /* Light beige */
   --muted-foreground: 215.4 16.3% 46.9%;
 
-  --accent: 210 40% 96.1%;
+  --accent: 43 74% 66%;  /* Amber from landing page */
   --accent-foreground: 222.2 47.4% 11.2%;
+  
+  /* sow2grow theme colors */
+  --s2g-green: 142 76% 36%;
+  --s2g-blue: 199 89% 50%;
+  --s2g-amber: 43 74% 66%;
+  --s2g-brown: 30 35% 45%;
+  --s2g-beige: 60 8% 94%;
+  --s2g-purple: 270 75% 45%;
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(var(--s2g-green)), hsl(var(--s2g-blue)));
+  --gradient-warm: linear-gradient(135deg, hsl(var(--s2g-amber)), hsl(var(--s2g-brown)));
+  --gradient-hero: linear-gradient(135deg, hsl(var(--s2g-blue)), hsl(var(--s2g-green)));
   
   /* Custom colors for registration form */
   --olive-green: 60 30% 45%;
@@ -42,33 +56,26 @@ All colors MUST be HSL.
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 142 76% 36%;  /* Green ring */
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
+    --sidebar-primary: 142 76% 36%;  /* Green */
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
+    --sidebar-accent: 60 8% 95%;  /* Light beige */
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 199 89% 50%;  /* Blue */
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --success: 142.1 76.2% 36.3%;
+    --success: 142 76% 36%;  /* Green */
     --success-foreground: 355.7 100% 97.3%;
-    --warning: 47.9 95.8% 53.1%;
+    --warning: 43 74% 66%;  /* Amber */
     --warning-foreground: 26 83.3% 14.1%;
-    --info: 199.89 89.47% 49.8%;
+    --info: 199 89% 50%;  /* Blue */
     --info-foreground: 210 40% 98%;
-    --harvest: 16.2 84.5% 55.1%;
+    --harvest: 43 74% 66%;  /* Amber */
     --harvest-foreground: 210 40% 98%;
     --login: 328 88% 35%;
     --login-foreground: 210 40% 98%;

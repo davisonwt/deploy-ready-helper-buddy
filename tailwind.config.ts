@@ -82,6 +82,13 @@ export default {
 					DEFAULT: 'hsl(var(--login))',
 					foreground: 'hsl(var(--login-foreground))'
 				},
+				// sow2grow theme colors
+				's2g-green': 'hsl(var(--s2g-green))',
+				's2g-blue': 'hsl(var(--s2g-blue))',
+				's2g-amber': 'hsl(var(--s2g-amber))',
+				's2g-brown': 'hsl(var(--s2g-brown))',
+				's2g-beige': 'hsl(var(--s2g-beige))',
+				's2g-purple': 'hsl(var(--s2g-purple))',
 				// Custom colors for registration form
 				'olive-green': 'hsl(var(--olive-green))',
 				'golden-brown': 'hsl(var(--golden-brown))',

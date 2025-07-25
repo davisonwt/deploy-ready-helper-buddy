@@ -94,19 +94,28 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-amber/10 to-s2g-green/10">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+              alt="sow2grow logo" 
+              className="w-20 h-20 object-contain bg-transparent"
+              style={{ backgroundColor: 'transparent' }}
+            />
+          </div>
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 bg-gradient-to-br from-s2g-green to-s2g-blue rounded-full flex items-center justify-center shadow-lg">
               <Sprout className="h-8 w-8 text-white animate-pulse" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-green-800 mb-4" style={{ fontFamily: "Playfair Display, serif" }}>
+          <h1 className="text-4xl font-bold text-s2g-brown mb-4" style={{ fontFamily: "Playfair Display, serif" }}>
             Community Orchards
           </h1>
-          <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">
+          <p className="text-lg text-s2g-brown/70 max-w-2xl mx-auto mb-6">
             Discover and support orchards in our community. Every bestowal helps dreams grow! 🌱
           </p>
           <div className="flex justify-center">
@@ -114,7 +123,7 @@ export default function BrowseOrchardsPage() {
               variant="outline" 
               onClick={handleRefresh}
               disabled={loading}
-              className="border-green-600 text-green-600 hover:bg-green-50"
+              className="border-s2g-green text-s2g-green hover:bg-s2g-green/10"
             >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -127,25 +136,25 @@ export default function BrowseOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg mb-8">
+        <Card className="bg-white/95 backdrop-blur-sm border-s2g-green/30 shadow-lg mb-8 hover:shadow-xl transition-all">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-green-600" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-s2g-green" />
                 <Input
                   type="text"
                   placeholder="Search orchards..."
-                  className="pl-10 border-green-300 focus:border-green-500 focus:ring-green-500"
+                  className="pl-10 border-s2g-green/30 focus:border-s2g-green focus:ring-s2g-green"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="border-green-300 focus:border-green-500 focus:ring-green-500">
+                <SelectTrigger className="border-s2g-green/30 focus:border-s2g-green focus:ring-s2g-green">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-green-200 shadow-xl z-50">
+                <SelectContent className="bg-white border-s2g-green/30 shadow-xl z-50">
                   <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>{category}</SelectItem>

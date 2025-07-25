@@ -89,27 +89,36 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50">
+    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-blue/10 to-s2g-amber/20">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-blue-100 sticky top-0 z-40">
+      <div className="bg-white/90 backdrop-blur-lg border-b border-s2g-green/20 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Avatar className="h-12 w-12 ring-2 ring-blue-200">
+              {/* Logo */}
+              <div className="flex items-center justify-center bg-transparent">
+                <img 
+                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                  alt="sow2grow logo" 
+                  className="w-12 h-12 object-contain bg-transparent"
+                  style={{ backgroundColor: 'transparent' }}
+                />
+              </div>
+              <Avatar className="h-12 w-12 ring-2 ring-s2g-green/30">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white">
+                <AvatarFallback className="bg-gradient-to-br from-s2g-green to-s2g-blue text-white">
                   {getInitials(user?.user_metadata?.first_name, user?.user_metadata?.last_name)}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-s2g-brown">
                   Welcome back, {user?.user_metadata?.first_name || 'Grower'}!
                 </h1>
-                <p className="text-gray-600">Here's what's growing in your garden</p>
+                <p className="text-s2g-brown/70">Here's what's growing in your garden</p>
               </div>
             </div>
             <Link to="/create-orchard">
-              <Button className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700">
+              <Button className="bg-gradient-to-r from-s2g-green to-s2g-blue hover:from-s2g-green/90 hover:to-s2g-blue/90 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Plant New Seed
               </Button>
@@ -121,50 +130,50 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
+          <Card className="bg-white/90 backdrop-blur-sm border-s2g-green/30 hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">My Orchards</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalOrchards}</p>
+                  <p className="text-sm font-medium text-s2g-brown/70">My Orchards</p>
+                  <p className="text-2xl font-bold text-s2g-brown">{stats.totalOrchards}</p>
                 </div>
-                <TreePine className="h-8 w-8 text-green-600" />
+                <TreePine className="h-8 w-8 text-s2g-green" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-green-200">
+          <Card className="bg-white/90 backdrop-blur-sm border-s2g-blue/30 hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Raised</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalRaised)}</p>
+                  <p className="text-sm font-medium text-s2g-brown/70">Total Raised</p>
+                  <p className="text-2xl font-bold text-s2g-brown">{formatCurrency(stats.totalRaised)}</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-blue-600" />
+                <TrendingUp className="h-8 w-8 text-s2g-blue" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-yellow-200">
+          <Card className="bg-white/90 backdrop-blur-sm border-s2g-amber/30 hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">My Bestowals</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalBestowals}</p>
+                  <p className="text-sm font-medium text-s2g-brown/70">My Bestowals</p>
+                  <p className="text-2xl font-bold text-s2g-brown">{stats.totalBestowals}</p>
                 </div>
-                <Heart className="h-8 w-8 text-red-500" />
+                <Heart className="h-8 w-8 text-s2g-amber" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-200">
+          <Card className="bg-white/90 backdrop-blur-sm border-s2g-purple/30 hover:shadow-lg transition-all">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Supported</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalSupported)}</p>
+                  <p className="text-sm font-medium text-s2g-brown/70">Total Supported</p>
+                  <p className="text-2xl font-bold text-s2g-brown">{formatCurrency(stats.totalSupported)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-purple-600" />
+                <DollarSign className="h-8 w-8 text-s2g-purple" />
               </div>
             </CardContent>
           </Card>

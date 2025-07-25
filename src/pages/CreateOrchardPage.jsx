@@ -358,26 +358,35 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-green-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-s2g-beige via-s2g-amber/10 to-s2g-green/10 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-green-200 shadow-2xl">
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-s2g-green/30 shadow-2xl">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                alt="sow2grow logo" 
+                className="w-20 h-20 object-contain bg-transparent"
+                style={{ backgroundColor: 'transparent' }}
+              />
+            </div>
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-s2g-green to-s2g-blue rounded-full flex items-center justify-center shadow-lg">
                 <Sprout className="h-8 w-8 text-white animate-pulse" />
               </div>
             </div>
-            <h1 className="text-4xl font-bold text-green-800 mb-4" style={{ 
+            <h1 className="text-4xl font-bold text-s2g-brown mb-4" style={{ 
               fontFamily: "Playfair Display, serif"
             }}>
               {isEdit ? "Edit Your Orchard" : "Plant a New Seed"}
             </h1>
-            <p className="text-lg text-green-600 max-w-2xl mx-auto">
+            <p className="text-lg text-s2g-brown/70 max-w-2xl mx-auto">
               {isEdit ? "Update your orchard details and grow your community support" : "Create a new orchard in your farm stall within the sow2grow community farm."} 
               Share your need with the community and watch it grow with their support.
             </p>
-            <Badge className="mt-4 bg-green-500 text-white">
+            <Badge className="mt-4 bg-s2g-green text-white">
               <Plus className="h-3 w-3 mr-1" />
               6-Step Creation Process
             </Badge>
@@ -386,10 +395,10 @@ export default function CreateOrchardPage({ isEdit = false }) {
       
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white/95 backdrop-blur-sm border-s2g-green/30 shadow-lg hover:shadow-xl transition-all">
             <CardHeader>
-              <CardTitle className="text-green-800 flex items-center gap-2">
-                <Sprout className="h-5 w-5" />
+              <CardTitle className="text-s2g-brown flex items-center gap-2">
+                <Sprout className="h-5 w-5 text-s2g-green" />
                 Step 1: Basic Information
               </CardTitle>
             </CardHeader>
@@ -799,7 +808,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               size="xl"
               variant="default"
               disabled={saving || uploading}
-              className="px-12 py-6 text-xl font-bold bg-green-600 hover:bg-green-700 text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+              className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-s2g-green to-s2g-blue hover:from-s2g-green/90 hover:to-s2g-blue/90 text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
             >
               {saving || uploading ? (
                 <div className="flex items-center">
