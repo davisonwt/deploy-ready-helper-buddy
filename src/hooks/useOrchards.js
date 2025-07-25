@@ -17,7 +17,7 @@ export function useOrchards() {
         .from('orchards')
         .select(`
           *,
-          profiles!profile_id (
+          profiles!orchards_user_id_fkey (
             first_name,
             last_name,
             display_name,
@@ -61,7 +61,7 @@ export function useOrchards() {
         .from('orchards')
         .select(`
           *,
-          profiles!profile_id (
+          profiles!orchards_user_id_fkey (
             first_name,
             last_name,
             display_name,
@@ -166,7 +166,7 @@ export function useOrchards() {
         .from('bestowals')
         .select(`
           *,
-          profiles!bestower_profile_id (
+          profiles!bestowals_bestower_profile_id_fkey (
             first_name,
             last_name,
             display_name
