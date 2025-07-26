@@ -10,7 +10,6 @@ import {
   DollarSign, 
   Calendar, 
   User,
-  Church,
   Gift,
   Star,
   Sparkles,
@@ -92,7 +91,7 @@ export default function TithingPage() {
           <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
             <CardHeader>
               <CardTitle className="flex items-center text-red-700">
-                <Church className="h-5 w-5 mr-2" />
+                <HandHeart className="h-5 w-5 mr-2" />
                 Set Up Your Tithe
               </CardTitle>
             </CardHeader>
@@ -192,14 +191,14 @@ export default function TithingPage() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <Gift className="h-4 w-4 mt-0.5 text-red-500" />
-                    <p>It supports the work of the church and ministry</p>
+                    <p>It supports our community projects</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <Star className="h-4 w-4 mt-0.5 text-red-500" />
                     <p>elohim promises to bless faithful givers</p>
                   </div>
                   <div className="flex items-start space-x-2">
-                    <Church className="h-4 w-4 mt-0.5 text-red-500" />
+                    <HandHeart className="h-4 w-4 mt-0.5 text-red-500" />
                     <p>It helps build elohim's kingdom on earth</p>
                   </div>
                 </div>
