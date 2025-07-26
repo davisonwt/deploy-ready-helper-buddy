@@ -173,6 +173,27 @@ export default function CreateOrchardPage({ isEdit = false }) {
         throw new Error("Please fill in all required fields")
       }
 
+      const seedValue = parseFloat(formData.seed_value) || 0
+
+      // Validate based on orchard type
+      if (formData.orchard_type === 'standard') {
+        if (seedValue <= 100) {
+          throw new Error("Seed value must be over $100 for Standard Orchard")
+        }
+        const pocketValue = parseFloat(formData.pocket_price) || 0
+        if (pocketValue <= 0) {
+          throw new Error("Bestowal pocket value must be greater than 0")
+        }
+      } else if (formData.orchard_type === 'full_value') {
+        if (seedValue < 1 || seedValue > 100) {
+          throw new Error("Seed value must be between $1 and $100 for Full Value Orchard")
+        }
+        const numPockets = parseInt(formData.number_of_pockets) || 0
+        if (numPockets < 1) {
+          throw new Error("Number of pockets must be greater than 0")
+        }
+      }
+
       // Upload images first
       let imageUrls = []
       const newImages = selectedImages.filter(img => !img.isExisting && img.file)
@@ -259,11 +280,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
       // For full value orchards, use the specified number of pockets
       return parseInt(formData.number_of_pockets) || 1
     } else {
-      // For standard orchards, calculate based on seed value / pocket price
-      const finalSeedValue = calculateFinalSeedValue()
-      const pocketPrice = parseFloat(formData.pocket_price)
-      if (finalSeedValue && pocketPrice) {
-        return Math.ceil(finalSeedValue / pocketPrice)
+      // For standard orchards, calculate based on total (seed value * 1.16) / pocket price
+      const seedValue = parseFloat(formData.seed_value) || 0
+      const total = seedValue * 1.16  // 10% tithing + 6% payment gateway fees
+      const pocketPrice = parseFloat(formData.pocket_price) || 150
+      if (total && pocketPrice) {
+        return Math.floor(total / pocketPrice)
       }
       return 0
     }
@@ -273,34 +295,38 @@ export default function CreateOrchardPage({ isEdit = false }) {
     const originalSeedValue = parseFloat(formData.seed_value) || 0
     if (originalSeedValue === 0) return 0
     
-    const tithingAmount = originalSeedValue * 0.10
-    const paymentProcessingFee = originalSeedValue * 0.066
-    
-    // For full value orchards, multiply by number of pockets since each pocket gets full value
     if (formData.orchard_type === 'full_value') {
+      // For full value orchards: (seed value * 1.16) * number of pockets
+      const pocketCost = originalSeedValue * 1.16 // 10% tithing + 6% payment gateway fees
       const numberOfPockets = parseInt(formData.number_of_pockets) || 1
-      return (originalSeedValue + tithingAmount + paymentProcessingFee) * numberOfPockets
+      return pocketCost * numberOfPockets
+    } else {
+      // For standard orchards: seed value * 1.16
+      return originalSeedValue * 1.16 // 10% tithing + 6% payment gateway fees
     }
-    
-    // For standard orchards, just add fees once
-    return originalSeedValue + tithingAmount + paymentProcessingFee
   }
 
   const getSeedValueBreakdown = () => {
     const originalSeedValue = parseFloat(formData.seed_value) || 0
     if (originalSeedValue === 0) return null
     
-    const tithingAmount = originalSeedValue * 0.10
-    const baseAmountWithTithing = originalSeedValue + tithingAmount
-    const paymentProcessingFee = baseAmountWithTithing * 0.06
-    const finalSeedValue = baseAmountWithTithing + paymentProcessingFee
+    const tithingAmount = originalSeedValue * 0.10  // 10% tithing
+    const gatewayFees = originalSeedValue * 0.06    // 6% payment gateway fees
+    const totalWithFees = originalSeedValue * 1.16  // Total = seed * 1.16
+    
+    let finalCost = totalWithFees
+    if (formData.orchard_type === 'full_value') {
+      const numberOfPockets = parseInt(formData.number_of_pockets) || 1
+      finalCost = totalWithFees * numberOfPockets
+    }
     
     return {
       original: originalSeedValue,
       tithing: tithingAmount,
-      baseWithTithing: baseAmountWithTithing,
-      paymentProcessing: paymentProcessingFee,
-      final: finalSeedValue
+      paymentProcessing: gatewayFees,
+      totalWithFees: totalWithFees,
+      final: finalCost,
+      pocketCost: formData.orchard_type === 'full_value' ? totalWithFees : null
     }
   }
 
@@ -611,32 +637,48 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <DollarSign className="inline h-4 w-4 mr-1" />
-                    Total Seed Value (R) *
-                  </label>
-                  <Input
-                    type="number"
-                    name="seed_value"
-                    value={formData.seed_value}
-                    onChange={handleChange}
-                    placeholder="e.g., 18000"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pocket Price (R)
-                  </label>
-                  <Input
-                    type="number"
-                    name="pocket_price"
-                    value={formData.pocket_price}
-                    onChange={handleChange}
-                    placeholder="150"
-                  />
-                </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     <DollarSign className="inline h-4 w-4 mr-1" />
+                     Seed Value (R) *
+                   </label>
+                   <Input
+                     type="number"
+                     name="seed_value"
+                     value={formData.seed_value}
+                     onChange={handleChange}
+                     placeholder={formData.orchard_type === 'standard' ? "e.g., 18000 (minimum R100.01)" : "e.g., 50 (R1 - R100)"}
+                     min={formData.orchard_type === 'standard' ? "100.01" : "1"}
+                     max={formData.orchard_type === 'full_value' ? "100" : undefined}
+                     step="0.01"
+                     required
+                   />
+                   <p className="text-xs text-gray-500 mt-1">
+                     {formData.orchard_type === 'standard' 
+                       ? "Must be greater than R100 for Standard Orchard" 
+                       : "Must be between R1 and R100 for Full Value Orchard"}
+                   </p>
+                 </div>
+                 {formData.orchard_type === 'standard' && (
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Bestowal Pocket Value (R) *
+                     </label>
+                     <Input
+                       type="number"
+                       name="pocket_price"
+                       value={formData.pocket_price}
+                       onChange={handleChange}
+                       placeholder="150"
+                       min="1"
+                       step="0.01"
+                       required
+                     />
+                     <p className="text-xs text-gray-500 mt-1">
+                       Default R150. Must be greater than 0.
+                     </p>
+                   </div>
+                 )}
               </div>
               
               {formData.seed_value && (
@@ -652,46 +694,74 @@ export default function CreateOrchardPage({ isEdit = false }) {
                     
                     return (
                       <div className="space-y-4">
-                        {/* Financial Breakdown */}
-                        <div className="bg-white p-4 rounded-lg border border-green-100">
-                          <h5 className="font-medium text-gray-800 mb-3">Seed Value Calculation:</h5>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Original Seed Value:</span>
-                              <span className="font-medium">R{breakdown.original.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-amber-700">
-                              <span>+ 10% Tithing (yhvh364 gosat's):</span>
-                              <span className="font-medium">R{breakdown.tithing.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-blue-700">
-                              <span>+ 6% Payment Processing Fee:</span>
-                              <span className="font-medium">R{breakdown.paymentProcessing.toFixed(2)}</span>
-                            </div>
-                            <div className="border-t border-gray-200 pt-2 mt-2">
-                              <div className="flex justify-between font-bold text-green-800">
-                                <span>Final Seed Value:</span>
-                                <span>R{breakdown.final.toFixed(2)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          {/* Financial Breakdown */}
+                         <div className="bg-white p-4 rounded-lg border border-green-100">
+                           <h5 className="font-medium text-gray-800 mb-3">
+                             {formData.orchard_type === 'standard' ? 'Standard Orchard' : 'Full Value Orchard'} Calculation:
+                           </h5>
+                           <div className="space-y-2 text-sm">
+                             <div className="flex justify-between">
+                               <span className="text-gray-600">Original Seed Value:</span>
+                               <span className="font-medium">R{breakdown.original.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between text-amber-700">
+                               <span>+ 10% Tithing:</span>
+                               <span className="font-medium">R{breakdown.tithing.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between text-blue-700">
+                               <span>+ 6% Payment Gateway Fee:</span>
+                               <span className="font-medium">R{breakdown.paymentProcessing.toFixed(2)}</span>
+                             </div>
+                             <div className="border-t border-gray-200 pt-2 mt-2">
+                               <div className="flex justify-between font-semibold text-green-700">
+                                 <span>Total (= Seed × 1.16):</span>
+                                 <span>R{breakdown.totalWithFees.toFixed(2)}</span>
+                               </div>
+                               {formData.orchard_type === 'full_value' && (
+                                 <>
+                                   <div className="flex justify-between text-purple-700">
+                                     <span>× {formData.number_of_pockets || 1} Pockets:</span>
+                                     <span className="font-medium">R{breakdown.final.toFixed(2)}</span>
+                                   </div>
+                                   <div className="flex justify-between text-sm text-gray-600 mt-1">
+                                     <span>Pocket Cost (each):</span>
+                                     <span>R{breakdown.pocketCost?.toFixed(2)}</span>
+                                   </div>
+                                 </>
+                               )}
+                               <div className="border-t border-gray-200 pt-2 mt-2">
+                                 <div className="flex justify-between font-bold text-green-800">
+                                   <span>Final Cost:</span>
+                                   <span>R{breakdown.final.toFixed(2)}</span>
+                                 </div>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
                         
-                        {/* Pocket Calculation */}
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div className="bg-white p-3 rounded-lg border border-green-100">
-                            <div className="text-2xl font-bold text-green-800">{calculatePockets()}</div>
-                            <div className="text-sm text-green-600">Total Pockets</div>
-                          </div>
-                          <div className="bg-white p-3 rounded-lg border border-green-100">
-                            <div className="text-2xl font-bold text-green-800">R{formData.pocket_price}</div>
-                            <div className="text-sm text-green-600">Per Pocket</div>
-                          </div>
-                          <div className="bg-white p-3 rounded-lg border border-green-100">
-                            <div className="text-2xl font-bold text-green-800">R{breakdown.final.toFixed(2)}</div>
-                            <div className="text-sm text-green-600">Final Value</div>
-                          </div>
-                        </div>
+                         {/* Pocket Calculation */}
+                         <div className="grid grid-cols-3 gap-4 text-center">
+                           <div className="bg-white p-3 rounded-lg border border-green-100">
+                             <div className="text-2xl font-bold text-green-800">{calculatePockets()}</div>
+                             <div className="text-sm text-green-600">
+                               {formData.orchard_type === 'standard' ? 'Total Pockets' : 'Number of Pockets'}
+                             </div>
+                           </div>
+                           <div className="bg-white p-3 rounded-lg border border-green-100">
+                             <div className="text-2xl font-bold text-green-800">
+                               R{formData.orchard_type === 'standard' 
+                                 ? formData.pocket_price 
+                                 : breakdown.pocketCost?.toFixed(2) || '0.00'}
+                             </div>
+                             <div className="text-sm text-green-600">
+                               {formData.orchard_type === 'standard' ? 'Pocket Value' : 'Cost Per Pocket'}
+                             </div>
+                           </div>
+                           <div className="bg-white p-3 rounded-lg border border-green-100">
+                             <div className="text-2xl font-bold text-green-800">R{breakdown.final.toFixed(2)}</div>
+                             <div className="text-sm text-green-600">Total Cost</div>
+                           </div>
+                         </div>
                       </div>
                     )
                   })()}
