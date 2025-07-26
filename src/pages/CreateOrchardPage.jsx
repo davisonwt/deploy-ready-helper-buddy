@@ -454,7 +454,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </div>
             </div>
             <h2 className="text-2xl font-bold text-yellow-700 mb-4">
-              {isEdit ? "Edit Your Orchard" : "Plant a New Seed"}
+              {isEdit ? "Edit Your Orchard" : "Sow a New Seed"}
             </h2>
             <p className="text-lg text-yellow-600 max-w-2xl mx-auto">
               {isEdit ? "Update your orchard details and grow your community support" : "Create a new orchard in your farm stall within the sow2grow community farm."} 
@@ -956,7 +956,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               ) : (
                 <>
                   <Sprout className="h-6 w-6 mr-3" />
-                  {isEdit ? "Update Orchard 🌱" : "Plant Your Seed 🌱"}
+                  {isEdit ? "Update Orchard 🌱" : "Sow Your Seed 🌱"}
                 </>
               )}
             </Button>
