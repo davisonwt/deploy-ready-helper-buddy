@@ -64,7 +64,7 @@ export default function TithingPage() {
               Tithing, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-red-600 text-lg">
-              Honor God with your faithful giving
+              Honor elohim with your faithful giving
             </p>
             <p className="text-red-500 text-sm mt-1">
               Preferred Currency: {user?.preferred_currency || 'USD'}
@@ -83,7 +83,7 @@ export default function TithingPage() {
           </div>
           <h2 className="text-2xl font-bold text-red-700 mb-2">Faithful Tithing</h2>
           <p className="text-red-600 max-w-2xl mx-auto">
-            "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says the Lord Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
+            "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says yhvh (the creator) Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
           </p>
         </div>
 
@@ -188,7 +188,7 @@ export default function TithingPage() {
                 <div className="space-y-4 text-sm text-red-600">
                   <div className="flex items-start space-x-2">
                     <Heart className="h-4 w-4 mt-0.5 text-red-500" />
-                    <p>Tithing is an act of worship and obedience to God</p>
+                    <p>Tithing is an act of worship and obedience to elohim</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <Gift className="h-4 w-4 mt-0.5 text-red-500" />
@@ -196,11 +196,11 @@ export default function TithingPage() {
                   </div>
                   <div className="flex items-start space-x-2">
                     <Star className="h-4 w-4 mt-0.5 text-red-500" />
-                    <p>God promises to bless faithful givers</p>
+                    <p>elohim promises to bless faithful givers</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <Church className="h-4 w-4 mt-0.5 text-red-500" />
-                    <p>It helps build God's kingdom on earth</p>
+                    <p>It helps build elohim's kingdom on earth</p>
                   </div>
                 </div>
               </CardContent>
@@ -240,7 +240,7 @@ export default function TithingPage() {
             <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
               <CardContent className="p-6">
                 <blockquote className="text-red-600 italic text-center">
-                  "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver."
+                  "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for elohim loves a cheerful giver."
                   <br />
                   <cite className="text-red-700 font-semibold not-italic">- 2 Corinthians 9:7</cite>
                 </blockquote>
