@@ -250,7 +250,7 @@ export default function Layout({ children }) {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                A biblical community giving platform where growers create orchards and bestowers help them grow and stand up together.
+                A scriptural community giving platform where growers create orchards and bestowers help them grow and stand up together.
               </p>
             </div>
             
@@ -259,7 +259,7 @@ export default function Layout({ children }) {
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>• Faith-based giving</p>
                 <p>• Mutual community support</p>
-                <p>• Biblical principles</p>
+                <p>• Scriptural principles</p>
                 <p>• Transparent platform</p>
               </div>
             </div>
