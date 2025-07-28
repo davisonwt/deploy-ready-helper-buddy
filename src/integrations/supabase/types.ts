@@ -309,6 +309,45 @@ export type Database = {
         }
         Relationships: []
       }
+      seeds: {
+        Row: {
+          additional_details: Json | null
+          category: string
+          created_at: string
+          description: string
+          gifter_id: string
+          id: string
+          images: string[] | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          additional_details?: Json | null
+          category: string
+          created_at?: string
+          description: string
+          gifter_id: string
+          id?: string
+          images?: string[] | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          additional_details?: Json | null
+          category?: string
+          created_at?: string
+          description?: string
+          gifter_id?: string
+          id?: string
+          images?: string[] | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

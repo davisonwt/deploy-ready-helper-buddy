@@ -25,6 +25,8 @@ import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import DashboardPage from "./pages/DashboardPage";
 import MyOrchardsPage from "./pages/MyOrchardsPage";
 import FreeWillGiftingPage from "./pages/FreeWillGiftingPage";
+import SeedSubmissionPage from "./pages/SeedSubmissionPage";
+import YhvhOrchardsPage from "./pages/YhvhOrchardsPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -170,6 +172,24 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <FreeWillGiftingPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Seed Submission */}
+              <Route path="/seed-submission" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SeedSubmissionPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* 364yhvh Orchards */}
+              <Route path="/364yhvh-orchards" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <YhvhOrchardsPage />
                   </Layout>
                 </ProtectedRoute>
               } />

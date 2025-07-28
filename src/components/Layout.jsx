@@ -38,6 +38,7 @@ export default function Layout({ children }) {
     { name: "community orchards", href: "/browse-orchards", icon: Search },
     { name: "create orchard", href: "/create-orchard", icon: Plus },
     { name: "my orchards", href: "/my-orchards", icon: BarChart3 },
+    { name: "364yhvh orchards", href: "/364yhvh-orchards", icon: Sprout },
     { name: "tithing", href: "/tithing", icon: HandHeart },
     { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
   ]
@@ -78,6 +79,7 @@ export default function Layout({ children }) {
                   "community orchards": { bg: '#caffbf', border: '#caffbf', text: '#166534' },
                   "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
                   "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
+                  "364yhvh orchards": { bg: '#c7f9cc', border: '#c7f9cc', text: '#14532d' },
                   "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
                   "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' }
                 }

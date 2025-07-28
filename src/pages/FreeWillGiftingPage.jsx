@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Label } from '@/components/ui/label'
 import { 
   Gift, 
   Heart, 
@@ -13,19 +15,33 @@ import {
   DollarSign,
   Send,
   Users,
-  HandHeart
+  HandHeart,
+  Seedling,
+  Droplets
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function FreeWillGiftingPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const [giftType, setGiftType] = useState('rain')
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [message, setMessage] = useState('')
   const [frequency, setFrequency] = useState('one-time')
   const [loading, setLoading] = useState(false)
 
+  const handleGiftTypeChange = (value) => {
+    setGiftType(value)
+    if (value === 'seed') {
+      navigate('/seed-submission')
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (giftType !== 'rain') return
+    
     setLoading(true)
     // Handle free will gifting logic here
     setTimeout(() => setLoading(false), 1000)
@@ -87,19 +103,50 @@ export default function FreeWillGiftingPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-purple-700 mb-2">
-                    Gift Amount ({user?.preferred_currency || 'USD'})
-                  </label>
-                  <Input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className="border-nav-gifting/30 focus:border-nav-gifting"
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Gift Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-purple-700 mb-3">
+                  Choose Gift Type
+                </label>
+                <RadioGroup value={giftType} onValueChange={handleGiftTypeChange} className="space-y-3">
+                  <div className="flex items-center space-x-3 p-3 border border-nav-gifting/30 rounded-lg hover:bg-nav-gifting/10 transition-colors">
+                    <RadioGroupItem value="rain" id="rain" />
+                    <Label htmlFor="rain" className="flex items-center space-x-2 cursor-pointer flex-1">
+                      <Droplets className="h-4 w-4 text-blue-500" />
+                      <div>
+                        <div className="font-medium text-purple-700">Rain/Compost</div>
+                        <div className="text-sm text-purple-600">Monetary donation to support community members</div>
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border border-nav-gifting/30 rounded-lg hover:bg-nav-gifting/10 transition-colors">
+                    <RadioGroupItem value="seed" id="seed" />
+                    <Label htmlFor="seed" className="flex items-center space-x-2 cursor-pointer flex-1">
+                      <Seedling className="h-4 w-4 text-green-500" />
+                      <div>
+                        <div className="font-medium text-purple-700">Seed</div>
+                        <div className="text-sm text-purple-600">Gift a product, service, or skill to the community</div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {giftType === 'rain' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Gift Amount ({user?.preferred_currency || 'USD'})
+                    </label>
+                    <Input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                    />
+                  </div>
 
                 <div>
                   <label className="block text-sm font-medium text-purple-700 mb-2">
@@ -134,22 +181,27 @@ export default function FreeWillGiftingPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-purple-700 mb-2">
-                    Personal Message (Optional)
-                  </label>
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Share a blessing or encouragement..."
-                    className="border-nav-gifting/30 focus:border-nav-gifting"
-                    rows={3}
-                  />
-                </div>
+                </>
+              )}
+
+               {giftType === 'rain' && (
+                 <div>
+                   <label className="block text-sm font-medium text-purple-700 mb-2">
+                     Personal Message (Optional)
+                   </label>
+                   <Textarea
+                     value={message}
+                     onChange={(e) => setMessage(e.target.value)}
+                     placeholder="Share a blessing or encouragement..."
+                     className="border-nav-gifting/30 focus:border-nav-gifting"
+                     rows={3}
+                   />
+                 </div>
+               )}
 
                 <Button
                   type="submit"
-                  disabled={loading || !amount || !recipient}
+                  disabled={loading || !amount || !recipient || giftType !== 'rain'}
                   className="w-full bg-nav-gifting hover:bg-nav-gifting/90 text-purple-700"
                 >
                   {loading ? (
