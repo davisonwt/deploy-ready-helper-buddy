@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
-  Seedling, 
+  Sprout, 
   Eye,
   Calendar,
   User,
@@ -93,7 +93,7 @@ export default function YhvhOrchardsPage() {
                 <TreePine className="h-16 w-16 text-success" />
               </div>
               <div className="absolute -top-2 -right-2 animate-bounce">
-                <Seedling className="h-8 w-8 text-warning" />
+                <Sprout className="h-8 w-8 text-warning" />
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function YhvhOrchardsPage() {
                       </div>
                     </div>
                     <div className="ml-2 p-2 bg-success/10 rounded-full">
-                      <Seedling className="h-4 w-4 text-success" />
+                      <Sprout className="h-4 w-4 text-success" />
                     </div>
                   </div>
                 </CardHeader>
@@ -201,7 +201,7 @@ export default function YhvhOrchardsPage() {
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle className="flex items-center space-x-2">
-                          <Seedling className="h-5 w-5 text-success" />
+                          <Sprout className="h-5 w-5 text-success" />
                           <span>{selectedSeed?.title}</span>
                         </DialogTitle>
                       </DialogHeader>
