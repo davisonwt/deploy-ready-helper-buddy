@@ -31,7 +31,7 @@ export default function YhvhOrchardsPage() {
         .from('seeds')
         .select(`
           *,
-          profiles!seeds_gifter_id_fkey (
+          profiles (
             display_name,
             first_name,
             last_name
