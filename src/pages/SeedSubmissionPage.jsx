@@ -28,6 +28,7 @@ export default function SeedSubmissionPage() {
     title: '',
     description: '',
     category: '',
+    value: '',
     additional_details: {}
   })
   
@@ -144,6 +145,20 @@ export default function SeedSubmissionPage() {
     setVideoFile(null)
   }
 
+  const calculatePockets = (value) => {
+    const numValue = parseFloat(value)
+    if (numValue >= 100 && numValue <= 200) return 10
+    if (numValue >= 210 && numValue <= 400) return 20
+    if (numValue >= 401 && numValue <= 600) return 40
+    if (numValue >= 601 && numValue <= 1000) return 60
+    if (numValue >= 1001 && numValue <= 5000) return 100
+    if (numValue >= 5001 && numValue <= 10000) return 500
+    if (numValue >= 10000 && numValue <= 30000) return 1000
+    if (numValue >= 30001 && numValue <= 100000) return 1500
+    if (numValue >= 100001 && numValue <= 1000000) return 10000
+    return 0
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.title || !formData.description || !formData.category) {
@@ -173,7 +188,7 @@ export default function SeedSubmissionPage() {
       }
 
       // Save seed to database
-      const { data, error } = await supabase
+      const { data: seedData, error: seedError } = await supabase
         .from('seeds')
         .insert({
           gifter_id: user.id,
@@ -182,13 +197,54 @@ export default function SeedSubmissionPage() {
           category: formData.category,
           images: uploadedImages,
           video_url: uploadedVideoUrl,
-          additional_details: formData.additional_details
+          additional_details: { ...formData.additional_details, value: formData.value }
         })
         .select()
 
-      if (error) throw error
+      if (seedError) throw seedError
 
-      toast.success('Seed submitted successfully!')
+      // Auto-generate orchard if value is provided and meets criteria
+      if (formData.value && parseFloat(formData.value) >= 100) {
+        const seedValue = parseFloat(formData.value)
+        const totalPockets = calculatePockets(seedValue)
+        
+        if (totalPockets > 0) {
+          // Calculate values including tithing and payment fees
+          const tithingAmount = seedValue * 0.10
+          const paymentFee = seedValue * 0.06
+          const totalValue = seedValue + tithingAmount + paymentFee
+          const pocketPrice = totalValue / totalPockets
+
+          const { error: orchardError } = await supabase
+            .from('orchards')
+            .insert({
+              user_id: user.id,
+              title: `Orchard for: ${formData.title}`,
+              description: `Auto-generated orchard from seed: ${formData.description}`,
+              category: formData.category,
+              seed_value: totalValue,
+              original_seed_value: seedValue,
+              tithing_amount: tithingAmount,
+              payment_processing_fee: paymentFee,
+              pocket_price: pocketPrice,
+              total_pockets: totalPockets,
+              images: uploadedImages,
+              video_url: uploadedVideoUrl,
+              orchard_type: 'community',
+              status: 'active'
+            })
+
+          if (orchardError) {
+            console.error('Error creating orchard:', orchardError)
+            toast.error('Seed submitted but failed to create orchard')
+          } else {
+            toast.success('Seed submitted and orchard created successfully!')
+          }
+        }
+      } else {
+        toast.success('Seed submitted successfully!')
+      }
+
       navigate('/364yhvh-orchards')
     } catch (error) {
       console.error('Error submitting seed:', error)
@@ -269,6 +325,27 @@ export default function SeedSubmissionPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Value */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Seed Value (Optional)
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.value}
+                  onChange={(e) => handleInputChange('value', e.target.value)}
+                  placeholder="Enter the value of your seed (USD)"
+                  className="border-border focus:border-primary"
+                />
+                {formData.value && parseFloat(formData.value) >= 100 && (
+                  <p className="text-xs text-success mt-1">
+                    ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value))} pockets
+                  </p>
+                )}
               </div>
 
               {/* Image Upload */}

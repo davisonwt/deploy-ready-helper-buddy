@@ -12,17 +12,22 @@ import {
   Play,
   Image as ImageIcon,
   Video,
-  TreePine
+  TreePine,
+  Heart
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 
 export default function YhvhOrchardsPage() {
   const [seeds, setSeeds] = useState([])
+  const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedSeed, setSelectedSeed] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchSeeds()
+    fetchOrchards()
   }, [])
 
   const fetchSeeds = async () => {
@@ -46,6 +51,30 @@ export default function YhvhOrchardsPage() {
       toast.error('Failed to load seeds')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchOrchards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orchards')
+        .select(`
+          *,
+          profiles (
+            display_name,
+            first_name,
+            last_name
+          )
+        `)
+        .eq('orchard_type', 'community')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setOrchards(data || [])
+    } catch (error) {
+      console.error('Error fetching orchards:', error)
+      toast.error('Failed to load orchards')
     }
   }
 
@@ -126,12 +155,95 @@ export default function YhvhOrchardsPage() {
               {seeds.length} Seeds Planted
             </Badge>
             <Badge variant="outline" className="px-4 py-2 text-sm">
+              {orchards.length} Orchards Active
+            </Badge>
+            <Badge variant="outline" className="px-4 py-2 text-sm">
               Growing Together
             </Badge>
           </div>
         </div>
 
+        {/* Orchards Section */}
+        {orchards.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Community Orchards</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {orchards.map((orchard, index) => (
+                <Card 
+                  key={orchard.id} 
+                  className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                          {orchard.title}
+                        </CardTitle>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Badge className={`text-xs ${getCategoryColor(orchard.category)}`}>
+                            {orchard.category}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="ml-2 p-2 bg-success/10 rounded-full">
+                        <TreePine className="h-4 w-4 text-success" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    {/* Image Preview */}
+                    {orchard.images && orchard.images.length > 0 && (
+                      <div className="mb-3 relative overflow-hidden rounded-lg">
+                        <img
+                          src={orchard.images[0]}
+                          alt={orchard.title}
+                          className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Progress */}
+                    <div className="mb-3">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Progress</span>
+                        <span>{orchard.filled_pockets}/{orchard.total_pockets} pockets</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-success h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${(orchard.filled_pockets / orchard.total_pockets) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Description */}
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {orchard.description}
+                    </p>
+                    
+                    {/* Bestow Button */}
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                      onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
+                    >
+                      <Heart className="h-3 w-3 mr-2" />
+                      Bestow into this Orchard
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Seeds Grid */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Community Seeds</h2>
+        </div>
         {seeds.length === 0 ? (
           <div className="text-center py-16">
             <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
