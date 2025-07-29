@@ -65,8 +65,7 @@ export default function ProfilePage() {
     youtube_url: user?.youtube_url || "",
     show_social_media: user?.show_social_media !== false,
     profile_picture: user?.profile_picture || null,
-    preferred_currency: user?.preferred_currency || "USD",
-    location: user?.location || ""
+    preferred_currency: user?.preferred_currency || "USD"
   })
   
   const handleChange = (e) => {
@@ -192,8 +191,7 @@ export default function ProfilePage() {
       youtube_url: user?.youtube_url || "",
       show_social_media: user?.show_social_media !== false,
       profile_picture: user?.profile_picture || null,
-      preferred_currency: user?.preferred_currency || "USD",
-      location: user?.location || ""
+      preferred_currency: user?.preferred_currency || "USD"
     })
     setEditing(false)
     setPictureError("")

@@ -16,7 +16,7 @@ import {
   Send,
   Users,
   HandHeart,
-  Seedling,
+  Sprout,
   Droplets
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -123,7 +123,7 @@ export default function FreeWillGiftingPage() {
                   <div className="flex items-center space-x-3 p-3 border border-nav-gifting/30 rounded-lg hover:bg-nav-gifting/10 transition-colors">
                     <RadioGroupItem value="seed" id="seed" />
                     <Label htmlFor="seed" className="flex items-center space-x-2 cursor-pointer flex-1">
-                      <Seedling className="h-4 w-4 text-green-500" />
+                      <Sprout className="h-4 w-4 text-green-500" />
                       <div>
                         <div className="font-medium text-purple-700">Seed</div>
                         <div className="text-sm text-purple-600">Gift a product, service, or skill to the community</div>
