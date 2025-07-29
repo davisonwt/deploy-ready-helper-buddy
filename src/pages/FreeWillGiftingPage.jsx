@@ -116,7 +116,7 @@ export default function FreeWillGiftingPage() {
                       <Droplets className="h-4 w-4 text-blue-500" />
                       <div>
                         <div className="font-medium text-purple-700">Rain/Compost</div>
-                        <div className="text-sm text-purple-600">Monetary donation to support community members</div>
+                        <div className="text-sm text-purple-600">Free-will support to 364yhvh community projects</div>
                       </div>
                     </Label>
                   </div>
