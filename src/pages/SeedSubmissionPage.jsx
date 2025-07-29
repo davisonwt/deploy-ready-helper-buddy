@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
-  Seedling, 
+  Sprout, 
   Upload, 
   Image,
   Video,
@@ -186,7 +186,7 @@ export default function SeedSubmissionPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-success/20 rounded-full">
-              <Seedling className="h-12 w-12 text-success" />
+              <Sprout className="h-12 w-12 text-success" />
             </div>
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Gift a Seed</h1>
@@ -198,7 +198,7 @@ export default function SeedSubmissionPage() {
         <Card className="bg-card/90 backdrop-blur-sm border-border shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center text-foreground">
-              <Seedling className="h-5 w-5 mr-2" />
+              <Sprout className="h-5 w-5 mr-2" />
               Seed Information
             </CardTitle>
           </CardHeader>
