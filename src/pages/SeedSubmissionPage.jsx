@@ -38,12 +38,31 @@ export default function SeedSubmissionPage() {
   const [videoFile, setVideoFile] = useState(null)
 
   const categories = [
-    { value: 'product', label: 'Product' },
-    { value: 'service', label: 'Service' },
-    { value: 'skill', label: 'Skill' },
-    { value: 'knowledge', label: 'Knowledge' },
-    { value: 'resource', label: 'Resource' },
-    { value: 'other', label: 'Other' }
+    "The Gift of Accessories", 
+    "The Gift of Adventure Packages",
+    "The Gift of Appliances",
+    "The Gift of Art",
+    "The Gift of Books & Literature",
+    "The Gift of Business Solutions",
+    "The Gift of Clothing & Fashion",
+    "The Gift of Computers & Technology",
+    "The Gift of Education & Training",
+    "The Gift of Entertainment",
+    "The Gift of Food & Beverages",
+    "The Gift of Furniture & Home Decor",
+    "The Gift of Gifts & Special Items",
+    "The Gift of Health & Medical",
+    "The Gift of Industrial & Scientific",
+    "The Gift of Music",
+    "The Gift of Personal Care",
+    "The Gift of Security",
+    "The Gift of Services",
+    "The Gift of Social Impact",
+    "The Gift of Software",
+    "The Gift of Sports & Recreation",
+    "The Gift of Tools & Equipment",
+    "The Gift of Transportation",
+    "The Gift of Travel & Tourism"
   ]
 
   const handleInputChange = (field, value) => {
@@ -244,8 +263,8 @@ export default function SeedSubmissionPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                      <SelectItem key={category} value={category}>
+                        {category}
                       </SelectItem>
                     ))}
                   </SelectContent>

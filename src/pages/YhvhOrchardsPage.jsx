@@ -31,7 +31,7 @@ export default function YhvhOrchardsPage() {
         .from('seeds')
         .select(`
           *,
-          profiles:gifter_id (
+          profiles!seeds_gifter_id_fkey (
             display_name,
             first_name,
             last_name
@@ -51,14 +51,33 @@ export default function YhvhOrchardsPage() {
 
   const getCategoryColor = (category) => {
     const colors = {
-      product: 'bg-blue-100 text-blue-800',
-      service: 'bg-green-100 text-green-800',
-      skill: 'bg-purple-100 text-purple-800',
-      knowledge: 'bg-yellow-100 text-yellow-800',
-      resource: 'bg-orange-100 text-orange-800',
-      other: 'bg-gray-100 text-gray-800'
+      'The Gift of Accessories': 'bg-purple-100 text-purple-800',
+      'The Gift of Adventure Packages': 'bg-green-100 text-green-800',
+      'The Gift of Appliances': 'bg-blue-100 text-blue-800',
+      'The Gift of Art': 'bg-pink-100 text-pink-800',
+      'The Gift of Books & Literature': 'bg-amber-100 text-amber-800',
+      'The Gift of Business Solutions': 'bg-slate-100 text-slate-800',
+      'The Gift of Clothing & Fashion': 'bg-rose-100 text-rose-800',
+      'The Gift of Computers & Technology': 'bg-indigo-100 text-indigo-800',
+      'The Gift of Education & Training': 'bg-yellow-100 text-yellow-800',
+      'The Gift of Entertainment': 'bg-orange-100 text-orange-800',
+      'The Gift of Food & Beverages': 'bg-red-100 text-red-800',
+      'The Gift of Furniture & Home Decor': 'bg-cyan-100 text-cyan-800',
+      'The Gift of Gifts & Special Items': 'bg-violet-100 text-violet-800',
+      'The Gift of Health & Medical': 'bg-emerald-100 text-emerald-800',
+      'The Gift of Industrial & Scientific': 'bg-stone-100 text-stone-800',
+      'The Gift of Music': 'bg-fuchsia-100 text-fuchsia-800',
+      'The Gift of Personal Care': 'bg-teal-100 text-teal-800',
+      'The Gift of Security': 'bg-gray-100 text-gray-800',
+      'The Gift of Services': 'bg-lime-100 text-lime-800',
+      'The Gift of Social Impact': 'bg-sky-100 text-sky-800',
+      'The Gift of Software': 'bg-blue-100 text-blue-800',
+      'The Gift of Sports & Recreation': 'bg-green-100 text-green-800',
+      'The Gift of Tools & Equipment': 'bg-zinc-100 text-zinc-800',
+      'The Gift of Transportation': 'bg-neutral-100 text-neutral-800',
+      'The Gift of Travel & Tourism': 'bg-cyan-100 text-cyan-800'
     }
-    return colors[category] || colors.other
+    return colors[category] || 'bg-gray-100 text-gray-800'
   }
 
   const formatDate = (dateString) => {
