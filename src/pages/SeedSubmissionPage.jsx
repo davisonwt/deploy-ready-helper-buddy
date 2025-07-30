@@ -234,7 +234,7 @@ export default function SeedSubmissionPage() {
             total_pockets: totalPockets,
             images: uploadedImages,
             video_url: uploadedVideoUrl,
-            orchard_type: 'community',
+            orchard_type: 'standard',
             status: 'active'
           })
 
