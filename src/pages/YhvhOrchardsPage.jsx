@@ -66,7 +66,7 @@ export default function YhvhOrchardsPage() {
             last_name
           )
         `)
-        .eq('orchard_type', 'community')
+        .eq('orchard_type', 'standard')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
 
@@ -316,105 +316,25 @@ export default function YhvhOrchardsPage() {
                     )}
                   </div>
                   
-                  {/* View Details Button */}
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                        onClick={() => setSelectedSeed(seed)}
-                      >
-                        <Eye className="h-3 w-3 mr-2" />
-                        View Details
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center space-x-2">
-                          <Sprout className="h-5 w-5 text-success" />
-                          <span>{selectedSeed?.title}</span>
-                        </DialogTitle>
-                      </DialogHeader>
-                      
-                      {selectedSeed && (
-                        <div className="space-y-6">
-                          {/* Images */}
-                          {selectedSeed.images && selectedSeed.images.length > 0 && (
-                            <div className="space-y-3">
-                              <h4 className="font-semibold flex items-center">
-                                <ImageIcon className="h-4 w-4 mr-2" />
-                                Images
-                              </h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {selectedSeed.images.map((image, index) => (
-                                  <img
-                                    key={index}
-                                    src={image}
-                                    alt={`${selectedSeed.title} ${index + 1}`}
-                                    className="w-full h-48 object-cover rounded-lg border border-border"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Video */}
-                          {selectedSeed.video_url && (
-                            <div className="space-y-3">
-                              <h4 className="font-semibold flex items-center">
-                                <Video className="h-4 w-4 mr-2" />
-                                Video
-                              </h4>
-                              <video
-                                src={selectedSeed.video_url}
-                                controls
-                                className="w-full rounded-lg border border-border"
-                              />
-                            </div>
-                          )}
-                          
-                          {/* Description */}
-                          <div className="space-y-3">
-                            <h4 className="font-semibold">Description</h4>
-                            <p className="text-muted-foreground whitespace-pre-wrap">
-                              {selectedSeed.description}
-                            </p>
-                          </div>
-                          
-                          {/* Additional Details */}
-                          {selectedSeed.additional_details?.notes && (
-                            <div className="space-y-3">
-                              <h4 className="font-semibold">Additional Details</h4>
-                              <p className="text-muted-foreground whitespace-pre-wrap">
-                                {selectedSeed.additional_details.notes}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {/* Meta Info */}
-                          <div className="space-y-3 pt-4 border-t border-border">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="font-medium">Category:</span>
-                                <Badge className={`ml-2 ${getCategoryColor(selectedSeed.category)}`}>
-                                  {selectedSeed.category}
-                                </Badge>
-                              </div>
-                              <div>
-                                <span className="font-medium">Gifted by:</span>
-                                <span className="ml-2">{getGifterName(selectedSeed.profiles)}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Planted:</span>
-                                <span className="ml-2">{formatDate(selectedSeed.created_at)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </DialogContent>
-                  </Dialog>
+                  {/* Bestow Button */}
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="w-full mt-4 bg-success hover:bg-success/90 text-success-foreground"
+                    onClick={() => {
+                      // Navigate to animated orchard if seed has a value that generated an orchard
+                      const seedValue = seed.additional_details?.value;
+                      if (seedValue && parseFloat(seedValue) >= 100) {
+                        // Find matching orchard and navigate to it
+                        navigate(`/browse-orchards`);
+                      } else {
+                        setSelectedSeed(seed);
+                      }
+                    }}
+                  >
+                    <Heart className="h-3 w-3 mr-2" />
+                    Bestow into this Orchard
+                  </Button>
                 </CardContent>
               </Card>
             ))}
