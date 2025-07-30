@@ -147,6 +147,7 @@ export default function SeedSubmissionPage() {
 
   const calculatePockets = (value) => {
     const numValue = parseFloat(value)
+    if (numValue < 100) return 10  // For values under $100, always use 10 pockets
     if (numValue >= 100 && numValue <= 200) return 10
     if (numValue >= 210 && numValue <= 400) return 20
     if (numValue >= 401 && numValue <= 600) return 40
@@ -166,10 +167,6 @@ export default function SeedSubmissionPage() {
       return
     }
 
-    if (parseFloat(formData.value) < 100) {
-      toast.error('Seed value must be at least $100')
-      return
-    }
 
     setLoading(true)
     
@@ -208,7 +205,7 @@ export default function SeedSubmissionPage() {
 
       if (seedError) throw seedError
 
-      // Auto-generate orchard since value is mandatory and >= 100
+      // Auto-generate orchard since value is mandatory
       const seedValue = parseFloat(formData.value)
       const totalPockets = calculatePockets(seedValue)
       
@@ -337,15 +334,15 @@ export default function SeedSubmissionPage() {
                 </label>
                 <Input
                   type="number"
-                  min="100"
+                  min="1"
                   step="0.01"
                   value={formData.value}
                   onChange={(e) => handleInputChange('value', e.target.value)}
-                  placeholder="Enter the value of your seed (USD) - Minimum $100"
+                  placeholder="Enter the value of your seed (USD)"
                   className="border-border focus:border-primary"
                   required
                 />
-                {formData.value && parseFloat(formData.value) >= 100 && (
+                {formData.value && parseFloat(formData.value) > 0 && (
                   <p className="text-xs text-success mt-1">
                     ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value))} pockets
                   </p>
@@ -456,7 +453,7 @@ export default function SeedSubmissionPage() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={loading || uploading || !formData.title || !formData.description || !formData.category || !formData.value || parseFloat(formData.value || 0) < 100}
+                disabled={loading || uploading || !formData.title || !formData.description || !formData.category || !formData.value || parseFloat(formData.value || 0) <= 0}
                 className="w-full bg-success hover:bg-success/90 text-success-foreground"
               >
                 {loading || uploading ? (
