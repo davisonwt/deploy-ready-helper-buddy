@@ -354,12 +354,17 @@ export default function YhvhOrchardsPage() {
                         if (matchingOrchards && matchingOrchards.length > 0) {
                           // Navigate to the matching orchard's animated page
                           navigate(`/animated-orchard/${matchingOrchards[0].id}`);
-                        } else {
-                          // Create an alert for debugging - let's check what we have
-                          console.log('Seed data:', seed);
-                          console.log('Seed value:', seed.additional_details?.value);
-                          toast.error('No matching orchard found. This seed may not have generated an orchard yet.');
-                        }
+                         } else {
+                           // No orchard found - check if seed has value for auto-creation
+                           const seedValue = seed.additional_details?.value;
+                           if (!seedValue) {
+                             // This seed was created without a value, so no orchard exists
+                             toast.error(`This seed "${seed.title}" was created without a value, so no orchard was generated. Seeds need a monetary value to create orchards where others can bestow.`);
+                           } else {
+                             // Has value but no orchard - something went wrong during creation
+                             toast.error(`No orchard found for "${seed.title}". The orchard may not have been created properly during seed submission.`);
+                           }
+                         }
                       } catch (error) {
                         console.error('Error finding orchard:', error);
                         toast.error('Failed to find matching orchard');
