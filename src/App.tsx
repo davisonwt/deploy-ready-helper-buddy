@@ -197,7 +197,7 @@ const App = () => (
               <Route path="/basket" element={
                 <ProtectedRoute>
                   <Layout>
-                    <BrowseOrchardsPage />
+                    <AnimatedOrchardPage />
                   </Layout>
                 </ProtectedRoute>
               } />

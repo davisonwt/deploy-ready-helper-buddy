@@ -321,14 +321,36 @@ export default function YhvhOrchardsPage() {
                     variant="default" 
                     size="sm" 
                     className="w-full mt-4 bg-success hover:bg-success/90 text-success-foreground"
-                    onClick={() => {
-                      // Navigate to animated orchard if seed has a value that generated an orchard
+                    onClick={async () => {
+                      // Check if this seed generated an orchard
                       const seedValue = seed.additional_details?.value;
-                      if (seedValue && parseFloat(seedValue) >= 100) {
-                        // Find matching orchard and navigate to it
-                        navigate(`/browse-orchards`);
+                      if (seedValue) {
+                        try {
+                          // Try to find the matching orchard for this seed
+                          const { data: matchingOrchards, error } = await supabase
+                            .from('orchards')
+                            .select('id, title')
+                            .eq('orchard_type', 'standard')
+                            .eq('status', 'active')
+                            .eq('original_seed_value', parseFloat(seedValue))
+                            .limit(1);
+                          
+                          if (error) throw error;
+                          
+                          if (matchingOrchards && matchingOrchards.length > 0) {
+                            // Navigate to the matching orchard's animated page
+                            navigate(`/animated-orchard/${matchingOrchards[0].id}`);
+                          } else {
+                            // No matching orchard found, show message
+                            toast.error('No matching orchard found for this seed');
+                          }
+                        } catch (error) {
+                          console.error('Error finding orchard:', error);
+                          toast.error('Failed to find matching orchard');
+                        }
                       } else {
-                        setSelectedSeed(seed);
+                        // No seed value, can't find orchard
+                        toast.error('This seed does not have an associated orchard');
                       }
                     }}
                   >
