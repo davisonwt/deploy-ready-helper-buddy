@@ -29,6 +29,8 @@ export default function SeedSubmissionPage() {
     description: '',
     category: '',
     value: '',
+    orchardType: 'full_value', // Default to full value for seeds
+    numberOfPockets: '10', // How many copies of the item
     additional_details: {}
   })
   
@@ -145,19 +147,26 @@ export default function SeedSubmissionPage() {
     setVideoFile(null)
   }
 
-  const calculatePockets = (value) => {
+  const calculatePockets = (value, orchardType, numberOfPockets) => {
     const numValue = parseFloat(value)
-    if (numValue < 100) return 10  // For values under $100, always use 10 pockets
-    if (numValue >= 100 && numValue <= 200) return 10
-    if (numValue >= 210 && numValue <= 400) return 20
-    if (numValue >= 401 && numValue <= 600) return 40
-    if (numValue >= 601 && numValue <= 1000) return 60
-    if (numValue >= 1001 && numValue <= 5000) return 100
-    if (numValue >= 5001 && numValue <= 10000) return 500
-    if (numValue >= 10000 && numValue <= 30000) return 1000
-    if (numValue >= 30001 && numValue <= 100000) return 1500
-    if (numValue >= 100001 && numValue <= 1000000) return 10000
-    return 0
+    
+    if (orchardType === 'full_value') {
+      // For full value, use the specified number of pockets
+      return parseInt(numberOfPockets) || 1
+    } else {
+      // Standard calculation for traditional orchards
+      if (numValue < 100) return 10  // For values under $100, always use 10 pockets
+      if (numValue >= 100 && numValue <= 200) return 10
+      if (numValue >= 210 && numValue <= 400) return 20
+      if (numValue >= 401 && numValue <= 600) return 40
+      if (numValue >= 601 && numValue <= 1000) return 60
+      if (numValue >= 1001 && numValue <= 5000) return 100
+      if (numValue >= 5001 && numValue <= 10000) return 500
+      if (numValue >= 10000 && numValue <= 30000) return 1000
+      if (numValue >= 30001 && numValue <= 100000) return 1500
+      if (numValue >= 100001 && numValue <= 1000000) return 10000
+      return 0
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -167,6 +176,10 @@ export default function SeedSubmissionPage() {
       return
     }
 
+    if (formData.orchardType === 'full_value' && (!formData.numberOfPockets || parseInt(formData.numberOfPockets) < 1)) {
+      toast.error('Please specify how many copies you want to make available')
+      return
+    }
 
     setLoading(true)
     
@@ -190,48 +203,64 @@ export default function SeedSubmissionPage() {
       }
 
       // Save seed to database
-      const { data: seedData, error: seedError } = await supabase
-        .from('seeds')
-        .insert({
-          gifter_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          images: uploadedImages,
-          video_url: uploadedVideoUrl,
-          additional_details: { ...formData.additional_details, value: formData.value }
-        })
-        .select()
+        const { data: seedData, error: seedError } = await supabase
+          .from('seeds')
+          .insert({
+            gifter_id: user.id,
+            title: formData.title,
+            description: formData.description,
+            category: formData.category,
+            images: uploadedImages,
+            video_url: uploadedVideoUrl,
+            additional_details: { 
+              ...formData.additional_details, 
+              value: formData.value,
+              orchardType: formData.orchardType,
+              numberOfPockets: formData.numberOfPockets
+            }
+          })
+          .select()
 
       if (seedError) throw seedError
 
       // Auto-generate orchard since value is mandatory
       const seedValue = parseFloat(formData.value)
-      const totalPockets = calculatePockets(seedValue)
+      const totalPockets = calculatePockets(seedValue, formData.orchardType, formData.numberOfPockets)
       
       if (totalPockets > 0) {
         // Calculate values including tithing and payment fees
         const tithingAmount = seedValue * 0.10
         const paymentFee = seedValue * 0.06
-        const totalValue = seedValue + tithingAmount + paymentFee
-        const pocketPrice = totalValue / totalPockets
+        const totalWithFees = seedValue + tithingAmount + paymentFee
+        
+        let finalSeedValue, pocketPrice
+        
+        if (formData.orchardType === 'full_value') {
+          // For full value: each pocket costs the full seed value + fees
+          finalSeedValue = totalWithFees * totalPockets // Total needed for all pockets
+          pocketPrice = totalWithFees // Each pocket costs the full amount
+        } else {
+          // For standard: distribute the total across pockets
+          finalSeedValue = totalWithFees
+          pocketPrice = totalWithFees / totalPockets
+        }
 
         const { error: orchardError } = await supabase
           .from('orchards')
           .insert({
             user_id: user.id,
             title: `Orchard for: ${formData.title}`,
-            description: `Auto-generated orchard from seed: ${formData.description}`,
+            description: `Auto-generated orchard from seed: ${formData.description}${formData.orchardType === 'full_value' ? ` (Each pocket = 1 complete ${formData.title})` : ''}`,
             category: formData.category,
-            seed_value: totalValue,
+            seed_value: finalSeedValue,
             original_seed_value: seedValue,
-            tithing_amount: tithingAmount,
-            payment_processing_fee: paymentFee,
+            tithing_amount: tithingAmount * (formData.orchardType === 'full_value' ? totalPockets : 1),
+            payment_processing_fee: paymentFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
             pocket_price: pocketPrice,
             total_pockets: totalPockets,
             images: uploadedImages,
             video_url: uploadedVideoUrl,
-            orchard_type: 'standard',
+            orchard_type: formData.orchardType,
             status: 'active'
           })
 
@@ -239,7 +268,7 @@ export default function SeedSubmissionPage() {
           console.error('Error creating orchard:', orchardError)
           toast.error('Seed submitted but failed to create orchard')
         } else {
-          toast.success('Seed submitted and orchard created successfully!')
+          toast.success(`Seed submitted and ${formData.orchardType === 'full_value' ? 'full-value' : 'standard'} orchard created successfully!`)
         }
       } else {
         toast.error('Invalid seed value for orchard generation')
@@ -327,27 +356,71 @@ export default function SeedSubmissionPage() {
                 </Select>
               </div>
 
-              {/* Value */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Seed Value *
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={formData.value}
-                  onChange={(e) => handleInputChange('value', e.target.value)}
-                  placeholder="Enter the value of your seed (USD)"
-                  className="border-border focus:border-primary"
-                  required
-                />
-                {formData.value && parseFloat(formData.value) > 0 && (
-                  <p className="text-xs text-success mt-1">
-                    ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value))} pockets
-                  </p>
-                )}
-              </div>
+               {/* Orchard Type */}
+               <div>
+                 <label className="block text-sm font-medium text-foreground mb-2">
+                   Orchard Type
+                 </label>
+                 <Select value={formData.orchardType} onValueChange={(value) => handleInputChange('orchardType', value)}>
+                   <SelectTrigger className="border-border focus:border-primary">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="full_value">Full Value (Each pocket = 1 complete item)</SelectItem>
+                     <SelectItem value="standard">Standard (Total value divided across pockets)</SelectItem>
+                   </SelectContent>
+                 </Select>
+                 <p className="text-xs text-muted-foreground mt-1">
+                   {formData.orchardType === 'full_value' 
+                     ? 'Each pocket allows someone to receive the complete item/service'
+                     : 'The total value is distributed across multiple pockets for partial contributions'
+                   }
+                 </p>
+               </div>
+
+               {/* Number of Pockets (only for full value) */}
+               {formData.orchardType === 'full_value' && (
+                 <div>
+                   <label className="block text-sm font-medium text-foreground mb-2">
+                     Number of Copies Available *
+                   </label>
+                   <Input
+                     type="number"
+                     min="1"
+                     max="100"
+                     value={formData.numberOfPockets}
+                     onChange={(e) => handleInputChange('numberOfPockets', e.target.value)}
+                     placeholder="How many copies do you want to make available?"
+                     className="border-border focus:border-primary"
+                     required
+                   />
+                   <p className="text-xs text-muted-foreground mt-1">
+                     Each copy will cost ${formData.value ? (parseFloat(formData.value) * 1.16).toFixed(2) : '0'} (including 10% tithing + 6% processing fees)
+                   </p>
+                 </div>
+               )}
+
+               {/* Value */}
+               <div>
+                 <label className="block text-sm font-medium text-foreground mb-2">
+                   Seed Value (per item) *
+                 </label>
+                 <Input
+                   type="number"
+                   min="1"
+                   step="0.01"
+                   value={formData.value}
+                   onChange={(e) => handleInputChange('value', e.target.value)}
+                   placeholder="Enter the value of your seed (USD)"
+                   className="border-border focus:border-primary"
+                   required
+                 />
+                 {formData.value && parseFloat(formData.value) > 0 && (
+                   <p className="text-xs text-success mt-1">
+                     ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value), formData.orchardType, formData.numberOfPockets)} pockets
+                   </p>
+                 )}
+               </div>
 
               {/* Image Upload */}
               <div>

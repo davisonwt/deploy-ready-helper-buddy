@@ -66,8 +66,8 @@ export default function YhvhOrchardsPage() {
             last_name
           )
         `)
-        .eq('orchard_type', 'standard')
-        .eq('status', 'active')
+         .in('orchard_type', ['standard', 'full_value'])
+         .eq('status', 'active')
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -326,8 +326,8 @@ export default function YhvhOrchardsPage() {
                         // First, try to find orchard by matching seed title
                         let { data: matchingOrchards, error } = await supabase
                           .from('orchards')
-                          .select('id, title, original_seed_value')
-                          .eq('orchard_type', 'standard')
+                           .select('id, title, original_seed_value, orchard_type')
+                           .eq('orchard_type', seed.additional_details?.orchardType || 'standard')
                           .eq('status', 'active')
                           .ilike('title', `%${seed.title}%`)
                           .limit(1);
@@ -338,10 +338,10 @@ export default function YhvhOrchardsPage() {
                         if (!matchingOrchards || matchingOrchards.length === 0) {
                           const seedValue = seed.additional_details?.value;
                           if (seedValue) {
-                            const { data: valueMatchOrchards, error: valueError } = await supabase
-                              .from('orchards')
-                              .select('id, title, original_seed_value')
-                              .eq('orchard_type', 'standard')
+                             const { data: valueMatchOrchards, error: valueError } = await supabase
+                               .from('orchards')
+                               .select('id, title, original_seed_value, orchard_type')
+                               .eq('orchard_type', seed.additional_details?.orchardType || 'standard')
                               .eq('status', 'active')
                               .eq('original_seed_value', parseFloat(seedValue))
                               .limit(1);
