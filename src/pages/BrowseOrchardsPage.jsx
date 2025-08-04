@@ -10,14 +10,18 @@ import { Progress } from "../components/ui/progress"
 import { 
   Search, Heart, Eye, MapPin, TrendingUp, 
   Calendar, Users, Filter, Grid, List,
-  RefreshCw, Loader2, Sprout, User, TreePine
+  RefreshCw, Loader2, Sprout, User, TreePine,
+  Edit, Trash2
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
+import { useOrchards } from "../hooks/useOrchards"
 import { supabase } from "@/integrations/supabase/client"
+import { toast } from "sonner"
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
+  const { deleteOrchard } = useOrchards()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -67,6 +71,26 @@ export default function BrowseOrchardsPage() {
 
   const handleRefresh = () => {
     fetchOrchards()
+  }
+
+  const handleDeleteOrchard = async (orchardId) => {
+    if (!window.confirm('Are you sure you want to delete this orchard? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const result = await deleteOrchard(orchardId)
+      
+      if (result.success) {
+        toast.success('Orchard deleted successfully')
+        fetchOrchards() // Refresh the list
+      } else {
+        toast.error(result.error || 'Failed to delete orchard')
+      }
+    } catch (error) {
+      console.error('Error deleting orchard:', error)
+      toast.error('Failed to delete orchard')
+    }
   }
 
   // Transform orchards data with safe defaults
@@ -424,6 +448,31 @@ export default function BrowseOrchardsPage() {
                         </Button>
                       </Link>
                     </div>
+                    
+                    {/* Owner Actions */}
+                    {user && orchard.user_id === user.id && (
+                      <div className="flex gap-2 pt-2 border-t border-nav-community/20 mt-4">
+                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full border-nav-community/30 text-green-700 hover:bg-nav-community/10"
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteOrchard(orchard.id)}
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

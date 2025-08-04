@@ -19,16 +19,21 @@ import {
   TrendingUp,
   Gift,
   Share2,
-  Bookmark
+  Bookmark,
+  Edit,
+  Trash2
 } from "lucide-react";
 import BestowalUI from '../components/BestowalUI';
 import { fetchOrchard, createBestowal, incrementOrchardViews } from '../api/orchards';
 import { useAuth } from '../hooks/useAuth';
+import { useOrchards } from '../hooks/useOrchards';
+import { toast } from 'sonner';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { deleteOrchard } = useOrchards();
   const [orchard, setOrchard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,7 +102,27 @@ const OrchardPage = () => {
   const handleShare = () => {
     const url = `${window.location.origin}/orchard/${orchardId}`;
     navigator.clipboard.writeText(url);
-    // Could add a toast notification here
+    toast.success('Orchard link copied to clipboard!');
+  };
+
+  const handleDeleteOrchard = async () => {
+    if (!window.confirm('Are you sure you want to delete this orchard? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const result = await deleteOrchard(orchardId)
+      
+      if (result.success) {
+        toast.success('Orchard deleted successfully')
+        navigate('/my-orchards')
+      } else {
+        toast.error(result.error || 'Failed to delete orchard')
+      }
+    } catch (error) {
+      console.error('Error deleting orchard:', error)
+      toast.error('Failed to delete orchard')
+    }
   };
 
   const getStatusColor = (status) => {
@@ -216,6 +241,32 @@ const OrchardPage = () => {
                   <Share2 className="h-4 w-4 mr-2" />
                   Share Orchard
                 </Button>
+                
+                {/* Owner Actions */}
+                {user && orchard.user_id === user.id && (
+                  <>
+                    <Link to={`/edit-orchard/${orchardId}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-success/30 text-success hover:bg-success/5"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={handleDeleteOrchard}
+                      variant="outline"
+                      size="sm"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/5"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"

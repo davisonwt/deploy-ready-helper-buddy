@@ -13,12 +13,18 @@ import {
   Image as ImageIcon,
   Video,
   TreePine,
-  Heart
+  Heart,
+  Edit,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useOrchards } from '../hooks/useOrchards'
 
 export default function YhvhOrchardsPage() {
+  const { user } = useAuth()
+  const { deleteOrchard } = useOrchards()
   const [seeds, setSeeds] = useState([])
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +81,26 @@ export default function YhvhOrchardsPage() {
     } catch (error) {
       console.error('Error fetching orchards:', error)
       toast.error('Failed to load orchards')
+    }
+  }
+
+  const handleDeleteOrchard = async (orchardId) => {
+    if (!window.confirm('Are you sure you want to delete this orchard? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const result = await deleteOrchard(orchardId)
+      
+      if (result.success) {
+        toast.success('Orchard deleted successfully')
+        fetchOrchards() // Refresh the list
+      } else {
+        toast.error(result.error || 'Failed to delete orchard')
+      }
+    } catch (error) {
+      console.error('Error deleting orchard:', error)
+      toast.error('Failed to delete orchard')
     }
   }
 
@@ -227,12 +253,36 @@ export default function YhvhOrchardsPage() {
                     <Button 
                       variant="default" 
                       size="sm" 
-                      className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                      className="w-full bg-success hover:bg-success/90 text-success-foreground mb-2"
                       onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
                     >
                       <Heart className="h-3 w-3 mr-2" />
                       Bestow into this Orchard
                     </Button>
+                    
+                    {/* Owner Actions */}
+                    {user && orchard.user_id === user.id && (
+                      <div className="flex gap-2 pt-2 border-t border-border mt-2">
+                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full border-success/30 text-success hover:bg-success/10"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteOrchard(orchard.id)}
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}

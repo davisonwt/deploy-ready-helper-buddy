@@ -27,6 +27,7 @@ import MyOrchardsPage from "./pages/MyOrchardsPage";
 import FreeWillGiftingPage from "./pages/FreeWillGiftingPage";
 import SeedSubmissionPage from "./pages/SeedSubmissionPage";
 import YhvhOrchardsPage from "./pages/YhvhOrchardsPage";
+import EditOrchardPage from "./pages/EditOrchardPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -125,10 +126,10 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              <Route path="/edit-orchard/:id" element={
+              <Route path="/edit-orchard/:orchardId" element={
                 <ProtectedRoute>
                   <Layout>
-                    <CreateOrchardPage isEdit={true} />
+                    <EditOrchardPage />
                   </Layout>
                 </ProtectedRoute>
               } />

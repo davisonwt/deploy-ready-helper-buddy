@@ -21,13 +21,15 @@ import {
   Edit,
   Share2,
   MapPin,
-  Heart
+  Heart,
+  Trash2
 } from 'lucide-react'
+import { toast } from "sonner"
 import { formatCurrency } from '../utils/formatters'
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
-  const { orchards, loading, fetchOrchards } = useOrchards()
+  const { orchards, loading, fetchOrchards, deleteOrchard } = useOrchards()
   const [userOrchards, setUserOrchards] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -102,6 +104,26 @@ export default function MyOrchardsPage() {
     return userOrchards.reduce((sum, orchard) => 
       sum + ((orchard.filled_pockets || 0) * (orchard.pocket_price || 0)), 0
     )
+  }
+
+  const handleDeleteOrchard = async (orchardId) => {
+    if (!window.confirm('Are you sure you want to delete this orchard? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const result = await deleteOrchard(orchardId)
+      
+      if (result.success) {
+        toast.success('Orchard deleted successfully')
+        fetchOrchards() // Refresh the list
+      } else {
+        toast.error(result.error || 'Failed to delete orchard')
+      }
+    } catch (error) {
+      console.error('Error deleting orchard:', error)
+      toast.error('Failed to delete orchard')
+    }
   }
 
   if (loading) {
@@ -383,10 +405,19 @@ export default function MyOrchardsPage() {
                         onClick={() => {
                           const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                           navigator.clipboard.writeText(url)
+                          toast.success('Orchard link copied to clipboard!')
                         }}
                         className="border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10"
                       >
                         <Share2 className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteOrchard(orchard.id)}
+                        className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
