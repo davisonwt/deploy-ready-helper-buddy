@@ -2,6 +2,7 @@ import React from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
+import { useRoles } from "../hooks/useRoles"
 import { 
   Sprout, 
   Home, 
@@ -24,6 +25,7 @@ import { Badge } from "./ui/badge"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
+  const { isAdminOrGosat } = useRoles()
   const location = useLocation()
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
@@ -41,6 +43,7 @@ export default function Layout({ children }) {
     { name: "364yhvh orchards", href: "/364yhvh-orchards", icon: Sprout },
     { name: "tithing", href: "/tithing", icon: HandHeart },
     { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
+    ...(isAdminOrGosat() ? [{ name: "admin dashboard", href: "/admin/dashboard", icon: Church }] : [])
   ]
   
   const isActive = (href) => location.pathname === href

@@ -28,6 +28,7 @@ import FreeWillGiftingPage from "./pages/FreeWillGiftingPage";
 import SeedSubmissionPage from "./pages/SeedSubmissionPage";
 import YhvhOrchardsPage from "./pages/YhvhOrchardsPage";
 import EditOrchardPage from "./pages/EditOrchardPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -225,6 +226,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <AdminAnalyticsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AdminDashboardPage />
                   </Layout>
                 </ProtectedRoute>
               } />

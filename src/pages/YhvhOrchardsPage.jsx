@@ -21,10 +21,12 @@ import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
+import { useRoles } from '../hooks/useRoles'
 
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
   const { deleteOrchard } = useOrchards()
+  const { isAdminOrGosat } = useRoles()
   const [seeds, setSeeds] = useState([])
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -260,8 +262,8 @@ export default function YhvhOrchardsPage() {
                       Bestow into this Orchard
                     </Button>
                     
-                    {/* Owner Actions */}
-                    {user && orchard.user_id === user.id && (
+                    {/* Owner Actions and Gosat Management */}
+                    {user && (orchard.user_id === user.id || isAdminOrGosat()) && (
                       <div className="flex gap-2 pt-2 border-t border-border mt-2">
                         <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
                           <Button 
@@ -270,7 +272,7 @@ export default function YhvhOrchardsPage() {
                             className="w-full border-success/30 text-success hover:bg-success/10"
                           >
                             <Edit className="h-3 w-3 mr-1" />
-                            Edit
+                            {orchard.user_id === user.id ? 'Edit' : 'Manage'}
                           </Button>
                         </Link>
                         <Button 
