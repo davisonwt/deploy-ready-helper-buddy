@@ -29,6 +29,7 @@ import SeedSubmissionPage from "./pages/SeedSubmissionPage";
 import YhvhOrchardsPage from "./pages/YhvhOrchardsPage";
 import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import ChatappPage from "./pages/ChatappPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -192,6 +193,15 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <YhvhOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Chatapp */}
+              <Route path="/chatapp" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ChatappPage />
                   </Layout>
                 </ProtectedRoute>
               } />

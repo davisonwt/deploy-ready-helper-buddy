@@ -80,6 +80,196 @@ export type Database = {
           },
         ]
       }
+      chat_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: Database["public"]["Enums"]["file_type"]
+          id: string
+          mime_type: string | null
+          room_id: string
+          thumbnail_url: string | null
+          uploader_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: Database["public"]["Enums"]["file_type"]
+          id?: string
+          mime_type?: string | null
+          room_id: string
+          thumbnail_url?: string | null
+          uploader_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: Database["public"]["Enums"]["file_type"]
+          id?: string
+          mime_type?: string | null
+          room_id?: string
+          thumbnail_url?: string | null
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_files_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: Database["public"]["Enums"]["file_type"] | null
+          file_url: string | null
+          id: string
+          is_edited: boolean
+          message_type: string
+          reply_to_id: string | null
+          room_id: string
+          sender_id: string
+          sender_profile_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: Database["public"]["Enums"]["file_type"] | null
+          file_url?: string | null
+          id?: string
+          is_edited?: boolean
+          message_type?: string
+          reply_to_id?: string | null
+          room_id: string
+          sender_id: string
+          sender_profile_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: Database["public"]["Enums"]["file_type"] | null
+          file_url?: string | null
+          id?: string
+          is_edited?: boolean
+          message_type?: string
+          reply_to_id?: string | null
+          room_id?: string
+          sender_id?: string
+          sender_profile_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          id: string
+          is_active: boolean
+          is_moderator: boolean
+          joined_at: string
+          profile_id: string | null
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          is_moderator?: boolean
+          joined_at?: string
+          profile_id?: string | null
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          is_moderator?: boolean
+          joined_at?: string
+          profile_id?: string | null
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          max_participants: number | null
+          name: string | null
+          room_type: Database["public"]["Enums"]["chat_room_type"]
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          name?: string | null
+          room_type?: Database["public"]["Enums"]["chat_room_type"]
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_participants?: number | null
+          name?: string | null
+          room_type?: Database["public"]["Enums"]["chat_room_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orchards: {
         Row: {
           category: string
@@ -409,6 +599,15 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "gosat" | "admin"
+      chat_room_type:
+        | "direct"
+        | "group"
+        | "live_marketing"
+        | "live_study"
+        | "live_podcast"
+        | "live_training"
+        | "live_conference"
+      file_type: "image" | "video" | "document" | "audio"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
       orchard_type: "standard" | "full_value"
       verification_status: "pending" | "verified" | "rejected"
@@ -540,6 +739,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "gosat", "admin"],
+      chat_room_type: [
+        "direct",
+        "group",
+        "live_marketing",
+        "live_study",
+        "live_podcast",
+        "live_training",
+        "live_conference",
+      ],
+      file_type: ["image", "video", "document", "audio"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
       orchard_type: ["standard", "full_value"],
       verification_status: ["pending", "verified", "rejected"],

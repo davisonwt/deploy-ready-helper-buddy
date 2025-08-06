@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   HandHeart,
-  ShoppingCart
+  ShoppingCart,
+  MessageSquare
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -41,6 +42,7 @@ export default function Layout({ children }) {
     { name: "create orchard", href: "/create-orchard", icon: Plus },
     { name: "my orchards", href: "/my-orchards", icon: BarChart3 },
     { name: "364yhvh orchards", href: "/364yhvh-orchards", icon: Sprout },
+    { name: "chatapp", href: "/chatapp", icon: MessageSquare },
     { name: "tithing", href: "/tithing", icon: HandHeart },
     { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
     ...(isAdminOrGosat() ? [{ name: "admin dashboard", href: "/admin/dashboard", icon: Church }] : [])
@@ -83,6 +85,7 @@ export default function Layout({ children }) {
                   "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
                   "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
                   "364yhvh orchards": { bg: '#c7f9cc', border: '#c7f9cc', text: '#14532d' },
+                  "chatapp": { bg: '#b19cd9', border: '#b19cd9', text: '#4c1d95' },
                   "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
                   "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' }
                 }
