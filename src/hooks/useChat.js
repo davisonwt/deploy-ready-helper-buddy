@@ -133,6 +133,37 @@ export const useChat = () => {
     }
   }, [user, toast]);
 
+  // Create a direct message room with another user
+  const createDirectRoom = useCallback(async (otherUserId) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: otherUserId
+      });
+
+      if (error) throw error;
+
+      const { data: room } = await supabase
+        .from('chat_rooms')
+        .select('*')
+        .eq('id', data)
+        .single();
+
+      fetchRooms(); // Refresh rooms list
+      return room;
+    } catch (error) {
+      console.error('Error creating direct room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create direct chat",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [user, toast, fetchRooms]);
+
   // Create a new room
   const createRoom = useCallback(async (roomData) => {
     if (!user) return null;
@@ -278,6 +309,7 @@ export const useChat = () => {
     loading,
     sendMessage,
     createRoom,
+    createDirectRoom,
     joinRoom,
     fetchRooms,
   };

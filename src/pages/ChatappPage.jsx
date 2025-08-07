@@ -25,6 +25,8 @@ import { useChat } from '@/hooks/useChat';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import CreateRoomModal from '@/components/chat/CreateRoomModal';
+import UserSelector from '@/components/chat/UserSelector';
+import CallInterface from '@/components/chat/CallInterface';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -37,11 +39,14 @@ const ChatappPage = () => {
     loading,
     sendMessage,
     createRoom,
+    createDirectRoom,
   } = useChat();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [showUserSelector, setShowUserSelector] = useState(false);
+  const [activeCall, setActiveCall] = useState(null);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -55,6 +60,28 @@ const ChatappPage = () => {
     if (activeTab === 'all') return true;
     return room.room_type === activeTab;
   });
+
+  const handleStartDirectChat = async (otherUserId) => {
+    const room = await createDirectRoom(otherUserId);
+    if (room) {
+      setCurrentRoom(room);
+      setShowUserSelector(false);
+    }
+  };
+
+  const handleStartCall = (otherUserId, callType) => {
+    // In a real implementation, you would initialize WebRTC here
+    console.log(`Starting ${callType} call with user:`, otherUserId);
+    setActiveCall({
+      type: callType,
+      isIncoming: false,
+      callerInfo: { display_name: 'Test User' }
+    });
+  };
+
+  const handleEndCall = () => {
+    setActiveCall(null);
+  };
 
   const getTabContent = (type) => {
     const configs = {
@@ -103,15 +130,25 @@ const ChatappPage = () => {
                 Connect, collaborate, and grow together in our farming community
               </p>
             </div>
-            <Button onClick={() => setShowCreateModal(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Room
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowUserSelector(!showUserSelector)} 
+                variant="outline" 
+                className="gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Direct Chat
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create Room
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
           {/* Sidebar - Room List */}
           <div className="lg:col-span-1">
             <Card className="h-full flex flex-col">
@@ -169,8 +206,18 @@ const ChatappPage = () => {
             </Card>
           </div>
 
+          {/* User Selector */}
+          {showUserSelector && (
+            <div className="lg:col-span-1">
+              <UserSelector
+                onStartDirectChat={handleStartDirectChat}
+                onStartCall={handleStartCall}
+              />
+            </div>
+          )}
+
           {/* Main Chat Area */}
-          <div className="lg:col-span-2">
+          <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             {currentRoom ? (
               <Card className="h-full flex flex-col">
                 <CardHeader className="border-b">
@@ -183,8 +230,10 @@ const ChatappPage = () => {
                         </Badge>
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {participants.length} participants
-                        {currentRoom.category && ` • ${currentRoom.category}`}
+                        {currentRoom.room_type === 'direct' 
+                          ? 'Direct Message' 
+                          : `${participants.length} participants${currentRoom.category ? ` • ${currentRoom.category}` : ''}`
+                        }
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -266,6 +315,20 @@ const ChatappPage = () => {
           onClose={() => setShowCreateModal(false)}
           onCreateRoom={createRoom}
         />
+
+        {/* Call Interface */}
+        {activeCall && (
+          <CallInterface
+            callType={activeCall.type}
+            isIncoming={activeCall.isIncoming}
+            callerInfo={activeCall.callerInfo}
+            onAccept={() => console.log('Call accepted')}
+            onDecline={() => setActiveCall(null)}
+            onEnd={handleEndCall}
+            onToggleVideo={() => console.log('Toggle video')}
+            onToggleMic={() => console.log('Toggle mic')}
+          />
+        )}
       </div>
     </div>
   );
