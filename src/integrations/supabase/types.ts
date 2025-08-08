@@ -600,6 +600,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      user_is_in_room: {
+        Args: { check_room_id: string; check_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "user" | "gosat" | "admin"
