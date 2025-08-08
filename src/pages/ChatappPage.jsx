@@ -163,20 +163,47 @@ const ChatappPage = () => {
               </CardHeader>
               <CardContent className="flex-1 min-h-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                  <TabsList className="grid grid-cols-2 lg:grid-cols-4 mb-4 h-auto">
-                    {['all', 'group', 'live_marketing', 'live_study'].map((type) => {
-                      const { icon: Icon, label } = getTabContent(type);
-                      return (
-                        <TabsTrigger 
-                          key={type} 
-                          value={type} 
-                          className="text-xs py-2 px-2 flex flex-col lg:flex-row items-center gap-1"
-                        >
-                          <Icon className="h-3 w-3" />
-                          <span className="truncate">{label}</span>
-                        </TabsTrigger>
-                      );
-                    })}
+                  {/* Beautiful Tab Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {[
+                      { type: 'all', label: 'All Chats', icon: MessageSquare, gradient: 'from-blue-500/20 to-blue-600/30', border: 'border-blue-200', shadow: 'shadow-blue-500/20' },
+                      { type: 'group', label: 'Groups', icon: Users, gradient: 'from-green-500/20 to-green-600/30', border: 'border-green-200', shadow: 'shadow-green-500/20' },
+                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, gradient: 'from-purple-500/20 to-purple-600/30', border: 'border-purple-200', shadow: 'shadow-purple-500/20' },
+                      { type: 'live_study', label: 'Study', icon: BookOpen, gradient: 'from-orange-500/20 to-orange-600/30', border: 'border-orange-200', shadow: 'shadow-orange-500/20' }
+                    ].map(({ type, label, icon: Icon, gradient, border, shadow }) => (
+                      <button
+                        key={type}
+                        onClick={() => setActiveTab(type)}
+                        className={`
+                          relative p-4 rounded-xl transition-all duration-300 
+                          bg-gradient-to-br ${gradient} 
+                          border-2 ${activeTab === type ? border : 'border-border/20'}
+                          hover:scale-105 hover:shadow-lg ${shadow}
+                          ${activeTab === type ? 'shadow-lg ring-2 ring-primary/20' : 'hover:bg-opacity-80'}
+                          group
+                        `}
+                      >
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className={`
+                            p-3 rounded-lg transition-all duration-300
+                            ${activeTab === type ? 'bg-white/20 shadow-md' : 'bg-white/10 group-hover:bg-white/20'}
+                          `}>
+                            <Icon className={`h-5 w-5 transition-all duration-300 ${
+                              activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                            }`} />
+                          </div>
+                          <span className={`
+                            text-sm font-medium transition-all duration-300
+                            ${activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}
+                          `}>
+                            {label}
+                          </span>
+                        </div>
+                        {activeTab === type && (
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
+                        )}
+                      </button>
+                    ))}
                   </TabsList>
                   
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
