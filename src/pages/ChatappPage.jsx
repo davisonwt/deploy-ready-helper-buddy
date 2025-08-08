@@ -160,21 +160,25 @@ const ChatappPage = () => {
               </CardHeader>
               <CardContent className="flex-1 min-h-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                  <TabsList className="grid grid-cols-4 mb-4">
+                  <TabsList className="grid grid-cols-2 lg:grid-cols-4 mb-4 h-auto">
                     {['all', 'group', 'live_marketing', 'live_study'].map((type) => {
                       const { icon: Icon, label } = getTabContent(type);
                       return (
-                        <TabsTrigger key={type} value={type} className="text-xs">
-                          <Icon className="h-3 w-3 mr-1" />
-                          {label}
+                        <TabsTrigger 
+                          key={type} 
+                          value={type} 
+                          className="text-xs py-2 px-2 flex flex-col lg:flex-row items-center gap-1"
+                        >
+                          <Icon className="h-3 w-3" />
+                          <span className="truncate">{label}</span>
                         </TabsTrigger>
                       );
                     })}
                   </TabsList>
                   
-                  <TabsContent value={activeTab} className="flex-1 min-h-0">
-                    <ScrollArea className="h-full">
-                      <div className="space-y-2">
+                  <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
+                    <ScrollArea className="h-full pr-4">
+                      <div className="space-y-3 pb-4">
                         {filteredRooms.map((room) => (
                           <ChatRoomCard
                             key={room.id}
@@ -187,7 +191,7 @@ const ChatappPage = () => {
                         {filteredRooms.length === 0 && (
                           <div className="text-center py-8 text-muted-foreground">
                             <MessageSquare className="h-8 w-8 mx-auto mb-2" />
-                            <p>No rooms found</p>
+                            <p className="text-sm">No rooms found</p>
                             <Button 
                               variant="ghost" 
                               size="sm"

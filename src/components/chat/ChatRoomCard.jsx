@@ -43,33 +43,35 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0 }) => {
   
   return (
     <Card 
-      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-        isActive ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-accent/50'
+      className={`cursor-pointer transition-all duration-200 hover:shadow-md border ${
+        isActive 
+          ? 'ring-2 ring-primary bg-primary/5 border-primary/20' 
+          : 'hover:bg-accent/50 hover:border-accent'
       }`}
       onClick={() => onClick(room)}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-9 w-9">
               <AvatarFallback className="bg-primary/10">
-                <Icon className="h-5 w-5 text-primary" />
+                <Icon className="h-4 w-4 text-primary" />
               </AvatarFallback>
             </Avatar>
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-medium text-sm truncate">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <h3 className="font-medium text-sm truncate leading-tight">
                 {room.name || getRoomTypeLabel(room.room_type)}
               </h3>
-              <Badge variant="secondary" className="text-xs">
-                {getRoomTypeLabel(room.room_type)}
+              <Badge variant="secondary" className="text-xs px-1.5 py-0.5 shrink-0">
+                {room.room_type === 'direct' ? 'DM' : room.room_type.split('_')[0]}
               </Badge>
             </div>
             
             {room.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+              <p className="text-xs text-muted-foreground line-clamp-1 mb-2 leading-relaxed">
                 {room.description}
               </p>
             )}
@@ -77,10 +79,10 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0 }) => {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {participantCount} participants
+                {participantCount}
               </span>
               {room.category && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
                   {room.category}
                 </Badge>
               )}
