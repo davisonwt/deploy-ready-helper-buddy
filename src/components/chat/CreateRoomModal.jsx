@@ -50,7 +50,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
     description: '',
     room_type: 'group',
     category: '',
-    max_participants: 50,
+    max_participants: 500,
   });
   const [isCreating, setIsCreating] = useState(false);
 
@@ -76,7 +76,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
           description: '',
           room_type: 'group',
           category: '',
-          max_participants: 50,
+          max_participants: 500,
         });
         onClose();
       }
@@ -170,7 +170,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
               value={formData.max_participants}
               onChange={(e) => handleChange('max_participants', parseInt(e.target.value))}
               min="2"
-              max="50"
+              max="500"
             />
           </div>
 
