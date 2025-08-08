@@ -18,13 +18,15 @@ import {
   Send,
   Paperclip,
   Phone,
-  VideoIcon
+  VideoIcon,
+  UserPlus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import CreateRoomModal from '@/components/chat/CreateRoomModal';
+import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
 
@@ -46,6 +48,7 @@ const ChatappPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [showUserSelector, setShowUserSelector] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCall, setActiveCall] = useState(null);
 
   const handleSendMessage = async (e) => {
@@ -241,6 +244,15 @@ const ChatappPage = () => {
                       </p>
                     </div>
                     <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowInviteModal(true)}
+                        className="gap-2"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Invite
+                      </Button>
                       <Button variant="outline" size="sm">
                         <Phone className="h-4 w-4" />
                       </Button>
@@ -318,6 +330,14 @@ const ChatappPage = () => {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onCreateRoom={createRoom}
+        />
+
+        {/* Invite Modal */}
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          room={currentRoom}
+          currentParticipants={participants}
         />
 
         {/* Call Interface */}
