@@ -135,12 +135,12 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-orchards/20 via-background to-nav-orchards/10">
+    <div className="min-h-screen bg-gradient-to-br from-nav-my/20 via-background to-nav-my/10">
       {/* Welcome Section with Profile Picture */}
-      <div className="bg-nav-orchards/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-orchards/30 shadow-lg mb-8">
+      <div className="bg-nav-my/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-my/30 shadow-lg mb-8">
         <div className="flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-orchards shadow-lg">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-my shadow-lg">
               {user?.profile_picture ? (
                 <img 
                   src={user.profile_picture} 
@@ -148,7 +148,7 @@ export default function MyOrchardsPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-orchards to-nav-orchards/80 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-nav-my to-nav-my/80 flex items-center justify-center">
                   <User className="h-10 w-10 text-orange-700" />
                 </div>
               )}
@@ -168,10 +168,10 @@ export default function MyOrchardsPage() {
           <div className="min-w-[200px]">
             <label className="block text-sm font-medium text-orange-700 mb-2">Filter by Category</label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="border-nav-orchards/30 focus:border-nav-orchards bg-white">
+              <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-nav-orchards/30 z-50">
+              <SelectContent className="bg-white border-nav-my/30 z-50">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -187,7 +187,7 @@ export default function MyOrchardsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats and Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-nav-orchards/20 backdrop-blur-sm border-nav-orchards/30">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -199,7 +199,7 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-orchards/20 backdrop-blur-sm border-nav-orchards/30">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -211,7 +211,7 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-orchards/20 backdrop-blur-sm border-nav-orchards/30">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -225,10 +225,10 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-orchards/20 backdrop-blur-sm border-nav-orchards/30">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6 flex items-center justify-center">
               <Link to="/create-orchard" className="w-full">
-                <Button className="w-full bg-nav-orchards hover:bg-nav-orchards/90 text-orange-700">
+                <Button className="w-full bg-nav-my hover:bg-nav-my/90 text-orange-700">
                   <Plus className="h-4 w-4 mr-2" />
                   Create New
                 </Button>
@@ -238,7 +238,7 @@ export default function MyOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-8 bg-nav-orchards/10 backdrop-blur-sm border-nav-orchards/30">
+        <Card className="mb-8 bg-nav-my/10 backdrop-blur-sm border-nav-my/30">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
@@ -248,7 +248,7 @@ export default function MyOrchardsPage() {
                     placeholder="Search your orchards..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-nav-orchards/30 focus:border-nav-orchards"
+                    className="pl-10 border-nav-my/30 focus:border-nav-my"
                   />
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function MyOrchardsPage() {
                     variant={statusFilter === status ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setStatusFilter(status)}
-                    className={statusFilter === status ? 'bg-nav-orchards text-orange-700' : 'border-nav-orchards/30 text-orange-700'}
+                    className={statusFilter === status ? 'bg-nav-my text-orange-700' : 'border-nav-my/30 text-orange-700'}
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </Button>
@@ -271,7 +271,7 @@ export default function MyOrchardsPage() {
 
         {/* Orchards Grid */}
         {userOrchards.length === 0 ? (
-          <Card className="bg-nav-orchards/10 backdrop-blur-sm border-nav-orchards/30">
+          <Card className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-12 text-center">
               <TreePine className="h-16 w-16 mx-auto text-orange-400 mb-4" />
               <h3 className="text-xl font-semibold text-orange-700 mb-2">
@@ -285,7 +285,7 @@ export default function MyOrchardsPage() {
               </p>
               {!searchTerm && statusFilter === 'all' && (
                 <Link to="/create-orchard">
-                  <Button className="bg-nav-orchards hover:bg-nav-orchards/90 text-orange-700">
+                  <Button className="bg-nav-my hover:bg-nav-my/90 text-orange-700">
                     <Plus className="h-4 w-4 mr-2" />
                     Plant Your First Seed
                   </Button>
@@ -296,7 +296,7 @@ export default function MyOrchardsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userOrchards.map((orchard) => (
-              <Card key={orchard.id} className="bg-nav-orchards/10 backdrop-blur-sm border-nav-orchards/30 hover:shadow-lg transition-all">
+              <Card key={orchard.id} className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30 hover:shadow-lg transition-all">
                 <div className="relative">
                   {orchard.images?.[0] ? (
                     <img 
@@ -305,14 +305,14 @@ export default function MyOrchardsPage() {
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-nav-orchards/30 to-nav-orchards/50 rounded-t-lg flex items-center justify-center">
+                    <div className="w-full h-48 bg-gradient-to-br from-nav-my/30 to-nav-my/50 rounded-t-lg flex items-center justify-center">
                       <TreePine className="h-12 w-12 text-orange-600" />
                     </div>
                   )}
                   <div className="absolute top-4 right-4">
                     <Badge 
                       variant={orchard.status === 'active' ? 'default' : 'secondary'}
-                      className={orchard.status === 'active' ? 'bg-nav-orchards text-orange-700' : ''}
+                      className={orchard.status === 'active' ? 'bg-nav-my text-orange-700' : ''}
                     >
                       {orchard.status}
                     </Badge>
@@ -388,13 +388,13 @@ export default function MyOrchardsPage() {
                     
                     <div className="flex gap-2 pt-2">
                       <Link to={`/orchards/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10">
+                        <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
                       </Link>
                       <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10">
+                        <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
                         </Button>
@@ -407,7 +407,7 @@ export default function MyOrchardsPage() {
                           navigator.clipboard.writeText(url)
                           toast.success('Orchard link copied to clipboard!')
                         }}
-                        className="border-nav-orchards/30 text-orange-700 hover:bg-nav-orchards/10"
+                        className="border-nav-my/30 text-orange-700 hover:bg-nav-my/10"
                       >
                         <Share2 className="h-4 w-4" />
                       </Button>
