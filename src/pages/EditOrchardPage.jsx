@@ -290,7 +290,7 @@ export default function EditOrchardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-orchards/10 via-background to-nav-orchards/10">
+    <div className="min-h-screen bg-gradient-to-br from-nav-create/20 via-background to-nav-create/10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center mb-8">
