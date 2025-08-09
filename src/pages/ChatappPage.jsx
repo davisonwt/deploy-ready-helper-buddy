@@ -203,8 +203,8 @@ const ChatappPage = () => {
                           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
                         )}
                       </button>
-                    ))}
-                  </TabsList>
+                      ))}
+                  </div>
                   
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
                     <ScrollArea className="h-full pr-4">
