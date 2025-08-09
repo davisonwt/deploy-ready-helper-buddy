@@ -163,8 +163,8 @@ const ChatappPage = () => {
               </CardHeader>
               <CardContent className="flex-1 min-h-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                  {/* Beautiful Tab Grid */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  {/* Beautiful Tab Row */}
+                  <div className="flex gap-2 mb-4">
                     {[
                       { type: 'all', label: 'All Chats', icon: MessageSquare, gradient: 'from-blue-500/20 to-blue-600/30', border: 'border-blue-200', shadow: 'shadow-blue-500/20' },
                       { type: 'group', label: 'Groups', icon: Users, gradient: 'from-green-500/20 to-green-600/30', border: 'border-green-200', shadow: 'shadow-green-500/20' },
@@ -175,7 +175,7 @@ const ChatappPage = () => {
                         key={type}
                         onClick={() => setActiveTab(type)}
                         className={`
-                          relative p-4 rounded-xl transition-all duration-300 
+                          relative flex-1 p-3 rounded-xl transition-all duration-300 
                           bg-gradient-to-br ${gradient} 
                           border-2 ${activeTab === type ? border : 'border-border/20'}
                           hover:scale-105 hover:shadow-lg ${shadow}
@@ -183,17 +183,17 @@ const ChatappPage = () => {
                           group
                         `}
                       >
-                        <div className="flex flex-col items-center space-y-2">
+                        <div className="flex flex-col items-center space-y-1">
                           <div className={`
-                            p-3 rounded-lg transition-all duration-300
+                            p-2 rounded-lg transition-all duration-300
                             ${activeTab === type ? 'bg-white/20 shadow-md' : 'bg-white/10 group-hover:bg-white/20'}
                           `}>
-                            <Icon className={`h-5 w-5 transition-all duration-300 ${
+                            <Icon className={`h-4 w-4 transition-all duration-300 ${
                               activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
                             }`} />
                           </div>
                           <span className={`
-                            text-sm font-medium transition-all duration-300
+                            text-xs font-medium transition-all duration-300
                             ${activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}
                           `}>
                             {label}
@@ -203,7 +203,7 @@ const ChatappPage = () => {
                           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 pointer-events-none" />
                         )}
                       </button>
-                      ))}
+                    ))}
                   </div>
                   
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
@@ -223,11 +223,10 @@ const ChatappPage = () => {
                             <MessageSquare className="h-8 w-8 mx-auto mb-2" />
                             <p className="text-sm">No rooms found</p>
                             <Button 
-                              variant="ghost" 
-                              size="sm"
                               onClick={() => setShowCreateModal(true)}
-                              className="mt-2"
+                              className="mt-4 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white border-2 border-pink-700 shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 transition-all duration-300 hover:scale-105"
                             >
+                              <Plus className="h-4 w-4 mr-2" />
                               Create your first room
                             </Button>
                           </div>
