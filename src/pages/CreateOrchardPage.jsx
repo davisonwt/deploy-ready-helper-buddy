@@ -423,7 +423,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
       >
-        <source src="/s2g  become a sower and grower (1).mp4" type="video/mp4" />
+        <source src="/sow seed into new orchard.mp4" type="video/mp4" />
       </video>
       
       {/* Overlay for better text readability */}
