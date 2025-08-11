@@ -414,7 +414,23 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-create/20 via-background to-nav-create/10">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src="/s2g  become a sower and grower (1).mp4" type="video/mp4" />
+      </video>
+      
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-nav-create/30 backdrop-blur-[2px]"></div>
+      
+      {/* Content Container */}
+      <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-create/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-create/30 shadow-lg mb-8">
         <div className="flex items-center space-x-6">
@@ -963,6 +979,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </Button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   )
