@@ -422,8 +422,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => console.error('Video error:', e)}
+        onLoadStart={() => console.log('Video loading started')}
+        onCanPlay={() => console.log('Video can play')}
       >
         <source src="/sow seed into new orchard.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
       
       {/* Overlay for better text readability */}
