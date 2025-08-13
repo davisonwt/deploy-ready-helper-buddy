@@ -136,7 +136,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-white/88 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="bg-white/88 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/88 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/88 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/88 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/88 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/88 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/88 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* My Orchards */}
-            <Card className="bg-white/88 backdrop-blur-md border-white/40 shadow-xl">
+            <Card className="bg-white/88 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -255,7 +255,7 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="bg-white/88 backdrop-blur-md border-white/40 shadow-xl">
+            <Card className="bg-white/88 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -317,7 +317,7 @@ export default function DashboardPage() {
         </div>
 
           {/* Quick Actions */}
-          <Card className="mt-8 bg-white/88 backdrop-blur-md border-white/40 shadow-xl">
+          <Card className="mt-8 bg-white/88 border-white/40 shadow-xl">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
