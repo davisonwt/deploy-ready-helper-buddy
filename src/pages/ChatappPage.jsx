@@ -166,36 +166,32 @@ const ChatappPage = () => {
                   {/* Beautiful Tab Row */}
                   <div className="flex gap-2 mb-4">
                     {[
-                      { type: 'all', label: 'All Chats', icon: MessageSquare, bgColor: 'bg-blue-100 hover:bg-blue-200', textColor: 'text-blue-700', borderColor: 'border-blue-300' },
-                      { type: 'group', label: 'Groups', icon: Users, bgColor: 'bg-green-100 hover:bg-green-200', textColor: 'text-green-700', borderColor: 'border-green-300' },
-                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, bgColor: 'bg-purple-100 hover:bg-purple-200', textColor: 'text-purple-700', borderColor: 'border-purple-300' },
-                      { type: 'live_study', label: 'Study', icon: BookOpen, bgColor: 'bg-orange-100 hover:bg-orange-200', textColor: 'text-orange-700', borderColor: 'border-orange-300' }
-                    ].map(({ type, label, icon: Icon, bgColor, textColor, borderColor }) => (
+                      { type: 'all', label: 'All Chats', icon: MessageSquare, color: '#3B82F6' }, // Blue
+                      { type: 'group', label: 'Groups', icon: Users, color: '#10B981' }, // Green
+                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, color: '#8B5CF6' }, // Purple
+                      { type: 'live_study', label: 'Study', icon: BookOpen, color: '#F59E0B' } // Orange
+                    ].map(({ type, label, icon: Icon, color }) => (
                       <button
                         key={type}
                         onClick={() => setActiveTab(type)}
-                        className={`
-                          relative flex-1 p-3 rounded-xl transition-all duration-300 
-                          ${bgColor}
-                          border-2 ${activeTab === type ? borderColor : 'border-border/20'}
-                          hover:scale-105 hover:shadow-lg
-                          ${activeTab === type ? 'shadow-lg ring-2 ring-primary/20' : ''}
-                          group
-                        `}
+                        style={{
+                          backgroundColor: activeTab === type ? color + '20' : color + '10',
+                          borderColor: activeTab === type ? color : '#e5e7eb',
+                          color: activeTab === type ? color : '#6b7280'
+                        }}
+                        className="relative flex-1 p-3 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group"
                       >
                         <div className="flex flex-col items-center space-y-1">
-                          <div className={`
-                            p-2 rounded-lg transition-all duration-300
-                            ${activeTab === type ? 'bg-white/20 shadow-md' : 'bg-white/10 group-hover:bg-white/20'}
-                          `}>
-                            <Icon className={`h-4 w-4 transition-all duration-300 ${
-                              activeTab === type ? textColor : 'text-muted-foreground group-hover:' + textColor
-                            }`} />
+                          <div className="p-2 rounded-lg bg-white/20">
+                            <Icon 
+                              className="h-4 w-4 transition-all duration-300" 
+                              style={{ color: activeTab === type ? color : '#6b7280' }}
+                            />
                           </div>
-                          <span className={`
-                            text-xs font-medium transition-all duration-300
-                            ${activeTab === type ? textColor : 'text-muted-foreground group-hover:' + textColor}
-                          `}>
+                          <span 
+                            className="text-xs font-medium transition-all duration-300"
+                            style={{ color: activeTab === type ? color : '#6b7280' }}
+                          >
                             {label}
                           </span>
                         </div>
@@ -224,7 +220,8 @@ const ChatappPage = () => {
                             <p className="text-sm">No rooms found</p>
                             <Button 
                               onClick={() => setShowCreateModal(true)}
-                              className="mt-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                              style={{ background: 'linear-gradient(to right, #EC4899, #DC2626)' }}
+                              className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create your first room
@@ -342,7 +339,8 @@ const ChatappPage = () => {
                     </p>
                     <Button 
                       onClick={() => setShowCreateModal(true)}
-                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                      style={{ background: 'linear-gradient(to right, #10B981, #14B8A6)' }}
+                      className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Room
