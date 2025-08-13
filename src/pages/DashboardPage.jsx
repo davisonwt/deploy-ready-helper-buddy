@@ -17,8 +17,7 @@ import {
   Plus,
   Eye,
   Calendar,
-  User,
-  Search
+  User
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 
@@ -349,18 +348,18 @@ export default function DashboardPage() {
                 <div className="flex justify-center space-x-3">
                   <Link to="/browse-orchards">
                     <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                       style={{
                         backgroundColor: '#caffbf',
                         borderColor: '#166534'
                       }}
                     >
-                      <Search className="h-4 w-4" style={{ color: '#166534' }} />
+                      <Users className="h-4 w-4" style={{ color: '#166534' }} />
                     </div>
                   </Link>
                   <Link to="/my-orchards">
                     <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                       style={{
                         backgroundColor: '#ffd6a5',
                         borderColor: '#9a3412'
@@ -371,13 +370,13 @@ export default function DashboardPage() {
                   </Link>
                   <Link to="/364yhvh-orchards">
                     <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                       style={{
-                        backgroundColor: '#8093f1',
-                        borderColor: '#581c87'
+                        backgroundColor: '#e9d5ff',
+                        borderColor: '#7c3aed'
                       }}
                     >
-                      <Heart className="h-4 w-4" style={{ color: '#581c87' }} />
+                      <Heart className="h-4 w-4" style={{ color: '#7c3aed' }} />
                     </div>
                   </Link>
                 </div>
