@@ -89,9 +89,22 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-dashboard/20 via-background to-nav-dashboard/10">
-      {/* Welcome Section with Profile Picture */}
-      <div className="bg-nav-dashboard/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-dashboard/30 shadow-lg mb-8">
+    <div 
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: "url('/dashboard.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Background overlay for better content readability */}
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
+      
+      {/* Content wrapper */}
+      <div className="relative z-10">
+        {/* Welcome Section with Profile Picture */}
+        <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl border border-white/40 shadow-2xl mb-8 mx-4 mt-4">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
             {user?.profile_picture ? (
@@ -107,23 +120,23 @@ export default function DashboardPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-700">
+            <h1 className="text-3xl font-bold text-slate-800">
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
-            <p className="text-slate-600 text-lg">
+            <p className="text-slate-700 text-lg">
               Ready to grow your orchard today?
             </p>
-            <p className="text-slate-500 text-sm mt-1">
+            <p className="text-slate-600 text-sm mt-1">
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="bg-white/90 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -135,46 +148,46 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
+          <Card className="bg-white/90 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600">Total Raised</p>
-                  <p className="text-2xl font-bold text-slate-700">{formatCurrency(stats.totalRaised)}</p>
+                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalRaised)}</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-slate-600" />
+                <TrendingUp className="h-8 w-8 text-emerald-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
+          <Card className="bg-white/90 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600">My Bestowals</p>
-                  <p className="text-2xl font-bold text-slate-700">{stats.totalBestowals}</p>
+                  <p className="text-2xl font-bold text-slate-800">{stats.totalBestowals}</p>
                 </div>
-                <Heart className="h-8 w-8 text-slate-600" />
+                <Heart className="h-8 w-8 text-rose-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-dashboard/30 backdrop-blur-sm border-nav-dashboard hover:shadow-lg transition-all">
+          <Card className="bg-white/90 backdrop-blur-md border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600">Total Supported</p>
-                  <p className="text-2xl font-bold text-slate-700">{formatCurrency(stats.totalSupported)}</p>
+                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalSupported)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-slate-600" />
+                <DollarSign className="h-8 w-8 text-amber-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* My Orchards */}
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* My Orchards */}
+            <Card className="bg-white/90 backdrop-blur-md border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -192,7 +205,9 @@ export default function DashboardPage() {
                   <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't planted any seeds yet</p>
                   <Link to="/create-orchard">
-                    <Button style={{ backgroundColor: '#fdffb6', borderColor: '#fdffb6', color: '#a16207' }}>Plant Your First Seed</Button>
+                    <Button className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                      Plant Your First Seed
+                    </Button>
                   </Link>
                 </div>
               ) : (
@@ -231,8 +246,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent Bestowals */}
-          <Card className="bg-white/80 backdrop-blur-sm border-green-200">
+            {/* Recent Bestowals */}
+            <Card className="bg-white/90 backdrop-blur-md border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center">
@@ -250,7 +265,9 @@ export default function DashboardPage() {
                   <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't made any bestowals yet</p>
                   <Link to="/browse-orchards">
-                    <Button style={{ backgroundColor: '#caffbf', borderColor: '#caffbf', color: '#166534' }}>Discover Orchards</Button>
+                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                      Discover Orchards
+                    </Button>
                   </Link>
                 </div>
               ) : (
@@ -283,15 +300,15 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="mt-8 bg-white/80 backdrop-blur-sm border-blue-200">
+          {/* Quick Actions */}
+          <Card className="mt-8 bg-white/90 backdrop-blur-md border-white/40 shadow-xl">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to="/create-orchard">
-                <Button className="w-full h-20" style={{ backgroundColor: '#fdffb6', borderColor: '#fdffb6', color: '#a16207' }}>
+                <Button className="w-full h-20 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="text-center">
                     <Plus className="h-6 w-6 mx-auto mb-2" />
                     <span>Plant New Seed</span>
@@ -300,7 +317,7 @@ export default function DashboardPage() {
               </Link>
               
               <Link to="/browse-orchards">
-                <Button className="w-full h-20" style={{ backgroundColor: '#caffbf', borderColor: '#caffbf', color: '#166534' }}>
+                <Button className="w-full h-20 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="text-center">
                     <TreePine className="h-6 w-6 mx-auto mb-2" />
                     <span>Browse Orchards</span>
@@ -309,7 +326,7 @@ export default function DashboardPage() {
               </Link>
               
               <Link to="/profile">
-                <Button variant="outline" className="w-full h-20">
+                <Button className="w-full h-20 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="text-center">
                     <Users className="h-6 w-6 mx-auto mb-2" />
                     <span>My Profile</span>
@@ -319,6 +336,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )
