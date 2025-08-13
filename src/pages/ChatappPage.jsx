@@ -166,20 +166,20 @@ const ChatappPage = () => {
                   {/* Beautiful Tab Row */}
                   <div className="flex gap-2 mb-4">
                     {[
-                      { type: 'all', label: 'All Chats', icon: MessageSquare, gradient: 'from-nav-dashboard/30 to-nav-dashboard/50', border: 'border-nav-dashboard', shadow: 'shadow-nav-dashboard/30' },
-                      { type: 'group', label: 'Groups', icon: Users, gradient: 'from-nav-community/30 to-nav-community/50', border: 'border-nav-community', shadow: 'shadow-nav-community/30' },
-                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, gradient: 'from-nav-gifting/30 to-nav-gifting/50', border: 'border-nav-gifting', shadow: 'shadow-nav-gifting/30' },
-                      { type: 'live_study', label: 'Study', icon: BookOpen, gradient: 'from-nav-my/30 to-nav-my/50', border: 'border-nav-my', shadow: 'shadow-nav-my/30' }
-                    ].map(({ type, label, icon: Icon, gradient, border, shadow }) => (
+                      { type: 'all', label: 'All Chats', icon: MessageSquare, bgColor: 'bg-blue-100 hover:bg-blue-200', textColor: 'text-blue-700', borderColor: 'border-blue-300' },
+                      { type: 'group', label: 'Groups', icon: Users, bgColor: 'bg-green-100 hover:bg-green-200', textColor: 'text-green-700', borderColor: 'border-green-300' },
+                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, bgColor: 'bg-purple-100 hover:bg-purple-200', textColor: 'text-purple-700', borderColor: 'border-purple-300' },
+                      { type: 'live_study', label: 'Study', icon: BookOpen, bgColor: 'bg-orange-100 hover:bg-orange-200', textColor: 'text-orange-700', borderColor: 'border-orange-300' }
+                    ].map(({ type, label, icon: Icon, bgColor, textColor, borderColor }) => (
                       <button
                         key={type}
                         onClick={() => setActiveTab(type)}
                         className={`
                           relative flex-1 p-3 rounded-xl transition-all duration-300 
-                          bg-gradient-to-br ${gradient} 
-                          border-2 ${activeTab === type ? border : 'border-border/20'}
-                          hover:scale-105 hover:shadow-lg ${shadow}
-                          ${activeTab === type ? 'shadow-lg ring-2 ring-primary/20' : 'hover:bg-opacity-80'}
+                          ${bgColor}
+                          border-2 ${activeTab === type ? borderColor : 'border-border/20'}
+                          hover:scale-105 hover:shadow-lg
+                          ${activeTab === type ? 'shadow-lg ring-2 ring-primary/20' : ''}
                           group
                         `}
                       >
@@ -189,12 +189,12 @@ const ChatappPage = () => {
                             ${activeTab === type ? 'bg-white/20 shadow-md' : 'bg-white/10 group-hover:bg-white/20'}
                           `}>
                             <Icon className={`h-4 w-4 transition-all duration-300 ${
-                              activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                              activeTab === type ? textColor : 'text-muted-foreground group-hover:' + textColor
                             }`} />
                           </div>
                           <span className={`
                             text-xs font-medium transition-all duration-300
-                            ${activeTab === type ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}
+                            ${activeTab === type ? textColor : 'text-muted-foreground group-hover:' + textColor}
                           `}>
                             {label}
                           </span>
@@ -224,7 +224,7 @@ const ChatappPage = () => {
                             <p className="text-sm">No rooms found</p>
                             <Button 
                               onClick={() => setShowCreateModal(true)}
-                              className="mt-4 bg-gradient-to-r from-nav-tithing to-royal-purple hover:from-nav-tithing/90 hover:to-royal-purple/90 text-white border-2 border-nav-tithing shadow-lg shadow-nav-tithing/30 hover:shadow-xl hover:shadow-nav-tithing/40 transition-all duration-300 hover:scale-105"
+                              className="mt-4 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create your first room
@@ -342,7 +342,7 @@ const ChatappPage = () => {
                     </p>
                     <Button 
                       onClick={() => setShowCreateModal(true)}
-                      className="bg-gradient-to-r from-harvest to-s2g-amber hover:from-harvest/90 hover:to-s2g-amber/90 text-white border-2 border-harvest shadow-lg shadow-harvest/30 hover:shadow-xl hover:shadow-harvest/40 transition-all duration-300 hover:scale-105"
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Room
