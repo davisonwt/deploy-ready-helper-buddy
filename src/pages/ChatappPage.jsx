@@ -170,10 +170,10 @@ const ChatappPage = () => {
                   {/* Beautiful Tab Row */}
                   <div className="flex gap-2 mb-4">
                     {[
-                      { type: 'all', label: 'All Chats', icon: MessageSquare, color: '#3B82F6' }, // Blue
-                      { type: 'group', label: 'Groups', icon: Users, color: '#10B981' }, // Green
-                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, color: '#8B5CF6' }, // Purple
-                      { type: 'live_study', label: 'Study', icon: BookOpen, color: '#F59E0B' } // Orange
+                      { type: 'all', label: 'All Chats', icon: MessageSquare, color: '#3B82F6' }, // Bright Blue
+                      { type: 'group', label: 'Groups', icon: Users, color: '#00D084' }, // Vibrant Green
+                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, color: '#A855F7' }, // Vibrant Purple
+                      { type: 'live_study', label: 'Study', icon: BookOpen, color: '#FF6B35' } // Vibrant Orange
                     ].map(({ type, label, icon: Icon, color }) => (
                       <button
                         key={type}
