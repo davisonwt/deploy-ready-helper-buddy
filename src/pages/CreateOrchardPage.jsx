@@ -964,10 +964,11 @@ export default function CreateOrchardPage({ isEdit = false }) {
           <div className="text-center">
             <Button
               type="submit"
-              size="xl"
+              size="lg"
               variant="default"
               disabled={saving || uploading}
-              className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-s2g-green to-s2g-blue hover:from-s2g-green/90 hover:to-s2g-blue/90 text-white shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+              style={{ background: 'linear-gradient(to right, #8B4513, #A0522D)' }}
+              className="px-8 py-4 text-lg font-bold text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
             >
               {saving || uploading ? (
                 <div className="flex items-center">
