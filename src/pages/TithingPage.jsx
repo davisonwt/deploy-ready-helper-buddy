@@ -63,7 +63,7 @@ export default function TithingPage() {
               color: 'hsl(0, 100%, 84%)', 
               textShadow: '2px 2px 4px hsl(0, 100%, 64%)' 
             }}>
-              Tithing, {user?.first_name || 'Friend'}!
+              Tithing
             </h1>
             <p className="text-red-600 text-lg">
               Honor elohim with your faithful giving

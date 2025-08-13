@@ -70,7 +70,7 @@ export default function FreeWillGiftingPage() {
               color: 'hsl(230, 81%, 72%)', 
               textShadow: '2px 2px 4px hsl(230, 81%, 52%)' 
             }}>
-              Free-Will Gifting, {user?.first_name || 'Friend'}!
+              Free-Will Gifting
             </h1>
             <p className="text-purple-600 text-lg">
               Spread love and blessings through spontaneous giving

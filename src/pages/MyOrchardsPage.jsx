@@ -158,7 +158,7 @@ export default function MyOrchardsPage() {
                 color: 'hsl(33, 100%, 82%)', 
                 textShadow: '2px 2px 4px hsl(33, 100%, 62%)' 
               }}>
-                My Orchards, {user?.first_name || 'Friend'}!
+                My Orchards
               </h1>
               <p className="text-orange-600 text-lg">
                 Manage and track your growing orchards

@@ -456,7 +456,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               color: 'hsl(45, 90%, 55%)', 
               textShadow: '2px 2px 4px hsl(45, 90%, 35%)' 
             }}>
-              {isEdit ? "Edit Orchard" : "Create New Orchard"}, {user?.first_name || 'Friend'}!
+              {isEdit ? "Edit Orchard" : "Create New Orchard"}
             </h1>
             <p className="text-yellow-600 text-lg">
               {isEdit ? "Update your orchard details" : "Plant a new seed in our community"}

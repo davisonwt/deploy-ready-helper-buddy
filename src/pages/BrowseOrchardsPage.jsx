@@ -197,7 +197,7 @@ export default function BrowseOrchardsPage() {
               color: 'hsl(137, 80%, 65%)', 
               textShadow: '2px 2px 4px hsl(137, 80%, 45%)' 
             }}>
-              Community Orchards, {user?.first_name || 'Friend'}!
+              Community Orchards
             </h1>
             <p className="text-green-600 text-lg">
               Discover and support orchards in our community
