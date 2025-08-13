@@ -175,7 +175,7 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-community/20 via-background to-nav-community/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #caffbf20, #f8fafc, #caffbf10)' }}>
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-community/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-community/30 shadow-lg mb-8">
         <div className="flex items-center space-x-6">

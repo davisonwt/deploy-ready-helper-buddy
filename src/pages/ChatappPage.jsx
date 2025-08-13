@@ -122,7 +122,7 @@ const ChatappPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-primary/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #b19cd920, #f8fafc, #b19cd910)' }}>
       <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
         {/* Header */}
         <div className="mb-6">

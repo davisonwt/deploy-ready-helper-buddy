@@ -135,7 +135,7 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-my/20 via-background to-nav-my/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffd6a520, #f8fafc, #ffd6a510)' }}>
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-my/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-my/30 shadow-lg mb-8">
         <div className="flex items-center justify-between space-x-6">

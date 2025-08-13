@@ -48,7 +48,7 @@ export default function FreeWillGiftingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-gifting/20 via-background to-nav-gifting/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #8093f120, #f8fafc, #8093f110)' }}>
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-gifting/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-gifting/30 shadow-lg mb-8">
         <div className="flex items-center space-x-6">

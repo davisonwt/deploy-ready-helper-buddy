@@ -159,7 +159,7 @@ export default function YhvhOrchardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-s2g-green/20 via-background to-s2g-green/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #e9d5ff20, #f8fafc, #e9d5ff10)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">

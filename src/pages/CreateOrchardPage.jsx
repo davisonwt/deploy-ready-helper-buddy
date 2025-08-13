@@ -431,7 +431,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
       </video>
       
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-nav-create/30 backdrop-blur-[2px]"></div>
+      <div className="absolute inset-0 backdrop-blur-[2px]" style={{ backgroundColor: '#fdffb630' }}></div>
       
       {/* Content Container */}
       <div className="relative z-10">

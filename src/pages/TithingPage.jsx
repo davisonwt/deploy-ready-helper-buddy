@@ -41,7 +41,7 @@ export default function TithingPage() {
   const suggestedAmounts = [50, 100, 200, 500, 1000]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nav-tithing/20 via-background to-nav-tithing/10">
+    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffadad20, #f8fafc, #ffadad10)' }}>
       {/* Welcome Section with Profile Picture */}
       <div className="bg-nav-tithing/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-tithing/30 shadow-lg mb-8">
         <div className="flex items-center space-x-6">
