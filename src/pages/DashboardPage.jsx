@@ -201,7 +201,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {userOrchards.length === 0 ? (
-                <div className="bg-white/90 rounded-lg mx-4 p-8">
+                <div className="bg-white/80 rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-700 mb-6 font-medium">You haven't planted any seeds yet</p>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {userBestowals.length === 0 ? (
-                <div className="bg-white/90 rounded-lg mx-4 p-8">
+                <div className="bg-white/80 rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-700 mb-6 font-medium">You haven't made any bestowals yet</p>
