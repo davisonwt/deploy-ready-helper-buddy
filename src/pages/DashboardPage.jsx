@@ -205,7 +205,7 @@ export default function DashboardPage() {
                   <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't planted any seeds yet</p>
                   <Link to="/create-orchard">
-                    <Button className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Button className="bg-nav-create hover:bg-nav-create/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                       Plant Your First Seed
                     </Button>
                   </Link>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                   <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't made any bestowals yet</p>
                   <Link to="/browse-orchards">
-                    <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Button className="bg-nav-community hover:bg-nav-community/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                       Discover Orchards
                     </Button>
                   </Link>
@@ -308,7 +308,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to="/create-orchard">
-                <Button className="w-full h-20 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button className="w-full h-20 bg-nav-create hover:bg-nav-create/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="text-center">
                     <Plus className="h-6 w-6 mx-auto mb-2" />
                     <span>Plant New Seed</span>
@@ -316,19 +316,42 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               
-              <Link to="/browse-orchards">
-                <Button className="w-full h-20 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <div className="text-center">
-                    <TreePine className="h-6 w-6 mx-auto mb-2" />
-                    <span>Browse Orchards</span>
-                  </div>
-                </Button>
-              </Link>
+              <div className="w-full h-20 bg-nav-community hover:bg-nav-community/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-lg p-4 cursor-pointer">
+                <div className="text-center mb-3">
+                  <TreePine className="h-6 w-6 mx-auto mb-2" />
+                  <span className="font-medium">Browse Orchards</span>
+                </div>
+                <div className="flex justify-center space-x-3">
+                  <Link to="/browse-orchards">
+                    <div className="w-8 h-8 rounded-full bg-nav-community border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
+                      <Users className="h-4 w-4 text-slate-700" />
+                    </div>
+                  </Link>
+                  <Link to="/my-orchards">
+                    <div className="w-8 h-8 rounded-full bg-nav-my border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
+                      <User className="h-4 w-4 text-slate-700" />
+                    </div>
+                  </Link>
+                  <Link to="/yhvh-orchards">
+                    <div className="w-8 h-8 rounded-full bg-nav-gifting border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
+                      <Heart className="h-4 w-4 text-slate-700" />
+                    </div>
+                  </Link>
+                </div>
+              </div>
               
               <Link to="/profile">
-                <Button className="w-full h-20 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button className="w-full h-20 bg-nav-my hover:bg-nav-my/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="text-center">
-                    <Users className="h-6 w-6 mx-auto mb-2" />
+                    {user?.profile_picture ? (
+                      <img 
+                        src={user.profile_picture} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full mx-auto mb-2 border-2 border-slate-700"
+                      />
+                    ) : (
+                      <User className="h-6 w-6 mx-auto mb-2" />
+                    )}
                     <span>My Profile</span>
                   </div>
                 </Button>
