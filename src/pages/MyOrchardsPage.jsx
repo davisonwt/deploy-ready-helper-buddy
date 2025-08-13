@@ -154,7 +154,7 @@ export default function MyOrchardsPage() {
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-nav-my">
+              <h1 className="text-3xl font-bold" style={{ color: 'hsl(33, 100%, 82%)' }}>
                 My Orchards, {user?.first_name || 'Friend'}!
               </h1>
               <p className="text-orange-600 text-lg">

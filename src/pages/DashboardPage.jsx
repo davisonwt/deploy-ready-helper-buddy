@@ -119,7 +119,7 @@ export default function DashboardPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-primary">
+            <h1 className="text-3xl font-bold" style={{ color: 'hsl(187, 100%, 80%)' }}>
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-slate-700 text-lg">
