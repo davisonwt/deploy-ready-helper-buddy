@@ -98,13 +98,12 @@ export default function DashboardPage() {
         backgroundAttachment: 'fixed'
       }}
     >
-      {/* Background overlay for better content readability */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
+      {/* Removed background overlay for better transparency visibility */}
       
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture */}
-        <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl border border-white/40 shadow-2xl mb-8 mx-4 mt-4">
+        <div className="bg-white/90 p-8 rounded-2xl border border-white/40 shadow-2xl mb-8 mx-4 mt-4">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
             {user?.profile_picture ? (
