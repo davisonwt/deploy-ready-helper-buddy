@@ -335,7 +335,7 @@ export default function DashboardPage() {
               </Link>
               
               <div 
-                className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-lg p-4 cursor-pointer font-medium"
+                className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-4 cursor-pointer font-medium"
                 style={{
                   backgroundColor: '#caffbf',
                   color: '#166534'

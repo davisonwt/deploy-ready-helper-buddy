@@ -99,7 +99,7 @@ export default function Layout({ children }) {
                     to={item.href}
                      className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
                        hover:scale-105 active:scale-95 w-[160px] h-[40px] text-center
-                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500' : ''}
+                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                      `}
                      style={{
                        backgroundColor: colors.bg,
@@ -107,7 +107,7 @@ export default function Layout({ children }) {
                        color: colors.text,
                        borderRadius: '21px',
                        boxShadow: isActive(item.href)
-                         ? 'inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.15)' 
+                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
                          : 'inset 0 2px 4px rgba(0,0,0,0.1)'
                      }}
                    >
