@@ -128,7 +128,7 @@ const ChatappPage = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Chatapp</h1>
+              <h1 className="text-3xl font-bold mb-2" style={{ color: '#3B82F6' }}>Chatapp</h1>
               <p className="text-muted-foreground">
                 Connect, collaborate, and grow together in our farming community
               </p>
@@ -136,13 +136,17 @@ const ChatappPage = () => {
             <div className="flex gap-2">
               <Button 
                 onClick={() => setShowUserSelector(!showUserSelector)} 
-                variant="outline" 
-                className="gap-2"
+                style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
+                className="gap-2 hover:shadow-lg transition-all duration-300"
               >
                 <MessageSquare className="h-4 w-4" />
                 Direct Chat
               </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+              <Button 
+                onClick={() => setShowCreateModal(true)} 
+                style={{ backgroundColor: '#1D4ED8', color: 'white' }}
+                className="gap-2 hover:shadow-lg transition-all duration-300"
+              >
                 <Plus className="h-4 w-4" />
                 Create Room
               </Button>
