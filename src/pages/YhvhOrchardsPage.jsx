@@ -164,13 +164,8 @@ export default function YhvhOrchardsPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="p-6 bg-success/20 rounded-full animate-pulse">
-                <TreePine className="h-16 w-16 text-success" />
-              </div>
-              <div className="absolute -top-2 -right-2 animate-bounce">
-                <Sprout className="h-8 w-8 text-warning" />
-              </div>
+            <div className="p-6 bg-success/20 rounded-full animate-pulse">
+              <TreePine className="h-16 w-16 text-success" />
             </div>
           </div>
           <h1 className="text-4xl font-bold mb-4" style={{ 
