@@ -255,7 +255,11 @@ export default function YhvhOrchardsPage() {
                     <Button 
                       variant="default" 
                       size="sm" 
-                      className="w-full bg-success hover:bg-success/90 text-success-foreground mb-2"
+                      className="w-full mb-2 text-white shadow-lg"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
+                        border: '2px solid #1e40af'
+                      }}
                       onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
                     >
                       <Heart className="h-3 w-3 mr-2" />
@@ -372,7 +376,11 @@ export default function YhvhOrchardsPage() {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className="w-full mt-4 bg-success hover:bg-success/90 text-success-foreground"
+                    className="w-full mt-4 text-white shadow-lg"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
+                      border: '2px solid #1e40af'
+                    }}
                     onClick={async () => {
                       try {
                         // First, try to find orchard by matching seed title

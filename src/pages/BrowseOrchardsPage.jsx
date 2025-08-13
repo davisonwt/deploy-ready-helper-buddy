@@ -441,7 +441,11 @@ export default function BrowseOrchardsPage() {
                     <div className="flex gap-2 pt-2">
                       <Link to={`/animated-orchard/${orchard.id}`} className="flex-1">
                         <Button 
-                          className="w-full bg-nav-community hover:bg-nav-community/90 text-green-700 font-medium"
+                          className="w-full text-white shadow-lg font-medium"
+                          style={{ 
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
+                            border: '2px solid #1e40af'
+                          }}
                         >
                           <Heart className="h-4 w-4 mr-2" />
                           Bestow into this Orchard
