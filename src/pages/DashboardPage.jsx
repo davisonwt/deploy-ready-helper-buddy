@@ -17,7 +17,8 @@ import {
   Plus,
   Eye,
   Calendar,
-  User
+  User,
+  Search
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 
@@ -205,7 +206,13 @@ export default function DashboardPage() {
                   <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't planted any seeds yet</p>
                   <Link to="/create-orchard">
-                    <Button className="bg-nav-create hover:bg-nav-create/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Button 
+                      className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium"
+                      style={{
+                        backgroundColor: '#fdffb6',
+                        color: '#a16207'
+                      }}
+                    >
                       Plant Your First Seed
                     </Button>
                   </Link>
@@ -265,7 +272,13 @@ export default function DashboardPage() {
                   <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-600 mb-4">You haven't made any bestowals yet</p>
                   <Link to="/browse-orchards">
-                    <Button className="bg-nav-community hover:bg-nav-community/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Button 
+                      className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium"
+                      style={{
+                        backgroundColor: '#caffbf',
+                        color: '#166534'
+                      }}
+                    >
                       Discover Orchards
                     </Button>
                   </Link>
@@ -308,7 +321,13 @@ export default function DashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to="/create-orchard">
-                <Button className="w-full h-20 bg-nav-create hover:bg-nav-create/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button 
+                  className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    backgroundColor: '#fdffb6',
+                    color: '#a16207'
+                  }}
+                >
                   <div className="text-center">
                     <Plus className="h-6 w-6 mx-auto mb-2" />
                     <span>Plant New Seed</span>
@@ -316,38 +335,69 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               
-              <div className="w-full h-20 bg-nav-community hover:bg-nav-community/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-lg p-4 cursor-pointer">
+              <div 
+                className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-lg p-4 cursor-pointer font-medium"
+                style={{
+                  backgroundColor: '#caffbf',
+                  color: '#166534'
+                }}
+              >
                 <div className="text-center mb-3">
                   <TreePine className="h-6 w-6 mx-auto mb-2" />
                   <span className="font-medium">Browse Orchards</span>
                 </div>
                 <div className="flex justify-center space-x-3">
                   <Link to="/browse-orchards">
-                    <div className="w-8 h-8 rounded-full bg-nav-community border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
-                      <Users className="h-4 w-4 text-slate-700" />
+                    <div 
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: '#caffbf',
+                        borderColor: '#166534'
+                      }}
+                    >
+                      <Search className="h-4 w-4" style={{ color: '#166534' }} />
                     </div>
                   </Link>
                   <Link to="/my-orchards">
-                    <div className="w-8 h-8 rounded-full bg-nav-my border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
-                      <User className="h-4 w-4 text-slate-700" />
+                    <div 
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: '#ffd6a5',
+                        borderColor: '#9a3412'
+                      }}
+                    >
+                      <User className="h-4 w-4" style={{ color: '#9a3412' }} />
                     </div>
                   </Link>
-                  <Link to="/yhvh-orchards">
-                    <div className="w-8 h-8 rounded-full bg-nav-gifting border-2 border-slate-700 flex items-center justify-center hover:scale-110 transition-transform">
-                      <Heart className="h-4 w-4 text-slate-700" />
+                  <Link to="/364yhvh-orchards">
+                    <div 
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: '#8093f1',
+                        borderColor: '#581c87'
+                      }}
+                    >
+                      <Heart className="h-4 w-4" style={{ color: '#581c87' }} />
                     </div>
                   </Link>
                 </div>
               </div>
               
               <Link to="/profile">
-                <Button className="w-full h-20 bg-nav-my hover:bg-nav-my/80 text-slate-800 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <Button 
+                  className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    backgroundColor: '#ffd6a5',
+                    color: '#9a3412'
+                  }}
+                >
                   <div className="text-center">
                     {user?.profile_picture ? (
                       <img 
                         src={user.profile_picture} 
                         alt="Profile" 
-                        className="w-8 h-8 rounded-full mx-auto mb-2 border-2 border-slate-700"
+                        className="w-8 h-8 rounded-full mx-auto mb-2 border-2"
+                        style={{ borderColor: '#9a3412' }}
                       />
                     ) : (
                       <User className="h-6 w-6 mx-auto mb-2" />
