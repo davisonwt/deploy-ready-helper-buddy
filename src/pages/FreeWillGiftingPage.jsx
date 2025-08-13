@@ -66,7 +66,10 @@ export default function FreeWillGiftingPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'hsl(230, 81%, 72%)' }}>
+            <h1 className="text-3xl font-bold" style={{ 
+              color: 'hsl(230, 81%, 72%)', 
+              textShadow: '2px 2px 4px hsl(230, 81%, 52%)' 
+            }}>
               Free-Will Gifting, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-purple-600 text-lg">

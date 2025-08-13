@@ -128,7 +128,10 @@ const ChatappPage = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2" style={{ color: '#3B82F6' }}>Chatapp</h1>
+              <h1 className="text-3xl font-bold mb-2" style={{ 
+                color: '#3B82F6', 
+                textShadow: '2px 2px 4px #1D4ED8' 
+              }}>Chatapp</h1>
               <p className="text-muted-foreground">
                 Connect, collaborate, and grow together in our farming community
               </p>

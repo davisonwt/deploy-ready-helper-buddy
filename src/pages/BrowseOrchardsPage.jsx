@@ -193,7 +193,10 @@ export default function BrowseOrchardsPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'hsl(137, 100%, 87%)' }}>
+            <h1 className="text-3xl font-bold" style={{ 
+              color: 'hsl(137, 100%, 87%)', 
+              textShadow: '2px 2px 4px hsl(137, 100%, 67%)' 
+            }}>
               Community Orchards, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-green-600 text-lg">

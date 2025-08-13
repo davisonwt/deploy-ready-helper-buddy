@@ -59,7 +59,10 @@ export default function TithingPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold" style={{ color: 'hsl(0, 100%, 84%)' }}>
+            <h1 className="text-3xl font-bold" style={{ 
+              color: 'hsl(0, 100%, 84%)', 
+              textShadow: '2px 2px 4px hsl(0, 100%, 64%)' 
+            }}>
               Tithing, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-red-600 text-lg">
