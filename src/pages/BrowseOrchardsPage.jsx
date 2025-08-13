@@ -193,7 +193,7 @@ export default function BrowseOrchardsPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-green-700">
+            <h1 className="text-3xl font-bold text-nav-community">
               Community Orchards, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-green-600 text-lg">
@@ -214,7 +214,7 @@ export default function BrowseOrchardsPage() {
               <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-green-700 mb-4">
+          <h2 className="text-2xl font-bold text-nav-community mb-4">
             Browse Community Orchards
           </h2>
           <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">

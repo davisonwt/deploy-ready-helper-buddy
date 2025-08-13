@@ -154,7 +154,7 @@ export default function MyOrchardsPage() {
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-orange-700">
+              <h1 className="text-3xl font-bold text-nav-my">
                 My Orchards, {user?.first_name || 'Friend'}!
               </h1>
               <p className="text-orange-600 text-lg">

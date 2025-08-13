@@ -452,7 +452,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-yellow-700">
+            <h1 className="text-3xl font-bold text-nav-create">
               {isEdit ? "Edit Orchard" : "Create New Orchard"}, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-yellow-600 text-lg">
