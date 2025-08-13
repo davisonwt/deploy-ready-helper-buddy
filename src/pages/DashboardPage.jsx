@@ -120,8 +120,8 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold" style={{ 
-              color: 'hsl(187, 100%, 80%)', 
-              textShadow: '2px 2px 4px hsl(187, 100%, 60%)' 
+              color: 'hsl(187, 85%, 65%)', 
+              textShadow: '2px 2px 4px hsl(187, 85%, 45%)' 
             }}>
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
