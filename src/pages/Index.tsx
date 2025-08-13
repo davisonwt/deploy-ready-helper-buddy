@@ -29,7 +29,7 @@ const Index = () => {
                  />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-green-800">sow2grow</h1>
+                <h1 className="text-xl font-bold text-primary">sow2grow</h1>
                 <p className="text-xs text-green-600">364yhvh community farm</p>
               </div>
             </div>
@@ -76,7 +76,7 @@ const Index = () => {
             </div>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold text-blue-400 mb-8 animate-fade-in">
+          <h1 className="text-6xl md:text-8xl font-bold text-primary mb-8 animate-fade-in">
             welcome to sow2grow
           </h1>
           

@@ -324,7 +324,7 @@ export default function ProfilePage() {
                 </div>
               )}
               
-              <h1 className="text-5xl font-bold text-foreground mb-3 animate-fade-in" style={{ 
+              <h1 className="text-5xl font-bold text-primary mb-3 animate-fade-in" style={{ 
                 fontFamily: "Playfair Display, serif"
               }}>
                 My Farm Profile
