@@ -86,7 +86,7 @@ export default function Layout({ children }) {
                   "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
                   "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
                   "364yhvh orchards": { bg: '#e9d5ff', border: '#e9d5ff', text: '#7c3aed' },
-                  "chatapp": { bg: '#b19cd9', border: '#b19cd9', text: '#4c1d95' },
+                  "chatapp": { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
                   "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
                   "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' }
                 }
