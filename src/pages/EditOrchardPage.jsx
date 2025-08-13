@@ -303,7 +303,7 @@ export default function EditOrchardPage() {
             Back to My Orchards
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Orchard</h1>
+            <h1 className="text-3xl font-bold text-nav-create">Edit Orchard</h1>
             <p className="text-muted-foreground">Update your orchard details</p>
           </div>
         </div>

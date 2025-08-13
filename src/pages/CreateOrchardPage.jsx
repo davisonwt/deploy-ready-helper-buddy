@@ -474,7 +474,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                 <Sprout className="h-8 w-8 text-yellow-700 animate-pulse" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-yellow-700 mb-4">
+            <h2 className="text-2xl font-bold text-nav-create mb-4">
               {isEdit ? "Edit Your Orchard" : "Sow a New Seed"}
             </h2>
             <p className="text-lg text-yellow-600 max-w-2xl mx-auto">

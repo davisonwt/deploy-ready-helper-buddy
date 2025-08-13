@@ -66,7 +66,7 @@ export default function FreeWillGiftingPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-purple-700">
+            <h1 className="text-3xl font-bold text-purple-600">
               Free-Will Gifting, {user?.first_name || 'Friend'}!
             </h1>
             <p className="text-purple-600 text-lg">
@@ -87,7 +87,7 @@ export default function FreeWillGiftingPage() {
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-purple-700 mb-2">Free-Will Gifting</h2>
+          <h2 className="text-2xl font-bold text-purple-600 mb-2">Free-Will Gifting</h2>
           <p className="text-purple-600 max-w-2xl mx-auto">
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
           </p>
