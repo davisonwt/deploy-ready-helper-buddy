@@ -200,10 +200,10 @@ export default function BrowseOrchardsPage() {
             }}>
               Community Orchards
             </h1>
-            <p className="text-green-600 text-lg">
+            <p className="text-lg" style={{ color: '#0b6623' }}>
               Discover and support orchards in our community
             </p>
-            <p className="text-green-500 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>

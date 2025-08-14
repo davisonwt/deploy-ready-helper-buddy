@@ -459,10 +459,10 @@ export default function CreateOrchardPage({ isEdit = false }) {
             }}>
               {isEdit ? "Edit Orchard" : "Create New Orchard"}
             </h1>
-            <p className="text-yellow-600 text-lg">
+            <p className="text-lg" style={{ color: '#cc5500' }}>
               {isEdit ? "Update your orchard details" : "Plant a new seed in our community"}
             </p>
-            <p className="text-yellow-500 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#cc5500' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>

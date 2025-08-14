@@ -161,10 +161,10 @@ export default function MyOrchardsPage() {
               }}>
                 My Orchards
               </h1>
-              <p className="text-orange-600 text-lg">
+              <p className="text-lg" style={{ color: '#8b4513' }}>
                 Manage and track your growing orchards
               </p>
-              <p className="text-orange-500 text-sm mt-1">
+              <p className="text-sm mt-1" style={{ color: '#8b4513' }}>
                 Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
               </p>
             </div>

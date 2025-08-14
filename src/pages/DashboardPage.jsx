@@ -126,10 +126,10 @@ export default function DashboardPage() {
             }}>
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
-            <p className="text-slate-700 text-lg">
+            <p className="text-lg" style={{ color: '#1c2a39' }}>
               Ready to grow your orchard today?
             </p>
-            <p className="text-slate-600 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#1c2a39' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>

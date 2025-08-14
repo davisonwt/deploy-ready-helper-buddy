@@ -173,7 +173,7 @@ export default function YhvhOrchardsPage() {
             textShadow: '2px 2px 4px #7c3aed',
             backgroundColor: '#C8B6A6'
           }}>364yhvh Community Orchards</h1>
-          <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
+          <p className="max-w-3xl mx-auto text-lg" style={{ color: '#663399' }}>
             Welcome to our community seed garden where members share their gifts, talents, and offerings. 
             Each seed represents a blessing planted by a community member to help others grow.
           </p>
