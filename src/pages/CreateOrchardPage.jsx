@@ -436,7 +436,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
       {/* Content Container */}
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="bg-nav-create/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-create/30 shadow-lg mb-8">
+      <div className="p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-create shadow-lg">
             {user?.profile_picture ? (

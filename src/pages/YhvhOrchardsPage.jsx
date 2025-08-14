@@ -162,7 +162,7 @@ export default function YhvhOrchardsPage() {
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #e9d5ff20, #f8fafc, #e9d5ff10)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 p-8 rounded-2xl" style={{ backgroundColor: '#C8B6A6' }}>
           <div className="flex justify-center mb-6">
             <div className="p-6 bg-success/20 rounded-full animate-pulse">
               <TreePine className="h-16 w-16 text-success" />
