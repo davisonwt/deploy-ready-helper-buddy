@@ -452,7 +452,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold" style={{ 
+            <h1 className="text-3xl font-bold bg-heading-bg px-8 py-4 rounded-lg" style={{ 
               color: 'hsl(45, 90%, 55%)', 
               textShadow: '2px 2px 4px hsl(45, 90%, 35%)' 
             }}>

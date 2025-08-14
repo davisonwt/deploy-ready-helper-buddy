@@ -101,7 +101,9 @@ export default {
 				'nav-create': 'hsl(var(--nav-create))',
 				'nav-my': 'hsl(var(--nav-my))',
 				'nav-tithing': 'hsl(var(--nav-tithing))',
-				'nav-gifting': 'hsl(var(--nav-gifting))'
+				'nav-gifting': 'hsl(var(--nav-gifting))',
+				// Heading colors
+				'heading-bg': 'hsl(var(--heading-bg))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -193,7 +193,7 @@ export default function BrowseOrchardsPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold" style={{ 
+            <h1 className="text-3xl font-bold bg-heading-bg px-8 py-4 rounded-lg" style={{ 
               color: 'hsl(137, 80%, 65%)', 
               textShadow: '2px 2px 4px hsl(137, 80%, 45%)' 
             }}>

@@ -168,7 +168,7 @@ export default function YhvhOrchardsPage() {
               <TreePine className="h-16 w-16 text-success" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-4" style={{ 
+          <h1 className="text-4xl font-bold mb-4 bg-heading-bg px-8 py-4 rounded-lg inline-block" style={{ 
             color: '#e9d5ff', 
             textShadow: '2px 2px 4px #7c3aed' 
           }}>364yhvh Community Orchards</h1>

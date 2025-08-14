@@ -52,6 +52,9 @@ All colors MUST be HSL.
   --nav-tithing: 0 100% 84%; /* #ffadad - light red */
   --nav-gifting: 230 81% 72%; /* #8093f1 - light purple */
   
+  /* Heading background */
+  --heading-bg: 24 14% 78%; /* #C8B6A6 - soft taupe */
+  
   /* Custom colors for registration form */
   --olive-green: 60 30% 45%;
   --golden-brown: 30 35% 45%;
