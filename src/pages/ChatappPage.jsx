@@ -125,12 +125,13 @@ const ChatappPage = () => {
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #b19cd920, #f8fafc, #b19cd910)' }}>
       <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 p-8 rounded-2xl" style={{ backgroundColor: '#C8B6A6' }}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2" style={{ 
+              <h1 className="text-3xl font-bold mb-2 px-8 py-4 rounded-lg" style={{ 
                 color: '#3B82F6', 
-                textShadow: '2px 2px 4px #1D4ED8' 
+                textShadow: '2px 2px 4px #1D4ED8',
+                backgroundColor: '#C8B6A6'
               }}>Chatapp</h1>
               <p className="text-muted-foreground">
                 Connect, collaborate, and grow together in our farming community

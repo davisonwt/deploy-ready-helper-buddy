@@ -137,7 +137,7 @@ export default function MyOrchardsPage() {
   return (
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffd6a520, #f8fafc, #ffd6a510)' }}>
       {/* Welcome Section with Profile Picture */}
-      <div className="bg-nav-my/20 backdrop-blur-sm p-8 rounded-2xl border border-nav-my/30 shadow-lg mb-8">
+      <div className="p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-my shadow-lg">
@@ -154,9 +154,10 @@ export default function MyOrchardsPage() {
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold" style={{ 
+              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
                 color: 'hsl(33, 100%, 82%)', 
-                textShadow: '2px 2px 4px hsl(33, 100%, 62%)' 
+                textShadow: '2px 2px 4px hsl(33, 100%, 62%)',
+                backgroundColor: '#C8B6A6'
               }}>
                 My Orchards
               </h1>
