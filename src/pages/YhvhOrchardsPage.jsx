@@ -162,22 +162,28 @@ export default function YhvhOrchardsPage() {
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #e9d5ff20, #f8fafc, #e9d5ff10)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-12 p-8 rounded-2xl" style={{ backgroundColor: '#C8B6A6' }}>
-          <div className="flex justify-center mb-6">
-            <div className="p-6 bg-success/20 rounded-full animate-pulse">
-              <TreePine className="h-16 w-16 text-success" />
+        <div className="p-8 rounded-2xl" style={{ backgroundColor: '#C8B6A6' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
+                color: '#e9d5ff', 
+                textShadow: '2px 2px 4px #7c3aed',
+                backgroundColor: '#C8B6A6'
+              }}>364yhvh Community Orchards</h1>
+              <p className="text-lg" style={{ color: '#663399' }}>
+                Welcome to our community seed garden where members share their gifts, talents, and offerings.
+              </p>
+              <p className="text-sm mt-1" style={{ color: '#663399' }}>
+                Each seed represents a blessing planted by a community member to help others grow.
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="p-4 bg-success/20 rounded-full">
+                <TreePine className="h-12 w-12 text-success" />
+              </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-4 px-8 py-4 rounded-lg inline-block" style={{ 
-            color: '#e9d5ff', 
-            textShadow: '2px 2px 4px #7c3aed',
-            backgroundColor: '#C8B6A6'
-          }}>364yhvh Community Orchards</h1>
-          <p className="max-w-3xl mx-auto text-lg" style={{ color: '#663399' }}>
-            Welcome to our community seed garden where members share their gifts, talents, and offerings. 
-            Each seed represents a blessing planted by a community member to help others grow.
-          </p>
-          <div className="mt-6 flex justify-center space-x-4">
+          <div className="mt-6 flex space-x-4">
             <Badge variant="secondary" className="px-4 py-2 text-sm">
               {seeds.length} Seeds Planted
             </Badge>
