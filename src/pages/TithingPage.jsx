@@ -43,7 +43,7 @@ export default function TithingPage() {
   return (
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffadad20, #f8fafc, #ffadad10)' }}>
       {/* Welcome Section with Profile Picture */}
-      <div className="p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-tithing shadow-lg">
             {user?.profile_picture ? (
