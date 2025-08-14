@@ -164,7 +164,7 @@ export default function OrchardErrorPage() {
         </div>
 
         {/* Enhanced Header */}
-        <div className="text-center mb-8">
+        <div className="max-w-2xl mx-auto text-center mb-8">
           <div className="mx-auto w-24 h-24 bg-gradient-to-br from-destructive/10 to-destructive/20 rounded-full flex items-center justify-center mb-6 shadow-xl">
             <ErrorIcon className="h-12 w-12 text-destructive animate-pulse" />
           </div>

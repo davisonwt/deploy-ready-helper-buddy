@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="max-w-2xl mx-auto text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-primary/20 rounded-full">
               <Settings className="h-12 w-12 text-primary" />
