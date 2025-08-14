@@ -59,9 +59,10 @@ export default function TithingPage() {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-heading-bg px-8 py-4 rounded-lg" style={{ 
+            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
               color: 'hsl(0, 100%, 84%)', 
-              textShadow: '2px 2px 4px hsl(0, 100%, 64%)' 
+              textShadow: '2px 2px 4px hsl(0, 100%, 64%)',
+              backgroundColor: '#C8B6A6'
             }}>
               Tithing
             </h1>

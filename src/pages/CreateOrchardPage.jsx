@@ -452,9 +452,10 @@ export default function CreateOrchardPage({ isEdit = false }) {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-heading-bg px-8 py-4 rounded-lg" style={{ 
+            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
               color: 'hsl(45, 90%, 55%)', 
-              textShadow: '2px 2px 4px hsl(45, 90%, 35%)' 
+              textShadow: '2px 2px 4px hsl(45, 90%, 35%)',
+              backgroundColor: '#C8B6A6'
             }}>
               {isEdit ? "Edit Orchard" : "Create New Orchard"}
             </h1>
