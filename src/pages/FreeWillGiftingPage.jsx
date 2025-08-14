@@ -50,7 +50,7 @@ export default function FreeWillGiftingPage() {
   return (
     <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #8093f120, #f8fafc, #8093f110)' }}>
       {/* Welcome Section with Profile Picture */}
-      <div className="p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+      <div className="max-w-3xl mx-auto p-6 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-gifting shadow-lg">
             {user?.profile_picture ? (
@@ -85,7 +85,7 @@ export default function FreeWillGiftingPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="max-w-2xl mx-auto text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-nav-gifting/30 rounded-full">
               <Gift className="h-12 w-12 text-purple-700" />
