@@ -73,10 +73,10 @@ export default function FreeWillGiftingPage() {
             }}>
               Free-Will Gifting
             </h1>
-            <p className="text-purple-600 text-lg">
+            <p className="text-lg">
               Spread love and blessings through spontaneous giving
             </p>
-            <p className="text-purple-500 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#c3b1e1' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>

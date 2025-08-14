@@ -66,10 +66,10 @@ export default function TithingPage() {
             }}>
               Tithing
             </h1>
-            <p className="text-red-600 text-lg">
+            <p className="text-lg">
               Honor elohim with your faithful giving
             </p>
-            <p className="text-red-500 text-sm mt-1">
+            <p className="text-sm mt-1" style={{ color: '#c71585' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>

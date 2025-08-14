@@ -133,7 +133,7 @@ const ChatappPage = () => {
                 textShadow: '2px 2px 4px #1D4ED8',
                 backgroundColor: '#C8B6A6'
               }}>Chatapp</h1>
-              <p className="text-muted-foreground">
+              <p style={{ color: '#b0e0e6' }}>
                 Connect, collaborate, and grow together in our farming community
               </p>
             </div>
