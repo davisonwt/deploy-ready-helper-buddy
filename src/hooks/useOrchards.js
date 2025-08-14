@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth'
+import { useAuth } from './useAuth.jsx'
 
 export function useOrchards() {
   const [orchards, setOrchards] = useState([])
