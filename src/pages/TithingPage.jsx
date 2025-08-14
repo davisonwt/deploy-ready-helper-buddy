@@ -66,7 +66,7 @@ export default function TithingPage() {
             }}>
               Tithing
             </h1>
-            <p className="text-lg">
+            <p className="text-lg" style={{ color: '#c71585' }}>
               Honor elohim with your faithful giving
             </p>
             <p className="text-sm mt-1" style={{ color: '#c71585' }}>
