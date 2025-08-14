@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth'
+import { useAuth } from './useAuth.jsx'
 
 export function useBestowals() {
   const [loading, setLoading] = useState(false)
