@@ -35,10 +35,16 @@ import { useRoles } from '../hooks/useRoles'
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
   const { deleteOrchard } = useOrchards()
-  const { isAdminOrGosat } = useRoles()
+  const { isAdminOrGosat, userRoles, loading: rolesLoading } = useRoles()
   const [seeds, setSeeds] = useState([])
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  // Debug logging
+  console.log('User:', user?.id)
+  console.log('User roles:', userRoles)
+  console.log('Is Admin or Gosat:', isAdminOrGosat())
+  console.log('Roles loading:', rolesLoading)
   const [selectedSeed, setSelectedSeed] = useState(null)
   const [convertDialogOpen, setConvertDialogOpen] = useState(false)
   const [pocketPrice, setPocketPrice] = useState(150)
