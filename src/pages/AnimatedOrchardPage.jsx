@@ -210,7 +210,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Orchard Info */}
-          <OrchardInfo orchard={orchard} takenPockets={takenPockets} />
+          <OrchardInfo orchard={orchard} />
           
           {/* Product Images */}
           <OrchardImages orchard={orchard} />
@@ -223,7 +223,27 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              <AnimatedOrchardGrid 
+              {/* Growth Stages Row */}
+              <div className="flex gap-2 mb-6">
+                <div className="bg-emerald-50 p-4 rounded-xl flex-1 text-center">
+                  <div className="text-2xl font-bold text-emerald-800">{takenPockets.filter(p => p.stage === 'sprout').length}</div>
+                  <div className="text-sm text-emerald-600">Sprout 🌱</div>
+                </div>
+                <div className="bg-lime-50 p-4 rounded-xl flex-1 text-center">
+                  <div className="text-2xl font-bold text-lime-800">{takenPockets.filter(p => p.stage === 'young').length}</div>
+                  <div className="text-sm text-lime-600">Young 🌿</div>
+                </div>
+                <div className="bg-teal-50 p-4 rounded-xl flex-1 text-center">
+                  <div className="text-2xl font-bold text-teal-800">{takenPockets.filter(p => p.stage === 'growing').length}</div>
+                  <div className="text-sm text-teal-600">Growing 🌳</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
+                  <div className="text-2xl font-bold text-green-800">{takenPockets.filter(p => p.stage === 'mature').length}</div>
+                  <div className="text-sm text-green-600">Mature 🌲</div>
+                </div>
+              </div>
+
+              <AnimatedOrchardGrid
                 totalPockets={orchard.total_pockets || 195}
                 pocketPrice={orchard.pocket_price || 150}
                 selectedPockets={selectedPockets}

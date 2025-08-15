@@ -4,16 +4,8 @@ import { Badge } from './ui/badge'
 import { CheckCircle, Eye, Users, Clock } from 'lucide-react'
 import { useCurrency } from '../hooks/useCurrency'
 
-export function OrchardInfo({ orchard, takenPockets = [] }) {
+export function OrchardInfo({ orchard }) {
   const { formatAmount } = useCurrency()
-
-  // Calculate growth stage counts
-  const growthStageCounts = {
-    sprout: takenPockets.filter(p => p.stage === 'sprout').length,
-    young: takenPockets.filter(p => p.stage === 'young').length,
-    growing: takenPockets.filter(p => p.stage === 'growing').length,
-    mature: takenPockets.filter(p => p.stage === 'mature').length
-  }
 
   return (
     <Card className="bg-white/95 backdrop-blur-sm border-green-200 shadow-xl">
@@ -63,25 +55,6 @@ export function OrchardInfo({ orchard, takenPockets = [] }) {
           </div>
         </div>
 
-        {/* Second Row: Growth Stages */}
-        <div className="flex gap-2 mb-6">
-          <div className="bg-emerald-50 p-4 rounded-xl flex-1 text-center">
-            <div className="text-2xl font-bold text-emerald-800">{growthStageCounts.sprout}</div>
-            <div className="text-sm text-emerald-600">Sprout 🌱</div>
-          </div>
-          <div className="bg-lime-50 p-4 rounded-xl flex-1 text-center">
-            <div className="text-2xl font-bold text-lime-800">{growthStageCounts.young}</div>
-            <div className="text-sm text-lime-600">Young 🌿</div>
-          </div>
-          <div className="bg-teal-50 p-4 rounded-xl flex-1 text-center">
-            <div className="text-2xl font-bold text-teal-800">{growthStageCounts.growing}</div>
-            <div className="text-sm text-teal-600">Growing 🌳</div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
-            <div className="text-2xl font-bold text-green-800">{growthStageCounts.mature}</div>
-            <div className="text-sm text-green-600">Mature 🌲</div>
-          </div>
-        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
