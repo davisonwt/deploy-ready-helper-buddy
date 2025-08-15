@@ -114,15 +114,19 @@ export default function FreeWillGiftingPage() {
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2 px-4 py-2 rounded-lg bg-black/80 border-2" style={{ 
-            color: 'hsl(45, 100%, 85%)', 
-            textShadow: '2px 2px 4px black',
-            borderColor: 'hsl(45, 100%, 70%)'
+          <h2 className="text-2xl font-bold mb-2 px-6 py-3 relative" style={{ 
+            color: 'hsl(45, 100%, 20%)', 
+            textShadow: '1px 1px 2px white',
+            background: 'radial-gradient(ellipse 120% 80% at 50% 50%, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.85))',
+            borderRadius: '50px 30px 40px 35px',
+            boxShadow: '0 8px 20px rgba(255, 255, 255, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.8)'
           }}>Free-Will Gifting</h2>
-          <p className="max-w-2xl mx-auto px-4 py-3 rounded-lg bg-black/80 border" style={{ 
-            color: 'white',
-            textShadow: '1px 1px 2px black',
-            borderColor: 'rgba(255, 255, 255, 0.3)'
+          <p className="max-w-2xl mx-auto px-6 py-4 relative" style={{ 
+            color: 'hsl(230, 50%, 20%)',
+            textShadow: '1px 1px 1px rgba(255, 255, 255, 0.8)',
+            background: 'radial-gradient(ellipse 110% 90% at 60% 40%, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.88))',
+            borderRadius: '40px 25px 35px 45px',
+            boxShadow: '0 6px 15px rgba(255, 255, 255, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.9)'
           }}>
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
           </p>
