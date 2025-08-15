@@ -149,7 +149,7 @@ export default function MyOrchardsPage() {
         }}
       >
         <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/my%20orchards.mp4"
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
           type="video/mp4"
         />
       </video>
