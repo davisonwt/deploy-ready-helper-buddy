@@ -185,7 +185,7 @@ export default function BrowseOrchardsPage() {
       {/* Semi-transparent overlay for better content readability */}
       <div className="min-h-screen bg-white/70 backdrop-blur-sm">
         {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 bg-white/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
               {user?.profile_picture ? (
