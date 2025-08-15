@@ -106,7 +106,10 @@ export default function TithingPage() {
             <div className="p-3 bg-red-100/80 rounded-full mr-4">
               <HandHeart className="h-12 w-12 text-red-700" />
             </div>
-            <h2 className="text-2xl font-bold text-red-700">Faithful Tithing</h2>
+            <h2 className="text-2xl font-bold" style={{ 
+              color: 'hsl(320, 100%, 60%)', 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+            }}>Faithful Tithing</h2>
           </div>
           <p className="text-red-600 max-w-2xl mx-auto">
             "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says yhvh (the creator) Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
@@ -117,7 +120,10 @@ export default function TithingPage() {
           {/* Tithing Form */}
           <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardHeader>
-              <CardTitle className="flex items-center text-red-700">
+              <CardTitle className="flex items-center" style={{ 
+                color: 'hsl(200, 100%, 50%)', 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+              }}>
                 <HandHeart className="h-5 w-5 mr-2" />
                 Set Up Your Tithe
               </CardTitle>
@@ -205,7 +211,10 @@ export default function TithingPage() {
           <div className="space-y-6">
             <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center text-red-700">
+                <CardTitle className="flex items-center" style={{ 
+                  color: 'hsl(120, 100%, 40%)', 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                }}>
                   <Sparkles className="h-5 w-5 mr-2" />
                   Why We Tithe
                 </CardTitle>
@@ -234,7 +243,10 @@ export default function TithingPage() {
 
             <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center text-red-700">
+                <CardTitle className="flex items-center" style={{ 
+                  color: 'hsl(45, 100%, 50%)', 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                }}>
                   <DollarSign className="h-5 w-5 mr-2" />
                   Tithing Statistics
                 </CardTitle>
