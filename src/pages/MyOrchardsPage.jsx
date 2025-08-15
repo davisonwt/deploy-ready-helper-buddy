@@ -525,5 +525,3 @@ export default function MyOrchardsPage() {
     </div>
   )
 }
-
-export default MyOrchardsPage
