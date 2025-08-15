@@ -248,29 +248,29 @@ export default function MyOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-8 bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {/* Category Filter Row */}
-              <div className="flex justify-center">
-                <div className="min-w-[200px]">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
-                      <SelectValue placeholder="Filter by Category" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-nav-my/30 z-50">
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        <div className="mb-8">
+          <div className="space-y-4">
+            {/* Category Filter Row */}
+            <div className="flex justify-center">
+              <div className="min-w-[200px]">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
+                    <SelectValue placeholder="Filter by Category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-nav-my/30 z-50">
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              
-              {/* Status Filter Buttons Row */}
+            </div>
+            
+            {/* Status Filter Buttons Row */}
+            <div className="flex justify-center">
               <div className="flex gap-2">
                 {['all', 'active', 'completed', 'paused'].map((status) => {
                   const getStatusStyle = (status, isSelected) => {
@@ -306,8 +306,8 @@ export default function MyOrchardsPage() {
                 })}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Orchards Grid */}
         <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6">
