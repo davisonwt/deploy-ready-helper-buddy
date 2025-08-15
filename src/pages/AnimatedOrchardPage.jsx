@@ -223,8 +223,19 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              {/* Growth Stages Row */}
-              <div className="flex gap-2 mb-6">
+              <AnimatedOrchardGrid 
+                totalPockets={orchard.total_pockets || 195}
+                pocketPrice={orchard.pocket_price || 150}
+                selectedPockets={selectedPockets}
+                onPocketClick={handlePocketClick}
+                takenPockets={takenPockets}
+                pocketsPerRow={10}
+                showNumbers={true}
+                interactive={true}
+              />
+              
+              {/* Growth Stages Row - UNDER the orchard grid */}
+              <div className="flex gap-2 mt-6 mb-6">
                 <div className="bg-emerald-50 p-4 rounded-xl flex-1 text-center">
                   <div className="text-2xl font-bold text-emerald-800">{takenPockets.filter(p => p.stage === 'sprout').length}</div>
                   <div className="text-sm text-emerald-600">Sprout 🌱<br/>(0-7 days)</div>
@@ -242,8 +253,6 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
                   <div className="text-sm text-green-600">Mature 🌲<br/>(43+ days)</div>
                 </div>
               </div>
-
-              <AnimatedOrchardGrid
                 totalPockets={orchard.total_pockets || 195}
                 pocketPrice={orchard.pocket_price || 150}
                 selectedPockets={selectedPockets}
