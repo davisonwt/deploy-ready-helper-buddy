@@ -35,21 +35,21 @@ export function OrchardInfo({ orchard }) {
         </div>
       </CardHeader>
       <CardContent>
-        {/* First Row: Pocket Statistics */}
-        <div className="flex gap-2 mb-4">
-          <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
+        {/* First Row: Pocket Statistics - CENTERED */}
+        <div className="flex gap-2 mb-4 justify-center">
+          <div className="bg-green-50 p-4 rounded-xl flex-1 text-center max-w-[200px]">
             <div className="text-2xl font-bold text-green-800">{orchard.total_pockets || 0}</div>
             <div className="text-sm text-green-600">Total</div>
           </div>
-          <div className="bg-amber-50 p-4 rounded-xl flex-1 text-center">
+          <div className="bg-amber-50 p-4 rounded-xl flex-1 text-center max-w-[200px]">
             <div className="text-2xl font-bold text-amber-800">{orchard.filled_pockets || 0}</div>
             <div className="text-sm text-amber-600">Growing</div>
           </div>
-          <div className="bg-blue-50 p-4 rounded-xl flex-1 text-center">
+          <div className="bg-blue-50 p-4 rounded-xl flex-1 text-center max-w-[200px]">
             <div className="text-2xl font-bold text-blue-800">{(orchard.total_pockets || 0) - (orchard.filled_pockets || 0)}</div>
             <div className="text-sm text-blue-600">Available</div>
           </div>
-          <div className="bg-purple-50 p-4 rounded-xl flex-1 text-center">
+          <div className="bg-purple-50 p-4 rounded-xl flex-1 text-center max-w-[200px]">
             <div className="text-2xl font-bold text-purple-800">{Math.round(orchard.completion_rate || 0)}%</div>
             <div className="text-sm text-purple-600">Complete</div>
           </div>
