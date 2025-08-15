@@ -310,16 +310,18 @@ export default function YhvhOrchardsPage() {
 
         {orchards.length > 0 && (
           <div className="mb-12">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <TreePine className="h-6 w-6 text-success" />
-              <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
-              <TreePine className="h-6 w-6 text-success" />
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-200 shadow-lg p-6 mb-6 mx-auto max-w-2xl">
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <TreePine className="h-6 w-6 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
+                <TreePine className="h-6 w-6 text-success" />
+              </div>
+              {isAdminOrGosat() && (
+                <p className="text-center text-gray-700 text-sm">
+                  Fully processed projects ready for community support • Edit prices and manage settings
+                </p>
+              )}
             </div>
-            {isAdminOrGosat() && (
-              <p className="text-center text-muted-foreground mb-6 text-sm">
-                Fully processed projects ready for community support • Edit prices and manage settings
-              </p>
-            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {orchards.map((orchard, index) => (
                 <Card 
