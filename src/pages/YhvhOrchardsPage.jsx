@@ -295,7 +295,7 @@ export default function YhvhOrchardsPage() {
           <div className="mb-8 p-6 bg-blue-50/80 rounded-xl border border-blue-200">
             <div className="flex items-center space-x-3 mb-4">
               <Settings className="h-6 w-6 text-blue-600" />
-              <h3 className="text-lg font-semibold text-blue-800">Gosat Management Zone</h3>
+              <h3 className="text-lg font-semibold text-blue-800">Gosat's Management Zone</h3>
             </div>
             <p className="text-blue-700 text-sm mb-2">
               <strong>Community Orchards:</strong> These are fully processed projects ready for community support. 
@@ -421,26 +421,27 @@ export default function YhvhOrchardsPage() {
           </div>
         )}
 
-        {/* Seeds Grid */}
-        <div className="mb-6">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Sprout className="h-6 w-6 text-green-600" />
-            <h2 className="text-2xl font-bold text-foreground">Community Seeds</h2>
-            <Sprout className="h-6 w-6 text-green-600" />
-          </div>
-          {isAdminOrGosat() && (
+        {/* Seeds Grid - Only visible to Gosats/Admins */}
+        {isAdminOrGosat() && (
+          <div className="mb-6">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <Sprout className="h-6 w-6 text-green-600" />
+              <h2 className="text-2xl font-bold text-foreground">Community Seeds</h2>
+              <Sprout className="h-6 w-6 text-green-600" />
+            </div>
             <p className="text-center text-muted-foreground mb-6 text-sm">
               Seeds submitted by sowers via Free-Will Gifting • Convert valuable seeds into orchards
             </p>
-          )}
-        </div>
-        {seeds.length === 0 ? (
-          <div className="text-center py-16">
-            <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No seeds planted yet</h3>
-            <p className="text-muted-foreground">Be the first to plant a seed in our community orchard!</p>
           </div>
-        ) : (
+        )}
+        {isAdminOrGosat() && (
+          seeds.length === 0 ? (
+            <div className="text-center py-16">
+              <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No seeds planted yet</h3>
+              <p className="text-muted-foreground">Waiting for sowers to plant seeds via Free-Will Gifting!</p>
+            </div>
+          ) : (
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
              {seeds.map((seed, index) => {
                const seedStatus = getSeedStatus(seed)
@@ -608,16 +609,18 @@ export default function YhvhOrchardsPage() {
                          <ArrowRight className="h-3 w-3 mr-2" />
                          Convert to Orchard
                        </Button>
-                     )}
-                   </div>
-                </CardContent>
-                 </Card>
-               )
-             })}
-           </div>
-         )}
+                      )}
+                    </div>
+                 </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )
+        )}
 
-        {/* Conversion Dialog */}
+        {/* Conversion Dialog - Only for Gosats/Admins */}
+        {isAdminOrGosat() && (
         <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -682,6 +685,7 @@ export default function YhvhOrchardsPage() {
             )}
           </DialogContent>
         </Dialog>
+        )}
       </div>
     </div>
   )
