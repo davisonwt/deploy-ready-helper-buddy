@@ -101,7 +101,7 @@ export default function TithingPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with solid background */}
-        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
+        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 rounded-3xl shadow-lg" style={{ backgroundColor: '#C8B6A6' }}>
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-red-100/80 rounded-full">
               <HandHeart className="h-12 w-12 text-red-700" />
