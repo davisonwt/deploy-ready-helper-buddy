@@ -192,22 +192,6 @@ export default function MyOrchardsPage() {
               </p>
             </div>
           </div>
-          <div className="min-w-[200px]">
-            <label className="block text-sm font-medium text-orange-700 mb-2">Filter by Category</label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-nav-my/30 z-50">
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </div>
 
@@ -266,18 +250,38 @@ export default function MyOrchardsPage() {
         {/* Filters */}
         <Card className="mb-8 bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
-                  <Input
-                    placeholder="Search your orchards..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-nav-my/30 focus:border-nav-my"
-                  />
+            <div className="space-y-4">
+              {/* Search and Category Filter Row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
+                    <Input
+                      placeholder="Search your orchards..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 border-nav-my/30 focus:border-nav-my"
+                    />
+                  </div>
+                </div>
+                <div className="min-w-[200px]">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
+                      <SelectValue placeholder="Filter by Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-nav-my/30 z-50">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              
+              {/* Status Filter Buttons Row */}
               <div className="flex gap-2">
                 {['all', 'active', 'completed', 'paused'].map((status) => {
                   const getStatusStyle = (status, isSelected) => {
