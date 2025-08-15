@@ -129,7 +129,8 @@ export default function FreeWillGiftingPage() {
             <CardHeader>
               <CardTitle className="flex items-center" style={{ 
                 color: 'hsl(160, 100%, 70%)', 
-                textShadow: '1px 1px 2px hsl(160, 100%, 50%)' 
+                textShadow: '2px 2px 0px hsl(160, 100%, 30%), -1px -1px 0px hsl(160, 100%, 30%), 1px -1px 0px hsl(160, 100%, 30%), -1px 1px 0px hsl(160, 100%, 30%)',
+                WebkitTextStroke: '1px hsl(160, 100%, 30%)'
               }}>
                 <HandHeart className="h-5 w-5 mr-2" />
                 Send a Gift
