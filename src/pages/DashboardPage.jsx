@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
-import { useBestowals } from '../hooks/useBestowals'
+import { useBestowals } from '../hooks/useBestowals.jsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
