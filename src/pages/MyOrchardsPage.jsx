@@ -240,7 +240,7 @@ export default function MyOrchardsPage() {
         {/* Call to Action */}
         <div className="mb-8 text-center">
           <Link to="/create-orchard">
-            <Button className="px-8 py-3 text-lg font-semibold text-amber-900 border-2 border-amber-800 hover:bg-amber-200" style={{ backgroundColor: '#D4B895' }}>
+            <Button className="px-8 py-3 text-lg font-semibold text-green-800 border-2 border-green-700 hover:bg-lime-400 shadow-lg" style={{ backgroundColor: '#84CC16' }}>
               <Plus className="h-5 w-5 mr-2" />
               Sow a New Seed
             </Button>
