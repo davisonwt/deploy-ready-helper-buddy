@@ -218,7 +218,7 @@ export default function BrowseOrchardsPage() {
 
       <div className="container mx-auto px-4 py-8 pb-32">
         {/* Header */}
-        <div className="max-w-xl mx-auto text-center mb-8 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/50">
+        <div className="max-w-xl mx-auto text-center mb-8 bg-white/98 backdrop-blur-lg rounded-2xl p-4 shadow-xl border-2 border-white/70">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-nav-community/30 rounded-full flex items-center justify-center shadow-lg">
               <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
