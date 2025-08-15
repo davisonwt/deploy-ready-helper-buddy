@@ -602,21 +602,18 @@ export type Database = {
       public_profiles: {
         Row: {
           avatar_url: string | null
-          bio: string | null
           display_name: string | null
           id: string | null
           user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
-          bio?: string | null
           display_name?: string | null
           id?: string | null
           user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
-          bio?: string | null
           display_name?: string | null
           id?: string | null
           user_id?: string | null
