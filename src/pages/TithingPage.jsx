@@ -101,13 +101,13 @@ export default function TithingPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with solid background */}
-        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 rounded-3xl shadow-lg" style={{ backgroundColor: '#C8B6A6' }}>
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-red-100/80 rounded-full">
+        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-red-100/80 rounded-full mr-4">
               <HandHeart className="h-12 w-12 text-red-700" />
             </div>
+            <h2 className="text-2xl font-bold text-red-700">Faithful Tithing</h2>
           </div>
-          <h2 className="text-2xl font-bold text-red-700 mb-2">Faithful Tithing</h2>
           <p className="text-red-600 max-w-2xl mx-auto">
             "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says yhvh (the creator) Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
           </p>
