@@ -216,7 +216,7 @@ export default function BrowseOrchardsPage() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="max-w-2xl mx-auto text-center mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
           <div className="flex justify-center mb-4">
@@ -493,7 +493,6 @@ export default function BrowseOrchardsPage() {
             ))}
           </div>
         )}
-        </div>
       </div>
     </div>
   )
