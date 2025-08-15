@@ -175,52 +175,50 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #caffbf20, #f8fafc, #caffbf10)' }}>
-      {/* Welcome Section with Profile Picture */}
-      <div 
-        className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 relative bg-cover bg-center bg-no-repeat" 
-        style={{ 
-          backgroundImage: 'url(https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/community%20orchards%201.jpg)',
-          backgroundColor: '#C8B6A6' 
-        }}
-      >
-        {/* Semi-transparent overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/20 rounded-2xl"></div>
-        <div className="relative z-10">
-        <div className="flex items-center space-x-6">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
-            {user?.profile_picture ? (
-              <img 
-                src={user.profile_picture} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
-                <User className="h-10 w-10 text-green-700" />
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(137, 80%, 65%)', 
-              textShadow: '2px 2px 4px hsl(137, 80%, 45%)',
-              backgroundColor: '#C8B6A6'
-            }}>
-              Community Orchards
-            </h1>
-            <p className="text-lg" style={{ color: '#0b6623' }}>
-              Discover and support orchards in our community
-            </p>
-            <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
-              Preferred Currency: {user?.preferred_currency || 'USD'}
-            </p>
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" 
+      style={{ 
+        backgroundImage: 'url(https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/community%20orchards%201.jpg)',
+        backgroundColor: '#f8fafc'
+      }}
+    >
+      {/* Semi-transparent overlay for better content readability */}
+      <div className="min-h-screen bg-white/70 backdrop-blur-sm">
+        {/* Welcome Section with Profile Picture */}
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 bg-white/80 backdrop-blur-sm">
+          <div className="flex items-center space-x-6">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
+              {user?.profile_picture ? (
+                <img 
+                  src={user.profile_picture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
+                  <User className="h-10 w-10 text-green-700" />
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
+                color: 'hsl(137, 80%, 65%)', 
+                textShadow: '2px 2px 4px hsl(137, 80%, 45%)',
+                backgroundColor: '#C8B6A6'
+              }}>
+                Community Orchards
+              </h1>
+              <p className="text-lg" style={{ color: '#0b6623' }}>
+                Discover and support orchards in our community
+              </p>
+              <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
+                Preferred Currency: {user?.preferred_currency || 'USD'}
+              </p>
+            </div>
           </div>
         </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="max-w-2xl mx-auto text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -497,6 +495,7 @@ export default function BrowseOrchardsPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   )
