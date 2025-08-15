@@ -292,7 +292,7 @@ export default function YhvhOrchardsPage() {
 
         {/* Orchards Section */}
         {isAdminOrGosat() && (
-          <div className="mb-8 p-6 bg-white/90 backdrop-blur-sm rounded-xl border border-blue-200 shadow-lg">
+          <div className="mb-8 p-6 bg-white/90 backdrop-blur-sm rounded-2xl border border-blue-200 shadow-lg">
             <div className="flex items-center space-x-3 mb-4">
               <Settings className="h-6 w-6 text-blue-600" />
               <h3 className="text-lg font-semibold text-blue-800">Gosat Management Zone</h3>
