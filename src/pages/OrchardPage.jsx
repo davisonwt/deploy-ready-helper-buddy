@@ -120,13 +120,20 @@ const OrchardPage = () => {
               Back to My Orchards
             </Button>
             
-            {user && orchard.user_id === user.id && (
-              <Link to={`/edit-orchard/${orchardId}`}>
-                <Button className="bg-lime-500 hover:bg-lime-400 text-green-800 border-2 border-green-700">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Orchard
-                </Button>
-              </Link>
+            <Link to={`/edit-orchard/${orchardId}`}>
+              <Button className="bg-lime-500 hover:bg-lime-400 text-green-800 border-2 border-green-700">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Orchard
+              </Button>
+            </Link>
+            
+            {/* Debug info - remove this later */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500 mt-2">
+                User ID: {user?.id || 'No user'}<br/>
+                Orchard User ID: {orchard?.user_id || 'No orchard user'}<br/>
+                Match: {user?.id === orchard?.user_id ? 'Yes' : 'No'}
+              </div>
             )}
           </div>
         </div>
