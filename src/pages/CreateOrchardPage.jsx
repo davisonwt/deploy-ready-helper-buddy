@@ -426,7 +426,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         onLoadStart={() => console.log('Video loading started')}
         onCanPlay={() => console.log('Video can play')}
       >
-        <source src="/sow seed into new orchard.mp4" type="video/mp4" />
+        <source src="/s2g upload sower 1280x720.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
