@@ -501,8 +501,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
           {/* Basic Information */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-rose-400 flex items-center gap-2">
-                <Sprout className="h-5 w-5 text-rose-300" />
+              <CardTitle style={{ color: '#f8a5c2' }} className="flex items-center gap-2">
+                <Sprout className="h-5 w-5" style={{ color: '#f472b6' }} />
                 Step 1: Basic Information
               </CardTitle>
             </CardHeader>
@@ -584,8 +584,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
           {/* Orchard Type Selection */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-sky-400 flex items-center gap-2">
-                <Sprout className="h-5 w-5 text-sky-300" />
+              <CardTitle style={{ color: '#7dd3fc' }} className="flex items-center gap-2">
+                <Sprout className="h-5 w-5" style={{ color: '#38bdf8' }} />
                 Step 2: Orchard Type
               </CardTitle>
             </CardHeader>
@@ -658,8 +658,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
           {/* Financial Details */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-emerald-400 flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-emerald-300" />
+              <CardTitle style={{ color: '#6ee7b7' }} className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" style={{ color: '#34d399' }} />
                 Step 3: Financial Details
               </CardTitle>
             </CardHeader>
@@ -801,8 +801,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
           {/* Purpose & Impact */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-purple-400 flex items-center gap-2">
-                <Heart className="h-5 w-5 text-purple-300" />
+              <CardTitle style={{ color: '#c084fc' }} className="flex items-center gap-2">
+                <Heart className="h-5 w-5" style={{ color: '#a855f7' }} />
                 Step 4: Purpose & Impact
               </CardTitle>
             </CardHeader>
@@ -853,8 +853,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
           {/* Media Upload */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-orange-400 flex items-center gap-2">
-                <Camera className="h-5 w-5 text-orange-300" />
+              <CardTitle style={{ color: '#fb923c' }} className="flex items-center gap-2">
+                <Camera className="h-5 w-5" style={{ color: '#f97316' }} />
                 Step 5: Media Upload
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
