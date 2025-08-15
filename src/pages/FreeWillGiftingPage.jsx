@@ -24,6 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { useFileUpload } from '../hooks/useFileUpload'
 
 export default function FreeWillGiftingPage() {
   const { user } = useAuth()
@@ -39,12 +40,115 @@ export default function FreeWillGiftingPage() {
   const [seedTitle, setSeedTitle] = useState('')
   const [seedDescription, setSeedDescription] = useState('')
   const [seedCategory, setSeedCategory] = useState('')
+  const [uploadedImages, setUploadedImages] = useState([])
+  const [uploadedVideo, setUploadedVideo] = useState(null)
   const { toast } = useToast()
+  const { uploadFile, uploading } = useFileUpload()
 
   const categories = [
     'Technology', 'Education', 'Healthcare', 'Agriculture', 'Arts & Culture',
     'Community Service', 'Environment', 'Business', 'Food & Nutrition', 'Other'
   ]
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files)
+    const maxImages = 3
+    
+    if (uploadedImages.length + files.length > maxImages) {
+      toast({
+        title: "Too many images",
+        description: `You can only upload up to ${maxImages} images.`,
+        variant: "destructive"
+      })
+      return
+    }
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload only image files.",
+          variant: "destructive"
+        })
+        continue
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Images must be less than 5MB.",
+          variant: "destructive"
+        })
+        continue
+      }
+
+      try {
+        const result = await uploadFile(file, 'orchard-images')
+        if (result.success) {
+          setUploadedImages(prev => [...prev, { file, url: result.data.url, preview: URL.createObjectURL(file) }])
+        } else {
+          throw new Error(result.error)
+        }
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}: ${error.message}`,
+          variant: "destructive"
+        })
+      }
+    }
+  }
+
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload only video files.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Videos must be less than 50MB.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const result = await uploadFile(file, 'orchard-videos')
+      if (result.success) {
+        setUploadedVideo({ file, url: result.data.url, preview: URL.createObjectURL(file) })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: `Failed to upload video: ${error.message}`,
+        variant: "destructive"
+      })
+    }
+  }
+
+  const removeImage = (index) => {
+    const imageToRemove = uploadedImages[index]
+    URL.revokeObjectURL(imageToRemove.preview)
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeVideo = () => {
+    if (uploadedVideo) {
+      URL.revokeObjectURL(uploadedVideo.preview)
+      setUploadedVideo(null)
+    }
+  }
 
   const handleGiftTypeChange = (value) => {
     setGiftType(value)
@@ -78,7 +182,9 @@ export default function FreeWillGiftingPage() {
             gifter_id: user.id,
             title: seedTitle,
             description: seedDescription,
-            category: seedCategory
+            category: seedCategory,
+            images: uploadedImages.map(img => img.url),
+            video_url: uploadedVideo?.url || null
           })
 
         if (error) throw error
@@ -92,6 +198,8 @@ export default function FreeWillGiftingPage() {
         setSeedTitle('')
         setSeedDescription('')
         setSeedCategory('')
+        setUploadedImages([])
+        setUploadedVideo(null)
       }
     } catch (error) {
       toast({
@@ -306,6 +414,69 @@ export default function FreeWillGiftingPage() {
                       required
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Images (1-3 images)
+                    </label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                      disabled={uploading || uploadedImages.length >= 3}
+                    />
+                    {uploadedImages.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {uploadedImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image.preview}
+                              alt={`Upload ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Video (Optional)
+                    </label>
+                    <Input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                      disabled={uploading || uploadedVideo}
+                    />
+                    {uploadedVideo && (
+                      <div className="relative mt-2">
+                        <video
+                          src={uploadedVideo.preview}
+                          className="w-full h-32 object-cover rounded border"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={removeVideo}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -326,13 +497,13 @@ export default function FreeWillGiftingPage() {
 
                 <Button
                   type="submit"
-                  disabled={loading || (giftType === 'rain' && (!amount || !recipient)) || (giftType === 'seed' && (!seedTitle || !seedDescription || !seedCategory))}
+                  disabled={loading || uploading || (giftType === 'rain' && (!amount || !recipient)) || (giftType === 'seed' && (!seedTitle || !seedDescription || !seedCategory || uploadedImages.length === 0))}
                   className="w-full bg-nav-gifting hover:bg-nav-gifting/90 text-purple-700"
                 >
-                  {loading ? (
+                  {loading || uploading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-700 border-t-transparent mr-2" />
-                      {giftType === 'seed' ? 'Submitting Seed...' : 'Sending Gift...'}
+                      {uploading ? 'Uploading...' : (giftType === 'seed' ? 'Submitting Seed...' : 'Sending Gift...')}
                     </>
                   ) : (
                     <>
