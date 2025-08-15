@@ -255,16 +255,12 @@ export default function MyOrchardsPage() {
 
         {/* Call to Action */}
         <div className="mb-8 text-center">
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl inline-block">
-            <CardContent className="p-6">
-              <Link to="/create-orchard">
-                <Button className="bg-nav-my hover:bg-nav-my/90 text-orange-700 px-8 py-3 text-lg font-semibold">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Sow a New Seed
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <Link to="/create-orchard">
+            <Button className="px-8 py-3 text-lg font-semibold text-amber-900 border-2 border-amber-800 hover:bg-amber-200" style={{ backgroundColor: '#D4B895' }}>
+              <Plus className="h-5 w-5 mr-2" />
+              Sow a New Seed
+            </Button>
+          </Link>
         </div>
 
         {/* Filters */}
