@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
         .from('seeds')
         .select(`
           *,
-          profiles:gifter_id (
+          profiles!seeds_gifter_id_fkey (
             display_name,
             first_name,
             last_name

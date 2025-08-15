@@ -54,7 +54,7 @@ export function useRoles() {
         .from('profiles')
         .select(`
           *,
-          user_roles (
+          user_roles!user_roles_user_id_fkey (
             role,
             granted_at,
             granted_by
