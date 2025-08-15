@@ -18,10 +18,16 @@ import { useRoles } from '../hooks/useRoles'
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
   const { deleteOrchard } = useOrchards()
-  const { isAdminOrGosat } = useRoles()
+  const { isAdminOrGosat, userRoles, loading: rolesLoading } = useRoles()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+
+  // Debug logging for roles
+  console.log('Current user:', user?.id)
+  console.log('User roles:', userRoles)
+  console.log('Is admin or gosat:', isAdminOrGosat())
+  console.log('Roles loading:', rolesLoading)
 
   useEffect(() => {
     fetchOrchards()
