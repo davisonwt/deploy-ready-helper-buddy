@@ -83,31 +83,22 @@ export default function EditOrchardPage() {
       navigate('/login')
       return
     }
-    loadUserRoles()
     loadOrchard()
   }, [orchardId, user])
-
-  const loadUserRoles = async () => {
-    try {
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-      
-      setUserRoles(data?.map(r => r.role) || [])
-    } catch (error) {
-      console.error('Error loading roles:', error)
-      setUserRoles([])
-    }
-  }
-
-  const isAdminOrGosat = () => {
-    return userRoles.includes('admin') || userRoles.includes('gosat')
-  }
 
   const loadOrchard = async () => {
     try {
       setLoading(true)
+      
+      // Load user roles FIRST
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+      
+      const currentUserRoles = rolesData?.map(r => r.role) || []
+      const isGosat = currentUserRoles.includes('gosat') || currentUserRoles.includes('admin')
+      
       const result = await fetchOrchardById(orchardId)
       
       if (!result.success) {
@@ -119,7 +110,7 @@ export default function EditOrchardPage() {
       const orchardData = result.data
       
       // Check if user owns this orchard or is a gosat/admin
-      if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
+      if (orchardData.user_id !== user.id && !isGosat) {
         toast.error('You can only edit your own orchards')
         navigate('/my-orchards')
         return
