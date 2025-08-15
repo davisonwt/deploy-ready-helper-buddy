@@ -248,7 +248,7 @@ export default function BrowseOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-nav-community/10 backdrop-blur-sm border-nav-community/30 shadow-lg mb-8 hover:shadow-xl transition-all">
+        <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg mb-8 hover:shadow-xl transition-all">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[200px]">
@@ -334,7 +334,7 @@ export default function BrowseOrchardsPage() {
             </CardContent>
           </Card>
         ) : filteredOrchards.length === 0 ? (
-          <Card className="bg-nav-community/10 backdrop-blur-sm border-nav-community/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30">
             <CardContent className="p-12 text-center">
               <Sprout className="h-16 w-16 mx-auto text-green-400 mb-4" />
               <h3 className="text-xl font-semibold text-green-700 mb-2">
@@ -361,7 +361,7 @@ export default function BrowseOrchardsPage() {
               : "grid-cols-1 max-w-4xl mx-auto"
           }`}>
             {filteredOrchards.map((orchard) => (
-              <Card key={orchard.id} className="bg-nav-community/10 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group">
+              <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group">
                 <div className="relative">
                   {orchard.main_image ? (
                     <img 
