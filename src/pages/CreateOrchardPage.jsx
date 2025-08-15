@@ -499,7 +499,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
       
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <Card className="bg-white/95 backdrop-blur-sm border-s2g-green/30 shadow-lg hover:shadow-xl transition-all">
+          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle className="text-s2g-brown flex items-center gap-2">
                 <Sprout className="h-5 w-5 text-s2g-green" />
