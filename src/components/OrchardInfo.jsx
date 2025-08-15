@@ -56,7 +56,7 @@ export function OrchardInfo({ orchard }) {
         </div>
 
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-center">
           <div>
             <h4 className="font-semibold text-gray-800 mb-2">Description</h4>
             <p className="text-gray-700 text-sm">{orchard.why_needed || orchard.description || 'No description available'}</p>
