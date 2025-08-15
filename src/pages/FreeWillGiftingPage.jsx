@@ -107,14 +107,14 @@ export default function FreeWillGiftingPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Combined Header Section with Icon, Title and Description */}
         <div className="max-w-2xl mx-auto text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-nav-gifting/30 rounded-full">
+            <div className="p-4 bg-white/20 rounded-full shadow-lg">
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2 px-6 py-3 relative" style={{ 
+          <h2 className="text-2xl font-bold mb-4 px-6 py-3 relative" style={{ 
             color: 'hsl(45, 100%, 20%)', 
             textShadow: '1px 1px 2px white',
             background: 'radial-gradient(ellipse 120% 80% at 50% 50%, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.85))',
