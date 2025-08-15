@@ -66,7 +66,7 @@ export default function TithingPage() {
       {/* Content */}
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 bg-white/90">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-tithing shadow-lg">
             {user?.profile_picture ? (
@@ -100,10 +100,10 @@ export default function TithingPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-8">
+        {/* Header with solid background */}
+        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-nav-tithing/30 rounded-full">
+            <div className="p-4 bg-red-100/80 rounded-full">
               <HandHeart className="h-12 w-12 text-red-700" />
             </div>
           </div>
@@ -115,7 +115,7 @@ export default function TithingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Tithing Form */}
-          <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center text-red-700">
                 <HandHeart className="h-5 w-5 mr-2" />
@@ -203,7 +203,7 @@ export default function TithingPage() {
 
           {/* Information & Scripture */}
           <div className="space-y-6">
-            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center text-red-700">
                   <Sparkles className="h-5 w-5 mr-2" />
@@ -232,7 +232,7 @@ export default function TithingPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center text-red-700">
                   <DollarSign className="h-5 w-5 mr-2" />
@@ -263,7 +263,7 @@ export default function TithingPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-nav-tithing/10 backdrop-blur-sm border-nav-tithing/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardContent className="p-6">
                 <blockquote className="text-red-600 italic text-center">
                   "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for elohim loves a cheerful giver."
