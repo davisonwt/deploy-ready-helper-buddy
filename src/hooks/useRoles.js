@@ -15,6 +15,8 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
+      console.log('Fetching roles for user:', user.id)
+
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('role')
@@ -22,7 +24,9 @@ export function useRoles() {
 
       if (fetchError) throw fetchError
 
+      console.log('Fetched roles data:', data)
       setUserRoles(data?.map(r => r.role) || [])
+      console.log('Set user roles:', data?.map(r => r.role) || [])
     } catch (err) {
       console.error('Error fetching user roles:', err)
       setError(err.message)
@@ -32,12 +36,17 @@ export function useRoles() {
   }
 
   const hasRole = (role) => {
+    console.log('Checking role:', role, 'in userRoles:', userRoles)
     return userRoles.includes(role)
   }
 
   const isAdmin = () => hasRole('admin')
   const isGosat = () => hasRole('gosat')
-  const isAdminOrGosat = () => isAdmin() || isGosat()
+  const isAdminOrGosat = () => {
+    const result = isAdmin() || isGosat()
+    console.log('isAdminOrGosat result:', result, 'userRoles:', userRoles)
+    return result
+  }
 
   const fetchAllUsers = async () => {
     try {
