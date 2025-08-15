@@ -249,9 +249,10 @@ export default function BrowseOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg mb-8 hover:shadow-xl transition-all">
-          <CardContent className="p-6">
-            <div className="flex flex-wrap gap-4 items-end">
+        <div className="flex justify-center mb-8">
+          <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg hover:shadow-xl transition-all">
+            <CardContent className="p-6">
+            <div className="flex flex-wrap gap-4 items-end justify-center">
               <div className="min-w-[150px]">
                 <label className="block text-sm font-medium text-green-700 mb-2">Category</label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -302,9 +303,10 @@ export default function BrowseOrchardsPage() {
                   <List className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Results */}
         {loading ? (
