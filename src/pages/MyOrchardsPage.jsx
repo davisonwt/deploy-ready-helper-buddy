@@ -280,14 +280,22 @@ export default function MyOrchardsPage() {
               </div>
               <div className="flex gap-2">
                 {['all', 'active', 'completed', 'paused'].map((status) => {
-                  const getStatusColors = (status, isSelected) => {
-                    const colors = {
-                      all: isSelected ? 'bg-blue-200 text-blue-800 border-blue-300' : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-150',
-                      active: isSelected ? 'bg-green-200 text-green-800 border-green-300' : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-150',
-                      completed: isSelected ? 'bg-purple-200 text-purple-800 border-purple-300' : 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-150',
-                      paused: isSelected ? 'bg-orange-200 text-orange-800 border-orange-300' : 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-150'
+                  const getStatusStyle = (status, isSelected) => {
+                    const styles = {
+                      all: isSelected 
+                        ? { backgroundColor: '#DBEAFE', color: '#1E40AF', borderColor: '#93C5FD' }
+                        : { backgroundColor: '#EFF6FF', color: '#1D4ED8', borderColor: '#DBEAFE' },
+                      active: isSelected 
+                        ? { backgroundColor: '#DCFCE7', color: '#166534', borderColor: '#86EFAC' }
+                        : { backgroundColor: '#F0FDF4', color: '#15803D', borderColor: '#DCFCE7' },
+                      completed: isSelected 
+                        ? { backgroundColor: '#E9D5FF', color: '#7C2D12', borderColor: '#C4B5FD' }
+                        : { backgroundColor: '#FAF5FF', color: '#8B5CF6', borderColor: '#E9D5FF' },
+                      paused: isSelected 
+                        ? { backgroundColor: '#FED7AA', color: '#C2410C', borderColor: '#FDBA74' }
+                        : { backgroundColor: '#FFF7ED', color: '#EA580C', borderColor: '#FED7AA' }
                     };
-                    return colors[status];
+                    return styles[status];
                   };
                   
                   return (
@@ -296,7 +304,8 @@ export default function MyOrchardsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setStatusFilter(status)}
-                      className={getStatusColors(status, statusFilter === status)}
+                      style={getStatusStyle(status, statusFilter === status)}
+                      className="border-2"
                     >
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </Button>
