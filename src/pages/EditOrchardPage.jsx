@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
+import { useRoles } from '../hooks/useRoles'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import { toast } from 'sonner'
 export default function EditOrchardPage() {
   const { orchardId } = useParams()
   const { user } = useAuth()
+  const { isAdminOrGosat } = useRoles()
   const navigate = useNavigate()
   const { fetchOrchardById, updateOrchard } = useOrchards()
   const { uploadFile, uploading } = useFileUpload()
@@ -97,8 +99,8 @@ export default function EditOrchardPage() {
 
       const orchardData = result.data
       
-      // Check if user owns this orchard
-      if (orchardData.user_id !== user.id) {
+      // Check if user owns this orchard or is a gosat/admin
+      if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
         toast.error('You can only edit your own orchards')
         navigate('/my-orchards')
         return
