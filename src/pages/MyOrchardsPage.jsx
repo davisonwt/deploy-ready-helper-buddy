@@ -226,7 +226,7 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -238,7 +238,7 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -252,7 +252,7 @@ export default function MyOrchardsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6 flex items-center justify-center">
               <Link to="/create-orchard" className="w-full">
                 <Button className="w-full bg-nav-my hover:bg-nav-my/90 text-orange-700">
@@ -299,7 +299,7 @@ export default function MyOrchardsPage() {
         {/* Orchards Grid */}
         <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6">
           {userOrchards.length === 0 ? (
-            <Card className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardContent className="p-12 text-center">
                 <TreePine className="h-16 w-16 mx-auto text-orange-400 mb-4" />
                 <h3 className="text-xl font-semibold text-orange-700 mb-2">
@@ -324,7 +324,7 @@ export default function MyOrchardsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userOrchards.map((orchard) => (
-                <Card key={orchard.id} className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30 hover:shadow-lg transition-all">
+                <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl hover:shadow-lg transition-all">
                   <div className="relative">
                     {orchard.images?.[0] ? (
                       <img 
