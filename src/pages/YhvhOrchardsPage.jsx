@@ -159,10 +159,23 @@ export default function YhvhOrchardsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #e9d5ff20, #f8fafc, #e9d5ff10)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        className="fixed top-0 left-0 w-full h-full object-cover z-0"
+      >
+        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%201a%201280x720.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Overlay for better text readability */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
+      
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl" style={{ backgroundColor: '#C8B6A6' }}>
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl backdrop-blur-sm" style={{ backgroundColor: 'rgba(200, 182, 166, 0.9)' }}>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
