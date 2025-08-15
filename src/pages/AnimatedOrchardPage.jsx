@@ -210,7 +210,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Orchard Info */}
-          <OrchardInfo orchard={orchard} />
+          <OrchardInfo orchard={orchard} takenPockets={takenPockets} />
           
           {/* Product Images */}
           <OrchardImages orchard={orchard} />

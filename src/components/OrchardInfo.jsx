@@ -4,8 +4,16 @@ import { Badge } from './ui/badge'
 import { CheckCircle, Eye, Users, Clock } from 'lucide-react'
 import { useCurrency } from '../hooks/useCurrency'
 
-export function OrchardInfo({ orchard }) {
+export function OrchardInfo({ orchard, takenPockets = [] }) {
   const { formatAmount } = useCurrency()
+
+  // Calculate growth stage counts
+  const growthStageCounts = {
+    sprout: takenPockets.filter(p => p.stage === 'sprout').length,
+    young: takenPockets.filter(p => p.stage === 'young').length,
+    growing: takenPockets.filter(p => p.stage === 'growing').length,
+    mature: takenPockets.filter(p => p.stage === 'mature').length
+  }
 
   return (
     <Card className="bg-white/95 backdrop-blur-sm border-green-200 shadow-xl">
@@ -51,6 +59,26 @@ export function OrchardInfo({ orchard }) {
           <div className="bg-purple-50 p-4 rounded-xl">
             <div className="text-2xl font-bold text-purple-800">{Math.round(orchard.completion_rate || 0)}%</div>
             <div className="text-sm text-purple-600">Complete</div>
+          </div>
+        </div>
+
+        {/* Growth Stages Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center mb-6">
+          <div className="bg-emerald-50 p-4 rounded-xl">
+            <div className="text-2xl font-bold text-emerald-800">{growthStageCounts.sprout}</div>
+            <div className="text-sm text-emerald-600">Sprout 🌱</div>
+          </div>
+          <div className="bg-lime-50 p-4 rounded-xl">
+            <div className="text-2xl font-bold text-lime-800">{growthStageCounts.young}</div>
+            <div className="text-sm text-lime-600">Young 🌿</div>
+          </div>
+          <div className="bg-teal-50 p-4 rounded-xl">
+            <div className="text-2xl font-bold text-teal-800">{growthStageCounts.growing}</div>
+            <div className="text-sm text-teal-600">Growing 🌳</div>
+          </div>
+          <div className="bg-green-50 p-4 rounded-xl">
+            <div className="text-2xl font-bold text-green-800">{growthStageCounts.mature}</div>
+            <div className="text-sm text-green-600">Mature 🌲</div>
           </div>
         </div>
         
