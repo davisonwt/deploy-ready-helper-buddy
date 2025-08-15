@@ -111,7 +111,10 @@ export default function TithingPage() {
               textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
             }}>Faithful Tithing</h2>
           </div>
-          <p className="text-red-600 max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto" style={{ 
+            color: 'hsl(320, 100%, 60%)',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+          }}>
             "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says yhvh (the creator) Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
           </p>
         </div>
@@ -131,7 +134,7 @@ export default function TithingPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label htmlFor="amount" className="text-red-700">
+                  <Label htmlFor="amount" style={{ color: 'hsl(200, 100%, 50%)' }}>
                     Tithe Amount ({user?.preferred_currency || 'USD'})
                   </Label>
                   <Input
@@ -145,7 +148,7 @@ export default function TithingPage() {
                 </div>
 
                 <div>
-                  <Label className="text-red-700">Suggested Amounts</Label>
+                  <Label style={{ color: 'hsl(200, 100%, 50%)' }}>Suggested Amounts</Label>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     {suggestedAmounts.map((suggAmount) => (
                       <Button
@@ -163,7 +166,7 @@ export default function TithingPage() {
                 </div>
 
                 <div>
-                  <Label className="text-red-700">Frequency</Label>
+                  <Label style={{ color: 'hsl(200, 100%, 50%)' }}>Frequency</Label>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     {['weekly', 'monthly', 'yearly'].map((freq) => (
                       <Button
@@ -220,7 +223,7 @@ export default function TithingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 text-sm text-red-600">
+                <div className="space-y-4 text-sm" style={{ color: 'hsl(120, 100%, 40%)' }}>
                   <div className="flex items-start space-x-2">
                     <Heart className="h-4 w-4 mt-0.5 text-red-500" />
                     <p>Tithing is an act of worship and obedience to elohim</p>
@@ -252,21 +255,21 @@ export default function TithingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                  <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-red-600">This Month</span>
+                    <span style={{ color: 'hsl(45, 100%, 50%)' }}>This Month</span>
                     <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
                       $0
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-red-600">This Year</span>
+                    <span style={{ color: 'hsl(45, 100%, 50%)' }}>This Year</span>
                     <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
                       $0
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-red-600">Total Given</span>
+                    <span style={{ color: 'hsl(45, 100%, 50%)' }}>Total Given</span>
                     <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
                       $0
                     </Badge>
