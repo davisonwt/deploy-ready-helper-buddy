@@ -167,7 +167,7 @@ export default function YhvhOrchardsPage() {
 
         {/* Gosat Management Info */}
         {isAdminOrGosat() && (
-          <div className="mb-8 p-6 bg-blue-50/80 rounded-xl border border-blue-200">
+          <div className="mb-8 p-6 bg-white/90 rounded-xl border border-white/50 shadow-lg backdrop-blur-sm">
             <div className="flex items-center space-x-3 mb-4">
               <Settings className="h-6 w-6 text-blue-600" />
               <h3 className="text-lg font-semibold text-blue-800">Gosat's Management Zone</h3>
@@ -185,14 +185,16 @@ export default function YhvhOrchardsPage() {
         {/* Community Orchards Section */}
         {orchards.length > 0 ? (
           <div className="mb-12">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <TreePine className="h-6 w-6 text-success" />
-              <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
-              <TreePine className="h-6 w-6 text-success" />
+            <div className="p-6 bg-white/90 rounded-xl border border-white/50 shadow-lg backdrop-blur-sm mb-6">
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <TreePine className="h-6 w-6 text-success" />
+                <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
+                <TreePine className="h-6 w-6 text-success" />
+              </div>
+              <p className="text-center text-muted-foreground text-sm">
+                Fully processed projects ready for community support • Click to bestow into any orchard
+              </p>
             </div>
-            <p className="text-center text-muted-foreground mb-6 text-sm">
-              Fully processed projects ready for community support • Click to bestow into any orchard
-            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {orchards.map((orchard, index) => (
                 <Card 
