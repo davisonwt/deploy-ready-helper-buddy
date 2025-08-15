@@ -48,7 +48,30 @@ export default function FreeWillGiftingPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #8093f120, #f8fafc, #8093f110)' }}>
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Video failed to load:', e);
+          e.target.style.display = 'none';
+        }}
+      >
+        <source
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/free-will%20giving.mp4"
+          type="video/mp4"
+        />
+      </video>
+      
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-black/30"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
       <div className="max-w-3xl mx-auto p-6 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center space-x-6">
@@ -285,6 +308,7 @@ export default function FreeWillGiftingPage() {
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
