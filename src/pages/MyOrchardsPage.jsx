@@ -160,10 +160,10 @@ export default function MyOrchardsPage() {
       {/* Content */}
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl shadow-lg mb-8 bg-black/90 border border-white/20" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}>
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-my shadow-lg">
               {user?.profile_picture ? (
                 <img 
                   src={user.profile_picture} 
@@ -171,32 +171,34 @@ export default function MyOrchardsPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/40 flex items-center justify-center">
-                  <User className="h-10 w-10 text-white" />
+                <div className="w-full h-full bg-gradient-to-br from-nav-my to-nav-my/80 flex items-center justify-center">
+                  <User className="h-10 w-10 text-orange-700" />
                 </div>
               )}
             </div>
             <div>
-              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg text-white" style={{ 
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
+                color: 'hsl(30, 100%, 50%)', 
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                backgroundColor: '#C8B6A6'
               }}>
                 My Orchards
               </h1>
-              <p className="text-lg text-gray-200">
+              <p className="text-lg" style={{ color: 'hsl(30, 100%, 50%)' }}>
                 Manage and track your growing orchards
               </p>
-              <p className="text-sm mt-1 text-gray-300">
+              <p className="text-sm mt-1" style={{ color: 'hsl(30, 100%, 50%)' }}>
                 Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
               </p>
             </div>
           </div>
           <div className="min-w-[200px]">
-            <label className="block text-sm font-medium text-white mb-2">Filter by Category</label>
+            <label className="block text-sm font-medium text-orange-700 mb-2">Filter by Category</label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="border-white/30 focus:border-white bg-white/10 text-white">
+              <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-gray-300 z-50">
+              <SelectContent className="bg-white border-nav-my/30 z-50">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -211,49 +213,49 @@ export default function MyOrchardsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats and Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-slate-800/95 border-white/20 shadow-xl">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" style={{ backgroundColor: '#C8B6A6', padding: '24px', borderRadius: '16px' }}>
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-white">Total Orchards</p>
-                  <p className="text-2xl font-bold text-white">{userOrchards.length}</p>
+                  <p className="text-sm font-medium text-orange-600">Total Orchards</p>
+                  <p className="text-2xl font-bold text-orange-700">{userOrchards.length}</p>
                 </div>
-                <TreePine className="h-8 w-8 text-white" />
+                <TreePine className="h-8 w-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/95 border-white/20">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-white">Total Raised</p>
-                  <p className="text-2xl font-bold text-white">{formatCurrency(getTotalRaised())}</p>
+                  <p className="text-sm font-medium text-orange-600">Total Raised</p>
+                  <p className="text-2xl font-bold text-orange-700">{formatCurrency(getTotalRaised())}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-white" />
+                <DollarSign className="h-8 w-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/95 border-white/20">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-white">Active Orchards</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm font-medium text-orange-600">Active Orchards</p>
+                  <p className="text-2xl font-bold text-orange-700">
                     {userOrchards.filter(o => o.status === 'active').length}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-white" />
+                <TrendingUp className="h-8 w-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/95 border-white/20">
+          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
             <CardContent className="p-6 flex items-center justify-center">
               <Link to="/create-orchard" className="w-full">
-                <Button className="w-full bg-slate-700 hover:bg-slate-600 text-white border border-white/30">
+                <Button className="w-full bg-nav-my hover:bg-nav-my/90 text-orange-700">
                   <Plus className="h-4 w-4 mr-2" />
                   Create New
                 </Button>
@@ -263,17 +265,17 @@ export default function MyOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-8 bg-slate-700/95 border-white/20">
+        <Card className="mb-8" style={{ backgroundColor: '#C8B6A6' }}>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
                   <Input
                     placeholder="Search your orchards..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-white/30 focus:border-white bg-white/10 text-white placeholder:text-white/70"
+                    className="pl-10 border-nav-my/30 focus:border-nav-my"
                   />
                 </div>
               </div>
@@ -284,7 +286,7 @@ export default function MyOrchardsPage() {
                     variant={statusFilter === status ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setStatusFilter(status)}
-                    className={statusFilter === status ? 'bg-slate-600 text-white border-white' : 'border-white/30 text-white hover:bg-white/20'}
+                    className={statusFilter === status ? 'bg-nav-my text-orange-700' : 'border-nav-my/30 text-orange-700'}
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </Button>
@@ -295,162 +297,164 @@ export default function MyOrchardsPage() {
         </Card>
 
         {/* Orchards Grid */}
-        {userOrchards.length === 0 ? (
-          <Card className="bg-slate-600/95 border-white/20">
-            <CardContent className="p-12 text-center">
-              <TreePine className="h-16 w-16 mx-auto text-white mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {searchTerm || statusFilter !== 'all' ? 'No orchards found' : 'No orchards yet'}
-              </h3>
-              <p className="text-white/80 mb-6">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filters'
-                  : 'Start your journey by planting your first seed'
-                }
-              </p>
-              {!searchTerm && statusFilter === 'all' && (
-                <Link to="/create-orchard">
-                  <Button className="bg-slate-500 hover:bg-slate-400 text-white border border-white/30">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Plant Your First Seed
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userOrchards.map((orchard) => (
-              <Card key={orchard.id} className="bg-slate-600/95 border-white/20 hover:shadow-lg transition-all">
-                <div className="relative">
-                  {orchard.images?.[0] ? (
-                    <img 
-                      src={orchard.images[0]} 
-                      alt={orchard.title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-slate-500 to-slate-600 rounded-t-lg flex items-center justify-center">
-                      <TreePine className="h-12 w-12 text-white" />
-                    </div>
-                  )}
-                  <div className="absolute top-4 right-4">
-                    <Badge 
-                      variant={orchard.status === 'active' ? 'default' : 'secondary'}
-                      className={orchard.status === 'active' ? 'bg-green-600 text-white border-white' : 'bg-gray-600 text-white'}
-                    >
-                      {orchard.status}
-                    </Badge>
-                  </div>
-                  <div className="absolute top-4 left-4">
-                    <Badge className="bg-blue-600 text-white border-white/30">
-                      {orchard.category}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg text-white mb-2">{orchard.title}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-white/80">
-                        <span className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          {orchard.views || 0}
-                        </span>
-                        <span className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          {orchard.supporters || 0}
-                        </span>
-                        {orchard.location && (
-                          <span className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {orchard.location}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-white/80 text-sm line-clamp-2">
-                      {orchard.description}
-                    </p>
-                    
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-white/80">Progress</span>
-                        <span className="text-sm font-medium text-white">
-                          {getCompletionPercentage(orchard)}%
-                        </span>
-                      </div>
-                      <Progress 
-                        value={getCompletionPercentage(orchard)} 
-                        className="h-2 bg-slate-700"
+        <div style={{ backgroundColor: '#C8B6A6', padding: '24px', borderRadius: '16px' }}>
+          {userOrchards.length === 0 ? (
+            <Card className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30">
+              <CardContent className="p-12 text-center">
+                <TreePine className="h-16 w-16 mx-auto text-orange-400 mb-4" />
+                <h3 className="text-xl font-semibold text-orange-700 mb-2">
+                  {searchTerm || statusFilter !== 'all' ? 'No orchards found' : 'No orchards yet'}
+                </h3>
+                <p className="text-orange-600 mb-6">
+                  {searchTerm || statusFilter !== 'all' 
+                    ? 'Try adjusting your search or filters'
+                    : 'Start your journey by planting your first seed'
+                  }
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Link to="/create-orchard">
+                    <Button className="bg-nav-my hover:bg-nav-my/90 text-orange-700">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Plant Your First Seed
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {userOrchards.map((orchard) => (
+                <Card key={orchard.id} className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30 hover:shadow-lg transition-all">
+                  <div className="relative">
+                    {orchard.images?.[0] ? (
+                      <img 
+                        src={orchard.images[0]} 
+                        alt={orchard.title}
+                        className="w-full h-48 object-cover rounded-t-lg"
                       />
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/80">Raised:</span>
-                      <span className="font-medium text-white">
-                        {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/80">Goal:</span>
-                      <span className="font-medium text-white">
-                        {formatCurrency((orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center text-sm text-white/70">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Created {new Date(orchard.created_at).toLocaleDateString()}
-                    </div>
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Link to={`/orchards/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-white/30 text-white hover:bg-slate-500">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </Link>
-                      <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full border-white/30 text-white hover:bg-slate-500">
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                      </Link>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          const url = `${window.location.origin}/animated-orchard/${orchard.id}`
-                          navigator.clipboard.writeText(url)
-                          toast.success('Orchard link copied to clipboard!')
-                        }}
-                        className="border-white/30 text-white hover:bg-slate-500"
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-br from-nav-my/30 to-nav-my/50 rounded-t-lg flex items-center justify-center">
+                        <TreePine className="h-12 w-12 text-orange-600" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <Badge 
+                        variant={orchard.status === 'active' ? 'default' : 'secondary'}
+                        className={orchard.status === 'active' ? 'bg-nav-my text-orange-700' : ''}
                       >
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDeleteOrchard(orchard.id)}
-                        className="border-red-300/50 text-red-200 hover:bg-red-500/20"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        {orchard.status}
+                      </Badge>
+                    </div>
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-orange-100 text-orange-700 border-0">
+                        {orchard.category}
+                      </Badge>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg text-orange-700 mb-2">{orchard.title}</CardTitle>
+                        <div className="flex items-center space-x-4 text-sm text-orange-600">
+                          <span className="flex items-center">
+                            <Eye className="h-4 w-4 mr-1" />
+                            {orchard.views || 0}
+                          </span>
+                          <span className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            {orchard.supporters || 0}
+                          </span>
+                          {orchard.location && (
+                            <span className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {orchard.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-orange-600 text-sm line-clamp-2">
+                        {orchard.description}
+                      </p>
+                      
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-orange-600">Progress</span>
+                          <span className="text-sm font-medium text-orange-700">
+                            {getCompletionPercentage(orchard)}%
+                          </span>
+                        </div>
+                        <Progress 
+                          value={getCompletionPercentage(orchard)} 
+                          className="h-2"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-orange-600">Raised:</span>
+                        <span className="font-medium text-orange-700">
+                          {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-orange-600">Goal:</span>
+                        <span className="font-medium text-orange-700">
+                          {formatCurrency((orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center text-sm text-orange-500">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Created {new Date(orchard.created_at).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2">
+                        <Link to={`/orchards/${orchard.id}`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </Link>
+                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const url = `${window.location.origin}/animated-orchard/${orchard.id}`
+                            navigator.clipboard.writeText(url)
+                            toast.success('Orchard link copied to clipboard!')
+                          }}
+                          className="border-nav-my/30 text-orange-700 hover:bg-nav-my/10"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteOrchard(orchard.id)}
+                          className="border-red-300/50 text-red-700 hover:bg-red-500/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       </div>
     </div>
