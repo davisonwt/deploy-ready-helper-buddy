@@ -17,7 +17,8 @@ import {
   X,
   CheckCircle,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -40,7 +41,9 @@ export default function EditOrchardPage() {
     why_needed: '',
     how_it_helps: '',
     community_impact: '',
-    expected_completion: ''
+    expected_completion: '',
+    seed_value: '',
+    pocket_price: ''
   })
   
   const [images, setImages] = useState([])
@@ -97,6 +100,7 @@ export default function EditOrchardPage() {
         .eq('user_id', user.id)
       
       const currentUserRoles = rolesData?.map(r => r.role) || []
+      setUserRoles(currentUserRoles)
       const isGosat = currentUserRoles.includes('gosat') || currentUserRoles.includes('admin')
       
       const result = await fetchOrchardById(orchardId)
@@ -125,7 +129,9 @@ export default function EditOrchardPage() {
         why_needed: orchardData.why_needed || '',
         how_it_helps: orchardData.how_it_helps || '',
         community_impact: orchardData.community_impact || '',
-        expected_completion: orchardData.expected_completion || ''
+        expected_completion: orchardData.expected_completion || '',
+        seed_value: orchardData.seed_value || '',
+        pocket_price: orchardData.pocket_price || ''
       })
 
       // Set existing images
@@ -442,6 +448,58 @@ export default function EditOrchardPage() {
                   className="border-border focus:border-primary"
                 />
               </div>
+
+              {/* Gosat Financial Controls */}
+              {userRoles.includes('gosat') || userRoles.includes('admin') ? (
+                <>
+                  <div className="border-t border-border pt-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+                      <Settings className="h-5 w-5 mr-2 text-primary" />
+                      Gosat Financial Controls
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Seed Value */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Seed Value (Total Project Value)
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.seed_value}
+                          onChange={(e) => handleInputChange('seed_value', e.target.value)}
+                          placeholder="Enter total project value"
+                          className="border-border focus:border-primary"
+                        />
+                      </div>
+
+                      {/* Pocket Price */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Pocket Price (Price per pocket)
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.pocket_price}
+                          onChange={(e) => handleInputChange('pocket_price', e.target.value)}
+                          placeholder="Enter price per pocket"
+                          className="border-border focus:border-primary"
+                        />
+                      </div>
+                    </div>
+                    
+                    {formData.seed_value && formData.pocket_price && (
+                      <div className="mt-3 p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Calculated Total Pockets:</strong> {Math.ceil(Number(formData.seed_value) / Number(formData.pocket_price))}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
 
               {/* Image Upload */}
               <div>
