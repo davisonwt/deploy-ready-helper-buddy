@@ -132,7 +132,8 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
               color: '#9bf6ff', 
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              WebkitTextStroke: '1px rgba(0,0,0,0.5)'
             }}>
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
