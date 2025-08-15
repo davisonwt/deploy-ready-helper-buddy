@@ -555,7 +555,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="inline h-4 w-4 mr-1" />
                     Location
                   </label>
                   <Input
@@ -568,7 +567,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Clock className="inline h-4 w-4 mr-1" />
                     Timeline
                   </label>
                   <Input
