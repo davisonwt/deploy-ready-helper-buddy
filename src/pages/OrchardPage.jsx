@@ -120,12 +120,14 @@ const OrchardPage = () => {
               Back to My Orchards
             </Button>
             
-            <Link to={`/edit-orchard/${orchardId}`}>
-              <Button className="bg-lime-500 hover:bg-lime-400 text-green-800 border-2 border-green-700">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Orchard
-              </Button>
-            </Link>
+            {user && orchard.user_id === user.id && (
+              <Link to={`/edit-orchard/${orchardId}`}>
+                <Button className="bg-lime-500 hover:bg-lime-400 text-green-800 border-2 border-green-700">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Orchard
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
