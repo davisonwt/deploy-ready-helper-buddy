@@ -161,8 +161,8 @@ export default function MyOrchardsPage() {
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
       <div className="relative max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 overflow-hidden">
-        {/* Blue gradient overlay for welcome section */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 via-blue-500/85 to-blue-700/90 backdrop-blur-sm"></div>
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div className="relative z-10 flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
@@ -184,10 +184,10 @@ export default function MyOrchardsPage() {
               }}>
                 My Orchards
               </h1>
-              <p className="text-lg text-blue-100">
+              <p className="text-lg text-gray-200">
                 Manage and track your growing orchards
               </p>
-              <p className="text-sm mt-1 text-blue-100">
+              <p className="text-sm mt-1 text-gray-300">
                 Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function MyOrchardsPage() {
               <SelectTrigger className="border-white/30 focus:border-white bg-white/10 text-white">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-blue-600/30 z-50">
+              <SelectContent className="bg-white border-gray-300 z-50">
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -214,8 +214,8 @@ export default function MyOrchardsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats and Actions */}
         <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 p-6 rounded-2xl overflow-hidden">
-          {/* Green gradient overlay for stats section */}
-          <div className="absolute inset-0 bg-gradient-to-r from-green-600/85 via-green-500/80 to-emerald-600/85 backdrop-blur-sm"></div>
+          {/* Dark overlay for stats section */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
           
           <Card className="relative z-10 bg-white/20 backdrop-blur-sm border-white/30 shadow-xl">
             <CardContent className="p-6">
@@ -269,8 +269,8 @@ export default function MyOrchardsPage() {
 
         {/* Filters */}
         <div className="relative mb-8 p-6 rounded-2xl overflow-hidden">
-          {/* Purple gradient overlay for filters section */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/85 via-purple-500/80 to-indigo-600/85 backdrop-blur-sm"></div>
+          {/* Dark overlay for filters section */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
           <Card className="relative z-10 bg-white/20 backdrop-blur-sm border-white/30">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-4">
@@ -305,8 +305,8 @@ export default function MyOrchardsPage() {
 
         {/* Orchards Grid */}
         <div className="relative p-6 rounded-2xl overflow-hidden">
-          {/* Orange gradient overlay for orchards grid section */}
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/85 via-orange-500/80 to-red-600/85 backdrop-blur-sm"></div>
+          {/* Dark overlay for orchards grid section */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
           
           {userOrchards.length === 0 ? (
             <Card className="relative z-10 bg-white/20 backdrop-blur-sm border-white/30">
