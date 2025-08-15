@@ -182,10 +182,8 @@ export default function BrowseOrchardsPage() {
         backgroundColor: '#f8fafc'
       }}
     >
-      {/* Semi-transparent overlay for better content readability */}
-      <div className="min-h-screen bg-white/70 backdrop-blur-sm">
-        {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+      {/* Welcome Section with Profile Picture */}
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
               {user?.profile_picture ? (
@@ -220,7 +218,7 @@ export default function BrowseOrchardsPage() {
 
         <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-8">
+        <div className="max-w-2xl mx-auto text-center mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-nav-community/30 rounded-full flex items-center justify-center shadow-lg">
               <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
@@ -322,12 +320,12 @@ export default function BrowseOrchardsPage() {
 
         {/* Results */}
         {loading ? (
-          <div className="flex justify-center items-center py-12">
+          <div className="flex justify-center items-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl mx-auto max-w-md">
             <Loader2 className="h-8 w-8 animate-spin text-green-600" />
             <span className="ml-2 text-green-700">Loading orchards...</span>
           </div>
         ) : error ? (
-          <Card className="bg-red-50 border-red-200">
+          <Card className="bg-red-50/90 backdrop-blur-sm border-red-200">
             <CardContent className="p-8 text-center">
               <p className="text-red-600 mb-4">{error}</p>
               <Button onClick={handleRefresh} variant="outline" className="border-red-300 text-red-600">
