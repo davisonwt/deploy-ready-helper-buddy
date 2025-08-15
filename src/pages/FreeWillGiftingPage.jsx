@@ -114,11 +114,16 @@ export default function FreeWillGiftingPage() {
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2" style={{ 
-            color: 'hsl(45, 100%, 70%)', 
-            textShadow: '2px 2px 4px hsl(45, 100%, 50%)' 
+          <h2 className="text-2xl font-bold mb-2 px-4 py-2 rounded-lg bg-black/80 border-2" style={{ 
+            color: 'hsl(45, 100%, 85%)', 
+            textShadow: '2px 2px 4px black',
+            borderColor: 'hsl(45, 100%, 70%)'
           }}>Free-Will Gifting</h2>
-          <p className="text-purple-600 max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto px-4 py-3 rounded-lg bg-black/80 border" style={{ 
+            color: 'white',
+            textShadow: '1px 1px 2px black',
+            borderColor: 'rgba(255, 255, 255, 0.3)'
+          }}>
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
           </p>
         </div>
