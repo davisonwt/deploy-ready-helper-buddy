@@ -181,7 +181,10 @@ export default function YhvhOrchardsPage() {
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="p-4 bg-success/20 rounded-full">
+              <TreePine className="h-12 w-12 text-success" />
+            </div>
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
                 color: '#e9d5ff', 
@@ -193,11 +196,6 @@ export default function YhvhOrchardsPage() {
               <p className="text-sm mt-1" style={{ color: '#663399' }}>
                 Each seed represents a blessing planted by a community member to help others grow.
               </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="p-4 bg-success/20 rounded-full">
-                <TreePine className="h-12 w-12 text-success" />
-              </div>
             </div>
           </div>
           <div className="mt-6 flex space-x-4">
