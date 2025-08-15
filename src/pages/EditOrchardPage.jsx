@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
-import { useRoles } from '../hooks/useRoles'
 import { useFileUpload } from '../hooks/useFileUpload'
+import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,8 +24,8 @@ import { toast } from 'sonner'
 export default function EditOrchardPage() {
   const { orchardId } = useParams()
   const { user } = useAuth()
-  const { isAdminOrGosat, loading: rolesLoading } = useRoles()
   const navigate = useNavigate()
+  const [userRoles, setUserRoles] = useState([])
   const { fetchOrchardById, updateOrchard } = useOrchards()
   const { uploadFile, uploading } = useFileUpload()
   
@@ -83,11 +83,27 @@ export default function EditOrchardPage() {
       navigate('/login')
       return
     }
-    // Wait for roles to load before checking orchard access
-    if (!rolesLoading) {
-      loadOrchard()
+    loadUserRoles()
+    loadOrchard()
+  }, [orchardId, user])
+
+  const loadUserRoles = async () => {
+    try {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+      
+      setUserRoles(data?.map(r => r.role) || [])
+    } catch (error) {
+      console.error('Error loading roles:', error)
+      setUserRoles([])
     }
-  }, [orchardId, user, rolesLoading])
+  }
+
+  const isAdminOrGosat = () => {
+    return userRoles.includes('admin') || userRoles.includes('gosat')
+  }
 
   const loadOrchard = async () => {
     try {
@@ -102,24 +118,11 @@ export default function EditOrchardPage() {
 
       const orchardData = result.data
       
-      // Debug the exact timing issue
-      console.log('=== PERMISSION CHECK ===')
-      console.log('User ID:', user.id)
-      console.log('Orchard owner ID:', orchardData.user_id)
-      console.log('Roles loading:', rolesLoading)
-      console.log('Is admin or gosat:', isAdminOrGosat())
-      console.log('User owns orchard:', orchardData.user_id === user.id)
-      console.log('Should allow edit:', orchardData.user_id === user.id || isAdminOrGosat())
-      console.log('========================')
-      
       // Check if user owns this orchard or is a gosat/admin
       if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
-        console.log('❌ ACCESS DENIED - Not owner and not gosat/admin')
         toast.error('You can only edit your own orchards')
         navigate('/my-orchards')
         return
-      } else {
-        console.log('✅ ACCESS GRANTED')
       }
 
       setOrchard(orchardData)
@@ -296,14 +299,12 @@ export default function EditOrchardPage() {
     }
   }
 
-  if (loading || rolesLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {loading ? 'Loading orchard...' : 'Loading permissions...'}
-          </p>
+          <p className="text-muted-foreground">Loading orchard...</p>
         </div>
       </div>
     )
