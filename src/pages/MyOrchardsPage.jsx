@@ -160,7 +160,7 @@ export default function MyOrchardsPage() {
       {/* Content */}
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl shadow-lg mb-8 bg-slate-900/95 border border-white/20">
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl shadow-lg mb-8 bg-black/90 border border-white/20" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}>
         <div className="flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
