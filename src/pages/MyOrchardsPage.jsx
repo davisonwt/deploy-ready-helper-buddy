@@ -124,6 +124,7 @@ export default function MyOrchardsPage() {
     } catch (error) {
       console.error('Error deleting orchard:', error)
       toast.error('Failed to delete orchard')
+    }
   }
 
   // TESTING FUNCTION - Change orchard status for testing filter buttons
