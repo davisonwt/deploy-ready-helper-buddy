@@ -107,26 +107,24 @@ export default function FreeWillGiftingPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Combined Header Section with Icon, Title and Description */}
-        <div className="max-w-2xl mx-auto text-center mb-8">
+        {/* Combined Header Section with Icon, Title and Description in ONE cloud background */}
+        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6" style={{ 
+          background: 'radial-gradient(ellipse 120% 90% at 50% 50%, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.88))',
+          borderRadius: '60px 40px 50px 45px',
+          boxShadow: '0 10px 25px rgba(255, 255, 255, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.8)'
+        }}>
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-white/20 rounded-full shadow-lg">
+            <div className="p-3 bg-purple-100/60 rounded-full">
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-4 px-6 py-3 relative" style={{ 
+          <h2 className="text-2xl font-bold mb-4" style={{ 
             color: 'hsl(45, 100%, 20%)', 
-            textShadow: '1px 1px 2px white',
-            background: 'radial-gradient(ellipse 120% 80% at 50% 50%, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.85))',
-            borderRadius: '50px 30px 40px 35px',
-            boxShadow: '0 8px 20px rgba(255, 255, 255, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.8)'
+            textShadow: '1px 1px 2px white'
           }}>Free-Will Gifting</h2>
-          <p className="max-w-2xl mx-auto px-6 py-4 relative" style={{ 
+          <p className="text-lg" style={{ 
             color: 'hsl(230, 50%, 20%)',
-            textShadow: '1px 1px 1px rgba(255, 255, 255, 0.8)',
-            background: 'radial-gradient(ellipse 110% 90% at 60% 40%, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.88))',
-            borderRadius: '40px 25px 35px 45px',
-            boxShadow: '0 6px 15px rgba(255, 255, 255, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.9)'
+            textShadow: '1px 1px 1px rgba(255, 255, 255, 0.8)'
           }}>
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
           </p>
