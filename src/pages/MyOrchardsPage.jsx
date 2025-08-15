@@ -212,8 +212,8 @@ export default function MyOrchardsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats and Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -249,17 +249,6 @@ export default function MyOrchardsPage() {
                 </div>
                 <TrendingUp className="h-8 w-8 text-orange-600" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-            <CardContent className="p-6 flex items-center justify-center">
-              <Link to="/create-orchard" className="w-full">
-                <Button className="w-full bg-nav-my hover:bg-nav-my/90 text-orange-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New
-                </Button>
-              </Link>
             </CardContent>
           </Card>
         </div>
