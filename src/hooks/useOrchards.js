@@ -1,11 +1,11 @@
-import * as React from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './useAuth.jsx'
 
 export function useOrchards() {
-  const [orchards, setOrchards] = React.useState([])
-  const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState(null)
+  const [orchards, setOrchards] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const { user } = useAuth()
 
   const fetchOrchards = async (filters = {}) => {

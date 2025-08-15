@@ -14,14 +14,14 @@ import {
   Edit, Trash2
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
-// import { useOrchards } from "../hooks/useOrchards"
+import { useOrchards } from "../hooks/useOrchards"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
-  // const { deleteOrchard } = useOrchards()
+  const { deleteOrchard } = useOrchards()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -79,16 +79,14 @@ export default function BrowseOrchardsPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from('orchards')
-        .delete()
-        .eq('id', orchardId)
-        .eq('user_id', user.id) // Ensure only owner can delete
+      const result = await deleteOrchard(orchardId)
       
-      if (error) throw error
-      
-      toast.success('Orchard deleted successfully')
-      fetchOrchards() // Refresh the list
+      if (result.success) {
+        toast.success('Orchard deleted successfully')
+        fetchOrchards() // Refresh the list
+      } else {
+        toast.error(result.error || 'Failed to delete orchard')
+      }
     } catch (error) {
       console.error('Error deleting orchard:', error)
       toast.error('Failed to delete orchard')
