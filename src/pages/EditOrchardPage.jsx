@@ -24,7 +24,7 @@ import { toast } from 'sonner'
 export default function EditOrchardPage() {
   const { orchardId } = useParams()
   const { user } = useAuth()
-  const { isAdminOrGosat } = useRoles()
+  const { isAdminOrGosat, loading: rolesLoading } = useRoles()
   const navigate = useNavigate()
   const { fetchOrchardById, updateOrchard } = useOrchards()
   const { uploadFile, uploading } = useFileUpload()
@@ -83,8 +83,11 @@ export default function EditOrchardPage() {
       navigate('/login')
       return
     }
-    loadOrchard()
-  }, [orchardId, user])
+    // Wait for roles to load before checking orchard access
+    if (!rolesLoading) {
+      loadOrchard()
+    }
+  }, [orchardId, user, rolesLoading])
 
   const loadOrchard = async () => {
     try {
@@ -98,13 +101,6 @@ export default function EditOrchardPage() {
       }
 
       const orchardData = result.data
-      
-      // Debug logging for role checking
-      console.log('User ID:', user.id)
-      console.log('Orchard owner ID:', orchardData.user_id)
-      console.log('Is admin or gosat:', isAdminOrGosat())
-      console.log('User owns orchard:', orchardData.user_id === user.id)
-      console.log('Should allow edit:', orchardData.user_id === user.id || isAdminOrGosat())
       
       // Check if user owns this orchard or is a gosat/admin
       if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
@@ -287,12 +283,14 @@ export default function EditOrchardPage() {
     }
   }
 
-  if (loading) {
+  if (loading || rolesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading orchard...</p>
+          <p className="text-muted-foreground">
+            {loading ? 'Loading orchard...' : 'Loading permissions...'}
+          </p>
         </div>
       </div>
     )
