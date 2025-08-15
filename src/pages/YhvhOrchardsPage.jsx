@@ -165,9 +165,14 @@ export default function YhvhOrchardsPage() {
         autoPlay 
         loop 
         muted 
+        playsInline
         className="fixed top-0 left-0 w-full h-full object-cover z-0"
+        onError={(e) => console.error('Video failed to load:', e)}
+        onLoadStart={() => console.log('Video loading started')}
+        onCanPlay={() => console.log('Video can play')}
       >
         <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%201a%201280x720.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
       </video>
       
       {/* Overlay for better text readability */}
