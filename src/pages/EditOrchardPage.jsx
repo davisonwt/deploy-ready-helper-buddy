@@ -99,6 +99,13 @@ export default function EditOrchardPage() {
 
       const orchardData = result.data
       
+      // Debug logging for role checking
+      console.log('User ID:', user.id)
+      console.log('Orchard owner ID:', orchardData.user_id)
+      console.log('Is admin or gosat:', isAdminOrGosat())
+      console.log('User owns orchard:', orchardData.user_id === user.id)
+      console.log('Should allow edit:', orchardData.user_id === user.id || isAdminOrGosat())
+      
       // Check if user owns this orchard or is a gosat/admin
       if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
         toast.error('You can only edit your own orchards')
