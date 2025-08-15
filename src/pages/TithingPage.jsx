@@ -41,7 +41,30 @@ export default function TithingPage() {
   const suggestedAmounts = [50, 100, 200, 500, 1000]
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffadad20, #f8fafc, #ffadad10)' }}>
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Video failed to load:', e);
+          e.target.style.display = 'none';
+        }}
+      >
+        <source
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/let%20it%20rain%201a%20mp4.mp4"
+          type="video/mp4"
+        />
+      </video>
+      
+      {/* Solid dark overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
       <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
         <div className="flex items-center space-x-6">
@@ -251,6 +274,7 @@ export default function TithingPage() {
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
