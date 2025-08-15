@@ -58,10 +58,6 @@ export default function TithingPage() {
           src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/tithing%201280x720.mp4"
           type="video/mp4"
         />
-        <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/let%20it%20rain%201a%20mp4.mp4"
-          type="video/mp4"
-        />
       </video>
       
       {/* Solid dark overlay for better readability */}
