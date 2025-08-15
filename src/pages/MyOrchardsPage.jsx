@@ -135,9 +135,32 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffd6a520, #f8fafc, #ffd6a510)' }}>
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Video failed to load:', e);
+          e.target.style.display = 'none';
+        }}
+      >
+        <source
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/my%20orchards.mp4"
+          type="video/mp4"
+        />
+      </video>
+      
+      {/* Solid dark overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 bg-white/90">
         <div className="flex items-center justify-between space-x-6">
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-my shadow-lg">
@@ -155,16 +178,15 @@ export default function MyOrchardsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-                color: 'hsl(33, 100%, 82%)', 
-                textShadow: '2px 2px 4px hsl(33, 100%, 62%)',
-                backgroundColor: '#C8B6A6'
+                color: 'hsl(30, 100%, 50%)', 
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}>
                 My Orchards
               </h1>
-              <p className="text-lg" style={{ color: '#8b4513' }}>
+              <p className="text-lg" style={{ color: 'hsl(30, 100%, 50%)' }}>
                 Manage and track your growing orchards
               </p>
-              <p className="text-sm mt-1" style={{ color: '#8b4513' }}>
+              <p className="text-sm mt-1" style={{ color: 'hsl(30, 100%, 50%)' }}>
                 Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
               </p>
             </div>
@@ -191,7 +213,7 @@ export default function MyOrchardsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats and Actions */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-nav-my/20 backdrop-blur-sm border-nav-my/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>

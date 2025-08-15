@@ -284,24 +284,53 @@ export default function SeedSubmissionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-s2g-green/20 via-background to-s2g-green/10">
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Video failed to load:', e);
+          e.target.style.display = 'none';
+        }}
+      >
+        <source
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seed%20submission.mp4"
+          type="video/mp4"
+        />
+      </video>
+      
+      {/* Solid dark overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+      
+      {/* Content */}
+      <div className="relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-success/20 rounded-full">
+        {/* Header with cloud background */}
+        <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-green-100/80 rounded-full mr-4">
               <Sprout className="h-12 w-12 text-success" />
             </div>
+            <h1 className="text-3xl font-bold" style={{ 
+              color: 'hsl(120, 100%, 30%)', 
+              textShadow: '2px 2px 4px rgba(0,0,0,0.2)' 
+            }}>Gift a Seed</h1>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Gift a Seed</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="max-w-2xl mx-auto" style={{ color: 'hsl(120, 100%, 30%)' }}>
             Share your products, services, or skills with the 364yhvh community. Your seed will be showcased in our community orchard.
           </p>
         </div>
 
-        <Card className="bg-card/90 backdrop-blur-sm border-border shadow-lg">
+        <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center text-foreground">
+            <CardTitle className="flex items-center" style={{ 
+              color: 'hsl(120, 100%, 30%)', 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+            }}>
               <Sprout className="h-5 w-5 mr-2" />
               Seed Information
             </CardTitle>
@@ -544,6 +573,7 @@ export default function SeedSubmissionPage() {
             </form>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

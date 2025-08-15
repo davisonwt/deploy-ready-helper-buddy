@@ -89,21 +89,32 @@ export default function DashboardPage() {
   }
 
   return (
-    <div 
-      className="min-h-screen relative"
-      style={{
-        backgroundImage: "url('/dashboard.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Removed background overlay for better transparency visibility */}
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={(e) => {
+          console.error('Video failed to load:', e);
+          e.target.style.display = 'none';
+        }}
+      >
+        <source
+          src="/dashboard.jpg"
+          type="video/mp4"
+        />
+      </video>
+      
+      {/* Solid dark overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
       
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4" style={{ backgroundColor: '#C8B6A6' }}>
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
             {user?.profile_picture ? (
@@ -120,16 +131,15 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(187, 85%, 65%)', 
-              textShadow: '2px 2px 4px hsl(187, 85%, 45%)',
-              backgroundColor: '#C8B6A6'
+              color: 'hsl(220, 100%, 50%)', 
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               Welcome back, {user?.first_name || 'Friend'}!
             </h1>
-            <p className="text-lg" style={{ color: '#1c2a39' }}>
+            <p className="text-lg" style={{ color: 'hsl(220, 100%, 50%)' }}>
               Ready to grow your orchard today?
             </p>
-            <p className="text-sm mt-1" style={{ color: '#1c2a39' }}>
+            <p className="text-sm mt-1" style={{ color: 'hsl(220, 100%, 50%)' }}>
               Preferred Currency: {user?.preferred_currency || 'USD'}
             </p>
           </div>
@@ -193,7 +203,10 @@ export default function DashboardPage() {
             <Card className="bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center">
+                <span className="flex items-center" style={{ 
+                  color: 'hsl(120, 100%, 40%)', 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                }}>
                   <Sprout className="h-5 w-5 mr-2 text-green-600" />
                   My Orchards
                 </span>
@@ -261,7 +274,10 @@ export default function DashboardPage() {
             <Card className="bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center">
+                <span className="flex items-center" style={{ 
+                  color: 'hsl(0, 100%, 60%)', 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                }}>
                   <Heart className="h-5 w-5 mr-2 text-red-500" />
                   Recent Bestowals
                 </span>
@@ -322,7 +338,10 @@ export default function DashboardPage() {
           {/* Quick Actions */}
           <Card className="mt-8 bg-white/80 border-white/40 shadow-xl">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle style={{ 
+              color: 'hsl(280, 100%, 60%)', 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+            }}>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -416,6 +435,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         </div>
+      </div>
       </div>
     </div>
   )
