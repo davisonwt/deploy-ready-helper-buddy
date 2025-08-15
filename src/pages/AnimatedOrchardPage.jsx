@@ -234,35 +234,6 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
                 interactive={true}
               />
               
-              {/* Growth Stages Row - UNDER the orchard grid */}
-              <div className="flex gap-2 mt-6 mb-6">
-                <div className="bg-emerald-50 p-4 rounded-xl flex-1 text-center">
-                  <div className="text-2xl font-bold text-emerald-800">{takenPockets.filter(p => p.stage === 'sprout').length}</div>
-                  <div className="text-sm text-emerald-600">Sprout 🌱<br/>(0-7 days)</div>
-                </div>
-                <div className="bg-lime-50 p-4 rounded-xl flex-1 text-center">
-                  <div className="text-2xl font-bold text-lime-800">{takenPockets.filter(p => p.stage === 'young').length}</div>
-                  <div className="text-sm text-lime-600">Young 🌿<br/>(8-21 days)</div>
-                </div>
-                <div className="bg-teal-50 p-4 rounded-xl flex-1 text-center">
-                  <div className="text-2xl font-bold text-teal-800">{takenPockets.filter(p => p.stage === 'growing').length}</div>
-                  <div className="text-sm text-teal-600">Growing 🌳<br/>(22-42 days)</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
-                  <div className="text-2xl font-bold text-green-800">{takenPockets.filter(p => p.stage === 'mature').length}</div>
-                  <div className="text-sm text-green-600">Mature 🌲<br/>(43+ days)</div>
-                </div>
-              </div>
-                totalPockets={orchard.total_pockets || 195}
-                pocketPrice={orchard.pocket_price || 150}
-                selectedPockets={selectedPockets}
-                onPocketClick={handlePocketClick}
-                takenPockets={takenPockets}
-                pocketsPerRow={10}
-                showNumbers={true}
-                interactive={true}
-              />
-              
               <OrchardActions
                 selectedPockets={selectedPockets}
                 orchard={orchard}
