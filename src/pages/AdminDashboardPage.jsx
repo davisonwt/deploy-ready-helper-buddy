@@ -139,14 +139,16 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-primary/20 rounded-full">
-              <Settings className="h-12 w-12 text-primary" />
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90">
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-4 bg-primary/20 rounded-full">
+                <Settings className="h-12 w-12 text-primary" />
+              </div>
             </div>
+            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage user roles and permissions</p>
           </div>
-          <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage user roles and permissions</p>
         </div>
 
         {/* Search and Stats */}
