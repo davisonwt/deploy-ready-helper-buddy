@@ -131,7 +131,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(220, 100%, 50%)', 
+              color: '#9bf6ff', 
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               Welcome back, {user?.first_name || 'Friend'}!
