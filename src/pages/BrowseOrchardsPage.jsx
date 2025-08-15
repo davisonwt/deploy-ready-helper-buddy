@@ -214,8 +214,7 @@ export default function BrowseOrchardsPage() {
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
                 color: 'hsl(137, 80%, 65%)', 
-                textShadow: '2px 2px 4px hsl(137, 80%, 45%)',
-                backgroundColor: '#C8B6A6'
+                textShadow: '2px 2px 4px hsl(137, 80%, 45%)'
               }}>
                 Community Orchards
               </h1>

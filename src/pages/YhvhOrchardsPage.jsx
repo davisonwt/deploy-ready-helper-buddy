@@ -185,8 +185,7 @@ export default function YhvhOrchardsPage() {
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
                 color: '#e9d5ff', 
-                textShadow: '2px 2px 4px #7c3aed',
-                backgroundColor: '#C8B6A6'
+                textShadow: '2px 2px 4px #7c3aed'
               }}>364yhvh Community Orchards</h1>
               <p className="text-lg" style={{ color: '#663399' }}>
                 Welcome to our community seed garden where members share their gifts, talents, and offerings.

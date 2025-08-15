@@ -91,8 +91,7 @@ export default function FreeWillGiftingPage() {
           <div>
             <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
               color: 'hsl(280, 100%, 80%)', 
-              textShadow: '2px 2px 4px hsl(280, 100%, 60%)',
-              backgroundColor: '#C8B6A6'
+              textShadow: '2px 2px 4px hsl(280, 100%, 60%)'
             }}>
               Free-Will Gifting
             </h1>

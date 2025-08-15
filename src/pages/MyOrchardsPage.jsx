@@ -200,8 +200,7 @@ export default function MyOrchardsPage() {
             <div>
               <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
                 color: 'hsl(30, 100%, 50%)', 
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                backgroundColor: '#C8B6A6'
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}>
                 My Orchards
               </h1>

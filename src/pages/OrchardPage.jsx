@@ -109,7 +109,7 @@ const OrchardPage = () => {
       {/* Content */}
       <div className="relative z-10 min-h-screen">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-lg mb-8 mt-4" style={{ backgroundColor: '#C8B6A6' }}>
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
           <div className="flex items-center justify-between">
             <Button 
               onClick={() => navigate('/my-orchards')}
