@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useCurrency } from "../hooks/useCurrency"
 import { supabase } from "@/integrations/supabase/client"
-import { loadOrchard } from "../utils/orchardLoader"
+import { loadOrchard, clearOrchardCache } from "../utils/orchardLoader"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { AnimatedOrchardGrid } from "../components/AnimatedOrchardGrid"
 import { OrchardHeader } from "../components/OrchardHeader"
@@ -35,9 +35,15 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
       return
     }
     
-    const fetchOrchard = async () => {
+    const fetchOrchard = async (forceRefresh = false) => {
       try {
         setLoading(true)
+        
+        // Clear cache if forcing refresh
+        if (forceRefresh) {
+          clearOrchardCache(id)
+        }
+        
         const orchardData = await loadOrchard(id)
         
         if (orchardData && !orchardData._isFallback) {
@@ -71,6 +77,20 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
     }
     
     fetchOrchard()
+    
+    // Listen for storage events to refresh when data is updated elsewhere
+    const handleStorageChange = (e) => {
+      if (e.key === `orchard_updated_${id}`) {
+        console.log('🔄 Orchard updated, refreshing data...')
+        fetchOrchard(true)
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
   }, [id, propOrchard, toast, navigate])
   
   // Helper function for growth stages

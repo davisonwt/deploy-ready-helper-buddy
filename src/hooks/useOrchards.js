@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './useAuth.jsx'
+import { clearOrchardCache } from '../utils/orchardLoader'
 
 export function useOrchards() {
   const [orchards, setOrchards] = useState([])
@@ -124,6 +125,9 @@ export function useOrchards() {
         .single()
 
       if (updateError) throw updateError
+
+      // Clear cache for this orchard to force fresh data
+      clearOrchardCache(id)
 
       return { success: true, data }
     } catch (err) {

@@ -283,6 +283,11 @@ export default function EditOrchardPage() {
 
       if (result.success) {
         toast.success('Orchard updated successfully!')
+        
+        // Trigger refresh in other tabs/components
+        localStorage.setItem(`orchard_updated_${orchardId}`, Date.now().toString())
+        localStorage.removeItem(`orchard_updated_${orchardId}`)
+        
         navigate('/my-orchards')
       } else {
         toast.error(result.error || 'Failed to update orchard')
