@@ -102,11 +102,24 @@ export default function EditOrchardPage() {
 
       const orchardData = result.data
       
+      // Debug the exact timing issue
+      console.log('=== PERMISSION CHECK ===')
+      console.log('User ID:', user.id)
+      console.log('Orchard owner ID:', orchardData.user_id)
+      console.log('Roles loading:', rolesLoading)
+      console.log('Is admin or gosat:', isAdminOrGosat())
+      console.log('User owns orchard:', orchardData.user_id === user.id)
+      console.log('Should allow edit:', orchardData.user_id === user.id || isAdminOrGosat())
+      console.log('========================')
+      
       // Check if user owns this orchard or is a gosat/admin
       if (orchardData.user_id !== user.id && !isAdminOrGosat()) {
+        console.log('❌ ACCESS DENIED - Not owner and not gosat/admin')
         toast.error('You can only edit your own orchards')
         navigate('/my-orchards')
         return
+      } else {
+        console.log('✅ ACCESS GRANTED')
       }
 
       setOrchard(orchardData)
