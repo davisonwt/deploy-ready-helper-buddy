@@ -213,7 +213,7 @@ export default function MyOrchardsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats and Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" style={{ backgroundColor: '#C8B6A6', padding: '24px', borderRadius: '16px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -265,7 +265,7 @@ export default function MyOrchardsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-8" style={{ backgroundColor: '#C8B6A6' }}>
+        <Card className="mb-8 bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
@@ -297,7 +297,7 @@ export default function MyOrchardsPage() {
         </Card>
 
         {/* Orchards Grid */}
-        <div style={{ backgroundColor: '#C8B6A6', padding: '24px', borderRadius: '16px' }}>
+        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6">
           {userOrchards.length === 0 ? (
             <Card className="bg-nav-my/10 backdrop-blur-sm border-nav-my/30">
               <CardContent className="p-12 text-center">
