@@ -113,17 +113,17 @@ export default function FreeWillGiftingPage() {
           borderRadius: '60px 40px 50px 45px',
           boxShadow: '0 10px 25px rgba(255, 255, 255, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.8)'
         }}>
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-purple-100/60 rounded-full">
+          <div className="flex items-center justify-center mb-4">
+            <div className="p-3 bg-purple-100/60 rounded-full mr-4">
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
+            <h2 className="text-2xl font-bold" style={{ 
+              color: 'hsl(45, 100%, 20%)', 
+              textShadow: '1px 1px 2px white'
+            }}>Free-Will Gifting</h2>
           </div>
-          <h2 className="text-2xl font-bold mb-4" style={{ 
-            color: 'hsl(45, 100%, 20%)', 
-            textShadow: '1px 1px 2px white'
-          }}>Free-Will Gifting</h2>
           <p className="text-lg" style={{ 
-            color: 'hsl(230, 50%, 20%)',
+            color: 'hsl(45, 100%, 20%)',
             textShadow: '1px 1px 1px rgba(255, 255, 255, 0.8)'
           }}>
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
