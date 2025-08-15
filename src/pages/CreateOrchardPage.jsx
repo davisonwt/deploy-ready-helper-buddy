@@ -509,7 +509,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-rose-400 mb-2">
                     Orchard Title *
                   </label>
                   <Input
@@ -522,7 +522,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-rose-400 mb-2">
                     Category *
                   </label>
                   <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
@@ -539,7 +539,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-rose-400 mb-2">
                   Description *
                 </label>
                 <Textarea
@@ -554,7 +554,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-rose-400 mb-2">
                     Location
                   </label>
                   <Input
@@ -566,7 +566,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-rose-400 mb-2">
                     Timeline
                   </label>
                   <Input
@@ -591,7 +591,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
+                <label className="block text-sm font-medium text-sky-400 mb-4">
                   Choose your orchard type:
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -634,7 +634,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                 {/* Number of Pockets for Full Value Orchard */}
                 {formData.orchard_type === 'full_value' && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-sky-400 mb-2">
                       Number of Pockets
                     </label>
                     <Input
@@ -666,7 +666,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                   <label className="block text-sm font-medium text-emerald-400 mb-2">
                      <DollarSign className="inline h-4 w-4 mr-1" />
                      Seed Value (R) *
                    </label>
@@ -689,7 +689,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                  </div>
                  {formData.orchard_type === 'standard' && (
                    <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-emerald-400 mb-2">
                        Bestowal Pocket Value (R) *
                      </label>
                      <Input
@@ -808,7 +808,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-purple-400 mb-2">
                   Why is this needed? *
                 </label>
                 <Textarea
@@ -822,7 +822,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-purple-400 mb-2">
                   Community Impact *
                 </label>
                 <Textarea
@@ -836,7 +836,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-purple-400 mb-2">
                   Features (comma-separated)
                 </label>
                 <Input
@@ -864,7 +864,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             <CardContent className="space-y-6">
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-orange-400 mb-2">
                   <Image className="inline h-4 w-4 mr-1" />
                   Images (1-3 photos)
                 </label>
@@ -915,7 +915,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               
               {/* Video Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-orange-400 mb-2">
                   <Video className="inline h-4 w-4 mr-1" />
                   Video (Optional)
                 </label>
