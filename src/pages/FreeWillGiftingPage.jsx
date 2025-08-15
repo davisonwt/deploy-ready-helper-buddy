@@ -67,8 +67,8 @@ export default function FreeWillGiftingPage() {
         />
       </video>
       
-      {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-black/30"></div>
+      {/* Enhanced dark overlay with blur for better readability */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       
       {/* Content */}
       <div className="relative z-10">
@@ -90,8 +90,8 @@ export default function FreeWillGiftingPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(230, 81%, 72%)', 
-              textShadow: '2px 2px 4px hsl(230, 81%, 52%)',
+              color: 'hsl(280, 100%, 80%)', 
+              textShadow: '2px 2px 4px hsl(280, 100%, 60%)',
               backgroundColor: '#C8B6A6'
             }}>
               Free-Will Gifting
@@ -114,7 +114,10 @@ export default function FreeWillGiftingPage() {
               <Gift className="h-12 w-12 text-purple-700" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-purple-600 mb-2">Free-Will Gifting</h2>
+          <h2 className="text-2xl font-bold mb-2" style={{ 
+            color: 'hsl(45, 100%, 70%)', 
+            textShadow: '2px 2px 4px hsl(45, 100%, 50%)' 
+          }}>Free-Will Gifting</h2>
           <p className="text-purple-600 max-w-2xl mx-auto">
             "Give freely as you have received freely." Share your blessings with others in the community through spontaneous acts of generosity.
           </p>
@@ -124,7 +127,10 @@ export default function FreeWillGiftingPage() {
           {/* Gifting Form */}
           <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
             <CardHeader>
-              <CardTitle className="flex items-center text-purple-700">
+              <CardTitle className="flex items-center" style={{ 
+                color: 'hsl(160, 100%, 70%)', 
+                textShadow: '1px 1px 2px hsl(160, 100%, 50%)' 
+              }}>
                 <HandHeart className="h-5 w-5 mr-2" />
                 Send a Gift
               </CardTitle>
@@ -251,7 +257,10 @@ export default function FreeWillGiftingPage() {
           <div className="space-y-6">
             <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
               <CardHeader>
-                <CardTitle className="flex items-center text-purple-700">
+                <CardTitle className="flex items-center" style={{ 
+                  color: 'hsl(320, 100%, 75%)', 
+                  textShadow: '1px 1px 2px hsl(320, 100%, 55%)' 
+                }}>
                   <Sparkles className="h-5 w-5 mr-2" />
                   Recent Community Gifts
                 </CardTitle>
@@ -280,7 +289,10 @@ export default function FreeWillGiftingPage() {
 
             <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
               <CardHeader>
-                <CardTitle className="flex items-center text-purple-700">
+                <CardTitle className="flex items-center" style={{ 
+                  color: 'hsl(200, 100%, 75%)', 
+                  textShadow: '1px 1px 2px hsl(200, 100%, 55%)' 
+                }}>
                   <Users className="h-5 w-5 mr-2" />
                   Gifting Guidelines
                 </CardTitle>
