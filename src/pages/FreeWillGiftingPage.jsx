@@ -67,8 +67,8 @@ export default function FreeWillGiftingPage() {
         />
       </video>
       
-      {/* Enhanced dark overlay with blur for better readability */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      {/* Solid dark overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
       
       {/* Content */}
       <div className="relative z-10">
@@ -125,7 +125,7 @@ export default function FreeWillGiftingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Gifting Form */}
-          <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
+          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center" style={{ 
                 color: 'hsl(160, 100%, 70%)', 
@@ -255,7 +255,7 @@ export default function FreeWillGiftingPage() {
 
           {/* Recent Gifts & Community */}
           <div className="space-y-6">
-            <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center" style={{ 
                   color: 'hsl(320, 100%, 75%)', 
@@ -287,7 +287,7 @@ export default function FreeWillGiftingPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-nav-gifting/10 backdrop-blur-sm border-nav-gifting/30">
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardHeader>
                 <CardTitle className="flex items-center" style={{ 
                   color: 'hsl(200, 100%, 75%)', 
