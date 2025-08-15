@@ -691,32 +691,37 @@ export default function AnimatedOrchardPage({ orchard: propOrchard, source }) {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {(orchard.images || []).slice(0, 3).map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`${orchard.title} - Image ${index + 1}`}
-                          className="w-full h-48 object-cover rounded-lg border border-gray-200 shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div 
-                          className="w-full h-48 bg-gradient-to-br from-green-100 to-green-200 rounded-lg border border-gray-200 shadow-md flex items-center justify-center text-green-600"
-                          style={{ display: 'none' }}
-                        >
-                          <div className="text-center">
-                            <Sprout className="h-12 w-12 mx-auto mb-2" />
-                            <p className="text-sm">Image not available</p>
+                    {(orchard.images || []).slice(0, 3).map((image, index) => {
+                      console.log(`Rendering image ${index + 1}:`, image);
+                      return (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`${orchard.title} - Image ${index + 1}`}
+                            className="w-full h-48 object-cover rounded-lg border border-gray-200 shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+                            onLoad={() => console.log(`Image ${index + 1} loaded successfully`)}
+                            onError={(e) => {
+                              console.log(`Image ${index + 1} failed to load:`, image);
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                          <div 
+                            className="w-full h-48 bg-gradient-to-br from-green-100 to-green-200 rounded-lg border border-gray-200 shadow-md flex items-center justify-center text-green-600"
+                            style={{ display: 'none' }}
+                          >
+                            <div className="text-center">
+                              <Sprout className="h-12 w-12 mx-auto mb-2" />
+                              <p className="text-sm">Image not available</p>
+                              <p className="text-xs text-gray-500 mt-1">URL: {image?.slice(0, 50)}...</p>
+                            </div>
+                          </div>
+                          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                            Image {index + 1}
                           </div>
                         </div>
-                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg"></div>
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                          Image {index + 1}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {(orchard.images || []).length > 3 && (
                     <p className="text-center text-sm text-gray-600 mt-4">
