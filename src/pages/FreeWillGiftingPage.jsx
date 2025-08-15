@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Gift, 
   Heart, 
@@ -17,9 +18,12 @@ import {
   Users,
   HandHeart,
   Sprout,
-  Droplets
+  Droplets,
+  Upload
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/integrations/supabase/client'
+import { useToast } from '@/hooks/use-toast'
 
 export default function FreeWillGiftingPage() {
   const { user } = useAuth()
@@ -30,21 +34,74 @@ export default function FreeWillGiftingPage() {
   const [message, setMessage] = useState('')
   const [frequency, setFrequency] = useState('one-time')
   const [loading, setLoading] = useState(false)
+  
+  // Seed form states
+  const [seedTitle, setSeedTitle] = useState('')
+  const [seedDescription, setSeedDescription] = useState('')
+  const [seedCategory, setSeedCategory] = useState('')
+  const { toast } = useToast()
+
+  const categories = [
+    'Technology', 'Education', 'Healthcare', 'Agriculture', 'Arts & Culture',
+    'Community Service', 'Environment', 'Business', 'Food & Nutrition', 'Other'
+  ]
 
   const handleGiftTypeChange = (value) => {
     setGiftType(value)
-    if (value === 'seed') {
-      navigate('/seed-submission')
-    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (giftType !== 'rain') return
-    
     setLoading(true)
-    // Handle free will gifting logic here
-    setTimeout(() => setLoading(false), 1000)
+    
+    try {
+      if (giftType === 'rain') {
+        // Handle free will gifting logic here
+        toast({
+          title: "Gift Sent!",
+          description: "Your free-will gift has been sent successfully.",
+        })
+      } else if (giftType === 'seed') {
+        // Handle seed submission
+        if (!seedTitle || !seedDescription || !seedCategory) {
+          toast({
+            title: "Missing Information",
+            description: "Please fill in all required fields.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('seeds')
+          .insert({
+            gifter_id: user.id,
+            title: seedTitle,
+            description: seedDescription,
+            category: seedCategory
+          })
+
+        if (error) throw error
+
+        toast({
+          title: "Seed Submitted!",
+          description: "Your seed has been submitted for gosat review.",
+        })
+        
+        // Reset form
+        setSeedTitle('')
+        setSeedDescription('')
+        setSeedCategory('')
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -202,6 +259,56 @@ export default function FreeWillGiftingPage() {
                 </>
               )}
 
+              {giftType === 'seed' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Seed Title *
+                    </label>
+                    <Input
+                      type="text"
+                      value={seedTitle}
+                      onChange={(e) => setSeedTitle(e.target.value)}
+                      placeholder="What are you offering?"
+                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Category *
+                    </label>
+                    <Select value={seedCategory} onValueChange={setSeedCategory}>
+                      <SelectTrigger className="border-nav-gifting/30 focus:border-nav-gifting">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-purple-700 mb-2">
+                      Description *
+                    </label>
+                    <Textarea
+                      value={seedDescription}
+                      onChange={(e) => setSeedDescription(e.target.value)}
+                      placeholder="Describe your offering in detail..."
+                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                      rows={4}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
                {giftType === 'rain' && (
                  <div>
                    <label className="block text-sm font-medium text-purple-700 mb-2">
@@ -219,18 +326,18 @@ export default function FreeWillGiftingPage() {
 
                 <Button
                   type="submit"
-                  disabled={loading || !amount || !recipient || giftType !== 'rain'}
+                  disabled={loading || (giftType === 'rain' && (!amount || !recipient)) || (giftType === 'seed' && (!seedTitle || !seedDescription || !seedCategory))}
                   className="w-full bg-nav-gifting hover:bg-nav-gifting/90 text-purple-700"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-700 border-t-transparent mr-2" />
-                      Sending Gift...
+                      {giftType === 'seed' ? 'Submitting Seed...' : 'Sending Gift...'}
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Gift
+                      {giftType === 'seed' ? <Sprout className="h-4 w-4 mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                      {giftType === 'seed' ? 'Submit Seed' : 'Send Gift'}
                     </>
                   )}
                 </Button>
