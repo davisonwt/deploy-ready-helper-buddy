@@ -89,7 +89,7 @@ export default function Layout({ children }) {
                   "chatapp": { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
                   "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
                   "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' },
-                  "gosat's dashboard": { bg: '#f0e68c', border: '#f0e68c', text: '#7a6c00' }
+                  "gosat's dashboard": { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' }
                 }
                 
                 const colors = buttonColors[item.name] || { bg: '#f1f5f9', border: '#e2e8f0', text: '#64748b' }
