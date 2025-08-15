@@ -22,7 +22,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useChat } from '@/hooks/useChat';
+import { useChat } from '@/hooks/useChat.jsx';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import CreateRoomModal from '@/components/chat/CreateRoomModal';
