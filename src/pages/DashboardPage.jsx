@@ -103,7 +103,7 @@ export default function DashboardPage() {
         }}
       >
         <source
-          src="/dashboard.jpg"
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/my%20orchards%201280x720%20mp4.mp4"
           type="video/mp4"
         />
       </video>
