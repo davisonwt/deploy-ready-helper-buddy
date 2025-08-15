@@ -71,10 +71,9 @@ export default function MyOrchardsPage() {
   }, [user])
 
   useEffect(() => {
-    // Show all orchards for now (temporary fix)
+    // Filter to show only user's own orchards
     let filtered = orchards.filter(orchard => {
-      // Show all orchards regardless of user for debugging
-      return true
+      return orchard.user_id === user?.id
     })
     
     if (searchTerm) {
