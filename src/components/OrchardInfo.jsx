@@ -44,40 +44,40 @@ export function OrchardInfo({ orchard, takenPockets = [] }) {
       </CardHeader>
       <CardContent>
         {/* First Row: Pocket Statistics */}
-        <div className="grid grid-cols-4 gap-4 text-center mb-4">
-          <div className="bg-green-50 p-4 rounded-xl">
+        <div className="flex gap-2 mb-4">
+          <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-green-800">{orchard.total_pockets || 0}</div>
-            <div className="text-sm text-green-600">Total Pockets</div>
+            <div className="text-sm text-green-600">Total</div>
           </div>
-          <div className="bg-amber-50 p-4 rounded-xl">
+          <div className="bg-amber-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-amber-800">{orchard.filled_pockets || 0}</div>
             <div className="text-sm text-amber-600">Growing</div>
           </div>
-          <div className="bg-blue-50 p-4 rounded-xl">
+          <div className="bg-blue-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-blue-800">{(orchard.total_pockets || 0) - (orchard.filled_pockets || 0)}</div>
             <div className="text-sm text-blue-600">Available</div>
           </div>
-          <div className="bg-purple-50 p-4 rounded-xl">
+          <div className="bg-purple-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-purple-800">{Math.round(orchard.completion_rate || 0)}%</div>
             <div className="text-sm text-purple-600">Complete</div>
           </div>
         </div>
 
         {/* Second Row: Growth Stages */}
-        <div className="grid grid-cols-4 gap-4 text-center mb-6">
-          <div className="bg-emerald-50 p-4 rounded-xl">
+        <div className="flex gap-2 mb-6">
+          <div className="bg-emerald-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-emerald-800">{growthStageCounts.sprout}</div>
             <div className="text-sm text-emerald-600">Sprout 🌱</div>
           </div>
-          <div className="bg-lime-50 p-4 rounded-xl">
+          <div className="bg-lime-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-lime-800">{growthStageCounts.young}</div>
             <div className="text-sm text-lime-600">Young 🌿</div>
           </div>
-          <div className="bg-teal-50 p-4 rounded-xl">
+          <div className="bg-teal-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-teal-800">{growthStageCounts.growing}</div>
             <div className="text-sm text-teal-600">Growing 🌳</div>
           </div>
-          <div className="bg-green-50 p-4 rounded-xl">
+          <div className="bg-green-50 p-4 rounded-xl flex-1 text-center">
             <div className="text-2xl font-bold text-green-800">{growthStageCounts.mature}</div>
             <div className="text-sm text-green-600">Mature 🌲</div>
           </div>
