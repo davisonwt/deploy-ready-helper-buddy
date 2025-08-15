@@ -41,10 +41,14 @@ export default function YhvhOrchardsPage() {
   const [loading, setLoading] = useState(true)
   
   // Debug logging
+  console.log('=== DEBUG INFO ===')
   console.log('User:', user?.id)
+  console.log('User email:', user?.email)
   console.log('User roles:', userRoles)
   console.log('Is Admin or Gosat:', isAdminOrGosat())
   console.log('Roles loading:', rolesLoading)
+  console.log('Seeds visible:', isAdminOrGosat())
+  console.log('===================')
   const [selectedSeed, setSelectedSeed] = useState(null)
   const [convertDialogOpen, setConvertDialogOpen] = useState(false)
   const [pocketPrice, setPocketPrice] = useState(150)
