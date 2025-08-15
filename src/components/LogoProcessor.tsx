@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { removeBackground, loadImageFromUrl } from '@/utils/backgroundRemoval';
 import { Button } from '@/components/ui/button';
 
