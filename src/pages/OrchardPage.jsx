@@ -14,35 +14,27 @@ import {
   Loader2,
   AlertTriangle
 } from "lucide-react";
-import { fetchOrchard, incrementOrchardViews } from '../api/orchards';
 import { useAuth } from '../hooks/useAuth';
+import { useOrchards } from '../hooks/useOrchards';
 import { formatCurrency } from '../utils/formatters';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { fetchOrchardById, loading, error } = useOrchards();
   const [orchard, setOrchard] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadOrchard = async () => {
-      try {
-        const data = await fetchOrchard(orchardId);
-        setOrchard(data);
-        
-        // Increment view count
-        incrementOrchardViews(orchardId);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      const result = await fetchOrchardById(orchardId);
+      if (result.success) {
+        setOrchard(result.data);
       }
     };
 
     loadOrchard();
-  }, [orchardId]);
+  }, [orchardId, fetchOrchardById]);
 
   const getCompletionPercentage = (orchard) => {
     if (!orchard.total_pockets) return 0;
