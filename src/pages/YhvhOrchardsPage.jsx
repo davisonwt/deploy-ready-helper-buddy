@@ -3,28 +3,11 @@ import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
-  Sprout, 
-  Eye,
-  Calendar,
-  User,
-  Play,
-  Image as ImageIcon,
-  Video,
   TreePine,
   Heart,
-  Edit,
-  Trash2,
-  ArrowRight,
   Settings,
-  DollarSign,
-  Plus,
-  CheckCircle,
-  Clock,
-  AlertCircle
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
@@ -35,55 +18,14 @@ import { useRoles } from '../hooks/useRoles'
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
   const { deleteOrchard } = useOrchards()
-  const { isAdminOrGosat, userRoles, loading: rolesLoading } = useRoles()
-  const [seeds, setSeeds] = useState([])
+  const { isAdminOrGosat } = useRoles()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
-  
-  // Debug logging
-  console.log('=== DEBUG INFO ===')
-  console.log('User:', user?.id)
-  console.log('User email:', user?.email)
-  console.log('User roles:', userRoles)
-  console.log('Is Admin or Gosat:', isAdminOrGosat())
-  console.log('Roles loading:', rolesLoading)
-  console.log('Seeds visible:', isAdminOrGosat())
-  console.log('===================')
-  const [selectedSeed, setSelectedSeed] = useState(null)
-  const [convertDialogOpen, setConvertDialogOpen] = useState(false)
-  const [pocketPrice, setPocketPrice] = useState(150)
-  const [totalPockets, setTotalPockets] = useState(10)
-  const [converting, setConverting] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchSeeds()
     fetchOrchards()
   }, [])
-
-  const fetchSeeds = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('seeds')
-        .select(`
-          *,
-          profiles (
-            display_name,
-            first_name,
-            last_name
-          )
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setSeeds(data || [])
-    } catch (error) {
-      console.error('Error fetching seeds:', error)
-      toast.error('Failed to load seeds')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const fetchOrchards = async () => {
     try {
@@ -106,6 +48,8 @@ export default function YhvhOrchardsPage() {
     } catch (error) {
       console.error('Error fetching orchards:', error)
       toast.error('Failed to load orchards')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -127,66 +71,6 @@ export default function YhvhOrchardsPage() {
       console.error('Error deleting orchard:', error)
       toast.error('Failed to delete orchard')
     }
-  }
-
-  // Function to convert seed to orchard
-  const convertSeedToOrchard = async () => {
-    if (!selectedSeed) return
-
-    setConverting(true)
-    try {
-      const { data: newOrchard, error } = await supabase
-        .from('orchards')
-        .insert({
-          user_id: selectedSeed.gifter_id,
-          title: selectedSeed.title,
-          description: selectedSeed.description,
-          category: selectedSeed.category,
-          images: selectedSeed.images || [],
-          video_url: selectedSeed.video_url,
-          seed_value: selectedSeed.additional_details?.value || pocketPrice,
-          original_seed_value: selectedSeed.additional_details?.value || pocketPrice,
-          pocket_price: pocketPrice,
-          total_pockets: totalPockets,
-          currency: 'USD',
-          orchard_type: 'standard',
-          status: 'active',
-          verification_status: 'approved'
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      toast.success(`Successfully converted "${selectedSeed.title}" to an orchard!`)
-      setConvertDialogOpen(false)
-      setSelectedSeed(null)
-      setPocketPrice(150)
-      setTotalPockets(10)
-      
-      // Refresh both lists
-      fetchSeeds()
-      fetchOrchards()
-      
-    } catch (error) {
-      console.error('Error converting seed to orchard:', error)
-      toast.error('Failed to convert seed to orchard')
-    } finally {
-      setConverting(false)
-    }
-  }
-
-  // Function to check if seed already has an orchard
-  const getSeedStatus = (seed) => {
-    const hasValue = seed.additional_details?.value
-    const matchingOrchard = orchards.find(orchard => 
-      orchard.title.toLowerCase().includes(seed.title.toLowerCase()) ||
-      (hasValue && orchard.original_seed_value === parseFloat(hasValue))
-    )
-    
-    if (matchingOrchard) return 'converted'
-    if (hasValue) return 'ready'
-    return 'pending'
   }
 
   const getCategoryColor = (category) => {
@@ -218,19 +102,6 @@ export default function YhvhOrchardsPage() {
       'The Gift of Travel & Tourism': 'bg-cyan-100 text-cyan-800'
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const getGifterName = (profiles) => {
-    if (!profiles) return 'Anonymous'
-    return profiles.display_name || `${profiles.first_name} ${profiles.last_name}`.trim() || 'Anonymous'
   }
 
   if (loading) {
@@ -274,19 +145,19 @@ export default function YhvhOrchardsPage() {
                 textShadow: '2px 2px 4px #7c3aed'
               }}>364yhvh Community Orchards</h1>
               <p className="text-lg" style={{ color: '#663399' }}>
-                Welcome to our community seed garden where members share their gifts, talents, and offerings.
+                Fully processed projects ready for community support and bestowals.
               </p>
               <p className="text-sm mt-1" style={{ color: '#663399' }}>
-                Each seed represents a blessing planted by a community member to help others grow.
+                Each orchard represents a completed project ready for community funding.
               </p>
             </div>
           </div>
           <div className="mt-6 flex space-x-4">
-            <Badge variant="secondary" className="px-4 py-2 text-sm">
-              {seeds.length} Seeds Planted
+            <Badge variant="outline" className="px-4 py-2 text-sm">
+              {orchards.length} Active Orchards
             </Badge>
             <Badge variant="outline" className="px-4 py-2 text-sm">
-              {orchards.length} Orchards Active
+              Community Funded
             </Badge>
             <Badge variant="outline" className="px-4 py-2 text-sm">
               Growing Together
@@ -294,7 +165,7 @@ export default function YhvhOrchardsPage() {
           </div>
         </div>
 
-        {/* Orchards Section */}
+        {/* Gosat Management Info */}
         {isAdminOrGosat() && (
           <div className="mb-8 p-6 bg-blue-50/80 rounded-xl border border-blue-200">
             <div className="flex items-center space-x-3 mb-4">
@@ -306,24 +177,22 @@ export default function YhvhOrchardsPage() {
               You can edit pocket prices, amounts, and manage orchard settings.
             </p>
             <p className="text-blue-700 text-sm">
-              <strong>Community Seeds:</strong> Raw submissions from sowers via Free-Will Gifting. 
-              Convert valuable seeds into orchards for community funding.
+              <strong>Note:</strong> Seeds from Free-Will Gifting are managed on the Gosat's Dashboard where you can convert them into orchards.
             </p>
           </div>
         )}
 
-        {orchards.length > 0 && (
+        {/* Community Orchards Section */}
+        {orchards.length > 0 ? (
           <div className="mb-12">
             <div className="flex items-center justify-center space-x-3 mb-6">
               <TreePine className="h-6 w-6 text-success" />
               <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
               <TreePine className="h-6 w-6 text-success" />
             </div>
-            {isAdminOrGosat() && (
-              <p className="text-center text-muted-foreground mb-6 text-sm">
-                Fully processed projects ready for community support • Edit prices and manage settings
-              </p>
-            )}
+            <p className="text-center text-muted-foreground mb-6 text-sm">
+              Fully processed projects ready for community support • Click to bestow into any orchard
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {orchards.map((orchard, index) => (
                 <Card 
@@ -423,272 +292,12 @@ export default function YhvhOrchardsPage() {
               ))}
             </div>
           </div>
-        )}
-
-        {/* Seeds Grid - Only visible to Gosats/Admins */}
-        {isAdminOrGosat() && (
-          <div className="mb-6">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              <Sprout className="h-6 w-6 text-green-600" />
-              <h2 className="text-2xl font-bold text-foreground">Community Seeds</h2>
-              <Sprout className="h-6 w-6 text-green-600" />
-            </div>
-            <p className="text-center text-muted-foreground mb-6 text-sm">
-              Seeds submitted by sowers via Free-Will Gifting • Convert valuable seeds into orchards
-            </p>
+        ) : (
+          <div className="text-center py-16">
+            <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold text-foreground mb-2">No orchards available yet</h3>
+            <p className="text-muted-foreground">Gosats will convert seeds into orchards that will appear here for community support.</p>
           </div>
-        )}
-        {isAdminOrGosat() && (
-          seeds.length === 0 ? (
-            <div className="text-center py-16">
-              <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">No seeds planted yet</h3>
-              <p className="text-muted-foreground">Waiting for sowers to plant seeds via Free-Will Gifting!</p>
-            </div>
-          ) : (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-             {seeds.map((seed, index) => {
-               const seedStatus = getSeedStatus(seed)
-               return (
-                 <Card 
-                   key={seed.id} 
-                   className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in"
-                   style={{ animationDelay: `${index * 100}ms` }}
-                 >
-                   <CardHeader className="pb-3">
-                     <div className="flex items-start justify-between">
-                       <div className="flex-1">
-                         <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                           {seed.title}
-                         </CardTitle>
-                         <div className="flex items-center space-x-2 mt-2">
-                           <Badge className={`text-xs ${getCategoryColor(seed.category)}`}>
-                             {seed.category}
-                           </Badge>
-                           {/* Status Badge */}
-                           {seedStatus === 'converted' && (
-                             <Badge className="text-xs bg-green-100 text-green-800">
-                               <CheckCircle className="h-3 w-3 mr-1" />
-                               Converted
-                             </Badge>
-                           )}
-                           {seedStatus === 'ready' && (
-                             <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                               <Clock className="h-3 w-3 mr-1" />
-                               Ready
-                             </Badge>
-                           )}
-                           {seedStatus === 'pending' && (
-                             <Badge className="text-xs bg-gray-100 text-gray-800">
-                               <AlertCircle className="h-3 w-3 mr-1" />
-                               No Value
-                             </Badge>
-                           )}
-                         </div>
-                       </div>
-                       <div className="ml-2 p-2 bg-success/10 rounded-full">
-                         <Sprout className="h-4 w-4 text-success" />
-                       </div>
-                     </div>
-                   </CardHeader>
-                
-                <CardContent className="pt-0">
-                  {/* Image Preview */}
-                  {seed.images && seed.images.length > 0 && (
-                    <div className="mb-3 relative overflow-hidden rounded-lg">
-                      <img
-                        src={seed.images[0]}
-                        alt={seed.title}
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {seed.images.length > 1 && (
-                        <Badge className="absolute top-2 right-2 bg-black/50 text-white text-xs">
-                          +{seed.images.length - 1}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                    {seed.description}
-                  </p>
-                  
-                  {/* Meta Info */}
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3" />
-                      <span>By {getGifterName(seed.profiles)}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>Planted {formatDate(seed.created_at)}</span>
-                    </div>
-                    {seed.video_url && (
-                      <div className="flex items-center space-x-1">
-                        <Video className="h-3 w-3" />
-                        <span>Has video</span>
-                      </div>
-                    )}
-                  </div>
-                   
-                   {/* Action Buttons */}
-                   <div className="space-y-2">
-                     {/* Standard Bestow Button for all users */}
-                     <Button 
-                       variant="default" 
-                       size="sm" 
-                       className="w-full text-white shadow-lg"
-                       style={{ 
-                         background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
-                         border: '2px solid #1e40af'
-                       }}
-                       onClick={async () => {
-                      try {
-                        // First, try to find orchard by matching seed title
-                        let { data: matchingOrchards, error } = await supabase
-                          .from('orchards')
-                           .select('id, title, original_seed_value, orchard_type')
-                           .eq('orchard_type', seed.additional_details?.orchardType || 'standard')
-                          .eq('status', 'active')
-                          .ilike('title', `%${seed.title}%`)
-                          .limit(1);
-                        
-                        if (error) throw error;
-                        
-                        // If no match by title, try by seed value
-                        if (!matchingOrchards || matchingOrchards.length === 0) {
-                          const seedValue = seed.additional_details?.value;
-                          if (seedValue) {
-                             const { data: valueMatchOrchards, error: valueError } = await supabase
-                               .from('orchards')
-                               .select('id, title, original_seed_value, orchard_type')
-                               .eq('orchard_type', seed.additional_details?.orchardType || 'standard')
-                              .eq('status', 'active')
-                              .eq('original_seed_value', parseFloat(seedValue))
-                              .limit(1);
-                            
-                            if (valueError) throw valueError;
-                            matchingOrchards = valueMatchOrchards;
-                          }
-                        }
-                        
-                        if (matchingOrchards && matchingOrchards.length > 0) {
-                          // Navigate to the matching orchard's animated page
-                          navigate(`/animated-orchard/${matchingOrchards[0].id}`);
-                         } else {
-                           // No orchard found - check if seed has value for auto-creation
-                           const seedValue = seed.additional_details?.value;
-                           if (!seedValue) {
-                             // This seed was created without a value, so no orchard exists
-                             toast.error(`This seed "${seed.title}" was created without a value, so no orchard was generated. Seeds need a monetary value to create orchards where others can bestow.`);
-                           } else {
-                             // Has value but no orchard - something went wrong during creation
-                             toast.error(`No orchard found for "${seed.title}". The orchard may not have been created properly during seed submission.`);
-                           }
-                         }
-                      } catch (error) {
-                        console.error('Error finding orchard:', error);
-                        toast.error('Failed to find matching orchard');
-                      }
-                       }}
-                     >
-                       <Heart className="h-3 w-3 mr-2" />
-                       Bestow into this Orchard
-                     </Button>
-                     
-                     {/* Gosat Conversion Button */}
-                     {isAdminOrGosat() && seedStatus !== 'converted' && (
-                       <Button 
-                         variant="outline" 
-                         size="sm" 
-                         className="w-full border-green-500/30 text-green-700 hover:bg-green-50"
-                         onClick={() => {
-                           setSelectedSeed(seed)
-                           setPocketPrice(seed.additional_details?.value || 150)
-                           setTotalPockets(Math.ceil((seed.additional_details?.value || 1500) / (seed.additional_details?.value || 150)))
-                           setConvertDialogOpen(true)
-                         }}
-                       >
-                         <ArrowRight className="h-3 w-3 mr-2" />
-                         Convert to Orchard
-                       </Button>
-                      )}
-                    </div>
-                 </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          )
-        )}
-
-        {/* Conversion Dialog - Only for Gosats/Admins */}
-        {isAdminOrGosat() && (
-        <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Convert Seed to Orchard</DialogTitle>
-            </DialogHeader>
-            {selectedSeed && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedSeed.title}</h3>
-                  <p className="text-sm text-muted-foreground">{selectedSeed.category}</p>
-                </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="pocketPrice">Pocket Price (USD)</Label>
-                    <Input
-                      id="pocketPrice"
-                      type="number"
-                      value={pocketPrice}
-                      onChange={(e) => setPocketPrice(Number(e.target.value))}
-                      min="1"
-                      step="0.01"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="totalPockets">Total Pockets</Label>
-                    <Input
-                      id="totalPockets"
-                      type="number"
-                      value={totalPockets}
-                      onChange={(e) => setTotalPockets(Number(e.target.value))}
-                      min="1"
-                    />
-                  </div>
-                  
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-medium">Total Goal: ${(pocketPrice * totalPockets).toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Seed Value: ${selectedSeed.additional_details?.value || 'Not specified'}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setConvertDialogOpen(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={convertSeedToOrchard}
-                    disabled={converting}
-                    className="flex-1"
-                  >
-                    {converting ? 'Converting...' : 'Convert'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
         )}
       </div>
     </div>
