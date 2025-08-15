@@ -279,17 +279,29 @@ export default function MyOrchardsPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                {['all', 'active', 'completed', 'paused'].map((status) => (
-                  <Button
-                    key={status}
-                    variant={statusFilter === status ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setStatusFilter(status)}
-                    className={statusFilter === status ? 'bg-nav-my text-orange-700' : 'border-nav-my/30 text-orange-700'}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                ))}
+                {['all', 'active', 'completed', 'paused'].map((status) => {
+                  const getStatusColors = (status, isSelected) => {
+                    const colors = {
+                      all: isSelected ? 'bg-blue-200 text-blue-800 border-blue-300' : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-150',
+                      active: isSelected ? 'bg-green-200 text-green-800 border-green-300' : 'bg-green-100 text-green-700 border-green-200 hover:bg-green-150',
+                      completed: isSelected ? 'bg-purple-200 text-purple-800 border-purple-300' : 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-150',
+                      paused: isSelected ? 'bg-orange-200 text-orange-800 border-orange-300' : 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-150'
+                    };
+                    return colors[status];
+                  };
+                  
+                  return (
+                    <Button
+                      key={status}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStatusFilter(status)}
+                      className={getStatusColors(status, statusFilter === status)}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
