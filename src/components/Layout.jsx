@@ -88,7 +88,8 @@ export default function Layout({ children }) {
                   "364yhvh orchards": { bg: '#e9d5ff', border: '#e9d5ff', text: '#7c3aed' },
                   "chatapp": { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
                   "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
-                  "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' }
+                  "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' },
+                  "gosat's dashboard": { bg: '#f0e68c', border: '#f0e68c', text: '#7a6c00' }
                 }
                 
                 const colors = buttonColors[item.name] || { bg: '#f1f5f9', border: '#e2e8f0', text: '#64748b' }
