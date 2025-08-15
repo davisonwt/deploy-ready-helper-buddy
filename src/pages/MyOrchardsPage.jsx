@@ -25,6 +25,7 @@ import {
   Trash2
 } from 'lucide-react'
 import { toast } from "sonner"
+import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
 
 export default function MyOrchardsPage() {
@@ -123,6 +124,26 @@ export default function MyOrchardsPage() {
     } catch (error) {
       console.error('Error deleting orchard:', error)
       toast.error('Failed to delete orchard')
+  }
+
+  // TESTING FUNCTION - Change orchard status for testing filter buttons
+  const handleChangeStatus = async (orchardId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('orchards')
+        .update({ status: newStatus })
+        .eq('id', orchardId)
+        .eq('user_id', user.id)
+
+      if (error) {
+        toast.error(`Failed to change status: ${error.message}`)
+      } else {
+        toast.success(`Orchard status changed to ${newStatus}`)
+        fetchOrchards() // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error changing orchard status:', error)
+      toast.error('Failed to change orchard status')
     }
   }
 
@@ -426,6 +447,36 @@ export default function MyOrchardsPage() {
                         <Calendar className="h-4 w-4 mr-1" />
                         Created {new Date(orchard.created_at).toLocaleDateString()}
                       </div>
+                      
+                      {/* TESTING BUTTONS - Change status for testing filters */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="border-t pt-2">
+                          <p className="text-xs text-gray-500 mb-2">Testing: Change Status</p>
+                          <div className="flex gap-1">
+                            <Button 
+                              size="xs" 
+                              onClick={() => handleChangeStatus(orchard.id, 'active')}
+                              className="text-xs bg-green-100 text-green-700 hover:bg-green-200 border-green-300"
+                            >
+                              Active
+                            </Button>
+                            <Button 
+                              size="xs" 
+                              onClick={() => handleChangeStatus(orchard.id, 'completed')}
+                              className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300"
+                            >
+                              Completed
+                            </Button>
+                            <Button 
+                              size="xs" 
+                              onClick={() => handleChangeStatus(orchard.id, 'paused')}
+                              className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-300"
+                            >
+                              Paused
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex gap-2 pt-2">
                         <Link to={`/orchards/${orchard.id}`} className="flex-1">
