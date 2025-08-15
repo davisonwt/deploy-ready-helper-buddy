@@ -167,7 +167,7 @@ export default function YhvhOrchardsPage() {
 
         {/* Gosat Management Info */}
         {isAdminOrGosat() && (
-          <div className="mb-8 p-6 bg-white/90 rounded-xl border border-white/50 shadow-lg backdrop-blur-sm">
+          <div className="mb-8 p-6 bg-white/90 rounded-2xl border border-white/50 shadow-lg backdrop-blur-sm">
             <div className="flex items-center space-x-3 mb-4">
               <Settings className="h-6 w-6 text-blue-600" />
               <h3 className="text-lg font-semibold text-blue-800">Gosat's Management Zone</h3>
@@ -185,7 +185,7 @@ export default function YhvhOrchardsPage() {
         {/* Community Orchards Section */}
         {orchards.length > 0 ? (
           <div className="mb-12">
-            <div className="p-6 bg-white/90 rounded-xl border border-white/50 shadow-lg backdrop-blur-sm mb-6">
+            <div className="p-6 bg-white/90 rounded-2xl border border-white/50 shadow-lg backdrop-blur-sm mb-6">
               <div className="flex items-center justify-center space-x-3 mb-4">
                 <TreePine className="h-6 w-6 text-success" />
                 <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
