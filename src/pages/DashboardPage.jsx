@@ -148,55 +148,57 @@ export default function DashboardPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">My Orchards</p>
+                    <p className="text-2xl font-bold text-slate-700">{stats.totalOrchards}</p>
+                  </div>
+                  <TreePine className="h-8 w-8 text-slate-600" />
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">My Orchards</p>
-                  <p className="text-2xl font-bold text-slate-700">{stats.totalOrchards}</p>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Raised</p>
+                    <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalRaised)}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-emerald-600" />
                 </div>
-                <TreePine className="h-8 w-8 text-slate-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Total Raised</p>
-                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalRaised)}</p>
+            <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">My Bestowals</p>
+                    <p className="text-2xl font-bold text-slate-800">{stats.totalBestowals}</p>
+                  </div>
+                  <Heart className="h-8 w-8 text-rose-500" />
                 </div>
-                <TrendingUp className="h-8 w-8 text-emerald-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">My Bestowals</p>
-                  <p className="text-2xl font-bold text-slate-800">{stats.totalBestowals}</p>
+            <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Supported</p>
+                    <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalSupported)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-amber-600" />
                 </div>
-                <Heart className="h-8 w-8 text-rose-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600">Total Supported</p>
-                  <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalSupported)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-amber-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* My Orchards */}
