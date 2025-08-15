@@ -100,11 +100,26 @@ export function useOrchards() {
       setLoading(true)
       setError(null)
 
-      const { data, error: updateError } = await supabase
+      // Check if user is gosat/admin
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+      
+      const userRoles = rolesData?.map(r => r.role) || []
+      const isGosat = userRoles.includes('gosat') || userRoles.includes('admin')
+
+      // Build query - gosats can update any orchard, others only their own
+      let query = supabase
         .from('orchards')
         .update(updates)
         .eq('id', id)
-        .eq('user_id', user.id)
+
+      if (!isGosat) {
+        query = query.eq('user_id', user.id)
+      }
+
+      const { data, error: updateError } = await query
         .select()
         .single()
 
