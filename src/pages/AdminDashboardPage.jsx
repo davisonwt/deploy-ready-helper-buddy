@@ -15,17 +15,26 @@ import {
   Trash2,
   Search,
   Calendar,
-  Settings
+  Settings,
+  Sprout,
+  TreePine,
+  Eye,
+  ArrowRight
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
 import { useAuth } from '../hooks/useAuth'
+import { supabase } from '@/integrations/supabase/client'
+import { useNavigate } from 'react-router-dom'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
-  const { isAdmin, fetchAllUsers, grantRole, revokeRole } = useRoles()
+  const { isAdmin, isAdminOrGosat, fetchAllUsers, grantRole, revokeRole } = useRoles()
+  const navigate = useNavigate()
   const [users, setUsers] = useState([])
+  const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(true)
+  const [seedsLoading, setSeedsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
@@ -33,6 +42,9 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadUsers()
+    if (isAdminOrGosat()) {
+      loadSeeds()
+    }
   }, [])
 
   const loadUsers = async () => {
@@ -50,6 +62,36 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadSeeds = async () => {
+    try {
+      setSeedsLoading(true)
+      const { data, error } = await supabase
+        .from('seeds')
+        .select(`
+          *,
+          profiles:gifter_id (
+            display_name,
+            first_name,
+            last_name
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setSeeds(data || [])
+    } catch (error) {
+      console.error('Error loading seeds:', error)
+      toast.error('Failed to load seeds')
+    } finally {
+      setSeedsLoading(false)
+    }
+  }
+
+  const convertSeedToOrchard = (seedId) => {
+    // Navigate to create orchard page with seed data
+    navigate(`/create-orchard?from_seed=${seedId}`)
   }
 
   const handleGrantRole = async () => {
@@ -113,14 +155,14 @@ export default function AdminDashboardPage() {
     user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  if (!isAdmin()) {
+  if (!isAdminOrGosat()) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-destructive/10 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Shield className="h-16 w-16 mx-auto text-destructive mb-4" />
             <h2 className="text-xl font-bold text-foreground mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">You need admin privileges to access this page.</p>
+            <p className="text-muted-foreground">You need gosat or admin privileges to access this page.</p>
           </CardContent>
         </Card>
       </div>
@@ -312,6 +354,84 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Seeds Management Section - Only for Gosats/Admins */}
+        {isAdminOrGosat() && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Sprout className="h-5 w-5 text-success" />
+                <span>Seeds Management</span>
+                <Badge variant="secondary">{seeds.length} seeds</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {seedsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : seeds.length === 0 ? (
+                <div className="text-center py-8">
+                  <Sprout className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No seeds submitted yet</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {seeds.map((seed) => (
+                    <Card key={seed.id} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Seed Image */}
+                          {seed.images && seed.images.length > 0 && (
+                            <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
+                              <img 
+                                src={seed.images[0]} 
+                                alt={seed.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Seed Info */}
+                          <div>
+                            <h3 className="font-semibold text-sm mb-1 line-clamp-2">{seed.title}</h3>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{seed.description}</p>
+                            <Badge variant="outline" className="text-xs">{seed.category}</Badge>
+                          </div>
+                          
+                          {/* Gifter Info */}
+                          <div className="text-xs text-muted-foreground">
+                            <p>Gifted by: {seed.profiles?.display_name || `${seed.profiles?.first_name} ${seed.profiles?.last_name}` || 'Unknown'}</p>
+                            <p>Date: {new Date(seed.created_at).toLocaleDateString()}</p>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex space-x-2">
+                            <Button 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => convertSeedToOrchard(seed.id)}
+                            >
+                              <TreePine className="h-3 w-3 mr-1" />
+                              Convert to Orchard
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )
