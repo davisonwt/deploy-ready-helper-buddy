@@ -146,7 +146,7 @@ export default function AdminDashboardPage() {
                 <Settings className="h-12 w-12 text-primary" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold text-primary mb-2">Gosat's Dashboard</h1>
             <p className="text-muted-foreground">Manage user roles and permissions</p>
           </div>
         </div>

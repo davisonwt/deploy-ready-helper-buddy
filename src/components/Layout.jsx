@@ -46,7 +46,7 @@ export default function Layout({ children }) {
     { name: "chatapp", href: "/chatapp", icon: MessageSquare },
     { name: "tithing", href: "/tithing", icon: HandHeart },
     { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
-    ...(isAdminOrGosat() ? [{ name: "admin dashboard", href: "/admin/dashboard", icon: Church }] : [])
+    ...(isAdminOrGosat() ? [{ name: "gosat's dashboard", href: "/admin/dashboard", icon: Church }] : [])
   ]
   
   const isActive = (href) => location.pathname === href
