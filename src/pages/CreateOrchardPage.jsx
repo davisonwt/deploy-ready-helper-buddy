@@ -422,10 +422,15 @@ export default function CreateOrchardPage({ isEdit = false }) {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        onError={(e) => console.error('Video error:', e)}
+        onError={(e) => {
+          console.error('Video error:', e);
+          // Hide video and show background color if video fails
+          e.target.style.display = 'none';
+        }}
         onLoadStart={() => console.log('Video loading started')}
         onCanPlay={() => console.log('Video can play')}
       >
+        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g upload sower 1280x720.mp4" type="video/mp4" />
         <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20upload%20sower%201280x720.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
