@@ -176,7 +176,7 @@ export default function BrowseOrchardsPage() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" 
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed pb-24" 
       style={{ 
         backgroundImage: 'url(https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/community%20orchards%201.jpg)',
         backgroundColor: '#f8fafc'
