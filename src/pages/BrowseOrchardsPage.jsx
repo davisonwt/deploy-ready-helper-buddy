@@ -175,15 +175,28 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed pb-24" 
-      style={{ 
-        backgroundImage: 'url(https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/community%20orchards%201.jpg)',
-        backgroundColor: '#f8fafc'
-      }}
-    >
+    <div className="min-h-screen relative pb-24">
+      {/* Background Video */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        className="fixed top-0 left-0 w-full h-full object-cover z-0"
+        onError={(e) => console.error('Video failed to load:', e)}
+        onLoadStart={() => console.log('Browse orchards video loading started')}
+        onCanPlay={() => console.log('Browse orchards video can play')}
+      >
+        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%201a%201280x720.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Overlay for better text readability */}
+      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
+      
+      <div className="relative z-20">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-4 rounded-2xl border shadow-lg mb-8 bg-white/90 backdrop-blur-sm" style={{ backgroundColor: 'rgba(200, 182, 166, 0.9)' }}>
+      <div className="max-w-4xl mx-auto p-4 rounded-2xl border shadow-lg mb-8 backdrop-blur-sm" style={{ backgroundColor: 'rgba(200, 182, 166, 0.9)' }}>
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
               {user?.profile_picture ? (
@@ -493,6 +506,7 @@ export default function BrowseOrchardsPage() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   )
