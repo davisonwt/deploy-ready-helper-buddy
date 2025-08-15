@@ -25,7 +25,6 @@ export default function BrowseOrchardsPage() {
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [viewMode, setViewMode] = useState("grid")
@@ -113,16 +112,6 @@ export default function BrowseOrchardsPage() {
   const filteredOrchards = useMemo(() => {
     let results = processedOrchards
 
-    // Filter by search term
-    if (searchTerm) {
-      results = results.filter(orchard =>
-        orchard.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orchard.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orchard.grower_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        orchard.location?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
     // Filter by category
     if (selectedCategory !== "all") {
       results = results.filter(orchard => orchard.category === selectedCategory)
@@ -145,7 +134,7 @@ export default function BrowseOrchardsPage() {
     })
     
     return results
-  }, [processedOrchards, searchTerm, selectedCategory, sortBy])
+  }, [processedOrchards, selectedCategory, sortBy])
 
   const categories = [
     "The Gift of Accessories", 
@@ -263,19 +252,6 @@ export default function BrowseOrchardsPage() {
         <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg mb-8 hover:shadow-xl transition-all">
           <CardContent className="p-6">
             <div className="flex flex-wrap gap-4 items-end">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-sm font-medium text-green-700 mb-2">Search Orchards</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
-                  <Input
-                    placeholder="Search orchards, growers, descriptions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-nav-community/30 focus:border-nav-community"
-                  />
-                </div>
-              </div>
-              
               <div className="min-w-[150px]">
                 <label className="block text-sm font-medium text-green-700 mb-2">Category</label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -350,11 +326,11 @@ export default function BrowseOrchardsPage() {
             <CardContent className="p-12 text-center">
               <Sprout className="h-16 w-16 mx-auto text-green-400 mb-4" />
               <h3 className="text-xl font-semibold text-green-700 mb-2">
-                {searchTerm || selectedCategory !== "all" ? "No orchards found" : "No orchards available"}
+                {selectedCategory !== "all" ? "No orchards found" : "No orchards available"}
               </h3>
               <p className="text-green-600 mb-6">
-                {searchTerm || selectedCategory !== "all" 
-                  ? "Try adjusting your search or filters"
+                {selectedCategory !== "all" 
+                  ? "Try adjusting your category filter"
                   : "Be the first to plant a seed in our community!"
                 }
               </p>
