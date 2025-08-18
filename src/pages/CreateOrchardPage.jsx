@@ -10,6 +10,7 @@ import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
+import { QuickAIHelper } from "../components/ai/QuickAIHelper"
 import { 
   Plus, 
   Sprout, 
@@ -507,7 +508,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="space-y-4">
                   <label className="block text-sm font-medium text-rose-400 mb-2">
                     Orchard Title *
                   </label>
@@ -518,6 +519,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
                     onChange={handleChange}
                     placeholder="e.g., 2019 Toyota Corolla"
                     required
+                  />
+                  <QuickAIHelper
+                    type="orchard-title"
+                    onContentGenerated={(content) => setFormData(prev => ({ ...prev, title: content.split('\n')[0].replace(/^\d+\.\s*/, '') }))}
+                    compact={true}
+                    suggestions={["organic farm equipment", "community garden tools", "healthy food business"]}
                   />
                 </div>
                 <div>
@@ -537,7 +544,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                 </div>
               </div>
               
-              <div>
+              <div className="space-y-4">
                 <label className="block text-sm font-medium text-rose-400 mb-2">
                   Description *
                 </label>
@@ -548,6 +555,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   rows={4}
                   placeholder="Describe what this orchard is for..."
                   required
+                />
+                <QuickAIHelper
+                  type="orchard-description"
+                  onContentGenerated={(content) => setFormData(prev => ({ ...prev, description: content }))}
+                  compact={true}
+                  suggestions={["startup business funding", "farm equipment purchase", "community garden project"]}
                 />
               </div>
               

@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Video, Upload, TrendingUp, Users, Play } from 'lucide-react'
+import { Video, Upload, TrendingUp, Users, Play, Sparkles, Lightbulb } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { QuickAIHelper } from '@/components/ai/QuickAIHelper'
 import VideoFeed from '@/components/community/VideoFeed.jsx'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 
@@ -88,6 +89,63 @@ export default function CommunityVideosPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Assistance Section */}
+        {user && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <QuickAIHelper
+              type="video-script"
+              compact={false}
+              placeholder="Describe the marketing video you want to create (e.g., 'promoting organic vegetables at farmers market')"
+              suggestions={[
+                "promoting fresh farm eggs",
+                "showcasing sustainable farming practices", 
+                "introducing our family farm business"
+              ]}
+            />
+            <QuickAIHelper
+              type="video-ideas"
+              compact={false}
+              placeholder="What agricultural product or service do you want video ideas for?"
+              suggestions={[
+                "seasonal vegetable marketing",
+                "farm-to-table storytelling",
+                "community-supported agriculture"
+              ]}
+            />
+          </div>
+        )}
+
+        {/* Marketing Tips Card */}
+        <Card className="mb-8 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Marketing Assistant Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row items-start gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Need help creating compelling video content? Our AI assistant can help you generate scripts, marketing tips, content ideas, and thumbnails to grow your agricultural business and reach more customers.
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded">🎬 Video Scripts</span>
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded">📈 Marketing Tips</span>
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded">💡 Content Ideas</span>
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded">🖼️ Thumbnails</span>
+                </div>
+              </div>
+              <Button asChild className="flex items-center gap-2">
+                <a href="/ai-assistant">
+                  <Lightbulb className="h-4 w-4" />
+                  Open AI Assistant
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Guidelines */}
         {!user && (
