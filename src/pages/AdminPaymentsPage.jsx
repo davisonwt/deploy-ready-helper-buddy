@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout } from '@/components/Layout';
+import Layout from '@/components/Layout';
 import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
