@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useRoles() {
   const [userRoles, setUserRoles] = useState([])
