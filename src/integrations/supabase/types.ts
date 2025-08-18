@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_creations: {
+        Row: {
+          content_text: string | null
+          content_type: Database["public"]["Enums"]["ai_content_type"]
+          created_at: string
+          custom_prompt: string | null
+          id: string
+          image_url: string | null
+          is_favorited: boolean | null
+          metadata: Json | null
+          product_description: string | null
+          style: string | null
+          target_audience: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          video_length: number | null
+        }
+        Insert: {
+          content_text?: string | null
+          content_type: Database["public"]["Enums"]["ai_content_type"]
+          created_at?: string
+          custom_prompt?: string | null
+          id?: string
+          image_url?: string | null
+          is_favorited?: boolean | null
+          metadata?: Json | null
+          product_description?: string | null
+          style?: string | null
+          target_audience?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          video_length?: number | null
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: Database["public"]["Enums"]["ai_content_type"]
+          created_at?: string
+          custom_prompt?: string | null
+          id?: string
+          image_url?: string | null
+          is_favorited?: boolean | null
+          metadata?: Json | null
+          product_description?: string | null
+          style?: string | null
+          target_audience?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          video_length?: number | null
+        }
+        Relationships: []
+      }
+      ai_usage: {
+        Row: {
+          date: string
+          generations_count: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          generations_count?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          generations_count?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bestowals: {
         Row: {
           amount: number
@@ -771,6 +846,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_ai_usage_today: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
@@ -786,6 +865,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ai_usage: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
         Returns: undefined
@@ -800,6 +883,12 @@ export type Database = {
       }
     }
     Enums: {
+      ai_content_type:
+        | "script"
+        | "voice_over"
+        | "marketing_tip"
+        | "thumbnail"
+        | "content_idea"
       app_role: "user" | "gosat" | "admin"
       chat_room_type:
         | "direct"
@@ -940,6 +1029,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_content_type: [
+        "script",
+        "voice_over",
+        "marketing_tip",
+        "thumbnail",
+        "content_idea",
+      ],
       app_role: ["user", "gosat", "admin"],
       chat_room_type: [
         "direct",
