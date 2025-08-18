@@ -36,7 +36,7 @@ import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
-import AIAssistantPage from "./pages/AIAssistantPage";
+import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
