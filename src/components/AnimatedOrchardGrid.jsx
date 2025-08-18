@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { cn, getGrowthStage, getGrowthStageColor } from "../lib/utils"
 import { Sprout, Sparkles, Heart, Star } from "lucide-react"
 

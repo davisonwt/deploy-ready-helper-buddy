@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { loadOrchard } from "../lib/orchardLoader";
