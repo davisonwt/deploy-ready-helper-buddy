@@ -73,8 +73,8 @@ export default function Layout({ children }) {
     },
     {
       name: "Let It Rain",
-      icon: Cloud,
-      color: { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
+      icon: "🌧️", // Using emoji instead of Lucide icon
+      color: { bg: '#ffffff', border: '#3B82F6', text: '#1e293b' },
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
         { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
@@ -153,7 +153,7 @@ export default function Layout({ children }) {
               {groupedNavigation.map((group) => {
                 const Icon = group.icon
                 const isGroupHighlighted = isGroupActive(group)
-                const isCloudButton = group.name === "Let It Rain"
+                const isEmojiIcon = typeof Icon === 'string'
                 
                 return (
                   <DropdownMenu key={group.name}>
@@ -162,51 +162,22 @@ export default function Layout({ children }) {
                         className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
                           hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
                           ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
-                          ${isCloudButton ? 'cloud-shape' : ''}
                         `}
                         style={{
                           backgroundColor: group.color.bg,
                           borderColor: group.color.border,
                           color: group.color.text,
-                          borderRadius: isCloudButton ? '50px 50px 50px 50px / 60px 60px 40px 40px' : '21px',
+                          borderRadius: '21px',
                           boxShadow: isGroupHighlighted
                             ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                            : 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                          position: isCloudButton ? 'relative' : 'static'
+                            : 'inset 0 2px 4px rgba(0,0,0,0.1)'
                         }}
                       >
-                        {isCloudButton && (
-                          <>
-                            {/* Cloud bumps using pseudo-elements via CSS */}
-                            <style jsx>{`
-                              .cloud-shape::before {
-                                content: '';
-                                position: absolute;
-                                top: -8px;
-                                left: 10px;
-                                width: 25px;
-                                height: 25px;
-                                background: ${group.color.bg};
-                                border: 2px solid ${group.color.border};
-                                border-radius: 50%;
-                                z-index: -1;
-                              }
-                              .cloud-shape::after {
-                                content: '';
-                                position: absolute;
-                                top: -12px;
-                                right: 15px;
-                                width: 30px;
-                                height: 30px;
-                                background: ${group.color.bg};
-                                border: 2px solid ${group.color.border};
-                                border-radius: 50%;
-                                z-index: -1;
-                              }
-                            `}</style>
-                          </>
+                        {isEmojiIcon ? (
+                          <span className="text-base mr-1">{Icon}</span>
+                        ) : (
+                          <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
                         )}
-                        <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
                         <span className="truncate text-center leading-tight">{group.name}</span>
                         <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
                       </button>
