@@ -1,4 +1,3 @@
-import '../polyfills'; // Import polyfills for Solana
 import { useState, useEffect, useCallback } from 'react';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
