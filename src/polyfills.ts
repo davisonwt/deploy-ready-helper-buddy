@@ -2,13 +2,18 @@
 import { Buffer } from 'buffer';
 import process from 'process';
 
-// Make Buffer globally available
-window.Buffer = Buffer;
-window.global = window.global ?? window;
-window.process = process;
+// Make sure globalThis has the necessary properties
+if (typeof globalThis !== 'undefined') {
+  globalThis.Buffer = Buffer;
+  globalThis.process = process;
+  globalThis.global = globalThis;
+}
 
-// Add any other globals that might be needed
-window.global.Buffer = Buffer;
-window.global.process = process;
+// Also set on window for compatibility
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+  window.process = process;
+  window.global = window.global ?? window;
+}
 
 export {};

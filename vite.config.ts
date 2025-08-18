@@ -32,10 +32,6 @@ export default defineConfig(({ mode }) => ({
   define: {
     // Define global variables for Node.js compatibility
     global: 'globalThis',
-    process: {
-      env: {},
-      browser: true,
-    },
   },
   optimizeDeps: {
     include: [
