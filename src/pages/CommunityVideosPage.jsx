@@ -128,7 +128,7 @@ export default function CommunityVideosPage() {
             <div className="flex flex-col md:flex-row items-start gap-4">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Need help creating compelling video content? Our AI assistant can help you generate scripts, marketing tips, content ideas, and thumbnails to grow your agricultural business and reach more customers.
+                  Need help creating compelling video content? Our AI assistant can help you generate scripts, marketing tips, content ideas, and thumbnails to grow your 364yhvh community - sow2grow business and reach more customers.
                 </p>
                 <div className="flex flex-wrap gap-2 text-xs">
                   <span className="bg-primary/10 text-primary px-2 py-1 rounded">🎬 Video Scripts</span>
