@@ -18,12 +18,6 @@
   </head>
 
   <body>
-    <!-- Load Buffer polyfill before the main app -->
-    <script type="module">
-      import { Buffer } from 'buffer';
-      globalThis.Buffer = Buffer;
-      window.Buffer = Buffer;
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

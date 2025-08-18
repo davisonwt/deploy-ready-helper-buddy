@@ -20,7 +20,8 @@ import {
   User
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
-import { WalletWidget } from '@/components/WalletWidget'
+// Temporarily disabled to fix React issues
+// import { WalletWidget } from '@/components/WalletWidget'
 
 export default function DashboardPage() {
   const { user } = useAuth()
