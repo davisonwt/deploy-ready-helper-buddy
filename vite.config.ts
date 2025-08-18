@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    // Only define what's absolutely necessary
     global: 'globalThis',
+    'process.env': {},
   },
   optimizeDeps: {
     include: [

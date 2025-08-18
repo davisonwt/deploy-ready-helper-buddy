@@ -1,27 +1,13 @@
-// Polyfills for Node.js modules in browser environment
+// Import this file in components that need Solana polyfills only
 import { Buffer } from 'buffer';
-import process from 'process';
 
-// Only add polyfills if they don't exist
-if (typeof globalThis.Buffer === 'undefined') {
+// Only add Buffer if it doesn't exist
+if (typeof window !== 'undefined' && !window.Buffer) {
+  window.Buffer = Buffer;
+}
+
+if (typeof globalThis !== 'undefined' && !globalThis.Buffer) {
   globalThis.Buffer = Buffer;
-}
-
-if (typeof globalThis.process === 'undefined') {
-  globalThis.process = process;
-}
-
-// Set up window globals only if window exists
-if (typeof window !== 'undefined') {
-  if (!window.Buffer) {
-    window.Buffer = Buffer;
-  }
-  if (!window.process) {
-    window.process = process;
-  }
-  if (!window.global) {
-    window.global = globalThis;
-  }
 }
 
 export {};
