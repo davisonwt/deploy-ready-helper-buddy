@@ -19,7 +19,8 @@ import {
   HandHeart,
   ShoppingCart,
   MessageSquare,
-  Users
+  Users,
+  Video
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -40,6 +41,7 @@ export default function Layout({ children }) {
   const navigation = [
     { name: "dashboard", href: "/dashboard", icon: Home },
     { name: "community orchards", href: "/browse-orchards", icon: Users },
+    { name: "community videos", href: "/community-videos", icon: Video },
     { name: "create orchard", href: "/create-orchard", icon: Plus },
     { name: "my orchards", href: "/my-orchards", icon: User },
     { name: "364yhvh orchards", href: "/364yhvh-orchards", icon: Heart },
@@ -83,6 +85,7 @@ export default function Layout({ children }) {
                 const buttonColors = {
                   "dashboard": { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' },
                   "community orchards": { bg: '#caffbf', border: '#caffbf', text: '#166534' },
+                  "community videos": { bg: '#ff9f9b', border: '#ff9f9b', text: '#1e293b' },
                   "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
                   "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
                   "364yhvh orchards": { bg: '#e9d5ff', border: '#e9d5ff', text: '#7c3aed' },

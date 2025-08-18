@@ -244,6 +244,40 @@ export function useCommunityVideos() {
     }
   }
 
+  // Delete video
+  const deleteVideo = async (videoId) => {
+    try {
+      if (!user) throw new Error('Must be logged in to delete videos')
+
+      const { error } = await supabase
+        .from('community_videos')
+        .delete()
+        .eq('id', videoId)
+        .eq('uploader_id', user.id) // Ensure only owner can delete
+
+      if (error) throw error
+
+      // Remove from local state
+      setVideos(videos.filter(v => v.id !== videoId))
+
+      toast({
+        title: "Video deleted",
+        description: "Your video has been removed",
+        variant: "default"
+      })
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting video:', error)
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive"
+      })
+      return { success: false, error: error.message }
+    }
+  }
+
   // Get video duration
   const getVideoDuration = (file) => {
     return new Promise((resolve, reject) => {
@@ -274,6 +308,7 @@ export function useCommunityVideos() {
     uploadVideo,
     toggleLike,
     addComment,
-    incrementViews
+    incrementViews,
+    deleteVideo
   }
 }

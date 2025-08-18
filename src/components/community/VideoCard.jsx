@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Heart, MessageCircle, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
+import { Heart, MessageCircle, Play, Pause, Volume2, VolumeX, Maximize, Trash2, MoreVertical } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
+import { useAuth } from '@/hooks/useAuth.jsx'
 import { formatDistanceToNow } from 'date-fns'
 import VideoCommentsModal from './VideoCommentsModal.jsx'
 
@@ -13,7 +15,8 @@ export default function VideoCard({ video, onVideoClick }) {
   const [showComments, setShowComments] = useState(false)
   const [hasViewed, setHasViewed] = useState(false)
   const videoRef = useRef(null)
-  const { toggleLike, incrementViews } = useCommunityVideos()
+  const { toggleLike, incrementViews, deleteVideo } = useCommunityVideos()
+  const { user } = useAuth()
 
   const handlePlayPause = async () => {
     if (!videoRef.current) return
@@ -43,6 +46,14 @@ export default function VideoCard({ video, onVideoClick }) {
     e.stopPropagation()
     await toggleLike(video.id)
   }
+
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      await deleteVideo(video.id)
+    }
+  }
+
+  const isOwner = user && video.uploader_id === user.id
 
   const getUploaderName = () => {
     const profile = video.profiles
@@ -185,6 +196,34 @@ export default function VideoCard({ video, onVideoClick }) {
               >
                 <MessageCircle className="h-4 w-4" />
               </Button>
+
+              {/* Delete menu for video owner */}
+              {isOwner && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete()
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Video
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
 
