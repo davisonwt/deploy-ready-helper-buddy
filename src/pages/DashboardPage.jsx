@@ -20,8 +20,7 @@ import {
   User
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
-// Temporarily disabled to fix React issues
-// import { WalletWidget } from '@/components/WalletWidget'
+import { WalletWidget } from '@/components/WalletWidget'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -203,9 +202,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Wallet Widget */}
+            <div className="lg:col-span-1">
+              <WalletWidget />
+            </div>
+            
             {/* My Orchards */}
-            <Card className="bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-2 bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
@@ -276,7 +280,7 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-3 bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 

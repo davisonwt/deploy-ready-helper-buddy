@@ -31,6 +31,9 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
+    'process.env': '{}',
+    'process.version': '"v18.0.0"',
+    'process.browser': 'true',
   },
   optimizeDeps: {
     include: [
