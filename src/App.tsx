@@ -5,6 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth.jsx";
 import { BasketProvider } from "./hooks/useBasket.jsx";
+import { lazy, Suspense } from "react";
+
+// Lazy-loaded pages
+const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
+const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
 
 // Pages that exist
 import Index from "./pages/Index";
@@ -213,6 +218,24 @@ const App = () => (
                   <Layout>
                     <CommunityVideosPage />
                   </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Support Us - Phantom Wallet Payments */}
+              <Route path="/support-us" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <SupportUsPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+
+              {/* Admin Payment Dashboard */}
+              <Route path="/admin/payments" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <AdminPaymentsPage />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               

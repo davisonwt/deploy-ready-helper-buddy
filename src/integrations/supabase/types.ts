@@ -391,6 +391,81 @@ export type Database = {
           },
         ]
       }
+      organization_payments: {
+        Row: {
+          amount: number
+          block_time: string | null
+          confirmation_status: string
+          created_at: string
+          id: string
+          memo: string | null
+          recipient_address: string
+          sender_address: string
+          token_mint: string | null
+          token_symbol: string
+          transaction_signature: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          block_time?: string | null
+          confirmation_status?: string
+          created_at?: string
+          id?: string
+          memo?: string | null
+          recipient_address: string
+          sender_address: string
+          token_mint?: string | null
+          token_symbol: string
+          transaction_signature: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          block_time?: string | null
+          confirmation_status?: string
+          created_at?: string
+          id?: string
+          memo?: string | null
+          recipient_address?: string
+          sender_address?: string
+          token_mint?: string | null
+          token_symbol?: string
+          transaction_signature?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organization_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          supported_tokens: string[]
+          updated_at: string
+          wallet_address: string
+          wallet_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          supported_tokens?: string[]
+          updated_at?: string
+          wallet_address: string
+          wallet_name?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          supported_tokens?: string[]
+          updated_at?: string
+          wallet_address?: string
+          wallet_name?: string
+        }
+        Relationships: []
+      }
       payment_config: {
         Row: {
           bank_account_name: string
