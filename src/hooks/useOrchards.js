@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 import { clearOrchardCache } from '../utils/orchardLoader'
 
 export function useOrchards() {

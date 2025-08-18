@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useAuth } from "./useAuth.jsx"
+import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/integrations/supabase/client"
 
 export function useCurrency() {

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Video, Upload, TrendingUp, Users, Play } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 import VideoFeed from '@/components/community/VideoFeed.jsx'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 

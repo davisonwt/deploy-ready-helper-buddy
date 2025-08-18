@@ -1,7 +1,7 @@
 // Fixed React import - force refresh
 import React, { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useFileUpload() {
   console.log('useFileUpload hook initializing - React:', React, 'useState:', useState)

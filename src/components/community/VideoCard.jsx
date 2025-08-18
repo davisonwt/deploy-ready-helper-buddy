@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Heart, MessageCircle, Play, Pause, Volume2, VolumeX, Maximize, Trash2, MoreVertical } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
-import { useAuth } from '@/hooks/useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 import { formatDistanceToNow } from 'date-fns'
 import VideoCommentsModal from './VideoCommentsModal.jsx'
 

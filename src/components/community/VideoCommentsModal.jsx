@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { MessageCircle, Send } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
-import { useAuth } from '@/hooks/useAuth.jsx'
+import { useAuth } from '@/hooks/useAuth'
 import { formatDistanceToNow } from 'date-fns'
 
 export default function VideoCommentsModal({ video, isOpen, onClose }) {

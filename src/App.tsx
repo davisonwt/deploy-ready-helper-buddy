@@ -3,8 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth.jsx";
-import { BasketProvider } from "./hooks/useBasket.jsx";
+import { AuthProvider } from "./hooks/useAuth";
+import { BasketProvider } from "./hooks/useBasket";
 import { lazy, Suspense } from "react";
 
 // Lazy-loaded pages
