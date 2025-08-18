@@ -23,7 +23,8 @@ import {
   Video,
   ChevronDown,
   Wallet,
-  Settings
+  Settings,
+  Cloud
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -72,7 +73,7 @@ export default function Layout({ children }) {
     },
     {
       name: "Let It Rain",
-      icon: Wallet,
+      icon: Cloud,
       color: { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
