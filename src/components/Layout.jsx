@@ -20,10 +20,14 @@ import {
   ShoppingCart,
   MessageSquare,
   Users,
-  Video
+  Video,
+  ChevronDown,
+  Wallet,
+  Settings
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
@@ -38,18 +42,57 @@ export default function Layout({ children }) {
     navigate("/")
   }
   
-  const navigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home },
-    { name: "community orchards", href: "/browse-orchards", icon: Users },
-    { name: "community videos", href: "/community-videos", icon: Video },
-    { name: "create orchard", href: "/create-orchard", icon: Plus },
-    { name: "my orchards", href: "/my-orchards", icon: User },
-    { name: "364yhvh orchards", href: "/364yhvh-orchards", icon: Heart },
-    { name: "chatapp", href: "/chatapp", icon: MessageSquare },
-    { name: "tithing", href: "/tithing", icon: HandHeart },
-    { name: "free-will gifting", href: "/free-will-gifting", icon: Gift },
-    ...(isAdminOrGosat() ? [{ name: "gosat's dashboard", href: "/admin/dashboard", icon: Church }] : [])
+  
+  // Primary navigation (direct buttons)
+  const primaryNavigation = [
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' } },
+    { name: "community videos", href: "/community-videos", icon: Video, color: { bg: '#ff9f9b', border: '#ff9f9b', text: '#1e293b' } },
+    { name: "create orchard", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' } }
   ]
+
+  // Grouped navigation (dropdowns)
+  const groupedNavigation = [
+    {
+      name: "My Content",
+      icon: User,
+      color: { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
+      items: [
+        { name: "My Orchards", href: "/my-orchards", icon: User },
+        { name: "Browse Community Orchards", href: "/browse-orchards", icon: Users },
+        { name: "364yhvh Orchards", href: "/364yhvh-orchards", icon: Heart }
+      ]
+    },
+    {
+      name: "Community",
+      icon: MessageSquare,
+      color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
+      items: [
+        { name: "Chat App", href: "/chatapp", icon: MessageSquare }
+      ]
+    },
+    {
+      name: "Financial",
+      icon: Wallet,
+      color: { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
+      items: [
+        { name: "Tithing", href: "/tithing", icon: HandHeart },
+        { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
+      ]
+    },
+    ...(isAdminOrGosat() ? [{
+      name: "Admin",
+      icon: Settings,
+      color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
+      items: [
+        { name: "Admin Dashboard", href: "/admin/dashboard", icon: Church }
+      ]
+    }] : [])
+  ]
+
+  // Check if current path is in any dropdown
+  const isGroupActive = (group) => {
+    return group.items.some(item => location.pathname === item.href)
+  }
   
   const isActive = (href) => location.pathname === href
   
@@ -78,46 +121,87 @@ export default function Layout({ children }) {
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-2">
-              {navigation.map((item, index) => {
+              {/* Primary Navigation Buttons */}
+              {primaryNavigation.map((item) => {
                 const Icon = item.icon
-                
-                // Direct color mapping
-                const buttonColors = {
-                  "dashboard": { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' },
-                  "community orchards": { bg: '#caffbf', border: '#caffbf', text: '#166534' },
-                  "community videos": { bg: '#ff9f9b', border: '#ff9f9b', text: '#1e293b' },
-                  "create orchard": { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' },
-                  "my orchards": { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
-                  "364yhvh orchards": { bg: '#e9d5ff', border: '#e9d5ff', text: '#7c3aed' },
-                  "chatapp": { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
-                  "tithing": { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
-                  "free-will gifting": { bg: '#8093f1', border: '#8093f1', text: '#581c87' },
-                  "gosat's dashboard": { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' }
-                }
-                
-                const colors = buttonColors[item.name] || { bg: '#f1f5f9', border: '#e2e8f0', text: '#64748b' }
-                
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                     className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
-                       hover:scale-105 active:scale-95 w-[160px] h-[40px] text-center
-                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
-                     `}
-                     style={{
-                       backgroundColor: colors.bg,
-                       borderColor: colors.border,
-                       color: colors.text,
-                       borderRadius: '21px',
-                       boxShadow: isActive(item.href)
-                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
-                     }}
-                   >
-                     <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
-                     <span className="truncate text-center leading-tight">{item.name}</span>
-                   </Link>
+                    className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
+                      hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
+                      ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                    `}
+                    style={{
+                      backgroundColor: item.color.bg,
+                      borderColor: item.color.border,
+                      color: item.color.text,
+                      borderRadius: '21px',
+                      boxShadow: isActive(item.href)
+                        ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate text-center leading-tight">{item.name}</span>
+                  </Link>
+                )
+              })}
+
+              {/* Grouped Navigation Dropdowns */}
+              {groupedNavigation.map((group) => {
+                const Icon = group.icon
+                const isGroupHighlighted = isGroupActive(group)
+                
+                return (
+                  <DropdownMenu key={group.name}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
+                          hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
+                          ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                        `}
+                        style={{
+                          backgroundColor: group.color.bg,
+                          borderColor: group.color.border,
+                          color: group.color.text,
+                          borderRadius: '21px',
+                          boxShadow: isGroupHighlighted
+                            ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
+                            : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span className="truncate text-center leading-tight">{group.name}</span>
+                        <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      className="w-56 bg-background border border-border shadow-lg z-50"
+                      align="start"
+                      sideOffset={4}
+                    >
+                      {group.items.map((item) => {
+                        const ItemIcon = item.icon
+                        return (
+                          <DropdownMenuItem key={item.name} asChild>
+                            <Link
+                              to={item.href}
+                              className={`flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer
+                                ${isActive(item.href) 
+                                  ? 'bg-accent text-accent-foreground font-medium' 
+                                  : 'hover:bg-accent hover:text-accent-foreground'
+                                }
+                              `}
+                            >
+                              <ItemIcon className="h-4 w-4" />
+                              <span>{item.name}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        )
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )
               })}
             </nav>
@@ -184,7 +268,8 @@ export default function Layout({ children }) {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-card border-t border-border">
-              {navigation.map((item) => {
+              {/* Primary Navigation */}
+              {primaryNavigation.map((item) => {
                 const Icon = item.icon
                 return (
                   <Link
@@ -202,6 +287,28 @@ export default function Layout({ children }) {
                   </Link>
                 )
               })}
+              
+              {/* Grouped Navigation - Flattened for mobile */}
+              {groupedNavigation.map((group) => (
+                group.items.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
+                        isActive(item.href)
+                          ? "bg-accent text-accent-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-primary hover:bg-accent"
+                      }`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  )
+                })
+              ))}
               
               <div className="pt-4 mt-4 border-t border-border">
                 <Link
