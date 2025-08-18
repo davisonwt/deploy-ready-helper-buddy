@@ -2,18 +2,26 @@
 import { Buffer } from 'buffer';
 import process from 'process';
 
-// Make sure globalThis has the necessary properties
-if (typeof globalThis !== 'undefined') {
+// Only add polyfills if they don't exist
+if (typeof globalThis.Buffer === 'undefined') {
   globalThis.Buffer = Buffer;
-  globalThis.process = process;
-  globalThis.global = globalThis;
 }
 
-// Also set on window for compatibility
+if (typeof globalThis.process === 'undefined') {
+  globalThis.process = process;
+}
+
+// Set up window globals only if window exists
 if (typeof window !== 'undefined') {
-  window.Buffer = Buffer;
-  window.process = process;
-  window.global = window.global ?? window;
+  if (!window.Buffer) {
+    window.Buffer = Buffer;
+  }
+  if (!window.process) {
+    window.process = process;
+  }
+  if (!window.global) {
+    window.global = globalThis;
+  }
 }
 
 export {};

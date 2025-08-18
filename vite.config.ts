@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    // Define global variables for Node.js compatibility
+    // Only define what's absolutely necessary
     global: 'globalThis',
   },
   optimizeDeps: {
