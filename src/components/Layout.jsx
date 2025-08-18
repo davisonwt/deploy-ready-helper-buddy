@@ -71,7 +71,7 @@ export default function Layout({ children }) {
       ]
     },
     {
-      name: "Financial",
+      name: "Let It Rain",
       icon: Wallet,
       color: { bg: '#ffadad', border: '#ffadad', text: '#991b1b' },
       items: [
