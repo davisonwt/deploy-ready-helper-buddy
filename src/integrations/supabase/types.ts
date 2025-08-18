@@ -560,6 +560,56 @@ export type Database = {
           },
         ]
       }
+      usdc_transactions: {
+        Row: {
+          amount: number
+          bestowal_id: string | null
+          confirmed_at: string | null
+          created_at: string
+          from_wallet: string | null
+          id: string
+          signature: string
+          status: string
+          to_wallet: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bestowal_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          from_wallet?: string | null
+          id?: string
+          signature: string
+          status?: string
+          to_wallet?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bestowal_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          from_wallet?: string | null
+          id?: string
+          signature?: string
+          status?: string
+          to_wallet?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usdc_transactions_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -587,6 +637,57 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_wallets: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wallet_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wallet_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
+      wallet_balances: {
+        Row: {
+          id: string
+          last_updated: string
+          usdc_balance: number
+          wallet_address: string
+        }
+        Insert: {
+          id?: string
+          last_updated?: string
+          usdc_balance?: number
+          wallet_address: string
+        }
+        Update: {
+          id?: string
+          last_updated?: string
+          usdc_balance?: number
+          wallet_address?: string
         }
         Relationships: []
       }

@@ -10,10 +10,17 @@ import {
   CheckCircle, 
   AlertCircle,
   Copy,
-  ExternalLink 
+  ExternalLink,
+  Wallet,
+  Plus,
+  Coins
 } from 'lucide-react';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '../hooks/use-toast';
+import { useWallet } from '../hooks/useWallet';
+import { useUSDCPayments } from '../hooks/useUSDCPayments';
+import { WalletConnection } from './WalletConnection';
+import { FiatOnRamp } from './FiatOnRamp';
 
 const PaymentModal = ({ 
   isOpen, 
@@ -23,21 +30,35 @@ const PaymentModal = ({
   orchardId, 
   pocketsCount = 0, 
   pocketNumbers = [],
-  orchardTitle = "Orchard"
+  orchardTitle = "Orchard",
+  onPaymentComplete
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('usdc');
   const [processing, setProcessing] = useState(false);
   const [eftDetails, setEftDetails] = useState(null);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
   const { toast } = useToast();
+  const { wallet, connected, balance, connectWallet, refreshBalance } = useWallet();
+  const { processBestowPart, checkSufficientBalance, loading: usdcLoading } = useUSDCPayments();
 
   const paymentMethods = [
+    {
+      id: 'usdc',
+      name: 'USDC Wallet',
+      icon: <Coins className="h-5 w-5" />,
+      description: connected ? `Balance: $${balance.toFixed(2)} USDC` : 'Ultra-low fees • Instant transfer',
+      color: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+      recommended: true,
+      available: true
+    },
     {
       id: 'paypal',
       name: 'PayPal',
       icon: '💳',
       description: 'Pay with your PayPal account',
       color: 'bg-blue-50 border-blue-200 text-blue-800',
+      available: true
     },
     {
       id: 'stripe',
@@ -45,6 +66,7 @@ const PaymentModal = ({
       icon: <CreditCard className="h-5 w-5" />,
       description: 'Visa, Mastercard, American Express',
       color: 'bg-purple-50 border-purple-200 text-purple-800',
+      available: true
     },
     {
       id: 'eft',
@@ -52,6 +74,7 @@ const PaymentModal = ({
       icon: <Building2 className="h-5 w-5" />,
       description: 'Direct bank transfer',
       color: 'bg-green-50 border-green-200 text-green-800',
+      available: true
     }
   ];
 
@@ -181,8 +204,53 @@ const PaymentModal = ({
     }
   };
 
+  const handleUSDCPayment = async () => {
+    try {
+      if (!connected) {
+        await connectWallet();
+        return;
+      }
+
+      if (!checkSufficientBalance(amount)) {
+        setShowTopUp(true);
+        return;
+      }
+
+      setProcessing(true);
+
+      const result = await processBestowPart({
+        amount,
+        orchardId,
+        pocketsCount,
+        pocketNumbers
+      });
+
+      if (result.success) {
+        setPaymentCompleted(true);
+        setTimeout(() => {
+          onClose();
+          onPaymentComplete?.();
+          setPaymentCompleted(false);
+        }, 2000);
+      }
+
+    } catch (error) {
+      console.error('USDC payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to process USDC payment",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handlePayment = () => {
     switch (selectedMethod) {
+      case 'usdc':
+        handleUSDCPayment();
+        break;
       case 'paypal':
         handlePayPalPayment();
         break;
@@ -242,19 +310,60 @@ const PaymentModal = ({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Payment Summary */}
-          <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-muted-foreground">Amount</span>
-              <span className="font-semibold text-foreground">{currency} {amount}</span>
-            </div>
-            {pocketsCount > 0 && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Pockets</span>
-                <span className="text-sm text-foreground">{pocketsCount} selected</span>
+          {/* Show Top-up Interface */}
+          {showTopUp && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground">Top-up Required</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTopUp(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            )}
-          </div>
+              
+              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                <div className="flex items-center gap-2 text-yellow-800 mb-2">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-semibold">Insufficient Balance</span>
+                </div>
+                <p className="text-sm text-yellow-700">
+                  You need ${amount.toFixed(2)} USDC but only have ${balance.toFixed(2)} USDC.
+                  Please top-up your wallet to continue.
+                </p>
+              </div>
+
+              <FiatOnRamp 
+                requiredAmount={amount - balance}
+                onSuccess={() => {
+                  refreshBalance();
+                  setShowTopUp(false);
+                  toast({
+                    title: "Balance Updated",
+                    description: "Your wallet balance has been refreshed.",
+                  });
+                }}
+              />
+            </div>
+          )}
+
+          {/* Payment Summary */}
+          {!showTopUp && (
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-muted-foreground">Amount</span>
+                <span className="font-semibold text-foreground">${amount} USDC</span>
+              </div>
+              {pocketsCount > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Pockets</span>
+                  <span className="text-sm text-foreground">{pocketsCount} selected</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* EFT Details Display */}
           {eftDetails && (
@@ -324,24 +433,58 @@ const PaymentModal = ({
             </div>
           )}
 
+          {/* Wallet Connection for USDC */}
+          {!showTopUp && selectedMethod === 'usdc' && !connected && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Connect Your Wallet</h3>
+              <WalletConnection />
+            </div>
+          )}
+
+          {/* USDC Balance Check */}
+          {!showTopUp && selectedMethod === 'usdc' && connected && !checkSufficientBalance(amount) && (
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 text-yellow-800 mb-2">
+                <AlertCircle className="h-5 w-5" />
+                <span className="font-semibold">Insufficient Balance</span>
+              </div>
+              <p className="text-sm text-yellow-700 mb-3">
+                You need ${amount.toFixed(2)} USDC but only have ${balance.toFixed(2)} USDC.
+              </p>
+              <Button
+                onClick={() => setShowTopUp(true)}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Top-up Wallet
+              </Button>
+            </div>
+          )}
+
           {/* Payment Method Selection */}
-          {!eftDetails && (
+          {!eftDetails && !showTopUp && (
             <>
               <div>
                 <h3 className="font-semibold text-foreground mb-3">Choose Payment Method</h3>
                 <div className="space-y-3">
-                  {paymentMethods.map((method) => (
+                  {paymentMethods.filter(method => method.available).map((method) => (
                     <div
                       key={method.id}
                       className={`
-                        p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                        relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
                         ${selectedMethod === method.id 
                           ? method.color + ' border-current' 
                           : 'bg-background border-border hover:border-primary/30'
                         }
+                        ${method.id === 'usdc' && !connected ? 'opacity-75' : ''}
                       `}
                       onClick={() => setSelectedMethod(method.id)}
                     >
+                      {method.recommended && (
+                        <Badge className="absolute -top-2 -right-2 bg-emerald-500 text-white">
+                          Recommended
+                        </Badge>
+                      )}
                       <div className="flex items-center gap-3">
                         <div className="text-lg">
                           {typeof method.icon === 'string' ? method.icon : method.icon}
@@ -364,17 +507,23 @@ const PaymentModal = ({
                 <Button
                   variant="outline"
                   onClick={onClose}
-                  disabled={processing}
+                  disabled={processing || usdcLoading}
                   className="flex-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handlePayment}
-                  disabled={!selectedMethod || processing}
+                  disabled={
+                    !selectedMethod || 
+                    processing || 
+                    usdcLoading ||
+                    (selectedMethod === 'usdc' && !connected) ||
+                    (selectedMethod === 'usdc' && connected && !checkSufficientBalance(amount))
+                  }
                   className="flex-1 bg-primary hover:bg-primary/90"
                 >
-                  {processing ? (
+                  {processing || usdcLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Processing...
@@ -382,10 +531,20 @@ const PaymentModal = ({
                   ) : paymentCompleted ? (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Redirecting...
+                      Payment Complete!
+                    </>
+                  ) : selectedMethod === 'usdc' && !connected ? (
+                    <>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Connect Wallet
+                    </>
+                  ) : selectedMethod === 'usdc' && connected && !checkSufficientBalance(amount) ? (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Top-up Required
                     </>
                   ) : (
-                    `Pay ${currency} ${amount}`
+                    `Pay $${amount} ${selectedMethod === 'usdc' ? 'USDC' : currency}`
                   )}
                 </Button>
               </div>
