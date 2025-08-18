@@ -14,7 +14,7 @@ import { GenerateContentIdeasForm } from '@/components/ai/GenerateContentIdeasFo
 import { AICreationsList } from '@/components/ai/AICreationsList';
 import { ExampleTemplates } from '@/components/ai/ExampleTemplates';
 
-export const AIAssistantPage = () => {
+export default function AIAssistantPage() {
   const [activeTab, setActiveTab] = useState('scripts');
   const { usage, limit, getCurrentUsage } = useAIAssistant();
   const { isAuthenticated } = useAuth();
@@ -212,4 +212,4 @@ export const AIAssistantPage = () => {
       </Tabs>
     </div>
   );
-};
+}
