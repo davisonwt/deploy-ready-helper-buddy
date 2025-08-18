@@ -36,6 +36,7 @@ import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
+import AIAssistantPage from "./pages/AIAssistantPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -219,7 +220,16 @@ const App = () => (
                     <CommunityVideosPage />
                   </Layout>
                 </ProtectedRoute>
-              } />
+               } />
+
+               {/* AI Assistant */}
+               <Route path="/ai-assistant" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <AIAssistantPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
 
               {/* Support Us - Phantom Wallet Payments */}
               <Route path="/support-us" element={
