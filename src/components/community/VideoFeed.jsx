@@ -104,9 +104,6 @@ export default function VideoFeed() {
         </div>
       ) : videos.length === 0 ? (
         <div className="text-center py-12">
-          <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-            <Search className="h-8 w-8 text-muted-foreground" />
-          </div>
           <h3 className="text-lg font-semibold mb-2 text-slate-900" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>No videos found</h3>
           <p className="mb-4 text-slate-800 font-medium" style={{textShadow: '0.5px 0.5px 0 white, -0.5px -0.5px 0 white, 0.5px -0.5px 0 white, -0.5px 0.5px 0 white'}}>
             {searchQuery 
