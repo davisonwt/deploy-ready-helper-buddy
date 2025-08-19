@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useBillingInfo } from '../hooks/useBillingInfo'
+import { useBasket } from '../hooks/useBasket'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +33,7 @@ import { useFileUpload } from '../hooks/useFileUpload.jsx'
 export default function FreeWillGiftingPage() {
   const { user } = useAuth()
   const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
+  const { addToBasket } = useBasket()
   const navigate = useNavigate()
   const { toast } = useToast()
   const [giftType, setGiftType] = useState('rain')
@@ -59,33 +61,34 @@ export default function FreeWillGiftingPage() {
     setLoading(true)
     
     try {
-      const giftData = { 
-        giftType, 
-        amount, 
-        recipient, 
-        message, 
-        frequency 
+      // Add gift item to basket
+      const giftItem = {
+        orchardId: 'free-will-gift',
+        orchardTitle: `Free-Will ${giftType.charAt(0).toUpperCase() + giftType.slice(1)} Gift`,
+        amount: parseFloat(amount),
+        currency: 'USDC',
+        pockets: [],
+        type: 'free_will_gift',
+        recipient: recipient || 'Community Pool',
+        message: message,
+        frequency: frequency
       }
       
-      // Check if user has complete billing info
-      if (!hasCompleteBillingInfo) {
-        // Show billing form first
-        setPendingGiftData(giftData)
-        setShowBillingForm(true)
-      } else {
-        // Proceed directly to payment
-        setPendingGiftData(giftData)
-        setShowPaymentModal(true)
-      }
+      addToBasket(giftItem)
+      
+      // Reset form
+      setAmount("")
+      setRecipient("")
+      setMessage("")
       
       toast({
-        title: "Gift Prepared",
-        description: "Your free-will gift is ready to be processed."
+        title: "Gift Added to Basket",
+        description: "Your free-will gift has been added to your basket! Please proceed to checkout."
       })
     } catch (error) {
       toast({
         title: "Error",
-        description: "There was an error preparing your gift.",
+        description: "There was an error adding your gift to the basket.",
         variant: "destructive"
       })
     } finally {
@@ -379,7 +382,7 @@ export default function FreeWillGiftingPage() {
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        Send Gift
+                        Add Gift to Basket
                       </>
                     )}
                   </Button>
