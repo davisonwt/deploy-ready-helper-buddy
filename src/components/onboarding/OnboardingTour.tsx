@@ -28,7 +28,7 @@ export function OnboardingTour({ isVisible, onClose, onComplete }: OnboardingTou
     {
       id: "welcome",
       title: "Welcome to Sow2Grow!",
-      description: "Your gateway to 364yhvh community farm's digital mall - sow2grow. Let's take a tour to get you started.",
+      description: "Your gateway to 364yhvh community farm's digital mall - sow2grow. Let's take a quick tour to get you started.",
       icon: <Users className="h-8 w-8 text-primary" />,
     },
     {
