@@ -372,7 +372,8 @@ export default function FreeWillGiftingPage() {
                   <Button
                     type="submit"
                     disabled={loading || !amount}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 text-lg"
+                    onClick={() => console.log('🎁 Gift button clicked! Amount:', amount, 'Type:', giftType)}
                   >
                     {loading ? (
                       <>
