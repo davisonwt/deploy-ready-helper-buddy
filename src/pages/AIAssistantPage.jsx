@@ -15,7 +15,7 @@ import { AICreationsList } from '@/components/ai/AICreationsList';
 import { ExampleTemplates } from '@/components/ai/ExampleTemplates';
 
 export default function AIAssistantPage() {
-  const [activeTab, setActiveTab] = useState('thumbnails');
+  const [activeTab, setActiveTab] = useState('scripts');
   const { usage, limit, getCurrentUsage } = useAIAssistant();
   const { isAuthenticated } = useAuth();
 
@@ -97,7 +97,15 @@ export default function AIAssistantPage() {
 
       {/* Main content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="scripts" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            Scripts
+          </TabsTrigger>
+          <TabsTrigger value="tips" className="flex items-center gap-2">
+            <TrendingUp className="w-4 w-4" />
+            Tips
+          </TabsTrigger>
           <TabsTrigger value="thumbnails" className="flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Thumbnails
@@ -112,6 +120,41 @@ export default function AIAssistantPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="scripts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Generate Video Script
+              </CardTitle>
+              <CardDescription>
+                Create engaging scripts for 30-60 second promotional videos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GenerateScriptForm />
+            </CardContent>
+          </Card>
+          <ExampleTemplates type="script" />
+        </TabsContent>
+
+        <TabsContent value="tips" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Generate Marketing Tips
+              </CardTitle>
+              <CardDescription>
+                Get actionable marketing strategies for your products
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GenerateMarketingTipsForm />
+            </CardContent>
+          </Card>
+          <ExampleTemplates type="tips" />
+        </TabsContent>
 
         <TabsContent value="thumbnails" className="space-y-6">
           <Card>
