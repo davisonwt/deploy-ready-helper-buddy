@@ -58,6 +58,9 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
   const [lastCommand, setLastCommand] = useState<string>("")
   const [hasPermission, setHasPermission] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
+  const [showManualInput, setShowManualInput] = useState(false)
+  const [manualCommand, setManualCommand] = useState("")
+  const [isInitializing, setIsInitializing] = useState(false)
   const { toast } = useToast()
 
   // Check browser support and initialize recognition
@@ -78,27 +81,27 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
       recognitionInstance.onstart = () => {
         console.log('VoiceCommands: Recognition started')
         setIsListening(true)
+        setIsInitializing(false)
       }
 
       recognitionInstance.onend = () => {
         console.log('VoiceCommands: Recognition ended')
         setIsListening(false)
+        setIsInitializing(false)
         
         // Only restart if still enabled and has permission, and no network errors
-        if (isEnabled && hasPermission) {
+        if (isEnabled && hasPermission && !isInitializing) {
           setTimeout(() => {
-            try {
-              console.log('VoiceCommands: Attempting to restart recognition')
-              recognitionInstance.start()
-            } catch (error) {
-              console.error('VoiceCommands: Restart failed:', error)
-              // If restart fails multiple times, disable temporarily
-              if (error.message && error.message.includes('already')) {
-                console.log('VoiceCommands: Recognition already running')
-                return
+            if (isEnabled && hasPermission && !isListening) {
+              try {
+                console.log('VoiceCommands: Attempting to restart recognition')
+                recognitionInstance.start()
+              } catch (error) {
+                console.error('VoiceCommands: Restart failed:', error)
+                setShowManualInput(true)
               }
             }
-          }, 1500) // Increased delay to prevent rapid restarts
+          }, 2000) // Increased delay
         }
       }
 
@@ -186,8 +189,9 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
   useEffect(() => {
     console.log('VoiceCommands: isEnabled changed:', isEnabled, 'hasPermission:', hasPermission)
     
-    if (recognition && hasPermission) {
-      if (isEnabled && !isListening) {
+    if (recognition && hasPermission && isSupported) {
+      if (isEnabled && !isListening && !isInitializing) {
+        setIsInitializing(true)
         try {
           console.log('VoiceCommands: Starting recognition')
           recognition.start()
@@ -197,28 +201,32 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
           })
         } catch (error) {
           console.error('VoiceCommands: Start failed:', error)
+          setIsInitializing(false)
           toast({
-            title: "Failed to Start",
-            description: "Could not start voice recognition. Try again.",
+            title: "Could not start voice recognition",
+            description: "Try manual input or check browser settings",
             variant: "destructive"
           })
+          setShowManualInput(true)
         }
       } else if (!isEnabled && isListening) {
         console.log('VoiceCommands: Stopping recognition')
         recognition.stop()
+        setIsInitializing(false)
         toast({
           title: "Voice Commands Disabled", 
           description: "Voice commands are now turned off",
         })
       }
-    } else if (isEnabled && !hasPermission) {
+    } else if (isEnabled && (!hasPermission || !isSupported)) {
       toast({
-        title: "Permission Required",
-        description: "Please allow microphone access first",
+        title: "Voice Commands Unavailable",
+        description: "Using manual input instead",
         variant: "destructive"
       })
+      setShowManualInput(true)
     }
-  }, [isEnabled, recognition, hasPermission])
+  }, [isEnabled, recognition, hasPermission, isSupported])
 
   const handleVoiceCommand = (command: string) => {
     const trimmedCommand = command.trim()
@@ -292,11 +300,7 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
 
   const toggleListening = () => {
     if (!isSupported) {
-      toast({
-        title: "Not Supported",
-        description: "Voice commands are not supported in this browser",
-        variant: "destructive"
-      })
+      setShowManualInput(!showManualInput)
       return
     }
     
@@ -306,20 +310,49 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
         description: "Please allow microphone access to use voice commands",
         variant: "destructive"
       })
+      setShowManualInput(true)
       return
     }
     
     onToggle()
   }
 
+  const handleManualCommand = () => {
+    if (manualCommand.trim()) {
+      console.log('VoiceCommands: Manual command:', manualCommand)
+      setLastCommand(manualCommand)
+      handleVoiceCommand(manualCommand)
+      setManualCommand("")
+    }
+  }
+
   if (!isSupported) {
     return (
       <div className="fixed bottom-20 left-6 z-40">
         <Card className="w-80 shadow-lg">
-          <CardContent className="p-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="flex items-center space-x-2">
+                <Mic className="h-4 w-4" />
+                <span>Manual Commands</span>
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Voice commands are not supported in this browser
+              Voice commands not supported. Use manual input:
             </p>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={manualCommand}
+                onChange={(e) => setManualCommand(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleManualCommand()}
+                placeholder="Type command..."
+                className="flex-1 px-3 py-2 text-sm border rounded"
+              />
+              <Button onClick={handleManualCommand} size="sm">Send</Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -335,25 +368,42 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
               <Volume2 className="h-4 w-4" />
               <span>Voice Commands</span>
             </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleListening}
-              className={`hover-scale ${isEnabled ? 'text-green-600' : 'text-muted-foreground'}`}
-            >
-              {isEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-            </Button>
+            <div className="flex space-x-1">
+              {!isSupported || !hasPermission ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowManualInput(!showManualInput)}
+                  className="hover-scale text-blue-600"
+                >
+                  ⌨️
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleListening}
+                className={`hover-scale ${isEnabled ? 'text-green-600' : 'text-muted-foreground'}`}
+                disabled={isInitializing}
+              >
+                {isInitializing ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : isEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Status:</span>
             <Badge variant={
+              isInitializing ? "secondary" :
               !hasPermission ? "destructive" : 
               isListening ? "default" : 
               isEnabled ? "secondary" : "outline"
             }>
-              {!hasPermission ? "No Permission" :
+              {isInitializing ? "Starting..." :
+               !hasPermission ? "No Permission" :
                isListening ? "Listening..." : 
                isEnabled ? "Ready" : "Disabled"}
             </Badge>
@@ -363,6 +413,23 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
             <div className="space-y-1">
               <span className="text-sm text-muted-foreground">Last command:</span>
               <p className="text-xs bg-muted p-2 rounded">{lastCommand}</p>
+            </div>
+          )}
+          
+          {showManualInput && (
+            <div className="space-y-2">
+              <span className="text-sm font-medium">Manual Input:</span>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={manualCommand}
+                  onChange={(e) => setManualCommand(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleManualCommand()}
+                  placeholder="Type command..."
+                  className="flex-1 px-3 py-2 text-sm border rounded"
+                />
+                <Button onClick={handleManualCommand} size="sm">Send</Button>
+              </div>
             </div>
           )}
           
