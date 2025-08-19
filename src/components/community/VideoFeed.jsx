@@ -45,7 +45,7 @@ export default function VideoFeed() {
               <SelectValue />
             </div>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-background border border-border shadow-lg z-50">
             <SelectItem value="newest">
               Newest First
             </SelectItem>
@@ -67,10 +67,10 @@ export default function VideoFeed() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="aspect-[9/16] bg-muted rounded-lg mb-3" />
+              <div className="aspect-[9/16] bg-muted/30 rounded-lg mb-3 border border-muted" />
               <div className="space-y-2">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-1/2" />
+                <div className="h-4 bg-muted/30 rounded w-3/4 border border-muted" />
+                <div className="h-3 bg-muted/30 rounded w-1/2 border border-muted" />
               </div>
             </div>
           ))}
