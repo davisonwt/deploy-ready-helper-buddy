@@ -12,9 +12,25 @@ export default function CommunityVideosPage() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Video */}
+      <div className="fixed inset-0 w-full h-full z-0">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover opacity-20"
+        >
+          <source src="/orchards-strip2.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-background/80" />
+      </div>
+      
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background/50 border-b backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
@@ -170,8 +186,9 @@ export default function CommunityVideosPage() {
           </Card>
         )}
 
-        {/* Video Feed */}
-        <VideoFeed />
+          {/* Video Feed */}
+          <VideoFeed />
+        </div>
       </div>
 
       {/* Upload Modal */}
