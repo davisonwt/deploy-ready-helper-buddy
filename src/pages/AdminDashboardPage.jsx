@@ -21,7 +21,9 @@ import {
   Sprout,
   TreePine,
   Eye,
-  ArrowRight
+  ArrowRight,
+  Check,
+  X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
@@ -90,6 +92,32 @@ export default function AdminDashboardPage() {
       toast.error('Failed to load seeds')
     } finally {
       setSeedsLoading(false)
+    }
+  }
+
+  const approveSeed = (seedId) => {
+    // Navigate to create orchard page with seed data for approval
+    navigate(`/create-orchard?from_seed=${seedId}&approve=true`)
+  }
+
+  const deleteSeed = async (seedId, seedTitle) => {
+    if (!window.confirm(`Are you sure you want to delete the seed "${seedTitle}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('seeds')
+        .delete()
+        .eq('id', seedId)
+
+      if (error) throw error
+
+      toast.success('Seed deleted successfully')
+      loadSeeds() // Reload seeds list
+    } catch (error) {
+      console.error('Error deleting seed:', error)
+      toast.error('Failed to delete seed')
     }
   }
 
@@ -404,22 +432,46 @@ export default function AdminDashboardPage() {
                           </div>
                           
                           {/* Actions */}
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              className="flex-1"
-                              onClick={() => convertSeedToOrchard(seed.id)}
-                            >
-                              <TreePine className="h-3 w-3 mr-1" />
-                              Convert to Orchard
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Button>
+                          <div className="flex flex-col space-y-2">
+                            {/* Primary Actions */}
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                className="flex-1"
+                                onClick={() => approveSeed(seed.id)}
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => deleteSeed(seed.id, seed.title)}
+                                className="flex-1"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                            {/* Secondary Actions */}
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => convertSeedToOrchard(seed.id)}
+                              >
+                                <TreePine className="h-3 w-3 mr-1" />
+                                Convert
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
