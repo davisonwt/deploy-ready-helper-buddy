@@ -147,6 +147,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bestowals_bestower_profile_id_fkey"
+            columns: ["bestower_profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bestowals_orchard_id_fkey"
             columns: ["orchard_id"]
             isOneToOne: false
@@ -306,6 +313,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_messages_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_participants: {
@@ -342,6 +356,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -455,6 +476,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "community_videos_uploader_profile_id_fkey"
+            columns: ["uploader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       orchards: {
@@ -560,6 +588,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orchards_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -834,6 +869,13 @@ export type Database = {
             columns: ["gifter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "seeds_gifter_id_fkey"
+            columns: ["gifter_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
             referencedColumns: ["user_id"]
           },
         ]
@@ -1144,6 +1186,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "video_comments_commenter_profile_id_fkey"
+            columns: ["commenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "secure_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_comments_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -1210,7 +1259,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      secure_profiles: {
+        Row: {
+          avatar_url: string | null
+          billing_address_masked: string | null
+          billing_country: string | null
+          billing_email_masked: string | null
+          billing_phone_masked: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          has_complete_billing_info: boolean | null
+          id: string | null
+          location: string | null
+          preferred_currency: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          billing_address_masked?: never
+          billing_country?: string | null
+          billing_email_masked?: never
+          billing_phone_masked?: never
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          has_complete_billing_info?: boolean | null
+          id?: string | null
+          location?: string | null
+          preferred_currency?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          billing_address_masked?: never
+          billing_country?: string | null
+          billing_email_masked?: never
+          billing_phone_masked?: never
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          has_complete_billing_info?: boolean | null
+          id?: string | null
+          location?: string | null
+          preferred_currency?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_achievement: {
@@ -1298,6 +1394,14 @@ export type Database = {
       mask_phone: {
         Args: { phone_number: string }
         Returns: string
+      }
+      migrate_billing_data_for_user: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      remove_sensitive_profile_data: {
+        Args: { target_user_id: string }
+        Returns: boolean
       }
       search_user_profiles: {
         Args: { search_term: string }
