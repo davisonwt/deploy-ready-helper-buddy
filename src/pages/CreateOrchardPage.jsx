@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useCurrency } from "../hooks/useCurrency"
 import { useOrchards } from "../hooks/useOrchards"
 import { useFileUpload } from "../hooks/useFileUpload.jsx"
+import { supabase } from "../integrations/supabase/client"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -32,11 +33,15 @@ import {
 
 export default function CreateOrchardPage({ isEdit = false }) {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currency } = useCurrency()
   const { createOrchard, updateOrchard, fetchOrchardById } = useOrchards()
   const { uploadFile, uploadMultipleFiles, uploading } = useFileUpload()
+  
+  const seedId = searchParams.get('from_seed')
+  const isApproval = searchParams.get('approve') === 'true'
   
   const [loadingData, setLoadingData] = useState(isEdit)
   const [saving, setSaving] = useState(false)
@@ -73,12 +78,14 @@ export default function CreateOrchardPage({ isEdit = false }) {
     }
   }, [currency])
   
-  // Load existing orchard data if editing
+  // Load existing orchard data if editing, or seed data if creating from seed
   useEffect(() => {
     if (isEdit && id) {
       loadOrchardData()
+    } else if (seedId) {
+      loadSeedData()
     }
-  }, [isEdit, id])
+  }, [isEdit, id, seedId])
   
   const loadOrchardData = async () => {
     try {
@@ -119,6 +126,57 @@ export default function CreateOrchardPage({ isEdit = false }) {
     } catch (error) {
       setError("Failed to load orchard data")
       console.error("Load orchard error:", error)
+    } finally {
+      setLoadingData(false)
+    }
+  }
+  
+  const loadSeedData = async () => {
+    try {
+      setLoadingData(true)
+      console.log('Loading seed data for seedId:', seedId)
+      
+      const { data: seed, error } = await supabase
+        .from('seeds')
+        .select('*')
+        .eq('id', seedId)
+        .single()
+      
+      if (error) {
+        console.error('Error loading seed:', error)
+        throw error
+      }
+      
+      if (seed) {
+        console.log('Seed data loaded:', seed)
+        
+        // Pre-fill form with seed data
+        setFormData(prev => ({
+          ...prev,
+          title: seed.title || "",
+          description: seed.description || "",
+          category: seed.category || "",
+          // Keep default values for financial fields - gosat will set these
+          seed_value: "",
+          pocket_price: "150",
+          video_url: seed.video_url || ""
+        }))
+        
+        // Pre-fill images if they exist
+        if (seed.images && seed.images.length > 0) {
+          setSelectedImages(seed.images.map((img, index) => ({
+            id: index,
+            url: img,
+            preview: img,
+            isExisting: true
+          })))
+        }
+        
+        console.log('Form pre-filled with seed data')
+      }
+    } catch (error) {
+      console.error('Error loading seed data:', error)
+      setError("Failed to load seed data")
     } finally {
       setLoadingData(false)
     }
@@ -260,6 +318,26 @@ export default function CreateOrchardPage({ isEdit = false }) {
       }
 
       if (result.success) {
+        // If created from a seed, delete the seed after successful orchard creation
+        if (!isEdit && seedId) {
+          try {
+            const { error: deleteError } = await supabase
+              .from('seeds')
+              .delete()
+              .eq('id', seedId)
+            
+            if (deleteError) {
+              console.error('Error deleting seed:', deleteError)
+              // Don't fail the orchard creation, just log the error
+            } else {
+              console.log('Seed deleted successfully after orchard creation')
+            }
+          } catch (deleteErr) {
+            console.error('Error deleting seed:', deleteErr)
+            // Don't fail the orchard creation
+          }
+        }
+        
         if (isEdit) {
           navigate("/my-orchards")
         } else {
