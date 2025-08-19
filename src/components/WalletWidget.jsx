@@ -24,7 +24,7 @@ export function WalletWidget() {
 
   if (!connected) {
     return (
-      <Card className="w-full">
+      <Card className="w-full bg-white/80 border-white/40 shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
@@ -40,7 +40,7 @@ export function WalletWidget() {
 
   if (showTopUp) {
     return (
-      <Card className="w-full">
+      <Card className="w-full bg-white/80 border-white/40 shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export function WalletWidget() {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-white/80 border-white/40 shadow-xl">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
