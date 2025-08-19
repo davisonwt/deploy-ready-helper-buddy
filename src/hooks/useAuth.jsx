@@ -109,17 +109,22 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`,
-      })
+      // Use our custom password reset function instead of Supabase's built-in
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
+      });
       
       if (error) {
-        return { success: false, error: error.message }
+        return { success: false, error: error.message };
       }
       
-      return { success: true }
+      if (data?.error) {
+        return { success: false, error: data.error };
+      }
+      
+      return { success: true, message: data?.message || 'Password reset email sent!' };
     } catch (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: error.message };
     }
   }
 
