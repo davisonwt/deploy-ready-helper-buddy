@@ -19,6 +19,7 @@ import { VideoCreationWizard } from '@/components/ai/VideoCreationWizard';
 
 export default function AIAssistantPage() {
   const [activeTab, setActiveTab] = useState('thumbnails');
+  const [videoActiveTab, setVideoActiveTab] = useState('wizard');
   const { usage, limit, getCurrentUsage } = useAIAssistant();
   const { isAuthenticated } = useAuth();
 
@@ -185,7 +186,7 @@ export default function AIAssistantPage() {
         </TabsContent>
 
         <TabsContent value="videos" className="space-y-6">
-          <Tabs defaultValue="wizard" className="space-y-6">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Video className="w-6 h-6" />
@@ -193,25 +194,25 @@ export default function AIAssistantPage() {
               </h2>
               <div className="flex items-center gap-2">
                 <Button 
-                  variant="outline" 
+                  variant={videoActiveTab === 'wizard' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => document.querySelector('[value="wizard"]').click()}
+                  onClick={() => setVideoActiveTab('wizard')}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Creation Wizard
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant={videoActiveTab === 'upload' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => document.querySelector('[value="upload"]').click()}
+                  onClick={() => setVideoActiveTab('upload')}
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload & Tools
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant={videoActiveTab === 'manage' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => document.querySelector('[value="manage"]').click()}
+                  onClick={() => setVideoActiveTab('manage')}
                 >
                   <Video className="w-4 h-4 mr-2" />
                   My Videos
@@ -219,38 +220,14 @@ export default function AIAssistantPage() {
               </div>
             </div>
             
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="wizard" className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Creation Wizard
-              </TabsTrigger>
-              <TabsTrigger value="upload" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                Upload & Tools
-              </TabsTrigger>
-              <TabsTrigger value="manage" className="flex items-center gap-2">
-                <Video className="w-4 h-4" />
-                My Videos
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="wizard">
-              <VideoCreationWizard />
-            </TabsContent>
-            
-            <TabsContent value="upload">
+            {videoActiveTab === 'wizard' && <VideoCreationWizard />}
+            {videoActiveTab === 'upload' && (
               <VideoUploadForm onVideoUploaded={() => {
-                // Switch to manage tab after upload
-                setTimeout(() => {
-                  document.querySelector('[value="manage"]').click();
-                }, 1000);
+                setVideoActiveTab('manage');
               }} />
-            </TabsContent>
-            
-            <TabsContent value="manage">
-              <VideoMarketingDashboard />
-            </TabsContent>
-          </Tabs>
+            )}
+            {videoActiveTab === 'manage' && <VideoMarketingDashboard />}
+          </div>
         </TabsContent>
 
         <TabsContent value="library">
