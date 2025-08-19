@@ -23,9 +23,10 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
 
     try {
       setLoading(true);
+      // Only select safe public profile data - no sensitive info
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, display_name, avatar_url, created_at') // Only safe fields
         .neq('user_id', user.id)
         .order('display_name');
 
