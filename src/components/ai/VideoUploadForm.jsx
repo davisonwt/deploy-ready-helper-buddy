@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Upload, Video, FileText, Wand2, Play } from 'lucide-react';
+import { Upload, Video, FileText, Wand2, Play, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { AIVideoGenerator } from './AIVideoGenerator';
+import { SmartHashtagGenerator } from './SmartHashtagGenerator';
 
 export const VideoUploadForm = ({ onVideoUploaded }) => {
   const [file, setFile] = useState(null);
@@ -163,158 +166,220 @@ export const VideoUploadForm = ({ onVideoUploaded }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Video className="w-5 h-5" />
-            Upload Marketing Video
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="video-upload">Select Video File</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              {!file ? (
+    <Tabs defaultValue="upload" className="space-y-6">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Video className="w-6 h-6" />
+          Video Marketing Toolkit
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => document.querySelector('[value="upload"]').click()}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => document.querySelector('[value="generate"]').click()}
+          >
+            <Wand2 className="w-4 h-4 mr-2" />
+            AI Generate
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => document.querySelector('[value="hashtags"]').click()}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Hashtags
+          </Button>
+        </div>
+      </div>
+      
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="upload" className="flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Upload Video
+        </TabsTrigger>
+        <TabsTrigger value="generate" className="flex items-center gap-2">
+          <Wand2 className="w-4 h-4" />
+          AI Generate
+        </TabsTrigger>
+        <TabsTrigger value="hashtags" className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          Smart Hashtags
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Upload Tab */}
+      <TabsContent value="upload" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Upload Marketing Video
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="video-upload">Select Video File</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                {!file ? (
+                  <>
+                    <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <input
+                      id="video-upload"
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('video-upload').click()}
+                    >
+                      Choose Video File
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-2">
+                      MP4, MOV, AVI up to 100MB
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    {previewUrl && (
+                      <video
+                        src={previewUrl}
+                        controls
+                        className="w-full max-w-md mx-auto rounded-lg"
+                      />
+                    )}
+                    <p className="text-sm text-gray-600">
+                      {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFile(null);
+                        setPreviewUrl(null);
+                      }}
+                    >
+                      Change File
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Video Details */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Video Title *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter an engaging title for your video"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what your video is about and why it will attract bestowers"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="e.g., marketing, product, demo, tutorial"
+                />
+              </div>
+            </div>
+
+            {/* Upload Progress */}
+            {uploading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Uploading video...</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} />
+                {generatingContent && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <Wand2 className="w-4 h-4 animate-spin" />
+                    Generating AI marketing content...
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <Button
+              onClick={handleUpload}
+              disabled={!file || !title.trim() || uploading}
+              className="w-full"
+            >
+              {uploading ? (
                 <>
-                  <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <input
-                    id="video-upload"
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById('video-upload').click()}
-                  >
-                    Choose Video File
-                  </Button>
-                  <p className="text-sm text-gray-500 mt-2">
-                    MP4, MOV, AVI up to 100MB
-                  </p>
+                  <Upload className="w-4 h-4 mr-2 animate-pulse" />
+                  Uploading & Generating Content...
                 </>
               ) : (
-                <div className="space-y-4">
-                  {previewUrl && (
-                    <video
-                      src={previewUrl}
-                      controls
-                      className="w-full max-w-md mx-auto rounded-lg"
-                    />
-                  )}
-                  <p className="text-sm text-gray-600">
-                    {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFile(null);
-                      setPreviewUrl(null);
-                    }}
-                  >
-                    Change File
-                  </Button>
-                </div>
+                <>
+                  <Video className="w-4 h-4 mr-2" />
+                  Upload Video & Generate Marketing Content
+                </>
               )}
-            </div>
-          </div>
+            </Button>
+          </CardContent>
+        </Card>
 
-          {/* Video Details */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Video Title *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter an engaging title for your video"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what your video is about and why it will attract bestowers"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="e.g., marketing, product, demo, tutorial"
-              />
-            </div>
-          </div>
-
-          {/* Upload Progress */}
-          {uploading && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Uploading video...</span>
-                <span>{Math.round(progress)}%</span>
+        {/* Upload Info */}
+        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Upload className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-purple-900 mb-1">Upload & Optimize</h3>
+                <p className="text-sm text-purple-700">
+                  Upload your existing videos and our AI will enhance them with:
+                </p>
+                <ul className="text-sm text-purple-600 mt-2 space-y-1">
+                  <li>• Platform-specific descriptions</li>
+                  <li>• Trending hashtags for maximum reach</li>
+                  <li>• Sow2Grow marketplace optimization</li>
+                  <li>• Bestower attraction strategies</li>
+                </ul>
               </div>
-              <Progress value={progress} />
-              {generatingContent && (
-                <div className="flex items-center gap-2 text-sm text-blue-600">
-                  <Wand2 className="w-4 h-4 animate-spin" />
-                  Generating AI marketing content...
-                </div>
-              )}
             </div>
-          )}
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-          {/* Upload Button */}
-          <Button
-            onClick={handleUpload}
-            disabled={!file || !title.trim() || uploading}
-            className="w-full"
-          >
-            {uploading ? (
-              <>
-                <Upload className="w-4 h-4 mr-2 animate-pulse" />
-                Uploading & Generating Content...
-              </>
-            ) : (
-              <>
-                <Video className="w-4 h-4 mr-2" />
-                Upload Video & Generate Marketing Content
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* AI Generate Tab */}
+      <TabsContent value="generate">
+        <AIVideoGenerator onVideoGenerated={onVideoUploaded} />
+      </TabsContent>
 
-      {/* AI Features Info */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Wand2 className="w-5 h-5 text-purple-600 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-purple-900 mb-1">AI Marketing Magic</h3>
-              <p className="text-sm text-purple-700">
-                When you upload a video, our AI will automatically generate:
-              </p>
-              <ul className="text-sm text-purple-600 mt-2 space-y-1">
-                <li>• Engaging descriptions for different platforms</li>
-                <li>• Relevant hashtags to maximize reach</li>
-                <li>• Platform-specific optimization tips</li>
-                <li>• Content scheduling suggestions</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      {/* Smart Hashtags Tab */}
+      <TabsContent value="hashtags">
+        <SmartHashtagGenerator productDescription={description} />
+      </TabsContent>
+    </Tabs>
   );
 };
