@@ -18,7 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 
 // Platform wallet address (replace with your actual platform wallet)
-const PLATFORM_WALLET = new PublicKey('YourPlatformWalletAddressHere');
+// Using a valid Solana address as placeholder - replace with your actual platform wallet
+const PLATFORM_WALLET_ADDRESS = '11111111111111111111111111111112'; // System Program ID as placeholder
+const PLATFORM_WALLET = new PublicKey(PLATFORM_WALLET_ADDRESS);
 
 // Connection to Solana mainnet
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
