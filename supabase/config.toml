@@ -55,3 +55,12 @@ verify_jwt = false
 
 [functions.send_brevo_email]
 verify_jwt = false
+
+[functions.send-resend-email]
+verify_jwt = false
+
+[functions.send-auth-email]
+verify_jwt = false
+
+[functions.send-bestowal-notifications]
+verify_jwt = false
