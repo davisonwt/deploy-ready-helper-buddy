@@ -39,6 +39,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
+import BasketPage from "./pages/BasketPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -256,7 +257,7 @@ const App = () => (
               <Route path="/basket" element={
                 <ProtectedRoute>
                   <Layout>
-                    <AnimatedOrchardPage />
+                    <BasketPage />
                   </Layout>
                 </ProtectedRoute>
               } />
