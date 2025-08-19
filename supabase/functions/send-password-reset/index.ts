@@ -117,32 +117,29 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       `;
 
-      // Try to send via Resend using our existing function
+      // Try to send via our Supabase function instead of direct Resend call
       try {
-        const resendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-resend-email`;
+        // Create Supabase client to call our own function
+        const supabaseClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
         
-        const emailResponse = await fetch(resendUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
-          },
-          body: JSON.stringify({
+        const { data: emailResult, error: emailError } = await supabaseClient.functions.invoke('send-resend-email', {
+          body: {
             to: [email],
             subject: "Password Reset Request - Sow2Grow",
             html: customEmailHtml,
             from: "noreply@sow2grow.online"
-          })
+          }
         });
 
-        const emailResult = await emailResponse.json();
-        
-        if (!emailResponse.ok) {
-          console.error('Resend API failed:', emailResult);
-          throw new Error(`Resend failed: ${JSON.stringify(emailResult)}`);
+        if (emailError) {
+          console.error('Resend function failed:', emailError);
+          throw new Error(`Email function failed: ${emailError.message}`);
         }
 
-        console.log('Password reset email sent via Resend:', emailResult);
+        console.log('Password reset email sent via Resend function:', emailResult);
       } catch (customEmailError) {
         console.error('Custom email also failed:', customEmailError);
         throw new Error(`Failed to send password reset email: ${customEmailError.message}`);
