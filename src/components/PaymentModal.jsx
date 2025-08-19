@@ -521,7 +521,7 @@ const PaymentModal = ({
                     (selectedMethod === 'usdc' && !connected) ||
                     (selectedMethod === 'usdc' && connected && !checkSufficientBalance(amount))
                   }
-                  className="flex-1 bg-primary hover:bg-primary/90"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
                 >
                   {processing || usdcLoading ? (
                     <>
@@ -531,7 +531,7 @@ const PaymentModal = ({
                   ) : paymentCompleted ? (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Payment Complete!
+                      Payment Complete! 🌧️
                     </>
                   ) : selectedMethod === 'usdc' && !connected ? (
                     <>
@@ -544,7 +544,9 @@ const PaymentModal = ({
                       Top-up Required
                     </>
                   ) : (
-                    `Pay $${amount} ${selectedMethod === 'usdc' ? 'USDC' : currency}`
+                    <>
+                      🌧️ Let it Rain - ${amount} {selectedMethod === 'usdc' ? 'USDC' : currency}
+                    </>
                   )}
                 </Button>
               </div>

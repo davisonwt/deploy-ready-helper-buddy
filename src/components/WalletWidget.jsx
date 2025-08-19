@@ -109,10 +109,10 @@ export function WalletWidget() {
         <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={() => setShowTopUp(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Top-up
+            💰 Top-up Wallet
           </Button>
           <Button
             variant="outline"
