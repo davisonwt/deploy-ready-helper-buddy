@@ -25,7 +25,8 @@ import {
   Wallet,
   Settings,
   Cloud,
-  Sparkles
+  Sparkles,
+  Mic
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -44,6 +45,7 @@ export default function Layout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
   
   const { 
     showOnboarding, 
@@ -230,9 +232,19 @@ export default function Layout({ children }) {
               })}
             </nav>
             
-            {/* User Menu */}
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3">
+                {/* Voice Commands Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowVoiceCommands(true)}
+                  className="hover-scale text-muted-foreground hover:text-primary"
+                  title="Voice Commands"
+                >
+                  <Mic className="h-5 w-5" />
+                </Button>
+                
                 {/* Theme Toggle */}
                 <ThemeToggle />
                 {/* Basket Icon */}
@@ -445,6 +457,8 @@ export default function Layout({ children }) {
       <VoiceCommands 
         isEnabled={voiceCommandsEnabled}
         onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
+        isOpen={showVoiceCommands}
+        onOpenChange={setShowVoiceCommands}
       />
     </div>
   )
