@@ -10,7 +10,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { Trash2, ShoppingCart, CreditCard } from 'lucide-react'
-import { PaymentModal } from '../components/PaymentModal'
+import PaymentModal from '../components/PaymentModal'
 
 export default function BasketPage() {
   const navigate = useNavigate()
