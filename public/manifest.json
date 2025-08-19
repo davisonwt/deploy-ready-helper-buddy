@@ -1,0 +1,27 @@
+{
+  "name": "Sow2Grow - 364yhvh Community Platform",
+  "short_name": "Sow2Grow",
+  "description": "Agricultural crowdfunding and community platform for the 364yhvh community",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["agriculture", "community", "finance"],
+  "lang": "en",
+  "dir": "ltr"
+}
