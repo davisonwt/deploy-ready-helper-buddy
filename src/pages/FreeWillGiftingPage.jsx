@@ -372,18 +372,18 @@ export default function FreeWillGiftingPage() {
                   <Button
                     type="submit"
                     disabled={loading || !amount}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    style={{ color: '#ffffff' }}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-black font-bold"
+                    style={{ color: '#000000' }}
                   >
                     {loading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-black border-t-transparent mr-2" />
                         Processing Gift...
                       </>
                     ) : (
                       <>
-                        <Send className="h-4 w-4 mr-2" style={{ color: '#ffffff' }} />
-                        <span style={{ color: '#ffffff' }}>Add Gift to Basket</span>
+                        <Send className="h-4 w-4 mr-2" style={{ color: '#000000' }} />
+                        <span style={{ color: '#000000' }}>Add Gift to Basket</span>
                       </>
                     )}
                   </Button>
