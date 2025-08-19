@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useBillingInfo } from '../hooks/useBillingInfo'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { BillingInfoForm } from '@/components/BillingInfoForm'
+import { PaymentModal } from '@/components/PaymentModal'
 import { 
   Gift, 
   Heart, 
@@ -28,189 +31,174 @@ import { useFileUpload } from '../hooks/useFileUpload.jsx'
 
 export default function FreeWillGiftingPage() {
   const { user } = useAuth()
+  const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [giftType, setGiftType] = useState('rain')
   const [amount, setAmount] = useState('')
   const [recipient, setRecipient] = useState('')
   const [message, setMessage] = useState('')
   const [frequency, setFrequency] = useState('one-time')
   const [loading, setLoading] = useState(false)
+  const [showBillingForm, setShowBillingForm] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [pendingGiftData, setPendingGiftData] = useState(null)
   
   // Seed form states
   const [seedTitle, setSeedTitle] = useState('')
   const [seedDescription, setSeedDescription] = useState('')
   const [seedCategory, setSeedCategory] = useState('')
-  const [uploadedImages, setUploadedImages] = useState([])
-  const [uploadedVideo, setUploadedVideo] = useState(null)
-  const { toast } = useToast()
+  const [seedTargetAmount, setSeedTargetAmount] = useState('')
+  const [seedBeneficiaries, setSeedBeneficiaries] = useState('')
+  const [seedImpact, setSeedImpact] = useState('')
   const { uploadFile, uploading } = useFileUpload()
-
-  const categories = [
-    'Technology', 'Education', 'Healthcare', 'Agriculture', 'Arts & Culture',
-    'Community Service', 'Environment', 'Business', 'Food & Nutrition', 'Other'
-  ]
-
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files)
-    const maxImages = 3
-    
-    if (uploadedImages.length + files.length > maxImages) {
-      toast({
-        title: "Too many images",
-        description: `You can only upload up to ${maxImages} images.`,
-        variant: "destructive"
-      })
-      return
-    }
-
-    for (const file of files) {
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload only image files.",
-          variant: "destructive"
-        })
-        continue
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Images must be less than 5MB.",
-          variant: "destructive"
-        })
-        continue
-      }
-
-      try {
-        const result = await uploadFile(file, 'orchard-images')
-        if (result.success) {
-          setUploadedImages(prev => [...prev, { file, url: result.data.url, preview: URL.createObjectURL(file) }])
-        } else {
-          throw new Error(result.error)
-        }
-      } catch (error) {
-        toast({
-          title: "Upload failed",
-          description: `Failed to upload ${file.name}: ${error.message}`,
-          variant: "destructive"
-        })
-      }
-    }
-  }
-
-  const handleVideoUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload only video files.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (file.size > 50 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Videos must be less than 50MB.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    try {
-      const result = await uploadFile(file, 'orchard-videos')
-      if (result.success) {
-        setUploadedVideo({ file, url: result.data.url, preview: URL.createObjectURL(file) })
-      } else {
-        throw new Error(result.error)
-      }
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: `Failed to upload video: ${error.message}`,
-        variant: "destructive"
-      })
-    }
-  }
-
-  const removeImage = (index) => {
-    const imageToRemove = uploadedImages[index]
-    URL.revokeObjectURL(imageToRemove.preview)
-    setUploadedImages(prev => prev.filter((_, i) => i !== index))
-  }
-
-  const removeVideo = () => {
-    if (uploadedVideo) {
-      URL.revokeObjectURL(uploadedVideo.preview)
-      setUploadedVideo(null)
-    }
-  }
-
-  const handleGiftTypeChange = (value) => {
-    setGiftType(value)
-  }
+  const [seedImage, setSeedImage] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     
     try {
-      if (giftType === 'rain') {
-        // Handle free will gifting logic here
-        toast({
-          title: "Gift Sent!",
-          description: "Your free-will gift has been sent successfully.",
-        })
-      } else if (giftType === 'seed') {
-        // Handle seed submission
-        if (!seedTitle || !seedDescription || !seedCategory) {
-          toast({
-            title: "Missing Information",
-            description: "Please fill in all required fields.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        const { data, error } = await supabase
-          .from('seeds')
-          .insert({
-            gifter_id: user.id,
-            title: seedTitle,
-            description: seedDescription,
-            category: seedCategory,
-            images: uploadedImages.map(img => img.url),
-            video_url: uploadedVideo?.url || null
-          })
-
-        if (error) throw error
-
-        toast({
-          title: "Seed Submitted!",
-          description: "Your seed has been submitted for gosat review.",
-        })
-        
-        // Reset form
-        setSeedTitle('')
-        setSeedDescription('')
-        setSeedCategory('')
-        setUploadedImages([])
-        setUploadedVideo(null)
+      const giftData = { 
+        giftType, 
+        amount, 
+        recipient, 
+        message, 
+        frequency 
       }
+      
+      // Check if user has complete billing info
+      if (!hasCompleteBillingInfo) {
+        // Show billing form first
+        setPendingGiftData(giftData)
+        setShowBillingForm(true)
+      } else {
+        // Proceed directly to payment
+        setPendingGiftData(giftData)
+        setShowPaymentModal(true)
+      }
+      
+      toast({
+        title: "Gift Prepared",
+        description: "Your free-will gift is ready to be processed."
+      })
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: "There was an error preparing your gift.",
         variant: "destructive"
       })
     } finally {
       setLoading(false)
     }
   }
+
+  const handleBillingInfoComplete = () => {
+    setShowBillingForm(false)
+    if (pendingGiftData) {
+      setShowPaymentModal(true)
+    }
+  }
+
+  const handlePaymentComplete = () => {
+    setShowPaymentModal(false)
+    setPendingGiftData(null)
+    setAmount("")
+    setRecipient("")
+    setMessage("")
+    toast({
+      title: "Gift Sent!",
+      description: "Your free-will gift has been processed successfully!"
+    })
+  }
+
+  const handleSeedSubmit = async (e) => {
+    e.preventDefault()
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to submit a seed.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setLoading(true)
+    try {
+      let imageUrl = null
+      if (seedImage) {
+        imageUrl = await uploadFile(seedImage, 'seed-images')
+      }
+
+      const { data, error } = await supabase
+        .from('seeds')
+        .insert([
+          {
+            title: seedTitle,
+            description: seedDescription,
+            category: seedCategory,
+            target_amount: parseFloat(seedTargetAmount),
+            beneficiaries: seedBeneficiaries,
+            impact_description: seedImpact,
+            image_url: imageUrl,
+            user_id: user.id,
+            status: 'pending'
+          }
+        ])
+
+      if (error) throw error
+
+      toast({
+        title: "Seed Submitted!",
+        description: "Your seed has been submitted for review and will be processed soon."
+      })
+
+      // Reset form
+      setSeedTitle('')
+      setSeedDescription('')
+      setSeedCategory('')
+      setSeedTargetAmount('')
+      setSeedBeneficiaries('')
+      setSeedImpact('')
+      setSeedImage(null)
+      
+    } catch (error) {
+      console.error('Error submitting seed:', error)
+      toast({
+        title: "Submission Error",
+        description: "There was an error submitting your seed. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const giftTypes = [
+    { 
+      id: 'rain', 
+      title: 'Rain Gift', 
+      description: 'Spontaneous blessing for someone in need',
+      icon: Droplets,
+      color: 'text-blue-600'
+    },
+    { 
+      id: 'seed', 
+      title: 'Seed Gift', 
+      description: 'Plant a seed for future blessings',
+      icon: Sprout,
+      color: 'text-green-600'
+    },
+    { 
+      id: 'harvest', 
+      title: 'Harvest Gift', 
+      description: 'Celebrate and share abundance',
+      icon: Heart,
+      color: 'text-purple-600'
+    }
+  ]
+
+  const suggestedAmounts = [25, 50, 100, 250, 500]
 
   return (
     <div className="min-h-screen relative">
@@ -227,7 +215,7 @@ export default function FreeWillGiftingPage() {
         }}
       >
         <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/free-will%20giving.mp4"
+          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/free%20will%20gifting%201280x720.mp4"
           type="video/mp4"
         />
       </video>
@@ -237,378 +225,227 @@ export default function FreeWillGiftingPage() {
       
       {/* Content */}
       <div className="relative z-10">
-      {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-        <div className="flex items-center space-x-6">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-gifting shadow-lg">
-            {user?.profile_picture ? (
-              <img 
-                src={user.profile_picture} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-nav-gifting to-nav-gifting/80 flex items-center justify-center">
-                <User className="h-10 w-10 text-purple-700" />
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(280, 100%, 80%)', 
-              textShadow: '2px 2px 4px hsl(280, 100%, 60%)'
-            }}>
-              Free-Will Gifting
-            </h1>
-            <p className="text-lg" style={{ color: '#084caa' }}>
-              Spread love and blessings through spontaneous giving
-            </p>
-            <p className="text-sm mt-1" style={{ color: '#084caa' }}>
-              Payment Method: USDC (USD Coin)
-            </p>
+        {/* Welcome Section with Profile Picture */}
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
+          <div className="flex items-center space-x-6">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-purple-400 shadow-lg">
+              {user?.profile_picture ? (
+                <img 
+                  src={user.profile_picture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                  <User className="h-10 w-10 text-white" />
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-purple-600">
+                Free-Will Gifting
+              </h1>
+              <p className="text-lg text-purple-700">
+                Give from the heart, bless others freely
+              </p>
+              <p className="text-sm mt-1 text-purple-600">
+                Payment Method: USDC (USD Coin)
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Gifting Form */}
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center" style={{ 
-                color: 'hsl(160, 100%, 70%)', 
-                textShadow: '2px 2px 0px hsl(160, 100%, 30%), -1px -1px 0px hsl(160, 100%, 30%), 1px -1px 0px hsl(160, 100%, 30%), -1px 1px 0px hsl(160, 100%, 30%)',
-                WebkitTextStroke: '1px hsl(160, 100%, 30%)'
-              }}>
-                <HandHeart className="h-5 w-5 mr-2" />
-                Send a Gift
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Gift Type Selection */}
-              <div>
-                <label className="block text-sm font-medium text-purple-700 mb-3">
-                  Choose Gift Type
-                </label>
-                <RadioGroup value={giftType} onValueChange={handleGiftTypeChange} className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 border border-nav-gifting/30 rounded-lg hover:bg-nav-gifting/10 transition-colors">
-                    <RadioGroupItem value="rain" id="rain" />
-                    <Label htmlFor="rain" className="flex items-center space-x-2 cursor-pointer flex-1">
-                      <Droplets className="h-4 w-4 text-blue-500" />
-                      <div>
-                        <div className="font-medium text-purple-700">Rain/Compost</div>
-                        <div className="text-sm text-purple-600">Free-will support to 364yhvh community projects</div>
-                      </div>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border border-nav-gifting/30 rounded-lg hover:bg-nav-gifting/10 transition-colors">
-                    <RadioGroupItem value="seed" id="seed" />
-                    <Label htmlFor="seed" className="flex items-center space-x-2 cursor-pointer flex-1">
-                      <Sprout className="h-4 w-4 text-green-500" />
-                      <div>
-                        <div className="font-medium text-purple-700">Seed</div>
-                        <div className="text-sm text-purple-600">Gift a product, service, or skill to the community</div>
-                      </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
+            <div className="flex items-center justify-center mb-4">
+              <div className="p-3 bg-purple-100/80 rounded-full mr-4">
+                <Gift className="h-12 w-12 text-purple-600" />
               </div>
+              <h2 className="text-2xl font-bold text-purple-700">Share Your Blessings</h2>
+            </div>
+            <p className="max-w-2xl mx-auto text-purple-600">
+              "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for elohim loves a cheerful giver." - 2 Corinthians 9:7
+            </p>
+          </div>
 
-              {giftType === 'rain' && (
-                <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Gift Form */}
+            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center text-purple-700">
+                  <HandHeart className="h-5 w-5 mr-2" />
+                  Send a Free-Will Gift
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Gift Amount (USDC)
-                    </label>
+                    <Label className="text-purple-700">Gift Type</Label>
+                    <RadioGroup 
+                      value={giftType} 
+                      onValueChange={setGiftType}
+                      className="grid grid-cols-1 gap-4 mt-2"
+                    >
+                      {giftTypes.map((type) => (
+                        <div key={type.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-purple-50/50">
+                          <RadioGroupItem value={type.id} id={type.id} />
+                          <div className="flex items-center space-x-3 flex-1">
+                            <type.icon className={`h-5 w-5 ${type.color}`} />
+                            <div>
+                              <Label htmlFor={type.id} className="font-medium text-purple-700">{type.title}</Label>
+                              <p className="text-sm text-purple-600">{type.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="amount" className="text-purple-700">Amount (USDC)</Label>
                     <Input
+                      id="amount"
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="Enter amount"
-                      className="border-nav-gifting/30 focus:border-nav-gifting"
+                      className="border-purple-300 focus:border-purple-500"
                     />
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {suggestedAmounts.map((suggAmount) => (
+                        <Button
+                          key={suggAmount}
+                          type="button"
+                          variant={amount === suggAmount.toString() ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setAmount(suggAmount.toString())}
+                          className={amount === suggAmount.toString() ? 'bg-purple-600 text-white' : 'border-purple-300 text-purple-700'}
+                        >
+                          ${suggAmount}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-purple-700 mb-2">
-                    Recipient (Email or Username)
-                  </label>
-                  <Input
-                    type="text"
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    placeholder="Enter recipient"
-                    className="border-nav-gifting/30 focus:border-nav-gifting"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-purple-700 mb-2">
-                    Frequency
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['one-time', 'monthly', 'weekly'].map((freq) => (
-                      <Button
-                        key={freq}
-                        type="button"
-                        variant={frequency === freq ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setFrequency(freq)}
-                        className={frequency === freq ? 'bg-nav-gifting text-purple-700' : 'border-nav-gifting/30 text-purple-700'}
-                      >
-                        {freq.charAt(0).toUpperCase() + freq.slice(1).replace('-', ' ')}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                </>
-              )}
-
-              {giftType === 'seed' && (
-                <>
                   <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Seed Title *
-                    </label>
+                    <Label htmlFor="recipient" className="text-purple-700">Recipient (Optional)</Label>
                     <Input
-                      type="text"
-                      value={seedTitle}
-                      onChange={(e) => setSeedTitle(e.target.value)}
-                      placeholder="What are you offering?"
-                      className="border-nav-gifting/30 focus:border-nav-gifting"
-                      required
+                      id="recipient"
+                      value={recipient}
+                      onChange={(e) => setRecipient(e.target.value)}
+                      placeholder="Enter recipient name or leave blank for community pool"
+                      className="border-purple-300 focus:border-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Category *
-                    </label>
-                    <Select value={seedCategory} onValueChange={setSeedCategory}>
-                      <SelectTrigger className="border-nav-gifting/30 focus:border-nav-gifting">
-                        <SelectValue placeholder="Select category" />
+                    <Label htmlFor="message" className="text-purple-700">Message (Optional)</Label>
+                    <Textarea
+                      id="message"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Add a blessing or encouragement..."
+                      rows={4}
+                      className="border-purple-300 focus:border-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-purple-700">Frequency</Label>
+                    <Select value={frequency} onValueChange={setFrequency}>
+                      <SelectTrigger className="border-purple-300 focus:border-purple-500">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="one-time">One-time Gift</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="quarterly">Quarterly</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Description *
-                    </label>
-                    <Textarea
-                      value={seedDescription}
-                      onChange={(e) => setSeedDescription(e.target.value)}
-                      placeholder="Describe your offering in detail..."
-                      className="border-nav-gifting/30 focus:border-nav-gifting"
-                      rows={4}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Images (1-3 images)
-                    </label>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="border-nav-gifting/30 focus:border-nav-gifting"
-                      disabled={uploading || uploadedImages.length >= 3}
-                    />
-                    {uploadedImages.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2 mt-2">
-                        {uploadedImages.map((image, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={image.preview}
-                              alt={`Upload ${index + 1}`}
-                              className="w-full h-20 object-cover rounded border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                  <Button
+                    type="submit"
+                    disabled={loading || !amount}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                        Processing Gift...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Gift
+                      </>
                     )}
-                  </div>
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
-                  <div>
-                    <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Video (Optional)
-                    </label>
-                    <Input
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      className="border-nav-gifting/30 focus:border-nav-gifting"
-                      disabled={uploading || uploadedVideo}
-                    />
-                    {uploadedVideo && (
-                      <div className="relative mt-2">
-                        <video
-                          src={uploadedVideo.preview}
-                          className="w-full h-32 object-cover rounded border"
-                          controls
-                        />
-                        <button
-                          type="button"
-                          onClick={removeVideo}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-               {giftType === 'rain' && (
-                 <div>
-                   <label className="block text-sm font-medium text-purple-700 mb-2">
-                     Personal Message (Optional)
-                   </label>
-                   <Textarea
-                     value={message}
-                     onChange={(e) => setMessage(e.target.value)}
-                     placeholder="Share a blessing or encouragement..."
-                     className="border-nav-gifting/30 focus:border-nav-gifting"
-                     rows={3}
-                   />
-                 </div>
-               )}
-
-                <Button
-                  type="submit"
-                  disabled={loading || uploading || (giftType === 'rain' && (!amount || !recipient)) || (giftType === 'seed' && (!seedTitle || !seedDescription || !seedCategory || uploadedImages.length === 0))}
-                  className="w-full bg-nav-gifting hover:bg-nav-gifting/90 text-purple-700"
-                >
-                  {loading || uploading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-700 border-t-transparent mr-2" />
-                      {uploading ? 'Uploading...' : (giftType === 'seed' ? 'Submitting Seed...' : 'Sending Gift...')}
-                    </>
-                  ) : (
-                    <>
-                      {giftType === 'seed' ? <Sprout className="h-4 w-4 mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                      {giftType === 'seed' ? 'Submit Seed' : 'Send Gift'}
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Recent Gifts & Community */}
-          <div className="space-y-6">
-            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center" style={{ 
-                  color: 'hsl(320, 100%, 75%)', 
-                  textShadow: '1px 1px 2px hsl(320, 100%, 55%)' 
-                }}>
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Recent Community Gifts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-nav-gifting/20 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-nav-gifting rounded-full flex items-center justify-center">
-                          <Heart className="h-4 w-4 text-purple-700" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-purple-700">Anonymous Gift</p>
-                          <p className="text-xs text-purple-600">To community member</p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="bg-nav-gifting/30 text-purple-700">
-                        ${(Math.random() * 100).toFixed(0)}
-                      </Badge>
+            {/* Information & Guidelines */}
+            <div className="space-y-6">
+              <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-green-700">
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Gifting Guidelines
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4 text-sm text-green-700">
+                    <div className="flex items-start space-x-2">
+                      <Heart className="h-4 w-4 mt-0.5 text-purple-500" />
+                      <p>Give cheerfully and from the heart</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center" style={{ 
-                  color: 'hsl(200, 100%, 75%)', 
-                  textShadow: '1px 1px 2px hsl(200, 100%, 55%)' 
-                }}>
-                  <Users className="h-5 w-5 mr-2" />
-                  Gifting Guidelines
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm text-purple-600">
-                  <div className="flex items-start space-x-2">
-                    <Heart className="h-4 w-4 mt-0.5 text-purple-500" />
-                    <p>Give from the heart without expectation of return</p>
+                    <div className="flex items-start space-x-2">
+                      <Users className="h-4 w-4 mt-0.5 text-purple-500" />
+                      <p>Consider those in your community who may be in need</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <DollarSign className="h-4 w-4 mt-0.5 text-purple-500" />
+                      <p>Give within your means and abilities</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Gift className="h-4 w-4 mt-0.5 text-purple-500" />
+                      <p>Include encouragement and prayer when possible</p>
+                    </div>
                   </div>
-                  <div className="flex items-start space-x-2">
-                    <Sparkles className="h-4 w-4 mt-0.5 text-purple-500" />
-                    <p>Consider the recipient's genuine needs</p>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <DollarSign className="h-4 w-4 mt-0.5 text-purple-500" />
-                    <p>Give within your means and abilities</p>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <Gift className="h-4 w-4 mt-0.5 text-purple-500" />
-                    <p>Include encouragement and prayer when possible</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
+
+        {/* Billing Info Form Modal */}
+        {showBillingForm && (
+          <BillingInfoForm
+            isOpen={showBillingForm}
+            onClose={() => setShowBillingForm(false)}
+            onComplete={handleBillingInfoComplete}
+          />
+        )}
+
+        {/* Payment Modal */}
+        {showPaymentModal && pendingGiftData && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            paymentDetails={{
+              orchardTitle: 'Free-Will Rain Gift',
+              amount: pendingGiftData.amount,
+              currency: 'USDC',
+              pockets: [],
+              type: 'rain_gift'
+            }}
+            onPaymentComplete={handlePaymentComplete}
+          />
+        )}
       </div>
-
-      {/* Billing Info Form Modal */}
-      {showBillingForm && (
-        <BillingInfoForm
-          isOpen={showBillingForm}
-          onClose={() => setShowBillingForm(false)}
-          onComplete={handleBillingInfoComplete}
-        />
-      )}
-
-      {/* Payment Modal */}
-      {showPaymentModal && pendingGiftData && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          paymentDetails={{
-            orchardTitle: 'Free-Will Rain Gift',
-            amount: pendingGiftData.amount,
-            currency: 'USDC',
-            pockets: [],
-            type: 'rain_gift'
-          }}
-          onPaymentComplete={handlePaymentComplete}
-        />
-      )}
     </div>
   )
 }
