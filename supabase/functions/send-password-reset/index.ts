@@ -31,18 +31,16 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check if user exists
-    const { data: userData, error: userError } = await supabaseServiceClient.auth.admin.listUsers();
+    // Check if user exists by trying to get user by email
+    const { data: userData, error: userError } = await supabaseServiceClient.auth.admin.getUserByEmail(email);
     
-    if (userError) {
-      console.error('Error fetching users:', userError);
+    if (userError && userError.message !== 'User not found') {
+      console.error('Error fetching user:', userError);
       throw new Error('Failed to verify user account');
     }
 
-    const userExists = userData.users.some(user => user.email === email);
-    
-    if (!userExists) {
-      console.log('User not found:', email);
+    if (!userData?.user) {
+      console.log('User not found, but proceeding for security:', email);
       // For security, we still return success even if user doesn't exist
       return new Response(JSON.stringify({ 
         success: true, 
@@ -56,8 +54,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    console.log('User found, proceeding with password reset for:', email);
+
     // Generate password reset using Supabase's built-in functionality
-    const { error: resetError } = await supabaseServiceClient.auth.admin.generateLink({
+    const { data: resetData, error: resetError } = await supabaseServiceClient.auth.admin.generateLink({
       type: 'recovery',
       email: email,
       options: {
@@ -67,19 +67,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (resetError) {
       console.error('Error generating reset link:', resetError);
-      throw new Error('Failed to generate reset link');
+      // Don't throw error, fall back to sending email notification
+      console.log('Falling back to support email method');
+    } else {
+      console.log('Successfully generated reset link:', resetData);
     }
 
-    // For now, we'll use Supabase's built-in email system
-    // But you can enhance this to use your custom email templates
+    // Try Supabase's built-in password reset email first
     const { error: sendError } = await supabaseServiceClient.auth.resetPasswordForEmail(email, {
       redirectTo: `${req.headers.get('origin') || 'https://f76da68e-977d-42e6-85f3-ea2df1aea0df.lovableproject.com'}/login`
     });
 
     if (sendError) {
-      console.error('Error sending reset email:', sendError);
+      console.error('Supabase built-in email failed:', sendError);
+      console.log('Attempting to send custom email via Resend...');
       
-      // Fall back to custom email if Supabase email fails
+      // Fall back to custom email via Resend
       const customEmailHtml = `
         <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
           <div style="background: linear-gradient(135deg, #3b82f6, #10b981); padding: 40px; text-align: center;">
@@ -114,13 +117,15 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
       `;
 
-      // Try to send via Resend
+      // Try to send via Resend using our existing function
       try {
-        const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-resend-email`, {
+        const resendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-resend-email`;
+        
+        const emailResponse = await fetch(resendUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
+            'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
           },
           body: JSON.stringify({
             to: [email],
@@ -130,15 +135,20 @@ const handler = async (req: Request): Promise<Response> => {
           })
         });
 
+        const emailResult = await emailResponse.json();
+        
         if (!emailResponse.ok) {
-          throw new Error('Failed to send via Resend');
+          console.error('Resend API failed:', emailResult);
+          throw new Error(`Resend failed: ${JSON.stringify(emailResult)}`);
         }
 
-        console.log('Password reset email sent via custom function');
+        console.log('Password reset email sent via Resend:', emailResult);
       } catch (customEmailError) {
         console.error('Custom email also failed:', customEmailError);
-        throw new Error('Failed to send password reset email');
+        throw new Error(`Failed to send password reset email: ${customEmailError.message}`);
       }
+    } else {
+      console.log('Password reset email sent via Supabase built-in system');
     }
 
     return new Response(JSON.stringify({ 
