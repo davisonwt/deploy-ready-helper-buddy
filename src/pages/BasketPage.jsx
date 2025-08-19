@@ -13,6 +13,7 @@ import { Trash2, ShoppingCart, CreditCard } from 'lucide-react'
 import PaymentModal from '../components/PaymentModal'
 
 export default function BasketPage() {
+  console.log('🛒 BasketPage rendered')
   const navigate = useNavigate()
   const { user } = useAuth()
   const { basketItems, removeFromBasket, updateQuantity, clearBasket, getTotalItems, getTotalAmount } = useBasket()
