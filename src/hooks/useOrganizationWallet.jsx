@@ -21,10 +21,13 @@ export function useOrganizationWallet() {
         .from('organization_wallets')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error) throw error;
-      setOrganizationWallet(data);
+      
+      // Take the first (most recent) active wallet if multiple exist
+      setOrganizationWallet(data && data.length > 0 ? data[0] : null);
     } catch (err) {
       console.error('Error fetching organization wallet:', err);
       setError(err.message);
