@@ -285,11 +285,28 @@ export default function TithingPage() {
                   <cite className="text-red-700 font-semibold not-italic">- 2 Corinthians 9:7</cite>
                 </blockquote>
               </CardContent>
-            </Card>
+                  </Card>
+                </div>
+              </div>
+            )}
+            </div>
           </div>
         </div>
-      </div>
-      </div>
-    </div>
-  )
-}
+
+        {/* Payment Modal */}
+        {showPaymentModal && pendingTithingData && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            paymentDetails={{
+              orchardTitle: 'Tithing Contribution',
+              amount: pendingTithingData.amount,
+              currency: 'USDC',
+              pockets: [],
+              type: 'tithing'
+            }}
+            onPaymentComplete={handlePaymentComplete}
+          />
+        )}
+      )
+    }

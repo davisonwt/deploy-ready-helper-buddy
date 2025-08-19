@@ -581,10 +581,27 @@ export default function FreeWillGiftingPage() {
                 </div>
               </CardContent>
             </Card>
+                </div>
+              </div>
+            )}
+            </div>
           </div>
         </div>
-      </div>
-      </div>
-    </div>
-  )
-}
+
+        {/* Payment Modal */}
+        {showPaymentModal && pendingGiftData && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            paymentDetails={{
+              orchardTitle: 'Free-Will Rain Gift',
+              amount: pendingGiftData.amount,
+              currency: 'USDC',
+              pockets: [],
+              type: 'rain_gift'
+            }}
+            onPaymentComplete={handlePaymentComplete}
+          />
+        )}
+      )
+    }
