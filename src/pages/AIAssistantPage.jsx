@@ -77,7 +77,7 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Quick stats */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-4 justify-center flex-wrap">
           <Button
             variant="outline"
             onClick={() => setActiveTab('thumbnails')}
@@ -108,25 +108,26 @@ export default function AIAssistantPage() {
               <p className="text-xs opacity-80">Creative inspiration</p>
             </div>
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setActiveTab('library')}
+            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
+              activeTab === 'library' 
+                ? 'bg-blue-100 border-blue-500 text-blue-700 shadow-lg' 
+                : 'bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100'
+            }`}
+          >
+            <History className="w-6 h-6" />
+            <div className="text-center">
+              <p className="text-sm font-medium">My Library</p>
+              <p className="text-xs opacity-80">Saved creations</p>
+            </div>
+          </Button>
         </div>
       </div>
 
       {/* Main content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="thumbnails" className="flex items-center gap-2">
-            <Camera className="w-4 h-4" />
-            Thumbnails
-          </TabsTrigger>
-          <TabsTrigger value="ideas" className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Ideas
-          </TabsTrigger>
-          <TabsTrigger value="library" className="flex items-center gap-2">
-            <History className="w-4 h-4" />
-            My Library
-          </TabsTrigger>
-        </TabsList>
 
 
         <TabsContent value="thumbnails" className="space-y-6">
