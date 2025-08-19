@@ -65,7 +65,7 @@ export default function BasketPage() {
       orchardId: basketItems[0]?.orchardId,
       amount: getTotalAmount(),
       currency: basketItems[0]?.currency || 'USD',
-      pockets: basketItems.flatMap(item => item.pockets),
+      pockets: basketItems.flatMap(item => Array.isArray(item.pockets) ? item.pockets : []),
       invoiceInfo: invoiceForm
     }
 
@@ -131,10 +131,10 @@ export default function BasketPage() {
                   <div className="flex-1">
                     <h4 className="font-semibold">{item.orchardTitle}</h4>
                     <p className="text-sm text-gray-600">
-                      {item.quantity} × {item.pockets.length} pockets = {formatAmount(item.amount * item.quantity * item.pockets.length)}
+                      {item.quantity} × {Array.isArray(item.pockets) ? item.pockets.length : 0} pockets = {formatAmount(item.amount * item.quantity * (Array.isArray(item.pockets) ? item.pockets.length : 0))}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Pockets: {item.pockets.join(', ')}
+                      Pockets: {Array.isArray(item.pockets) ? item.pockets.join(', ') : (item.pockets || 'None')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
