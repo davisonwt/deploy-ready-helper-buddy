@@ -259,13 +259,40 @@ export default function AdminDashboardPage() {
                         const user = users.find(u => u.user_id === value)
                         setSelectedUser(user)
                       }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose user..." />
+                        <SelectTrigger className="bg-background border-input hover:bg-accent/50">
+                          <SelectValue placeholder="Search by name or email..." />
                         </SelectTrigger>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.user_id} value={user.user_id}>
-                              {user.display_name || `${user.first_name} ${user.last_name}`}
+                        <SelectContent className="z-50 bg-popover border shadow-lg max-h-80 overflow-y-auto">
+                          {users
+                            .filter(user => 
+                              user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              user.user_id?.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                            .map((user) => (
+                            <SelectItem 
+                              key={user.user_id} 
+                              value={user.user_id}
+                              className="hover:bg-accent cursor-pointer p-3"
+                            >
+                              <div className="flex flex-col space-y-1">
+                                <span className="font-medium">
+                                  {user.display_name || `${user.first_name} ${user.last_name}`}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  ID: {user.user_id}
+                                </span>
+                                {user.user_roles?.length > 0 && (
+                                  <div className="flex space-x-1">
+                                    {user.user_roles.map((role) => (
+                                      <Badge key={role.role} variant="outline" className="text-xs">
+                                        {role.role}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
