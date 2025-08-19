@@ -31,6 +31,7 @@ import {
   User
 } from "lucide-react"
 import CurrencyCalculator from "../components/CurrencyCalculator"
+import CourierCostCalculator from "../components/CourierCostCalculator"
 
 export default function CreateOrchardPage({ isEdit = false }) {
   const { id } = useParams()
@@ -56,6 +57,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
     seed_value: "",
     pocket_price: "150",
     number_of_pockets: "1", // New field for full value orchards
+    courier_cost: "0", // New field for courier costs
     location: "",
     why_needed: "",
     how_it_helps: "",
@@ -102,6 +104,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
           orchard_type: orchard.orchard_type || "standard",
           seed_value: orchard.original_seed_value?.toString() || "",
           pocket_price: orchard.pocket_price?.toString() || "150",
+          courier_cost: orchard.courier_cost?.toString() || "0",
           location: orchard.location || "",
           why_needed: orchard.why_needed || "",
           how_it_helps: orchard.how_it_helps || "",
@@ -302,6 +305,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         orchard_type: formData.orchard_type,
         seed_value: finalSeedValue,
         original_seed_value: originalSeedValue,
+        courier_cost: breakdown ? breakdown.courierCost : 0,
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
         pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
@@ -400,11 +404,13 @@ export default function CreateOrchardPage({ isEdit = false }) {
 
   const getSeedValueBreakdown = () => {
     const originalSeedValue = parseFloat(formData.seed_value) || 0
+    const courierCost = parseFloat(formData.courier_cost) || 0
     if (originalSeedValue === 0) return null
     
-    const tithingAmount = originalSeedValue * 0.10  // 10% tithing
-    const adminFee = originalSeedValue * 0.005       // 0.5% admin fee
-    const totalWithFees = originalSeedValue * 1.105  // Total = seed * 1.105
+    const baseValue = originalSeedValue + courierCost  // Add courier cost to base
+    const tithingAmount = baseValue * 0.10  // 10% tithing on total (seed + courier)
+    const adminFee = baseValue * 0.005       // 0.5% admin fee on total
+    const totalWithFees = baseValue * 1.105  // Total = (seed + courier) * 1.105
     
     let finalCost = totalWithFees
     if (formData.orchard_type === 'full_value') {
@@ -414,6 +420,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
     
     return {
       original: originalSeedValue,
+      courierCost: courierCost,
+      baseValue: baseValue,
       tithing: tithingAmount,
       paymentProcessing: adminFee,
       totalWithFees: totalWithFees,
@@ -770,6 +778,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
                 {/* Currency Calculator */}
                 <CurrencyCalculator onUseAmount={handleUseCalculatedAmount} />
                 
+                {/* Courier Cost Calculator */}
+                <CourierCostCalculator 
+                  onCourierCostChange={(cost) => setFormData(prev => ({ ...prev, courier_cost: cost.toString() }))}
+                  initialCost={parseFloat(formData.courier_cost) || 0}
+                />
+                
                 <div>
                   <label className="block text-sm font-medium text-emerald-400 mb-2">
                     <DollarSign className="inline h-4 w-4 mr-1" />
@@ -858,10 +872,20 @@ export default function CreateOrchardPage({ isEdit = false }) {
                              {formData.orchard_type === 'standard' ? 'Standard Orchard' : 'Full Value Orchard'} Calculation:
                            </h5>
                            <div className="space-y-2 text-sm">
-                               <div className="flex justify-between">
-                                 <span className="text-gray-600">Original Seed Value:</span>
-                                 <span className="font-medium">{breakdown.original.toFixed(2)} USDC</span>
-                               </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Original Seed Value:</span>
+                                  <span className="font-medium">{breakdown.original.toFixed(2)} USDC</span>
+                                </div>
+                                {breakdown.courierCost > 0 && (
+                                  <div className="flex justify-between text-purple-700">
+                                    <span>+ Courier Cost:</span>
+                                    <span className="font-medium">{breakdown.courierCost.toFixed(2)} USDC</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-gray-800 font-medium border-t border-gray-100 pt-1">
+                                  <span>Base Value (Seed + Courier):</span>
+                                  <span>{breakdown.baseValue.toFixed(2)} USDC</span>
+                                </div>
                                <div className="flex justify-between text-amber-700">
                                  <span>+ 10% Tithing:</span>
                                  <span className="font-medium">{breakdown.tithing.toFixed(2)} USDC</span>

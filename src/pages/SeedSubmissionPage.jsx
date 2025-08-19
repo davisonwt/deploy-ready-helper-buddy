@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
+import CourierCostCalculator from '../components/CourierCostCalculator'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 
@@ -31,6 +32,7 @@ export default function SeedSubmissionPage() {
     value: '',
     orchardType: 'full_value', // Default to full value for seeds
     numberOfPockets: '10', // How many copies of the item
+    courierCost: '0', // New field for courier costs
     additional_details: {}
   })
   
@@ -215,6 +217,7 @@ export default function SeedSubmissionPage() {
             additional_details: { 
               ...formData.additional_details, 
               value: formData.value,
+              courierCost: formData.courierCost,
               orchardType: formData.orchardType,
               numberOfPockets: formData.numberOfPockets
             }
@@ -225,13 +228,15 @@ export default function SeedSubmissionPage() {
 
       // Auto-generate orchard since value is mandatory
       const seedValue = parseFloat(formData.value)
+      const courierCost = parseFloat(formData.courierCost) || 0
       const totalPockets = calculatePockets(seedValue, formData.orchardType, formData.numberOfPockets)
       
       if (totalPockets > 0) {
-        // Calculate values including tithing and admin fee
-        const tithingAmount = seedValue * 0.10
-        const adminFee = seedValue * 0.005
-        const totalWithFees = seedValue + tithingAmount + adminFee
+        // Calculate values including courier cost, tithing and admin fee
+        const baseValue = seedValue + courierCost  // Add courier cost to base
+        const tithingAmount = baseValue * 0.10  // 10% tithing on total (seed + courier)
+        const adminFee = baseValue * 0.005       // 0.5% admin fee on total
+        const totalWithFees = baseValue * 1.105  // Total = (seed + courier) * 1.105
         
         let finalSeedValue, pocketPrice
         
@@ -254,6 +259,7 @@ export default function SeedSubmissionPage() {
             category: formData.category,
             seed_value: finalSeedValue,
             original_seed_value: seedValue,
+            courier_cost: courierCost * (formData.orchardType === 'full_value' ? totalPockets : 1),
             tithing_amount: tithingAmount * (formData.orchardType === 'full_value' ? totalPockets : 1),
             payment_processing_fee: adminFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
             pocket_price: pocketPrice,
@@ -423,33 +429,39 @@ export default function SeedSubmissionPage() {
                      className="border-border focus:border-primary"
                      required
                    />
-                   <p className="text-xs text-muted-foreground mt-1">
-                     Each copy will cost ${formData.value ? (parseFloat(formData.value) * 1.105).toFixed(2) : '0'} (including 10% tithing + 0.5% admin fee)
-                   </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Each copy will cost ${formData.value && formData.courierCost ? ((parseFloat(formData.value) + parseFloat(formData.courierCost)) * 1.105).toFixed(2) : '0'} (including courier + 10% tithing + 0.5% admin fee)
+                    </p>
                  </div>
                )}
 
-               {/* Value */}
-               <div>
-                 <label className="block text-sm font-medium text-foreground mb-2">
-                   Seed Value (per item) *
-                 </label>
-                 <Input
-                   type="number"
-                   min="1"
-                   step="0.01"
-                   value={formData.value}
-                   onChange={(e) => handleInputChange('value', e.target.value)}
-                   placeholder="Enter the value of your seed (USD)"
-                   className="border-border focus:border-primary"
-                   required
-                 />
-                 {formData.value && parseFloat(formData.value) > 0 && (
-                   <p className="text-xs text-success mt-1">
-                     ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value), formData.orchardType, formData.numberOfPockets)} pockets
-                   </p>
-                 )}
-               </div>
+                {/* Courier Cost Calculator */}
+                <CourierCostCalculator 
+                  onCourierCostChange={(cost) => handleInputChange('courierCost', cost.toString())}
+                  initialCost={parseFloat(formData.courierCost) || 0}
+                />
+
+                {/* Value */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Seed Value (per item) *
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={formData.value}
+                    onChange={(e) => handleInputChange('value', e.target.value)}
+                    placeholder="Enter the value of your seed (USD)"
+                    className="border-border focus:border-primary"
+                    required
+                  />
+                  {formData.value && parseFloat(formData.value) > 0 && (
+                    <p className="text-xs text-success mt-1">
+                      ✓ This seed will automatically generate an orchard with {calculatePockets(parseFloat(formData.value), formData.orchardType, formData.numberOfPockets)} pockets
+                    </p>
+                  )}
+                </div>
 
               {/* Image Upload */}
               <div>

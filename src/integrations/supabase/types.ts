@@ -462,6 +462,7 @@ export type Database = {
           category: string
           community_impact: string | null
           completion_rate: number | null
+          courier_cost: number | null
           created_at: string
           currency: string
           description: string
@@ -494,6 +495,7 @@ export type Database = {
           category: string
           community_impact?: string | null
           completion_rate?: number | null
+          courier_cost?: number | null
           created_at?: string
           currency?: string
           description: string
@@ -526,6 +528,7 @@ export type Database = {
           category?: string
           community_impact?: string | null
           completion_rate?: number | null
+          courier_cost?: number | null
           created_at?: string
           currency?: string
           description?: string
