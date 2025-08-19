@@ -31,7 +31,7 @@ import {
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { ThemeToggle } from "./ui/theme-toggle"
+
 import { GamificationFloatingButton } from "./gamification/GamificationFloatingButton"
 import { GamificationHUD } from "./gamification/GamificationHUD"
 import { OnboardingTour } from "./onboarding/OnboardingTour"
@@ -252,8 +252,6 @@ export default function Layout({ children }) {
                   <Mic className="h-5 w-5" />
                 </Button>
                 
-                {/* Theme Toggle */}
-                <ThemeToggle />
                 {/* Basket Icon */}
                 <Link
                   to="/basket"
