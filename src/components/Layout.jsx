@@ -96,7 +96,14 @@ export default function Layout({ children }) {
       color: { bg: '#ffffff', border: '#3B82F6', text: '#1e293b' },
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
-        { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift },
+        { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
+      ]
+    },
+    {
+      name: "Support",
+      icon: Heart,
+      color: { bg: '#ffb3ba', border: '#ffb3ba', text: '#1e293b' },
+      items: [
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
