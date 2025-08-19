@@ -162,7 +162,7 @@ export const QuickAIHelper = ({
 
   if (!isOpen && !compact) {
     return (
-      <Card className="border-primary/20 bg-primary/5 border-2 shadow-md">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -170,8 +170,8 @@ export const QuickAIHelper = ({
                 <Icon className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-slate-900 drop-shadow-sm">{config.title}</h3>
-                <p className="text-xs text-slate-700 font-medium drop-shadow-sm">{config.description}</p>
+                <h3 className="font-semibold text-sm text-slate-900" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>{config.title}</h3>
+                <p className="text-xs text-slate-800 font-medium" style={{textShadow: '0.5px 0.5px 0 white, -0.5px -0.5px 0 white, 0.5px -0.5px 0 white, -0.5px 0.5px 0 white'}}>{config.description}</p>
               </div>
             </div>
             <Button
@@ -190,7 +190,7 @@ export const QuickAIHelper = ({
   }
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 border-2 shadow-md">
+    <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-base">
           <div className="flex items-center gap-2">
