@@ -37,18 +37,31 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      // Fetch user's orchards
-      fetchOrchards({ user_id: user.id })
+      console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
+      
+      // Fetch all orchards first (the hook doesn't support user filtering)
+      fetchOrchards()
+        .then(() => {
+          console.log('✅ Dashboard: Orchards fetched successfully')
+        })
+        .catch((error) => {
+          console.error('❌ Dashboard: Error fetching orchards:', error)
+        })
       
       // Fetch user's bestowals
       const fetchUserBestowals = async () => {
         try {
+          console.log('🔍 Dashboard: Fetching user bestowals...')
           const result = await getUserBestowals()
           if (result.success) {
             setUserBestowals(result.data)
+            console.log('✅ Dashboard: Bestowals fetched successfully:', result.data.length)
+          } else {
+            console.error('❌ Dashboard: Failed to fetch bestowals:', result.error)
+            setUserBestowals([])
           }
         } catch (error) {
-          console.error('Error fetching bestowals:', error)
+          console.error('❌ Dashboard: Error fetching bestowals:', error)
           setUserBestowals([])
         }
       }
@@ -82,9 +95,11 @@ export default function DashboardPage() {
   }
 
   if (orchardsLoading || bestowalsLoading) {
+    console.log('🔄 Dashboard: Loading state - orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-gray-600">Loading your dashboard...</p>
       </div>
     )
   }
