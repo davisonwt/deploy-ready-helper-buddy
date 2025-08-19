@@ -50,8 +50,8 @@ export function AdvancedSearch({ onSearch, onClear }: AdvancedSearchProps) {
     // Update active filters for display
     const active = Object.entries(newFilters)
       .filter(([k, v]) => {
-        if (k === "query") return v.length > 0
-        if (k === "priceRange") return v[0] > 0 || v[1] < 10000
+        if (k === "query") return (v as string).length > 0
+        if (k === "priceRange") return (v as [number, number])[0] > 0 || (v as [number, number])[1] < 10000
         return v !== ""
       })
       .map(([k]) => k)
