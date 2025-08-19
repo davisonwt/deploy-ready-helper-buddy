@@ -47,10 +47,10 @@ export default function AdminDashboardPage() {
   const [selectedRole, setSelectedRole] = useState('')
 
   useEffect(() => {
+    console.log('Component mounted, loading data...')
+    console.log('isAdminOrGosat():', isAdminOrGosat())
     loadUsers()
-    if (isAdminOrGosat()) {
-      loadSeeds()
-    }
+    loadSeeds() // Remove condition and always try to load seeds
   }, [])
 
   const loadUsers = async () => {
