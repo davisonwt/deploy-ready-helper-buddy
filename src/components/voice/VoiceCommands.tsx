@@ -84,7 +84,7 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
         console.log('VoiceCommands: Recognition ended')
         setIsListening(false)
         
-        // Only restart if still enabled and has permission
+        // Only restart if still enabled and has permission, and no network errors
         if (isEnabled && hasPermission) {
           setTimeout(() => {
             try {
@@ -92,8 +92,13 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
               recognitionInstance.start()
             } catch (error) {
               console.error('VoiceCommands: Restart failed:', error)
+              // If restart fails multiple times, disable temporarily
+              if (error.message && error.message.includes('already')) {
+                console.log('VoiceCommands: Recognition already running')
+                return
+              }
             }
-          }, 1000)
+          }, 1500) // Increased delay to prevent rapid restarts
         }
       }
 
@@ -108,11 +113,38 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
         console.error('VoiceCommands: Recognition error:', event.error)
         setIsListening(false)
         
+        // Handle different error types
         if (event.error === 'not-allowed') {
           setHasPermission(false)
           toast({
-            title: "Microphone Permission Denied",
+            title: "Microphone Access Denied",
             description: "Please allow microphone access to use voice commands",
+            variant: "destructive"
+          })
+        } else if (event.error === 'network') {
+          console.log('VoiceCommands: Network error, will retry...')
+          toast({
+            title: "Network Issue",
+            description: "Speech recognition temporarily unavailable. Retrying...",
+            variant: "destructive"
+          })
+          // Retry after network error
+          if (isEnabled && hasPermission) {
+            setTimeout(() => {
+              try {
+                recognitionInstance.start()
+              } catch (error) {
+                console.error('VoiceCommands: Retry failed:', error)
+              }
+            }, 3000)
+          }
+        } else if (event.error === 'no-speech') {
+          console.log('VoiceCommands: No speech detected, continuing...')
+          // Don't show error for no-speech, just restart
+        } else {
+          toast({
+            title: "Speech Recognition Error",
+            description: `Error: ${event.error}`,
             variant: "destructive"
           })
         }
@@ -165,15 +197,26 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
           })
         } catch (error) {
           console.error('VoiceCommands: Start failed:', error)
+          toast({
+            title: "Failed to Start",
+            description: "Could not start voice recognition. Try again.",
+            variant: "destructive"
+          })
         }
       } else if (!isEnabled && isListening) {
         console.log('VoiceCommands: Stopping recognition')
         recognition.stop()
         toast({
-          title: "Voice Commands Disabled",
+          title: "Voice Commands Disabled", 
           description: "Voice commands are now turned off",
         })
       }
+    } else if (isEnabled && !hasPermission) {
+      toast({
+        title: "Permission Required",
+        description: "Please allow microphone access first",
+        variant: "destructive"
+      })
     }
   }, [isEnabled, recognition, hasPermission])
 
