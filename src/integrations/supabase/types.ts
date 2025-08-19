@@ -359,6 +359,71 @@ export type Database = {
         }
         Relationships: []
       }
+      community_videos: {
+        Row: {
+          comment_count: number | null
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          file_size: number | null
+          id: string
+          like_count: number | null
+          status: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          uploader_id: string
+          uploader_profile_id: string | null
+          video_url: string
+          view_count: number | null
+        }
+        Insert: {
+          comment_count?: number | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          like_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          uploader_id: string
+          uploader_profile_id?: string | null
+          video_url: string
+          view_count?: number | null
+        }
+        Update: {
+          comment_count?: number | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          like_count?: number | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          uploader_id?: string
+          uploader_profile_id?: string | null
+          video_url?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_videos_uploader_profile_id_fkey"
+            columns: ["uploader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orchards: {
         Row: {
           category: string
@@ -955,6 +1020,80 @@ export type Database = {
         }
         Relationships: []
       }
+      video_comments: {
+        Row: {
+          commenter_id: string
+          commenter_profile_id: string | null
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          video_id: string
+        }
+        Insert: {
+          commenter_id: string
+          commenter_profile_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          video_id: string
+        }
+        Update: {
+          commenter_id?: string
+          commenter_profile_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_commenter_profile_id_fkey"
+            columns: ["commenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "community_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_likes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "community_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_balances: {
         Row: {
           id: string
@@ -1023,6 +1162,10 @@ export type Database = {
       }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
+        Returns: undefined
+      }
+      increment_video_views: {
+        Args: { video_uuid: string }
         Returns: undefined
       }
       is_admin_or_gosat: {
