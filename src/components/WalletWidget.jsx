@@ -84,11 +84,11 @@ export function WalletWidget() {
       <CardContent className="space-y-4">
         {/* Balance Display */}
         <div className="text-center space-y-2">
-          <div className="text-sm text-muted-foreground">Available Balance</div>
-          <div className="text-3xl font-bold">
+          <div className="text-sm text-black">Available Balance</div>
+          <div className="text-3xl font-bold text-black">
             {loadingBalance ? 'Loading...' : formatBalance(balance)}
           </div>
-          <div className="text-sm text-muted-foreground">USDC on Solana</div>
+          <div className="text-sm text-black">USDC on Solana</div>
         </div>
 
         {/* Quick Stats */}
