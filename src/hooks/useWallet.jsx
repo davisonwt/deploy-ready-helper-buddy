@@ -58,10 +58,28 @@ export function useWallet() {
       
       // Auto-login to Supabase if not already authenticated
       if (!user) {
-        const loginResult = await loginAnonymously();
-        if (!loginResult.success) {
-          console.warn('Auto-login failed:', loginResult.error);
+        console.log('🔐 User not authenticated, attempting auto-login...');
+        try {
+          const loginResult = await loginAnonymously();
+          if (loginResult.success) {
+            console.log('✅ Auto-login successful');
+            toast({
+              title: "Welcome!",
+              description: "You're now logged in and ready to explore sow2grow",
+            });
+          } else {
+            console.error('❌ Auto-login failed:', loginResult.error);
+            toast({
+              title: "Login Required", 
+              description: "Please login to continue",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error('❌ Auto-login error:', error);
         }
+      } else {
+        console.log('✅ User already authenticated');
       }
       
       // Save wallet to database
