@@ -84,11 +84,11 @@ export function WalletWidget() {
       <CardContent className="space-y-4">
         {/* Balance Display */}
         <div className="text-center space-y-2">
-          <div className="text-sm text-black">Available Balance</div>
-          <div className="text-3xl font-bold text-black">
+          <div className="text-sm text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>Available Balance</div>
+          <div className="text-3xl font-bold text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
             {loadingBalance ? 'Loading...' : formatBalance(balance)}
           </div>
-          <div className="text-sm text-black">USDC on Solana</div>
+          <div className="text-sm text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>USDC on Solana</div>
         </div>
 
         {/* Quick Stats */}
