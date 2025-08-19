@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { useBasket } from "../hooks/useBasket"
 import { useCurrency } from "../hooks/useCurrency"
 import { supabase } from "@/integrations/supabase/client"
 import { loadOrchard, clearOrchardCache } from "../utils/orchardLoader"
@@ -17,6 +18,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { addToBasket } = useBasket()
   const { formatAmount } = useCurrency()
   const { toast } = useToast()
   
@@ -121,8 +123,8 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
     setSelectedPockets(availablePockets)
   }
 
-  // Handle bestowal
-  const handleBestow = async () => {
+  // Handle adding to basket
+  const handleBestow = () => {
     if (selectedPockets.length === 0 || !user) {
       toast({
         title: "Error",
@@ -132,61 +134,27 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
       return
     }
     
-    setProcessing(true)
-    try {
-      // Create bestowal record
-      const { data: bestowal, error } = await supabase
-        .from('bestowals')
-        .insert({
-          orchard_id: id,
-          bestower_id: user.id,
-          amount: selectedPockets.length * orchard.pocket_price,
-          pockets_count: selectedPockets.length,
-          pocket_numbers: selectedPockets,
-          payment_status: 'completed' // In production, this would be 'pending'
-        })
-        .select()
-        .single()
-      
-      if (error) throw error
-      
-      // Add selected pockets to taken pockets
-      const newTakenPockets = selectedPockets.map(pocketNumber => ({
-        number: pocketNumber,
-        daysGrowing: 0,
-        stage: "sprout",
-        bestower: `${user?.user_metadata?.first_name || 'Anonymous'} ${(user?.user_metadata?.last_name || 'User')[0]}.`
-      }))
-      
-      setTakenPockets([...takenPockets, ...newTakenPockets])
-      
-      // Update orchard stats
-      const updatedOrchard = {
-        ...orchard,
-        filled_pockets: (orchard.filled_pockets || 0) + selectedPockets.length,
-        completion_rate: (((orchard.filled_pockets || 0) + selectedPockets.length) / (orchard.total_pockets || 1)) * 100,
-        supporters: (orchard.supporters || 0) + 1
-      }
-      setOrchard(updatedOrchard)
-      
-      // Reset selection
-      setSelectedPockets([])
-      
-      toast({
-        title: "Success! 🌱",
-        description: `Thank you for supporting ${orchard.title} with ${selectedPockets.length} pockets!`,
-      })
-      
-    } catch (error) {
-      console.error("Error processing bestowal:", error)
-      toast({
-        title: "Error",
-        description: "Failed to process bestowal. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setProcessing(false)
+    // Add item to basket
+    const basketItem = {
+      orchardId: id,
+      orchardTitle: orchard.title,
+      pockets: selectedPockets,
+      amount: orchard.pocket_price,
+      currency: orchard.currency || 'USD'
     }
+    
+    addToBasket(basketItem)
+    
+    // Reset selection
+    setSelectedPockets([])
+    
+    toast({
+      title: "Added to Basket! 🛒",
+      description: `${selectedPockets.length} pockets added to your basket. Go to basket to complete your bestowal.`,
+    })
+    
+    // Navigate to basket page
+    navigate('/basket')
   }
   
   // Loading state
