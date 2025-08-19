@@ -297,7 +297,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
         pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
-        total_pockets: calculatePockets(),
         location: formData.location?.trim() || "",
         currency: formData.currency || currency || "USD",
         why_needed: formData.why_needed?.trim() || "",
