@@ -1181,6 +1181,39 @@ export type Database = {
           },
         ]
       }
+      wallet_access_logs: {
+        Row: {
+          access_type: string
+          accessed_by: string | null
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          success: boolean | null
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          access_type: string
+          accessed_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          access_type?: string
+          accessed_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       wallet_balances: {
         Row: {
           id: string
@@ -1332,6 +1365,14 @@ export type Database = {
           id: string
           user_id: string
         }[]
+      }
+      update_wallet_balance_secure: {
+        Args: {
+          new_balance: number
+          target_user_id: string
+          target_wallet_address: string
+        }
+        Returns: boolean
       }
       user_is_in_room: {
         Args: { check_room_id: string; check_user_id: string }
