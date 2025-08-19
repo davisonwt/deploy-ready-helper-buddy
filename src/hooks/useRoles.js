@@ -50,21 +50,28 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await supabase
+      // First get all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles!inner (
-            role,
-            granted_at,
-            granted_by
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
-      if (fetchError) throw fetchError
+      if (profilesError) throw profilesError
 
-      return { success: true, data: data || [] }
+      // Then get user roles for each user
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role, granted_at, granted_by')
+
+      if (rolesError) throw rolesError
+
+      // Combine the data
+      const usersWithRoles = profiles.map(profile => ({
+        ...profile,
+        user_roles: userRoles.filter(role => role.user_id === profile.user_id)
+      }))
+
+      return { success: true, data: usersWithRoles }
     } catch (err) {
       console.error('Error fetching users:', err)
       return { success: false, error: err.message }
