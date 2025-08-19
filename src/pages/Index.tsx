@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
-import { ThemeToggle } from "../components/ui/theme-toggle";
+
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
 import { OnboardingTour } from "../components/onboarding/OnboardingTour";
@@ -63,7 +63,7 @@ function IndexContent() {
               >
                 <Mic className="h-5 w-5" />
               </Button>
-              <ThemeToggle />
+              
               <Link to="/login">
                 <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
               </Link>
