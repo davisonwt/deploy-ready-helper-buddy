@@ -13,8 +13,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState("")
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMessage, setResetMessage] = useState("")
   
-  const { login, loginAnonymously } = useAuth()
+  const { login, loginAnonymously, resetPassword } = useAuth()
   const navigate = useNavigate()
   
   useEffect(() => {
@@ -57,6 +61,31 @@ export default function LoginPage() {
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setResetLoading(true)
+    setResetMessage("")
+    
+    try {
+      const result = await resetPassword(resetEmail)
+      
+      if (result.success) {
+        setResetMessage("Password reset email sent! Check your inbox.")
+        setTimeout(() => {
+          setShowForgotPassword(false)
+          setResetEmail("")
+          setResetMessage("")
+        }, 3000)
+      } else {
+        setResetMessage(result.error || "Failed to send reset email")
+      }
+    } catch (err) {
+      setResetMessage("An unexpected error occurred")
+    } finally {
+      setResetLoading(false)
     }
   }
   
@@ -197,7 +226,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   className="text-sm text-blue-600 hover:text-blue-500 transition-colors duration-200"
-                  onClick={() => {/* TODO: Implement forgot password */}}
+                  onClick={() => setShowForgotPassword(true)}
                 >
                   Forgot Password?
                 </button>
@@ -275,6 +304,63 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-blue-700 mb-4 text-center">Reset Password</h3>
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              {resetMessage && (
+                <div className={`p-3 rounded-lg text-sm text-center ${
+                  resetMessage.includes('sent') 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {resetMessage}
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label htmlFor="resetEmail" className="text-sm font-medium text-gray-700">
+                  Email Address
+                </label>
+                <input
+                  id="resetEmail"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? "Sending..." : "Send Reset Email"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForgotPassword(false)
+                    setResetEmail("")
+                    setResetMessage("")
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
