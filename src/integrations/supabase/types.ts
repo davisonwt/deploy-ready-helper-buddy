@@ -945,39 +945,7 @@ export type Database = {
       }
     }
     Views: {
-      payment_config_public: {
-        Row: {
-          bank_account_name: string | null
-          bank_account_number: string | null
-          bank_name: string | null
-          bank_swift_code: string | null
-          business_email: string | null
-          created_at: string | null
-          id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          bank_account_name?: never
-          bank_account_number?: never
-          bank_name?: never
-          bank_swift_code?: never
-          business_email?: never
-          created_at?: string | null
-          id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          bank_account_name?: never
-          bank_account_number?: never
-          bank_name?: never
-          bank_swift_code?: never
-          business_email?: never
-          created_at?: string | null
-          id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       award_achievement: {
