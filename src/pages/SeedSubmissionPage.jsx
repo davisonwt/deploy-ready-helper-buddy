@@ -228,10 +228,10 @@ export default function SeedSubmissionPage() {
       const totalPockets = calculatePockets(seedValue, formData.orchardType, formData.numberOfPockets)
       
       if (totalPockets > 0) {
-        // Calculate values including tithing and payment fees
+        // Calculate values including tithing and admin fee
         const tithingAmount = seedValue * 0.10
-        const paymentFee = seedValue * 0.06
-        const totalWithFees = seedValue + tithingAmount + paymentFee
+        const adminFee = seedValue * 0.005
+        const totalWithFees = seedValue + tithingAmount + adminFee
         
         let finalSeedValue, pocketPrice
         
@@ -255,7 +255,7 @@ export default function SeedSubmissionPage() {
             seed_value: finalSeedValue,
             original_seed_value: seedValue,
             tithing_amount: tithingAmount * (formData.orchardType === 'full_value' ? totalPockets : 1),
-            payment_processing_fee: paymentFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
+            payment_processing_fee: adminFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
             pocket_price: pocketPrice,
             total_pockets: totalPockets,
             images: uploadedImages,
@@ -424,7 +424,7 @@ export default function SeedSubmissionPage() {
                      required
                    />
                    <p className="text-xs text-muted-foreground mt-1">
-                     Each copy will cost ${formData.value ? (parseFloat(formData.value) * 1.16).toFixed(2) : '0'} (including 10% tithing + 6% processing fees)
+                     Each copy will cost ${formData.value ? (parseFloat(formData.value) * 1.105).toFixed(2) : '0'} (including 10% tithing + 0.5% admin fee)
                    </p>
                  </div>
                )}
