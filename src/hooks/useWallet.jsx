@@ -20,7 +20,7 @@ export function useWallet() {
   const [connecting, setConnecting] = useState(false);
   const [balance, setBalance] = useState(0);
   const [loadingBalance, setLoadingBalance] = useState(false);
-  const { user } = useAuth();
+  const { user, loginAnonymously } = useAuth();
   const { toast } = useToast();
 
   // Check if Phantom wallet is available
@@ -56,6 +56,14 @@ export function useWallet() {
       setWallet(response.publicKey);
       setConnected(true);
       
+      // Auto-login to Supabase if not already authenticated
+      if (!user) {
+        const loginResult = await loginAnonymously();
+        if (!loginResult.success) {
+          console.warn('Auto-login failed:', loginResult.error);
+        }
+      }
+      
       // Save wallet to database
       await saveWalletToDatabase(walletAddress);
       
@@ -79,7 +87,7 @@ export function useWallet() {
     } finally {
       setConnecting(false);
     }
-  }, [isPhantomAvailable, user, toast]);
+  }, [isPhantomAvailable, user, toast, loginAnonymously]);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(async () => {
