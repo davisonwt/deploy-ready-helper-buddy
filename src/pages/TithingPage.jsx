@@ -92,7 +92,7 @@ export default function TithingPage() {
               Honor elohim with your faithful giving
             </p>
             <p className="text-sm mt-1" style={{ color: '#c71585' }}>
-              Preferred Currency: {user?.preferred_currency || 'USD'}
+              Payment Method: USDC (USD Coin)
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function TithingPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <Label htmlFor="amount" style={{ color: 'hsl(200, 100%, 50%)' }}>
-                    Tithe Amount ({user?.preferred_currency || 'USD'})
+                    Tithe Amount (USDC)
                   </Label>
                   <Input
                     id="amount"

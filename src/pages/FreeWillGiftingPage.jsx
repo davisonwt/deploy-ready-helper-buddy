@@ -264,7 +264,7 @@ export default function FreeWillGiftingPage() {
               Spread love and blessings through spontaneous giving
             </p>
             <p className="text-sm mt-1" style={{ color: '#084caa' }}>
-              Preferred Currency: {user?.preferred_currency || 'USD'}
+              Payment Method: USDC (USD Coin)
             </p>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function FreeWillGiftingPage() {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-purple-700 mb-2">
-                      Gift Amount ({user?.preferred_currency || 'USD'})
+                      Gift Amount (USDC)
                     </label>
                     <Input
                       type="number"

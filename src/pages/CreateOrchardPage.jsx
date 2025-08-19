@@ -550,7 +550,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
               {isEdit ? "Update your orchard details" : "Plant a new seed in our community"}
             </p>
             <p className="text-sm mt-1" style={{ color: '#cc5500' }}>
-              Preferred Currency: {user?.preferred_currency || 'USD'}
+              Payment Method: USDC (USD Coin)
             </p>
           </div>
         </div>

@@ -10,16 +10,16 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Safe currency formatting with fallback handling
  */
-export function formatCurrency(amount: any, currency = "USD", fallback = "0.00") {
+export function formatCurrency(amount: any, currency = "USDC", fallback = "0.00") {
   // Handle undefined, null, or empty values
   if (amount === undefined || amount === null || amount === "") {
-    return `${currency.toUpperCase()} ${fallback}`
+    return `${fallback} USDC`
   }
   
   // Handle string values
   if (typeof amount === "string") {
     amount = amount.trim()
-    if (amount === "") return `${currency.toUpperCase()} ${fallback}`
+    if (amount === "") return `${fallback} USDC`
   }
   
   // Convert to number and validate
@@ -27,29 +27,11 @@ export function formatCurrency(amount: any, currency = "USD", fallback = "0.00")
   
   // Return fallback if not a valid number
   if (isNaN(value) || !isFinite(value)) {
-    return `${currency.toUpperCase()} ${fallback}`
+    return `${fallback} USDC`
   }
   
-  try {
-    // Use uppercase ISO 4217 format
-    const currencyCode = currency.toUpperCase()
-    
-    // Get appropriate locale for currency
-    const locale = getLocaleForCurrency(currencyCode)
-    
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value)
-  } catch (error) {
-    // Fallback formatting with currency code
-    return `${currency.toUpperCase()} ${value.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`
-  }
+  // Format to 2 decimal places with USDC suffix
+  return `${value.toFixed(2)} USDC`
 }
 
 /**
