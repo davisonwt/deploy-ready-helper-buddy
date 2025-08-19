@@ -372,8 +372,8 @@ export default function FreeWillGiftingPage() {
                   <Button
                     type="submit"
                     disabled={loading || !amount}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 text-lg"
-                    onClick={() => console.log('🎁 Gift button clicked! Amount:', amount, 'Type:', giftType)}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    style={{ color: '#ffffff' }}
                   >
                     {loading ? (
                       <>
@@ -382,8 +382,8 @@ export default function FreeWillGiftingPage() {
                       </>
                     ) : (
                       <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Add Gift to Basket
+                        <Send className="h-4 w-4 mr-2" style={{ color: '#ffffff' }} />
+                        <span style={{ color: '#ffffff' }}>Add Gift to Basket</span>
                       </>
                     )}
                   </Button>
