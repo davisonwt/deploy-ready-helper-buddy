@@ -52,20 +52,46 @@ export function WalletConnection({ compact = false }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Phantom Wallet Required
+            Create Your USDC Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            To use USDC payments, please install the Phantom wallet browser extension.
-          </p>
-          <Button 
-            onClick={() => window.open('https://phantom.app/', '_blank')}
-            className="w-full"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Install Phantom Wallet
-          </Button>
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">🚀 Get Started with Ultra-Low Fee Payments</h4>
+            <p className="text-blue-700 text-sm mb-3">
+              Create a secure USDC wallet to make instant payments with fees under $0.01. Your wallet will be linked to your Sow2Grow account.
+            </p>
+            <div className="space-y-2 text-sm text-blue-600">
+              <div className="flex items-center gap-2">
+                <span>✓</span>
+                <span>Ultra-low transaction fees (~$0.001)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>✓</span>
+                <span>Instant transfers worldwide</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>✓</span>
+                <span>Secure blockchain technology</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <Button 
+              onClick={() => window.open('https://phantom.app/download', '_blank')}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Create Phantom Wallet (Free)
+            </Button>
+            
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">
+                Already have Phantom? Refresh this page after installation
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
