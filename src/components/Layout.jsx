@@ -251,6 +251,7 @@ export default function Layout({ children }) {
                 <Link
                   to="/basket"
                   className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent"
+                  onClick={() => console.log('🛒 Basket link clicked, total items:', getTotalItems())}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {getTotalItems() > 0 && (
