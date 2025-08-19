@@ -34,11 +34,11 @@ export default function CommunityVideosPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-800 drop-shadow-lg border border-white/30 bg-white/60 px-4 py-2 rounded-lg backdrop-blur-sm">
-                <Video className="h-8 w-8 text-primary drop-shadow-sm" />
+              <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-900" style={{textShadow: '2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white'}}>
+                <Video className="h-8 w-8 text-primary" style={{filter: 'drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white) drop-shadow(-1px 1px 0 white)'}} />
                 Community Videos
               </h1>
-              <p className="text-muted-foreground text-lg text-slate-700 drop-shadow-sm border border-white/30 bg-white/50 px-3 py-2 rounded backdrop-blur-sm">
+              <p className="text-lg text-slate-800 font-medium" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>
                 Share your marketing insights and discover what's working for other sowers
               </p>
             </div>
