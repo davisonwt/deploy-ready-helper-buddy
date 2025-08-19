@@ -28,27 +28,27 @@ export function OnboardingTour({ isVisible, onClose, onComplete }: OnboardingTou
     {
       id: "welcome",
       title: "Welcome to Sow2Grow!",
-      description: "Your gateway to agricultural crowdfunding and community building in the 364yhvh community. Let's take a quick tour to get you started.",
+      description: "Your gateway to 364yhvh community farm's digital mall - sow2grow. Let's take a tour to get you started.",
       icon: <Users className="h-8 w-8 text-primary" />,
     },
     {
       id: "orchards",
       title: "Discover Orchards",
-      description: "Browse and support agricultural projects from community members. Each orchard represents a real farming initiative that needs your support.",
+      description: "Browse and support sow2grow projects from community members. Each orchard represents a real farming initiative that needs your support.",
       icon: <MapPin className="h-8 w-8 text-green-600" />,
       action: () => window.location.href = "/browse-orchards"
     },
     {
       id: "create",
       title: "Create Your Own Orchard",
-      description: "Have a farming project? Create your own orchard to receive funding and support from the community. Share your vision and watch it grow!",
+      description: "Have your own sow2grow digital farm stalls! Create your own orchards to receive bestowals from our community. Show your seeds and watch it grow!",
       icon: <Target className="h-8 w-8 text-blue-600" />,
       action: () => window.location.href = "/create-orchard"
     },
     {
       id: "community",
       title: "Join the Community",
-      description: "Connect with other farmers, share videos, and chat with community members. Learn from experienced growers and share your knowledge.",
+      description: "Connect with sow2grow's bestowers, share your videos, and chat with community members. Learn from experienced growers and share your knowledge.",
       icon: <BookOpen className="h-8 w-8 text-purple-600" />,
       action: () => window.location.href = "/community-videos"
     },
