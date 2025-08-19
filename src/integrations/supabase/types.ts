@@ -624,10 +624,20 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_email: string | null
+          billing_organization: string | null
+          billing_phone: string | null
+          billing_postal_code: string | null
+          billing_state: string | null
           bio: string | null
           created_at: string
           display_name: string | null
           first_name: string | null
+          has_complete_billing_info: boolean | null
           id: string
           last_name: string | null
           location: string | null
@@ -637,10 +647,20 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_organization?: string | null
+          billing_phone?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
           first_name?: string | null
+          has_complete_billing_info?: boolean | null
           id?: string
           last_name?: string | null
           location?: string | null
@@ -650,10 +670,20 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_organization?: string | null
+          billing_phone?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
           first_name?: string | null
+          has_complete_billing_info?: boolean | null
           id?: string
           last_name?: string | null
           location?: string | null
