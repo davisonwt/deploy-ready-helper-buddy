@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Lightbulb, FileText, TrendingUp, Camera, Sparkles, Star, History, RefreshCcw } from 'lucide-react';
+import { Lightbulb, FileText, TrendingUp, Camera, Sparkles, Star, History, RefreshCcw, Video, Upload } from 'lucide-react';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useAuth } from '@/hooks/useAuth';
 import { GenerateScriptForm } from '@/components/ai/GenerateScriptForm';
@@ -13,6 +13,8 @@ import { GenerateThumbnailForm } from '@/components/ai/GenerateThumbnailForm';
 import { GenerateContentIdeasForm } from '@/components/ai/GenerateContentIdeasForm';
 import { AICreationsList } from '@/components/ai/AICreationsList';
 import { ExampleTemplates } from '@/components/ai/ExampleTemplates';
+import { VideoUploadForm } from '@/components/ai/VideoUploadForm';
+import { VideoMarketingDashboard } from '@/components/ai/VideoMarketingDashboard';
 
 export default function AIAssistantPage() {
   const [activeTab, setActiveTab] = useState('thumbnails');
@@ -110,6 +112,21 @@ export default function AIAssistantPage() {
           </Button>
           <Button
             variant="outline"
+            onClick={() => setActiveTab('videos')}
+            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
+              activeTab === 'videos' 
+                ? 'bg-green-100 border-green-500 text-green-700 shadow-lg' 
+                : 'bg-green-50 border-green-300 text-green-600 hover:bg-green-100'
+            }`}
+          >
+            <Video className="w-6 h-6" />
+            <div className="text-center">
+              <p className="text-sm font-medium">Video Marketing</p>
+              <p className="text-xs opacity-80">Upload & optimize</p>
+            </div>
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setActiveTab('library')}
             className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
               activeTab === 'library' 
@@ -164,6 +181,53 @@ export default function AIAssistantPage() {
             </CardContent>
           </Card>
           <ExampleTemplates type="ideas" />
+        </TabsContent>
+
+        <TabsContent value="videos" className="space-y-6">
+          <Tabs defaultValue="upload" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Video className="w-6 h-6" />
+                Video Marketing Hub
+              </h2>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => document.querySelector('[value="upload"]').click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Video
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => document.querySelector('[value="manage"]').click()}
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Manage Videos
+                </Button>
+              </div>
+            </div>
+            
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload & Generate</TabsTrigger>
+              <TabsTrigger value="manage">My Videos</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload">
+              <VideoUploadForm onVideoUploaded={() => {
+                // Switch to manage tab after upload
+                setTimeout(() => {
+                  document.querySelector('[value="manage"]').click();
+                }, 1000);
+              }} />
+            </TabsContent>
+            
+            <TabsContent value="manage">
+              <VideoMarketingDashboard />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="library">
