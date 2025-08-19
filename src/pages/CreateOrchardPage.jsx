@@ -766,7 +766,6 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 {/* Currency Calculator */}
                 <CurrencyCalculator onUseAmount={handleUseCalculatedAmount} />
@@ -801,20 +800,41 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   <div>
                       <label className="block text-sm font-medium text-emerald-400 mb-2">
                        Bestowal Pocket Value (USDC) *
-                     </label>
+                      </label>
+                     <Input
+                       type="number"
+                       name="pocket_price"
+                       value={formData.pocket_price}
+                       onChange={handleChange}
+                       placeholder="150"
+                       min="1"
+                       step="0.01"
+                       required
+                     />
+                       <p className="text-xs text-gray-500 mt-1">
+                         Default 150 USDC. Must be greater than 0.
+                       </p>
+                  </div>
+                )}
+
+                {formData.orchard_type === 'full_value' && (
+                  <div>
+                    <label className="block text-sm font-medium text-emerald-400 mb-2">
+                      Number of Pockets *
+                    </label>
                     <Input
                       type="number"
-                      name="pocket_price"
-                      value={formData.pocket_price}
+                      name="number_of_pockets"
+                      value={formData.number_of_pockets}
                       onChange={handleChange}
-                      placeholder="150"
+                      placeholder="1"
                       min="1"
-                      step="0.01"
+                      step="1"
                       required
                     />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Default 150 USDC. Must be greater than 0.
-                      </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Each pocket will contain the full seed value ({formData.seed_value || 0} USDC) + fees
+                    </p>
                   </div>
                 )}
               </div>
