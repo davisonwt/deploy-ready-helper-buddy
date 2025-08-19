@@ -59,12 +59,17 @@ export default function YhvhOrchardsPage() {
     }
 
     try {
+      console.log('Attempting to delete orchard:', orchardId)
       const result = await deleteOrchard(orchardId)
+      console.log('Delete result:', result)
       
       if (result.success) {
         toast.success('Orchard deleted successfully')
-        fetchOrchards() // Refresh the list
+        console.log('Refreshing orchards list...')
+        await fetchOrchards() // Refresh the list
+        console.log('Orchards list refreshed')
       } else {
+        console.error('Delete failed:', result.error)
         toast.error(result.error || 'Failed to delete orchard')
       }
     } catch (error) {
