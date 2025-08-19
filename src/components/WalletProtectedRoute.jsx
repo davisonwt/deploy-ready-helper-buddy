@@ -10,8 +10,18 @@ export default function WalletProtectedRoute({ children }) {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { connected, connecting, isPhantomAvailable } = useWallet()
   
+  // Add debugging
+  console.log('🔍 WalletProtectedRoute state:', {
+    isAuthenticated,
+    authLoading,
+    connected,
+    connecting,
+    isPhantomAvailable: isPhantomAvailable()
+  })
+  
   // Show loading while auth is being checked
   if (authLoading) {
+    console.log('⏳ WalletProtectedRoute: Auth loading...')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -21,11 +31,13 @@ export default function WalletProtectedRoute({ children }) {
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log('❌ WalletProtectedRoute: Not authenticated, redirecting to login')
     return <Navigate to="/login" replace />
   }
   
   // If wallet is not connected, show mandatory wallet connection screen
   if (!connected && !connecting) {
+    console.log('💰 WalletProtectedRoute: Wallet not connected, showing connection screen')
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -75,6 +87,7 @@ export default function WalletProtectedRoute({ children }) {
   
   // Show connecting state
   if (connecting) {
+    console.log('🔄 WalletProtectedRoute: Wallet connecting...')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -86,5 +99,6 @@ export default function WalletProtectedRoute({ children }) {
   }
   
   // If wallet is connected, render the children
+  console.log('✅ WalletProtectedRoute: All checks passed, rendering dashboard')
   return children
 }
