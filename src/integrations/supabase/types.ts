@@ -896,6 +896,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean | null
           is_primary: boolean
           updated_at: string
           user_id: string
@@ -905,6 +906,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
           is_primary?: boolean
           updated_at?: string
           user_id: string
@@ -914,6 +916,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean | null
           is_primary?: boolean
           updated_at?: string
           user_id?: string
@@ -926,19 +929,25 @@ export type Database = {
         Row: {
           id: string
           last_updated: string
+          updated_at: string | null
           usdc_balance: number
+          user_id: string | null
           wallet_address: string
         }
         Insert: {
           id?: string
           last_updated?: string
+          updated_at?: string | null
           usdc_balance?: number
+          user_id?: string | null
           wallet_address: string
         }
         Update: {
           id?: string
           last_updated?: string
+          updated_at?: string | null
           usdc_balance?: number
+          user_id?: string | null
           wallet_address?: string
         }
         Relationships: []
