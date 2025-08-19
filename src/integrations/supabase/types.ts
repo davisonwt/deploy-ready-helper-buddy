@@ -155,6 +155,39 @@ export type Database = {
           },
         ]
       }
+      billing_access_logs: {
+        Row: {
+          access_type: string
+          accessed_by: string | null
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          success: boolean | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          accessed_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          accessed_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_files: {
         Row: {
           created_at: string
@@ -891,6 +924,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_billing_info: {
+        Row: {
+          billing_address_line1_encrypted: string | null
+          billing_address_line2_encrypted: string | null
+          billing_city_encrypted: string | null
+          billing_country_encrypted: string | null
+          billing_email_encrypted: string | null
+          billing_organization_encrypted: string | null
+          billing_phone_encrypted: string | null
+          billing_postal_code_encrypted: string | null
+          billing_state_encrypted: string | null
+          created_at: string
+          encryption_key_id: string | null
+          id: string
+          last_accessed: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_address_line1_encrypted?: string | null
+          billing_address_line2_encrypted?: string | null
+          billing_city_encrypted?: string | null
+          billing_country_encrypted?: string | null
+          billing_email_encrypted?: string | null
+          billing_organization_encrypted?: string | null
+          billing_phone_encrypted?: string | null
+          billing_postal_code_encrypted?: string | null
+          billing_state_encrypted?: string | null
+          created_at?: string
+          encryption_key_id?: string | null
+          id?: string
+          last_accessed?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_address_line1_encrypted?: string | null
+          billing_address_line2_encrypted?: string | null
+          billing_city_encrypted?: string | null
+          billing_country_encrypted?: string | null
+          billing_email_encrypted?: string | null
+          billing_organization_encrypted?: string | null
+          billing_phone_encrypted?: string | null
+          billing_postal_code_encrypted?: string | null
+          billing_state_encrypted?: string | null
+          created_at?: string
+          encryption_key_id?: string | null
+          id?: string
+          last_accessed?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notifications: {
         Row: {
           action_url: string | null
@@ -1160,6 +1247,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_billing_summary: {
+        Args: { target_user_id?: string }
+        Returns: {
+          billing_country: string
+          has_billing_info: boolean
+          masked_address: string
+          masked_email: string
+          masked_phone: string
+        }[]
+      }
       get_user_display_info: {
         Args: { target_user_id: string }
         Returns: {
@@ -1189,6 +1286,18 @@ export type Database = {
       is_admin_or_gosat: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      mask_address: {
+        Args: { address: string }
+        Returns: string
+      }
+      mask_email: {
+        Args: { email_address: string }
+        Returns: string
+      }
+      mask_phone: {
+        Args: { phone_number: string }
+        Returns: string
       }
       search_user_profiles: {
         Args: { search_term: string }
