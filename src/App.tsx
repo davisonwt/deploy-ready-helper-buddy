@@ -44,6 +44,7 @@ import TestBasketPage from "./pages/TestBasketPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
+import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -67,28 +68,28 @@ const App = () => (
               
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
-                <ProtectedRoute>
+                <WalletProtectedRoute>
                   <Layout>
                     <DashboardPage />
                   </Layout>
-                </ProtectedRoute>
+                </WalletProtectedRoute>
               } />
               
               <Route path="/regrow-access" element={
-                <ProtectedRoute>
+                <WalletProtectedRoute>
                   <Layout>
                     <BrowseOrchardsPage />
                   </Layout>
-                </ProtectedRoute>
+                </WalletProtectedRoute>
               } />
               
               {/* Orchard Routes */}
               <Route path="/browse-orchards" element={
-                <ProtectedRoute>
+                <WalletProtectedRoute>
                   <Layout>
                     <BrowseOrchardsPage />
                   </Layout>
-                </ProtectedRoute>
+                </WalletProtectedRoute>
               } />
               
               <Route path="/orchards/:orchardId" element={
@@ -256,11 +257,11 @@ const App = () => (
               } />
               
               <Route path="/basket" element={
-                <ProtectedRoute>
+                <WalletProtectedRoute>
                   <Layout>
                     <BasketPage />
                   </Layout>
-                </ProtectedRoute>
+                </WalletProtectedRoute>
               } />
               
               <Route path="/test-basket" element={
