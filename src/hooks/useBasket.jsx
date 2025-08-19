@@ -27,6 +27,7 @@ export const BasketProvider = ({ children }) => {
   }, [basketItems])
   
   const addToBasket = (item) => {
+    console.log('🛒 Adding to basket:', item)
     const existingItem = basketItems.find(
       basketItem => basketItem.orchardId === item.orchardId && basketItem.pockets === item.pockets
     )
@@ -38,7 +39,9 @@ export const BasketProvider = ({ children }) => {
           : basketItem
       ))
     } else {
-      setBasketItems([...basketItems, { ...item, quantity: 1, id: Date.now() }])
+      const newBasketItems = [...basketItems, { ...item, quantity: 1, id: Date.now() }]
+      console.log('🛒 New basket items:', newBasketItems)
+      setBasketItems(newBasketItems)
     }
   }
   
@@ -62,7 +65,9 @@ export const BasketProvider = ({ children }) => {
   }
   
   const getTotalItems = () => {
-    return basketItems.reduce((total, item) => total + item.quantity, 0)
+    const total = basketItems.reduce((total, item) => total + item.quantity, 0)
+    console.log('🛒 Total items in basket:', total, 'basketItems:', basketItems)
+    return total
   }
   
   const getTotalAmount = () => {
