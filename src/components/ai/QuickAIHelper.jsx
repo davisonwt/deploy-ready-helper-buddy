@@ -170,8 +170,8 @@ export const QuickAIHelper = ({
                 <Icon className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">{config.title}</h3>
-                <p className="text-xs text-muted-foreground">{config.description}</p>
+                <h3 className="font-semibold text-sm text-slate-800 drop-shadow-sm">{config.title}</h3>
+                <p className="text-xs text-slate-700 drop-shadow-sm border border-white/30 bg-white/50 px-2 py-1 rounded backdrop-blur-sm">{config.description}</p>
               </div>
             </div>
             <Button

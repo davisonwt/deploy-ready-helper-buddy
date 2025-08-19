@@ -107,8 +107,8 @@ export default function VideoFeed() {
           <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
             <Search className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">No videos found</h3>
-          <p className="text-muted-foreground mb-4">
+          <h3 className="text-lg font-semibold mb-2 text-slate-800 drop-shadow-sm border border-white/30 bg-white/60 px-3 py-1 rounded backdrop-blur-sm inline-block">No videos found</h3>
+          <p className="text-muted-foreground mb-4 text-slate-700 drop-shadow-sm border border-white/30 bg-white/50 px-3 py-2 rounded backdrop-blur-sm">
             {searchQuery 
               ? `No videos match "${searchQuery}". Try a different search term.`
               : 'No videos have been uploaded yet. Be the first to share!'
