@@ -364,9 +364,9 @@ export default function CreateOrchardPage({ isEdit = false }) {
       // For full value orchards, use the specified number of pockets
       return parseInt(formData.number_of_pockets) || 1
     } else {
-      // For standard orchards, calculate based on total (seed value * 1.16) / pocket price
+      // For standard orchards, calculate based on total (seed value * 1.105) / pocket price
       const seedValue = parseFloat(formData.seed_value) || 0
-      const total = seedValue * 1.16  // 10% tithing + 6% payment gateway fees
+      const total = seedValue * 1.105  // 10% tithing + 0.5% admin fee
       const pocketPrice = parseFloat(formData.pocket_price) || 150
       if (total && pocketPrice) {
         return Math.floor(total / pocketPrice)
@@ -380,13 +380,13 @@ export default function CreateOrchardPage({ isEdit = false }) {
     if (originalSeedValue === 0) return 0
     
     if (formData.orchard_type === 'full_value') {
-      // For full value orchards: (seed value * 1.16) * number of pockets
-      const pocketCost = originalSeedValue * 1.16 // 10% tithing + 6% payment gateway fees
+      // For full value orchards: (seed value * 1.105) * number of pockets
+      const pocketCost = originalSeedValue * 1.105 // 10% tithing + 0.5% admin fee
       const numberOfPockets = parseInt(formData.number_of_pockets) || 1
       return pocketCost * numberOfPockets
     } else {
-      // For standard orchards: seed value * 1.16
-      return originalSeedValue * 1.16 // 10% tithing + 6% payment gateway fees
+      // For standard orchards: seed value * 1.105
+      return originalSeedValue * 1.105 // 10% tithing + 0.5% admin fee
     }
   }
 
@@ -395,8 +395,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
     if (originalSeedValue === 0) return null
     
     const tithingAmount = originalSeedValue * 0.10  // 10% tithing
-    const gatewayFees = originalSeedValue * 0.06    // 6% payment gateway fees
-    const totalWithFees = originalSeedValue * 1.16  // Total = seed * 1.16
+    const adminFee = originalSeedValue * 0.005       // 0.5% admin fee
+    const totalWithFees = originalSeedValue * 1.105  // Total = seed * 1.105
     
     let finalCost = totalWithFees
     if (formData.orchard_type === 'full_value') {
@@ -407,7 +407,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
     return {
       original: originalSeedValue,
       tithing: tithingAmount,
-      paymentProcessing: gatewayFees,
+      paymentProcessing: adminFee,
       totalWithFees: totalWithFees,
       final: finalCost,
       pocketCost: formData.orchard_type === 'full_value' ? totalWithFees : null
@@ -831,13 +831,13 @@ export default function CreateOrchardPage({ isEdit = false }) {
                                <span className="font-medium">R{breakdown.tithing.toFixed(2)}</span>
                              </div>
                              <div className="flex justify-between text-blue-700">
-                               <span>+ 6% Payment Gateway Fee:</span>
+                               <span>+ 0.5% Admin Fee:</span>
                                <span className="font-medium">R{breakdown.paymentProcessing.toFixed(2)}</span>
                              </div>
                              <div className="border-t border-gray-200 pt-2 mt-2">
-                               <div className="flex justify-between font-semibold text-green-700">
-                                 <span>Total (= Seed × 1.16):</span>
-                                 <span>R{breakdown.totalWithFees.toFixed(2)}</span>
+                                <div className="flex justify-between font-semibold text-green-700">
+                                  <span>Total (= Seed × 1.105):</span>
+                                  <span>R{breakdown.totalWithFees.toFixed(2)}</span>
                                </div>
                                {formData.orchard_type === 'full_value' && (
                                  <>
