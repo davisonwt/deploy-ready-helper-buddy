@@ -23,8 +23,9 @@ export function WalletConnection({ compact = false }) {
   const { toast } = useToast();
 
   const handleCopyAddress = () => {
-    if (wallet?.address) {
-      navigator.clipboard.writeText(wallet.address);
+    if (wallet) {
+      const address = wallet.toString();
+      navigator.clipboard.writeText(address);
       toast({
         title: "Address Copied",
         description: "Wallet address copied to clipboard",
@@ -102,10 +103,10 @@ export function WalletConnection({ compact = false }) {
       <div className="flex items-center gap-2 p-2 border rounded-lg bg-card">
         <div className="flex items-center gap-2 flex-1">
           <Wallet className="h-4 w-4 text-green-500" />
-          <div className="text-sm">
-            <div className="font-medium">{formatBalance(balance)}</div>
-            <div className="text-muted-foreground">{formatAddress(wallet.address)}</div>
-          </div>
+            <div className="text-sm">
+              <div className="font-medium">{formatBalance(balance)}</div>
+              <div className="text-muted-foreground">{formatAddress(wallet.toString())}</div>
+            </div>
         </div>
         <Button
           size="sm"
@@ -185,22 +186,22 @@ export function WalletConnection({ compact = false }) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <span className="text-sm text-muted-foreground">Wallet Address</span>
-          <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-            <code className="flex-1 text-sm">{formatAddress(wallet.address)}</code>
-            <Button size="sm" variant="ghost" onClick={handleCopyAddress}>
-              <Copy className="h-4 w-4" />
-            </Button>
+          <div className="space-y-2">
+            <span className="text-sm text-muted-foreground">Wallet Address</span>
+            <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+              <code className="flex-1 text-sm">{formatAddress(wallet.toString())}</code>
+              <Button size="sm" variant="ghost" onClick={handleCopyAddress}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={disconnectWallet} className="flex-1">
             Disconnect
           </Button>
           <Button 
-            onClick={() => window.open(`https://solscan.io/account/${wallet.address}`, '_blank')}
+            onClick={() => window.open(`https://solscan.io/account/${wallet.toString()}`, '_blank')}
             variant="outline"
             className="flex-1"
           >
