@@ -77,21 +77,37 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Quick stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Camera className="w-6 h-6 mx-auto mb-2 text-purple-500" />
+        <div className="flex gap-4 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => setActiveTab('thumbnails')}
+            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
+              activeTab === 'thumbnails' 
+                ? 'bg-purple-100 border-purple-500 text-purple-700 shadow-lg' 
+                : 'bg-purple-50 border-purple-300 text-purple-600 hover:bg-purple-100'
+            }`}
+          >
+            <Camera className="w-6 h-6" />
+            <div className="text-center">
               <p className="text-sm font-medium">Thumbnails</p>
-              <p className="text-xs text-muted-foreground">Eye-catching visuals</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Lightbulb className="w-6 h-6 mx-auto mb-2 text-orange-500" />
+              <p className="text-xs opacity-80">Eye-catching visuals</p>
+            </div>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setActiveTab('ideas')}
+            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
+              activeTab === 'ideas' 
+                ? 'bg-orange-100 border-orange-500 text-orange-700 shadow-lg' 
+                : 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
+            }`}
+          >
+            <Lightbulb className="w-6 h-6" />
+            <div className="text-center">
               <p className="text-sm font-medium">Content Ideas</p>
-              <p className="text-xs text-muted-foreground">Creative inspiration</p>
-            </CardContent>
-          </Card>
+              <p className="text-xs opacity-80">Creative inspiration</p>
+            </div>
+          </Button>
         </div>
       </div>
 
