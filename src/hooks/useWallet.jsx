@@ -220,14 +220,36 @@ export function useWallet() {
 
   // Auto-connect if wallet was previously connected
   useEffect(() => {
-    if (isPhantomAvailable() && window.solana.isConnected) {
-      const publicKey = window.solana.publicKey;
-      if (publicKey) {
-        setWallet(publicKey);
-        setConnected(true);
-        loadUSDCBalance(publicKey.toString());
+    const checkConnection = async () => {
+      if (!isPhantomAvailable()) return;
+      
+      try {
+        // Check if already connected
+        if (window.solana.isConnected && window.solana.publicKey) {
+          console.log('🔄 Auto-connecting to previously connected wallet...');
+          const publicKey = window.solana.publicKey;
+          setWallet(publicKey);
+          setConnected(true);
+          await loadUSDCBalance(publicKey.toString());
+          console.log('✅ Auto-connection successful');
+          return;
+        }
+        
+        // Try to connect silently (only if trusted)
+        const response = await window.solana.connect({ onlyIfTrusted: true });
+        if (response.publicKey) {
+          console.log('🔄 Silent connection successful');
+          setWallet(response.publicKey);
+          setConnected(true);
+          await loadUSDCBalance(response.publicKey.toString());
+        }
+      } catch (error) {
+        // Silent connection failed, which is expected if user hasn't previously approved
+        console.log('Silent connection not available - user needs to manually connect');
       }
-    }
+    };
+    
+    checkConnection();
   }, [isPhantomAvailable, loadUSDCBalance]);
 
   // Listen for wallet events
