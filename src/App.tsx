@@ -68,28 +68,28 @@ const App = () => (
               
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
-                <WalletProtectedRoute>
+                <ProtectedRoute>
                   <Layout>
                     <DashboardPage />
                   </Layout>
-                </WalletProtectedRoute>
+                </ProtectedRoute>
               } />
               
               <Route path="/regrow-access" element={
-                <WalletProtectedRoute>
+                <ProtectedRoute>
                   <Layout>
                     <BrowseOrchardsPage />
                   </Layout>
-                </WalletProtectedRoute>
+                </ProtectedRoute>
               } />
               
               {/* Orchard Routes */}
               <Route path="/browse-orchards" element={
-                <WalletProtectedRoute>
+                <ProtectedRoute>
                   <Layout>
                     <BrowseOrchardsPage />
                   </Layout>
-                </WalletProtectedRoute>
+                </ProtectedRoute>
               } />
               
               <Route path="/orchards/:orchardId" element={
