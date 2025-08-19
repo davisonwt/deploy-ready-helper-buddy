@@ -56,10 +56,18 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
   const [lastCommand, setLastCommand] = useState<string>("")
+  const [hasPermission, setHasPermission] = useState(false)
+  const [isSupported, setIsSupported] = useState(false)
   const { toast } = useToast()
 
+  // Check browser support and initialize recognition
   useEffect(() => {
+    console.log('VoiceCommands: Checking browser support')
+    
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      setIsSupported(true)
+      console.log('VoiceCommands: Speech Recognition supported')
+      
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       const recognitionInstance = new SpeechRecognition()
       
@@ -68,18 +76,22 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
       recognitionInstance.lang = 'en-US'
 
       recognitionInstance.onstart = () => {
+        console.log('VoiceCommands: Recognition started')
         setIsListening(true)
       }
 
       recognitionInstance.onend = () => {
+        console.log('VoiceCommands: Recognition ended')
         setIsListening(false)
-        if (isEnabled) {
-          // Restart listening if enabled
+        
+        // Only restart if still enabled and has permission
+        if (isEnabled && hasPermission) {
           setTimeout(() => {
             try {
+              console.log('VoiceCommands: Attempting to restart recognition')
               recognitionInstance.start()
             } catch (error) {
-              console.log('Recognition restart failed:', error)
+              console.error('VoiceCommands: Restart failed:', error)
             }
           }, 1000)
         }
@@ -87,16 +99,29 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
 
       recognitionInstance.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase()
+        console.log('VoiceCommands: Transcript received:', transcript)
         setLastCommand(transcript)
         handleVoiceCommand(transcript)
       }
 
       recognitionInstance.onerror = (event) => {
-        console.error('Speech recognition error:', event.error)
+        console.error('VoiceCommands: Recognition error:', event.error)
         setIsListening(false)
+        
+        if (event.error === 'not-allowed') {
+          setHasPermission(false)
+          toast({
+            title: "Microphone Permission Denied",
+            description: "Please allow microphone access to use voice commands",
+            variant: "destructive"
+          })
+        }
       }
 
       setRecognition(recognitionInstance)
+    } else {
+      console.warn('VoiceCommands: Speech Recognition not supported')
+      setIsSupported(false)
     }
 
     return () => {
@@ -104,21 +129,53 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
         recognition.stop()
       }
     }
-  }, [])
+  }, []) // Remove dependencies to avoid recreating recognition
 
+  // Request microphone permission when component mounts
   useEffect(() => {
-    if (recognition) {
-      if (isEnabled && !isListening) {
-        try {
-          recognition.start()
-        } catch (error) {
-          console.log('Recognition start failed:', error)
-        }
-      } else if (!isEnabled && isListening) {
-        recognition.stop()
+    const requestPermission = async () => {
+      try {
+        console.log('VoiceCommands: Requesting microphone permission')
+        await navigator.mediaDevices.getUserMedia({ audio: true })
+        setHasPermission(true)
+        console.log('VoiceCommands: Microphone permission granted')
+      } catch (error) {
+        console.error('VoiceCommands: Microphone permission denied:', error)
+        setHasPermission(false)
       }
     }
-  }, [isEnabled, recognition])
+
+    if (isSupported) {
+      requestPermission()
+    }
+  }, [isSupported])
+
+  // Handle enabling/disabling voice commands
+  useEffect(() => {
+    console.log('VoiceCommands: isEnabled changed:', isEnabled, 'hasPermission:', hasPermission)
+    
+    if (recognition && hasPermission) {
+      if (isEnabled && !isListening) {
+        try {
+          console.log('VoiceCommands: Starting recognition')
+          recognition.start()
+          toast({
+            title: "Voice Commands Enabled",
+            description: "Say 'Hey Sow2Grow' followed by a command",
+          })
+        } catch (error) {
+          console.error('VoiceCommands: Start failed:', error)
+        }
+      } else if (!isEnabled && isListening) {
+        console.log('VoiceCommands: Stopping recognition')
+        recognition.stop()
+        toast({
+          title: "Voice Commands Disabled",
+          description: "Voice commands are now turned off",
+        })
+      }
+    }
+  }, [isEnabled, recognition, hasPermission])
 
   const handleVoiceCommand = (command: string) => {
     const trimmedCommand = command.trim()
@@ -191,11 +248,39 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
   }
 
   const toggleListening = () => {
+    if (!isSupported) {
+      toast({
+        title: "Not Supported",
+        description: "Voice commands are not supported in this browser",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    if (!hasPermission) {
+      toast({
+        title: "Permission Required",
+        description: "Please allow microphone access to use voice commands",
+        variant: "destructive"
+      })
+      return
+    }
+    
     onToggle()
   }
 
-  if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-    return null
+  if (!isSupported) {
+    return (
+      <div className="fixed bottom-20 left-6 z-40">
+        <Card className="w-80 shadow-lg">
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">
+              Voice commands are not supported in this browser
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -220,8 +305,14 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Status:</span>
-            <Badge variant={isListening ? "default" : "secondary"}>
-              {isListening ? "Listening..." : isEnabled ? "Ready" : "Disabled"}
+            <Badge variant={
+              !hasPermission ? "destructive" : 
+              isListening ? "default" : 
+              isEnabled ? "secondary" : "outline"
+            }>
+              {!hasPermission ? "No Permission" :
+               isListening ? "Listening..." : 
+               isEnabled ? "Ready" : "Disabled"}
             </Badge>
           </div>
           
