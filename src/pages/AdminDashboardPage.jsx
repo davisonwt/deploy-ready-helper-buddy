@@ -73,23 +73,53 @@ export default function AdminDashboardPage() {
   const loadSeeds = async () => {
     try {
       setSeedsLoading(true)
-      const { data, error } = await supabase
+      console.log('Loading seeds...')
+      
+      // First get all seeds
+      const { data: seedsData, error: seedsError } = await supabase
         .from('seeds')
-        .select(`
-          *,
-          profiles!seeds_gifter_id_fkey (
-            display_name,
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setSeeds(data || [])
+      if (seedsError) {
+        console.error('Seeds query error:', seedsError)
+        throw seedsError
+      }
+
+      console.log('Seeds loaded:', seedsData?.length || 0)
+
+      // Then get profiles for the gifters
+      if (seedsData && seedsData.length > 0) {
+        const gifterIds = seedsData.map(seed => seed.gifter_id).filter(Boolean)
+        
+        if (gifterIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, first_name, last_name')
+            .in('user_id', gifterIds)
+
+          if (profilesError) {
+            console.error('Profiles query error:', profilesError)
+          }
+
+          // Combine the data
+          const seedsWithProfiles = seedsData.map(seed => ({
+            ...seed,
+            profiles: profilesData?.find(profile => profile.user_id === seed.gifter_id) || null
+          }))
+
+          setSeeds(seedsWithProfiles)
+        } else {
+          setSeeds(seedsData)
+        }
+      } else {
+        setSeeds([])
+      }
+
+      console.log('Seeds with profiles set successfully')
     } catch (error) {
       console.error('Error loading seeds:', error)
-      toast.error('Failed to load seeds')
+      toast.error('Failed to load seeds: ' + error.message)
     } finally {
       setSeedsLoading(false)
     }
