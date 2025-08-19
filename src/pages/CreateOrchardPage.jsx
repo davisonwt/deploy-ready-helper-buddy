@@ -30,6 +30,7 @@ import {
   Loader2,
   User
 } from "lucide-react"
+import CurrencyCalculator from "../components/CurrencyCalculator"
 
 export default function CreateOrchardPage({ isEdit = false }) {
   const { id } = useParams()
@@ -215,6 +216,13 @@ export default function CreateOrchardPage({ isEdit = false }) {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+  }
+
+  const handleUseCalculatedAmount = (calculatedAmount) => {
+    setFormData(prev => ({
+      ...prev,
+      seed_value: calculatedAmount
     }))
   }
   
@@ -759,31 +767,36 @@ export default function CreateOrchardPage({ isEdit = false }) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div>
-                   <label className="block text-sm font-medium text-emerald-400 mb-2">
-                     <DollarSign className="inline h-4 w-4 mr-1" />
-                     Seed Value (USDC) *
-                   </label>
-                   <Input
-                     type="number"
-                     name="seed_value"
-                     value={formData.seed_value}
-                     onChange={handleChange}
-                     placeholder={formData.orchard_type === 'standard' ? "e.g., 18000 (minimum 100.01 USDC)" : "e.g., 50 (1-100 USDC)"}
-                     min={formData.orchard_type === 'standard' ? "100.01" : "1"}
-                     max={formData.orchard_type === 'full_value' ? "100" : undefined}
-                     step="0.01"
-                     required
-                   />
-                     <p className="text-xs text-gray-500 mt-1">
-                       {formData.orchard_type === 'standard' 
-                         ? "Must be greater than 100 USDC for Standard Orchard" 
-                         : "Must be between 1 and 100 USDC for Full Value Orchard"}
-                     </p>
-                     <p className="text-xs text-blue-600 mt-1 font-medium">
-                       💡 Note: 1 USDC = 1 USD
-                     </p>
-                 </div>
+              <div className="space-y-4">
+                {/* Currency Calculator */}
+                <CurrencyCalculator onUseAmount={handleUseCalculatedAmount} />
+                
+                <div>
+                  <label className="block text-sm font-medium text-emerald-400 mb-2">
+                    <DollarSign className="inline h-4 w-4 mr-1" />
+                    Seed Value (USDC) *
+                  </label>
+                  <Input
+                    type="number"
+                    name="seed_value"
+                    value={formData.seed_value}
+                    onChange={handleChange}
+                    placeholder={formData.orchard_type === 'standard' ? "e.g., 18000 (minimum 100.01 USDC)" : "e.g., 50 (1-100 USDC)"}
+                    min={formData.orchard_type === 'standard' ? "100.01" : "1"}
+                    max={formData.orchard_type === 'full_value' ? "100" : undefined}
+                    step="0.01"
+                    required
+                  />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.orchard_type === 'standard' 
+                        ? "Must be greater than 100 USDC for Standard Orchard" 
+                        : "Must be between 1 and 100 USDC for Full Value Orchard"}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                      💡 Note: 1 USDC = 1 USD
+                    </p>
+                </div>
+              </div>
                  {formData.orchard_type === 'standard' && (
                    <div>
                        <label className="block text-sm font-medium text-emerald-400 mb-2">
