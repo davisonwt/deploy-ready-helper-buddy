@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { QrCode, Copy, ExternalLink, Download, Wallet, Heart } from 'lucide-react';
 import { useOrganizationWallet } from '@/hooks/useOrganizationWallet';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast'
 import QRCode from 'qrcode';
 
 export function OrganizationPaymentInterface() {
