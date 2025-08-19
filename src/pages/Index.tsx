@@ -10,10 +10,27 @@ import {
    TreePine
 } from "lucide-react";
 import seedsStrip from '@/assets/seeds-strip.jpg';
+import { ThemeProvider } from "../components/ui/theme-provider";
+import { ThemeToggle } from "../components/ui/theme-toggle";
+import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
+import { GamificationHUD } from "../components/gamification/GamificationHUD";
+import { OnboardingTour } from "../components/onboarding/OnboardingTour";
+import { VoiceCommands } from "../components/voice/VoiceCommands";
+import { AppContextProvider, useAppContext } from "../contexts/AppContext";
+
+function IndexContent() {
+  const { 
+    showOnboarding, 
+    setShowOnboarding, 
+    showGamificationHUD, 
+    setShowGamificationHUD,
+    voiceCommandsEnabled,
+    setVoiceCommandsEnabled
+  } = useAppContext();
 
 
-const Index = () => {
   return (
+    <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
@@ -34,6 +51,7 @@ const Index = () => {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
+              <ThemeToggle />
               <Link to="/login">
                 <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
               </Link>
@@ -722,7 +740,36 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Floating Features */}
+      <GamificationFloatingButton onToggleHUD={() => setShowGamificationHUD(!showGamificationHUD)} />
+      
+      {/* Modals and Overlays */}
+      <GamificationHUD 
+        isVisible={showGamificationHUD} 
+        onClose={() => setShowGamificationHUD(false)} 
+      />
+      
+      <OnboardingTour
+        isVisible={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={() => setShowOnboarding(false)}
+      />
+      
+      {/* Voice Commands */}
+      <VoiceCommands 
+        isEnabled={voiceCommandsEnabled}
+        onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
+      />
     </div>
+    </ThemeProvider>
+  );
+}
+
+const Index = () => {
+  return (
+    <AppContextProvider>
+      <IndexContent />
+    </AppContextProvider>
   );
 };
 
