@@ -1190,6 +1190,15 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      search_user_profiles: {
+        Args: { search_term: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          user_id: string
+        }[]
+      }
       user_is_in_room: {
         Args: { check_room_id: string; check_user_id: string }
         Returns: boolean
