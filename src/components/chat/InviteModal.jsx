@@ -37,18 +37,10 @@ const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
 
     try {
       setLoading(true);
-      // Use RPC call to safely get public profile data for search
-      const { data, error } = await supabase.rpc('get_public_profile_info', { 
-        target_user_id: null // This will need to be updated to support search
+      // Use the secure search function to get only safe profile data
+      const { data: searchData, error: searchError } = await supabase.rpc('search_user_profiles', { 
+        search_term: searchQuery 
       });
-      
-      // For now, we'll keep the existing query but note this needs security review
-      // TODO: Create a secure search function that only returns safe profile data
-      const { data: searchData, error: searchError } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, avatar_url') // Only safe fields
-        .or(`display_name.ilike.%${searchQuery}%`)
-        .limit(20);
 
       if (searchError) throw searchError;
 
