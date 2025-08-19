@@ -1155,6 +1155,57 @@ export type Database = {
           },
         ]
       }
+      video_content: {
+        Row: {
+          ai_generated_description: string | null
+          ai_generated_script: string | null
+          created_at: string
+          description: string | null
+          duration: number | null
+          file_size: number | null
+          id: string
+          platform_optimizations: Json | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          ai_generated_description?: string | null
+          ai_generated_script?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          file_size?: number | null
+          id?: string
+          platform_optimizations?: Json | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          ai_generated_description?: string | null
+          ai_generated_script?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          file_size?: number | null
+          id?: string
+          platform_optimizations?: Json | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       video_likes: {
         Row: {
           created_at: string
