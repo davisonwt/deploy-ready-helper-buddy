@@ -62,28 +62,16 @@ export default function VideoFeed() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="newest">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Newest First
-              </div>
+              Newest First
             </SelectItem>
             <SelectItem value="views">
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Most Viewed
-              </div>
+              Most Viewed
             </SelectItem>
             <SelectItem value="likes">
-              <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                Most Liked
-              </div>
+              Most Liked
             </SelectItem>
             <SelectItem value="trending">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Trending
-              </div>
+              Trending
             </SelectItem>
           </SelectContent>
         </Select>
