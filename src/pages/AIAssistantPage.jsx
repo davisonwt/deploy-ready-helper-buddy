@@ -58,7 +58,7 @@ export default function AIAssistantPage() {
               <h1 className="text-3xl font-bold">AI Marketing Assistant</h1>
             </div>
             <p className="text-muted-foreground">
-              Create engaging content for your agricultural products and services with AI
+              Create engaging content for your sow2grow seeds with AI
             </p>
           </div>
           
