@@ -340,7 +340,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
         if (isEdit) {
           navigate("/my-orchards")
         } else {
-          navigate(`/orchard/${result.data.id}`)
+          // If created from a seed, redirect to YHVH orchards page
+          if (seedId && isApproval) {
+            navigate("/364yhvh-orchards")
+          } else {
+            navigate(`/orchard/${result.data.id}`)
+          }
         }
       } else {
         throw new Error(result.error || `Failed to ${isEdit ? 'update' : 'create'} orchard`)
