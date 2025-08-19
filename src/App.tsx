@@ -40,6 +40,7 @@ import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
 import BasketPage from "./pages/BasketPage";
+import TestBasketPage from "./pages/TestBasketPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -258,6 +259,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <BasketPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/test-basket" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TestBasketPage />
                   </Layout>
                 </ProtectedRoute>
               } />

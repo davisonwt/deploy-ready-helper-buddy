@@ -125,6 +125,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
 
   // Handle adding to basket
   const handleBestow = () => {
+    console.log('🌱 handleBestow called', { selectedPockets, user })
     if (selectedPockets.length === 0 || !user) {
       toast({
         title: "Error",
@@ -143,6 +144,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
       currency: orchard.currency || 'USD'
     }
     
+    console.log('🛒 Adding basketItem:', basketItem)
     addToBasket(basketItem)
     
     // Reset selection
@@ -154,6 +156,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
     })
     
     // Navigate to basket page
+    console.log('🧭 Navigating to basket...')
     navigate('/basket')
   }
   
