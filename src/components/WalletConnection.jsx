@@ -53,7 +53,7 @@ export function WalletConnection({ compact = false }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Create Your USDC Wallet
+            Install Phantom Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -77,6 +77,21 @@ export function WalletConnection({ compact = false }) {
               </div>
             </div>
           </div>
+
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+            <h4 className="font-semibold text-amber-800 mb-2">📱 How to Connect After Installation:</h4>
+            <div className="space-y-2 text-sm text-amber-700">
+              <div className="font-medium">Desktop:</div>
+              <div>1. Open Phantom browser extension</div>
+              <div>2. Click "Explore" tab → Search for Sow2Grow</div>
+              <div>3. Return here and click "Connect Wallet"</div>
+              
+              <div className="font-medium mt-3">Mobile:</div>
+              <div>1. Open Phantom mobile app</div>
+              <div>2. Tap "Explore" tab → Search for Sow2Grow</div>
+              <div>3. Open site in Phantom browser and connect</div>
+            </div>
+          </div>
           
           <div className="space-y-3">
             <Button 
@@ -84,12 +99,12 @@ export function WalletConnection({ compact = false }) {
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
             >
               <ExternalLink className="h-4 w-4 mr-2" />
-              Create Phantom Wallet (Free)
+              Download Phantom Wallet (Free)
             </Button>
             
             <div className="text-center">
               <p className="text-xs text-muted-foreground">
-                Already have Phantom? Refresh this page after installation
+                Already installed? Refresh this page and follow the connection steps above
               </p>
             </div>
           </div>
@@ -133,6 +148,17 @@ export function WalletConnection({ compact = false }) {
           <p className="text-muted-foreground">
             Connect your Phantom wallet to make USDC payments with ultra-low fees.
           </p>
+          
+          <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+            <div className="text-sm text-green-700">
+              <div className="font-medium mb-1">💡 Connection Tips:</div>
+              <div>• Make sure Phantom extension is unlocked</div>
+              <div>• Allow popups for this site</div>
+              <div>• If no popup appears, refresh the page</div>
+              <div>• You may need to approve a "Sign message" request</div>
+            </div>
+          </div>
+
           <Button 
             onClick={connectWallet}
             disabled={connecting}
@@ -141,7 +167,7 @@ export function WalletConnection({ compact = false }) {
             {connecting ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Connecting...
+                Connecting to Phantom...
               </>
             ) : (
               <>
@@ -150,6 +176,12 @@ export function WalletConnection({ compact = false }) {
               </>
             )}
           </Button>
+          
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">
+              Problems connecting? Try accessing Sow2Grow through Phantom's Explore tab
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
