@@ -73,80 +73,28 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('Successfully generated reset link:', resetData);
     }
 
-    // Try Supabase's built-in password reset email first
+    // Use Supabase's built-in password reset functionality
+    console.log('Attempting to send password reset email via Supabase...');
+    
     const { error: sendError } = await supabaseServiceClient.auth.resetPasswordForEmail(email, {
       redirectTo: `${req.headers.get('origin') || 'https://f76da68e-977d-42e6-85f3-ea2df1aea0df.lovableproject.com'}/login`
     });
 
     if (sendError) {
-      console.error('Supabase built-in email failed:', sendError);
-      console.log('Attempting to send custom email via Resend...');
-      
-      // Fall back to custom email via Resend
-      const customEmailHtml = `
-        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
-          <div style="background: linear-gradient(135deg, #3b82f6, #10b981); padding: 40px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset Request</h1>
-          </div>
-          
-          <div style="padding: 40px; background: #f9fafb;">
-            <h2 style="color: #1f2937; margin-bottom: 20px;">Reset Your Password</h2>
-            
-            <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px;">
-              We received a request to reset your password for your Sow2Grow account. 
-            </p>
-            
-            <p style="color: #4b5563; line-height: 1.6; margin-bottom: 30px;">
-              To reset your password, please contact our support team at <strong>support@sow2grow.online</strong> 
-              or visit our support page for assistance.
-            </p>
-            
-            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <p style="color: #92400e; margin: 0; font-size: 14px;">
-                <strong>Security Note:</strong> If you didn't request this password reset, please ignore this email 
-                or contact support if you have concerns about your account security.
-              </p>
-            </div>
-            
-            <div style="text-align: center; margin-top: 40px;">
-              <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                This email was sent from Sow2Grow Platform
-              </p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Try to send via our Supabase function instead of direct Resend call
-      try {
-        // Create Supabase client to call our own function
-        const supabaseClient = createClient(
-          Deno.env.get("SUPABASE_URL") ?? "",
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-        );
-        
-        const { data: emailResult, error: emailError } = await supabaseClient.functions.invoke('send-resend-email', {
-          body: {
-            to: [email],
-            subject: "Password Reset Request - Sow2Grow",
-            html: customEmailHtml,
-            from: "noreply@sow2grow.online"
-          }
-        });
-
-        if (emailError) {
-          console.error('Resend function failed:', emailError);
-          throw new Error(`Email function failed: ${emailError.message}`);
-        }
-
-        console.log('Password reset email sent via Resend function:', emailResult);
-      } catch (customEmailError) {
-        console.error('Custom email also failed:', customEmailError);
-        throw new Error(`Failed to send password reset email: ${customEmailError.message}`);
-      }
-    } else {
-      console.log('Password reset email sent via Supabase built-in system');
+      console.error('Supabase password reset failed:', sendError);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: `Password reset failed: ${sendError.message}. Please contact support at support@sow2grow.online` 
+      }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
     }
+
+    console.log('Password reset email sent successfully via Supabase');
 
     return new Response(JSON.stringify({ 
       success: true, 
