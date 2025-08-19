@@ -37,20 +37,7 @@ export default function VideoFeed() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search videos, tags, or creators..."
-            />
-          </div>
-          <Button type="submit" variant="outline">
-            Search
-          </Button>
-        </form>
-
+      <div className="flex justify-end">
         <Select value={sortBy} onValueChange={handleSortChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <div className="flex items-center gap-2">
