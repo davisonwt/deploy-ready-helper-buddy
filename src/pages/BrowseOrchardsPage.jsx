@@ -211,7 +211,7 @@ export default function BrowseOrchardsPage() {
                 Discover and support orchards in our community
               </p>
               <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
-                Preferred Currency: {user?.preferred_currency || 'USD'}
+                Payment Method: USDC (USD Coin)
               </p>
             </div>
           </div>

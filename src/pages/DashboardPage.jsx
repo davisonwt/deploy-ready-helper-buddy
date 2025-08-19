@@ -157,7 +157,7 @@ export default function DashboardPage() {
               Ready to grow your orchard today?
             </p>
             <p className="text-sm mt-1" style={{ color: 'hsl(220, 100%, 50%)' }}>
-              Preferred Currency: {user?.preferred_currency || 'USD'}
+              Payment Method: USDC (USD Coin)
             </p>
           </div>
         </div>

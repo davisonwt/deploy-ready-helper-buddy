@@ -208,7 +208,7 @@ export default function MyOrchardsPage() {
                 Manage and track your growing orchards
               </p>
               <p className="text-sm mt-1" style={{ color: 'hsl(30, 100%, 50%)' }}>
-                Preferred Currency: {user?.preferred_currency || 'USD'} • Total Raised: {formatCurrency(getTotalRaised())}
+                Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
               </p>
             </div>
           </div>

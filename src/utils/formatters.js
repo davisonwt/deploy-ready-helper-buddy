@@ -6,13 +6,13 @@
 export function formatCurrency(amount, fallback = "0.00") {
   // Handle undefined, null, or empty values
   if (amount === undefined || amount === null || amount === "") {
-    return fallback;
+    return `${fallback} USDC`;
   }
   
   // Handle string values
   if (typeof amount === "string") {
     amount = amount.trim();
-    if (amount === "") return fallback;
+    if (amount === "") return `${fallback} USDC`;
   }
   
   // Convert to number and validate
@@ -20,11 +20,11 @@ export function formatCurrency(amount, fallback = "0.00") {
   
   // Return fallback if not a valid number
   if (isNaN(value) || !isFinite(value)) {
-    return fallback;
+    return `${fallback} USDC`;
   }
   
-  // Format to 2 decimal places
-  return value.toFixed(2);
+  // Format to 2 decimal places with USDC suffix
+  return `${value.toFixed(2)} USDC`;
 }
 
 /**
