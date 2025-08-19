@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useBillingInfo } from '../hooks/useBillingInfo'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { BillingInfoForm } from '@/components/BillingInfoForm'
+import { PaymentModal } from '@/components/PaymentModal'
 import { 
   Heart, 
   DollarSign, 
@@ -18,24 +21,53 @@ import {
 
 export default function TithingPage() {
   const { user } = useAuth()
+  const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
   const [amount, setAmount] = useState("")
   const [frequency, setFrequency] = useState("monthly")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const [showBillingForm, setShowBillingForm] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [pendingTithingData, setPendingTithingData] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     
     try {
-      // Handle tithing submission logic here
-      console.log('Tithing submission:', { amount, frequency, message })
+      const tithingData = { amount, frequency }
+      
+      // Check if user has complete billing info
+      if (!hasCompleteBillingInfo) {
+        // Show billing form first
+        setPendingTithingData(tithingData)
+        setShowBillingForm(true)
+      } else {
+        // Proceed directly to payment
+        setPendingTithingData(tithingData)
+        setShowPaymentModal(true)
+      }
+      
       setMessage("Thank you for your faithful tithing!")
     } catch (error) {
       setMessage("There was an error processing your tithing.")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleBillingInfoComplete = () => {
+    setShowBillingForm(false)
+    if (pendingTithingData) {
+      setShowPaymentModal(true)
+    }
+  }
+
+  const handlePaymentComplete = () => {
+    setShowPaymentModal(false)
+    setPendingTithingData(null)
+    setAmount("")
+    setMessage("Your tithing has been processed successfully!")
   }
 
   const suggestedAmounts = [50, 100, 200, 500, 1000]
@@ -289,6 +321,15 @@ export default function TithingPage() {
           </div>
         </div>
       </div>
+
+      {/* Billing Info Form Modal */}
+      {showBillingForm && (
+        <BillingInfoForm
+          isOpen={showBillingForm}
+          onClose={() => setShowBillingForm(false)}
+          onComplete={handleBillingInfoComplete}
+        />
+      )}
 
       {/* Payment Modal */}
       {showPaymentModal && pendingTithingData && (
