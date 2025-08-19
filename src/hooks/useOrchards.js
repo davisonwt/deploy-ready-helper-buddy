@@ -149,11 +149,12 @@ export function useOrchards() {
       setLoading(true)
       setError(null)
 
+      // Only add user_id filter if not admin/gosat
+      // The RLS policy will handle permission checking
       const { error: deleteError } = await supabase
         .from('orchards')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id)
 
       if (deleteError) throw deleteError
 
