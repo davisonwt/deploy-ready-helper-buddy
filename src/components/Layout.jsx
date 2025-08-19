@@ -30,6 +30,12 @@ import {
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { ThemeToggle } from "./ui/theme-toggle"
+import { GamificationFloatingButton } from "./gamification/GamificationFloatingButton"
+import { GamificationHUD } from "./gamification/GamificationHUD"
+import { OnboardingTour } from "./onboarding/OnboardingTour"
+import { VoiceCommands } from "./voice/VoiceCommands"
+import { useAppContext } from "../contexts/AppContext"
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
@@ -38,6 +44,15 @@ export default function Layout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  
+  const { 
+    showOnboarding, 
+    setShowOnboarding, 
+    showGamificationHUD, 
+    setShowGamificationHUD,
+    voiceCommandsEnabled,
+    setVoiceCommandsEnabled
+  } = useAppContext()
   
   const handleLogout = () => {
     logout()
@@ -218,6 +233,8 @@ export default function Layout({ children }) {
             {/* User Menu */}
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3">
+                {/* Theme Toggle */}
+                <ThemeToggle />
                 {/* Basket Icon */}
                 <Link
                   to="/basket"
@@ -408,6 +425,27 @@ export default function Layout({ children }) {
           </div>
         </div>
       </footer>
+
+      {/* Floating Features */}
+      <GamificationFloatingButton onToggleHUD={() => setShowGamificationHUD(!showGamificationHUD)} />
+      
+      {/* Modals and Overlays */}
+      <GamificationHUD 
+        isVisible={showGamificationHUD} 
+        onClose={() => setShowGamificationHUD(false)} 
+      />
+      
+      <OnboardingTour
+        isVisible={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={() => setShowOnboarding(false)}
+      />
+      
+      {/* Voice Commands */}
+      <VoiceCommands 
+        isEnabled={voiceCommandsEnabled}
+        onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
+      />
     </div>
   )
 }

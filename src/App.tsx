@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
+import { ThemeProvider } from "./components/ui/theme-provider";
+import { AppContextProvider } from "./contexts/AppContext";
 import { lazy, Suspense } from "react";
 
 // Lazy-loaded pages
@@ -46,12 +48,14 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <BasketProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+      <AuthProvider>
+        <BasketProvider>
+          <AppContextProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -300,9 +304,11 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
-      </BasketProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+      </AppContextProvider>
+    </BasketProvider>
+  </AuthProvider>
+</ThemeProvider>
+</QueryClientProvider>
 );
 
 export default App;
