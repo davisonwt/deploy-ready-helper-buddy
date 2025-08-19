@@ -244,7 +244,7 @@ export default function DashboardPage() {
                 <div className="bg-white/95 rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-700 mb-6 font-medium">You haven't planted any seeds yet</p>
+                    <p className="text-gray-700 mb-6 font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>You haven't planted any seeds yet</p>
                     <Link to="/create-orchard">
                       <Button 
                         className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4"
@@ -315,7 +315,7 @@ export default function DashboardPage() {
                 <div className="bg-white/95 rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-700 mb-6 font-medium">You haven't made any bestowals yet</p>
+                    <p className="text-gray-700 mb-6 font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>You haven't made any bestowals yet</p>
                     <Link to="/browse-orchards">
                       <Button 
                         className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4"
