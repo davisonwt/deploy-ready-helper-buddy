@@ -34,7 +34,7 @@ export function OnboardingTour({ isVisible, onClose, onComplete }: OnboardingTou
     {
       id: "orchards",
       title: "Discover Orchards",
-      description: "Browse and support sow2grow projects from community members. Each orchard represents a real farming initiative that needs your support.",
+      description: "Browse and support sow2grow projects from community members. Each orchard represents a real sow2grow sower's initiative that needs your support.",
       icon: <MapPin className="h-8 w-8 text-green-600" />,
       action: () => window.location.href = "/browse-orchards"
     },
