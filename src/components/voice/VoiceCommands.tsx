@@ -2,12 +2,15 @@ import { useState, useEffect } from "react"
 import { Mic, MicOff, Volume2, VolumeX, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 
 interface VoiceCommandsProps {
   isEnabled: boolean
   onToggle: () => void
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 // Type declarations for Speech Recognition API
@@ -52,7 +55,7 @@ interface SpeechRecognitionAlternative {
   confidence: number
 }
 
-export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
+export function VoiceCommands({ isEnabled, onToggle, isOpen, onOpenChange }: VoiceCommandsProps) {
   const [isListening, setIsListening] = useState(false)
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null)
   const [lastCommand, setLastCommand] = useState<string>("")
@@ -328,17 +331,15 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
 
   if (!isSupported) {
     return (
-      <div className="fixed bottom-20 left-6 z-40">
-        <Card className="w-80 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span className="flex items-center space-x-2">
-                <Mic className="h-4 w-4" />
-                <span>Manual Commands</span>
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Mic className="h-5 w-5" />
+              <span>Manual Commands</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Voice commands not supported. Use manual input:
             </p>
@@ -349,23 +350,32 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
                 onChange={(e) => setManualCommand(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleManualCommand()}
                 placeholder="Type command..."
-                className="flex-1 px-3 py-2 text-sm border rounded"
+                className="flex-1 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <Button onClick={handleManualCommand} size="sm">Send</Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="space-y-1">
+              <span className="text-sm font-medium">Example commands:</span>
+              <div className="text-xs space-y-1 text-muted-foreground">
+                <p>"Hey Sow2Grow, show me orchards"</p>
+                <p>"Hey Sow2Grow, create orchard"</p>
+                <p>"Hey Sow2Grow, my dashboard"</p>
+                <p>"Hey Sow2Grow, help"</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     )
   }
 
   return (
-    <div className="fixed bottom-20 left-6 z-40">
-      <Card className="w-80 shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-base">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center space-x-2">
-              <Volume2 className="h-4 w-4" />
+              <Volume2 className="h-5 w-5" />
               <span>Voice Commands</span>
             </span>
             <div className="flex space-x-1">
@@ -391,9 +401,10 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
                 ) : isEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
               </Button>
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Status:</span>
             <Badge variant={
@@ -426,7 +437,7 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
                   onChange={(e) => setManualCommand(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleManualCommand()}
                   placeholder="Type command..."
-                  className="flex-1 px-3 py-2 text-sm border rounded"
+                  className="flex-1 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <Button onClick={handleManualCommand} size="sm">Send</Button>
               </div>
@@ -442,8 +453,8 @@ export function VoiceCommands({ isEnabled, onToggle }: VoiceCommandsProps) {
               <p>"Hey Sow2Grow, help"</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

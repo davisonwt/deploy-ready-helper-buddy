@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -7,7 +7,8 @@ import {
   Heart, 
   Users, 
   Gift,
-   TreePine
+   TreePine,
+   Mic
 } from "lucide-react";
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
@@ -19,6 +20,8 @@ import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 
 function IndexContent() {
+  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  
   const { 
     showOnboarding, 
     setShowOnboarding, 
@@ -51,6 +54,15 @@ function IndexContent() {
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowVoiceCommands(true)}
+                className="hover-scale text-muted-foreground hover:text-primary"
+                title="Voice Commands"
+              >
+                <Mic className="h-5 w-5" />
+              </Button>
               <ThemeToggle />
               <Link to="/login">
                 <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
@@ -759,6 +771,8 @@ function IndexContent() {
       <VoiceCommands 
         isEnabled={voiceCommandsEnabled}
         onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
+        isOpen={showVoiceCommands}
+        onOpenChange={setShowVoiceCommands}
       />
     </div>
     </ThemeProvider>
