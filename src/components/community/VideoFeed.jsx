@@ -49,7 +49,7 @@ export default function VideoFeed() {
             />
           </div>
           <Button type="submit" variant="outline">
-            <Search className="h-4 w-4" />
+            Search
           </Button>
         </form>
 
