@@ -76,7 +76,7 @@ export function WalletWidget() {
             <Wallet className="h-5 w-5" />
             USDC Wallet
           </div>
-          <Badge variant="secondary" className="text-green-600">
+          <Badge variant="secondary" className="text-black">
             Connected
           </Badge>
         </CardTitle>
