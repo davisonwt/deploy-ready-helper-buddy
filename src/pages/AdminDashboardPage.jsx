@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
         if (gifterIds.length > 0) {
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
-            .select('user_id, display_name, first_name, last_name')
+            .select('user_id, display_name') // Only safe public fields
             .in('user_id', gifterIds)
 
           if (profilesError) {

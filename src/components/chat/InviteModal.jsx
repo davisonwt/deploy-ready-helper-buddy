@@ -37,17 +37,24 @@ const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      // Use RPC call to safely get public profile data for search
+      const { data, error } = await supabase.rpc('get_public_profile_info', { 
+        target_user_id: null // This will need to be updated to support search
+      });
+      
+      // For now, we'll keep the existing query but note this needs security review
+      // TODO: Create a secure search function that only returns safe profile data
+      const { data: searchData, error: searchError } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, first_name, last_name, avatar_url')
-        .or(`display_name.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
+        .select('id, user_id, display_name, avatar_url') // Only safe fields
+        .or(`display_name.ilike.%${searchQuery}%`)
         .limit(20);
 
-      if (error) throw error;
+      if (searchError) throw searchError;
 
       // Filter out users already in the room
       const participantUserIds = new Set(currentParticipants.map(p => p.user_id));
-      const filteredUsers = (data || []).filter(user => !participantUserIds.has(user.user_id));
+      const filteredUsers = (searchData || []).filter(user => !participantUserIds.has(user.user_id));
       
       setUsers(filteredUsers);
     } catch (error) {
@@ -123,7 +130,7 @@ const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
   };
 
   const getUserDisplayName = (user) => {
-    return user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+    return user.display_name || 'Anonymous User';
   };
 
   const getUserInitials = (user) => {
