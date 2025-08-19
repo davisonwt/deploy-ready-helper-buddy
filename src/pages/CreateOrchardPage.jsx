@@ -796,27 +796,27 @@ export default function CreateOrchardPage({ isEdit = false }) {
                       💡 Note: 1 USDC = 1 USD
                     </p>
                 </div>
-              </div>
-                 {formData.orchard_type === 'standard' && (
-                   <div>
-                       <label className="block text-sm font-medium text-emerald-400 mb-2">
-                        Bestowal Pocket Value (USDC) *
-                      </label>
-                     <Input
-                       type="number"
-                       name="pocket_price"
-                       value={formData.pocket_price}
-                       onChange={handleChange}
-                       placeholder="150"
-                       min="1"
-                       step="0.01"
-                       required
-                     />
-                       <p className="text-xs text-gray-500 mt-1">
-                         Default 150 USDC. Must be greater than 0.
-                       </p>
-                   </div>
-                 )}
+
+                {formData.orchard_type === 'standard' && (
+                  <div>
+                      <label className="block text-sm font-medium text-emerald-400 mb-2">
+                       Bestowal Pocket Value (USDC) *
+                     </label>
+                    <Input
+                      type="number"
+                      name="pocket_price"
+                      value={formData.pocket_price}
+                      onChange={handleChange}
+                      placeholder="150"
+                      min="1"
+                      step="0.01"
+                      required
+                    />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Default 150 USDC. Must be greater than 0.
+                      </p>
+                  </div>
+                )}
               </div>
               
               {formData.seed_value && (
