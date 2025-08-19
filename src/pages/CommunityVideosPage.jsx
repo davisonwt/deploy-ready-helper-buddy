@@ -46,7 +46,11 @@ export default function CommunityVideosPage() {
             {user && (
               <Button
                 onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-slate-800 hover:text-slate-900"
+                style={{
+                  backgroundColor: '#ff9f9b',
+                  borderColor: '#ff9f9b'
+                }}
                 size="lg"
               >
                 <Upload className="h-5 w-5" />
