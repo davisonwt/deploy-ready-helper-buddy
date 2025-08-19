@@ -6,42 +6,54 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface PasswordResetRequest {
-  email: string;
-}
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let email: string;
+
   try {
-    const { email }: PasswordResetRequest = await req.json();
+    console.log('=== Password Reset Function Started ===');
+    
+    // Parse request body
+    const requestBody = await req.json();
+    email = requestBody.email;
+    
+    console.log('Request received for email:', email);
 
     if (!email) {
+      console.log('No email provided in request');
       throw new Error("Email is required");
     }
 
-    console.log('Processing password reset request for:', email);
-
-    // Initialize Supabase service client
-    const supabaseServiceClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // Check if user exists by trying to get user by email
-    const { data: userData, error: userError } = await supabaseServiceClient.auth.admin.getUserByEmail(email);
+    // Check environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    if (userError && userError.message !== 'User not found') {
-      console.error('Error fetching user:', userError);
-      throw new Error('Failed to verify user account');
+    console.log('Supabase URL exists:', !!supabaseUrl);
+    console.log('Service key exists:', !!supabaseServiceKey);
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase environment variables');
     }
 
-    if (!userData?.user) {
-      console.log('User not found, but proceeding for security:', email);
-      // For security, we still return success even if user doesn't exist
+    // Initialize Supabase client
+    console.log('Creating Supabase service client...');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Try the password reset
+    console.log('Attempting password reset for:', email);
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${req.headers.get('origin') || 'https://f76da68e-977d-42e6-85f3-ea2df1aea0df.lovableproject.com'}/login`
+    });
+
+    if (error) {
+      console.error('Supabase resetPasswordForEmail error:', error);
+      
+      // Return success for security (don't reveal if email exists)
       return new Response(JSON.stringify({ 
         success: true, 
         message: "If an account with that email exists, you will receive a password reset email shortly." 
@@ -54,47 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('User found, proceeding with password reset for:', email);
-
-    // Generate password reset using Supabase's built-in functionality
-    const { data: resetData, error: resetError } = await supabaseServiceClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: email,
-      options: {
-        redirectTo: `${req.headers.get('origin') || 'https://f76da68e-977d-42e6-85f3-ea2df1aea0df.lovableproject.com'}/login`
-      }
-    });
-
-    if (resetError) {
-      console.error('Error generating reset link:', resetError);
-      // Don't throw error, fall back to sending email notification
-      console.log('Falling back to support email method');
-    } else {
-      console.log('Successfully generated reset link:', resetData);
-    }
-
-    // Use Supabase's built-in password reset functionality
-    console.log('Attempting to send password reset email via Supabase...');
-    
-    const { error: sendError } = await supabaseServiceClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${req.headers.get('origin') || 'https://f76da68e-977d-42e6-85f3-ea2df1aea0df.lovableproject.com'}/login`
-    });
-
-    if (sendError) {
-      console.error('Supabase password reset failed:', sendError);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: `Password reset failed: ${sendError.message}. Please contact support at support@sow2grow.online` 
-      }), {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      });
-    }
-
-    console.log('Password reset email sent successfully via Supabase');
+    console.log('Password reset email sent successfully');
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -108,11 +80,17 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error("Error in send-password-reset function:", error);
+    console.error("=== ERROR in password reset function ===");
+    console.error("Error type:", typeof error);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    console.error("Full error object:", error);
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to process password reset request',
-        success: false 
+        success: false,
+        error: error?.message || 'An unexpected error occurred',
+        details: `Failed to process password reset for ${email || 'unknown email'}`
       }),
       {
         status: 500,
