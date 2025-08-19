@@ -47,9 +47,6 @@ export function useOrchards() {
       setLoading(true)
       setError(null)
 
-      // Increment view count
-      await supabase.rpc('increment_orchard_views', { orchard_uuid: id })
-
       const { data, error: fetchError } = await supabase
         .from('orchards')
         .select(`*`)
@@ -57,6 +54,13 @@ export function useOrchards() {
         .single()
 
       if (fetchError) throw fetchError
+
+      // Try to increment view count, but don't fail if it doesn't work
+      try {
+        await supabase.rpc('increment_orchard_views', { orchard_uuid: id })
+      } catch (viewError) {
+        console.warn('Failed to increment view count:', viewError)
+      }
 
       return { success: true, data }
     } catch (err) {
