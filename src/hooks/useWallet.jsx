@@ -32,16 +32,25 @@ export function useWallet() {
   const connectWallet = useCallback(async () => {
     if (!isPhantomAvailable()) {
       toast({
-        title: "Phantom Wallet Required",
-        description: "Please install Phantom wallet to connect.",
+        title: "Phantom Wallet Required", 
+        description: "Please install Phantom wallet extension and refresh the page.",
         variant: "destructive",
       });
+      // Redirect to Phantom download page
+      window.open('https://phantom.app/download', '_blank');
       return { success: false, error: 'Phantom wallet not available' };
     }
 
     try {
       setConnecting(true);
-      const response = await window.solana.connect();
+      
+      // Request connection with explicit permissions
+      const response = await window.solana.connect({ onlyIfTrusted: false });
+      
+      if (!response.publicKey) {
+        throw new Error('No public key received from wallet');
+      }
+      
       const walletAddress = response.publicKey.toString();
       
       setWallet(response.publicKey);
