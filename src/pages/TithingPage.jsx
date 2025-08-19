@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useBillingInfo } from '../hooks/useBillingInfo'
+import { useBasket } from '../hooks/useBasket'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +23,7 @@ import {
 export default function TithingPage() {
   const { user } = useAuth()
   const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
+  const { addToBasket } = useBasket()
   const [amount, setAmount] = useState("")
   const [frequency, setFrequency] = useState("monthly")
   const [loading, setLoading] = useState(false)
@@ -35,22 +37,22 @@ export default function TithingPage() {
     setLoading(true)
     
     try {
-      const tithingData = { amount, frequency }
-      
-      // Check if user has complete billing info
-      if (!hasCompleteBillingInfo) {
-        // Show billing form first
-        setPendingTithingData(tithingData)
-        setShowBillingForm(true)
-      } else {
-        // Proceed directly to payment
-        setPendingTithingData(tithingData)
-        setShowPaymentModal(true)
+      // Add tithing item to basket
+      const tithingItem = {
+        orchardId: 'tithing',
+        orchardTitle: 'Tithing Contribution',
+        amount: parseFloat(amount),
+        currency: 'USDC',
+        pockets: [],
+        type: 'tithing',
+        frequency: frequency
       }
       
-      setMessage("Thank you for your faithful tithing!")
+      addToBasket(tithingItem)
+      setMessage("Tithing added to basket! Please proceed to checkout.")
+      setAmount("")
     } catch (error) {
-      setMessage("There was an error processing your tithing.")
+      setMessage("There was an error adding tithing to basket.")
     } finally {
       setLoading(false)
     }
