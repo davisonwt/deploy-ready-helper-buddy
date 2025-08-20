@@ -14,7 +14,7 @@ import {
   Edit, Trash2
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
-import { useOrchards } from "../hooks/useOrchards"
+import useOrchards from "../hooks/useOrchards"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 

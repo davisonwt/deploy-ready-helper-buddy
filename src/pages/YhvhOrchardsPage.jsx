@@ -12,7 +12,7 @@ import {
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards'
+import useOrchards from '../hooks/useOrchards'
 import { useRoles } from '../hooks/useRoles'
 
 export default function YhvhOrchardsPage() {
