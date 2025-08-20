@@ -5,12 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Clock, Mic, Radio } from 'lucide-react'
 
-const HOUR_LABELS = [
-  '12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM',
-  '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM',
-  '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM',
-  '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'
-]
+const SLOT_LABELS = Array.from({ length: 12 }, (_, i) => {
+  const startHour = i * 2
+  const endHour = (i * 2) + 2
+  return startHour === 0 ? '12 AM - 2 AM' : 
+         startHour === 12 ? '12 PM - 2 PM' : 
+         startHour < 12 ? `${startHour} AM - ${startHour + 2} AM` : 
+         `${startHour - 12} PM - ${(startHour + 2) - 12} PM`
+})
 
 const CATEGORY_COLORS = {
   music: 'bg-blue-500/10 border-blue-500/20 text-blue-700',
@@ -27,70 +29,92 @@ const CATEGORY_COLORS = {
 
 export function RadioScheduleGrid({ schedule = [] }) {
   const currentHour = new Date().getHours()
+  const currentSlotIndex = Math.floor(currentHour / 2)
+
+  // Group schedule into 2-hour slots
+  const slotGroups = Array.from({ length: 12 }, (_, slotIndex) => {
+    const startHour = slotIndex * 2
+    const endHour = startHour + 2
+    
+    // Find schedules that fall within this 2-hour slot
+    const slotsInGroup = schedule.filter(slot => 
+      slot.hour_slot >= startHour && slot.hour_slot < endHour
+    )
+    
+    return {
+      slotIndex,
+      startHour,
+      endHour,
+      label: SLOT_LABELS[slotIndex],
+      slots: slotsInGroup,
+      isEmpty: slotsInGroup.length === 0 || !slotsInGroup.some(s => s.schedule_id)
+    }
+  })
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Today's Schedule
+          Today's Schedule (2-Hour Slots)
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-2">
-          {schedule.map((slot, index) => {
-            const isCurrentHour = slot.hour_slot === currentHour
-            const isLive = slot.status === 'live'
-            const isEmpty = !slot.schedule_id
+        <div className="grid gap-3">
+          {slotGroups.map((slotGroup) => {
+            const isCurrentSlot = slotGroup.slotIndex === currentSlotIndex
+            const mainSlot = slotGroup.slots.find(s => s.schedule_id) || slotGroup.slots[0]
+            const isLive = mainSlot?.status === 'live'
             
             return (
               <div
-                key={index}
+                key={slotGroup.slotIndex}
                 className={`p-4 rounded-lg border transition-all ${
-                  isCurrentHour 
+                  isCurrentSlot 
                     ? 'ring-2 ring-primary ring-offset-2 bg-primary/5' 
                     : 'border-border'
                 } ${isLive ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm font-mono w-16 text-center">
-                      {HOUR_LABELS[slot.hour_slot]}
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm font-mono w-24 text-center">
+                      <div className="font-medium">{slotGroup.label}</div>
+                      <div className="text-xs text-muted-foreground">2-hour slot</div>
                     </div>
                     
-                    {isEmpty ? (
+                    {slotGroup.isEmpty ? (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Radio className="h-4 w-4" />
                         <span className="text-sm">AI Radio Host</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={slot.dj_avatar} />
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={mainSlot?.dj_avatar} />
                           <AvatarFallback>
-                            <Mic className="h-4 w-4" />
+                            <Mic className="h-5 w-5" />
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm">{slot.show_name}</h4>
+                            <h4 className="font-medium">{mainSlot?.show_name}</h4>
                             {isLive && (
                               <Badge variant="default" className="text-xs">
                                 🔴 LIVE
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            with {slot.dj_name}
+                          <p className="text-sm text-muted-foreground">
+                            with {mainSlot?.dj_name}
                           </p>
-                          {slot.subject && (
-                            <p className="text-xs font-medium text-primary mt-1">
-                              📻 {slot.subject}
+                          {mainSlot?.subject && (
+                            <p className="text-sm font-medium text-primary mt-1">
+                              📻 {mainSlot.subject}
                             </p>
                           )}
-                          {slot.topic_description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {slot.topic_description}
+                          {mainSlot?.topic_description && (
+                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                              {mainSlot.topic_description}
                             </p>
                           )}
                         </div>
@@ -102,24 +126,24 @@ export function RadioScheduleGrid({ schedule = [] }) {
                     <div className="flex items-center gap-2">
                       <Badge 
                         variant="outline" 
-                        className={`text-xs ${CATEGORY_COLORS[slot.category] || ''}`}
+                        className={`text-xs ${CATEGORY_COLORS[mainSlot?.category] || ''}`}
                       >
-                        {slot.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {mainSlot?.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Generated'}
                       </Badge>
                       
-                      {isCurrentHour && !isLive && (
+                      {isCurrentSlot && !isLive && (
                         <Badge variant="secondary" className="text-xs">
-                          Now
+                          Current
                         </Badge>
                       )}
                     </div>
                     
-                    {slot.approval_status && slot.approval_status !== 'approved' && (
+                    {mainSlot?.approval_status && mainSlot.approval_status !== 'approved' && (
                       <Badge 
-                        variant={slot.approval_status === 'pending' ? 'outline' : 'destructive'} 
+                        variant={mainSlot.approval_status === 'pending' ? 'outline' : 'destructive'} 
                         className="text-xs"
                       >
-                        {slot.approval_status}
+                        {mainSlot.approval_status}
                       </Badge>
                     )}
                   </div>
