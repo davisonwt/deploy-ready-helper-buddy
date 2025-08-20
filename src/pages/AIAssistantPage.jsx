@@ -187,7 +187,12 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: 'url(/ai-marketing-background.jpg)' }}
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+      <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
       {/* Header */}
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-2">
@@ -563,6 +568,7 @@ export default function AIAssistantPage() {
           </CardContent>
         </Card>
       )}
+    </div>
     </div>
   );
 }
