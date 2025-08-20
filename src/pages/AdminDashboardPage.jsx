@@ -76,28 +76,36 @@ export default function AdminDashboardPage() {
 
   const loadUserStats = async () => {
     try {
+      console.log('🔍 AdminDashboard: Fetching active users...')
       // Get active users (users who have been active in the last 30 days)
       // We'll count users who have created orchards, made bestowals, or sent messages recently
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      console.log('📅 AdminDashboard: Looking for activity since:', thirtyDaysAgo.toISOString())
 
       // Get users who created orchards in last 30 days
-      const { data: orchardUsers } = await supabase
+      const { data: orchardUsers, error: orchardError } = await supabase
         .from('orchards')
         .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
+      console.log('🌳 AdminDashboard: Orchard users:', orchardUsers?.length || 0, orchardError)
+
       // Get users who made bestowals in last 30 days
-      const { data: bestowalUsers } = await supabase
+      const { data: bestowalUsers, error: bestowalError } = await supabase
         .from('bestowals')
         .select('bestower_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
+      console.log('💝 AdminDashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError)
+
       // Get users who sent messages in last 30 days
-      const { data: messageUsers } = await supabase
+      const { data: messageUsers, error: messageError } = await supabase
         .from('chat_messages')
         .select('sender_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
+
+      console.log('💬 AdminDashboard: Message users:', messageUsers?.length || 0, messageError)
 
       // Combine all unique user IDs
       const activeUserIds = new Set([
@@ -106,9 +114,10 @@ export default function AdminDashboardPage() {
         ...(messageUsers?.map(u => u.sender_id) || [])
       ])
 
+      console.log('👥 AdminDashboard: Total active users:', activeUserIds.size)
       setActiveUsers(activeUserIds.size)
     } catch (error) {
-      console.error('Error loading user stats:', error)
+      console.error('❌ AdminDashboard: Error loading user stats:', error)
     }
   }
 
