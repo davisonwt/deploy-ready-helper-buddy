@@ -1817,7 +1817,7 @@ export type Database = {
         | "marketing_tip"
         | "thumbnail"
         | "content_idea"
-      app_role: "user" | "gosat" | "admin"
+      app_role: "user" | "gosat" | "admin" | "radio_admin"
       chat_room_type:
         | "direct"
         | "group"
@@ -1984,7 +1984,7 @@ export const Constants = {
         "thumbnail",
         "content_idea",
       ],
-      app_role: ["user", "gosat", "admin"],
+      app_role: ["user", "gosat", "admin", "radio_admin"],
       chat_room_type: [
         "direct",
         "group",
