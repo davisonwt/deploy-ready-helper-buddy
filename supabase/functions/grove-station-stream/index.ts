@@ -275,7 +275,7 @@ serve(async (req) => {
     
     // Close OpenAI connection
     if (openAISocket) {
-      openAI Socket.close()
+      openAISocket.close()
       openAISocket = null
     }
   }
