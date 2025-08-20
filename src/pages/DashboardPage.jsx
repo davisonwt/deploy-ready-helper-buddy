@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { WalletWidget } from '@/components/WalletWidget'
+import { supabase } from "@/integrations/supabase/client"
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const { getUserBestowals, loading: bestowalsLoading } = useBestowals()
   const [userOrchards, setUserOrchards] = useState([])
   const [userBestowals, setUserBestowals] = useState([])
+  const [profile, setProfile] = useState(null)
   const [stats, setStats] = useState({
     totalOrchards: 0,
     totalBestowals: 0,
@@ -38,6 +40,26 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
+      
+      // Fetch user profile
+      const fetchProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (error) {
+            console.error('❌ Dashboard: Error fetching profile:', error)
+          } else {
+            setProfile(data)
+          }
+        } catch (error) {
+          console.error('❌ Dashboard: Error fetching profile:', error)
+        }
+      }
+      fetchProfile()
       
       // Fetch all orchards first (the hook doesn't support user filtering)
       fetchOrchards()
@@ -151,7 +173,7 @@ export default function DashboardPage() {
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
               WebkitTextStroke: '1px rgba(0,0,0,0.5)'
             }}>
-              Welcome back, {user?.first_name || 'Friend'}!
+              Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
             </h1>
             <p className="text-lg" style={{ color: 'hsl(220, 100%, 50%)' }}>
               Ready to grow your orchard today?
