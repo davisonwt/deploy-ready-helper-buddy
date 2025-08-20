@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { clearOrchardCache } from '../utils/orchardLoader'
 
-export function useOrchards() {
+export default function useOrchards() {
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
