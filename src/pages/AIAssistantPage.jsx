@@ -204,9 +204,10 @@ export default function AIAssistantPage() {
             Sow2Grow Marketing Creator
           </h1>
         </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto px-4 py-3 rounded-lg" style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(4px)'
+        <p className="text-foreground max-w-2xl mx-auto px-6 py-4 rounded-lg font-medium" style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(8px)',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
         }}>
           Create engaging marketing content that grows our community. Every piece you create will help drive people back to sow2grow to bestow into orchards and become sowers themselves.
         </p>
