@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { SecureInput } from '@/components/ui/secure-input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -160,85 +160,105 @@ export default function BillingInfoForm({ onSave, onCancel, initialData = {}, sh
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="billing_email">Email Address *</Label>
-            <Input
+            <SecureInput
               id="billing_email"
               name="billing_email"
               type="email"
+              sanitizeType="email"
               value={billingInfo.billing_email}
               onChange={handleInputChange}
               placeholder="your@email.com"
               required
+              rateLimitKey="billing_form"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="billing_organization">Organization (Optional)</Label>
-            <Input
+            <SecureInput
               id="billing_organization"
               name="billing_organization"
+              sanitizeType="text"
+              maxLength={200}
               value={billingInfo.billing_organization}
               onChange={handleInputChange}
               placeholder="Company or organization name"
+              rateLimitKey="billing_form"
             />
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="billing_address_line1">Address Line 1 *</Label>
-          <Input
+          <SecureInput
             id="billing_address_line1"
             name="billing_address_line1"
+            sanitizeType="text"
+            maxLength={100}
             value={billingInfo.billing_address_line1}
             onChange={handleInputChange}
             placeholder="Street address"
             required
+            rateLimitKey="billing_form"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="billing_address_line2">Address Line 2</Label>
-          <Input
+          <SecureInput
             id="billing_address_line2"
             name="billing_address_line2"
+            sanitizeType="text"
+            maxLength={100}
             value={billingInfo.billing_address_line2}
             onChange={handleInputChange}
             placeholder="Apartment, suite, unit, etc."
+            rateLimitKey="billing_form"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="billing_city">City *</Label>
-            <Input
+            <SecureInput
               id="billing_city"
               name="billing_city"
+              sanitizeType="text"
+              maxLength={50}
               value={billingInfo.billing_city}
               onChange={handleInputChange}
               placeholder="City"
               required
+              rateLimitKey="billing_form"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="billing_state">State/Province</Label>
-            <Input
+            <SecureInput
               id="billing_state"
               name="billing_state"
+              sanitizeType="text"
+              maxLength={50}
               value={billingInfo.billing_state}
               onChange={handleInputChange}
               placeholder="State or province"
+              rateLimitKey="billing_form"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="billing_postal_code">Postal Code *</Label>
-            <Input
+            <SecureInput
               id="billing_postal_code"
               name="billing_postal_code"
+              sanitizeType="text"
+              maxLength={20}
               value={billingInfo.billing_postal_code}
               onChange={handleInputChange}
               placeholder="Postal code"
               required
+              rateLimitKey="billing_form"
             />
           </div>
         </div>
@@ -265,13 +285,15 @@ export default function BillingInfoForm({ onSave, onCancel, initialData = {}, sh
 
           <div className="space-y-2">
             <Label htmlFor="billing_phone">Phone Number</Label>
-            <Input
+            <SecureInput
               id="billing_phone"
               name="billing_phone"
               type="tel"
+              sanitizeType="phone"
               value={billingInfo.billing_phone}
               onChange={handleInputChange}
               placeholder="Phone number"
+              rateLimitKey="billing_form"
             />
           </div>
         </div>

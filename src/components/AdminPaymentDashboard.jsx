@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SecureInput } from '@/components/ui/secure-input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -232,11 +232,14 @@ export function AdminPaymentDashboard() {
                   <label className="text-sm font-medium">Search</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
+                    <SecureInput
                       placeholder="Search by address, signature, or memo"
+                      sanitizeType="text"
+                      maxLength={100}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
+                      rateLimitKey="admin_search"
                     />
                   </div>
                 </div>
@@ -370,11 +373,14 @@ export function AdminPaymentDashboard() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Organization Wallet Address</label>
                 <div className="flex gap-2">
-                  <Input
+                  <SecureInput
                     value={newWalletAddress}
+                    sanitizeType="text"
+                    maxLength={100}
                     onChange={(e) => setNewWalletAddress(e.target.value)}
                     disabled={!isEditing}
                     className="font-mono"
+                    rateLimitKey="wallet_address"
                   />
                   {isEditing ? (
                     <div className="flex gap-2">
