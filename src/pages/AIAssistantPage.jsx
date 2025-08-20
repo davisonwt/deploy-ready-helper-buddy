@@ -262,8 +262,13 @@ export default function AIAssistantPage() {
                     }`}
                     onClick={() => setContentType(type.id)}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${type.color}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-muted/20">
+                      <Icon className={`w-4 h-4 ${
+                        type.id === 'video-ad' ? 'text-blue-400' :
+                        type.id === 'thumbnail' ? 'text-purple-400' :
+                        type.id === 'course' ? 'text-green-400' :
+                        'text-orange-400'
+                      }`} />
                     </div>
                     <div>
                       <p className="font-medium">{type.title}</p>
