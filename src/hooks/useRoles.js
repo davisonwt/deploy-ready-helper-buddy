@@ -85,6 +85,13 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
+      // SECURITY: Log admin action for audit trail
+      await supabase.rpc('log_admin_action', {
+        action_type: 'grant_role',
+        target_user_id: userId,
+        action_details: { role: role }
+      })
+
       const { data, error: grantError } = await supabase
         .from('user_roles')
         .insert([{
@@ -109,6 +116,13 @@ export function useRoles() {
     try {
       setLoading(true)
       setError(null)
+
+      // SECURITY: Log admin action for audit trail
+      await supabase.rpc('log_admin_action', {
+        action_type: 'revoke_role',
+        target_user_id: userId,
+        action_details: { role: role }
+      })
 
       const { error: revokeError } = await supabase
         .from('user_roles')
