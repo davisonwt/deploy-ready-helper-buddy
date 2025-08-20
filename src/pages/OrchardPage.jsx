@@ -15,7 +15,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
-import useOrchards from '../hooks/useOrchards';
+import { useOrchards } from '../hooks/useOrchards';
 import { formatCurrency } from '../utils/formatters';
 
 const OrchardPage = () => {
