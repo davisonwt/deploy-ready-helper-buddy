@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import Layout from '@/components/Layout'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -61,17 +60,14 @@ export default function GroveStationPage() {
 
   if (loading && !stationConfig) {
     return (
-      <Layout>
-        <div className="container mx-auto py-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
+      <div className="container mx-auto py-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     )
   }
 
   return (
-    <Layout>
-      <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto py-8 space-y-8">
         {/* Station Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
@@ -434,6 +430,6 @@ export default function GroveStationPage() {
           />
         )}
       </div>
-    </Layout>
+    </div>
   )
 }
