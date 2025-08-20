@@ -243,7 +243,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       setIsLive(true)
       toast({
         title: "🔴 Live!",
-        description: "You're now broadcasting live to Grove Station!",
+        description: "You're now broadcasting live to AOD Station!",
       })
 
     } catch (error) {
@@ -345,14 +345,14 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       wsRef.current = new WebSocket(`wss://zuwkgasbkpjlxzsjzumu.functions.supabase.co/functions/v1/grove-station-stream`)
       
       wsRef.current.onopen = () => {
-        console.log('Connected to Grove Station streaming server')
+        console.log('Connected to AOD Station streaming server')
         
         // Send session configuration
         const sessionConfig = {
           type: 'session.update',
           session: {
             modalities: ['text', 'audio'],
-            instructions: `You are the AI co-host for Grove Station, helping DJ ${djProfile?.dj_name} with their show "${currentShow?.show_name}".`,
+            instructions: `You are the AI co-host for AOD Station, helping DJ ${djProfile?.dj_name} with their show "${currentShow?.show_name}".`,
             voice: 'alloy',
             input_audio_format: 'pcm16',
             output_audio_format: 'pcm16'
