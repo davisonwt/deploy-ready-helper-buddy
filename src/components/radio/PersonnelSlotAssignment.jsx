@@ -43,14 +43,14 @@ export default function PersonnelSlotAssignment() {
   const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [slotAssignments, setSlotAssignments] = useState([])
-  const [radioDJs, setRadioDJs] = useState([])
+  const [radioAdmins, setRadioAdmins] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState(null)
-  const [selectedDJ, setSelectedDJ] = useState('')
+  const [selectedAdmin, setSelectedAdmin] = useState('')
 
   useEffect(() => {
-    fetchRadioDJs()
+    fetchRadioAdmins()
   }, [])
 
   useEffect(() => {
@@ -59,21 +59,42 @@ export default function PersonnelSlotAssignment() {
     }
   }, [selectedDate])
 
-  const fetchRadioDJs = async () => {
+  const fetchRadioAdmins = async () => {
     try {
-      console.log('Fetching radio DJs...')
+      console.log('Fetching radio admins...')
       const { data, error } = await supabase
-        .from('radio_djs')
-        .select('*')
-        .eq('is_active', true)
-        .order('dj_name')
+        .from('user_roles')
+        .select(`
+          user_id,
+          profiles!inner (
+            id,
+            user_id,
+            display_name,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .eq('role', 'radio_admin')
 
       if (error) throw error
-      console.log('Radio DJs fetched:', data)
-      setRadioDJs(data || [])
+      
+      // Transform the data to match expected format
+      const transformedData = data?.map(item => ({
+        id: item.user_id,
+        user_id: item.user_id,
+        dj_name: item.profiles.display_name || 
+                 `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 
+                 'Radio Admin',
+        avatar_url: item.profiles.avatar_url,
+        is_active: true
+      })) || []
+      
+      console.log('Radio admins fetched:', transformedData)
+      setRadioAdmins(transformedData)
     } catch (err) {
-      console.error('Error fetching radio DJs:', err)
-      toast.error('Failed to load radio DJs')
+      console.error('Error fetching radio admins:', err)
+      toast.error('Failed to load radio admins')
     }
   }
 
@@ -128,11 +149,46 @@ export default function PersonnelSlotAssignment() {
   }
 
   const assignPersonnelToSlot = async () => {
-    if (!selectedSlot || !selectedDJ) return
+    if (!selectedSlot || !selectedAdmin) return
 
     try {
-      const djData = radioDJs.find(dj => dj.id === selectedDJ)
-      if (!djData) throw new Error('DJ not found')
+      const adminData = radioAdmins.find(admin => admin.id === selectedAdmin)
+      if (!adminData) throw new Error('Radio admin not found')
+
+      // First, create or get a DJ profile for this radio admin
+      let djId = null;
+      
+      // Check if this admin already has a DJ profile
+      const { data: existingDJ, error: djCheckError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', selectedAdmin)
+        .single()
+
+      if (djCheckError && djCheckError.code !== 'PGRST116') {
+        throw djCheckError
+      }
+
+      if (existingDJ) {
+        djId = existingDJ.id
+      } else {
+        // Create a DJ profile for this radio admin
+        const { data: newDJ, error: djCreateError } = await supabase
+          .from('radio_djs')
+          .insert([{
+            user_id: selectedAdmin,
+            dj_name: adminData.dj_name,
+            avatar_url: adminData.avatar_url,
+            bio: 'Radio Admin',
+            dj_role: 'dj',
+            is_active: true
+          }])
+          .select()
+          .single()
+
+        if (djCreateError) throw djCreateError
+        djId = newDJ.id
+      }
 
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
       const startTime = new Date(selectedDate)
@@ -145,9 +201,9 @@ export default function PersonnelSlotAssignment() {
       const { data: showData, error: showError } = await supabase
         .from('radio_shows')
         .insert([{
-          dj_id: selectedDJ,
-          show_name: `${djData.dj_name}'s Show`,
-          description: `2-hour show hosted by ${djData.dj_name}`,
+          dj_id: djId,
+          show_name: `${adminData.dj_name}'s Show`,
+          description: `2-hour show hosted by ${adminData.dj_name}`,
           category: 'talk',
           subject: 'General Broadcasting',
           topic_description: 'Live radio broadcasting'
@@ -162,7 +218,7 @@ export default function PersonnelSlotAssignment() {
         .from('radio_schedule')
         .insert([{
           show_id: showData.id,
-          dj_id: selectedDJ,
+          dj_id: djId,
           time_slot_date: dateStr,
           hour_slot: selectedSlot.startHour,
           start_time: startTime.toISOString(),
@@ -173,10 +229,10 @@ export default function PersonnelSlotAssignment() {
 
       if (scheduleError) throw scheduleError
 
-      toast.success(`${djData.dj_name} assigned to ${selectedSlot.displayTime} slot`)
+      toast.success(`${adminData.dj_name} assigned to ${selectedSlot.displayTime} slot`)
       setShowAssignDialog(false)
       setSelectedSlot(null)
-      setSelectedDJ('')
+      setSelectedAdmin('')
       await fetchSlotAssignments()
     } catch (err) {
       console.error('Error assigning personnel:', err)
@@ -274,7 +330,7 @@ export default function PersonnelSlotAssignment() {
             <div className="flex-1">
               <h3 className="font-semibold text-lg text-blue-900">Radio Personnel Slot Assignment</h3>
               <p className="text-blue-700 text-sm">
-                Assign radio DJs to 2-hour time slots (12 slots per day). Send automated shift reminders via chat messages.
+                Assign radio admins to 2-hour time slots (12 slots per day). Send automated shift reminders via chat messages.
               </p>
             </div>
           </div>
@@ -439,10 +495,10 @@ export default function PersonnelSlotAssignment() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          setSelectedSlot(item.slot)
-                          setSelectedDJ(item.assignment.dj_id)
-                          setShowAssignDialog(true)
-                        }}
+                        setSelectedSlot(item.slot)
+                        setSelectedAdmin(item.assignment.radio_djs?.user_id || '')
+                        setShowAssignDialog(true)
+                      }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -472,22 +528,22 @@ export default function PersonnelSlotAssignment() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Select Radio Personnel</Label>
-              <Select value={selectedDJ} onValueChange={setSelectedDJ}>
+              <Label>Select Radio Admin</Label>
+              <Select value={selectedAdmin} onValueChange={setSelectedAdmin}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a DJ/Host" />
+                  <SelectValue placeholder="Choose a Radio Admin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {radioDJs.map((dj) => (
-                    <SelectItem key={dj.id} value={dj.id}>
+                  {radioAdmins.map((admin) => (
+                    <SelectItem key={admin.id} value={admin.id}>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={dj.avatar_url} />
+                          <AvatarImage src={admin.avatar_url} />
                           <AvatarFallback className="text-xs">
-                            {dj.dj_name?.charAt(0)}
+                            {admin.dj_name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                        {dj.dj_name}
+                        {admin.dj_name}
                       </div>
                     </SelectItem>
                   ))}
@@ -499,7 +555,7 @@ export default function PersonnelSlotAssignment() {
               <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={assignPersonnelToSlot} disabled={!selectedDJ}>
+              <Button onClick={assignPersonnelToSlot} disabled={!selectedAdmin}>
                 Assign Personnel
               </Button>
             </div>
