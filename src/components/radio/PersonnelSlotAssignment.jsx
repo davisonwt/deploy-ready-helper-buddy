@@ -62,31 +62,46 @@ export default function PersonnelSlotAssignment() {
   const fetchRadioAdmins = async () => {
     try {
       console.log('Fetching radio admins...')
-      const { data, error } = await supabase
+      
+      // First get all users with radio_admin role
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          profiles!inner (
-            id,
-            user_id,
-            display_name,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
+        .select('user_id')
         .eq('role', 'radio_admin')
 
-      if (error) throw error
+      if (roleError) throw roleError
+
+      if (!roleData || roleData.length === 0) {
+        console.log('No radio admins found')
+        setRadioAdmins([])
+        return
+      }
+
+      const userIds = roleData.map(r => r.user_id)
+
+      // Then get the profiles for these users
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          user_id,
+          display_name,
+          first_name,
+          last_name,
+          avatar_url
+        `)
+        .in('user_id', userIds)
+
+      if (profileError) throw profileError
       
       // Transform the data to match expected format
-      const transformedData = data?.map(item => ({
-        id: item.user_id,
-        user_id: item.user_id,
-        dj_name: item.profiles.display_name || 
-                 `${item.profiles.first_name || ''} ${item.profiles.last_name || ''}`.trim() || 
+      const transformedData = profileData?.map(profile => ({
+        id: profile.user_id,
+        user_id: profile.user_id,
+        dj_name: profile.display_name || 
+                 `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
                  'Radio Admin',
-        avatar_url: item.profiles.avatar_url,
+        avatar_url: profile.avatar_url,
         is_active: true
       })) || []
       
