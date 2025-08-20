@@ -17,17 +17,25 @@ export function useOrganizationWallet() {
   const fetchOrganizationWallet = async () => {
     try {
       setLoading(true);
+      // Use the secure function that only returns wallet address and supported tokens
       const { data, error } = await supabase
-        .from('organization_wallets')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .rpc('get_payment_wallet_address');
 
       if (error) throw error;
       
-      // Take the first (most recent) active wallet if multiple exist
-      setOrganizationWallet(data && data.length > 0 ? data[0] : null);
+      // Transform the secure data to match the expected format
+      if (data && data.length > 0) {
+        const walletData = data[0];
+        setOrganizationWallet({
+          id: 'secure-payment-wallet',
+          wallet_address: walletData.wallet_address,
+          supported_tokens: walletData.supported_tokens,
+          is_active: true,
+          wallet_name: 'Payment Wallet'
+        });
+      } else {
+        setOrganizationWallet(null);
+      }
     } catch (err) {
       console.error('Error fetching organization wallet:', err);
       setError(err.message);
