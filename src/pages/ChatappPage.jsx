@@ -122,7 +122,12 @@ const ChatappPage = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundImage: 'linear-gradient(to bottom right, #b19cd920, #f8fafc, #b19cd910)' }}>
+    <div className="min-h-screen" style={{ 
+      backgroundImage: 'url(/chatapp-background.jpg)', 
+      backgroundSize: 'cover', 
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    }}>
       <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border shadow-2xl bg-white/90">
