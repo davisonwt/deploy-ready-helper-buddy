@@ -71,28 +71,28 @@ export default function AIAssistantPage() {
       title: 'Video Advertisement',
       description: 'Create compelling video ads to promote your seeds',
       icon: Video,
-      color: 'bg-blue-500'
+      color: 'bg-blue-300'
     },
     {
       id: 'thumbnail',
       title: 'Eye-catching Thumbnail',
       description: 'Design thumbnails that attract sowers to your content',
       icon: Camera,
-      color: 'bg-purple-500'
+      color: 'bg-purple-300'
     },
     {
       id: 'course',
       title: 'Course/Workshop (Orchard)',
       description: 'Create educational content that becomes an orchard for attendees',
       icon: GraduationCap,
-      color: 'bg-green-500'
+      color: 'bg-green-300'
     },
     {
       id: 'social-ad',
       title: 'Social Media Ad',
       description: 'Craft social media content that drives traffic to sow2grow',
       icon: Megaphone,
-      color: 'bg-orange-500'
+      color: 'bg-orange-300'
     }
   ];
 
