@@ -41,11 +41,9 @@ serve(async (req) => {
     // Generate unique reference number for EFT
     const referenceNumber = `SOW${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     
-    // Get bank details from payment config
+    // Get bank details from payment config using secure RPC
     const { data: paymentConfig, error: configError } = await supabaseClient
-      .from("payment_config")
-      .select("*")
-      .single();
+      .rpc('get_payment_config_for_eft');
 
     if (configError || !paymentConfig) {
       logStep("Payment config error", configError);
