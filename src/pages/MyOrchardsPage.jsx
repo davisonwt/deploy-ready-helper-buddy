@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards'
+import { useOrchards } from '../hooks/useOrchards.js'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -30,11 +30,15 @@ import { formatCurrency } from '../utils/formatters'
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
-  const { orchards, loading, fetchOrchards, deleteOrchard } = useOrchards()
+  
+  // Initialize state first
   const [userOrchards, setUserOrchards] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  
+  // Then call the hook
+  const { orchards, loading, fetchOrchards, deleteOrchard } = useOrchards()
 
   // Categories list - same as other pages
   const categories = [
