@@ -345,9 +345,9 @@ const ChatappPage = () => {
               <Card className="h-full flex items-center justify-center bg-white/10 backdrop-blur-md border-white/20">
                 <CardContent>
                   <div className="text-center">
-                    <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold mb-2">Welcome to Chatapp</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <MessageSquare className="h-16 w-16 mx-auto mb-4 text-white drop-shadow-lg" />
+                    <h3 className="text-lg font-semibold mb-2 text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>Welcome to Chatapp</h3>
+                    <p className="text-white mb-4 px-4 py-2 rounded-lg bg-black/30 backdrop-blur-sm" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                       Select a chat room to start messaging or create a new one to begin your conversation.
                     </p>
                     <Button 
