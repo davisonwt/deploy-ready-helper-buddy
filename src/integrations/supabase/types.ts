@@ -1325,6 +1325,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_payment_wallet_address: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          supported_tokens: string[]
+          wallet_address: string
+        }[]
+      }
       get_public_profile_info: {
         Args: { target_user_id: string }
         Returns: {
