@@ -15,7 +15,8 @@ import {
   Plus,
   Edit,
   Trash2,
-  Radio
+  Radio,
+  MessageSquare
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -213,6 +214,43 @@ export default function PersonnelSlotAssignment() {
     }
   }
 
+  const sendShiftReminder = async (assignment, reminderType = 'immediate') => {
+    if (!assignment.assignment) return
+
+    try {
+      const { error } = await supabase.functions.invoke('send-shift-reminders', {
+        body: {
+          scheduleId: assignment.assignment.id,
+          reminderType: reminderType
+        }
+      })
+
+      if (error) throw error
+
+      toast.success(`Shift reminder sent to ${assignment.assignment.radio_djs?.dj_name}`)
+    } catch (err) {
+      console.error('Error sending shift reminder:', err)
+      toast.error('Failed to send shift reminder: ' + err.message)
+    }
+  }
+
+  const sendBulkReminders = async (type) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-shift-reminders', {
+        body: {
+          reminderType: type
+        }
+      })
+
+      if (error) throw error
+
+      toast.success(`${type === '24h' ? '24-hour' : '1-hour'} reminders sent to all upcoming DJs`)
+    } catch (err) {
+      console.error('Error sending bulk reminders:', err)
+      toast.error('Failed to send bulk reminders: ' + err.message)
+    }
+  }
+
   if (loading) {
     return (
       <Card>
@@ -265,6 +303,41 @@ export default function PersonnelSlotAssignment() {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Reminder Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Automated Shift Reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground flex-1">
+              Send automated reminders to radio personnel about their upcoming shifts via chat
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => sendBulkReminders('24h')}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Send 24h Reminders
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => sendBulkReminders('1h')}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Send 1h Reminders
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -338,6 +411,14 @@ export default function PersonnelSlotAssignment() {
                     </Button>
                   ) : (
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => sendShiftReminder(item)}
+                        title="Send shift reminder"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
