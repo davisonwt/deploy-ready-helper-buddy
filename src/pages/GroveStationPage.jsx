@@ -209,33 +209,31 @@ export default function GroveStationPage() {
               </Card>
             )}
 
-                {/* Feedback Section */}
-                {currentShow && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5" />
-                        Rate This Show
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <Button
-                            key={rating}
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => submitFeedback(currentShow.schedule_id, { rating })}
-                          >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </CardContent>
-            </Card>
+            {/* Feedback Section */}
+            {currentShow && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Rate This Show
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((rating) => (
+                      <Button
+                        key={rating}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => submitFeedback(currentShow.schedule_id, { rating })}
+                      >
+                        <Star className="h-4 w-4" />
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Schedule Tab */}
