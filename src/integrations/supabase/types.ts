@@ -725,15 +725,6 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          billing_address_line1: string | null
-          billing_address_line2: string | null
-          billing_city: string | null
-          billing_country: string | null
-          billing_email: string | null
-          billing_organization: string | null
-          billing_phone: string | null
-          billing_postal_code: string | null
-          billing_state: string | null
           bio: string | null
           created_at: string
           display_name: string | null
@@ -748,15 +739,6 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          billing_address_line1?: string | null
-          billing_address_line2?: string | null
-          billing_city?: string | null
-          billing_country?: string | null
-          billing_email?: string | null
-          billing_organization?: string | null
-          billing_phone?: string | null
-          billing_postal_code?: string | null
-          billing_state?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
@@ -771,15 +753,6 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
-          billing_address_line1?: string | null
-          billing_address_line2?: string | null
-          billing_city?: string | null
-          billing_country?: string | null
-          billing_email?: string | null
-          billing_organization?: string | null
-          billing_phone?: string | null
-          billing_postal_code?: string | null
-          billing_state?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string | null
@@ -1351,6 +1324,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_billing_info: {
+        Args: { target_user_id?: string }
+        Returns: {
+          billing_address_line1: string
+          billing_address_line2: string
+          billing_city: string
+          billing_country: string
+          billing_email: string
+          billing_organization: string
+          billing_phone: string
+          billing_postal_code: string
+          billing_state: string
+        }[]
+      }
       get_user_billing_summary: {
         Args: { target_user_id?: string }
         Returns: {
@@ -1419,6 +1406,21 @@ export type Database = {
           id: string
           user_id: string
         }[]
+      }
+      update_user_billing_info: {
+        Args: {
+          p_billing_address_line1?: string
+          p_billing_address_line2?: string
+          p_billing_city?: string
+          p_billing_country?: string
+          p_billing_email?: string
+          p_billing_organization?: string
+          p_billing_phone?: string
+          p_billing_postal_code?: string
+          p_billing_state?: string
+          target_user_id: string
+        }
+        Returns: boolean
       }
       update_wallet_balance_secure: {
         Args: {
