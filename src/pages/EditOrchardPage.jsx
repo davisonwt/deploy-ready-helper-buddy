@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards'
+import useOrchards from '../hooks/useOrchards'
 import { useFileUpload } from '../hooks/useFileUpload.jsx'
 import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
