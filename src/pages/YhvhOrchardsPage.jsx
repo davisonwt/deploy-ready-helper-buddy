@@ -126,8 +126,8 @@ export default function YhvhOrchardsPage() {
         onLoadStart={() => console.log('Video loading started')}
         onCanPlay={() => console.log('Video can play')}
       >
+        <source src="/s2g-divine-presence.mp4" type="video/mp4" />
         <source src="/let-it-rain-1280x720.mp4" type="video/mp4" />
-        <source src="/orchards-strip2.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
