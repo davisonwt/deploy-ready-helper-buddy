@@ -23,7 +23,8 @@ import {
   Eye,
   ArrowRight,
   Check,
-  X
+  X,
+  Radio
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
@@ -250,6 +251,7 @@ export default function AdminDashboardPage() {
     switch (role) {
       case 'admin': return <Crown className="h-4 w-4" />
       case 'gosat': return <Shield className="h-4 w-4" />
+      case 'radio_admin': return <Radio className="h-4 w-4" />
       default: return <User className="h-4 w-4" />
     }
   }
@@ -258,6 +260,7 @@ export default function AdminDashboardPage() {
     switch (role) {
       case 'admin': return 'destructive'
       case 'gosat': return 'default'
+      case 'radio_admin': return 'outline'
       default: return 'secondary'
     }
   }
@@ -461,6 +464,7 @@ export default function AdminDashboardPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="gosat">Gosat (Manager)</SelectItem>
+                        <SelectItem value="radio_admin">Radio Admin</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
