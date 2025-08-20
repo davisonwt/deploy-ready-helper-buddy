@@ -218,22 +218,31 @@ export default function AIAssistantPage() {
       {/* Progress indicator */}
       <div className="flex items-center justify-center mb-8">
         <div className="flex items-center space-x-4">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                currentStep >= step 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                {currentStep > step ? <CheckCircle className="w-4 h-4" /> : step}
+          {[1, 2, 3, 4].map((step) => {
+            const getStepColor = () => {
+              if (currentStep < step) return 'bg-muted text-muted-foreground';
+              switch(step) {
+                case 1: return 'bg-blue-500 text-white';
+                case 2: return 'bg-green-500 text-white';
+                case 3: return 'bg-purple-500 text-white';
+                case 4: return 'bg-orange-500 text-white';
+                default: return 'bg-primary text-primary-foreground';
+              }
+            };
+            
+            return (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${getStepColor()}`}>
+                  {currentStep > step ? <CheckCircle className="w-4 h-4" /> : step}
+                </div>
+                {step < 4 && (
+                  <div className={`w-12 h-1 mx-2 ${
+                    currentStep > step ? 'bg-primary' : 'bg-muted'
+                  }`} />
+                )}
               </div>
-              {step < 4 && (
-                <div className={`w-12 h-1 mx-2 ${
-                  currentStep > step ? 'bg-primary' : 'bg-muted'
-                }`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -316,7 +325,7 @@ export default function AIAssistantPage() {
             
             {contentType && (
               <div className="mt-6 text-center">
-                <Button onClick={() => setCurrentStep(2)}>
+                <Button onClick={() => setCurrentStep(2)} style={{ backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f3e8ff' }} className="hover:bg-pink-200">
                   Continue
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -389,6 +398,8 @@ export default function AIAssistantPage() {
               <Button 
                 onClick={() => setCurrentStep(3)}
                 disabled={!projectData.title || !projectData.description}
+                style={{ backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f3e8ff' }} 
+                className="hover:bg-pink-200 disabled:opacity-50"
               >
                 Continue
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -459,7 +470,7 @@ export default function AIAssistantPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <Button onClick={handleGenerate} disabled={isGenerating}>
+              <Button onClick={handleGenerate} disabled={isGenerating} style={{ backgroundColor: '#fce7f3', color: '#9d174d', borderColor: '#f3e8ff' }} className="hover:bg-pink-200 disabled:opacity-50">
                 {isGenerating ? 'Generating...' : 'Generate Content'}
                 <Sparkles className="w-4 h-4 ml-2" />
               </Button>
