@@ -117,7 +117,7 @@ export default function Layout({ children }) {
       ]
     },
     ...(isAdminOrGosat ? [{
-      name: "Admin",
+      name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
       items: [
