@@ -933,6 +933,13 @@ export type Database = {
             referencedRelation: "radio_live_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "radio_guest_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_sessions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       radio_live_hosts: {
@@ -988,6 +995,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_live_hosts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1778,7 +1792,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      radio_sessions_public: {
+        Row: {
+          created_at: string | null
+          ended_at: string | null
+          id: string | null
+          schedule_id: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string | null
+          schedule_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string | null
+          schedule_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_live_sessions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       approve_radio_schedule_slot: {
@@ -1867,6 +1921,10 @@ export type Database = {
           preferred_currency: string
           user_id: string
         }[]
+      }
+      get_session_token_secure: {
+        Args: { session_id_param: string }
+        Returns: string
       }
       get_user_billing_info: {
         Args: { target_user_id?: string }
@@ -1980,6 +2038,10 @@ export type Database = {
           p_billing_state?: string
           target_user_id: string
         }
+        Returns: boolean
+      }
+      update_viewer_count_secure: {
+        Args: { new_count: number; session_id_param: string }
         Returns: boolean
       }
       update_wallet_balance_secure: {
