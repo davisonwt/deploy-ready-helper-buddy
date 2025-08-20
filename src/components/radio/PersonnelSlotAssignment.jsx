@@ -60,6 +60,7 @@ export default function PersonnelSlotAssignment() {
 
   const fetchRadioDJs = async () => {
     try {
+      console.log('Fetching radio DJs...')
       const { data, error } = await supabase
         .from('radio_djs')
         .select('*')
@@ -67,6 +68,7 @@ export default function PersonnelSlotAssignment() {
         .order('dj_name')
 
       if (error) throw error
+      console.log('Radio DJs fetched:', data)
       setRadioDJs(data || [])
     } catch (err) {
       console.error('Error fetching radio DJs:', err)
@@ -78,6 +80,7 @@ export default function PersonnelSlotAssignment() {
     try {
       setLoading(true)
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
+      console.log('Fetching slot assignments for date:', dateStr)
       
       const { data, error } = await supabase
         .from('radio_schedule')
@@ -101,6 +104,7 @@ export default function PersonnelSlotAssignment() {
         .order('hour_slot')
 
       if (error) throw error
+      console.log('Slot assignments data:', data)
 
       // Create slot assignments for all 12 slots
       const assignments = TIME_SLOTS.map(slot => {
@@ -112,6 +116,7 @@ export default function PersonnelSlotAssignment() {
         }
       })
 
+      console.log('Processed assignments:', assignments)
       setSlotAssignments(assignments)
     } catch (err) {
       console.error('Error fetching slot assignments:', err)
