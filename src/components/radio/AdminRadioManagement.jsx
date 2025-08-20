@@ -147,11 +147,17 @@ export default function AdminRadioManagement() {
   }
 
   return (
-    <Tabs defaultValue="approvals" className="w-full">
+    <Tabs defaultValue="personnel" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="personnel" className="bg-blue-100 data-[state=active]:bg-blue-200">
+          👥 Personnel Assignment
+        </TabsTrigger>
         <TabsTrigger value="approvals">Show Approvals</TabsTrigger>
-        <TabsTrigger value="personnel">Personnel Assignment</TabsTrigger>
       </TabsList>
+
+      <TabsContent value="personnel" className="space-y-6">
+        <PersonnelSlotAssignment />
+      </TabsContent>
 
       <TabsContent value="approvals" className="space-y-6">
       {/* Header */}
@@ -400,10 +406,6 @@ export default function AdminRadioManagement() {
           </DialogContent>
         </Dialog>
       )}
-      </TabsContent>
-
-      <TabsContent value="personnel">
-        <PersonnelSlotAssignment />
       </TabsContent>
     </Tabs>
   )

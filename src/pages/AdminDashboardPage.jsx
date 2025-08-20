@@ -480,11 +480,16 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Radio Station Management */}
-        <Card className="mt-8">
+        <Card className="mt-8 border-2 border-blue-200 bg-blue-50/50">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Radio className="h-5 w-5" />
-              <span>Radio Station Management</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Radio className="h-5 w-5 text-blue-600" />
+                <span>📻 Grove Station Radio Management</span>
+              </div>
+              <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                Personnel & Schedule Control
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
