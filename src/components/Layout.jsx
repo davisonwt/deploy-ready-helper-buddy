@@ -96,7 +96,8 @@ export default function Layout({ children }) {
       icon: MessageSquare,
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
-        { name: "Chat App", href: "/chatapp", icon: MessageSquare }
+        { name: "Chat App", href: "/chatapp", icon: MessageSquare },
+        { name: "Grove Station", href: "/grove-station", icon: Mic }
       ]
     },
     {
