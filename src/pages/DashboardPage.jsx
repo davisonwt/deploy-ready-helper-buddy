@@ -36,6 +36,7 @@ export default function DashboardPage() {
     totalRaised: 0,
     totalSupported: 0
   })
+  const [activeUsers, setActiveUsers] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -70,6 +71,9 @@ export default function DashboardPage() {
           console.error('❌ Dashboard: Error fetching orchards:', error)
         })
       
+      // Fetch active users count
+      fetchActiveUsers()
+      
       // Fetch user's bestowals
       const fetchUserBestowals = async () => {
         try {
@@ -90,6 +94,43 @@ export default function DashboardPage() {
       fetchUserBestowals()
     }
   }, [user])
+
+  const fetchActiveUsers = async () => {
+    try {
+      // Get active users (users who have been active in the last 30 days)
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      // Get users who created orchards in last 30 days
+      const { data: orchardUsers } = await supabase
+        .from('orchards')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Get users who made bestowals in last 30 days
+      const { data: bestowalUsers } = await supabase
+        .from('bestowals')
+        .select('bestower_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Get users who sent messages in last 30 days
+      const { data: messageUsers } = await supabase
+        .from('chat_messages')
+        .select('sender_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Combine all unique user IDs
+      const activeUserIds = new Set([
+        ...(orchardUsers?.map(u => u.user_id) || []),
+        ...(bestowalUsers?.map(u => u.bestower_id) || []),
+        ...(messageUsers?.map(u => u.sender_id) || [])
+      ])
+
+      setActiveUsers(activeUserIds.size)
+    } catch (error) {
+      console.error('❌ Dashboard: Error fetching active users:', error)
+    }
+  }
 
   useEffect(() => {
     // Filter user's orchards
@@ -209,6 +250,19 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalRaised)}</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-emerald-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Active Users</p>
+                    <p className="text-2xl font-bold text-blue-600">{activeUsers}</p>
+                    <p className="text-xs text-slate-500 mt-1">Last 30 days</p>
+                  </div>
+                  <Users className="h-8 w-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
