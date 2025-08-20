@@ -270,7 +270,7 @@ export default function PersonnelSlotAssignment() {
           <CardTitle>
             Personnel Assignments for {format(selectedDate, "EEEE, MMMM d, yyyy")}
           </CardTitle>
-        </CardContent>
+        </CardHeader>
         <CardContent>
           <div className="grid gap-4">
             {slotAssignments.map((item, index) => (
