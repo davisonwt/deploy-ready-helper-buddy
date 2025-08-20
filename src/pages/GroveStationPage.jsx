@@ -430,6 +430,5 @@ export default function GroveStationPage() {
           />
         )}
       </div>
-    </div>
   )
 }
