@@ -218,7 +218,7 @@ export default function FreeWillGiftingPage() {
         }}
       >
         <source
-          src="/orchards-strip2.mp4"
+          src="/let-it-rain-1280x720.mp4"
           type="video/mp4"
         />
       </video>
