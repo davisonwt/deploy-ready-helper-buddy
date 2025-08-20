@@ -218,7 +218,7 @@ export default function FreeWillGiftingPage() {
         }}
       >
         <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/free%20will%20gifting%201280x720.mp4"
+          src="/orchards-strip2.mp4"
           type="video/mp4"
         />
       </video>
