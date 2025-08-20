@@ -41,7 +41,16 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat } = useRoles()
+  
+  // Add error boundary for useRoles hook
+  let isAdminOrGosat = false
+  try {
+    const rolesHook = useRoles()
+    isAdminOrGosat = rolesHook.isAdminOrGosat()
+  } catch (error) {
+    console.error('Error in useRoles hook:', error)
+  }
+  
   const location = useLocation()
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
@@ -107,7 +116,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(isAdminOrGosat() ? [{
+    ...(isAdminOrGosat ? [{
       name: "Admin",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
