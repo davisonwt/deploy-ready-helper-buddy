@@ -22,34 +22,45 @@ export const useBillingInfo = () => {
     setError(null)
     
     try {
-      const { data: profile, error } = await supabase
+      // Get the billing completion status from profiles
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          billing_address_line1,
-          billing_address_line2,
-          billing_city,
-          billing_state,
-          billing_postal_code,
-          billing_country,
-          billing_phone,
-          billing_email,
-          billing_organization,
-          has_complete_billing_info
-        `)
+        .select('has_complete_billing_info')
         .eq('user_id', user.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        throw error
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError
       }
 
-      if (profile) {
-        setBillingInfo(profile)
-        setHasCompleteBillingInfo(profile.has_complete_billing_info || false)
-      } else {
-        setBillingInfo(null)
-        setHasCompleteBillingInfo(false)
+      // Get the actual billing data from secure function
+      const { data: billingData, error: billingError } = await supabase
+        .rpc('get_user_billing_info', { target_user_id: user.id })
+
+      if (billingError) {
+        // If there's no billing data yet, that's okay
+        if (billingError.code !== 'PGRST116') {
+          console.error('Error fetching billing data:', billingError)
+        }
       }
+
+      // Combine the data - billing function returns array, take first item
+      const billing = billingData?.[0] || {}
+      const billingInfo = {
+        billing_address_line1: billing.billing_address_line1 || '',
+        billing_address_line2: billing.billing_address_line2 || '',
+        billing_city: billing.billing_city || '',
+        billing_state: billing.billing_state || '',
+        billing_postal_code: billing.billing_postal_code || '',
+        billing_country: billing.billing_country || '',
+        billing_phone: billing.billing_phone || '',
+        billing_email: billing.billing_email || '',
+        billing_organization: billing.billing_organization || '',
+        has_complete_billing_info: profile?.has_complete_billing_info || false
+      }
+
+      setBillingInfo(billingInfo)
+      setHasCompleteBillingInfo(profile?.has_complete_billing_info || false)
     } catch (err) {
       console.error('Error loading billing info:', err)
       setError(err.message)
@@ -67,28 +78,25 @@ export const useBillingInfo = () => {
     setError(null)
 
     try {
+      // Use the secure update function
       const { data, error } = await supabase
-        .from('profiles')
-        .update(newBillingInfo)
-        .eq('user_id', user.id)
-        .select(`
-          billing_address_line1,
-          billing_address_line2,
-          billing_city,
-          billing_state,
-          billing_postal_code,
-          billing_country,
-          billing_phone,
-          billing_email,
-          billing_organization,
-          has_complete_billing_info
-        `)
-        .single()
+        .rpc('update_user_billing_info', {
+          target_user_id: user.id,
+          p_billing_address_line1: newBillingInfo.billing_address_line1,
+          p_billing_address_line2: newBillingInfo.billing_address_line2,
+          p_billing_city: newBillingInfo.billing_city,
+          p_billing_state: newBillingInfo.billing_state,
+          p_billing_postal_code: newBillingInfo.billing_postal_code,
+          p_billing_country: newBillingInfo.billing_country,
+          p_billing_phone: newBillingInfo.billing_phone,
+          p_billing_email: newBillingInfo.billing_email,
+          p_billing_organization: newBillingInfo.billing_organization,
+        })
 
       if (error) throw error
 
-      setBillingInfo(data)
-      setHasCompleteBillingInfo(data.has_complete_billing_info || false)
+      // Reload billing info to get the updated data
+      await loadBillingInfo()
       
       return { success: true, data }
     } catch (err) {
