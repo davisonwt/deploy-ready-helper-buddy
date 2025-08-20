@@ -256,26 +256,50 @@ export default function AIAssistantPage() {
                 const getButtonStyle = () => {
                   switch(type.id) {
                     case 'video-ad':
-                      return { backgroundColor: '#dbeafe', borderColor: '#93c5fd' };
+                      return { 
+                        backgroundColor: '#dbeafe !important', 
+                        borderColor: '#93c5fd !important',
+                        '--tw-bg-opacity': '1'
+                      };
                     case 'thumbnail':
-                      return { backgroundColor: '#ede9fe', borderColor: '#c4b5fd' };
+                      return { 
+                        backgroundColor: '#ede9fe !important', 
+                        borderColor: '#c4b5fd !important',
+                        '--tw-bg-opacity': '1'
+                      };
                     case 'course':
-                      return { backgroundColor: '#dcfce7', borderColor: '#86efac' };
+                      return { 
+                        backgroundColor: '#dcfce7 !important', 
+                        borderColor: '#86efac !important',
+                        '--tw-bg-opacity': '1'
+                      };
                     case 'social-ad':
-                      return { backgroundColor: '#fed7aa', borderColor: '#fdba74' };
+                      return { 
+                        backgroundColor: '#fed7aa !important', 
+                        borderColor: '#fdba74 !important',
+                        '--tw-bg-opacity': '1'
+                      };
                     default:
-                      return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' };
+                      return {};
                   }
                 };
                 
                 return (
-                  <Button
+                  <button
                     key={type.id}
-                    variant="outline"
-                    className={`h-24 flex-col gap-3 text-left ${
+                    className={`h-24 flex flex-col gap-3 text-left p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                       contentType === type.id ? 'ring-2 ring-offset-2 ring-primary' : ''
                     }`}
-                    style={getButtonStyle()}
+                    style={{
+                      backgroundColor: type.id === 'video-ad' ? '#dbeafe' :
+                                      type.id === 'thumbnail' ? '#ede9fe' :
+                                      type.id === 'course' ? '#dcfce7' :
+                                      type.id === 'social-ad' ? '#fed7aa' : '#f3f4f6',
+                      borderColor: type.id === 'video-ad' ? '#93c5fd' :
+                                  type.id === 'thumbnail' ? '#c4b5fd' :
+                                  type.id === 'course' ? '#86efac' :
+                                  type.id === 'social-ad' ? '#fdba74' : '#d1d5db'
+                    }}
                     onClick={() => setContentType(type.id)}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/80">
@@ -285,7 +309,7 @@ export default function AIAssistantPage() {
                       <p className="font-medium text-gray-800">{type.title}</p>
                       <p className="text-xs opacity-70 text-gray-600">{type.description}</p>
                     </div>
-                  </Button>
+                  </button>
                 );
               })}
             </div>
