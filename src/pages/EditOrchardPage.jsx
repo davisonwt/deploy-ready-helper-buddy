@@ -43,7 +43,8 @@ export default function EditOrchardPage() {
     community_impact: '',
     expected_completion: '',
     seed_value: '',
-    pocket_price: ''
+    pocket_price: '',
+    total_pockets: ''
   })
   
   const [images, setImages] = useState([])
@@ -131,7 +132,8 @@ export default function EditOrchardPage() {
         community_impact: orchardData.community_impact || '',
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
-        pocket_price: orchardData.pocket_price || ''
+        pocket_price: orchardData.pocket_price || '',
+        total_pockets: orchardData.total_pockets || ''
       })
 
       // Set existing images
@@ -275,6 +277,7 @@ export default function EditOrchardPage() {
       // Update orchard
       const updateData = {
         ...formData,
+        total_pockets: formData.total_pockets ? parseInt(formData.total_pockets) : null,
         images: uploadedImages,
         video_url: uploadedVideoUrl
       }
@@ -463,7 +466,7 @@ export default function EditOrchardPage() {
                       Gosat Financial Controls
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Seed Value */}
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
@@ -493,12 +496,29 @@ export default function EditOrchardPage() {
                           className="border-border focus:border-primary"
                         />
                       </div>
+
+                      {/* Total Pockets */}
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Total Pockets
+                        </label>
+                        <Input
+                          type="number"
+                          step="1"
+                          min="1"
+                          value={formData.total_pockets}
+                          onChange={(e) => handleInputChange('total_pockets', e.target.value)}
+                          placeholder="Enter total pockets"
+                          className="border-border focus:border-primary"
+                        />
+                      </div>
                     </div>
                     
                     {formData.seed_value && formData.pocket_price && (
                       <div className="mt-3 p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">
-                          <strong>Calculated Total Pockets:</strong> {Math.ceil(Number(formData.seed_value) / Number(formData.pocket_price))}
+                          <strong>Auto-calculated Total Pockets:</strong> {Math.ceil(Number(formData.seed_value) / Number(formData.pocket_price))} 
+                          <span className="ml-2 text-xs">(You can override this with the Total Pockets field above)</span>
                         </p>
                       </div>
                     )}
