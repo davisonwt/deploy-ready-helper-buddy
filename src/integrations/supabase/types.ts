@@ -355,42 +355,71 @@ export type Database = {
       }
       chat_rooms: {
         Row: {
+          access_description: string | null
           category: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
           is_active: boolean
+          is_premium: boolean | null
           max_participants: number | null
           name: string | null
+          orchard_id: string | null
+          premium_category:
+            | Database["public"]["Enums"]["premium_room_category"]
+            | null
+          required_bestowal_amount: number | null
           room_type: Database["public"]["Enums"]["chat_room_type"]
           updated_at: string
         }
         Insert: {
+          access_description?: string | null
           category?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean | null
           max_participants?: number | null
           name?: string | null
+          orchard_id?: string | null
+          premium_category?:
+            | Database["public"]["Enums"]["premium_room_category"]
+            | null
+          required_bestowal_amount?: number | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
           updated_at?: string
         }
         Update: {
+          access_description?: string | null
           category?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
           is_active?: boolean
+          is_premium?: boolean | null
           max_participants?: number | null
           name?: string | null
+          orchard_id?: string | null
+          premium_category?:
+            | Database["public"]["Enums"]["premium_room_category"]
+            | null
+          required_bestowal_amount?: number | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_videos: {
         Row: {
@@ -1454,6 +1483,14 @@ export type Database = {
       file_type: "image" | "video" | "document" | "audio"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
       orchard_type: "standard" | "full_value"
+      premium_room_category:
+        | "marketing"
+        | "cooking_nutrition"
+        | "diy_home"
+        | "natural_health"
+        | "business_training"
+        | "podcasts_interviews"
+        | "general_courses"
       verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -1602,6 +1639,15 @@ export const Constants = {
       file_type: ["image", "video", "document", "audio"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
       orchard_type: ["standard", "full_value"],
+      premium_room_category: [
+        "marketing",
+        "cooking_nutrition",
+        "diy_home",
+        "natural_health",
+        "business_training",
+        "podcasts_interviews",
+        "general_courses",
+      ],
       verification_status: ["pending", "verified", "rejected"],
     },
   },
