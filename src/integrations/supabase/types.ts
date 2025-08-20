@@ -796,6 +796,316 @@ export type Database = {
         }
         Relationships: []
       }
+      radio_djs: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          dj_name: string
+          dj_role: Database["public"]["Enums"]["dj_role"]
+          emergency_availability: boolean | null
+          id: string
+          is_active: boolean
+          preferred_time_slots: string[] | null
+          rating: number | null
+          specialties: string[] | null
+          total_hours_hosted: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          dj_name: string
+          dj_role?: Database["public"]["Enums"]["dj_role"]
+          emergency_availability?: boolean | null
+          id?: string
+          is_active?: boolean
+          preferred_time_slots?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          total_hours_hosted?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          dj_name?: string
+          dj_role?: Database["public"]["Enums"]["dj_role"]
+          emergency_availability?: boolean | null
+          id?: string
+          is_active?: boolean
+          preferred_time_slots?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          total_hours_hosted?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radio_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          feedback_type: string | null
+          id: string
+          is_anonymous: boolean | null
+          listener_user_id: string | null
+          rating: number | null
+          schedule_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          feedback_type?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          listener_user_id?: string | null
+          rating?: number | null
+          schedule_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          feedback_type?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          listener_user_id?: string | null
+          rating?: number | null
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_feedback_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_schedule: {
+        Row: {
+          ai_backup_enabled: boolean | null
+          created_at: string
+          dj_id: string | null
+          end_time: string
+          hour_slot: number
+          id: string
+          listener_count: number | null
+          playlist_url: string | null
+          show_id: string | null
+          show_notes: string | null
+          start_time: string
+          status: string | null
+          time_slot_date: string
+          updated_at: string
+        }
+        Insert: {
+          ai_backup_enabled?: boolean | null
+          created_at?: string
+          dj_id?: string | null
+          end_time: string
+          hour_slot: number
+          id?: string
+          listener_count?: number | null
+          playlist_url?: string | null
+          show_id?: string | null
+          show_notes?: string | null
+          start_time: string
+          status?: string | null
+          time_slot_date: string
+          updated_at?: string
+        }
+        Update: {
+          ai_backup_enabled?: boolean | null
+          created_at?: string
+          dj_id?: string | null
+          end_time?: string
+          hour_slot?: number
+          id?: string
+          listener_count?: number | null
+          playlist_url?: string | null
+          show_id?: string | null
+          show_notes?: string | null
+          start_time?: string
+          status?: string | null
+          time_slot_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_schedule_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_schedule_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "radio_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_shows: {
+        Row: {
+          category: Database["public"]["Enums"]["show_category"]
+          created_at: string
+          description: string | null
+          dj_id: string | null
+          estimated_listeners: number | null
+          id: string
+          is_live: boolean | null
+          is_recurring: boolean | null
+          recurring_pattern: Json | null
+          show_image_url: string | null
+          show_name: string
+          tags: string[] | null
+          total_episodes: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["show_category"]
+          created_at?: string
+          description?: string | null
+          dj_id?: string | null
+          estimated_listeners?: number | null
+          id?: string
+          is_live?: boolean | null
+          is_recurring?: boolean | null
+          recurring_pattern?: Json | null
+          show_image_url?: string | null
+          show_name: string
+          tags?: string[] | null
+          total_episodes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["show_category"]
+          created_at?: string
+          description?: string | null
+          dj_id?: string | null
+          estimated_listeners?: number | null
+          id?: string
+          is_live?: boolean | null
+          is_recurring?: boolean | null
+          recurring_pattern?: Json | null
+          show_image_url?: string | null
+          show_name?: string
+          tags?: string[] | null
+          total_episodes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_shows_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_station_config: {
+        Row: {
+          ai_dj_enabled: boolean | null
+          created_at: string
+          current_show_id: string | null
+          emergency_mode: boolean | null
+          id: string
+          is_live: boolean
+          station_description: string | null
+          station_name: string
+          station_tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_dj_enabled?: boolean | null
+          created_at?: string
+          current_show_id?: string | null
+          emergency_mode?: boolean | null
+          id?: string
+          is_live?: boolean
+          station_description?: string | null
+          station_name?: string
+          station_tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_dj_enabled?: boolean | null
+          created_at?: string
+          current_show_id?: string | null
+          emergency_mode?: boolean | null
+          id?: string
+          is_live?: boolean
+          station_description?: string | null
+          station_name?: string
+          station_tagline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      radio_stats: {
+        Row: {
+          audio_quality_score: number | null
+          created_at: string
+          date: string
+          dj_id: string | null
+          engagement_score: number | null
+          hour_slot: number
+          id: string
+          peak_listeners: number | null
+          show_id: string | null
+          total_listeners: number | null
+        }
+        Insert: {
+          audio_quality_score?: number | null
+          created_at?: string
+          date?: string
+          dj_id?: string | null
+          engagement_score?: number | null
+          hour_slot: number
+          id?: string
+          peak_listeners?: number | null
+          show_id?: string | null
+          total_listeners?: number | null
+        }
+        Update: {
+          audio_quality_score?: number | null
+          created_at?: string
+          date?: string
+          dj_id?: string | null
+          engagement_score?: number | null
+          hour_slot?: number
+          id?: string
+          peak_listeners?: number | null
+          show_id?: string | null
+          total_listeners?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_stats_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_stats_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "radio_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seeds: {
         Row: {
           additional_details: Json | null
@@ -1317,6 +1627,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: number
       }
+      get_current_radio_show: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
@@ -1341,6 +1655,19 @@ export type Database = {
           display_name: string
           id: string
           user_id: string
+        }[]
+      }
+      get_radio_schedule_for_date: {
+        Args: { target_date?: string }
+        Returns: {
+          category: Database["public"]["Enums"]["show_category"]
+          dj_avatar: string
+          dj_name: string
+          hour_slot: number
+          is_live: boolean
+          schedule_id: string
+          show_name: string
+          status: string
         }[]
       }
       get_safe_profile_data: {
@@ -1499,6 +1826,7 @@ export type Database = {
         | "live_podcast"
         | "live_training"
         | "live_conference"
+      dj_role: "dj" | "program_director" | "station_manager" | "ai_host"
       file_type: "image" | "video" | "document" | "audio"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
       orchard_type: "standard" | "full_value"
@@ -1510,6 +1838,17 @@ export type Database = {
         | "business_training"
         | "podcasts_interviews"
         | "general_courses"
+      show_category:
+        | "music"
+        | "talk"
+        | "educational"
+        | "community"
+        | "news"
+        | "comedy"
+        | "spiritual"
+        | "business"
+        | "ai_generated"
+        | "live_call_in"
       verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -1655,6 +1994,7 @@ export const Constants = {
         "live_training",
         "live_conference",
       ],
+      dj_role: ["dj", "program_director", "station_manager", "ai_host"],
       file_type: ["image", "video", "document", "audio"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
       orchard_type: ["standard", "full_value"],
@@ -1666,6 +2006,18 @@ export const Constants = {
         "business_training",
         "podcasts_interviews",
         "general_courses",
+      ],
+      show_category: [
+        "music",
+        "talk",
+        "educational",
+        "community",
+        "news",
+        "comedy",
+        "spiritual",
+        "business",
+        "ai_generated",
+        "live_call_in",
       ],
       verification_status: ["pending", "verified", "rejected"],
     },
