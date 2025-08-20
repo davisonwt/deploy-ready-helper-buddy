@@ -71,7 +71,7 @@ export function useGroveStation() {
 
       if (error) throw error
 
-      // Format data to match the expected structure
+      // Format data to match the expected structure - keeping 24 hours for compatibility
       const formattedSchedule = Array.from({ length: 24 }, (_, hour) => {
         const slot = data?.find(s => s.hour_slot === hour)
         return {

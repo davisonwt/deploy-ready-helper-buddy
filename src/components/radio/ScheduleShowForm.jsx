@@ -32,11 +32,20 @@ const SHOW_CATEGORIES = [
   { value: 'live_call_in', label: 'Live Call-in' }
 ]
 
-const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => ({
-  value: i,
-  label: `${i.toString().padStart(2, '0')}:00 - ${(i + 1).toString().padStart(2, '0')}:00`,
-  displayTime: i === 0 ? '12 AM' : i === 12 ? '12 PM' : i < 12 ? `${i} AM` : `${i - 12} PM`
-}))
+const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
+  const startHour = i * 2
+  const endHour = (i * 2) + 2
+  return {
+    value: i,
+    startHour,
+    endHour,
+    label: `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`,
+    displayTime: startHour === 0 ? '12 AM - 2 AM' : 
+                 startHour === 12 ? '12 PM - 2 PM' : 
+                 startHour < 12 ? `${startHour} AM - ${startHour + 2} AM` : 
+                 `${startHour - 12} PM - ${(startHour + 2) - 12} PM`
+  }
+})
 
 export function ScheduleShowForm({ open, onClose, djProfile }) {
   const { createShow, scheduleShow, schedule, loading } = useGroveStation()
@@ -50,7 +59,7 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
   })
   const [scheduleData, setScheduleData] = useState({
     time_slot_date: new Date().toISOString().split('T')[0],
-    hour_slot: new Date().getHours(),
+    slot_index: Math.floor(new Date().getHours() / 2), // Convert current hour to 2-hour slot index
     show_notes: ''
   })
 
@@ -58,7 +67,7 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
   const getAvailableSlots = () => {
     const bookedSlots = schedule
       .filter(slot => slot.schedule_id) // Only slots that are actually booked
-      .map(slot => slot.hour_slot)
+      .map(slot => Math.floor(slot.hour_slot / 2)) // Convert hour to slot index
     
     return TIME_SLOTS.filter(slot => !bookedSlots.includes(slot.value))
   }
@@ -76,16 +85,18 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
   const handleScheduleSubmit = async (e) => {
     e.preventDefault()
     
-    // Calculate start and end times
+    // Calculate start and end times for 2-hour slot
     const date = new Date(scheduleData.time_slot_date)
+    const slot = TIME_SLOTS.find(s => s.value === scheduleData.slot_index)
     const startTime = new Date(date)
-    startTime.setHours(scheduleData.hour_slot, 0, 0, 0)
+    startTime.setHours(slot.startHour, 0, 0, 0)
     
     const endTime = new Date(startTime)
-    endTime.setHours(startTime.getHours() + 1)
+    endTime.setHours(slot.endHour, 0, 0, 0)
 
     const result = await scheduleShow({
       ...scheduleData,
+      hour_slot: slot.startHour, // Store the start hour for compatibility
       start_time: startTime.toISOString(),
       end_time: endTime.toISOString()
     })
@@ -237,16 +248,19 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
               ) : (
                 <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                   {availableSlots.map((slot) => (
-                    <Button
-                      key={slot.value}
-                      type="button"
-                      variant={scheduleData.hour_slot === slot.value ? "default" : "outline"}
-                      className="text-xs justify-start"
-                      onClick={() => setScheduleData(prev => ({ ...prev, hour_slot: slot.value }))}
-                    >
-                      <Clock className="h-3 w-3 mr-1" />
-                      {slot.label}
-                    </Button>
+                      <Button
+                        key={slot.value}
+                        type="button"
+                        variant={scheduleData.slot_index === slot.value ? "default" : "outline"}
+                        className="text-xs justify-start h-auto py-2 px-3"
+                        onClick={() => setScheduleData(prev => ({ ...prev, slot_index: slot.value }))}
+                      >
+                        <Clock className="h-3 w-3 mr-2" />
+                        <div className="text-left">
+                          <div className="font-medium">{slot.label}</div>
+                          <div className="text-xs opacity-70">{slot.displayTime}</div>
+                        </div>
+                      </Button>
                   ))}
                 </div>
               )}

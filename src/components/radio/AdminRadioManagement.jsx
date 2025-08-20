@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import PersonnelSlotAssignment from './PersonnelSlotAssignment'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -145,7 +147,13 @@ export default function AdminRadioManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="approvals" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="approvals">Show Approvals</TabsTrigger>
+        <TabsTrigger value="personnel">Personnel Assignment</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="approvals" className="space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -392,6 +400,11 @@ export default function AdminRadioManagement() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+      </TabsContent>
+
+      <TabsContent value="personnel">
+        <PersonnelSlotAssignment />
+      </TabsContent>
+    </Tabs>
   )
 }
