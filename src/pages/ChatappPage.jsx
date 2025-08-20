@@ -19,7 +19,8 @@ import {
   Paperclip,
   Phone,
   VideoIcon,
-  UserPlus
+  UserPlus,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
@@ -29,6 +30,7 @@ import CreateRoomModal from '@/components/chat/CreateRoomModal';
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
+import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -42,6 +44,7 @@ const ChatappPage = () => {
     sendMessage,
     createRoom,
     createDirectRoom,
+    joinRoom,
   } = useChat();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -61,6 +64,7 @@ const ChatappPage = () => {
 
   const filteredRooms = rooms.filter(room => {
     if (activeTab === 'all') return true;
+    if (activeTab === 'discover') return false; // Discover tab shows different content
     return room.room_type === activeTab;
   });
 
@@ -84,6 +88,19 @@ const ChatappPage = () => {
 
   const handleEndCall = () => {
     setActiveCall(null);
+  };
+
+  const handleJoinPublicRoom = async (roomId) => {
+    try {
+      await joinRoom(roomId);
+      // The room should now appear in user's room list
+    } catch (error) {
+      console.error('Error joining room:', error);
+    }
+  };
+
+  const handleNavigateToOrchard = (orchardId) => {
+    window.location.href = `/orchard/${orchardId}`;
   };
 
   const getTabContent = (type) => {
@@ -171,18 +188,17 @@ const ChatappPage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Chat Rooms
+                  My Rooms
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 min-h-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Beautiful Tab Row */}
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex gap-2 mb-4 overflow-x-auto">
                     {[
-                      { type: 'all', label: 'All Chats', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' }, // Blue
-                      { type: 'group', label: 'Groups', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' }, // Green
-                      { type: 'live_marketing', label: 'Marketing', icon: Megaphone, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }, // Purple
-                      { type: 'live_study', label: 'Study', icon: BookOpen, activeColor: 'rgba(249, 115, 22, 0.3)', inactiveColor: 'rgba(249, 115, 22, 0.1)' } // Orange
+                      { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
+                      { type: 'group', label: 'Groups', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
+                      { type: 'discover', label: 'Discover', icon: Sparkles, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }
                     ].map(({ type, label, icon: Icon, activeColor, inactiveColor }) => (
                       <button
                         key={type}
@@ -191,7 +207,7 @@ const ChatappPage = () => {
                           backgroundColor: activeTab === type ? activeColor : inactiveColor,
                           backdropFilter: 'blur(8px)'
                         }}
-                        className="relative flex-1 p-3 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30"
+                        className="relative flex-1 p-3 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[80px]"
                       >
                         <div className="flex flex-col items-center space-y-1">
                           <div className={`p-2 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
@@ -213,34 +229,43 @@ const ChatappPage = () => {
                     ))}
                   </div>
                   
+                  <TabsContent value="discover" className="flex-1 min-h-0 mt-0">
+                    <PublicRoomsBrowser 
+                      onJoinRoom={handleJoinPublicRoom}
+                      onNavigateToOrchard={handleNavigateToOrchard}
+                    />
+                  </TabsContent>
+                  
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
-                    <ScrollArea className="h-full pr-4">
-                      <div className="space-y-3 pb-4">
-                        {filteredRooms.map((room) => (
-                          <ChatRoomCard
-                            key={room.id}
-                            room={room}
-                            isActive={currentRoom?.id === room.id}
-                            onClick={setCurrentRoom}
-                            participantCount={participants.length}
-                          />
-                        ))}
-                        {filteredRooms.length === 0 && (
-                          <div className="text-center py-8">
-                            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
-                            <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>No rooms found</p>
-                            <Button 
-                              onClick={() => setShowCreateModal(true)}
-                              style={{ background: 'linear-gradient(to right, #EC4899, #DC2626)' }}
-                              className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Create your first room
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
+                    {activeTab !== 'discover' && (
+                      <ScrollArea className="h-full pr-4">
+                        <div className="space-y-3 pb-4">
+                          {filteredRooms.map((room) => (
+                            <ChatRoomCard
+                              key={room.id}
+                              room={room}
+                              isActive={currentRoom?.id === room.id}
+                              onClick={setCurrentRoom}
+                              participantCount={participants.length}
+                            />
+                          ))}
+                          {filteredRooms.length === 0 && (
+                            <div className="text-center py-8">
+                              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
+                              <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>No rooms found</p>
+                              <Button 
+                                onClick={() => setShowCreateModal(true)}
+                                style={{ background: 'linear-gradient(to right, #EC4899, #DC2626)' }}
+                                className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create your first room
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>
