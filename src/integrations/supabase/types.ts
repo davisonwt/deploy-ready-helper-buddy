@@ -1414,6 +1414,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      log_admin_action: {
+        Args: {
+          action_details?: Json
+          action_type: string
+          target_user_id?: string
+        }
+        Returns: undefined
+      }
       mask_address: {
         Args: { address: string }
         Returns: string
