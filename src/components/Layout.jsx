@@ -121,7 +121,7 @@ export default function Layout({ children }) {
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
       items: [
-        { name: "Admin Dashboard", href: "/admin/dashboard", icon: Church }
+        { name: "gosat's dashboard", href: "/admin/dashboard", icon: Church }
       ]
     }] : [])
   ]
