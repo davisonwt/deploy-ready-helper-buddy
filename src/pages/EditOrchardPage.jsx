@@ -37,6 +37,7 @@ export default function EditOrchardPage() {
     title: '',
     description: '',
     category: '',
+    orchard_type: 'standard',
     location: '',
     why_needed: '',
     how_it_helps: '',
@@ -44,7 +45,11 @@ export default function EditOrchardPage() {
     expected_completion: '',
     seed_value: '',
     pocket_price: '',
-    total_pockets: ''
+    total_pockets: '',
+    number_of_pockets: '1',
+    courier_cost: '0',
+    features: '',
+    currency: 'USDC'
   })
   
   const [images, setImages] = useState([])
@@ -126,6 +131,7 @@ export default function EditOrchardPage() {
         title: orchardData.title || '',
         description: orchardData.description || '',
         category: orchardData.category || '',
+        orchard_type: orchardData.orchard_type || 'standard',
         location: orchardData.location || '',
         why_needed: orchardData.why_needed || '',
         how_it_helps: orchardData.how_it_helps || '',
@@ -133,7 +139,11 @@ export default function EditOrchardPage() {
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
         pocket_price: orchardData.pocket_price || '',
-        total_pockets: orchardData.total_pockets || ''
+        total_pockets: orchardData.total_pockets || '',
+        number_of_pockets: orchardData.number_of_pockets?.toString() || '1',
+        courier_cost: orchardData.courier_cost?.toString() || '0',
+        features: orchardData.features ? orchardData.features.join(', ') : '',
+        currency: orchardData.currency || 'USDC'
       })
 
       // Set existing images
@@ -278,6 +288,9 @@ export default function EditOrchardPage() {
       const updateData = {
         ...formData,
         total_pockets: formData.total_pockets ? parseInt(formData.total_pockets) : null,
+        number_of_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : null,
+        courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
+        features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
         video_url: uploadedVideoUrl
       }
@@ -455,6 +468,110 @@ export default function EditOrchardPage() {
                   placeholder="When do you expect to complete this?"
                   className="border-border focus:border-primary"
                 />
+              </div>
+
+              {/* Orchard Type */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Orchard Type
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={`h-auto p-4 ${
+                      formData.orchard_type === 'standard' 
+                        ? 'border-primary bg-primary/10 text-primary' 
+                        : 'border-border'
+                    }`}
+                    onClick={() => handleInputChange('orchard_type', 'standard')}
+                  >
+                    <div className="text-center">
+                      <h4 className="font-semibold">Standard Orchard</h4>
+                      <p className="text-sm opacity-70">Multiple pocket funding</p>
+                    </div>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={`h-auto p-4 ${
+                      formData.orchard_type === 'full_value' 
+                        ? 'border-primary bg-primary/10 text-primary' 
+                        : 'border-border'
+                    }`}
+                    onClick={() => handleInputChange('orchard_type', 'full_value')}
+                  >
+                    <div className="text-center">
+                      <h4 className="font-semibold">Full Value Orchard</h4>
+                      <p className="text-sm opacity-70">Complete funding required</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Number of Pockets (for Full Value Orchards) */}
+              {formData.orchard_type === 'full_value' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Number of Pockets (1-100)
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.number_of_pockets}
+                    onChange={(e) => handleInputChange('number_of_pockets', e.target.value)}
+                    placeholder="Enter number of pockets"
+                    className="border-border focus:border-primary"
+                  />
+                </div>
+              )}
+
+              {/* Courier Cost */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Courier Cost
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.courier_cost}
+                  onChange={(e) => handleInputChange('courier_cost', e.target.value)}
+                  placeholder="Enter courier cost"
+                  className="border-border focus:border-primary"
+                />
+              </div>
+
+              {/* Features */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Features (comma-separated)
+                </label>
+                <Textarea
+                  value={formData.features}
+                  onChange={(e) => handleInputChange('features', e.target.value)}
+                  placeholder="e.g., Fast delivery, Premium quality, 24/7 support"
+                  className="border-border focus:border-primary"
+                />
+              </div>
+
+              {/* Currency */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Currency
+                </label>
+                <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+                  <SelectTrigger className="border-border focus:border-primary">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USDC">USDC</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Gosat Financial Controls */}
