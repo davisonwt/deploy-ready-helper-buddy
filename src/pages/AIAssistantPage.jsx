@@ -197,9 +197,17 @@ export default function AIAssistantPage() {
       <div className="text-center space-y-4 mb-8">
         <div className="flex items-center justify-center gap-2">
           <Sparkles className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold">Sow2Grow Marketing Creator</h1>
+          <h1 className="text-3xl font-bold" style={{ 
+            WebkitTextStroke: '2px white',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            Sow2Grow Marketing Creator
+          </h1>
         </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-muted-foreground max-w-2xl mx-auto px-4 py-3 rounded-lg" style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(4px)'
+        }}>
           Create engaging marketing content that grows our community. Every piece you create will help drive people back to sow2grow to bestow into orchards and become sowers themselves.
         </p>
         
