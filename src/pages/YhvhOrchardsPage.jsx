@@ -127,6 +127,7 @@ export default function YhvhOrchardsPage() {
         onCanPlay={() => console.log('Video can play')}
       >
         <source src="/earth-background.mp4" type="video/mp4" />
+        <source src="/let-it-rain-1280x720.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
