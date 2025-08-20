@@ -253,18 +253,29 @@ export default function AIAssistantPage() {
             <div className="grid md:grid-cols-2 gap-4">
               {contentTypes.map((type) => {
                 const Icon = type.icon;
-                const buttonColor = type.id === 'video-ad' ? 'bg-blue-200 hover:bg-blue-300 border-blue-300' :
-                                   type.id === 'thumbnail' ? 'bg-purple-200 hover:bg-purple-300 border-purple-300' :
-                                   type.id === 'course' ? 'bg-green-200 hover:bg-green-300 border-green-300' :
-                                   'bg-orange-200 hover:bg-orange-300 border-orange-300';
+                const getButtonStyle = () => {
+                  switch(type.id) {
+                    case 'video-ad':
+                      return { backgroundColor: '#dbeafe', borderColor: '#93c5fd' };
+                    case 'thumbnail':
+                      return { backgroundColor: '#ede9fe', borderColor: '#c4b5fd' };
+                    case 'course':
+                      return { backgroundColor: '#dcfce7', borderColor: '#86efac' };
+                    case 'social-ad':
+                      return { backgroundColor: '#fed7aa', borderColor: '#fdba74' };
+                    default:
+                      return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db' };
+                  }
+                };
                 
                 return (
                   <Button
                     key={type.id}
                     variant="outline"
-                    className={`h-24 flex-col gap-3 text-left ${buttonColor} ${
+                    className={`h-24 flex-col gap-3 text-left ${
                       contentType === type.id ? 'ring-2 ring-offset-2 ring-primary' : ''
                     }`}
+                    style={getButtonStyle()}
                     onClick={() => setContentType(type.id)}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/80">
