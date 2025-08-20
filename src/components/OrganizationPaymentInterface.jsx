@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SecureInput, SecureTextarea } from '@/components/ui/secure-input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -183,25 +182,29 @@ export function OrganizationPaymentInterface() {
             {/* Amount (Optional) */}
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (Optional)</Label>
-              <Input
+              <SecureInput
                 id="amount"
                 type="number"
                 step="0.000001"
+                sanitizeType="number"
                 placeholder="Enter amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                rateLimitKey="payment_form"
               />
             </div>
 
             {/* Memo (Optional) */}
             <div className="space-y-2">
               <Label htmlFor="memo">Message/Memo (Optional)</Label>
-              <Textarea
+              <SecureTextarea
                 id="memo"
+                sanitizeType="text"
                 placeholder="Add a message to your payment"
                 value={memo}
                 onChange={(e) => setMemo(e.target.value)}
                 maxLength={32} // Solana memo limit
+                rateLimitKey="payment_form"
               />
               <p className="text-xs text-muted-foreground">
                 {memo.length}/32 characters
