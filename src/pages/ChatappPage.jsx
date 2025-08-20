@@ -129,7 +129,7 @@ const ChatappPage = () => {
         minHeight: '100vh'
       }}
     >
-      <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col pb-20">
+      <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col pb-80">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
           <div className="flex items-center justify-between">
