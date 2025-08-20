@@ -126,7 +126,7 @@ export default function YhvhOrchardsPage() {
         onLoadStart={() => console.log('Video loading started')}
         onCanPlay={() => console.log('Video can play')}
       >
-        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%201a%201280x720.mp4" type="video/mp4" />
+        <source src="/earth-background.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       
