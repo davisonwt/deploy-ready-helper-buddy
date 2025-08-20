@@ -292,13 +292,13 @@ export default function AIAssistantPage() {
                     }`}
                     style={{
                       backgroundColor: type.id === 'video-ad' ? '#dbeafe' :
-                                      type.id === 'thumbnail' ? '#fed7aa' :
+                                      type.id === 'thumbnail' ? '#ede9fe' :
                                       type.id === 'course' ? '#dcfce7' :
-                                      type.id === 'social-ad' ? '#ede9fe' : '#f3f4f6',
+                                      type.id === 'social-ad' ? '#fed7aa' : '#f3f4f6',
                       borderColor: type.id === 'video-ad' ? '#93c5fd' :
-                                  type.id === 'thumbnail' ? '#fdba74' :
+                                  type.id === 'thumbnail' ? '#c4b5fd' :
                                   type.id === 'course' ? '#86efac' :
-                                  type.id === 'social-ad' ? '#c4b5fd' : '#d1d5db'
+                                  type.id === 'social-ad' ? '#fdba74' : '#d1d5db'
                     }}
                     onClick={() => setContentType(type.id)}
                   >
