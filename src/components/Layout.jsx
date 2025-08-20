@@ -97,7 +97,7 @@ export default function Layout({ children }) {
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
         { name: "Chat App", href: "/chatapp", icon: MessageSquare },
-        { name: "Grove Station", href: "/grove-station", icon: Mic }
+        { name: "AOD Station", href: "/grove-station", icon: Mic }
       ]
     },
     {
