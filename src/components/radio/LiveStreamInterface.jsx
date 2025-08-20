@@ -74,9 +74,9 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
 
       if (error) throw error
 
-      // Fetch session details
+      // Fetch session details using secure view (excludes session tokens)
       const { data: session, error: sessionError } = await supabase
-        .from('radio_live_sessions')
+        .from('radio_sessions_public')
         .select('*')
         .eq('id', sessionId)
         .single()
@@ -131,7 +131,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       )
       .subscribe()
 
-    // Subscribe to session updates
+    // Subscribe to session updates (using secure view)
     const sessionSubscription = supabase
       .channel(`live-session-${liveSession.id}`)
       .on('postgres_changes',
@@ -142,7 +142,15 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
           filter: `id=eq.${liveSession.id}`
         },
         (payload) => {
-          setLiveSession(payload.new)
+          // Only update non-sensitive data
+          setLiveSession(prev => ({
+            ...prev,
+            status: payload.new.status,
+            viewer_count: payload.new.viewer_count,
+            started_at: payload.new.started_at,
+            ended_at: payload.new.ended_at,
+            updated_at: payload.new.updated_at
+          }))
           setViewerCount(payload.new.viewer_count || 0)
         }
       )
@@ -229,7 +237,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       // Initialize WebRTC and audio
       await initializeWebRTC()
       
-      // Update session status
+      // Update session status (only authorized users can do this directly)
       const { error } = await supabase
         .from('radio_live_sessions')
         .update({ 
@@ -260,7 +268,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     try {
       cleanupConnections()
 
-      // Update session status
+      // Update session status (only authorized users can do this directly)
       const { error } = await supabase
         .from('radio_live_sessions')
         .update({ 

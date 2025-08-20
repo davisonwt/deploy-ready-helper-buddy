@@ -108,7 +108,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       )
       .subscribe()
 
-    // Subscribe to session updates
+    // Subscribe to session updates (using secure view)
     const sessionSubscription = supabase
       .channel(`live-session-${liveSession.id}`)
       .on('postgres_changes',
@@ -119,6 +119,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           filter: `id=eq.${liveSession.id}`
         },
         (payload) => {
+          // Only update non-sensitive data
           setViewerCount(payload.new.viewer_count || 0)
         }
       )
@@ -136,13 +137,15 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         await initializeAudioStream()
         setIsPlaying(true)
         
-        // Increment viewer count
-        await supabase
-          .from('radio_live_sessions')
-          .update({ 
-            viewer_count: (liveSession.viewer_count || 0) + 1 
-          })
-          .eq('id', liveSession.id)
+        // Increment viewer count using secure function
+        const { error } = await supabase.rpc('update_viewer_count_secure', {
+          session_id_param: liveSession.id,
+          new_count: (liveSession.viewer_count || 0) + 1
+        })
+        
+        if (error) {
+          console.error('Error updating viewer count:', error)
+        }
 
       } catch (error) {
         console.error('Error starting stream:', error)
@@ -159,13 +162,15 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         peerConnectionRef.current = null
       }
       
-      // Decrement viewer count
-      await supabase
-        .from('radio_live_sessions')
-        .update({ 
-          viewer_count: Math.max(0, (liveSession.viewer_count || 1) - 1)
-        })
-        .eq('id', liveSession.id)
+      // Decrement viewer count using secure function
+      const { error } = await supabase.rpc('update_viewer_count_secure', {
+        session_id_param: liveSession.id,
+        new_count: Math.max(0, (liveSession.viewer_count || 1) - 1)
+      })
+      
+      if (error) {
+        console.error('Error updating viewer count:', error)
+      }
     }
   }
 
