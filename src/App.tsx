@@ -41,6 +41,7 @@ import CommunityVideosPage from "./pages/CommunityVideosPage";
 import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
 import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
+import GroveStationPage from "./pages/GroveStationPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -220,14 +221,23 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* Community Videos */}
-              <Route path="/community-videos" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <CommunityVideosPage />
-                  </Layout>
-                </ProtectedRoute>
-               } />
+               {/* Community Videos */}
+               <Route path="/community-videos" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <CommunityVideosPage />
+                   </Layout>
+                 </ProtectedRoute>
+                } />
+
+               {/* Grove Station - 24hr Radio */}
+               <Route path="/grove-station" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <GroveStationPage />
+                   </Layout>
+                 </ProtectedRoute>
+                } />
 
                {/* AI Assistant */}
                <Route path="/ai-assistant" element={
