@@ -1,26 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Lightbulb, FileText, TrendingUp, Camera, Sparkles, Star, History, RefreshCcw, Video, Upload } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  Lightbulb, 
+  Camera, 
+  Video, 
+  GraduationCap, 
+  Megaphone,
+  Sparkles,
+  CheckCircle,
+  ExternalLink,
+  Wand2,
+  Zap
+} from 'lucide-react';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useAuth } from '@/hooks/useAuth';
-import { GenerateScriptForm } from '@/components/ai/GenerateScriptForm';
-import { GenerateMarketingTipsForm } from '@/components/ai/GenerateMarketingTipsForm';
-import { GenerateThumbnailForm } from '@/components/ai/GenerateThumbnailForm';
-import { GenerateContentIdeasForm } from '@/components/ai/GenerateContentIdeasForm';
-import { AICreationsList } from '@/components/ai/AICreationsList';
-import { ExampleTemplates } from '@/components/ai/ExampleTemplates';
-import { VideoUploadForm } from '@/components/ai/VideoUploadForm';
-import { VideoMarketingDashboard } from '@/components/ai/VideoMarketingDashboard';
-import { VideoCreationWizard } from '@/components/ai/VideoCreationWizard';
+import { toast } from 'sonner';
 
 export default function AIAssistantPage() {
-  const [activeTab, setActiveTab] = useState('thumbnails');
-  const [videoActiveTab, setVideoActiveTab] = useState('wizard');
-  const { usage, limit, getCurrentUsage } = useAIAssistant();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [contentType, setContentType] = useState('');
+  const [projectData, setProjectData] = useState({
+    title: '',
+    description: '',
+    targetAudience: '',
+    goals: '',
+    platform: 'sow2grow',
+    sow2growLink: true
+  });
+  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState(null);
+  
+  const { usage, limit, getCurrentUsage, generateThumbnail, generateScript, generateContentIdeas } = useAIAssistant();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -34,10 +53,10 @@ export default function AIAssistantPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-            <Lightbulb className="w-8 h-8 text-primary" />
+            <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold">AI Marketing Assistant</h1>
-          <p className="text-muted-foreground">Please log in to access your AI-powered marketing tools.</p>
+          <h1 className="text-3xl font-bold">Sow2Grow Marketing Creator</h1>
+          <p className="text-muted-foreground">Please log in to create engaging content that grows our community.</p>
           <Button asChild>
             <a href="/login">Sign In</a>
           </Button>
@@ -46,194 +65,453 @@ export default function AIAssistantPage() {
     );
   }
 
+  const contentTypes = [
+    {
+      id: 'video-ad',
+      title: 'Video Advertisement',
+      description: 'Create compelling video ads to promote your seeds',
+      icon: Video,
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'thumbnail',
+      title: 'Eye-catching Thumbnail',
+      description: 'Design thumbnails that attract sowers to your content',
+      icon: Camera,
+      color: 'bg-purple-500'
+    },
+    {
+      id: 'course',
+      title: 'Course/Workshop (Orchard)',
+      description: 'Create educational content that becomes an orchard for attendees',
+      icon: GraduationCap,
+      color: 'bg-green-500'
+    },
+    {
+      id: 'social-ad',
+      title: 'Social Media Ad',
+      description: 'Craft social media content that drives traffic to sow2grow',
+      icon: Megaphone,
+      color: 'bg-orange-500'
+    }
+  ];
+
   const usagePercentage = (usage / limit) * 100;
 
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Header */}
-      <div className="space-y-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold">AI Marketing Assistant</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Create engaging content for your sow2grow seeds with AI
-            </p>
-          </div>
-          
-          {/* Usage indicator */}
-          <Card className="w-64">
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Daily Usage</span>
-                  <span>{usage}/{limit}</span>
-                </div>
-                <Progress value={usagePercentage} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {limit - usage} generations remaining today
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+  const handleAIAssist = async () => {
+    if (!projectData.description.trim()) {
+      toast.error('Please add a description first');
+      return;
+    }
 
-        {/* Quick stats */}
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('thumbnails')}
-            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
-              activeTab === 'thumbnails' 
-                ? 'bg-purple-100 border-purple-500 text-purple-700 shadow-lg' 
-                : 'bg-purple-50 border-purple-300 text-purple-600 hover:bg-purple-100'
-            }`}
-          >
-            <Camera className="w-6 h-6" />
-            <div className="text-center">
-              <p className="text-sm font-medium">Thumbnails</p>
-              <p className="text-xs opacity-80">Eye-catching visuals</p>
+    setIsGenerating(true);
+    try {
+      const result = await generateContentIdeas({
+        productDescription: projectData.description,
+        targetAudience: projectData.targetAudience || 'Sow2Grow community members',
+        contentType: contentType,
+        customPrompt: `Please improve and enhance this idea to make it more compelling and effective: "${projectData.description}". Focus on how this connects people back to the Sow2Grow platform for bestowing into orchards.`
+      });
+      setAiSuggestion(result.ideas);
+      toast.success('AI suggestions generated!');
+    } catch (error) {
+      toast.error('Failed to generate AI suggestions');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      let result;
+      const finalDescription = aiSuggestion || projectData.description;
+      
+      switch (contentType) {
+        case 'thumbnail':
+          result = await generateThumbnail({
+            productDescription: finalDescription,
+            style: 'professional',
+            customPrompt: `Include subtle Sow2Grow branding. Make it eye-catching for: ${projectData.title}`
+          });
+          break;
+        case 'video-ad':
+        case 'social-ad':
+          result = await generateScript({
+            productDescription: finalDescription,
+            targetAudience: projectData.targetAudience,
+            videoLength: 60,
+            style: 'engaging',
+            customPrompt: `End with a call-to-action directing people to visit sow2grow platform to support this seed or become a sower themselves.`
+          });
+          break;
+        case 'course':
+          result = await generateContentIdeas({
+            productDescription: finalDescription,
+            targetAudience: projectData.targetAudience,
+            contentType: 'course-outline',
+            customPrompt: `Create a course outline that can be turned into a Sow2Grow orchard where people can reserve spots to attend. Include pricing suggestions and community-building elements.`
+          });
+          break;
+        default:
+          result = await generateContentIdeas({
+            productDescription: finalDescription,
+            targetAudience: projectData.targetAudience,
+            contentType: contentType
+          });
+      }
+      
+      setGeneratedContent(result);
+      setCurrentStep(4);
+      toast.success('Content generated successfully!');
+    } catch (error) {
+      toast.error('Failed to generate content');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const resetWizard = () => {
+    setCurrentStep(1);
+    setContentType('');
+    setProjectData({
+      title: '',
+      description: '',
+      targetAudience: '',
+      goals: '',
+      platform: 'sow2grow',
+      sow2growLink: true
+    });
+    setAiSuggestion('');
+    setGeneratedContent(null);
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Header */}
+      <div className="text-center space-y-4 mb-8">
+        <div className="flex items-center justify-center gap-2">
+          <Sparkles className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold">Sow2Grow Marketing Creator</h1>
+        </div>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          Create engaging marketing content that grows our community. Every piece you create will help drive people back to sow2grow to bestow into orchards and become sowers themselves.
+        </p>
+        
+        {/* Usage indicator */}
+        <Card className="w-80 mx-auto">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Daily Usage</span>
+                <span>{usage}/{limit}</span>
+              </div>
+              <Progress value={usagePercentage} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {limit - usage} generations remaining today
+              </p>
             </div>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('ideas')}
-            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
-              activeTab === 'ideas' 
-                ? 'bg-orange-100 border-orange-500 text-orange-700 shadow-lg' 
-                : 'bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100'
-            }`}
-          >
-            <Lightbulb className="w-6 h-6" />
-            <div className="text-center">
-              <p className="text-sm font-medium">Content Ideas</p>
-              <p className="text-xs opacity-80">Creative inspiration</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress indicator */}
+      <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center space-x-4">
+          {[1, 2, 3, 4].map((step) => (
+            <div key={step} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                currentStep >= step 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {currentStep > step ? <CheckCircle className="w-4 h-4" /> : step}
+              </div>
+              {step < 4 && (
+                <div className={`w-12 h-1 mx-2 ${
+                  currentStep > step ? 'bg-primary' : 'bg-muted'
+                }`} />
+              )}
             </div>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('videos')}
-            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
-              activeTab === 'videos' 
-                ? 'bg-green-100 border-green-500 text-green-700 shadow-lg' 
-                : 'bg-green-50 border-green-300 text-green-600 hover:bg-green-100'
-            }`}
-          >
-            <Video className="w-6 h-6" />
-            <div className="text-center">
-              <p className="text-sm font-medium">Video Marketing</p>
-              <p className="text-xs opacity-80">Upload & optimize</p>
-            </div>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('library')}
-            className={`flex-1 max-w-xs h-20 flex-col gap-2 border-2 transition-all duration-200 hover:scale-105 ${
-              activeTab === 'library' 
-                ? 'bg-blue-100 border-blue-500 text-blue-700 shadow-lg' 
-                : 'bg-blue-50 border-blue-300 text-blue-600 hover:bg-blue-100'
-            }`}
-          >
-            <History className="w-6 h-6" />
-            <div className="text-center">
-              <p className="text-sm font-medium">My Library</p>
-              <p className="text-xs opacity-80">Saved creations</p>
-            </div>
-          </Button>
+          ))}
         </div>
       </div>
 
-      {/* Main content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      {/* Step 1: Choose content type */}
+      {currentStep === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              What would you like to create?
+            </CardTitle>
+            <CardDescription>
+              Choose the type of marketing content that will help grow the sow2grow community
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {contentTypes.map((type) => {
+                const Icon = type.icon;
+                return (
+                  <Button
+                    key={type.id}
+                    variant={contentType === type.id ? "default" : "outline"}
+                    className={`h-24 flex-col gap-3 text-left ${
+                      contentType === type.id ? '' : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => setContentType(type.id)}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white ${type.color}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{type.title}</p>
+                      <p className="text-xs opacity-70">{type.description}</p>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+            
+            {contentType && (
+              <div className="mt-6 text-center">
+                <Button onClick={() => setCurrentStep(2)}>
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Step 2: Project details */}
+      {currentStep === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5" />
+              Tell us about your project
+            </CardTitle>
+            <CardDescription>
+              Share the details so we can create compelling content that connects people to sow2grow
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="title">Project Title *</Label>
+              <Input
+                id="title"
+                value={projectData.title}
+                onChange={(e) => setProjectData({...projectData, title: e.target.value})}
+                placeholder="What's your project called?"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                value={projectData.description}
+                onChange={(e) => setProjectData({...projectData, description: e.target.value})}
+                placeholder="Describe your project, what it does, and why people should care..."
+                rows={4}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="audience">Target Audience</Label>
+              <Input
+                id="audience"
+                value={projectData.targetAudience}
+                onChange={(e) => setProjectData({...projectData, targetAudience: e.target.value})}
+                placeholder="Who is this for? (e.g., entrepreneurs, students, creators)"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="goals">Goals & Impact</Label>
+              <Textarea
+                id="goals"
+                value={projectData.goals}
+                onChange={(e) => setProjectData({...projectData, goals: e.target.value})}
+                placeholder="What impact will this create? How does it help the community?"
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between pt-4">
+              <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep(3)}
+                disabled={!projectData.title || !projectData.description}
+              >
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="thumbnails" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="w-5 h-5" />
-                Generate Thumbnail
-              </CardTitle>
-              <CardDescription>
-                Create eye-catching thumbnails for your videos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <GenerateThumbnailForm />
-            </CardContent>
-          </Card>
-          <ExampleTemplates type="thumbnail" />
-        </TabsContent>
-
-        <TabsContent value="ideas" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5" />
-                Generate Content Ideas
-              </CardTitle>
-              <CardDescription>
-                Get creative inspiration for your marketing content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <GenerateContentIdeasForm />
-            </CardContent>
-          </Card>
-          <ExampleTemplates type="ideas" />
-        </TabsContent>
-
-        <TabsContent value="videos" className="space-y-6">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Video className="w-6 h-6" />
-                Complete Video Marketing Solution
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant={videoActiveTab === 'wizard' ? 'default' : 'outline'}
+      {/* Step 3: AI Enhancement */}
+      {currentStep === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wand2 className="w-5 h-5" />
+              AI-Enhanced Content Creation
+            </CardTitle>
+            <CardDescription>
+              Let AI help improve your idea and create compelling content that drives engagement
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <h4 className="font-medium mb-2">Your Project Summary:</h4>
+              <p className="text-sm text-muted-foreground mb-1">
+                <strong>Title:</strong> {projectData.title}
+              </p>
+              <p className="text-sm text-muted-foreground mb-1">
+                <strong>Type:</strong> {contentTypes.find(t => t.id === contentType)?.title}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Description:</strong> {projectData.description}
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>AI Enhancement (Optional but Recommended)</Label>
+                <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => setVideoActiveTab('wizard')}
+                  onClick={handleAIAssist}
+                  disabled={isGenerating}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Creation Wizard
+                  {isGenerating ? 'Enhancing...' : 'Get AI Suggestions'}
                 </Button>
-                <Button 
-                  variant={videoActiveTab === 'upload' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setVideoActiveTab('upload')}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload & Tools
-                </Button>
-                <Button 
-                  variant={videoActiveTab === 'manage' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setVideoActiveTab('manage')}
-                >
-                  <Video className="w-4 h-4 mr-2" />
-                  My Videos
-                </Button>
+              </div>
+              
+              {aiSuggestion && (
+                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                  <h5 className="font-medium text-green-800 mb-2">AI-Enhanced Version:</h5>
+                  <p className="text-sm text-green-700">{aiSuggestion}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+              <h5 className="font-medium text-blue-800 mb-2">🌱 Sow2Grow Integration</h5>
+              <p className="text-sm text-blue-700">
+                Your content will automatically include calls-to-action that direct people to visit sow2grow.com 
+                to support your {contentType === 'course' ? 'orchard (course)' : 'seed'} or explore other opportunities to become sowers themselves.
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between pt-4">
+              <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              <Button onClick={handleGenerate} disabled={isGenerating}>
+                {isGenerating ? 'Generating...' : 'Generate Content'}
+                <Sparkles className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Generated content & sow2grow integration */}
+      {currentStep === 4 && generatedContent && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              Your Content is Ready!
+            </CardTitle>
+            <CardDescription>
+              Here's your AI-generated content with built-in sow2grow community growth features
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/50 p-6 rounded-lg">
+              <h4 className="font-semibold mb-4">{contentTypes.find(t => t.id === contentType)?.title}</h4>
+              <div className="prose prose-sm max-w-none">
+                {contentType === 'thumbnail' && generatedContent.image_url && (
+                  <img src={generatedContent.image_url} alt="Generated thumbnail" className="rounded-lg mb-4" />
+                )}
+                <div className="whitespace-pre-wrap">
+                  {generatedContent.script || generatedContent.ideas || generatedContent.tips || 'Content generated successfully!'}
+                </div>
               </div>
             </div>
             
-            {videoActiveTab === 'wizard' && <VideoCreationWizard />}
-            {videoActiveTab === 'upload' && (
-              <VideoUploadForm onVideoUploaded={() => {
-                setVideoActiveTab('manage');
-              }} />
-            )}
-            {videoActiveTab === 'manage' && <VideoMarketingDashboard />}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="library">
-          <AICreationsList />
-        </TabsContent>
-      </Tabs>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="border-green-200 bg-green-50">
+                <CardContent className="p-4">
+                  <h5 className="font-medium text-green-800 mb-2">🌱 Sow2Grow Links</h5>
+                  <p className="text-sm text-green-700 mb-3">
+                    Your content includes strategic calls-to-action that will drive people to:
+                  </p>
+                  <ul className="text-sm text-green-700 space-y-1">
+                    <li>• Visit your {contentType === 'course' ? 'orchard page' : 'seed on sow2grow'}</li>
+                    <li>• Explore other seeds to bestow into</li>
+                    <li>• Join as sowers themselves</li>
+                    <li>• Discover the 364yhvh community</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4">
+                  <h5 className="font-medium text-blue-800 mb-2">📊 Next Steps</h5>
+                  <div className="space-y-2">
+                    <Button size="sm" className="w-full" asChild>
+                      <a href="/create-orchard" target="_blank">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        {contentType === 'course' ? 'Create Your Orchard' : 'Create Your Seed'}
+                      </a>
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-full" asChild>
+                      <a href="/browse-orchards" target="_blank">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Share in Community
+                      </a>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="flex justify-between items-center pt-4">
+              <Button variant="outline" onClick={resetWizard}>
+                Create Another
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => {
+                  navigator.clipboard.writeText(generatedContent.script || generatedContent.ideas || generatedContent.tips || '');
+                  toast.success('Content copied to clipboard!');
+                }}>
+                  Copy Content
+                </Button>
+                <Button asChild>
+                  <a href="/browse-orchards" target="_blank">
+                    Go to Sow2Grow
+                    <ExternalLink className="w-4 h-4 ml-2" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
