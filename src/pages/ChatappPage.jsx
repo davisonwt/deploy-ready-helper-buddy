@@ -103,7 +103,7 @@ const ChatappPage = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-96">
+        <Card className="w-96 bg-white/10 backdrop-blur-md border-white/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -131,7 +131,7 @@ const ChatappPage = () => {
     >
       <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
         {/* Header */}
-        <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border shadow-2xl bg-white/90">
+        <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2 px-8 py-4 rounded-lg" style={{ 
@@ -167,7 +167,7 @@ const ChatappPage = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
           {/* Sidebar - Room List */}
           <div className="lg:col-span-1">
-            <Card className="h-full flex flex-col">
+            <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
@@ -262,7 +262,7 @@ const ChatappPage = () => {
           {/* Main Chat Area */}
           <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             {currentRoom ? (
-              <Card className="h-full flex flex-col">
+              <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader className="border-b">
                   <div className="flex items-center justify-between">
                     <div>
@@ -342,7 +342,7 @@ const ChatappPage = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="h-full flex items-center justify-center">
+              <Card className="h-full flex items-center justify-center bg-white/10 backdrop-blur-md border-white/20">
                 <CardContent>
                   <div className="text-center">
                     <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
