@@ -485,7 +485,7 @@ export default function AdminDashboardPage() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Radio className="h-5 w-5 text-blue-600" />
-                <span>📻 Grove Station Radio Management</span>
+                <span>📻 AOD Station Radio Management</span>
               </div>
               <Badge variant="outline" className="bg-blue-100 text-blue-800">
                 Personnel & Schedule Control
