@@ -49,11 +49,47 @@ export function useGroveStation() {
   const fetchSchedule = async (date = new Date().toISOString().split('T')[0]) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.rpc('get_radio_schedule_for_date', {
-        target_date: date
-      })
+      // Get enhanced schedule with subject/topic info
+      const { data, error } = await supabase
+        .from('radio_schedule')
+        .select(`
+          *,
+          radio_shows (
+            show_name,
+            description,
+            category,
+            subject,
+            topic_description
+          ),
+          radio_djs (
+            dj_name,
+            avatar_url
+          )
+        `)
+        .eq('time_slot_date', date)
+        .order('hour_slot')
+
       if (error) throw error
-      setSchedule(data || [])
+
+      // Format data to match the expected structure
+      const formattedSchedule = Array.from({ length: 24 }, (_, hour) => {
+        const slot = data?.find(s => s.hour_slot === hour)
+        return {
+          hour_slot: hour,
+          schedule_id: slot?.id || null,
+          show_name: slot?.radio_shows?.show_name || 'AI Radio Host',
+          dj_name: slot?.radio_djs?.dj_name || 'Grove AI',
+          dj_avatar: slot?.radio_djs?.avatar_url || '/ai-dj-avatar.png',
+          category: slot?.radio_shows?.category || 'ai_generated',
+          subject: slot?.radio_shows?.subject || slot?.show_subject,
+          topic_description: slot?.radio_shows?.topic_description || slot?.show_topic_description,
+          status: slot?.status || 'ai_backup',
+          approval_status: slot?.approval_status,
+          is_live: slot?.status === 'live'
+        }
+      })
+      
+      setSchedule(formattedSchedule)
     } catch (err) {
       console.error('Error fetching schedule:', err)
       setError(err.message)
@@ -214,6 +250,7 @@ export function useGroveStation() {
         .from('radio_schedule')
         .insert([{
           dj_id: userDJProfile.id,
+          approval_status: 'pending', // All new slots need approval
           ...scheduleData
         }])
         .select()
@@ -226,7 +263,7 @@ export function useGroveStation() {
 
       toast({
         title: "Show Scheduled!",
-        description: "Your time slot has been booked successfully!",
+        description: "Your time slot has been submitted for approval by radio admins.",
       })
 
       return { success: true, data }

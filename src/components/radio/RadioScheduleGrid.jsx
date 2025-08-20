@@ -83,22 +83,43 @@ export function RadioScheduleGrid({ schedule = [] }) {
                           <p className="text-xs text-muted-foreground">
                             with {slot.dj_name}
                           </p>
+                          {slot.subject && (
+                            <p className="text-xs font-medium text-primary mt-1">
+                              📻 {slot.subject}
+                            </p>
+                          )}
+                          {slot.topic_description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {slot.topic_description}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs ${CATEGORY_COLORS[slot.category] || ''}`}
-                    >
-                      {slot.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </Badge>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${CATEGORY_COLORS[slot.category] || ''}`}
+                      >
+                        {slot.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                      
+                      {isCurrentHour && !isLive && (
+                        <Badge variant="secondary" className="text-xs">
+                          Now
+                        </Badge>
+                      )}
+                    </div>
                     
-                    {isCurrentHour && !isLive && (
-                      <Badge variant="secondary" className="text-xs">
-                        Now
+                    {slot.approval_status && slot.approval_status !== 'approved' && (
+                      <Badge 
+                        variant={slot.approval_status === 'pending' ? 'outline' : 'destructive'} 
+                        className="text-xs"
+                      >
+                        {slot.approval_status}
                       </Badge>
                     )}
                   </div>

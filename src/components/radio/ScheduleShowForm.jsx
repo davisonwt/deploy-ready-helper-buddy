@@ -44,6 +44,8 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
   const [showData, setShowData] = useState({
     show_name: '',
     description: '',
+    subject: '',
+    topic_description: '',
     category: 'music'
   })
   const [scheduleData, setScheduleData] = useState({
@@ -140,6 +142,32 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
             </div>
 
             <div>
+              <Label htmlFor="subject">Subject/Topic *</Label>
+              <SecureInput
+                id="subject"
+                placeholder="e.g., Love & Relationships, Life Coaching, Overcoming Challenges"
+                value={showData.subject}
+                onChange={(e) => setShowData(prev => ({ ...prev, subject: e.target.value }))}
+                required
+                maxLength={100}
+                sanitizeType="text"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="topic_description">Episode Topic Description</Label>
+              <SecureTextarea
+                id="topic_description"
+                placeholder="Describe what this specific episode will cover..."
+                value={showData.topic_description}
+                onChange={(e) => setShowData(prev => ({ ...prev, topic_description: e.target.value }))}
+                maxLength={500}
+                sanitizeType="text"
+                rows={3}
+              />
+            </div>
+
+            <div>
               <Label htmlFor="category">Category *</Label>
               <Select 
                 value={showData.category} 
@@ -164,7 +192,7 @@ export function ScheduleShowForm({ open, onClose, djProfile }) {
               </Button>
               <Button 
                 type="submit" 
-                disabled={loading || !showData.show_name.trim()}
+                disabled={loading || !showData.show_name.trim() || !showData.subject.trim()}
               >
                 {loading ? "Creating..." : "Next"}
               </Button>

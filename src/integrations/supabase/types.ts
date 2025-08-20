@@ -1039,6 +1039,9 @@ export type Database = {
       radio_schedule: {
         Row: {
           ai_backup_enabled: boolean | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           dj_id: string | null
           end_time: string
@@ -1048,6 +1051,8 @@ export type Database = {
           playlist_url: string | null
           show_id: string | null
           show_notes: string | null
+          show_subject: string | null
+          show_topic_description: string | null
           start_time: string
           status: string | null
           time_slot_date: string
@@ -1055,6 +1060,9 @@ export type Database = {
         }
         Insert: {
           ai_backup_enabled?: boolean | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           dj_id?: string | null
           end_time: string
@@ -1064,6 +1072,8 @@ export type Database = {
           playlist_url?: string | null
           show_id?: string | null
           show_notes?: string | null
+          show_subject?: string | null
+          show_topic_description?: string | null
           start_time: string
           status?: string | null
           time_slot_date: string
@@ -1071,6 +1081,9 @@ export type Database = {
         }
         Update: {
           ai_backup_enabled?: boolean | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           dj_id?: string | null
           end_time?: string
@@ -1080,6 +1093,8 @@ export type Database = {
           playlist_url?: string | null
           show_id?: string | null
           show_notes?: string | null
+          show_subject?: string | null
+          show_topic_description?: string | null
           start_time?: string
           status?: string | null
           time_slot_date?: string
@@ -1115,7 +1130,9 @@ export type Database = {
           recurring_pattern: Json | null
           show_image_url: string | null
           show_name: string
+          subject: string | null
           tags: string[] | null
+          topic_description: string | null
           total_episodes: number | null
           updated_at: string
         }
@@ -1131,7 +1148,9 @@ export type Database = {
           recurring_pattern?: Json | null
           show_image_url?: string | null
           show_name: string
+          subject?: string | null
           tags?: string[] | null
+          topic_description?: string | null
           total_episodes?: number | null
           updated_at?: string
         }
@@ -1147,7 +1166,9 @@ export type Database = {
           recurring_pattern?: Json | null
           show_image_url?: string | null
           show_name?: string
+          subject?: string | null
           tags?: string[] | null
+          topic_description?: string | null
           total_episodes?: number | null
           updated_at?: string
         }
@@ -1760,6 +1781,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_radio_schedule_slot: {
+        Args: { approver_id_param: string; schedule_id_param: string }
+        Returns: boolean
+      }
       award_achievement: {
         Args: {
           achievement_type_param: string
@@ -1919,6 +1944,10 @@ export type Database = {
       }
       migrate_billing_data_for_user: {
         Args: { target_user_id: string }
+        Returns: boolean
+      }
+      reject_radio_schedule_slot: {
+        Args: { approver_id_param: string; schedule_id_param: string }
         Returns: boolean
       }
       remove_sensitive_profile_data: {

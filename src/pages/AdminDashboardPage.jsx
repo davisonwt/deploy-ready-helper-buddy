@@ -31,6 +31,7 @@ import { useRoles } from '../hooks/useRoles'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { useNavigate } from 'react-router-dom'
+import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -475,6 +476,19 @@ export default function AdminDashboardPage() {
                 </div>
               </DialogContent>
             </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Radio Station Management */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Radio className="h-5 w-5" />
+              <span>Radio Station Management</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AdminRadioManagement />
           </CardContent>
         </Card>
 
