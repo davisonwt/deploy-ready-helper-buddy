@@ -122,10 +122,13 @@ const ChatappPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ 
-      backgroundImage: 'url(/chatapp-background.jpg)',
-      backgroundAttachment: 'fixed'
-    }}>
+    <div 
+      className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" 
+      style={{ 
+        backgroundImage: 'url(/chatapp-background.jpg)',
+        minHeight: '100vh'
+      }}
+    >
       <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border shadow-2xl bg-white/90">
