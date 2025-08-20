@@ -39,6 +39,8 @@ export default function AdminDashboardPage() {
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(true)
   const [seedsLoading, setSeedsLoading] = useState(false)
+  const [activeUsers, setActiveUsers] = useState(0)
+  const [totalRegistered, setTotalRegistered] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [userSearchTerm, setUserSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
@@ -50,7 +52,8 @@ export default function AdminDashboardPage() {
     console.log('Component mounted, loading data...')
     console.log('isAdminOrGosat():', isAdminOrGosat())
     loadUsers()
-    loadSeeds() // Remove condition and always try to load seeds
+    loadSeeds()
+    loadUserStats()
   }, [])
 
   const loadUsers = async () => {
@@ -59,6 +62,7 @@ export default function AdminDashboardPage() {
       const result = await fetchAllUsers()
       if (result.success) {
         setUsers(result.data)
+        setTotalRegistered(result.data.length)
       } else {
         toast.error(result.error || 'Failed to load users')
       }
@@ -67,6 +71,44 @@ export default function AdminDashboardPage() {
       toast.error('Failed to load users')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadUserStats = async () => {
+    try {
+      // Get active users (users who have been active in the last 30 days)
+      // We'll count users who have created orchards, made bestowals, or sent messages recently
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      // Get users who created orchards in last 30 days
+      const { data: orchardUsers } = await supabase
+        .from('orchards')
+        .select('user_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Get users who made bestowals in last 30 days
+      const { data: bestowalUsers } = await supabase
+        .from('bestowals')
+        .select('bestower_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Get users who sent messages in last 30 days
+      const { data: messageUsers } = await supabase
+        .from('chat_messages')
+        .select('sender_id')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+
+      // Combine all unique user IDs
+      const activeUserIds = new Set([
+        ...(orchardUsers?.map(u => u.user_id) || []),
+        ...(bestowalUsers?.map(u => u.bestower_id) || []),
+        ...(messageUsers?.map(u => u.sender_id) || [])
+      ])
+
+      setActiveUsers(activeUserIds.size)
+    } catch (error) {
+      console.error('Error loading user stats:', error)
     }
   }
 
@@ -256,7 +298,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Search and Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card className="md:col-span-2">
             <CardContent className="pt-6">
               <div className="relative">
@@ -275,10 +317,22 @@ export default function AdminDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold text-foreground">{users.length}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Registered</p>
+                  <p className="text-2xl font-bold text-foreground">{totalRegistered}</p>
                 </div>
                 <Users className="h-8 w-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active (30d)</p>
+                  <p className="text-2xl font-bold text-success">{activeUsers}</p>
+                </div>
+                <Calendar className="h-8 w-8 text-success" />
               </div>
             </CardContent>
           </Card>
