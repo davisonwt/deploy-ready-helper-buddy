@@ -79,7 +79,7 @@ export default function GroveStationPage() {
               )}
             </div>
             <div>
-              <h1 className="text-4xl font-bold">{stationConfig?.station_name || 'Grove Station'}</h1>
+              <h1 className="text-4xl font-bold">{stationConfig?.station_name || 'AOD Station'}</h1>
               <p className="text-muted-foreground">{stationConfig?.station_tagline}</p>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function GroveStationPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Radio className="h-5 w-5" />
-                    Grove Station Player
+                    The Set-Apart Heretics AOD Frequencies
                   </CardTitle>
                   <CardDescription>
                     {stationConfig?.station_description}
@@ -190,7 +190,7 @@ export default function GroveStationPage() {
                         <Radio className="h-12 w-12 text-primary" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-semibold">Grove Station</h3>
+                        <h3 className="text-xl font-semibold">AOD Station</h3>
                         <p className="text-muted-foreground">24/7 Community Radio</p>
                       </div>
                       <div className="flex items-center gap-4 justify-center">
@@ -257,7 +257,7 @@ export default function GroveStationPage() {
           <TabsContent value="djs" className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold">Grove Station DJs</h2>
+                <h2 className="text-2xl font-bold">AOD Station DJs</h2>
                 <p className="text-muted-foreground">Meet our amazing broadcasters</p>
               </div>
               {!isDJ && (
@@ -285,7 +285,7 @@ export default function GroveStationPage() {
                           <Badge variant="outline" size="sm">{dj.dj_role}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">
-                          {dj.bio || 'Grove Station DJ'}
+                          {dj.bio || 'AOD Station DJ'}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
@@ -404,7 +404,7 @@ export default function GroveStationPage() {
               <Card>
                 <CardContent className="p-8 text-center">
                   <Mic className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Become a Grove Station DJ</h3>
+                  <h3 className="text-lg font-semibold mb-2">Become an AOD Station DJ</h3>
                   <p className="text-muted-foreground mb-4">
                     Share your voice with the community and host your own shows!
                   </p>

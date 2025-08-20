@@ -247,9 +247,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold">{currentShow?.show_name || 'Grove Station Live'}</h2>
+              <h2 className="text-2xl font-bold">{currentShow?.show_name || 'AOD Station Live'}</h2>
               <p className="text-muted-foreground">
-                with {activeHosts.filter(h => h.role === 'main_host')[0]?.radio_djs?.dj_name || 'Grove Station'}
+                with {activeHosts.filter(h => h.role === 'main_host')[0]?.radio_djs?.dj_name || 'AOD Station'}
               </p>
             </div>
 

@@ -76,10 +76,10 @@ export function CreateDJProfileForm({ open, onClose }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mic className="h-5 w-5" />
-            Become a Grove Station DJ
+            Become an AOD Station DJ
           </DialogTitle>
           <DialogDescription>
-            Create your DJ profile and start broadcasting to the Grove Station community!
+            Create your DJ profile and start broadcasting to the AOD Station community!
           </DialogDescription>
         </DialogHeader>
 

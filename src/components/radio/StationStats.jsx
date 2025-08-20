@@ -68,7 +68,7 @@ export function StationStats() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Grove Station Analytics</h2>
+        <h2 className="text-2xl font-bold mb-2">AOD Station Analytics</h2>
         <p className="text-muted-foreground">
           Performance metrics for the last 7 days
         </p>

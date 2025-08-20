@@ -152,7 +152,7 @@ export function useGroveStation() {
       setUserDJProfile(data)
       toast({
         title: "DJ Profile Created!",
-        description: `Welcome to Grove Station, ${data.dj_name}!`,
+        description: `Welcome to AOD Station, ${data.dj_name}!`,
       })
 
       return { success: true, data }
