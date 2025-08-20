@@ -253,29 +253,26 @@ export default function AIAssistantPage() {
             <div className="grid md:grid-cols-2 gap-4">
               {contentTypes.map((type) => {
                 const Icon = type.icon;
+                const buttonColor = type.id === 'video-ad' ? 'bg-blue-200 hover:bg-blue-300 border-blue-300' :
+                                   type.id === 'thumbnail' ? 'bg-purple-200 hover:bg-purple-300 border-purple-300' :
+                                   type.id === 'course' ? 'bg-green-200 hover:bg-green-300 border-green-300' :
+                                   'bg-orange-200 hover:bg-orange-300 border-orange-300';
+                
                 return (
                   <Button
                     key={type.id}
-                    variant={contentType === type.id ? "default" : "outline"}
-                    className={`h-24 flex-col gap-3 text-left ${
-                      contentType === type.id ? '' : 'hover:bg-muted/50'
+                    variant="outline"
+                    className={`h-24 flex-col gap-3 text-left ${buttonColor} ${
+                      contentType === type.id ? 'ring-2 ring-offset-2 ring-primary' : ''
                     }`}
                     onClick={() => setContentType(type.id)}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/80">
-                      <Icon 
-                        className="w-5 h-5" 
-                        style={{
-                          color: type.id === 'video-ad' ? '#60a5fa' :
-                                type.id === 'thumbnail' ? '#a78bfa' :
-                                type.id === 'course' ? '#4ade80' :
-                                '#fb923c'
-                        }}
-                      />
+                      <Icon className="w-5 h-5 text-gray-700" />
                     </div>
                     <div>
-                      <p className="font-medium">{type.title}</p>
-                      <p className="text-xs opacity-70">{type.description}</p>
+                      <p className="font-medium text-gray-800">{type.title}</p>
+                      <p className="text-xs opacity-70 text-gray-600">{type.description}</p>
                     </div>
                   </Button>
                 );
