@@ -129,7 +129,7 @@ const ChatappPage = () => {
         minHeight: '100vh'
       }}
     >
-      <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col">
+      <div className="container mx-auto p-4 h-screen max-h-screen flex flex-col pb-20">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
           <div className="flex items-center justify-between">
@@ -232,7 +232,7 @@ const ChatappPage = () => {
                             <Button 
                               onClick={() => setShowCreateModal(true)}
                               style={{ background: 'linear-gradient(to right, #EC4899, #DC2626)' }}
-                              className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 mb-8"
+                              className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create your first room
