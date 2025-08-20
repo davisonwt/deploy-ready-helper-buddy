@@ -263,12 +263,15 @@ export default function AIAssistantPage() {
                     onClick={() => setContentType(type.id)}
                   >
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/80">
-                      <Icon className={`w-5 h-5 ${
-                        type.id === 'video-ad' ? 'text-blue-400' :
-                        type.id === 'thumbnail' ? 'text-purple-400' :
-                        type.id === 'course' ? 'text-green-400' :
-                        'text-orange-400'
-                      }`} />
+                      <Icon 
+                        className="w-5 h-5" 
+                        style={{
+                          color: type.id === 'video-ad' ? '#60a5fa' :
+                                type.id === 'thumbnail' ? '#a78bfa' :
+                                type.id === 'course' ? '#4ade80' :
+                                '#fb923c'
+                        }}
+                      />
                     </div>
                     <div>
                       <p className="font-medium">{type.title}</p>
