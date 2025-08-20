@@ -115,21 +115,11 @@ export default function YhvhOrchardsPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background Video */}
-      <video 
-        autoPlay 
-        loop 
-        muted 
-        playsInline
-        className="fixed top-0 left-0 w-full h-full object-cover z-0"
-        onError={(e) => console.error('Video failed to load:', e)}
-        onLoadStart={() => console.log('Video loading started')}
-        onCanPlay={() => console.log('Video can play')}
-      >
-        <source src="/s2g-divine-presence.mp4" type="video/mp4" />
-        <source src="/let-it-rain-1280x720.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+      {/* Background Image */}
+      <div 
+        className="fixed top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat z-0"
+        style={{ backgroundImage: 'url(/364yhvh-orchards-1.jpg)' }}
+      />
       
       {/* Overlay for better text readability */}
       <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
