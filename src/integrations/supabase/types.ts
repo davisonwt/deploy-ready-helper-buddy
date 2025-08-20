@@ -888,6 +888,154 @@ export type Database = {
           },
         ]
       }
+      radio_guest_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          request_message: string | null
+          session_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          request_message?: string | null
+          session_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          request_message?: string | null
+          session_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_guest_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_live_hosts: {
+        Row: {
+          audio_enabled: boolean
+          created_at: string
+          dj_id: string
+          id: string
+          is_active: boolean
+          joined_at: string
+          left_at: string | null
+          role: string
+          session_id: string
+          user_id: string
+          video_enabled: boolean
+        }
+        Insert: {
+          audio_enabled?: boolean
+          created_at?: string
+          dj_id: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          left_at?: string | null
+          role?: string
+          session_id: string
+          user_id: string
+          video_enabled?: boolean
+        }
+        Update: {
+          audio_enabled?: boolean
+          created_at?: string
+          dj_id?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          left_at?: string | null
+          role?: string
+          session_id?: string
+          user_id?: string
+          video_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_live_hosts_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_live_hosts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_live_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          schedule_id: string
+          session_token: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          viewer_count: number
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          schedule_id: string
+          session_token: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          viewer_count?: number
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          schedule_id?: string
+          session_token?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          viewer_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_live_sessions_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_schedule: {
         Row: {
           ai_backup_enabled: boolean | null
@@ -1623,6 +1771,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_join_session_early: {
+        Args: { schedule_id_param: string }
+        Returns: boolean
+      }
       get_ai_usage_today: {
         Args: { user_id_param: string }
         Returns: number
@@ -1633,6 +1785,10 @@ export type Database = {
       }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
+        Returns: string
+      }
+      get_or_create_live_session: {
+        Args: { schedule_id_param: string }
         Returns: string
       }
       get_payment_config_for_eft: {

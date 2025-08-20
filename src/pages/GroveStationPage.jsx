@@ -23,6 +23,7 @@ import {
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import { ScheduleShowForm } from '@/components/radio/ScheduleShowForm'
 import { LiveStreamInterface } from '@/components/radio/LiveStreamInterface'
+import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
 import { StationStats } from '@/components/radio/StationStats'
 
@@ -166,38 +167,47 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Radio className="h-5 w-5" />
-                  Grove Station Player
-                </CardTitle>
-                <CardDescription>
-                  {stationConfig?.station_description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
-                  <div className="text-center space-y-4">
-                    <div className="w-24 h-24 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                      <Radio className="h-12 w-12 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold">Grove Station</h3>
-                      <p className="text-muted-foreground">24/7 Community Radio</p>
-                    </div>
-                    <div className="flex items-center gap-4 justify-center">
-                      <Button size="lg" onClick={handlePlayPause}>
-                        {isPlaying ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-                        {isPlaying ? "Pause Stream" : "Play Stream"}
-                      </Button>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Volume2 className="h-4 w-4" />
-                        <span>High Quality Stream</span>
+            {currentShow ? (
+              <LiveStreamListener 
+                liveSession={currentShow.liveSession}
+                currentShow={currentShow}
+              />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Radio className="h-5 w-5" />
+                    Grove Station Player
+                  </CardTitle>
+                  <CardDescription>
+                    {stationConfig?.station_description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                    <div className="text-center space-y-4">
+                      <div className="w-24 h-24 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                        <Radio className="h-12 w-12 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold">Grove Station</h3>
+                        <p className="text-muted-foreground">24/7 Community Radio</p>
+                      </div>
+                      <div className="flex items-center gap-4 justify-center">
+                        <Button size="lg" onClick={handlePlayPause}>
+                          {isPlaying ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
+                          {isPlaying ? "Pause Stream" : "Play Stream"}
+                        </Button>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Volume2 className="h-4 w-4" />
+                          <span>High Quality Stream</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            )}
 
                 {/* Feedback Section */}
                 {currentShow && (
