@@ -17,22 +17,41 @@ export const useChat = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('chat_rooms')
+      // First get rooms where user is a participant
+      const { data: userRooms, error: roomsError } = await supabase
+        .from('chat_participants')
         .select(`
-          *,
-          chat_participants!inner(
-            user_id,
-            is_moderator,
-            joined_at
-          )
+          room_id,
+          chat_rooms!inner(*)
         `)
-        .eq('chat_participants.user_id', user.id)
-        .eq('chat_participants.is_active', true)
-        .order('updated_at', { ascending: false });
+        .eq('user_id', user.id)
+        .eq('is_active', true);
 
-      if (error) throw error;
-      setRooms(data || []);
+      if (roomsError) throw roomsError;
+
+      // Extract room data and get all participants for each room
+      const roomsWithParticipants = await Promise.all(
+        (userRooms || []).map(async (userRoom) => {
+          const room = userRoom.chat_rooms;
+          
+          // Get all participants for this room
+          const { data: allParticipants, error: participantsError } = await supabase
+            .from('chat_participants')
+            .select('user_id, is_moderator, joined_at')
+            .eq('room_id', room.id)
+            .eq('is_active', true);
+
+          return {
+            ...room,
+            chat_participants: allParticipants || []
+          };
+        })
+      );
+
+      // Sort by updated_at
+      roomsWithParticipants.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+      
+      setRooms(roomsWithParticipants);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       toast({
