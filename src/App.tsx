@@ -59,11 +59,10 @@ const App = () => (
       <AuthProvider>
         <BasketProvider>
           <AppContextProvider>
-            <ProfileRedirect>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -337,10 +336,9 @@ const App = () => (
           </BrowserRouter>
           <LiveActivityWidget />
         </TooltipProvider>
-      </ProfileRedirect>
-    </AppContextProvider>
-  </BasketProvider>
-</AuthProvider>
+      </AppContextProvider>
+    </BasketProvider>
+  </AuthProvider>
 </ThemeProvider>
 </QueryClientProvider>
 );
