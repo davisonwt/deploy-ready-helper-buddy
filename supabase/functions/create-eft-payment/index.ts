@@ -43,7 +43,7 @@ serve(async (req) => {
     
     // Get bank details from payment config using secure RPC
     const { data: paymentConfig, error: configError } = await supabaseClient
-      .rpc('get_payment_config_for_eft');
+      .rpc('get_payment_config_secure');
 
     if (configError || !paymentConfig) {
       logStep("Payment config error", configError);
