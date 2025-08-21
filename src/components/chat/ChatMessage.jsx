@@ -70,7 +70,36 @@ const ChatMessage = ({ message, isOwn = false }) => {
       
       <div className={`flex-1 max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className={`text-sm font-bold px-3 py-1 rounded-full border backdrop-blur-md shadow-lg ${userColor.bg} ${userColor.text} ${userColor.border}`}>
+          <span 
+            className="text-sm font-bold px-3 py-1 rounded-full border backdrop-blur-md shadow-lg"
+            style={{
+              backgroundColor: userColor.bg.includes('rose') ? '#fecdd3' : 
+                             userColor.bg.includes('blue') ? '#bfdbfe' : 
+                             userColor.bg.includes('green') ? '#bbf7d0' : 
+                             userColor.bg.includes('purple') ? '#d8b4fe' : 
+                             userColor.bg.includes('yellow') ? '#fde68a' : 
+                             userColor.bg.includes('pink') ? '#f9a8d4' : 
+                             userColor.bg.includes('indigo') ? '#c7d2fe' : 
+                             userColor.bg.includes('teal') ? '#99f6e4' : 
+                             userColor.bg.includes('orange') ? '#fdba74' : 
+                             userColor.bg.includes('cyan') ? '#a5f3fc' : 
+                             userColor.bg.includes('emerald') ? '#a7f3d0' : 
+                             userColor.bg.includes('violet') ? '#ddd6fe' : '#e5e7eb',
+              color: '#1f2937',
+              borderColor: userColor.bg.includes('rose') ? '#fb7185' : 
+                          userColor.bg.includes('blue') ? '#60a5fa' : 
+                          userColor.bg.includes('green') ? '#34d399' : 
+                          userColor.bg.includes('purple') ? '#a855f7' : 
+                          userColor.bg.includes('yellow') ? '#fbbf24' : 
+                          userColor.bg.includes('pink') ? '#ec4899' : 
+                          userColor.bg.includes('indigo') ? '#6366f1' : 
+                          userColor.bg.includes('teal') ? '#14b8a6' : 
+                          userColor.bg.includes('orange') ? '#f97316' : 
+                          userColor.bg.includes('cyan') ? '#06b6d4' : 
+                          userColor.bg.includes('emerald') ? '#10b981' : 
+                          userColor.bg.includes('violet') ? '#8b5cf6' : '#6b7280'
+            }}
+          >
             {getSenderName()}
           </span>
           <span className="text-xs text-gray-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 shadow-md">
@@ -84,8 +113,36 @@ const ChatMessage = ({ message, isOwn = false }) => {
         </div>
         
         <div 
-          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-md shadow-xl border ${userColor.bg} ${userColor.text} ${userColor.border}`}
+          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-md shadow-xl border-2`}
+          style={{ 
+            backgroundColor: userColor.bg.includes('rose') ? '#fecdd3' : 
+                           userColor.bg.includes('blue') ? '#bfdbfe' : 
+                           userColor.bg.includes('green') ? '#bbf7d0' : 
+                           userColor.bg.includes('purple') ? '#d8b4fe' : 
+                           userColor.bg.includes('yellow') ? '#fde68a' : 
+                           userColor.bg.includes('pink') ? '#f9a8d4' : 
+                           userColor.bg.includes('indigo') ? '#c7d2fe' : 
+                           userColor.bg.includes('teal') ? '#99f6e4' : 
+                           userColor.bg.includes('orange') ? '#fdba74' : 
+                           userColor.bg.includes('cyan') ? '#a5f3fc' : 
+                           userColor.bg.includes('emerald') ? '#a7f3d0' : 
+                           userColor.bg.includes('violet') ? '#ddd6fe' : '#e5e7eb',
+            color: '#1f2937',
+            borderColor: userColor.bg.includes('rose') ? '#fb7185' : 
+                        userColor.bg.includes('blue') ? '#60a5fa' : 
+                        userColor.bg.includes('green') ? '#34d399' : 
+                        userColor.bg.includes('purple') ? '#a855f7' : 
+                        userColor.bg.includes('yellow') ? '#fbbf24' : 
+                        userColor.bg.includes('pink') ? '#ec4899' : 
+                        userColor.bg.includes('indigo') ? '#6366f1' : 
+                        userColor.bg.includes('teal') ? '#14b8a6' : 
+                        userColor.bg.includes('orange') ? '#f97316' : 
+                        userColor.bg.includes('cyan') ? '#06b6d4' : 
+                        userColor.bg.includes('emerald') ? '#10b981' : 
+                        userColor.bg.includes('violet') ? '#8b5cf6' : '#6b7280'
+          }}
         >
+          {console.log('Rendering message with color:', userColor, 'for user:', message.sender_id)}
           {message.content && (
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}
