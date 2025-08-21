@@ -193,7 +193,15 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      console.log('🔄 Updating profile with data:', profileData)
+      console.log('🔄 Starting profile update...')
+      console.log('🔄 Current user ID:', user?.id)
+      console.log('🔄 User object:', user)
+      console.log('🔄 Profile data to update:', profileData)
+      
+      if (!user?.id) {
+        console.error('❌ No user ID found!')
+        return { success: false, error: 'User not authenticated' }
+      }
       
       // Only send fields that exist in the database
       const validFields = {
@@ -227,6 +235,9 @@ export const AuthProvider = ({ children }) => {
         .eq('user_id', user.id)
         .select()
         .single()
+      
+      console.log('🔄 Database response - data:', data)
+      console.log('🔄 Database response - error:', error)
       
       if (error) {
         console.error('❌ Profile update error:', error)
