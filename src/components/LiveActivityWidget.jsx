@@ -250,22 +250,22 @@ export default function LiveActivityWidget() {
                          (liveData.aodHereticFrequencies?.isLive ? 1 : 0)
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] w-80 max-w-[calc(100vw-3rem)]">
+    <div className="fixed bottom-6 right-6 z-[99999] w-80 max-w-[calc(100vw-3rem)] pointer-events-auto">
       {/* Debug indicator */}
-      <div className="absolute -top-10 right-0 bg-red-500 text-white text-xs px-2 py-1 rounded">
+      <div className="absolute -top-10 right-0 bg-red-500 text-white text-xs px-2 py-1 rounded z-[100000]">
         WIDGET ACTIVE
       </div>
       
-      <Card className="bg-background/98 backdrop-blur-md border-primary/60 shadow-2xl ring-4 ring-primary/30 ring-offset-2">
+      <Card className="bg-background border-primary/60 shadow-2xl ring-2 ring-primary/30 ring-offset-2 relative z-[99999] pointer-events-auto">
         {!user && (
-          <div className="absolute -top-2 -right-2 z-10">
+          <div className="absolute -top-2 -right-2 z-[100001] pointer-events-none">
             <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse shadow-lg">
               🔴 LIVE NOW
             </div>
           </div>
         )}
         <CardHeader 
-          className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20"
+          className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 relative z-[99999] pointer-events-auto"
           onClick={() => {
             console.log('Header clicked, toggling expand from', isExpanded, 'to', !isExpanded)
             setIsExpanded(!isExpanded)
@@ -306,7 +306,7 @@ export default function LiveActivityWidget() {
         </CardHeader>
 
         {isExpanded && (
-          <CardContent className="pt-0 max-h-96 overflow-y-auto space-y-4">
+          <CardContent className="pt-0 max-h-96 overflow-y-auto space-y-4 relative z-[99999] pointer-events-auto">
             {loading ? (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
