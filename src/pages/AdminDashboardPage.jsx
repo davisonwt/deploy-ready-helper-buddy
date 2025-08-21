@@ -213,18 +213,35 @@ export default function AdminDashboardPage() {
     if (!selectedUser || !selectedRole) return
 
     try {
+      console.log('🔄 Granting role:', selectedRole, 'to user:', selectedUser.user_id)
       const result = await grantRole(selectedUser.user_id, selectedRole)
       if (result.success) {
         toast.success(`Successfully granted ${selectedRole} role to ${selectedUser.display_name}`)
-        loadUsers()
-        setIsRoleDialogOpen(false)
-        setSelectedUser(null)
+        
+        // Update the selectedUser state immediately to show new role
+        const updatedSelectedUser = {
+          ...selectedUser,
+          user_roles: [
+            ...(selectedUser.user_roles || []),
+            { role: selectedRole, granted_at: new Date().toISOString() }
+          ]
+        }
+        setSelectedUser(updatedSelectedUser)
+        
+        // Wait a moment then reload all users to ensure database sync
+        setTimeout(async () => {
+          console.log('🔄 Reloading users after role grant...')
+          await loadUsers()
+        }, 500)
+        
+        // Keep dialog open to show the updated user roles
         setSelectedRole('')
       } else {
+        console.error('❌ Failed to grant role:', result.error)
         toast.error(result.error || 'Failed to grant role')
       }
     } catch (error) {
-      console.error('Error granting role:', error)
+      console.error('❌ Error granting role:', error)
       toast.error('Failed to grant role')
     }
   }
@@ -235,15 +252,31 @@ export default function AdminDashboardPage() {
     }
 
     try {
+      console.log('🔄 Revoking role:', role, 'from user:', userId)
       const result = await revokeRole(userId, role)
       if (result.success) {
         toast.success(`Successfully revoked ${role} role from ${userName}`)
-        loadUsers()
+        
+        // Update selectedUser if it's the same user
+        if (selectedUser && selectedUser.user_id === userId) {
+          const updatedSelectedUser = {
+            ...selectedUser,
+            user_roles: selectedUser.user_roles?.filter(r => r.role !== role) || []
+          }
+          setSelectedUser(updatedSelectedUser)
+        }
+        
+        // Wait a moment then reload all users
+        setTimeout(async () => {
+          console.log('🔄 Reloading users after role revoke...')
+          await loadUsers()
+        }, 500)
       } else {
+        console.error('❌ Failed to revoke role:', result.error)
         toast.error(result.error || 'Failed to revoke role')
       }
     } catch (error) {
-      console.error('Error revoking role:', error)
+      console.error('❌ Error revoking role:', error)
       toast.error('Failed to revoke role')
     }
   }
