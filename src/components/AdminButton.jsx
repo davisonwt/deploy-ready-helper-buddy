@@ -10,8 +10,10 @@ export function AdminButton() {
 
   // Debug logging
   console.log('🔥 AdminButton Full Debug:', {
-    auth,
-    roles
+    'auth.user.id': auth?.user?.id,
+    'auth.isAuthenticated': auth?.isAuthenticated,
+    'roles.userRoles': roles?.userRoles,
+    'roles.loading': roles?.loading
   });
 
   // Show debug info  
@@ -23,17 +25,29 @@ export function AdminButton() {
       <div className="text-xs text-red-500 mb-1">
         Roles: {JSON.stringify(roles?.userRoles || [])} | Loading: {roles?.loading ? 'YES' : 'NO'}
       </div>
-      {auth?.isAuthenticated && roles?.userRoles?.length > 0 && (
-        <Link to="/admin/dashboard">
+      <div className="flex gap-2 items-center">
+        {auth?.isAuthenticated && roles?.userRoles?.length > 0 && (
+          <Link to="/admin/dashboard">
+            <Button 
+              variant="outline"
+              className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
+            >
+              <Settings className="w-3 h-3 mr-1" />
+              gosat's ({roles.userRoles.join(', ')})
+            </Button>
+          </Link>
+        )}
+        {auth?.isAuthenticated && (
           <Button 
+            onClick={auth.logout}
             variant="outline"
-            className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
+            size="sm"
+            className="text-xs border-red-500 text-red-500 hover:bg-red-50"
           >
-            <Settings className="w-3 h-3 mr-1" />
-            gosat's ({roles.userRoles.join(', ')})
+            Reset Session
           </Button>
-        </Link>
-      )}
+        )}
+      </div>
     </div>
   );
 }
