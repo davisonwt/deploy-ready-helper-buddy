@@ -10,6 +10,7 @@ import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
 import { lazy, Suspense } from "react";
 import "./utils/errorDetection"; // Initialize error detection
+import "./utils/cookieConfig"; // Configure cookie policy
 
 // Initialize error detection system
 console.log('🚀 Error Detection System Initialized');
