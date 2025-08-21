@@ -231,7 +231,9 @@ export default function ProfilePage() {
       youtube_url: user?.youtube_url || "",
       show_social_media: user?.show_social_media !== false,
       profile_picture: user?.profile_picture || null,
-      preferred_currency: user?.preferred_currency || "USD"
+      preferred_currency: user?.preferred_currency || "USD",
+      country: user?.country || "",
+      timezone: user?.timezone || ""
     })
     setEditing(false)
     setPictureError("")
@@ -536,7 +538,7 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-primary" />
-                    Location
+                    City/Location
                   </label>
                   {editing ? (
                     <input
@@ -545,10 +547,67 @@ export default function ProfilePage() {
                       value={formData.location}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
-                      placeholder="City, Country"
+                      placeholder="City, Town, State"
                     />
                   ) : (
                     <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.location || "Not set"}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-primary" />
+                    Country
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      placeholder="Your country"
+                    />
+                  ) : (
+                    <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.country || "Not set"}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    Timezone
+                  </label>
+                  {editing ? (
+                    <select
+                      name="timezone"
+                      value={formData.timezone}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground"
+                    >
+                      <option value="">Select timezone</option>
+                      <option value="America/New_York">Eastern (EST/EDT)</option>
+                      <option value="America/Chicago">Central (CST/CDT)</option>
+                      <option value="America/Denver">Mountain (MST/MDT)</option>
+                      <option value="America/Los_Angeles">Pacific (PST/PDT)</option>
+                      <option value="Europe/London">London (GMT/BST)</option>
+                      <option value="Europe/Paris">Central Europe (CET/CEST)</option>
+                      <option value="Europe/Moscow">Moscow (MSK)</option>
+                      <option value="Asia/Tokyo">Tokyo (JST)</option>
+                      <option value="Asia/Shanghai">Shanghai (CST)</option>
+                      <option value="Asia/Dubai">Dubai (GST)</option>
+                      <option value="Asia/Kolkata">India (IST)</option>
+                      <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                      <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
+                      <option value="Africa/Lagos">Lagos (WAT)</option>
+                      <option value="Africa/Cairo">Cairo (EET)</option>
+                      <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
+                      <option value="America/Sao_Paulo">São Paulo (BRT/BRST)</option>
+                      <option value="America/Mexico_City">Mexico City (CST/CDT)</option>
+                      <option value="UTC">UTC</option>
+                    </select>
+                  ) : (
+                    <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.timezone || "Not set"}</p>
                   )}
                 </div>
                 
