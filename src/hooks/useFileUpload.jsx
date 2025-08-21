@@ -13,12 +13,23 @@ export function useFileUpload() {
     try {
       if (!user) throw new Error('User must be authenticated')
 
+      console.log('Starting file upload:', { 
+        fileName: file.name, 
+        fileSize: file.size, 
+        fileType: file.type, 
+        bucket, 
+        folder, 
+        userId: user.id 
+      });
+
       setUploading(true)
       setError(null)
 
       // Create unique filename
       const fileExt = file.name.split('.').pop()
       const fileName = `${user.id}/${folder}${Date.now()}.${fileExt}`
+      
+      console.log('Generated file path:', fileName);
 
       const { data, error: uploadError } = await supabase.storage
         .from(bucket)
@@ -27,7 +38,12 @@ export function useFileUpload() {
           upsert: false
         })
 
-      if (uploadError) throw uploadError
+      console.log('Storage upload response:', { data, error: uploadError });
+
+      if (uploadError) {
+        console.error('Storage upload error details:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
