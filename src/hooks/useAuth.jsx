@@ -38,18 +38,68 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Rate limiting check for login attempts
+      const { data: rateLimitCheck } = await supabase.rpc('check_rate_limit_enhanced', {
+        identifier: email,
+        limit_type: 'login_attempt',
+        max_attempts: 5,
+        time_window_minutes: 15
+      });
+
+      if (!rateLimitCheck) {
+        return { 
+          success: false, 
+          error: 'Too many login attempts. Please wait 15 minutes before trying again.' 
+        };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
-      })
+        password,
+      });
+      
+      // Log authentication attempt
+      await supabase.rpc('log_authentication_attempt', {
+        user_email: email,
+        success: !error,
+        user_agent_param: navigator.userAgent
+      });
       
       if (error) {
-        return { success: false, error: error.message }
+        // Log failed login for security monitoring
+        await supabase.rpc('log_security_event_enhanced', {
+          event_type: 'login_failed',
+          details: {
+            email: email,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          },
+          severity: 'warning'
+        });
+        
+        return { success: false, error: error.message };
       }
+
+      // Log successful login
+      await supabase.rpc('log_security_event_enhanced', {
+        event_type: 'login_successful',
+        details: {
+          email: email,
+          timestamp: new Date().toISOString()
+        },
+        severity: 'info'
+      });
       
-      return { success: true, user: data.user }
+      return { success: true, user: data.user };
     } catch (error) {
-      return { success: false, error: error.message }
+      // Log authentication error
+      await supabase.rpc('log_authentication_attempt', {
+        user_email: email,
+        success: false,
+        user_agent_param: navigator.userAgent
+      });
+      
+      return { success: false, error: error.message };
     }
   }
 
