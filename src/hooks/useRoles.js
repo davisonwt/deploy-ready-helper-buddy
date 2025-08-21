@@ -19,6 +19,16 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
+      // First try a simple direct query
+      console.log('🔑 Testing direct query to user_roles table...')
+      const { data: testData, error: testError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .limit(1)
+
+      console.log('🔑 Direct query test result:', { testData, testError })
+
+      // Now try the actual user-specific query
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('role')
