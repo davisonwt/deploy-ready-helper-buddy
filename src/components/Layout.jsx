@@ -43,17 +43,18 @@ export default function Layout({ children }) {
   const { getTotalItems } = useBasket()
   const roles = useRoles()
   const { isAdminOrGosat, loading: rolesLoading, userRoles } = roles
+  const location = useLocation()
   
   console.log('🏗️ Layout render:', { 
     user: !!user, 
     userId: user?.id, 
-    isAdminOrGosat: isAdminOrGosat(), 
+    isAdminOrGosat, 
     rolesLoading, 
     userRoles 
   })
 
-  const shouldShowAdminButton = !rolesLoading && isAdminOrGosat()
-  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { rolesLoading, isAdminResult: isAdminOrGosat(), userRoles })
+  const shouldShowAdminButton = !rolesLoading && isAdminOrGosat
+  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { rolesLoading, isAdminResult: isAdminOrGosat, userRoles })
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
@@ -100,7 +101,7 @@ export default function Layout({ children }) {
       items: [
         { name: "Chat App", href: "/chatapp", icon: MessageSquare },
         { name: "AOD Station", href: "/grove-station", icon: Mic },
-        ...(roles?.hasRole?.('radio_admin') || roles?.hasRole?.('admin') || roles?.hasRole?.('gosat') ? [
+        ...(roles?.userRoles?.includes('radio_admin') || roles?.userRoles?.includes('admin') || roles?.userRoles?.includes('gosat') ? [
           { name: "Heretic Management System", href: "/radio-management", icon: Settings }
         ] : [])
       ]
