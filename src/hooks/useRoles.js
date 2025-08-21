@@ -50,13 +50,9 @@ export function useRoles() {
     return result
   }
 
-  const isAdmin = () => hasRole('admin')
-  const isGosat = () => hasRole('gosat')
-  const isAdminOrGosat = () => {
-    const result = isAdmin() || isGosat()
-    console.log('isAdminOrGosat():', result, 'userRoles:', userRoles, 'loading:', loading)
-    return result
-  }
+  const isAdmin = userRoles.includes('admin')
+  const isGosat = userRoles.includes('gosat')
+  const isAdminOrGosat = isAdmin || isGosat
 
   const fetchAllUsers = async () => {
     try {
