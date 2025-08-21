@@ -486,6 +486,93 @@ export type Database = {
           },
         ]
       }
+      live_session_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message_type: string
+          metadata: Json | null
+          sender_id: string
+          sender_type: string
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string
+          metadata?: Json | null
+          sender_id: string
+          sender_type?: string
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string
+          metadata?: Json | null
+          sender_id?: string
+          sender_type?: string
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      live_session_participants: {
+        Row: {
+          audio_enabled: boolean | null
+          can_speak: boolean | null
+          created_at: string
+          id: string
+          join_request_approved: boolean | null
+          joined_at: string | null
+          left_at: string | null
+          participant_type: string
+          session_id: string
+          status: string
+          updated_at: string
+          user_id: string
+          video_enabled: boolean | null
+        }
+        Insert: {
+          audio_enabled?: boolean | null
+          can_speak?: boolean | null
+          created_at?: string
+          id?: string
+          join_request_approved?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          participant_type?: string
+          session_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_enabled?: boolean | null
+        }
+        Update: {
+          audio_enabled?: boolean | null
+          can_speak?: boolean | null
+          created_at?: string
+          id?: string
+          join_request_approved?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          participant_type?: string
+          session_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_enabled?: boolean | null
+        }
+        Relationships: []
+      }
       orchards: {
         Row: {
           category: string
@@ -755,6 +842,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          country: string | null
           created_at: string
           display_name: string | null
           first_name: string | null
@@ -763,12 +851,14 @@ export type Database = {
           last_name: string | null
           location: string | null
           preferred_currency: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
           first_name?: string | null
@@ -777,12 +867,14 @@ export type Database = {
           last_name?: string | null
           location?: string | null
           preferred_currency?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
           first_name?: string | null
@@ -791,6 +883,7 @@ export type Database = {
           last_name?: string | null
           location?: string | null
           preferred_currency?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
