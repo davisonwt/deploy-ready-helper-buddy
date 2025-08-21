@@ -4,10 +4,8 @@ import { OrganizationPaymentInterface } from '@/components/OrganizationPaymentIn
 
 export default function SupportUsPage() {
   return (
-    <Layout>
-      <div className="container mx-auto py-8">
-        <OrganizationPaymentInterface />
-      </div>
-    </Layout>
+    <div className="container mx-auto py-8">
+      <OrganizationPaymentInterface />
+    </div>
   );
 }
