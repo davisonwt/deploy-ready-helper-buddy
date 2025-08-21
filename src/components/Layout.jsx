@@ -98,7 +98,10 @@ export default function Layout({ children }) {
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
         { name: "Chat App", href: "/chatapp", icon: MessageSquare },
-        { name: "AOD Station", href: "/grove-station", icon: Mic }
+        { name: "AOD Station", href: "/grove-station", icon: Mic },
+        ...(roles?.hasRole?.('radio_admin') || roles?.hasRole?.('admin') || roles?.hasRole?.('gosat') ? [
+          { name: "Heretic Management System", href: "/radio-management", icon: Settings }
+        ] : [])
       ]
     },
     {

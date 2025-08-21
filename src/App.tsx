@@ -44,6 +44,7 @@ import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
 import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
 import GroveStationPage from "./pages/GroveStationPage";
+import RadioManagementPage from "./pages/RadioManagementPage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -240,13 +241,21 @@ const App = () => (
                 } />
 
                {/* Grove Station - 24hr Radio */}
-               <Route path="/grove-station" element={
-                 <ProtectedRoute>
-                   <Layout>
-                     <GroveStationPage />
-                   </Layout>
-                 </ProtectedRoute>
-                } />
+              <Route path="/grove-station" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <GroveStationPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/radio-management" element={
+                <ProtectedRoute allowedRoles={['radio_admin', 'admin', 'gosat']}>
+                  <Layout>
+                    <RadioManagementPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
 
                {/* AI Assistant */}
                <Route path="/ai-assistant" element={
