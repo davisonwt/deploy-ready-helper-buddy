@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { useSecurityLogging } from "../hooks/useSecurityLogging"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles } from "lucide-react"
+import { useToast } from "../hooks/use-toast"
+import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
+import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -17,16 +20,47 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState("")
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState("")
+  const [securityViolations, setSecurityViolations] = useState(0)
   
   const { login, loginAnonymously, resetPassword } = useAuth()
+  const { logSecurityEvent } = useSecurityLogging()
+  const { toast } = useToast()
   const navigate = useNavigate()
   
   useEffect(() => {
     setMounted(true)
   }, [])
   
+  const handleSecurityViolation = async (violationType, details) => {
+    setSecurityViolations(prev => prev + 1)
+    
+    await logSecurityEvent('login_security_violation', {
+      violation_type: violationType,
+      details: details,
+      violation_count: securityViolations + 1
+    }, 'warning')
+    
+    if (securityViolations >= 2) {
+      toast({
+        variant: "destructive",
+        title: "Security Alert",
+        description: "Multiple security violations detected. Please review your input.",
+      })
+    }
+  }
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (securityViolations >= 3) {
+      toast({
+        variant: "destructive",
+        title: "Access Blocked",
+        description: "Too many security violations. Please refresh and try again.",
+      })
+      return
+    }
+    
     setLoading(true)
     setError("")
     
@@ -164,14 +198,19 @@ export default function LoginPage() {
                   Username
                 </label>
                 <div className="relative group">
-                  <input
+                  <EnhancedSecureInput
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onSecurityViolation={handleSecurityViolation}
+                    sanitizeType="email"
+                    rateLimitKey="login_form"
+                    securityLevel="high"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md"
                     placeholder="your@email.com"
                     required
+                    disabled={loading || securityViolations >= 3}
                   />
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/5 to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                 </div>
@@ -183,19 +222,25 @@ export default function LoginPage() {
                   Password
                 </label>
                 <div className="relative group">
-                  <input
+                  <EnhancedSecureInput
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onSecurityViolation={handleSecurityViolation}
+                    sanitizeType="text"
+                    rateLimitKey="login_form"
+                    securityLevel="high"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md pr-12"
                     placeholder="Enter your password"
                     required
+                    disabled={loading || securityViolations >= 3}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110"
+                    disabled={loading || securityViolations >= 3}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -206,7 +251,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"
-                disabled={loading}
+                disabled={loading || securityViolations >= 3}
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -220,6 +265,21 @@ export default function LoginPage() {
                   </div>
                 )}
               </Button>
+              
+              {/* Security Status Indicator */}
+              {securityViolations > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-yellow-600" />
+                    <span className="text-xs text-yellow-700 font-medium">
+                      Security Enhanced Mode Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Additional validation is being performed to protect your account.
+                  </p>
+                </div>
+              )}
               
               {/* Forgot Password */}
               <div className="text-center">

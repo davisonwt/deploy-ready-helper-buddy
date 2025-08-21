@@ -1800,6 +1800,15 @@ export type Database = {
         Args: { schedule_id_param: string }
         Returns: boolean
       }
+      check_rate_limit_enhanced: {
+        Args: {
+          identifier: string
+          limit_type?: string
+          max_attempts?: number
+          time_window_minutes?: number
+        }
+        Returns: boolean
+      }
       get_ai_usage_today: {
         Args: { user_id_param: string }
         Returns: number
@@ -1934,8 +1943,27 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_authentication_attempt: {
+        Args: {
+          ip_address_param?: unknown
+          success: boolean
+          user_agent_param?: string
+          user_email: string
+        }
+        Returns: undefined
+      }
       log_security_event: {
         Args: { details?: Json; event_type: string; user_id_param?: string }
+        Returns: undefined
+      }
+      log_security_event_enhanced: {
+        Args: {
+          details?: Json
+          event_type: string
+          ip_address_param?: unknown
+          severity?: string
+          user_id_param?: string
+        }
         Returns: undefined
       }
       mask_address: {
