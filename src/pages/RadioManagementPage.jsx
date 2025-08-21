@@ -2,11 +2,11 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Settings, Users, Calendar, Radio, BarChart3, Clock } from 'lucide-react'
-import { TimezoneSlotAssignment } from '@/components/radio/TimezoneSlotAssignment'
-import { GlobalDJScheduler } from '@/components/radio/GlobalDJScheduler'
-import { AdminRadioManagement } from '@/components/radio/AdminRadioManagement'
-import { PersonnelSlotAssignment } from '@/components/radio/PersonnelSlotAssignment'
-import { StationStats } from '@/components/radio/StationStats'
+import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
+import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
+import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
+import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
+import StationStats from '@/components/radio/StationStats'
 
 export default function RadioManagementPage() {
   return (
