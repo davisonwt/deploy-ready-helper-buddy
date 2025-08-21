@@ -63,30 +63,48 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
+      console.log('🔍 Fetching all users and their roles...')
+
       // First get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (profilesError) throw profilesError
+      if (profilesError) {
+        console.error('❌ Error fetching profiles:', profilesError)
+        throw profilesError
+      }
 
-      // Then get user roles for each user
+      console.log('✅ Fetched profiles:', profiles?.length || 0)
+
+      // Then get ALL user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('user_id, role, granted_at, granted_by')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-      if (rolesError) throw rolesError
+      if (rolesError) {
+        console.error('❌ Error fetching user roles:', rolesError)
+        throw rolesError
+      }
 
-      // Combine the data
-      const usersWithRoles = profiles.map(profile => ({
-        ...profile,
-        user_roles: userRoles.filter(role => role.user_id === profile.user_id)
-      }))
+      console.log('✅ Fetched user roles:', userRoles?.length || 0, userRoles)
 
+      // Combine the data - make sure each user gets their roles
+      const usersWithRoles = profiles.map(profile => {
+        const userRolesList = userRoles.filter(role => role.user_id === profile.user_id) || []
+        console.log(`👤 User ${profile.display_name} (${profile.user_id}) has ${userRolesList.length} roles:`, userRolesList.map(r => r.role))
+        return {
+          ...profile,
+          user_roles: userRolesList
+        }
+      })
+
+      console.log('✅ Combined users with roles:', usersWithRoles.length)
       return { success: true, data: usersWithRoles }
     } catch (err) {
-      console.error('Error fetching users:', err)
+      console.error('❌ Error fetching users:', err)
       return { success: false, error: err.message }
     } finally {
       setLoading(false)
