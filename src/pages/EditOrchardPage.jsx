@@ -146,7 +146,7 @@ export default function EditOrchardPage() {
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
         pocket_price: orchardData.pocket_price || '',
-        number_of_pockets: orchardData.total_pockets?.toString() || '1', // Map total_pockets from DB to number_of_pockets in form
+        number_of_pockets: orchardData.intended_pockets?.toString() || orchardData.total_pockets?.toString() || '1', // Use intended_pockets first, then total_pockets
         courier_cost: orchardData.courier_cost?.toString() || '0',
         features: orchardData.features ? orchardData.features.join(', ') : '',
         currency: orchardData.currency || 'USDC'
@@ -290,13 +290,14 @@ export default function EditOrchardPage() {
         }
       }
 
-      // Update orchard - exclude total_pockets as it's managed by the database
+      // Update orchard - include intended_pockets for full_value orchards
       const updateData = {
         ...formData,
         courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
-        video_url: uploadedVideoUrl
+        video_url: uploadedVideoUrl,
+        intended_pockets: formData.orchard_type === 'full_value' ? parseInt(formData.number_of_pockets) || 1 : 1
       }
       
       // Remove the form-only field since it doesn't exist in the database

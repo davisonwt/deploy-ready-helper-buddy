@@ -745,6 +745,7 @@ export type Database = {
           how_it_helps: string | null
           id: string
           images: string[] | null
+          intended_pockets: number | null
           location: string | null
           orchard_type: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
@@ -778,6 +779,7 @@ export type Database = {
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
+          intended_pockets?: number | null
           location?: string | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
@@ -811,6 +813,7 @@ export type Database = {
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
+          intended_pockets?: number | null
           location?: string | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value?: number
