@@ -14,6 +14,7 @@ import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
 import { AdminButton } from "../components/AdminButton";
 import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../integrations/supabase/client";
 
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
@@ -34,6 +35,21 @@ function IndexContent() {
       navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, loading, navigate])
+  
+  // Also check auth immediately on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log('🏠 Index: Checking immediate auth state')
+      // Force check current session
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🏠 Index: Current session:', !!session)
+      if (session) {
+        console.log('🏠 Index: Found session, redirecting to dashboard')
+        navigate('/dashboard', { replace: true })
+      }
+    }
+    checkAuth()
+  }, [])
   
   // Show loading while checking auth state
   if (loading) {

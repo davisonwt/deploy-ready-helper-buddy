@@ -52,6 +52,8 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    console.log('🔥 LOGIN ATTEMPT START:', { email, securityViolations })
+    
     if (securityViolations >= 3) {
       toast({
         variant: "destructive",
@@ -65,18 +67,28 @@ export default function LoginPage() {
     setError("")
     
     try {
+      console.log('🔥 LOGIN: Calling auth.login...')
       const result = await login(email, password)
+      
+      console.log('🔥 LOGIN RESULT:', result)
       
       if (result.success) {
         console.log('✅ Login successful, navigating to dashboard...')
+        toast({
+          title: "Welcome back!",
+          description: "You're being redirected to your dashboard...",
+        })
         // Small delay to ensure auth state is updated
         setTimeout(() => {
+          console.log('🔥 NAVIGATING TO DASHBOARD')
           navigate("/dashboard", { replace: true })
         }, 50)
       } else {
+        console.log('❌ LOGIN FAILED:', result.error)
         setError(result.error || "Login failed")
       }
     } catch (err) {
+      console.log('💥 LOGIN ERROR:', err)
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
