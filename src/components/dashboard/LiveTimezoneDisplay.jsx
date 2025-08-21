@@ -25,7 +25,8 @@ export default function LiveTimezoneDisplay() {
     { label: 'Mumbai (India)', zone: 'Asia/Kolkata', flag: '🇮🇳' },
     { label: 'Moscow (Russia)', zone: 'Europe/Moscow', flag: '🇷🇺' },
     { label: 'Toronto (Canada)', zone: 'America/Toronto', flag: '🇨🇦' },
-    { label: 'São Paulo (Brazil)', zone: 'America/Sao_Paulo', flag: '🇧🇷' }
+    { label: 'São Paulo (Brazil)', zone: 'America/Sao_Paulo', flag: '🇧🇷' },
+    { label: 'Johannesburg (South Africa)', zone: 'Africa/Johannesburg', flag: '🇿🇦' }
   ];
 
   useEffect(() => {
