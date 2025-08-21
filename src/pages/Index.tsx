@@ -27,6 +27,16 @@ function IndexContent() {
   const { isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
   
+  // Get context values - MUST be called before any early returns
+  const { 
+    showOnboarding, 
+    setShowOnboarding, 
+    showGamificationHUD, 
+    setShowGamificationHUD,
+    voiceCommandsEnabled,
+    setVoiceCommandsEnabled
+  } = useAppContext()
+  
   // Redirect authenticated users to dashboard
   useEffect(() => {
     console.log('🏠 Index: Auth state changed:', { isAuthenticated, loading })
@@ -49,7 +59,7 @@ function IndexContent() {
       }
     }
     checkAuth()
-  }, [])
+  }, [navigate])
   
   // Show loading while checking auth state
   if (loading) {
@@ -68,16 +78,6 @@ function IndexContent() {
       </div>
     )
   }
-
-  // Get context values - safe to call here since we're inside the provider
-  const { 
-    showOnboarding, 
-    setShowOnboarding, 
-    showGamificationHUD, 
-    setShowGamificationHUD,
-    voiceCommandsEnabled,
-    setVoiceCommandsEnabled
-  } = useAppContext()
 
 
   return (
