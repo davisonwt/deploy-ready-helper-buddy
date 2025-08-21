@@ -51,8 +51,8 @@ export default function Layout({ children }) {
     userRoles 
   })
 
-  
-  const location = useLocation()
+  const shouldShowAdminButton = !rolesLoading && isAdminOrGosat()
+  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { rolesLoading, isAdminResult: isAdminOrGosat(), userRoles })
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
@@ -118,7 +118,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(!rolesLoading && isAdminOrGosat() ? [{
+    ...(shouldShowAdminButton ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
@@ -401,6 +401,12 @@ export default function Layout({ children }) {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* DEBUG INFO - Remove after fixing */}
+        {user && (
+          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <strong>Debug:</strong> rolesLoading: {String(rolesLoading)} | userRoles: {JSON.stringify(userRoles)} | shouldShow: {String(shouldShowAdminButton)}
+          </div>
+        )}
         {children}
       </main>
       
