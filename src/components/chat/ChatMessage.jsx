@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Image, FileText, Video, Music } from 'lucide-react';
+import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const getFileIcon = (fileType) => {
@@ -15,7 +15,7 @@ const getFileIcon = (fileType) => {
   return icons[fileType] || FileText;
 };
 
-const ChatMessage = ({ message, isOwn = false }) => {
+const ChatMessage = ({ message, isOwn = false, onDelete }) => {
   const sender = message.sender_profile;
   const FileIcon = getFileIcon(message.file_type);
   
@@ -109,6 +109,17 @@ const ChatMessage = ({ message, isOwn = false }) => {
             <Badge variant="outline" className="text-xs bg-white/90 backdrop-blur-md border border-white/50 text-gray-700">
               edited
             </Badge>
+          )}
+          {isOwn && onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(message.id)}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+              title="Delete message"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           )}
         </div>
         

@@ -197,6 +197,41 @@ export const useChat = () => {
     }
   }, [user, toast]);
 
+  // Delete a message
+  const deleteMessage = useCallback(async (messageId) => {
+    if (!user) return;
+
+    try {
+      console.log('Deleting message:', messageId);
+
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', user.id); // Extra security check
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        throw error;
+      }
+
+      console.log('Message deleted successfully');
+      
+      // Refresh messages for the current room
+      if (currentRoom) {
+        await fetchMessages(currentRoom.id);
+      }
+
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Error",
+        description: `Failed to delete message: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  }, [user, currentRoom, fetchMessages, toast]);
+
   // Create a direct message room with another user
   const createDirectRoom = useCallback(async (otherUserId) => {
     if (!user) return null;
@@ -372,6 +407,7 @@ export const useChat = () => {
     participants,
     loading,
     sendMessage,
+    deleteMessage,
     createRoom,
     createDirectRoom,
     joinRoom,
