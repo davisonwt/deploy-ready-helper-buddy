@@ -26,10 +26,12 @@ export const AuthProvider = ({ children }) => {
         .eq('user_id', authUser.id)
         .single()
 
-      // Merge auth user with profile data
+      // Merge auth user with profile data, but preserve auth user's ID
       return {
         ...authUser,
         ...profile,
+        id: authUser.id, // CRITICAL: Preserve auth user ID
+        user_id: authUser.id, // Ensure consistency
         email: authUser.email // Keep auth email as primary
       }
     } catch (error) {
