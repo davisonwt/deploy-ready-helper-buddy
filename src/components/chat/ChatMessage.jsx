@@ -24,16 +24,18 @@ const ChatMessage = ({ message, isOwn = false }) => {
     if (!userId) return { bg: 'bg-gray-200', text: 'text-gray-800', border: 'border-gray-300' };
     
     const colors = [
-      { bg: 'bg-rose-200', text: 'text-rose-900', border: 'border-rose-300' },
-      { bg: 'bg-blue-200', text: 'text-blue-900', border: 'border-blue-300' },
-      { bg: 'bg-green-200', text: 'text-green-900', border: 'border-green-300' },
-      { bg: 'bg-purple-200', text: 'text-purple-900', border: 'border-purple-300' },
-      { bg: 'bg-yellow-200', text: 'text-yellow-900', border: 'border-yellow-300' },
-      { bg: 'bg-pink-200', text: 'text-pink-900', border: 'border-pink-300' },
-      { bg: 'bg-indigo-200', text: 'text-indigo-900', border: 'border-indigo-300' },
-      { bg: 'bg-teal-200', text: 'text-teal-900', border: 'border-teal-300' },
-      { bg: 'bg-orange-200', text: 'text-orange-900', border: 'border-orange-300' },
-      { bg: 'bg-cyan-200', text: 'text-cyan-900', border: 'border-cyan-300' },
+      { bg: 'bg-rose-300', text: 'text-rose-900', border: 'border-rose-400' },
+      { bg: 'bg-blue-300', text: 'text-blue-900', border: 'border-blue-400' },
+      { bg: 'bg-green-300', text: 'text-green-900', border: 'border-green-400' },
+      { bg: 'bg-purple-300', text: 'text-purple-900', border: 'border-purple-400' },
+      { bg: 'bg-yellow-300', text: 'text-yellow-900', border: 'border-yellow-400' },
+      { bg: 'bg-pink-300', text: 'text-pink-900', border: 'border-pink-400' },
+      { bg: 'bg-indigo-300', text: 'text-indigo-900', border: 'border-indigo-400' },
+      { bg: 'bg-teal-300', text: 'text-teal-900', border: 'border-teal-400' },
+      { bg: 'bg-orange-300', text: 'text-orange-900', border: 'border-orange-400' },
+      { bg: 'bg-cyan-300', text: 'text-cyan-900', border: 'border-cyan-400' },
+      { bg: 'bg-emerald-300', text: 'text-emerald-900', border: 'border-emerald-400' },
+      { bg: 'bg-violet-300', text: 'text-violet-900', border: 'border-violet-400' },
     ];
     
     // Create a simple hash from the user ID to get consistent colors
@@ -42,6 +44,7 @@ const ChatMessage = ({ message, isOwn = false }) => {
       hash = userId.charCodeAt(i) + ((hash << 5) - hash);
     }
     const colorIndex = Math.abs(hash) % colors.length;
+    console.log(`User ${userId} gets color index ${colorIndex}:`, colors[colorIndex]);
     return colors[colorIndex];
   };
 
