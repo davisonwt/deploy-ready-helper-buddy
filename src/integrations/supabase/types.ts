@@ -188,6 +188,39 @@ export type Database = {
         }
         Relationships: []
       }
+      call_sessions: {
+        Row: {
+          accepted_at: string | null
+          call_type: string
+          caller_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          receiver_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          call_type: string
+          caller_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          receiver_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          call_type?: string
+          caller_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          receiver_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       chat_files: {
         Row: {
           created_at: string
