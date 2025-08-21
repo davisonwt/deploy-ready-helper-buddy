@@ -9,9 +9,13 @@ export function useRoles() {
   const { user } = useAuth()
 
   const fetchUserRoles = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('🔑 fetchUserRoles: No user, skipping role fetch')
+      return
+    }
 
     try {
+      console.log('🔑 fetchUserRoles: Fetching roles for user:', user.id)
       setLoading(true)
       setError(null)
 
@@ -20,11 +24,15 @@ export function useRoles() {
         .select('role')
         .eq('user_id', user.id)
 
+      console.log('🔑 fetchUserRoles: Response:', { data, error: fetchError })
+
       if (fetchError) throw fetchError
 
-      setUserRoles(data?.map(r => r.role) || [])
+      const roles = data?.map(r => r.role) || []
+      console.log('🔑 fetchUserRoles: Setting roles:', roles)
+      setUserRoles(roles)
     } catch (err) {
-      console.error('Error fetching user roles:', err)
+      console.error('🔑 fetchUserRoles: Error fetching user roles:', err)
       setError(err.message)
     } finally {
       setLoading(false)

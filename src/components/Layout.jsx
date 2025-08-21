@@ -49,7 +49,9 @@ export default function Layout({ children }) {
       isAdminOrGosat: isAdminOrGosat(), 
       rolesLoading, 
       rolesError, 
-      user: user?.id 
+      user: user?.id,
+      userEmail: user?.email,
+      isAuthenticated: !!user
     })
   }, [isAdminOrGosat, rolesLoading, rolesError, user])
   
