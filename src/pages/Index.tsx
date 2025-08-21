@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
+import { AdminButton } from "../components/AdminButton";
+import { AuthProvider } from "../hooks/useAuth";
+import { BasketProvider } from "../hooks/useBasket";
 
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
@@ -63,6 +66,8 @@ function IndexContent() {
               >
                 <Mic className="h-5 w-5" />
               </Button>
+              
+              <AdminButton />
               
               <Link to="/login">
                 <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
@@ -781,9 +786,13 @@ function IndexContent() {
 
 const Index = () => {
   return (
-    <AppContextProvider>
-      <IndexContent />
-    </AppContextProvider>
+    <AuthProvider>
+      <BasketProvider>
+        <AppContextProvider>
+          <IndexContent />
+        </AppContextProvider>
+      </BasketProvider>
+    </AuthProvider>
   );
 };
 
