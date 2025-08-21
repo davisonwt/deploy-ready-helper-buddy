@@ -761,30 +761,45 @@ export type Database = {
       payment_config: {
         Row: {
           bank_account_name: string
+          bank_account_name_encrypted: string | null
           bank_account_number: string
+          bank_account_number_encrypted: string | null
           bank_name: string
+          bank_name_encrypted: string | null
           bank_swift_code: string | null
+          bank_swift_code_encrypted: string | null
           business_email: string | null
+          business_email_encrypted: string | null
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
           bank_account_name: string
+          bank_account_name_encrypted?: string | null
           bank_account_number: string
+          bank_account_number_encrypted?: string | null
           bank_name: string
+          bank_name_encrypted?: string | null
           bank_swift_code?: string | null
+          bank_swift_code_encrypted?: string | null
           business_email?: string | null
+          business_email_encrypted?: string | null
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
           bank_account_name?: string
+          bank_account_name_encrypted?: string | null
           bank_account_number?: string
+          bank_account_number_encrypted?: string | null
           bank_name?: string
+          bank_name_encrypted?: string | null
           bank_swift_code?: string | null
+          bank_swift_code_encrypted?: string | null
           business_email?: string | null
+          business_email_encrypted?: string | null
           created_at?: string
           id?: string
           updated_at?: string
@@ -1908,6 +1923,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      decrypt_pii_data: {
+        Args: { encrypted_data: string }
+        Returns: string
+      }
+      encrypt_pii_data: {
+        Args: { data_text: string }
+        Returns: string
+      }
       get_ai_usage_today: {
         Args: { user_id_param: string }
         Returns: number
@@ -1925,6 +1948,10 @@ export type Database = {
         Returns: string
       }
       get_payment_config_for_eft: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_payment_config_secure: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -1981,6 +2008,20 @@ export type Database = {
         Returns: string
       }
       get_user_billing_info: {
+        Args: { target_user_id?: string }
+        Returns: {
+          billing_address_line1: string
+          billing_address_line2: string
+          billing_city: string
+          billing_country: string
+          billing_email: string
+          billing_organization: string
+          billing_phone: string
+          billing_postal_code: string
+          billing_state: string
+        }[]
+      }
+      get_user_billing_info_secure: {
         Args: { target_user_id?: string }
         Returns: {
           billing_address_line1: string
@@ -2098,7 +2139,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      update_payment_config_secure: {
+        Args: {
+          p_bank_account_name: string
+          p_bank_account_number: string
+          p_bank_name: string
+          p_bank_swift_code?: string
+          p_business_email?: string
+        }
+        Returns: boolean
+      }
       update_user_billing_info: {
+        Args: {
+          p_billing_address_line1?: string
+          p_billing_address_line2?: string
+          p_billing_city?: string
+          p_billing_country?: string
+          p_billing_email?: string
+          p_billing_organization?: string
+          p_billing_phone?: string
+          p_billing_postal_code?: string
+          p_billing_state?: string
+          target_user_id: string
+        }
+        Returns: boolean
+      }
+      update_user_billing_info_secure: {
         Args: {
           p_billing_address_line1?: string
           p_billing_address_line2?: string
