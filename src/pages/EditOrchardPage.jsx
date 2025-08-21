@@ -138,7 +138,7 @@ export default function EditOrchardPage() {
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
         pocket_price: orchardData.pocket_price || '',
-        number_of_pockets: orchardData.number_of_pockets?.toString() || '1',
+        number_of_pockets: orchardData.total_pockets?.toString() || '1', // Map total_pockets from DB to number_of_pockets in form
         courier_cost: orchardData.courier_cost?.toString() || '0',
         features: orchardData.features ? orchardData.features.join(', ') : '',
         currency: orchardData.currency || 'USDC'
@@ -282,18 +282,18 @@ export default function EditOrchardPage() {
         }
       }
 
-      // Update orchard - exclude total_pockets as it's a generated column
+      // Update orchard - map form fields to database columns
       const updateData = {
         ...formData,
-        number_of_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : null,
+        total_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : null, // Map number_of_pockets from form to total_pockets in DB
         courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
         video_url: uploadedVideoUrl
       }
       
-      // Remove total_pockets from update data since it's auto-calculated
-      delete updateData.total_pockets
+      // Remove the form-only field since it doesn't exist in the database
+      delete updateData.number_of_pockets
 
       const result = await updateOrchard(orchardId, updateData)
 
