@@ -26,6 +26,7 @@ import { LiveStreamInterface } from '@/components/radio/LiveStreamInterface'
 import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
 import { StationStats } from '@/components/radio/StationStats'
+import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
 
 export default function GroveStationPage() {
   const {
@@ -251,6 +252,11 @@ export default function GroveStationPage() {
               )}
             </div>
             <RadioScheduleGrid schedule={schedule} />
+            
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold mb-4">Global Personnel Assignment</h3>
+              <TimezoneSlotAssignment />
+            </div>
           </TabsContent>
 
           {/* DJs Tab */}
