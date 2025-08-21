@@ -98,6 +98,18 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
+      console.log('🔐 Checking auth before granting role...')
+      
+      // Check if user is authenticated
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) {
+        console.error('❌ No authenticated user found')
+        throw new Error('You must be logged in to grant roles')
+      }
+      
+      console.log('✅ Authenticated user:', currentUser.id)
+      console.log('🔑 Attempting to grant role:', role, 'to user:', userId)
+
       // SECURITY: Log admin action for audit trail
       await supabase.rpc('log_admin_action', {
         action_type: 'grant_role',
@@ -110,15 +122,27 @@ export function useRoles() {
         .insert([{
           user_id: userId,
           role: role,
-          granted_by: user.id
+          granted_by: currentUser.id
         }])
         .select()
 
-      if (grantError) throw grantError
+      if (grantError) {
+        console.error('❌ Database error granting role:', grantError)
+        
+        // Provide more specific error messages
+        if (grantError.code === '42501' || grantError.message?.includes('insufficient_privilege')) {
+          throw new Error('You do not have permission to grant roles. Contact an admin.')
+        } else if (grantError.code === '23505') {
+          throw new Error('This user already has this role.')
+        } else {
+          throw new Error(`Database error: ${grantError.message}`)
+        }
+      }
 
+      console.log('✅ Role granted successfully:', data)
       return { success: true, data }
     } catch (err) {
-      console.error('Error granting role:', err)
+      console.error('❌ Error granting role:', err)
       return { success: false, error: err.message }
     } finally {
       setLoading(false)
