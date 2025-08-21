@@ -233,27 +233,43 @@ export default function LiveActivityWidget() {
                          liveData.lifeCourses.filter(course => course.isLive).length
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] w-80 max-w-[calc(100vw-2rem)]">
-      <Card className="bg-background/95 backdrop-blur-sm border-primary/50 shadow-2xl ring-2 ring-primary/20">
+    <div className="fixed bottom-6 right-6 z-[9999] w-80 max-w-[calc(100vw-3rem)]">
+      {/* Debug indicator */}
+      <div className="absolute -top-10 right-0 bg-red-500 text-white text-xs px-2 py-1 rounded">
+        WIDGET ACTIVE
+      </div>
+      
+      <Card className="bg-background/98 backdrop-blur-md border-primary/60 shadow-2xl ring-4 ring-primary/30 ring-offset-2 animate-pulse">
+        {!user && (
+          <div className="absolute -top-2 -right-2 z-10">
+            <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse shadow-lg">
+              🔴 LIVE NOW
+            </div>
+          </div>
+        )}
         <CardHeader 
-          className="pb-2 cursor-pointer bg-gradient-to-r from-primary/5 to-secondary/5"
+          className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <Radio className="h-5 w-5 text-primary" />
+                <Radio className="h-6 w-6 text-primary animate-pulse" />
                 {totalActivities > 0 && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg" />
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce shadow-lg">
+                    {totalActivities}
+                  </div>
                 )}
               </div>
-              <CardTitle className="text-sm font-semibold">Live Activities</CardTitle>
-              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                {totalActivities}
-              </Badge>
+              <div>
+                <CardTitle className="text-base font-bold text-primary">🎬 Live Activities</CardTitle>
+                <div className="text-xs text-muted-foreground">
+                  {user ? 'Click to join activities' : 'Login to participate'}
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              {isExpanded ? <ChevronDown className="h-5 w-5 text-primary" /> : <ChevronUp className="h-5 w-5 text-primary" />}
               <Button
                 variant="ghost"
                 size="sm"
@@ -261,7 +277,7 @@ export default function LiveActivityWidget() {
                   e.stopPropagation()
                   setIsVisible(false)
                 }}
-                className="hover:bg-destructive/10 hover:text-destructive"
+                className="hover:bg-destructive/20 hover:text-destructive rounded-full"
               >
                 <X className="h-4 w-4" />
               </Button>
