@@ -41,7 +41,15 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat, loading: rolesLoading } = useRoles()
+  const { isAdminOrGosat, loading: rolesLoading, userRoles } = useRoles()
+  
+  console.log('🏗️ Layout render:', { 
+    user: !!user, 
+    userId: user?.id, 
+    isAdminOrGosat: isAdminOrGosat(), 
+    rolesLoading, 
+    userRoles 
+  })
   
   const location = useLocation()
   const navigate = useNavigate()
