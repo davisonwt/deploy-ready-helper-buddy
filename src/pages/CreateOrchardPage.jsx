@@ -49,6 +49,17 @@ export default function CreateOrchardPage({ isEdit = false }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   
+  // Debug logging
+  console.log('🌱 CreateOrchardPage render:', { 
+    isEdit, 
+    id, 
+    seedId, 
+    isApproval, 
+    loadingData, 
+    user: !!user,
+    currency 
+  })
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
