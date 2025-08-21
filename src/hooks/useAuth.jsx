@@ -41,32 +41,38 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 Auth state change:', event, !!session)
         setSession(session)
-        
-        if (session?.user) {
-          const fullUser = await fetchUserProfile(session.user)
-          setUser(fullUser)
-        } else {
-          setUser(null)
-        }
+        setUser(session?.user ?? null)
         setLoading(false)
+        
+        // Defer profile fetching to avoid deadlock
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user).then(fullUser => {
+              setUser(fullUser)
+            })
+          }, 0)
+        }
       }
     )
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('🔍 Initial session check:', !!session)
       setSession(session)
-      
-      if (session?.user) {
-        const fullUser = await fetchUserProfile(session.user)
-        setUser(fullUser)
-      } else {
-        setUser(null)
-      }
+      setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Defer profile fetching for initial session too
+      if (session?.user) {
+        setTimeout(() => {
+          fetchUserProfile(session.user).then(fullUser => {
+            setUser(fullUser)
+          })
+        }, 0)
+      }
     })
 
     return () => subscription.unsubscribe()
