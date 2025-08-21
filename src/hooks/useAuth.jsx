@@ -193,16 +193,24 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
+      console.log('🔄 Updating profile with data:', profileData)
+      
       const { data, error } = await supabase
         .from('profiles')
-        .update(profileData)
+        .update({
+          ...profileData,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id)
         .select()
         .single()
       
       if (error) {
+        console.error('❌ Profile update error:', error)
         return { success: false, error: error.message }
       }
+      
+      console.log('✅ Profile updated successfully:', data)
       
       // Update user state with new profile data
       const updatedUser = {
@@ -211,8 +219,18 @@ export const AuthProvider = ({ children }) => {
       }
       setUser(updatedUser)
       
+      // Force a small delay to ensure database consistency
+      setTimeout(() => {
+        console.log('🔄 Broadcasting profile update event')
+        // Trigger a custom event for other components to refresh
+        window.dispatchEvent(new CustomEvent('profileUpdated', { 
+          detail: { user: updatedUser, timestamp: Date.now() }
+        }))
+      }, 300)
+      
       return { success: true, user: updatedUser }
     } catch (error) {
+      console.error('❌ Profile update exception:', error)
       return { success: false, error: error.message }
     }
   }

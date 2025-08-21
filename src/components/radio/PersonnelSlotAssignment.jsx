@@ -51,6 +51,20 @@ export default function PersonnelSlotAssignment() {
 
   useEffect(() => {
     fetchRadioAdmins()
+    
+    // Listen for profile updates to refresh radio admin data
+    const handleProfileUpdate = (event) => {
+      console.log('👂 Received profile update event, refreshing radio admins...')
+      setTimeout(() => {
+        fetchRadioAdmins()
+      }, 500)
+    }
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate)
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate)
+    }
   }, [])
 
   useEffect(() => {
@@ -61,7 +75,7 @@ export default function PersonnelSlotAssignment() {
 
   const fetchRadioAdmins = async () => {
     try {
-      console.log('Fetching radio admins...')
+      console.log('🔍 Fetching radio admins with latest profile data...')
       
       // First get all users with radio_admin role
       const { data: roleData, error: roleError } = await supabase
@@ -72,14 +86,15 @@ export default function PersonnelSlotAssignment() {
       if (roleError) throw roleError
 
       if (!roleData || roleData.length === 0) {
-        console.log('No radio admins found')
+        console.log('⚠️ No radio admins found')
         setRadioAdmins([])
         return
       }
 
       const userIds = roleData.map(r => r.user_id)
+      console.log('👥 Found radio admin user IDs:', userIds)
 
-      // Then get the profiles for these users
+      // Then get the LATEST profiles for these users with all necessary fields
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -90,30 +105,55 @@ export default function PersonnelSlotAssignment() {
           last_name,
           avatar_url,
           country,
-          timezone
+          timezone,
+          location,
+          updated_at
         `)
         .in('user_id', userIds)
+        .order('updated_at', { ascending: false })
 
       if (profileError) throw profileError
       
-      // Transform the data to match expected format
-      const transformedData = profileData?.map(profile => ({
-        id: profile.user_id,
-        user_id: profile.user_id,
-        dj_name: profile.display_name || 
-                 `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
-                 `Radio Admin ${profile.user_id.substring(0, 8)}`,
-        avatar_url: profile.avatar_url,
-        country: profile.country || 'Unknown',
-        timezone: profile.timezone || 'UTC',
-        is_active: true
-      })) || []
+      console.log('📋 Raw profile data:', profileData)
       
-      console.log('Radio admins fetched:', transformedData)
+      // Transform the data to match expected format with enhanced info
+      const transformedData = profileData?.map(profile => {
+        const displayName = profile.display_name || 
+                           `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
+                           `Radio Admin ${profile.user_id.substring(0, 8)}`
+        
+        const country = profile.country || 'Unknown'
+        const timezone = profile.timezone || 'UTC'
+        const location = profile.location || 'Not specified'
+        
+        console.log(`👤 Processing admin: ${displayName} | 🌍 ${country} | ⏰ ${timezone} | 📍 ${location}`)
+        
+        return {
+          id: profile.user_id,
+          user_id: profile.user_id,
+          dj_name: displayName,
+          avatar_url: profile.avatar_url,
+          country: country,
+          timezone: timezone,
+          location: location,
+          is_active: true,
+          updated_at: profile.updated_at
+        }
+      }) || []
+      
+      console.log('✅ Transformed radio admins:', transformedData.length, transformedData)
       setRadioAdmins(transformedData)
+      
+      // Log timezone distribution for 24-hour coverage planning
+      const timezoneStats = transformedData.reduce((acc, admin) => {
+        acc[admin.timezone] = (acc[admin.timezone] || 0) + 1
+        return acc
+      }, {})
+      console.log('🌐 Radio Admin Timezone Distribution:', timezoneStats)
+      
     } catch (err) {
-      console.error('Error fetching radio admins:', err)
-      toast.error('Failed to load radio admins')
+      console.error('❌ Error fetching radio admins:', err)
+      toast.error('Failed to load radio admins: ' + err.message)
     }
   }
 
@@ -478,13 +518,18 @@ export default function PersonnelSlotAssignment() {
                           {item.assignment.radio_shows?.show_name}
                         </div>
                         {item.assignment.radio_djs && (
-                          <div className="text-xs text-blue-600 mt-1">
-                            🌍 {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'} • 
-                            ⏰ {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'} • 
-                            Local: {(() => {
-                              const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                              return new Date().toLocaleTimeString('en-US', { timeZone: timezone, hour12: true, hour: '2-digit', minute: '2-digit' });
-                            })()}
+                          <div className="text-xs text-blue-600 mt-1 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span>🌍 {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
+                              <span>📍 {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span>⏰ {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
+                              <span className="font-medium">Local: {(() => {
+                                const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
+                                return new Date().toLocaleTimeString('en-US', { timeZone: timezone, hour12: true, hour: '2-digit', minute: '2-digit' });
+                              })()}</span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -573,12 +618,13 @@ export default function PersonnelSlotAssignment() {
                               {admin.dj_name?.charAt(0) || 'RA'}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="text-left">
-                            <div className="font-medium">{admin.dj_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              🌍 {admin.country} • ⏰ {admin.timezone} • Now: {new Date().toLocaleTimeString('en-US', { timeZone: admin.timezone, hour12: true, hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
+                           <div className="text-left">
+                             <div className="font-medium">{admin.dj_name}</div>
+                             <div className="text-xs text-muted-foreground space-y-1">
+                               <div>🌍 {admin.country} | 📍 {admin.location}</div>
+                               <div>⏰ {admin.timezone} | <span className="font-medium">Now: {new Date().toLocaleTimeString('en-US', { timeZone: admin.timezone, hour12: true, hour: '2-digit', minute: '2-digit' })}</span></div>
+                             </div>
+                           </div>
                         </div>
                       </SelectItem>
                     ))
