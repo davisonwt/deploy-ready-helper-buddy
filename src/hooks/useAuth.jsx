@@ -195,10 +195,33 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔄 Updating profile with data:', profileData)
       
+      // Only send fields that exist in the database
+      const validFields = {
+        first_name: profileData.first_name || null,
+        last_name: profileData.last_name || null,
+        display_name: profileData.display_name || null,
+        avatar_url: profileData.avatar_url || null,
+        bio: profileData.bio || null,
+        location: profileData.location || null,
+        preferred_currency: profileData.preferred_currency || 'USD',
+        timezone: profileData.timezone || null,
+        country: profileData.country || null,
+        phone: profileData.phone || null,
+        website: profileData.website || null,
+        tiktok_url: profileData.tiktok_url || null,
+        instagram_url: profileData.instagram_url || null,
+        facebook_url: profileData.facebook_url || null,
+        twitter_url: profileData.twitter_url || null,
+        youtube_url: profileData.youtube_url || null,
+        show_social_media: profileData.show_social_media !== undefined ? profileData.show_social_media : true
+      }
+      
+      console.log('🔄 Sending valid fields to database:', validFields)
+      
       const { data, error } = await supabase
         .from('profiles')
         .update({
-          ...profileData,
+          ...validFields,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
