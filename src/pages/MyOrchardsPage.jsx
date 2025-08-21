@@ -26,7 +26,8 @@ import {
 } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
-import { formatCurrency } from '../utils/formatters'
+import { VideoPlayer } from '@/components/ui/VideoPlayer';
+import { formatCurrency } from '../utils/formatters';
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
@@ -163,22 +164,17 @@ export default function MyOrchardsPage() {
   return (
     <div className="min-h-screen relative">
       {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
+      <VideoPlayer
+        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
         className="absolute inset-0 w-full h-full object-cover"
+        autoPlay={true}
+        loop={true}
+        muted={true}
+        playsInline={true}
         onError={(e) => {
-          console.error('Video failed to load:', e);
-          e.target.style.display = 'none';
+          console.warn('Background video failed to load, using fallback');
         }}
-      >
-        <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
-          type="video/mp4"
-        />
-      </video>
+      />
       
       {/* Solid dark overlay for better readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>

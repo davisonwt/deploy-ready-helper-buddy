@@ -18,6 +18,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useOrchards } from '../hooks/useOrchards';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '../utils/formatters';
+import { VideoPlayer } from '@/components/ui/VideoPlayer';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
@@ -144,18 +145,14 @@ const OrchardPage = () => {
   return (
     <div className="min-h-screen relative">
       {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
+      <VideoPlayer
+        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
         className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source
-          src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
-          type="video/mp4"
-        />
-      </video>
+        autoPlay={true}
+        loop={true}
+        muted={true}
+        playsInline={true}
+      />
       
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
