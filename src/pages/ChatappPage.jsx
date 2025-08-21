@@ -44,6 +44,7 @@ const ChatappPage = () => {
     participants,
     loading,
     sendMessage,
+    deleteMessage,
     createRoom,
     createDirectRoom,
     joinRoom,
@@ -398,13 +399,14 @@ const ChatappPage = () => {
                         </div>
                       ) : messages.length > 0 ? (
                         <div className="space-y-1">
-                          {messages.map((message) => (
-                            <ChatMessage
-                              key={message.id}
-                              message={message}
-                              isOwn={message.sender_id === user.id}
-                            />
-                          ))}
+                        {messages.map((message) => (
+                          <ChatMessage
+                            key={message.id}
+                            message={message}
+                            isOwn={message.sender_id === user.id}
+                            onDelete={deleteMessage}
+                          />
+                        ))}
                         </div>
                       ) : (
                         <div className="text-center py-8">
