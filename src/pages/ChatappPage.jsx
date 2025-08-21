@@ -286,7 +286,11 @@ const ChatappPage = () => {
           <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             {currentRoom ? (
               <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
-                <CardHeader className="border-b bg-purple-300 border-purple-400/50 text-purple-900">
+                <CardHeader 
+                  className="border-b border-purple-400/50 text-purple-900"
+                  style={{ backgroundColor: '#D8B4FE' }}
+                >
+                  {console.log('Header rendering with currentRoom:', currentRoom)}
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2 text-purple-900">
