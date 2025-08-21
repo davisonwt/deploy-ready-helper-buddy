@@ -23,7 +23,15 @@ export default function YhvhOrchardsPage() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
+  console.log('🌳 YhvhOrchardsPage: Component loaded', {
+    user: !!user,
+    userId: user?.id,
+    isAdminOrGosat: isAdminOrGosat(),
+    userRoles
+  });
+
   useEffect(() => {
+    console.log('🌳 YhvhOrchardsPage: useEffect triggered, fetching orchards');
     fetchOrchards()
   }, [])
 

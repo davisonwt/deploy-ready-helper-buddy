@@ -557,9 +557,14 @@ export default function DashboardPage() {
                       <User className="h-4 w-4" style={{ color: '#9a3412' }} />
                     </div>
                   </Link>
-                  <Link to="/364yhvh-orchards">
+                  <Link 
+                    to="/364yhvh-orchards"
+                    onClick={(e) => {
+                      console.log('🔗 Navigating to 364yhvh-orchards page');
+                    }}
+                  >
                     <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
+                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                       style={{
                         backgroundColor: '#e9d5ff',
                         borderColor: '#7c3aed'
