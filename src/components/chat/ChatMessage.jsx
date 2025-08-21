@@ -16,7 +16,7 @@ const getFileIcon = (fileType) => {
 };
 
 const ChatMessage = ({ message, isOwn = false }) => {
-  const { profiles: sender } = message;
+  const sender = message.sender_profiles;
   const FileIcon = getFileIcon(message.file_type);
 
   return (
