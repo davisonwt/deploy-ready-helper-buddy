@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 Auth state change:', event, {
           hasSession: !!session,
           userId: session?.user?.id,
@@ -54,33 +54,29 @@ export const AuthProvider = ({ children }) => {
         
         if (!mounted) return;
         
+        // Immediately update session and loading state
         setSession(session)
         setLoading(false)
         
         if (session?.user) {
           console.log('🔐 Processing user session for:', session.user.id)
           
-          try {
-            // Test database connection first
-            const { error: testError } = await supabase.from('profiles').select('id').limit(1);
-            if (testError) {
-              console.error('❌ Database connection test failed:', testError);
-              // Force token refresh
-              await supabase.auth.refreshSession();
+          // Set basic user immediately to prevent UI lag
+          setUser(session.user);
+          
+          // Then fetch extended profile asynchronously
+          setTimeout(async () => {
+            try {
+              const fullUser = await fetchUserProfile(session.user);
+              if (mounted && fullUser) {
+                console.log('✅ Profile loaded for user:', fullUser?.id);
+                setUser(fullUser);
+              }
+            } catch (error) {
+              console.error('❌ Error fetching user profile:', error);
+              // Keep the basic user if profile fetch fails
             }
-            
-            // Fetch full user profile
-            const fullUser = await fetchUserProfile(session.user);
-            if (mounted) {
-              console.log('✅ Profile loaded for user:', fullUser?.id);
-              setUser(fullUser);
-            }
-          } catch (error) {
-            console.error('❌ Error processing user session:', error);
-            if (mounted) {
-              setUser(session.user); // Fallback to basic user
-            }
-          }
+          }, 0);
         } else {
           if (mounted) {
             setUser(null);
