@@ -25,6 +25,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import CreateRoomModal from '@/components/chat/CreateRoomModal';
@@ -36,6 +38,7 @@ import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 const ChatappPage = () => {
   const { user } = useAuth();
   const { uploadFile, uploading } = useFileUpload();
+  const { toast } = useToast();
   const {
     rooms,
     currentRoom,
@@ -139,14 +142,53 @@ const ChatappPage = () => {
     }
   };
 
-  const handleStartCall = (otherUserId, callType) => {
-    // In a real implementation, you would initialize WebRTC here
-    console.log(`Starting ${callType} call with user:`, otherUserId);
-    setActiveCall({
-      type: callType,
-      isIncoming: false,
-      callerInfo: { display_name: 'Test User' }
-    });
+  const handleStartCall = async (otherUserId, callType) => {
+    try {
+      // Fetch user profile for the call
+      const { data: userProfile, error } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url, first_name, last_name')
+        .eq('user_id', otherUserId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        toast({
+          title: "Error",
+          description: "Could not start call - user not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const callerInfo = {
+        display_name: userProfile.display_name || 
+                     `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() ||
+                     'Unknown User',
+        avatar_url: userProfile.avatar_url
+      };
+
+      console.log(`Starting ${callType} call with user:`, otherUserId);
+      setActiveCall({
+        type: callType,
+        isIncoming: false,
+        callerInfo,
+        otherUserId
+      });
+
+      toast({
+        title: "Call Started",
+        description: `${callType === 'video' ? 'Video' : 'Voice'} call with ${callerInfo.display_name}`,
+      });
+
+    } catch (error) {
+      console.error('Error starting call:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start call",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEndCall = () => {
