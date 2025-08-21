@@ -306,7 +306,16 @@ const ChatappPage = () => {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to call notifications for user:', user.id);
+        } else if (status === 'CLOSED') {
+          console.log('❌ Call notification subscription closed');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.log('🚨 Error with call notification subscription');
+        }
+      });
 
     return () => {
       console.log('🔇 Cleaning up call listener');
