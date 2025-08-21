@@ -41,15 +41,17 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
+  const { isAdminOrGosat, loading: rolesLoading, error: rolesError } = useRoles()
   
-  // Add error boundary for useRoles hook
-  let isAdminOrGosat = false
-  try {
-    const rolesHook = useRoles()
-    isAdminOrGosat = rolesHook.isAdminOrGosat()
-  } catch (error) {
-    console.error('Error in useRoles hook:', error)
-  }
+  // Log role status for debugging
+  React.useEffect(() => {
+    console.log('🔑 Layout roles debug:', { 
+      isAdminOrGosat: isAdminOrGosat(), 
+      rolesLoading, 
+      rolesError, 
+      user: user?.id 
+    })
+  }, [isAdminOrGosat, rolesLoading, rolesError, user])
   
   const location = useLocation()
   const navigate = useNavigate()
@@ -117,7 +119,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(isAdminOrGosat ? [{
+    ...(isAdminOrGosat() ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
