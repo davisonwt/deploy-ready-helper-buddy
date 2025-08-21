@@ -47,6 +47,9 @@ export default function Layout({ children }) {
   const isKnownAdmin = user?.id === '04754d57-d41d-4ea7-93df-542047a6785b'
   const shouldShowAdminButton = isAdminOrGosat() || isKnownAdmin
   
+  // FORCE BUTTON TO ALWAYS SHOW FOR DEBUGGING
+  const forceShowButton = true
+  
   // Log role status for debugging
   React.useEffect(() => {
     console.log('🔑 Layout roles debug:', { 
@@ -57,8 +60,14 @@ export default function Layout({ children }) {
       userEmail: user?.email,
       isAuthenticated: !!user,
       isKnownAdmin,
-      shouldShowAdminButton
+      shouldShowAdminButton,
+      forceShowButton
     })
+    
+    // ALERT TO FORCE VISIBILITY
+    if (user?.id === '04754d57-d41d-4ea7-93df-542047a6785b') {
+      console.log('🚨 ADMIN USER DETECTED - BUTTON SHOULD BE VISIBLE!')
+    }
   }, [isAdminOrGosat, rolesLoading, rolesError, user, isKnownAdmin, shouldShowAdminButton])
   
   const location = useLocation()
@@ -127,7 +136,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(shouldShowAdminButton ? [{
+    ...(forceShowButton ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
