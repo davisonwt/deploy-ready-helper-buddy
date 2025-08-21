@@ -323,31 +323,31 @@ const ChatappPage = () => {
                 </CardHeader>
 
                 <CardContent className="flex-1 flex flex-col min-h-0 p-0">
-                  {/* Messages Area */}
-                  <div className="flex-1 bg-white/95 backdrop-blur-md rounded-lg border border-white/40 shadow-lg m-4">
-                    <ScrollArea className="flex-1 p-6">
-                    {loading ? (
-                      <div className="text-center py-4 bg-white/90 backdrop-blur-sm rounded-lg">
-                        <span className="text-gray-800 font-medium">Loading messages...</span>
-                      </div>
-                    ) : messages.length > 0 ? (
-                      <div className="space-y-1">
-                        {messages.map((message) => (
-                          <ChatMessage
-                            key={message.id}
-                            message={message}
-                            isOwn={message.sender_id === user.id}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 bg-white/90 backdrop-blur-sm rounded-lg">
-                        <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                        <p className="text-gray-700 font-medium">No messages yet. Start the conversation!</p>
-                      </div>
-                     )}
-                   </ScrollArea>
-                   </div>
+                  {/* Messages Area with Full White Background */}
+                  <div className="flex-1 bg-white/90 backdrop-blur-md border border-white/30 shadow-lg m-4 rounded-lg overflow-hidden">
+                    <ScrollArea className="h-full p-6">
+                      {loading ? (
+                        <div className="text-center py-4">
+                          <span className="text-gray-800 font-medium">Loading messages...</span>
+                        </div>
+                      ) : messages.length > 0 ? (
+                        <div className="space-y-1">
+                          {messages.map((message) => (
+                            <ChatMessage
+                              key={message.id}
+                              message={message}
+                              isOwn={message.sender_id === user.id}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                          <p className="text-gray-700 font-medium">No messages yet. Start the conversation!</p>
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
 
                    {/* Message Input */}
                   <div className="border-t p-4">
