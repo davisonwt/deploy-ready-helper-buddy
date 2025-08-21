@@ -49,17 +49,44 @@ export const useChat = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First get messages
+      const { data: messages, error: messagesError } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          sender_profile:profiles!sender_id(display_name, avatar_url, first_name, last_name)
-        `)
+        .select('*')
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (messagesError) throw messagesError;
+
+      // Then get sender profiles for the messages
+      const senderIds = [...new Set(messages?.map(m => m.sender_id) || [])];
+      
+      let messagesWithProfiles = messages || [];
+      
+      if (senderIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, first_name, last_name')
+          .in('user_id', senderIds);
+
+        if (!profilesError && profiles) {
+          // Map profiles to messages
+          messagesWithProfiles = messages.map(message => {
+            const senderProfile = profiles.find(p => p.user_id === message.sender_id);
+            return {
+              ...message,
+              sender_profile: senderProfile || {
+                display_name: 'Unknown User',
+                first_name: 'Unknown',
+                last_name: 'User'
+              }
+            };
+          });
+        }
+      }
+
+      setMessages(messagesWithProfiles);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -77,17 +104,43 @@ export const useChat = () => {
     if (!roomId) return;
 
     try {
-      const { data, error } = await supabase
+      // First get participants
+      const { data: participants, error: participantsError } = await supabase
         .from('chat_participants')
-        .select(`
-          *,
-          profiles:user_id(display_name, avatar_url, first_name, last_name)
-        `)
+        .select('*')
         .eq('room_id', roomId)
         .eq('is_active', true);
 
-      if (error) throw error;
-      setParticipants(data || []);
+      if (participantsError) throw participantsError;
+
+      // Then get profiles for the participants
+      const userIds = participants?.map(p => p.user_id) || [];
+      
+      let participantsWithProfiles = participants || [];
+      
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, first_name, last_name')
+          .in('user_id', userIds);
+
+        if (!profilesError && profiles) {
+          // Map profiles to participants
+          participantsWithProfiles = participants.map(participant => {
+            const userProfile = profiles.find(p => p.user_id === participant.user_id);
+            return {
+              ...participant,
+              profiles: userProfile || {
+                display_name: 'Unknown User',
+                first_name: 'Unknown',
+                last_name: 'User'
+              }
+            };
+          });
+        }
+      }
+
+      setParticipants(participantsWithProfiles);
     } catch (error) {
       console.error('Error fetching participants:', error);
     }
