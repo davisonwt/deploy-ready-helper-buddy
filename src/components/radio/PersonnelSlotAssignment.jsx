@@ -102,7 +102,7 @@ export default function PersonnelSlotAssignment() {
         user_id: profile.user_id,
         dj_name: profile.display_name || 
                  `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
-                 'Radio Admin',
+                 `Radio Admin ${profile.user_id.substring(0, 8)}`,
         avatar_url: profile.avatar_url,
         country: profile.country || 'Unknown',
         timezone: profile.timezone || 'UTC',
@@ -171,7 +171,7 @@ export default function PersonnelSlotAssignment() {
     if (!selectedSlot || !selectedAdmin) return
 
     try {
-      const adminData = radioAdmins.find(admin => admin.id === selectedAdmin)
+      const adminData = radioAdmins.find(admin => admin.user_id === selectedAdmin)
       if (!adminData) throw new Error('Radio admin not found')
 
       // First, create or get a DJ profile for this radio admin
@@ -563,24 +563,30 @@ export default function PersonnelSlotAssignment() {
                   <SelectValue placeholder="Choose a Radio Admin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {radioAdmins.map((admin) => (
-                    <SelectItem key={admin.id} value={admin.id}>
-                      <div className="flex items-center gap-3 py-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={admin.avatar_url} />
-                          <AvatarFallback className="text-xs">
-                            {admin.dj_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="text-left">
-                          <div className="font-medium">{admin.dj_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            🌍 {admin.country} • ⏰ {admin.timezone} • Now: {new Date().toLocaleTimeString('en-US', { timeZone: admin.timezone, hour12: true, hour: '2-digit', minute: '2-digit' })}
+                  {radioAdmins.length > 0 ? (
+                    radioAdmins.map((admin) => (
+                      <SelectItem key={admin.user_id} value={admin.user_id}>
+                        <div className="flex items-center gap-3 py-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={admin.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {admin.dj_name?.charAt(0) || 'RA'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="text-left">
+                            <div className="font-medium">{admin.dj_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              🌍 {admin.country} • ⏰ {admin.timezone} • Now: {new Date().toLocaleTimeString('en-US', { timeZone: admin.timezone, hour12: true, hour: '2-digit', minute: '2-digit' })}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-admins" disabled>
+                      <div className="text-sm text-muted-foreground">No radio admins found</div>
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
