@@ -245,7 +245,10 @@ const ChatappPage = () => {
 
   // Listen for incoming calls
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) {
+      console.log('❌ No user found for call listener');
+      return;
+    }
 
     console.log('👂 Setting up call listener for user:', user.id);
     const channel = supabase
@@ -415,7 +418,10 @@ const ChatappPage = () => {
             </div>
             <div className="flex gap-2">
               <Button 
-                onClick={() => setShowUserSelector(!showUserSelector)} 
+                onClick={() => {
+                  console.log('🎯 Direct Chat button clicked!');
+                  setShowUserSelector(!showUserSelector);
+                }} 
                 style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
                 className="gap-2 hover:shadow-lg transition-all duration-300"
               >
