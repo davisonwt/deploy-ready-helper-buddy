@@ -39,24 +39,24 @@ const ChatMessage = ({ message, isOwn = false }) => {
       
       <div className={`flex-1 max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-sm font-bold text-foreground bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full border shadow-sm">
+          <span className="text-sm font-bold text-gray-800 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-white/50 shadow-lg">
             {getSenderName()}
           </span>
-          <span className="text-xs text-muted-foreground bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
+          <span className="text-xs text-gray-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 shadow-md">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
           </span>
           {message.is_edited && (
-            <Badge variant="outline" className="text-xs bg-white/80 backdrop-blur-sm">
+            <Badge variant="outline" className="text-xs bg-white/90 backdrop-blur-md border border-white/50 text-gray-700">
               edited
             </Badge>
           )}
         </div>
         
         <div 
-          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-sm ${
+          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-md ${
             isOwn 
-              ? 'bg-primary/90 text-primary-foreground shadow-lg' 
-              : 'bg-white/90 text-foreground shadow-lg border'
+              ? 'bg-blue-600/95 text-white shadow-xl border border-blue-500/30' 
+              : 'bg-white/95 text-gray-800 shadow-xl border border-white/50'
           }`}
         >
           {message.content && (
@@ -66,7 +66,7 @@ const ChatMessage = ({ message, isOwn = false }) => {
           )}
           
           {message.file_url && (
-            <div className="mt-2 border rounded-lg p-3 bg-white/80 backdrop-blur-sm shadow-sm">
+            <div className="mt-2 border border-white/50 rounded-lg p-3 bg-white/95 backdrop-blur-md shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <FileIcon className="h-4 w-4" />
                 <span className="text-sm font-medium truncate">
