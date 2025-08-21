@@ -7,6 +7,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { AppContextProvider } from "./contexts/AppContext";
+import LiveActivityWidget from "./components/LiveActivityWidget";
 import { lazy, Suspense } from "react";
 
 // Lazy-loaded pages
@@ -324,6 +325,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <LiveActivityWidget />
         </TooltipProvider>
       </AppContextProvider>
     </BasketProvider>
