@@ -486,6 +486,163 @@ export type Database = {
           },
         ]
       }
+      dj_music_tracks: {
+        Row: {
+          artist_name: string | null
+          bpm: number | null
+          created_at: string
+          dj_id: string
+          duration_seconds: number | null
+          file_size: number | null
+          file_url: string
+          genre: string | null
+          id: string
+          is_explicit: boolean | null
+          tags: string[] | null
+          track_title: string
+          track_type: string
+          updated_at: string
+          upload_date: string
+        }
+        Insert: {
+          artist_name?: string | null
+          bpm?: number | null
+          created_at?: string
+          dj_id: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url: string
+          genre?: string | null
+          id?: string
+          is_explicit?: boolean | null
+          tags?: string[] | null
+          track_title: string
+          track_type?: string
+          updated_at?: string
+          upload_date?: string
+        }
+        Update: {
+          artist_name?: string | null
+          bpm?: number | null
+          created_at?: string
+          dj_id?: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url?: string
+          genre?: string | null
+          id?: string
+          is_explicit?: boolean | null
+          tags?: string[] | null
+          track_title?: string
+          track_type?: string
+          updated_at?: string
+          upload_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_dj_music_tracks_dj_id"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dj_playlist_tracks: {
+        Row: {
+          created_at: string
+          fade_in_seconds: number | null
+          fade_out_seconds: number | null
+          id: string
+          playlist_id: string
+          start_time_seconds: number | null
+          track_id: string
+          track_order: number
+        }
+        Insert: {
+          created_at?: string
+          fade_in_seconds?: number | null
+          fade_out_seconds?: number | null
+          id?: string
+          playlist_id: string
+          start_time_seconds?: number | null
+          track_id: string
+          track_order: number
+        }
+        Update: {
+          created_at?: string
+          fade_in_seconds?: number | null
+          fade_out_seconds?: number | null
+          id?: string
+          playlist_id?: string
+          start_time_seconds?: number | null
+          track_id?: string
+          track_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_dj_playlist_tracks_playlist_id"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "dj_playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_dj_playlist_tracks_track_id"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dj_playlists: {
+        Row: {
+          created_at: string
+          description: string | null
+          dj_id: string
+          id: string
+          is_public: boolean | null
+          playlist_name: string
+          playlist_type: string
+          total_duration_seconds: number | null
+          track_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dj_id: string
+          id?: string
+          is_public?: boolean | null
+          playlist_name: string
+          playlist_type?: string
+          total_duration_seconds?: number | null
+          track_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dj_id?: string
+          id?: string
+          is_public?: boolean | null
+          playlist_name?: string
+          playlist_type?: string
+          total_duration_seconds?: number | null
+          track_count?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_dj_playlists_dj_id"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_session_messages: {
         Row: {
           content: string
@@ -927,6 +1084,69 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      radio_automated_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_position_seconds: number | null
+          current_track_id: string | null
+          error_message: string | null
+          id: string
+          listener_count: number | null
+          playback_status: string
+          playlist_id: string | null
+          schedule_id: string
+          session_type: string
+          started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_position_seconds?: number | null
+          current_track_id?: string | null
+          error_message?: string | null
+          id?: string
+          listener_count?: number | null
+          playback_status?: string
+          playlist_id?: string | null
+          schedule_id: string
+          session_type?: string
+          started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_position_seconds?: number | null
+          current_track_id?: string | null
+          error_message?: string | null
+          id?: string
+          listener_count?: number | null
+          playback_status?: string
+          playlist_id?: string | null
+          schedule_id?: string
+          session_type?: string
+          started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_radio_automated_sessions_playlist_id"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "dj_playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_radio_automated_sessions_schedule_id"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       radio_djs: {
         Row: {
