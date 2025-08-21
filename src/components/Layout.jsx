@@ -51,13 +51,6 @@ export default function Layout({ children }) {
     userRoles 
   })
 
-  // TEMPORARY DEBUG DISPLAY - Remove this after fixing
-  const debugInfo = user ? {
-    userId: user.id,
-    userRoles: userRoles,
-    isAdminOrGosat: isAdminOrGosat(),
-    rolesLoading: rolesLoading
-  } : null
   
   const location = useLocation()
   const navigate = useNavigate()
@@ -125,7 +118,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(isAdminOrGosat() ? [{
+    ...(!rolesLoading && isAdminOrGosat() ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
@@ -408,15 +401,6 @@ export default function Layout({ children }) {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* TEMPORARY DEBUG DISPLAY - REMOVE AFTER FIXING */}
-        {debugInfo && (
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
-            <h3 className="font-bold text-red-600">DEBUG INFO (Temporary):</h3>
-            <pre className="text-xs mt-2 whitespace-pre-wrap">
-              {JSON.stringify(debugInfo, null, 2)}
-            </pre>
-          </div>
-        )}
         {children}
       </main>
       
