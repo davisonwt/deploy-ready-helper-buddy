@@ -68,7 +68,8 @@ function IndexContent() {
       </div>
     )
   }
-  
+
+  // Get context values - safe to call here since we're inside the provider
   const { 
     showOnboarding, 
     setShowOnboarding, 
@@ -76,7 +77,7 @@ function IndexContent() {
     setShowGamificationHUD,
     voiceCommandsEnabled,
     setVoiceCommandsEnabled
-  } = useAppContext();
+  } = useAppContext()
 
 
   return (
