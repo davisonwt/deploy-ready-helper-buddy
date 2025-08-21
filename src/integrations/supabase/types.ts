@@ -800,6 +800,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          country: string | null
           created_at: string
           dj_name: string
           dj_role: Database["public"]["Enums"]["dj_role"]
@@ -809,6 +810,7 @@ export type Database = {
           preferred_time_slots: string[] | null
           rating: number | null
           specialties: string[] | null
+          timezone: string | null
           total_hours_hosted: number | null
           updated_at: string
           user_id: string
@@ -816,6 +818,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          country?: string | null
           created_at?: string
           dj_name: string
           dj_role?: Database["public"]["Enums"]["dj_role"]
@@ -825,6 +828,7 @@ export type Database = {
           preferred_time_slots?: string[] | null
           rating?: number | null
           specialties?: string[] | null
+          timezone?: string | null
           total_hours_hosted?: number | null
           updated_at?: string
           user_id: string
@@ -832,6 +836,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          country?: string | null
           created_at?: string
           dj_name?: string
           dj_role?: Database["public"]["Enums"]["dj_role"]
@@ -841,6 +846,7 @@ export type Database = {
           preferred_time_slots?: string[] | null
           rating?: number | null
           specialties?: string[] | null
+          timezone?: string | null
           total_hours_hosted?: number | null
           updated_at?: string
           user_id?: string
