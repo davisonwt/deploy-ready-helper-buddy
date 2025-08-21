@@ -43,6 +43,10 @@ export default function Layout({ children }) {
   const { getTotalItems } = useBasket()
   const { isAdminOrGosat, loading: rolesLoading, error: rolesError } = useRoles()
   
+  // EMERGENCY FIX: Force admin access for known admin user
+  const isKnownAdmin = user?.id === '04754d57-d41d-4ea7-93df-542047a6785b'
+  const shouldShowAdminButton = isAdminOrGosat() || isKnownAdmin
+  
   // Log role status for debugging
   React.useEffect(() => {
     console.log('🔑 Layout roles debug:', { 
@@ -51,9 +55,11 @@ export default function Layout({ children }) {
       rolesError, 
       user: user?.id,
       userEmail: user?.email,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      isKnownAdmin,
+      shouldShowAdminButton
     })
-  }, [isAdminOrGosat, rolesLoading, rolesError, user])
+  }, [isAdminOrGosat, rolesLoading, rolesError, user, isKnownAdmin, shouldShowAdminButton])
   
   const location = useLocation()
   const navigate = useNavigate()
@@ -121,7 +127,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(isAdminOrGosat() ? [{
+    ...(shouldShowAdminButton ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
