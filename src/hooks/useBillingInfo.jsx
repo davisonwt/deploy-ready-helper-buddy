@@ -35,7 +35,7 @@ export const useBillingInfo = () => {
 
       // Get the actual billing data from secure function
       const { data: billingData, error: billingError } = await supabase
-        .rpc('get_user_billing_info', { target_user_id: user.id })
+        .rpc('get_user_billing_info_secure', { target_user_id: user.id })
 
       if (billingError) {
         // If there's no billing data yet, that's okay
@@ -80,7 +80,7 @@ export const useBillingInfo = () => {
     try {
       // Use the secure update function
       const { data, error } = await supabase
-        .rpc('update_user_billing_info', {
+        .rpc('update_user_billing_info_secure', {
           target_user_id: user.id,
           p_billing_address_line1: newBillingInfo.billing_address_line1,
           p_billing_address_line2: newBillingInfo.billing_address_line2,

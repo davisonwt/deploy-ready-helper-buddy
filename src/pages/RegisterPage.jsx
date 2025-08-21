@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectScrollUpButton, SelectScrollDownButton } from "../components/ui/select"
+import { SecureInput } from "../components/ui/secure-input"
 import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
@@ -214,12 +215,15 @@ export default function RegisterPage() {
                   <label htmlFor="firstName" className="text-sm font-semibold text-green-700">
                     First Name
                   </label>
-                  <input
+                  <SecureInput
                     id="firstName"
                     name="firstName"
                     type="text"
                     value={formData.firstName}
                     onChange={handleChange}
+                    sanitizeType="text"
+                    maxLength={50}
+                    rateLimitKey="registration_form"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter first name"
                     required
@@ -230,12 +234,15 @@ export default function RegisterPage() {
                   <label htmlFor="lastName" className="text-sm font-semibold text-blue-700">
                     Last Name
                   </label>
-                  <input
+                  <SecureInput
                     id="lastName"
                     name="lastName"
                     type="text"
                     value={formData.lastName}
                     onChange={handleChange}
+                    sanitizeType="text"
+                    maxLength={50}
+                    rateLimitKey="registration_form"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter last name"
                     required
@@ -248,12 +255,14 @@ export default function RegisterPage() {
                   <label htmlFor="email" className="text-sm font-semibold text-blue-700">
                     Email Address
                   </label>
-                  <input
+                  <SecureInput
                     id="email"
                     name="email"
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
+                    sanitizeType="email"
+                    rateLimitKey="registration_form"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="your@email.com"
                     required
@@ -264,12 +273,14 @@ export default function RegisterPage() {
                   <label htmlFor="phone" className="text-sm font-semibold text-purple-700">
                     Phone <span className="text-purple-500 font-normal">(Optional)</span>
                   </label>
-                  <input
+                  <SecureInput
                     id="phone"
                     name="phone"
                     type="tel"
                     value={formData.phone}
                     onChange={handleChange}
+                    sanitizeType="phone"
+                    rateLimitKey="registration_form"
                     className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="+1234567890"
                   />
