@@ -66,7 +66,10 @@ const ChatappPage = () => {
       
       // Upload file if selected
       if (selectedFile) {
+        console.log('Uploading file:', selectedFile.name, selectedFile.type, selectedFile.size);
         const uploadResult = await uploadFile(selectedFile, 'chat-files', 'attachments/');
+        console.log('Upload result:', uploadResult);
+        
         if (uploadResult.success) {
           fileData = {
             url: uploadResult.data.url,
@@ -74,12 +77,14 @@ const ChatappPage = () => {
             type: selectedFile.type,
             size: selectedFile.size
           };
+          console.log('File data for message:', fileData);
         } else {
           console.error('File upload failed:', uploadResult.error);
           return;
         }
       }
 
+      console.log('Sending message with content:', newMessage.trim(), 'and file data:', fileData);
       await sendMessage(currentRoom.id, newMessage.trim(), 'text', fileData);
       setNewMessage('');
       setSelectedFile(null);
