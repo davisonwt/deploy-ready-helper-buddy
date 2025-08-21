@@ -16,8 +16,15 @@ export default function ProtectedRoute({ children, allowedRoles = null }) {
       allowedRoles,
       isKnownAdmin,
       authLoading,
-      rolesLoading
+      rolesLoading,
+      pathname: window.location.pathname
     })
+    
+    // FORCE ALLOW ADMIN DASHBOARD FOR KNOWN USER
+    if (isKnownAdmin && window.location.pathname === '/admin/dashboard') {
+      console.log('🚨 FORCING ADMIN DASHBOARD ACCESS FOR KNOWN USER')
+      return children
+    }
     
     // Show loading while auth is loading (but skip role loading for known admin)
     if (authLoading) {
