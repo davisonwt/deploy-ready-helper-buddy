@@ -71,10 +71,20 @@ const ChatappPage = () => {
         console.log('Upload result:', uploadResult);
         
         if (uploadResult.success) {
+          // Convert MIME type to enum value
+          let fileType = 'document'; // default
+          if (selectedFile.type.startsWith('image/')) {
+            fileType = 'image';
+          } else if (selectedFile.type.startsWith('video/')) {
+            fileType = 'video';
+          } else if (selectedFile.type.startsWith('audio/')) {
+            fileType = 'audio';
+          }
+          
           fileData = {
             url: uploadResult.data.url,
             name: selectedFile.name,
-            type: selectedFile.type,
+            type: fileType, // Use enum value instead of MIME type
             size: selectedFile.size
           };
           console.log('File data for message:', fileData);
