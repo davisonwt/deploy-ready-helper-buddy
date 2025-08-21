@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
 import { useOrchards } from '../hooks/useOrchards';
+import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '../utils/formatters';
 
 const OrchardPage = () => {
@@ -27,35 +28,68 @@ const OrchardPage = () => {
 
   useEffect(() => {
     const loadOrchard = async () => {
+      console.log('🌱 OrchardPage: Starting orchard load', {
+        orchardId,
+        hasUser: !!user,
+        userId: user?.id
+      });
+
       if (!user) {
-        console.log('OrchardPage: No user found, redirecting to login');
-        navigate('/login');
+        console.log('🌱 OrchardPage: No user found, waiting for auth...');
+        return; // Don't redirect immediately, wait for auth to load
+      }
+
+      if (!orchardId) {
+        console.error('🌱 OrchardPage: No orchardId provided');
+        navigate('/dashboard');
         return;
       }
 
-      console.log('OrchardPage: Loading orchard', orchardId, 'for user', user.id);
+      console.log('🌱 OrchardPage: Loading orchard', orchardId, 'for user', user.id);
       const result = await fetchOrchardById(orchardId);
-      console.log('OrchardPage: Fetch result', result);
+      console.log('🌱 OrchardPage: Fetch result', result);
       
       if (result.success) {
+        console.log('✅ OrchardPage: Orchard loaded successfully:', result.data.title);
         setOrchard(result.data);
       } else {
-        console.error('OrchardPage: Failed to load orchard:', result.error);
-        // If orchard not found or access denied, redirect to dashboard
-        if (result.error?.includes('not found') || result.error?.includes('access')) {
+        console.error('❌ OrchardPage: Failed to load orchard:', result.error);
+        
+        // Handle specific error cases
+        if (result.error?.includes('Authentication session expired')) {
+          console.log('🔄 OrchardPage: Session expired, forcing re-auth...');
+          // Force a fresh session check
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) {
+            navigate('/login');
+          } else {
+            // Retry with fresh session
+            const retryResult = await fetchOrchardById(orchardId);
+            if (retryResult.success) {
+              setOrchard(retryResult.data);
+            } else {
+              navigate('/my-orchards');
+            }
+          }
+        } else if (result.error?.includes('not found') || result.error?.includes('permission')) {
+          console.log('🌱 OrchardPage: Orchard not found or access denied, redirecting to My Orchards');
+          navigate('/my-orchards');
+        } else {
+          console.log('🌱 OrchardPage: Unknown error, redirecting to dashboard');
           navigate('/dashboard');
         }
       }
     };
 
-    if (orchardId && user) {
+    if (orchardId) {
       loadOrchard();
     }
   }, [orchardId, fetchOrchardById, user, navigate]);
 
   const getCompletionPercentage = (orchard) => {
-    if (!orchard.total_pockets) return 0;
-    return Math.round((orchard.filled_pockets / orchard.total_pockets) * 100);
+    const totalPockets = orchard.total_pockets || orchard.intended_pockets || 1;
+    if (!totalPockets || totalPockets === 0) return 0;
+    return Math.round((orchard.filled_pockets / totalPockets) * 100);
   };
 
   const getStatusColor = (status) => {
@@ -243,12 +277,12 @@ const OrchardPage = () => {
                       </div>
                       <div className="text-sm text-orange-600">Goal</div>
                     </div>
-                    <div>
-                      <div className="text-lg font-semibold text-orange-700">
-                        {orchard.filled_pockets || 0} / {orchard.total_pockets}
-                      </div>
-                      <div className="text-sm text-orange-600">Pockets</div>
-                    </div>
+                     <div>
+                       <div className="text-lg font-semibold text-orange-700">
+                         {orchard.filled_pockets || 0} / {orchard.total_pockets || orchard.intended_pockets || 1}
+                       </div>
+                       <div className="text-sm text-orange-600">Pockets</div>
+                     </div>
                   </div>
                 </div>
 
