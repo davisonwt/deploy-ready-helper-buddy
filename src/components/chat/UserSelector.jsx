@@ -103,7 +103,10 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onStartDirectChat(profile.user_id)}
+                        onClick={() => {
+                          console.log('💬 Direct chat clicked for:', displayName, profile.user_id);
+                          onStartDirectChat(profile.user_id);
+                        }}
                         className="h-8 w-8 p-0"
                       >
                         <MessageSquare className="h-4 w-4" />
@@ -111,7 +114,10 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onStartCall(profile.user_id, 'audio')}
+                        onClick={() => {
+                          console.log('📞 Audio call clicked for:', displayName, profile.user_id);
+                          onStartCall(profile.user_id, 'audio');
+                        }}
                         className="h-8 w-8 p-0"
                       >
                         <Phone className="h-4 w-4" />
@@ -119,7 +125,10 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onStartCall(profile.user_id, 'video')}
+                        onClick={() => {
+                          console.log('📹 Video call clicked for:', displayName, profile.user_id);
+                          onStartCall(profile.user_id, 'video');
+                        }}
                         className="h-8 w-8 p-0"
                       >
                         <Video className="h-4 w-4" />
