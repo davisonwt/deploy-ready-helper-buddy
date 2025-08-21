@@ -114,7 +114,8 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
   
   const handleSelectAllAvailable = () => {
     const availablePockets = []
-    for (let i = 1; i <= orchard.total_pockets; i++) {
+    const actualTotalPockets = orchard.intended_pockets || orchard.total_pockets || 1
+    for (let i = 1; i <= actualTotalPockets; i++) {
       const isTaken = takenPockets.some(p => p.number === i)
       if (!isTaken) {
         availablePockets.push(i)
@@ -215,7 +216,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
             </CardHeader>
             <CardContent className="p-8">
               <AnimatedOrchardGrid 
-                totalPockets={orchard.total_pockets || 195}
+                totalPockets={orchard.intended_pockets || orchard.total_pockets || 1}
                 pocketPrice={orchard.pocket_price || 150}
                 selectedPockets={selectedPockets}
                 onPocketClick={handlePocketClick}
