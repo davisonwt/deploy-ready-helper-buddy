@@ -324,7 +324,8 @@ const ChatappPage = () => {
 
                 <CardContent className="flex-1 flex flex-col min-h-0 p-0">
                   {/* Messages Area */}
-                  <ScrollArea className="flex-1 p-6 bg-white/85 backdrop-blur-md rounded-lg border border-white/30 shadow-lg">
+                  <div className="flex-1 bg-white/95 backdrop-blur-md rounded-lg border border-white/40 shadow-lg m-4">
+                    <ScrollArea className="flex-1 p-6">
                     {loading ? (
                       <div className="text-center py-4 bg-white/90 backdrop-blur-sm rounded-lg">
                         <span className="text-gray-800 font-medium">Loading messages...</span>
@@ -344,10 +345,11 @@ const ChatappPage = () => {
                         <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
                         <p className="text-gray-700 font-medium">No messages yet. Start the conversation!</p>
                       </div>
-                    )}
-                  </ScrollArea>
+                     )}
+                   </ScrollArea>
+                   </div>
 
-                  {/* Message Input */}
+                   {/* Message Input */}
                   <div className="border-t p-4">
                     <form onSubmit={handleSendMessage} className="flex gap-2">
                       <Button variant="outline" size="sm" type="button">
