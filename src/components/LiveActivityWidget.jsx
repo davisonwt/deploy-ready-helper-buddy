@@ -219,7 +219,10 @@ export default function LiveActivityWidget() {
     }
   }
 
-  if (!isVisible) return null
+  if (!isVisible || !user) {
+    console.log('LiveActivityWidget: Not showing - isVisible:', isVisible, 'user:', !!user)
+    return null
+  }
 
   const totalActivities = liveData.radioHosts.length + 
                          liveData.groupCalls.length + 
@@ -227,7 +230,7 @@ export default function LiveActivityWidget() {
                          liveData.lifeCourses.filter(course => course.isLive).length
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80">
+    <div className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)]">
       <Card className="bg-background/95 backdrop-blur-sm border-primary/20 shadow-xl">
         <CardHeader 
           className="pb-2 cursor-pointer"
