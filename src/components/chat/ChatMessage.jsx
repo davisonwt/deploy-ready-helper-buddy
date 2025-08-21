@@ -39,24 +39,24 @@ const ChatMessage = ({ message, isOwn = false }) => {
       
       <div className={`flex-1 max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-sm font-bold text-foreground bg-background/80 px-2 py-1 rounded-md border shadow-sm">
+          <span className="text-sm font-bold text-foreground bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full border shadow-sm">
             {getSenderName()}
           </span>
-          <span className="text-xs text-muted-foreground bg-background/60 px-2 py-1 rounded-md">
+          <span className="text-xs text-muted-foreground bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
           </span>
           {message.is_edited && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs bg-white/80 backdrop-blur-sm">
               edited
             </Badge>
           )}
         </div>
         
         <div 
-          className={`rounded-lg px-3 py-2 max-w-full ${
+          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-sm ${
             isOwn 
-              ? 'bg-primary text-primary-foreground' 
-              : 'bg-muted'
+              ? 'bg-primary/90 text-primary-foreground shadow-lg' 
+              : 'bg-white/90 text-foreground shadow-lg border'
           }`}
         >
           {message.content && (
@@ -66,7 +66,7 @@ const ChatMessage = ({ message, isOwn = false }) => {
           )}
           
           {message.file_url && (
-            <div className="mt-2 border rounded-lg p-3 bg-background/50">
+            <div className="mt-2 border rounded-lg p-3 bg-white/80 backdrop-blur-sm shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <FileIcon className="h-4 w-4" />
                 <span className="text-sm font-medium truncate">
