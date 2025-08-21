@@ -53,7 +53,7 @@ export const useChat = () => {
         .from('chat_messages')
         .select(`
           *,
-          profiles:sender_id(display_name, avatar_url, first_name, last_name)
+          sender_profile:profiles!sender_id(display_name, avatar_url, first_name, last_name)
         `)
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
