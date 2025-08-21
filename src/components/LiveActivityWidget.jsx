@@ -22,7 +22,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 export default function LiveActivityWidget() {
   const { user } = useAuth()
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true) // Start expanded by default
   const [isVisible, setIsVisible] = useState(true)
   
   console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible)
@@ -35,9 +35,11 @@ export default function LiveActivityWidget() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Always fetch mock data first to show something
+    fetchLiveData()
+    
     if (user) {
-      fetchLiveData()
-      // Set up real-time subscriptions
+      // Set up real-time subscriptions for authenticated users
       const subscriptions = setupRealtimeSubscriptions()
       
       return () => {
@@ -219,8 +221,9 @@ export default function LiveActivityWidget() {
     }
   }
 
-  if (!isVisible || !user) {
-    console.log('LiveActivityWidget: Not showing - isVisible:', isVisible, 'user:', !!user)
+  // Show widget for all users, with different content based on auth status
+  if (!isVisible) {
+    console.log('LiveActivityWidget: Not showing - isVisible:', isVisible)
     return null
   }
 
@@ -230,10 +233,10 @@ export default function LiveActivityWidget() {
                          liveData.lifeCourses.filter(course => course.isLive).length
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 max-w-[calc(100vw-2rem)]">
-      <Card className="bg-background/95 backdrop-blur-sm border-primary/20 shadow-xl">
+    <div className="fixed bottom-4 right-4 z-[100] w-80 max-w-[calc(100vw-2rem)]">
+      <Card className="bg-background/95 backdrop-blur-sm border-primary/50 shadow-2xl ring-2 ring-primary/20">
         <CardHeader 
-          className="pb-2 cursor-pointer"
+          className="pb-2 cursor-pointer bg-gradient-to-r from-primary/5 to-secondary/5"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center justify-between">
@@ -241,11 +244,11 @@ export default function LiveActivityWidget() {
               <div className="relative">
                 <Radio className="h-5 w-5 text-primary" />
                 {totalActivities > 0 && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg" />
                 )}
               </div>
-              <CardTitle className="text-sm">Live Activities</CardTitle>
-              <Badge variant="secondary" className="text-xs">
+              <CardTitle className="text-sm font-semibold">Live Activities</CardTitle>
+              <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                 {totalActivities}
               </Badge>
             </div>
@@ -258,6 +261,7 @@ export default function LiveActivityWidget() {
                   e.stopPropagation()
                   setIsVisible(false)
                 }}
+                className="hover:bg-destructive/10 hover:text-destructive"
               >
                 <X className="h-4 w-4" />
               </Button>
