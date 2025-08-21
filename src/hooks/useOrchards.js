@@ -60,11 +60,13 @@ export function useOrchards() {
         return { success: false, error: 'Authentication session expired. Please log in again.' }
       }
 
+      // Use maybeSingle() to handle cases where orchard doesn't exist or isn't accessible
       const { data, error: fetchError } = await supabase
         .from('orchards')
         .select(`*`)
         .eq('id', id)
-        .single()
+        .eq('status', 'active')
+        .maybeSingle()
 
       console.log('🔍 Orchard fetch result:', { 
         hasData: !!data, 
@@ -74,11 +76,13 @@ export function useOrchards() {
       })
 
       if (fetchError) {
-        // Handle specific error cases
-        if (fetchError.code === 'PGRST116') {
-          return { success: false, error: 'Orchard not found or you do not have permission to view it.' }
-        }
-        throw fetchError
+        console.error('❌ Database error:', fetchError)
+        return { success: false, error: `Database error: ${fetchError.message}` }
+      }
+
+      if (!data) {
+        console.warn('⚠️ No orchard found with ID:', id)
+        return { success: false, error: 'Orchard not found or you do not have permission to view it.' }
       }
 
       // Try to increment view count, but don't fail if it doesn't work
@@ -91,8 +95,14 @@ export function useOrchards() {
 
       return { success: true, data }
     } catch (err) {
-      console.error('❌ Error fetching orchard:', err)
-      return { success: false, error: err.message }
+      console.error('❌ Network/System error fetching orchard:', err)
+      
+      // Handle different types of errors
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        return { success: false, error: 'Network connection error. Please check your internet connection and try again.' }
+      }
+      
+      return { success: false, error: err.message || 'Unknown error occurred while loading orchard.' }
     } finally {
       setLoading(false)
     }
