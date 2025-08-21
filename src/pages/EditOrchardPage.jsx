@@ -87,7 +87,9 @@ export default function EditOrchardPage() {
   ]
 
   useEffect(() => {
+    console.log('🔧 EditOrchardPage useEffect:', { orchardId, user: !!user })
     if (!user) {
+      console.log('🔧 No user, navigating to login')
       navigate('/login')
       return
     }
@@ -96,6 +98,7 @@ export default function EditOrchardPage() {
 
   const loadOrchard = async () => {
     try {
+      console.log('🔧 Loading orchard:', orchardId)
       setLoading(true)
       
       // Load user roles FIRST
@@ -105,21 +108,26 @@ export default function EditOrchardPage() {
         .eq('user_id', user.id)
       
       const currentUserRoles = rolesData?.map(r => r.role) || []
+      console.log('🔧 User roles:', currentUserRoles)
       setUserRoles(currentUserRoles)
       const isGosat = currentUserRoles.includes('gosat') || currentUserRoles.includes('admin')
       
       const result = await fetchOrchardById(orchardId)
+      console.log('🔧 Fetch orchard result:', result)
       
       if (!result.success) {
+        console.log('🔧 Failed to fetch orchard, navigating to my-orchards')
         toast.error(result.error)
         navigate('/my-orchards')
         return
       }
 
       const orchardData = result.data
+      console.log('🔧 Orchard data:', { orchardId: orchardData.id, userId: orchardData.user_id, currentUserId: user.id, isGosat })
       
       // Check if user owns this orchard or is a gosat/admin
       if (orchardData.user_id !== user.id && !isGosat) {
+        console.log('🔧 User not authorized for this orchard, navigating to my-orchards')
         toast.error('You can only edit your own orchards')
         navigate('/my-orchards')
         return
