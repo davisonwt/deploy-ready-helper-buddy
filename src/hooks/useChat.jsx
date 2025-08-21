@@ -151,6 +151,8 @@ export const useChat = () => {
     if (!user || !roomId || (!content && !fileData)) return;
 
     try {
+      console.log('sendMessage called with:', { roomId, content, messageType, fileData, user: user.id });
+      
       const messageData = {
         room_id: roomId,
         sender_id: user.id,
@@ -164,11 +166,19 @@ export const useChat = () => {
         }),
       };
 
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert(messageData);
+      console.log('Inserting message data:', messageData);
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert(messageData)
+        .select();
+
+      if (error) {
+        console.error('Database error inserting message:', error);
+        throw error;
+      }
+
+      console.log('Message inserted successfully:', data);
 
       // Update room's updated_at timestamp
       await supabase
@@ -180,9 +190,10 @@ export const useChat = () => {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to send message",
+        description: `Failed to send message: ${error.message}`,
         variant: "destructive",
       });
+      throw error; // Re-throw so calling code can handle it
     }
   }, [user, toast]);
 
