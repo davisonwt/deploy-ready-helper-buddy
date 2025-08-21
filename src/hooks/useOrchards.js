@@ -47,24 +47,51 @@ export function useOrchards() {
       setLoading(true)
       setError(null)
 
+      // First verify we have authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 fetchOrchardById session check:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        orchardId: id
+      })
+
+      if (!session) {
+        console.error('❌ No session found in fetchOrchardById')
+        return { success: false, error: 'Authentication session expired. Please log in again.' }
+      }
+
       const { data, error: fetchError } = await supabase
         .from('orchards')
         .select(`*`)
         .eq('id', id)
         .single()
 
-      if (fetchError) throw fetchError
+      console.log('🔍 Orchard fetch result:', { 
+        hasData: !!data, 
+        error: fetchError?.message,
+        orchardUserId: data?.user_id,
+        currentUserId: session?.user?.id
+      })
+
+      if (fetchError) {
+        // Handle specific error cases
+        if (fetchError.code === 'PGRST116') {
+          return { success: false, error: 'Orchard not found or you do not have permission to view it.' }
+        }
+        throw fetchError
+      }
 
       // Try to increment view count, but don't fail if it doesn't work
       try {
         await supabase.rpc('increment_orchard_views', { orchard_uuid: id })
+        console.log('✅ View count incremented for orchard:', id)
       } catch (viewError) {
-        console.warn('Failed to increment view count:', viewError)
+        console.warn('⚠️ Failed to increment view count:', viewError)
       }
 
       return { success: true, data }
     } catch (err) {
-      console.error('Error fetching orchard:', err)
+      console.error('❌ Error fetching orchard:', err)
       return { success: false, error: err.message }
     } finally {
       setLoading(false)

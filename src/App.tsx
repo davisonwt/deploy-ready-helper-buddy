@@ -9,6 +9,10 @@ import { ThemeProvider } from "./components/ui/theme-provider";
 import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
 import { lazy, Suspense } from "react";
+import "./utils/errorDetection"; // Initialize error detection
+
+// Initialize error detection system
+console.log('🚀 Error Detection System Initialized');
 
 // Lazy-loaded pages
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));

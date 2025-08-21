@@ -100,8 +100,9 @@ export default function MyOrchardsPage() {
   }, [orchards, user, searchTerm, statusFilter, selectedCategory])
 
   const getCompletionPercentage = (orchard) => {
-    if (!orchard.total_pockets) return 0
-    return Math.round((orchard.filled_pockets / orchard.total_pockets) * 100)
+    const totalPockets = orchard.total_pockets || orchard.intended_pockets || 1;
+    if (!totalPockets || totalPockets === 0) return 0;
+    return Math.round((orchard.filled_pockets / totalPockets) * 100);
   }
 
   const getTotalRaised = () => {

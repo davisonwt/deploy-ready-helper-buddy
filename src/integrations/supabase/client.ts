@@ -13,5 +13,35 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'sow2grow-app'
+    }
+  }
+});
+
+// Add session debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔐 SUPABASE AUTH EVENT:', event, {
+    hasSession: !!session,
+    userId: session?.user?.id,
+    accessToken: session?.access_token ? 'present' : 'missing',
+    refreshToken: session?.refresh_token ? 'present' : 'missing'
+  });
+  
+  // Force session refresh on errors
+  if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+    console.log('🔄 Session refreshed/signed in, validating database connection...');
+    // Test database connection
+    supabase.from('profiles').select('id').limit(1).then(({ error }) => {
+      if (error) {
+        console.error('❌ Database connection failed after auth event:', error);
+      } else {
+        console.log('✅ Database connection verified after auth event');
+      }
+    });
   }
 });

@@ -41,47 +41,113 @@ export const AuthProvider = ({ children }) => {
   }
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔐 Auth state change:', event, !!session, 'UserID:', session?.user?.id)
+      async (event, session) => {
+        console.log('🔐 Auth state change:', event, {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!mounted) return;
+        
         setSession(session)
-        setUser(session?.user ?? null)
         setLoading(false)
         
-        // Defer profile fetching to avoid deadlock
         if (session?.user) {
-          console.log('🔐 Fetching profile for user:', session.user.id)
-          setTimeout(() => {
-            fetchUserProfile(session.user).then(fullUser => {
-              console.log('🔐 Profile fetched for user:', fullUser?.id)
-              setUser(fullUser)
-            })
-          }, 0)
+          console.log('🔐 Processing user session for:', session.user.id)
+          
+          try {
+            // Test database connection first
+            const { error: testError } = await supabase.from('profiles').select('id').limit(1);
+            if (testError) {
+              console.error('❌ Database connection test failed:', testError);
+              // Force token refresh
+              await supabase.auth.refreshSession();
+            }
+            
+            // Fetch full user profile
+            const fullUser = await fetchUserProfile(session.user);
+            if (mounted) {
+              console.log('✅ Profile loaded for user:', fullUser?.id);
+              setUser(fullUser);
+            }
+          } catch (error) {
+            console.error('❌ Error processing user session:', error);
+            if (mounted) {
+              setUser(session.user); // Fallback to basic user
+            }
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+          }
         }
       }
     )
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔍 Initial session check:', !!session, 'UserID:', session?.user?.id)
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-      
-      // Defer profile fetching for initial session too
-      if (session?.user) {
-        console.log('🔍 Initial profile fetch for user:', session.user.id)
-        setTimeout(() => {
-          fetchUserProfile(session.user).then(fullUser => {
-            console.log('🔍 Initial profile loaded for user:', fullUser?.id)
-            setUser(fullUser)
-          })
-        }, 0)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log('🔍 Initial session check:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          error: error?.message
+        });
+        
+        if (!mounted) return;
+        
+        setSession(session);
+        setLoading(false);
+        
+        if (session?.user) {
+          console.log('🔍 Processing initial session for user:', session.user.id);
+          
+          try {
+            // Test database connection
+            const { error: testError } = await supabase.from('profiles').select('id').limit(1);
+            if (testError) {
+              console.error('❌ Initial database connection test failed:', testError);
+              // Try to refresh session
+              await supabase.auth.refreshSession();
+            }
+            
+            const fullUser = await fetchUserProfile(session.user);
+            if (mounted) {
+              console.log('✅ Initial profile loaded for user:', fullUser?.id);
+              setUser(fullUser);
+            }
+          } catch (error) {
+            console.error('❌ Error in initial auth setup:', error);
+            if (mounted) {
+              setUser(session.user); // Fallback to basic user
+            }
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize auth:', error);
+        if (mounted) {
+          setLoading(false);
+          setUser(null);
+        }
       }
-    })
+    };
 
-    return () => subscription.unsubscribe()
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [])
 
   const login = async (email, password) => {
