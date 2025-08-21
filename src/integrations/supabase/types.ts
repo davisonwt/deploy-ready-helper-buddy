@@ -860,15 +860,23 @@ export type Database = {
           country: string | null
           created_at: string
           display_name: string | null
+          facebook_url: string | null
           first_name: string | null
           has_complete_billing_info: boolean | null
           id: string
+          instagram_url: string | null
           last_name: string | null
           location: string | null
+          phone: string | null
           preferred_currency: string | null
+          show_social_media: boolean | null
+          tiktok_url: string | null
           timezone: string | null
+          twitter_url: string | null
           updated_at: string
           user_id: string
+          website: string | null
+          youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -876,15 +884,23 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          facebook_url?: string | null
           first_name?: string | null
           has_complete_billing_info?: boolean | null
           id?: string
+          instagram_url?: string | null
           last_name?: string | null
           location?: string | null
+          phone?: string | null
           preferred_currency?: string | null
+          show_social_media?: boolean | null
+          tiktok_url?: string | null
           timezone?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
+          youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -892,15 +908,23 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          facebook_url?: string | null
           first_name?: string | null
           has_complete_billing_info?: boolean | null
           id?: string
+          instagram_url?: string | null
           last_name?: string | null
           location?: string | null
+          phone?: string | null
           preferred_currency?: string | null
+          show_social_media?: boolean | null
+          tiktok_url?: string | null
           timezone?: string | null
+          twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

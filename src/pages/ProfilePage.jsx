@@ -68,6 +68,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     first_name: user?.first_name || "",
     last_name: user?.last_name || "",
+    display_name: user?.display_name || "",
     location: user?.location || "",
     phone: user?.phone || "",
     bio: user?.bio || "",
@@ -78,7 +79,7 @@ export default function ProfilePage() {
     twitter_url: user?.twitter_url || "",
     youtube_url: user?.youtube_url || "",
     show_social_media: user?.show_social_media !== false,
-    profile_picture: user?.profile_picture || null,
+    avatar_url: user?.avatar_url || null,
     preferred_currency: user?.preferred_currency || "USD",
     country: user?.country || "",
     timezone: user?.timezone || ""
@@ -90,6 +91,7 @@ export default function ProfilePage() {
       setFormData({
         first_name: user?.first_name || "",
         last_name: user?.last_name || "",
+        display_name: user?.display_name || "",
         location: user?.location || "",
         phone: user?.phone || "",
         bio: user?.bio || "",
@@ -100,7 +102,7 @@ export default function ProfilePage() {
         twitter_url: user?.twitter_url || "",
         youtube_url: user?.youtube_url || "",
         show_social_media: user?.show_social_media !== false,
-        profile_picture: user?.profile_picture || null,
+        avatar_url: user?.avatar_url || null,
         preferred_currency: user?.preferred_currency || "USD",
         country: user?.country || "",
         timezone: user?.timezone || ""
@@ -144,7 +146,7 @@ export default function ProfilePage() {
         // Set the image directly (simplified without backend validation)
         setFormData(prev => ({
           ...prev,
-          profile_picture: base64Data
+          avatar_url: base64Data
         }))
         setPictureError("")
         setUploadingPicture(false)
@@ -220,6 +222,7 @@ export default function ProfilePage() {
     setFormData({
       first_name: user?.first_name || "",
       last_name: user?.last_name || "",
+      display_name: user?.display_name || "",
       location: user?.location || "",
       phone: user?.phone || "",
       bio: user?.bio || "",
@@ -230,7 +233,7 @@ export default function ProfilePage() {
       twitter_url: user?.twitter_url || "",
       youtube_url: user?.youtube_url || "",
       show_social_media: user?.show_social_media !== false,
-      profile_picture: user?.profile_picture || null,
+      avatar_url: user?.avatar_url || null,
       preferred_currency: user?.preferred_currency || "USD",
       country: user?.country || "",
       timezone: user?.timezone || ""
@@ -243,7 +246,7 @@ export default function ProfilePage() {
   const removePicture = () => {
     setFormData(prev => ({
       ...prev,
-      profile_picture: null
+      avatar_url: null
     }))
     setPictureError("")
   }
@@ -311,9 +314,9 @@ export default function ProfilePage() {
                 {/* Enhanced Profile Picture */}
                 <div className="relative group">
                   <div className="w-32 h-32 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 transition-all duration-500 group-hover:scale-105 group-hover:shadow-3xl">
-                    {formData.profile_picture ? (
+                    {formData.avatar_url ? (
                       <img 
-                        src={formData.profile_picture} 
+                        src={formData.avatar_url} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                       />
@@ -478,6 +481,25 @@ export default function ProfilePage() {
                     />
                   ) : (
                     <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.first_name || "Not set"}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary" />
+                    Display Name
+                  </label>
+                  {editing ? (
+                    <input
+                      type="text"
+                      name="display_name"
+                      value={formData.display_name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      placeholder="How you want to be known in the community"
+                    />
+                  ) : (
+                    <p className="text-foreground py-3 px-4 bg-muted/30 rounded-xl">{user?.display_name || "Not set"}</p>
                   )}
                 </div>
                 
