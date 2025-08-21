@@ -6,7 +6,7 @@ import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
 import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
 import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
-import StationStats from '@/components/radio/StationStats'
+import { StationStats } from '@/components/radio/StationStats'
 
 export default function RadioManagementPage() {
   return (
