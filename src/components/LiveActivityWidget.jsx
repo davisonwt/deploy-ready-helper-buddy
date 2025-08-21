@@ -22,10 +22,10 @@ import { formatDistanceToNow } from 'date-fns'
 
 export default function LiveActivityWidget() {
   const { user } = useAuth()
-  const [isExpanded, setIsExpanded] = useState(true) // Start expanded by default
+  const [isExpanded, setIsExpanded] = useState(true) // Start expanded
   const [isVisible, setIsVisible] = useState(true)
   
-  console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible)
+  console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible, 'isExpanded?', isExpanded)
   const [liveData, setLiveData] = useState({
     radioHosts: [],
     groupCalls: [],
@@ -239,7 +239,7 @@ export default function LiveActivityWidget() {
         WIDGET ACTIVE
       </div>
       
-      <Card className="bg-background/98 backdrop-blur-md border-primary/60 shadow-2xl ring-4 ring-primary/30 ring-offset-2 animate-pulse">
+      <Card className="bg-background/98 backdrop-blur-md border-primary/60 shadow-2xl ring-4 ring-primary/30 ring-offset-2">
         {!user && (
           <div className="absolute -top-2 -right-2 z-10">
             <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse shadow-lg">
@@ -249,7 +249,10 @@ export default function LiveActivityWidget() {
         )}
         <CardHeader 
           className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            console.log('Header clicked, toggling expand from', isExpanded, 'to', !isExpanded)
+            setIsExpanded(!isExpanded)
+          }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
