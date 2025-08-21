@@ -24,6 +24,8 @@ export default function LiveActivityWidget() {
   const { user } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
+  
+  console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible)
   const [liveData, setLiveData] = useState({
     radioHosts: [],
     groupCalls: [],
