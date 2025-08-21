@@ -45,16 +45,23 @@ export function useFileUpload() {
         throw uploadError;
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      // Get signed URL for private bucket
+      const { data: urlData, error: urlError } = await supabase.storage
         .from(bucket)
-        .getPublicUrl(fileName)
+        .createSignedUrl(fileName, 3600) // 1 hour expiry
+
+      console.log('Signed URL response:', { urlData, error: urlError });
+
+      if (urlError) {
+        console.error('Failed to create signed URL:', urlError);
+        throw urlError;
+      }
 
       return {
         success: true,
         data: {
           path: data.path,
-          url: urlData.publicUrl,
+          url: urlData.signedUrl,
           fileName
         }
       }
