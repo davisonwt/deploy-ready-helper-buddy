@@ -151,6 +151,7 @@ export default function TimezoneSlotAssignment() {
 
       const userIds = roleData.map(r => r.user_id)
 
+      // First get profiles
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
@@ -164,18 +165,56 @@ export default function TimezoneSlotAssignment() {
         .in('user_id', userIds)
 
       if (profileError) throw profileError
+
+      // Then get or create DJ records with timezone info
+      const transformedData = []
+      for (const profile of profileData || []) {
+        // Check if DJ record exists
+        let djRecord = null
+        const { data: existingDJ } = await supabase
+          .from('radio_djs')
+          .select('timezone, country')
+          .eq('user_id', profile.user_id)
+          .single()
+
+        if (existingDJ) {
+          djRecord = existingDJ
+        } else {
+          // Create DJ record if it doesn't exist
+          const { data: newDJ } = await supabase
+            .from('radio_djs')
+            .insert([{
+              user_id: profile.user_id,
+              dj_name: profile.display_name || 
+                      `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
+                      'Radio Admin',
+              avatar_url: profile.avatar_url,
+              bio: 'Radio Admin',
+              dj_role: 'dj',
+              is_active: true,
+              timezone: 'America/New_York',
+              country: 'United States'
+            }])
+            .select('timezone, country')
+            .single()
+
+          djRecord = newDJ || { timezone: 'America/New_York', country: 'United States' }
+        }
+
+        transformedData.push({
+          id: profile.user_id,
+          user_id: profile.user_id,
+          dj_name: profile.display_name || 
+                   `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
+                   'Radio Admin',
+          avatar_url: profile.avatar_url,
+          is_active: true,
+          timezone: djRecord.timezone || 'America/New_York',
+          country: djRecord.country || 'United States'
+        })
+      }
       
-      const transformedData = profileData?.map(profile => ({
-        id: profile.user_id,
-        user_id: profile.user_id,
-        dj_name: profile.display_name || 
-                 `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 
-                 'Radio Admin',
-        avatar_url: profile.avatar_url,
-        is_active: true
-      })) || []
-      
-      console.log('Radio admins fetched:', transformedData)
+      console.log('Radio admins fetched with timezone info:', transformedData)
       setRadioAdmins(transformedData)
     } catch (err) {
       console.error('Error fetching radio admins:', err)
@@ -204,7 +243,9 @@ export default function TimezoneSlotAssignment() {
             dj_name,
             user_id,
             avatar_url,
-            bio
+            bio,
+            timezone,
+            country
           )
         `)
         .eq('time_slot_date', dateStr)
@@ -574,6 +615,10 @@ export default function TimezoneSlotAssignment() {
                           <div className="text-xs text-muted-foreground">
                             {item.assignment.radio_shows?.show_name}
                           </div>
+                          <div className="text-xs text-blue-600 flex items-center gap-1">
+                            <Globe className="h-3 w-3" />
+                            {item.assignment.radio_djs?.country} ({item.assignment.radio_djs?.timezone})
+                          </div>
                         </div>
                         <Badge 
                           variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'}
@@ -657,7 +702,13 @@ export default function TimezoneSlotAssignment() {
                           <AvatarImage src={admin.avatar_url} />
                           <AvatarFallback>{admin.dj_name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        {admin.dj_name}
+                        <div>
+                          <div className="font-medium">{admin.dj_name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Globe className="h-3 w-3" />
+                            {admin.country} ({admin.timezone})
+                          </div>
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
