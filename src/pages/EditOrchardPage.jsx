@@ -45,7 +45,6 @@ export default function EditOrchardPage() {
     expected_completion: '',
     seed_value: '',
     pocket_price: '',
-    total_pockets: '',
     number_of_pockets: '1',
     courier_cost: '0',
     features: '',
@@ -139,7 +138,6 @@ export default function EditOrchardPage() {
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
         pocket_price: orchardData.pocket_price || '',
-        total_pockets: orchardData.total_pockets || '',
         number_of_pockets: orchardData.number_of_pockets?.toString() || '1',
         courier_cost: orchardData.courier_cost?.toString() || '0',
         features: orchardData.features ? orchardData.features.join(', ') : '',
@@ -284,16 +282,18 @@ export default function EditOrchardPage() {
         }
       }
 
-      // Update orchard
+      // Update orchard - exclude total_pockets as it's a generated column
       const updateData = {
         ...formData,
-        total_pockets: formData.total_pockets ? parseInt(formData.total_pockets) : null,
         number_of_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : null,
         courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
         video_url: uploadedVideoUrl
       }
+      
+      // Remove total_pockets from update data since it's auto-calculated
+      delete updateData.total_pockets
 
       const result = await updateOrchard(orchardId, updateData)
 
@@ -614,20 +614,19 @@ export default function EditOrchardPage() {
                         />
                       </div>
 
-                      {/* Total Pockets */}
+                      {/* Total Pockets - Auto-calculated */}
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
-                          Total Pockets
+                          Total Pockets (Auto-calculated)
                         </label>
-                        <Input
-                          type="number"
-                          step="1"
-                          min="1"
-                          value={formData.total_pockets}
-                          onChange={(e) => handleInputChange('total_pockets', e.target.value)}
-                          placeholder="Enter total pockets"
-                          className="border-border focus:border-primary"
-                        />
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Calculated from Seed Value ÷ Pocket Price:</strong> {orchard?.total_pockets || 'N/A'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            This field is automatically calculated and cannot be edited directly
+                          </p>
+                        </div>
                       </div>
                     </div>
                     
@@ -635,7 +634,9 @@ export default function EditOrchardPage() {
                       <div className="mt-3 p-3 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground">
                           <strong>Auto-calculated Total Pockets:</strong> {Math.ceil(Number(formData.seed_value) / Number(formData.pocket_price))} 
-                          <span className="ml-2 text-xs">(You can override this with the Total Pockets field above)</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          This value is automatically calculated when you update the Seed Value or Pocket Price
                         </p>
                       </div>
                     )}
