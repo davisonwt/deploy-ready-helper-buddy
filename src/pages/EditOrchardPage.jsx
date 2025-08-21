@@ -290,14 +290,13 @@ export default function EditOrchardPage() {
         }
       }
 
-      // Update orchard - map form fields to database fields
+      // Update orchard - exclude total_pockets as it's managed by the database
       const updateData = {
         ...formData,
         courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
-        video_url: uploadedVideoUrl,
-        total_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : 1
+        video_url: uploadedVideoUrl
       }
       
       // Remove the form-only field since it doesn't exist in the database
