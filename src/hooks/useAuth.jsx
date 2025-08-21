@@ -80,17 +80,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('🔐 Attempting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
+      console.log('🔐 Login response:', { data: !!data, error: error?.message });
+      
       if (error) {
+        console.error('🚨 Login error:', error);
         return { success: false, error: error.message };
       }
       
+      console.log('✅ Login successful for user:', data.user?.id);
       return { success: true, user: data.user };
     } catch (error) {
+      console.error('🚨 Login exception:', error);
       return { success: false, error: error.message };
     }
   }
