@@ -20,35 +20,24 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
-      // First try a simple direct query
-      console.log('🔑 Testing direct query to user_roles table...')
-      const { data: testData, error: testError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .limit(1)
-
-      console.log('🔑 Direct query test result:', { testData, testError })
-
-      // Check if user can see their own roles by email
-      console.log('🔑 Testing query with current auth user...')
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      console.log('🔑 Current auth user:', { id: currentUser?.id, email: currentUser?.email })
-
-      // Now try the actual user-specific query
-      const { data, error: fetchError } = await supabase
+      // Force the query and log everything
+      const { data, error: fetchError, status, statusText } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
 
-      console.log('🔑 fetchUserRoles: Response:', { data, error: fetchError, userId: user.id })
+      console.log('🔑 fetchUserRoles: Raw response:', { data, error: fetchError, status, statusText, userId: user.id })
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        console.error('🔑 fetchUserRoles: Supabase error:', fetchError)
+        throw fetchError
+      }
 
       const roles = data?.map(r => r.role) || []
-      console.log('🔑 fetchUserRoles: Setting roles:', roles)
+      console.log('🔑 fetchUserRoles: Final roles:', roles)
       setUserRoles(roles)
     } catch (err) {
-      console.error('🔑 fetchUserRoles: Error fetching user roles:', err)
+      console.error('🔑 fetchUserRoles: Catch block error:', err)
       setError(err.message)
     } finally {
       setLoading(false)
