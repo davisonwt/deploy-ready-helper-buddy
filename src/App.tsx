@@ -49,7 +49,6 @@ import GroveStationPage from "./pages/GroveStationPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
-import { ProfileRedirect } from "./components/ProfileRedirect";
 
 const queryClient = new QueryClient();
 
