@@ -17,10 +17,13 @@ import {
   Plus,
   Eye,
   Calendar,
-  User
+  User,
+  Globe,
+  Clock
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import { WalletWidget } from '@/components/WalletWidget'
+import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
 import { supabase } from "@/integrations/supabase/client"
 
 export default function DashboardPage() {
@@ -303,10 +306,33 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Wallet Widget */}
-            <div className="lg:col-span-1">
-              <WalletWidget />
-            </div>
+            {/* Global Timezone Support */}
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center" style={{ 
+                  color: 'hsl(200, 100%, 40%)', 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                }}>
+                  <Globe className="h-5 w-5 mr-2 text-blue-600" />
+                  Global Time Zones
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LiveTimezoneDisplay />
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <Link to="/grove-station">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="w-full text-blue-600 border-blue-200 hover:bg-blue-100"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      View Radio Schedule
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
             
             {/* My Orchards */}
             <Card className="lg:col-span-2 bg-white/80 border-white/40 shadow-xl">
