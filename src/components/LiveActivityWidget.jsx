@@ -250,22 +250,43 @@ export default function LiveActivityWidget() {
                          (liveData.aodHereticFrequencies?.isLive ? 1 : 0)
 
   return (
-    <div className="fixed bottom-6 right-6 z-[99999] w-80 max-w-[calc(100vw-3rem)] pointer-events-auto">
+    <div 
+      className="fixed bottom-6 right-6 w-80 max-w-[calc(100vw-3rem)] pointer-events-auto" 
+      style={{ 
+        zIndex: 2147483647, // Maximum safe z-index value
+        position: 'fixed',
+        isolation: 'isolate'
+      }}
+    >
       {/* Debug indicator */}
-      <div className="absolute -top-10 right-0 bg-red-500 text-white text-xs px-2 py-1 rounded z-[100000]">
-        WIDGET ACTIVE
+      <div 
+        className="absolute -top-10 right-0 bg-red-500 text-white text-xs px-2 py-1 rounded pointer-events-auto"
+        style={{ zIndex: 2147483647 }}
+      >
+        WIDGET ACTIVE - TOP LAYER
       </div>
       
-      <Card className="bg-background border-primary/60 shadow-2xl ring-2 ring-primary/30 ring-offset-2 relative z-[99999] pointer-events-auto">
+      <Card 
+        className="bg-white dark:bg-gray-900 border-primary/60 shadow-2xl ring-2 ring-primary/30 ring-offset-2 relative pointer-events-auto"
+        style={{ 
+          zIndex: 2147483647,
+          position: 'relative',
+          isolation: 'isolate'
+        }}
+      >
         {!user && (
-          <div className="absolute -top-2 -right-2 z-[100001] pointer-events-none">
+          <div 
+            className="absolute -top-2 -right-2 pointer-events-none"
+            style={{ zIndex: 2147483647 }}
+          >
             <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse shadow-lg">
               🔴 LIVE NOW
             </div>
           </div>
         )}
         <CardHeader 
-          className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 relative z-[99999] pointer-events-auto"
+          className="pb-3 cursor-pointer bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-primary/20 relative pointer-events-auto hover:bg-primary/5 transition-colors"
+          style={{ zIndex: 2147483647 }}
           onClick={() => {
             console.log('Header clicked, toggling expand from', isExpanded, 'to', !isExpanded)
             setIsExpanded(!isExpanded)
@@ -306,7 +327,10 @@ export default function LiveActivityWidget() {
         </CardHeader>
 
         {isExpanded && (
-          <CardContent className="pt-0 max-h-96 overflow-y-auto space-y-4 relative z-[99999] pointer-events-auto">
+          <CardContent 
+            className="pt-0 max-h-96 overflow-y-auto space-y-4 relative pointer-events-auto bg-white dark:bg-gray-900"
+            style={{ zIndex: 2147483647 }}
+          >
             {loading ? (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
