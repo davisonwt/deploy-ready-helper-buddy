@@ -19,6 +19,34 @@ const ChatMessage = ({ message, isOwn = false }) => {
   const sender = message.sender_profile;
   const FileIcon = getFileIcon(message.file_type);
   
+  // Generate a consistent pastel color for each user based on their ID
+  const getPastelColor = (userId) => {
+    if (!userId) return { bg: 'bg-gray-200', text: 'text-gray-800', border: 'border-gray-300' };
+    
+    const colors = [
+      { bg: 'bg-rose-200', text: 'text-rose-900', border: 'border-rose-300' },
+      { bg: 'bg-blue-200', text: 'text-blue-900', border: 'border-blue-300' },
+      { bg: 'bg-green-200', text: 'text-green-900', border: 'border-green-300' },
+      { bg: 'bg-purple-200', text: 'text-purple-900', border: 'border-purple-300' },
+      { bg: 'bg-yellow-200', text: 'text-yellow-900', border: 'border-yellow-300' },
+      { bg: 'bg-pink-200', text: 'text-pink-900', border: 'border-pink-300' },
+      { bg: 'bg-indigo-200', text: 'text-indigo-900', border: 'border-indigo-300' },
+      { bg: 'bg-teal-200', text: 'text-teal-900', border: 'border-teal-300' },
+      { bg: 'bg-orange-200', text: 'text-orange-900', border: 'border-orange-300' },
+      { bg: 'bg-cyan-200', text: 'text-cyan-900', border: 'border-cyan-300' },
+    ];
+    
+    // Create a simple hash from the user ID to get consistent colors
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % colors.length;
+    return colors[colorIndex];
+  };
+
+  const userColor = getPastelColor(message.sender_id);
+  
   const getSenderName = () => {
     if (!sender) return 'Unknown User';
     return sender.display_name || 
@@ -39,7 +67,7 @@ const ChatMessage = ({ message, isOwn = false }) => {
       
       <div className={`flex-1 max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-sm font-bold text-gray-800 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full border border-white/50 shadow-lg">
+          <span className={`text-sm font-bold px-3 py-1 rounded-full border backdrop-blur-md shadow-lg ${userColor.bg} ${userColor.text} ${userColor.border}`}>
             {getSenderName()}
           </span>
           <span className="text-xs text-gray-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 shadow-md">
@@ -53,11 +81,7 @@ const ChatMessage = ({ message, isOwn = false }) => {
         </div>
         
         <div 
-          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-md ${
-            isOwn 
-              ? 'bg-blue-600/95 text-white shadow-xl border border-blue-500/30' 
-              : 'bg-white/95 text-gray-800 shadow-xl border border-white/50'
-          }`}
+          className={`rounded-lg px-3 py-2 max-w-full backdrop-blur-md shadow-xl border ${userColor.bg} ${userColor.text} ${userColor.border}`}
         >
           {message.content && (
             <p className="text-sm whitespace-pre-wrap break-words">
