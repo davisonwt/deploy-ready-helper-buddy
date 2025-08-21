@@ -19,7 +19,10 @@ import {
   MessageSquare,
   TrendingUp,
   Headphones,
-  Globe
+  Globe,
+  Music,
+  ListMusic,
+  Zap
 } from 'lucide-react'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import { ScheduleShowForm } from '@/components/radio/ScheduleShowForm'
@@ -29,6 +32,9 @@ import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
 import { StationStats } from '@/components/radio/StationStats'
 import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
 import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
+import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
+import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
+import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
 
 export default function GroveStationPage() {
   const {
@@ -359,73 +365,108 @@ export default function GroveStationPage() {
                     onEndShow={() => setShowLiveInterface(false)}
                   />
                 ) : (
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Your Profile</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src={userDJProfile?.avatar_url} />
-                            <AvatarFallback>
-                              <Mic className="h-6 w-6" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold">{userDJProfile?.dj_name}</h3>
-                            <Badge variant="outline">{userDJProfile?.dj_role}</Badge>
-                          </div>
-                        </div>
-                        <Separator />
-                        <div className="grid grid-cols-2 gap-4 text-center">
-                          <div>
-                            <div className="text-2xl font-bold text-primary">
-                              {userDJProfile?.total_hours_hosted || 0}
-                            </div>
-                            <div className="text-xs text-muted-foreground">Hours Hosted</div>
-                          </div>
-                          <div>
-                            <div className="text-2xl font-bold text-primary">
-                              {userDJProfile?.rating || 5.0}
-                            </div>
-                            <div className="text-xs text-muted-foreground">Rating</div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <Tabs defaultValue="profile" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="profile">
+                        <Mic className="h-4 w-4 mr-2" />
+                        Profile
+                      </TabsTrigger>
+                      <TabsTrigger value="music">
+                        <Music className="h-4 w-4 mr-2" />
+                        Music Library
+                      </TabsTrigger>
+                      <TabsTrigger value="playlists">
+                        <ListMusic className="h-4 w-4 mr-2" />
+                        Playlists
+                      </TabsTrigger>
+                      <TabsTrigger value="automation">
+                        <Zap className="h-4 w-4 mr-2" />
+                        Automation
+                      </TabsTrigger>
+                    </TabsList>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Button 
-                          onClick={() => setShowScheduleForm(true)}
-                          className="w-full justify-start"
-                          variant="outline"
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Schedule New Show
-                        </Button>
-                        <Button 
-                          disabled={!canGoLive}
-                          onClick={handleGoLive}
-                          className="w-full justify-start"
-                        >
-                          <Mic className="h-4 w-4 mr-2" />
-                          {canGoLive ? "Go Live Now" : "No Scheduled Shows"}
-                        </Button>
-                        <Button 
-                          variant="ghost"
-                          className="w-full justify-start"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          View Feedback
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
+                    <TabsContent value="profile" className="space-y-6">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Your Profile</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <Avatar className="h-16 w-16">
+                                <AvatarImage src={userDJProfile?.avatar_url} />
+                                <AvatarFallback>
+                                  <Mic className="h-6 w-6" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-semibold">{userDJProfile?.dj_name}</h3>
+                                <Badge variant="outline">{userDJProfile?.dj_role}</Badge>
+                              </div>
+                            </div>
+                            <Separator />
+                            <div className="grid grid-cols-2 gap-4 text-center">
+                              <div>
+                                <div className="text-2xl font-bold text-primary">
+                                  {userDJProfile?.total_hours_hosted || 0}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Hours Hosted</div>
+                              </div>
+                              <div>
+                                <div className="text-2xl font-bold text-primary">
+                                  {userDJProfile?.rating || 5.0}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Rating</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <Button 
+                              onClick={() => setShowScheduleForm(true)}
+                              className="w-full justify-start"
+                              variant="outline"
+                            >
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Schedule New Show
+                            </Button>
+                            <Button 
+                              disabled={!canGoLive}
+                              onClick={handleGoLive}
+                              className="w-full justify-start"
+                            >
+                              <Mic className="h-4 w-4 mr-2" />
+                              {canGoLive ? "Go Live Now" : "No Scheduled Shows"}
+                            </Button>
+                            <Button 
+                              variant="ghost"
+                              className="w-full justify-start"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              View Feedback
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="music">
+                      <DJMusicLibrary />
+                    </TabsContent>
+
+                    <TabsContent value="playlists">
+                      <DJPlaylistManager />
+                    </TabsContent>
+
+                    <TabsContent value="automation">
+                      <AutomatedSessionScheduler />
+                    </TabsContent>
+                  </Tabs>
                 )}
               </div>
             ) : (
