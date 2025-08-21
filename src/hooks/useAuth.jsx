@@ -42,15 +42,17 @@ export const AuthProvider = ({ children }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state change:', event, !!session)
+        console.log('🔐 Auth state change:', event, !!session, 'UserID:', session?.user?.id)
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
         
         // Defer profile fetching to avoid deadlock
         if (session?.user) {
+          console.log('🔐 Fetching profile for user:', session.user.id)
           setTimeout(() => {
             fetchUserProfile(session.user).then(fullUser => {
+              console.log('🔐 Profile fetched for user:', fullUser?.id)
               setUser(fullUser)
             })
           }, 0)
@@ -60,15 +62,17 @@ export const AuthProvider = ({ children }) => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔍 Initial session check:', !!session)
+      console.log('🔍 Initial session check:', !!session, 'UserID:', session?.user?.id)
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
       
       // Defer profile fetching for initial session too
       if (session?.user) {
+        console.log('🔍 Initial profile fetch for user:', session.user.id)
         setTimeout(() => {
           fetchUserProfile(session.user).then(fullUser => {
+            console.log('🔍 Initial profile loaded for user:', fullUser?.id)
             setUser(fullUser)
           })
         }, 0)
