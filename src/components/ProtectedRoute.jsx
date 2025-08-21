@@ -5,28 +5,10 @@ import { useRoles } from "../hooks/useRoles"
 
 export default function ProtectedRoute({ children, allowedRoles = null }) {
   try {
-    const { isAuthenticated, loading: authLoading, user } = useAuth()
+    const { isAuthenticated, loading: authLoading } = useAuth()
     const { hasRole, loading: rolesLoading } = useRoles()
     
-    // EMERGENCY: Always allow access for specific admin user
-    const isKnownAdmin = user?.id === '04754d57-d41d-4ea7-93df-542047a6785b'
-    
-    console.log('🛡️ ProtectedRoute check:', {
-      user: user?.id,
-      allowedRoles,
-      isKnownAdmin,
-      authLoading,
-      rolesLoading,
-      pathname: window.location.pathname
-    })
-    
-    // FORCE ALLOW ADMIN DASHBOARD FOR KNOWN USER
-    if (isKnownAdmin && window.location.pathname === '/admin/dashboard') {
-      console.log('🚨 FORCING ADMIN DASHBOARD ACCESS FOR KNOWN USER')
-      return children
-    }
-    
-    // Show loading while auth is loading (but skip role loading for known admin)
+    // Show loading while auth is loading
     if (authLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
@@ -39,18 +21,19 @@ export default function ProtectedRoute({ children, allowedRoles = null }) {
       return <Navigate to="/login" replace />
     }
     
-    // EMERGENCY: Always allow known admin user regardless of role check
-    if (isKnownAdmin) {
-      console.log('🚨 ADMIN USER BYPASSING ALL ROLE CHECKS')
-      return children
-    }
-    
-    // Check roles for other users only if roles are loaded
-    if (allowedRoles && allowedRoles.length > 0 && !rolesLoading) {
+    // Check roles if specified and roles are loaded
+    if (allowedRoles && allowedRoles.length > 0) {
+      if (rolesLoading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        )
+      }
+      
       const hasRequiredRole = allowedRoles.some(role => hasRole(role))
       
       if (!hasRequiredRole) {
-        console.log('🚨 Access denied - user lacks required roles:', allowedRoles)
         return <Navigate to="/dashboard" replace />
       }
     }
