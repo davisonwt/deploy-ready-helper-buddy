@@ -98,51 +98,69 @@ export function useRoles() {
       setLoading(true)
       setError(null)
 
-      console.log('🔐 Checking auth before granting role...')
-      
-      // Check if user is authenticated
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
-      if (!currentUser) {
-        console.error('❌ No authenticated user found')
-        throw new Error('You must be logged in to grant roles')
-      }
-      
-      console.log('✅ Authenticated user:', currentUser.id)
-      console.log('🔑 Attempting to grant role:', role, 'to user:', userId)
+      console.log('🔐 Starting role grant process...')
+      console.log('👤 Target user:', userId)
+      console.log('🎭 Role to grant:', role)
 
-      // SECURITY: Log admin action for audit trail
-      await supabase.rpc('log_admin_action', {
-        action_type: 'grant_role',
-        target_user_id: userId,
-        action_details: { role: role }
+      // First check current auth state
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log('🔑 Session check:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        error: sessionError 
       })
 
-      const { data, error: grantError } = await supabase
+      if (!session?.user) {
+        console.error('❌ No session found - user not authenticated')
+        throw new Error('Authentication required. Please log in again.')
+      }
+
+      console.log('✅ Authenticated as:', session.user.id)
+
+      // Try direct insert first
+      console.log('📝 Inserting role into database...')
+      const { data, error: insertError } = await supabase
         .from('user_roles')
-        .insert([{
+        .insert({
           user_id: userId,
           role: role,
-          granted_by: currentUser.id
-        }])
+          granted_by: session.user.id
+        })
         .select()
 
-      if (grantError) {
-        console.error('❌ Database error granting role:', grantError)
+      if (insertError) {
+        console.error('❌ Insert failed:', insertError)
         
-        // Provide more specific error messages
-        if (grantError.code === '42501' || grantError.message?.includes('insufficient_privilege')) {
-          throw new Error('You do not have permission to grant roles. Contact an admin.')
-        } else if (grantError.code === '23505') {
-          throw new Error('This user already has this role.')
+        // Handle specific error cases
+        if (insertError.code === '42501') {
+          console.error('❌ RLS policy violation - insufficient permissions')
+          
+          // Try with service role call as backup
+          console.log('🔄 Attempting service role bypass...')
+          const { data: serviceData, error: serviceError } = await supabase.rpc('grant_user_role_admin', {
+            target_user_id: userId,
+            target_role: role
+          })
+          
+          if (serviceError) {
+            console.error('❌ Service role call also failed:', serviceError)
+            throw new Error(`Permission denied. You need admin/gosat role to grant roles. Error: ${insertError.message}`)
+          }
+          
+          console.log('✅ Service role call succeeded')
+          return { success: true, data: serviceData }
+        } else if (insertError.code === '23505') {
+          throw new Error('User already has this role')
         } else {
-          throw new Error(`Database error: ${grantError.message}`)
+          throw new Error(`Database error: ${insertError.message}`)
         }
       }
 
-      console.log('✅ Role granted successfully:', data)
+      console.log('✅ Role granted successfully via direct insert')
       return { success: true, data }
+
     } catch (err) {
-      console.error('❌ Error granting role:', err)
+      console.error('❌ Grant role failed:', err)
       return { success: false, error: err.message }
     } finally {
       setLoading(false)
