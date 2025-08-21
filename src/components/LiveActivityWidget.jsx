@@ -155,7 +155,7 @@ export default function LiveActivityWidget() {
         hostAvatar: "/aod-heretic-avatar.png",
         isLive: Math.random() > 0.5, // Simulate live/offline status
         listeners: Math.floor(Math.random() * 150) + 25, // 25-175 listeners
-        frequency: "666.6 MHz",
+        frequency: "777.7 MHz",
         description: "Unconventional wisdom and alternative perspectives",
         startedAt: new Date(Date.now() - Math.floor(Math.random() * 3600000)), // Random time in last hour
         topic: "Breaking the Matrix of Conventional Thinking"
