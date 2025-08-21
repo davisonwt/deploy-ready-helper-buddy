@@ -27,7 +27,7 @@ import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
 import { supabase } from "@/integrations/supabase/client"
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { orchards, loading: orchardsLoading, fetchOrchards } = useOrchards()
   const { getUserBestowals, loading: bestowalsLoading } = useBestowals()
   const [userOrchards, setUserOrchards] = useState([])
@@ -40,10 +40,12 @@ export default function DashboardPage() {
     totalSupported: 0
   })
   const [activeUsers, setActiveUsers] = useState(0)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
+      setError(null)
       
       // Fetch user profile
       const fetchProfile = async () => {
@@ -54,28 +56,29 @@ export default function DashboardPage() {
             .eq('user_id', user.id)
             .single()
           
-          if (error) {
+          if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
             console.error('❌ Dashboard: Error fetching profile:', error)
+            setError('Failed to load profile')
           } else {
             setProfile(data)
+            console.log('✅ Dashboard: Profile loaded')
           }
         } catch (error) {
           console.error('❌ Dashboard: Error fetching profile:', error)
+          setError('Failed to load profile')
         }
       }
-      fetchProfile()
       
       // Fetch all orchards first (the hook doesn't support user filtering)
-      fetchOrchards()
-        .then(() => {
+      const fetchData = async () => {
+        try {
+          await fetchOrchards()
           console.log('✅ Dashboard: Orchards fetched successfully')
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error('❌ Dashboard: Error fetching orchards:', error)
-        })
-      
-      // Fetch active users count
-      fetchActiveUsers()
+          setError('Failed to load orchards')
+        }
+      }
       
       // Fetch user's bestowals
       const fetchUserBestowals = async () => {
@@ -94,9 +97,19 @@ export default function DashboardPage() {
           setUserBestowals([])
         }
       }
-      fetchUserBestowals()
+      
+      // Execute all data fetching
+      Promise.all([
+        fetchProfile(),
+        fetchData(),
+        fetchActiveUsers(),
+        fetchUserBestowals()
+      ]).catch(err => {
+        console.error('❌ Dashboard: Error in data fetching:', err)
+        setError('Failed to load dashboard data')
+      })
     }
-  }, [user])
+  }, [user, authLoading])
 
   const fetchActiveUsers = async () => {
     try {
@@ -169,12 +182,27 @@ export default function DashboardPage() {
     return Math.round((orchard.filled_pockets / orchard.total_pockets) * 100)
   }
 
-  if (orchardsLoading || bestowalsLoading) {
-    console.log('🔄 Dashboard: Loading state - orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
+  // Show loading screen while auth is loading or data is loading
+  if (authLoading || orchardsLoading || bestowalsLoading) {
+    console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="ml-4 text-gray-600">Loading your dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
       </div>
     )
   }

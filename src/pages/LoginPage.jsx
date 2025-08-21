@@ -68,7 +68,11 @@ export default function LoginPage() {
       const result = await login(email, password)
       
       if (result.success) {
-        navigate("/dashboard")
+        console.log('✅ Login successful, navigating to dashboard...')
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true })
+        }, 100)
       } else {
         setError(result.error || "Login failed")
       }
