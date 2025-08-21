@@ -155,7 +155,12 @@ export function useRoles() {
   }
 
   useEffect(() => {
-    console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id })
+    console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id, userEmail: user?.email })
+    if (!user) {
+      console.log('🔑 useRoles: No user found, skipping fetchUserRoles')
+      return
+    }
+    console.log('🔑 useRoles: User found, calling fetchUserRoles')
     fetchUserRoles()
   }, [user])
 
