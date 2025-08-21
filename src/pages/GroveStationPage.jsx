@@ -254,7 +254,13 @@ export default function GroveStationPage() {
             <RadioScheduleGrid schedule={schedule} />
             
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-4">Global Personnel Assignment</h3>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Global Personnel Assignment (Multi-Timezone Support)
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Schedule radio shows across different time zones. Times are automatically converted to show local time for each region.
+              </p>
               <TimezoneSlotAssignment />
             </div>
           </TabsContent>
