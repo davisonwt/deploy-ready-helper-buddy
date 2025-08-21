@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { 
@@ -13,6 +13,7 @@ import {
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
 import { AdminButton } from "../components/AdminButton";
+import { useAuth } from "../hooks/useAuth";
 
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
@@ -22,6 +23,35 @@ import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 
 function IndexContent() {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const { isAuthenticated, loading } = useAuth()
+  const navigate = useNavigate()
+  
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    console.log('🏠 Index: Auth state changed:', { isAuthenticated, loading })
+    if (!loading && isAuthenticated) {
+      console.log('🏠 Index: Redirecting authenticated user to dashboard')
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, loading, navigate])
+  
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  
+  // Don't render the landing page if user is authenticated (they're being redirected)
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
   
   const { 
     showOnboarding, 
