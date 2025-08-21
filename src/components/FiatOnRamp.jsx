@@ -61,14 +61,27 @@ export function FiatOnRamp({ requiredAmount = null, onSuccess = null }) {
 
     switch (provider.id) {
       case 'moonpay':
-        onRampUrl = `https://buy.moonpay.com?apiKey=pk_live_Y1xq7Kzq7K7q7Kzq7K7q7Kzq7K7q7K&currencyCode=USDC&walletAddress=${walletAddress}&baseCurrencyAmount=${amount}&baseCurrencyCode=USD&redirectURL=${encodeURIComponent(window.location.href)}`;
-        break;
+        // SECURITY: Remove hardcoded API keys - these providers require proper backend integration
+        toast({
+          title: "Provider Configuration Required",
+          description: "This provider requires proper API key configuration. Please contact support.",
+          variant: "destructive"
+        });
+        return;
       case 'ramp':
-        onRampUrl = `https://widget.ramp.network/?hostApiKey=your_api_key&swapAsset=SOLANA_USDC&userAddress=${walletAddress}&purchaseAmount=${amount}&fiatCurrency=USD&finalUrl=${encodeURIComponent(window.location.href)}`;
-        break;
+        toast({
+          title: "Provider Configuration Required", 
+          description: "This provider requires proper API key configuration. Please contact support.",
+          variant: "destructive"
+        });
+        return;
       case 'mercuryo':
-        onRampUrl = `https://widget.mercuryo.io/?widget_id=your_widget_id&type=buy&currency=USDC&fiat_currency=USD&amount=${amount}&address=${walletAddress}&return_url=${encodeURIComponent(window.location.href)}`;
-        break;
+        toast({
+          title: "Provider Configuration Required",
+          description: "This provider requires proper API key configuration. Please contact support.",
+          variant: "destructive"
+        });
+        return;
       default:
         toast({
           title: "Provider Unavailable",
