@@ -26,7 +26,7 @@ export default function YhvhOrchardsPage() {
   console.log('🌳 YhvhOrchardsPage: Component loaded', {
     user: !!user,
     userId: user?.id,
-    isAdminOrGosat: isAdminOrGosat(),
+    isAdminOrGosat: isAdminOrGosat,
     userRoles
   });
 
@@ -166,7 +166,7 @@ export default function YhvhOrchardsPage() {
         </div>
 
         {/* Gosat Management Info */}
-        {isAdminOrGosat() && (
+        {isAdminOrGosat && (
           <div className="mb-8 p-6 bg-white/90 rounded-2xl border border-white/50 shadow-lg backdrop-blur-sm">
             <div className="flex items-center space-x-3 mb-4">
               <Settings className="h-6 w-6 text-blue-600" />
@@ -267,7 +267,7 @@ export default function YhvhOrchardsPage() {
                     </Button>
                     
                     {/* Owner Actions and Gosat Management */}
-                    {user && (orchard.user_id === user.id || isAdminOrGosat()) && (
+                    {user && (orchard.user_id === user.id || isAdminOrGosat) && (
                       <div className="flex gap-2 pt-2 border-t border-border mt-2">
                          <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
                            <Button 
