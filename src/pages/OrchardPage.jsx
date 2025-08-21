@@ -82,10 +82,10 @@ const OrchardPage = () => {
       }
     };
 
-    if (orchardId) {
+    if (orchardId && user) {
       loadOrchard();
     }
-  }, [orchardId, fetchOrchardById, user, navigate]);
+  }, [orchardId, user?.id, navigate]);
 
   const getCompletionPercentage = (orchard) => {
     const totalPockets = orchard.total_pockets || orchard.intended_pockets || 1;
