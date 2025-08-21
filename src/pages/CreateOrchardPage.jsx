@@ -318,7 +318,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         pocketPrice
       })
 
-      // Prepare orchard data
+      // Prepare orchard data - exclude total_pockets as it's managed by the database
       const orchardData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -330,7 +330,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
         pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
-        total_pockets: calculatedPockets, // Add calculated total pockets to database
+        // Note: total_pockets is excluded as it's managed by the database
         location: formData.location?.trim() || "",
         currency: "USDC",
         why_needed: formData.why_needed?.trim() || "",
