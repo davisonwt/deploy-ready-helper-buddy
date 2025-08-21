@@ -19,7 +19,9 @@ export default function RegisterPage() {
     lastName: "",
     location: "",
     phone: "",
-    currency: "USD"
+    currency: "USD",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    country: ""
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -63,7 +65,9 @@ export default function RegisterPage() {
         last_name: formData.lastName,
         location: formData.location,
         phone: formData.phone,
-        currency: formData.currency
+        currency: formData.currency,
+        timezone: formData.timezone,
+        country: formData.location
       })
       
       if (result.success) {
@@ -277,7 +281,7 @@ export default function RegisterPage() {
                   <label htmlFor="location" className="text-sm font-semibold text-amber-700">
                     Country <span className="text-amber-500 font-normal">(Optional)</span>
                   </label>
-                  <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value})}>
+                  <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value, country: value})}>
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
@@ -299,10 +303,20 @@ export default function RegisterPage() {
                 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-indigo-700">
-                    Preferred Currency
+                    Timezone <span className="text-indigo-500 font-normal">(Auto-detected)</span>
                   </label>
-                  <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                    <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                  <div className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl text-light-beige text-center text-sm">
+                    🌍 {formData.timezone} ({new Date().toLocaleTimeString()})
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-purple-700">
+                  Preferred Currency
+                </label>
+                <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
+                  <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">

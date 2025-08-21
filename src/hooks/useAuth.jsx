@@ -69,7 +69,9 @@ export const AuthProvider = ({ children }) => {
             last_name: userData.last_name,
             phone: userData.phone,
             location: userData.location,
-            preferred_currency: userData.currency
+            preferred_currency: userData.currency,
+            timezone: userData.timezone,
+            country: userData.country
           }
         }
       })
