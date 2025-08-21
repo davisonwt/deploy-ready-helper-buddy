@@ -282,10 +282,9 @@ export default function EditOrchardPage() {
         }
       }
 
-      // Update orchard - map form fields to database columns
+      // Update orchard - exclude total_pockets as it's managed by the database
       const updateData = {
         ...formData,
-        total_pockets: formData.number_of_pockets ? parseInt(formData.number_of_pockets) : null, // Map number_of_pockets from form to total_pockets in DB
         courier_cost: formData.courier_cost ? parseFloat(formData.courier_cost) : 0,
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: uploadedImages,
