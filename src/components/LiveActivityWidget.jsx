@@ -289,7 +289,7 @@ export default function LiveActivityWidget() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isExpanded ? <ChevronDown className="h-5 w-5 text-primary" /> : <ChevronUp className="h-5 w-5 text-primary" />}
+              {isExpanded ? <ChevronUp className="h-5 w-5 text-primary" /> : <ChevronDown className="h-5 w-5 text-primary" />}
               <Button
                 variant="ghost"
                 size="sm"
