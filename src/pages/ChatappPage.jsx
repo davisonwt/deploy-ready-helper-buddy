@@ -420,7 +420,9 @@ const ChatappPage = () => {
               <Button 
                 onClick={() => {
                   console.log('🎯 Direct Chat button clicked!');
+                  console.log('Current showUserSelector state:', showUserSelector);
                   setShowUserSelector(!showUserSelector);
+                  console.log('New showUserSelector state:', !showUserSelector);
                 }} 
                 style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
                 className="gap-2 hover:shadow-lg transition-all duration-300"
