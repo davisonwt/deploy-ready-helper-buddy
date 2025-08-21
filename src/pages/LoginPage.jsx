@@ -188,9 +188,7 @@ export default function LoginPage() {
             </Badge>
           </CardHeader>
           
-        <div className="console-log-debug bg-red-100 p-4 text-xs">
-          Auth Debug: {JSON.stringify({ isAuthenticated, loading })}
-        </div>
+          <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 animate-fade-in">
