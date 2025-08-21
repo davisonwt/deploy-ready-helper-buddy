@@ -16,7 +16,9 @@ import {
   Edit,
   Trash2,
   Radio,
-  MessageSquare
+  MessageSquare,
+  Globe,
+  MapPin
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -238,9 +240,11 @@ export default function PersonnelSlotAssignment() {
             user_id: selectedAdmin,
             dj_name: adminData.dj_name,
             avatar_url: adminData.avatar_url,
-            bio: 'Radio Admin',
+            bio: `Radio Admin from ${adminData.location}, ${adminData.country}`,
             dj_role: 'dj',
-            is_active: true
+            is_active: true,
+            timezone: adminData.timezone,
+            country: adminData.country
           }])
           .select()
           .single()
@@ -262,7 +266,7 @@ export default function PersonnelSlotAssignment() {
         .insert([{
           dj_id: djId,
           show_name: `${adminData.dj_name}'s Show`,
-          description: `2-hour show hosted by ${adminData.dj_name}`,
+          description: `2-hour show hosted by ${adminData.dj_name} from ${adminData.location}, ${adminData.country}`,
           category: 'talk',
           subject: 'General Broadcasting',
           topic_description: 'Live radio broadcasting'
@@ -288,7 +292,7 @@ export default function PersonnelSlotAssignment() {
 
       if (scheduleError) throw scheduleError
 
-      toast.success(`${adminData.dj_name} assigned to ${selectedSlot.displayTime} slot`)
+      toast.success(`${adminData.dj_name} assigned to ${selectedSlot.displayTime} slot (Local time: ${getLocalTime(adminData.timezone, selectedSlot.startHour)})`)
       setShowAssignDialog(false)
       setSelectedSlot(null)
       setSelectedAdmin('')
@@ -366,6 +370,49 @@ export default function PersonnelSlotAssignment() {
     }
   }
 
+  // Helper function to get local time for a specific timezone and hour
+  const getLocalTime = (timezone, hour) => {
+    try {
+      const date = new Date()
+      date.setHours(hour, 0, 0, 0)
+      return date.toLocaleTimeString('en-US', { 
+        timeZone: timezone, 
+        hour12: true, 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    } catch (error) {
+      return 'Unknown'
+    }
+  }
+
+  // Helper function to get current local time
+  const getCurrentLocalTime = (timezone) => {
+    try {
+      const now = new Date()
+      return now.toLocaleTimeString('en-US', { 
+        timeZone: timezone, 
+        hour12: true, 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    } catch (error) {
+      return 'Unknown'
+    }
+  }
+
+  // Helper function to determine if it's night time in a timezone
+  const isNightTime = (timezone) => {
+    try {
+      const now = new Date()
+      const localTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}))
+      const hours = localTime.getHours()
+      return hours < 6 || hours > 22 // Night time: 10 PM to 6 AM
+    } catch {
+      return false
+    }
+  }
+
   if (loading) {
     return (
       <Card>
@@ -389,12 +436,13 @@ export default function PersonnelSlotAssignment() {
             <div className="flex-1">
               <h3 className="font-semibold text-lg text-blue-900">Radio Personnel Slot Assignment</h3>
               <p className="text-blue-700 text-sm">
-                Assign radio admins to 2-hour time slots (12 slots per day). Send automated shift reminders via chat messages.
+                Assign radio admins to 2-hour time slots based on their location and timezone for 24-hour global coverage.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
       {/* Date Selector */}
       <Card>
         <CardHeader>
@@ -498,47 +546,69 @@ export default function PersonnelSlotAssignment() {
                   </div>
 
                   {item.isEmpty ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm">No personnel assigned</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">No assignment</p>
+                        <p className="text-xs text-muted-foreground">Slot available</p>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-10 w-10">
                         <AvatarImage src={item.assignment.radio_djs?.avatar_url} />
                         <AvatarFallback>
-                          {item.assignment.radio_djs?.dj_name?.charAt(0)}
+                          {item.assignment.radio_djs?.dj_name?.charAt(0) || 'DJ'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium text-sm">
-                          {item.assignment.radio_djs?.dj_name}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.assignment.radio_shows?.show_name}
-                        </div>
+                        <p className="font-medium">
+                          {item.assignment.radio_djs?.dj_name || 'Unknown DJ'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.assignment.radio_shows?.show_name || 'Live Show'}
+                        </p>
+                        
+                        {/* Enhanced timezone and location display */}
                         {item.assignment.radio_djs && (
                           <div className="text-xs text-blue-600 mt-1 space-y-1">
                             <div className="flex items-center gap-2">
-                              <span>🌍 {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
-                              <span>📍 {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
+                              <Globe className="h-3 w-3" />
+                              <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
+                              <MapPin className="h-3 w-3" />
+                              <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span>⏰ {radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
+                              <Clock className="h-3 w-3" />
+                              <span className="font-mono text-xs">{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
                               <span className="font-medium">Local: {(() => {
                                 const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                                return new Date().toLocaleTimeString('en-US', { timeZone: timezone, hour12: true, hour: '2-digit', minute: '2-digit' });
+                                return getCurrentLocalTime(timezone);
                               })()}</span>
+                              {(() => {
+                                const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
+                                return isNightTime(timezone) ? <span className="text-blue-500">🌙</span> : <span className="text-yellow-500">☀️</span>;
+                              })()}
                             </div>
                           </div>
                         )}
+                        
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {item.assignment.status}
+                          </Badge>
+                          {item.assignment.approval_status && (
+                            <Badge 
+                              variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'} 
+                              className="text-xs"
+                            >
+                              {item.assignment.approval_status}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Badge 
-                        variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'}
-                        className="text-xs"
-                      >
-                        {item.assignment.approval_status}
-                      </Badge>
                     </div>
                   )}
                 </div>
@@ -551,37 +621,30 @@ export default function PersonnelSlotAssignment() {
                         setSelectedSlot(item.slot)
                         setShowAssignDialog(true)
                       }}
+                      className="flex items-center gap-2"
                     >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Assign
+                      <Plus className="h-4 w-4" />
+                      Assign Personnel
                     </Button>
                   ) : (
                     <div className="flex gap-2">
                       <Button
+                        variant="outline"
                         size="sm"
-                        variant="secondary"
-                        onClick={() => sendShiftReminder(item)}
-                        title="Send shift reminder"
+                        onClick={() => sendShiftReminder(item, 'immediate')}
+                        className="flex items-center gap-2"
                       >
                         <MessageSquare className="h-4 w-4" />
+                        Send Reminder
                       </Button>
                       <Button
-                        size="sm"
                         variant="outline"
-                        onClick={() => {
-                        setSelectedSlot(item.slot)
-                        setSelectedAdmin(item.assignment.radio_djs?.user_id || '')
-                        setShowAssignDialog(true)
-                      }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
                         size="sm"
-                        variant="destructive"
                         onClick={() => removeSlotAssignment(item)}
+                        className="flex items-center gap-2 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
+                        Remove
                       </Button>
                     </div>
                   )}
@@ -592,56 +655,181 @@ export default function PersonnelSlotAssignment() {
         </CardContent>
       </Card>
 
+      {/* Available Radio Admins Panel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Available Radio Admins ({radioAdmins.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {radioAdmins.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No radio admins found</p>
+              <p className="text-sm">Users with radio_admin role will appear here with their timezone info</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {radioAdmins.map((admin) => {
+                const localTime = getCurrentLocalTime(admin.timezone)
+                const nightTime = isNightTime(admin.timezone)
+
+                return (
+                  <div 
+                    key={admin.id} 
+                    className="p-4 border rounded-lg hover:shadow-md transition-all duration-200 bg-card"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={admin.avatar_url} />
+                        <AvatarFallback className="bg-primary/10">
+                          {admin.dj_name?.charAt(0) || 'A'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium truncate text-sm">{admin.dj_name}</h3>
+                          {admin.is_active && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                          )}
+                        </div>
+                        
+                        {/* Enhanced Location & Timezone Info */}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">{admin.location}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Globe className="h-3 w-3" />
+                            <span>{admin.country}</span>
+                          </div>
+                          
+                          {/* Current Local Time with Day/Night indicator */}
+                          <div className={`flex items-center gap-1 text-xs font-medium ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
+                            <Clock className="h-3 w-3" />
+                            <span>{localTime}</span>
+                            {nightTime && <span className="text-blue-500">🌙</span>}
+                            {!nightTime && <span className="text-yellow-500">☀️</span>}
+                          </div>
+                          
+                          {/* Timezone Badge */}
+                          <div className="flex items-center gap-1">
+                            <Badge variant="outline" className="text-xs px-2 py-0 font-mono">
+                              {admin.timezone}
+                            </Badge>
+                            <Badge 
+                              variant={nightTime ? "secondary" : "default"} 
+                              className="text-xs px-2 py-0"
+                            >
+                              {nightTime ? 'Night Time' : 'Day Time'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Assignment Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedSlot && `Assign Personnel to ${selectedSlot.displayTime}`}
+              Assign Personnel to {selectedSlot?.displayTime} Slot
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Select Radio Admin</Label>
+              <Label>Select Radio Admin (with timezone info)</Label>
               <Select value={selectedAdmin} onValueChange={setSelectedAdmin}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a Radio Admin" />
+                  <SelectValue placeholder="Choose a radio admin..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {radioAdmins.length > 0 ? (
-                    radioAdmins.map((admin) => (
+                  {radioAdmins.map((admin) => {
+                    const localTime = getCurrentLocalTime(admin.timezone)
+                    const nightTime = isNightTime(admin.timezone)
+
+                    return (
                       <SelectItem key={admin.user_id} value={admin.user_id}>
-                        <div className="flex items-center gap-3 py-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={admin.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {admin.dj_name?.charAt(0) || 'RA'}
-                            </AvatarFallback>
-                          </Avatar>
-                           <div className="text-left">
-                             <div className="font-medium">{admin.dj_name}</div>
-                             <div className="text-xs text-muted-foreground space-y-1">
-                               <div>🌍 {admin.country} | 📍 {admin.location}</div>
-                               <div>⏰ {admin.timezone} | <span className="font-medium">Now: {new Date().toLocaleTimeString('en-US', { timeZone: admin.timezone, hour12: true, hour: '2-digit', minute: '2-digit' })}</span></div>
-                             </div>
-                           </div>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <span>{admin.dj_name}</span>
+                            {nightTime ? <span className="text-blue-500">🌙</span> : <span className="text-yellow-500">☀️</span>}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground ml-4">
+                            <span>🌍 {admin.country}</span>
+                            <span>⏰ {localTime}</span>
+                            <span className="font-mono">{admin.timezone}</span>
+                          </div>
                         </div>
                       </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-admins" disabled>
-                      <div className="text-sm text-muted-foreground">No radio admins found</div>
-                    </SelectItem>
-                  )}
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
+            
+            {selectedAdmin && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <h4 className="font-medium mb-2">Assignment Preview</h4>
+                {(() => {
+                  const admin = radioAdmins.find(a => a.user_id === selectedAdmin)
+                  if (!admin) return null
+                  
+                  // Calculate what time this slot would be in the admin's timezone
+                  const slotTimeInAdminTz = selectedSlot ? getLocalTime(admin.timezone, selectedSlot.startHour) : 'Unknown'
 
+                  return (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Admin:</span>
+                        <span className="font-medium">{admin.dj_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Location:</span>
+                        <span>{admin.location}, {admin.country}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Slot Time (UTC):</span>
+                        <span className="font-mono">{selectedSlot?.label}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Local Time for Admin:</span>
+                        <span className="font-medium text-primary">{slotTimeInAdminTz}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Timezone:</span>
+                        <span className="font-mono">{admin.timezone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Time of Day:</span>
+                        <span className={`font-medium ${isNightTime(admin.timezone) ? 'text-blue-600' : 'text-green-600'}`}>
+                          {isNightTime(admin.timezone) ? 'Night Time 🌙' : 'Day Time ☀️'}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+            
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={assignPersonnelToSlot} disabled={!selectedAdmin}>
+              <Button 
+                onClick={assignPersonnelToSlot}
+                disabled={!selectedAdmin}
+              >
                 Assign Personnel
               </Button>
             </div>
