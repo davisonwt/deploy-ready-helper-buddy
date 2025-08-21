@@ -324,9 +324,11 @@ const ChatappPage = () => {
 
                 <CardContent className="flex-1 flex flex-col min-h-0 p-0">
                   {/* Messages Area */}
-                  <ScrollArea className="flex-1 p-4">
+                  <ScrollArea className="flex-1 p-4 bg-white/5 backdrop-blur-sm rounded-lg">
                     {loading ? (
-                      <div className="text-center py-4">Loading messages...</div>
+                      <div className="text-center py-4 bg-white/80 backdrop-blur-sm rounded-lg">
+                        <span className="text-foreground font-medium">Loading messages...</span>
+                      </div>
                     ) : messages.length > 0 ? (
                       <div className="space-y-1">
                         {messages.map((message) => (
@@ -338,9 +340,9 @@ const ChatappPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="h-8 w-8 mx-auto mb-2" />
-                        <p>No messages yet. Start the conversation!</p>
+                      <div className="text-center py-8 bg-white/80 backdrop-blur-sm rounded-lg">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-muted-foreground font-medium">No messages yet. Start the conversation!</p>
                       </div>
                     )}
                   </ScrollArea>
