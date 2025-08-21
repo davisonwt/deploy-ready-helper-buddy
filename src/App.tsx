@@ -49,6 +49,7 @@ import GroveStationPage from "./pages/GroveStationPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
+import { ProfileRedirect } from "./components/ProfileRedirect";
 
 const queryClient = new QueryClient();
 
@@ -58,10 +59,11 @@ const App = () => (
       <AuthProvider>
         <BasketProvider>
           <AppContextProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+            <ProfileRedirect>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -335,9 +337,10 @@ const App = () => (
           </BrowserRouter>
           <LiveActivityWidget />
         </TooltipProvider>
-      </AppContextProvider>
-    </BasketProvider>
-  </AuthProvider>
+      </ProfileRedirect>
+    </AppContextProvider>
+  </BasketProvider>
+</AuthProvider>
 </ThemeProvider>
 </QueryClientProvider>
 );

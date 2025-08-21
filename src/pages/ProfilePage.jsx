@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react"
+import { useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { useToast } from "../hooks/use-toast"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -39,6 +41,8 @@ import {
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
+  const location = useLocation()
+  const { toast } = useToast()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [uploadingPicture, setUploadingPicture] = useState(false)
@@ -49,7 +53,17 @@ export default function ProfilePage() {
   
   useEffect(() => {
     setMounted(true)
-  }, [])
+    
+    // Show message if redirected here for missing info
+    if (location.state?.message) {
+      toast({
+        title: "Complete Your Profile",
+        description: location.state.message,
+        duration: 5000,
+      })
+      setEditing(true) // Auto-enter edit mode
+    }
+  }, [location.state, toast])
   
   const [formData, setFormData] = useState({
     first_name: user?.first_name || "",
@@ -65,8 +79,34 @@ export default function ProfilePage() {
     youtube_url: user?.youtube_url || "",
     show_social_media: user?.show_social_media !== false,
     profile_picture: user?.profile_picture || null,
-    preferred_currency: user?.preferred_currency || "USD"
+    preferred_currency: user?.preferred_currency || "USD",
+    country: user?.country || "",
+    timezone: user?.timezone || ""
   })
+  
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        first_name: user?.first_name || "",
+        last_name: user?.last_name || "",
+        location: user?.location || "",
+        phone: user?.phone || "",
+        bio: user?.bio || "",
+        website: user?.website || "",
+        tiktok_url: user?.tiktok_url || "",
+        instagram_url: user?.instagram_url || "",
+        facebook_url: user?.facebook_url || "",
+        twitter_url: user?.twitter_url || "",
+        youtube_url: user?.youtube_url || "",
+        show_social_media: user?.show_social_media !== false,
+        profile_picture: user?.profile_picture || null,
+        preferred_currency: user?.preferred_currency || "USD",
+        country: user?.country || "",
+        timezone: user?.timezone || ""
+      })
+    }
+  }, [user])
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target

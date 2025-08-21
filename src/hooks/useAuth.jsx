@@ -16,22 +16,56 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const fetchUserProfile = async (authUser) => {
+    if (!authUser) return null;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single()
+
+      // Merge auth user with profile data
+      return {
+        ...authUser,
+        ...profile,
+        email: authUser.email // Keep auth email as primary
+      }
+    } catch (error) {
+      console.log('No profile found, using auth user only:', error)
+      return authUser
+    }
+  }
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('🔐 Auth state change:', event, !!session)
         setSession(session)
-        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          const fullUser = await fetchUserProfile(session.user)
+          setUser(fullUser)
+        } else {
+          setUser(null)
+        }
         setLoading(false)
       }
     )
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('🔍 Initial session check:', !!session)
       setSession(session)
-      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        const fullUser = await fetchUserProfile(session.user)
+        setUser(fullUser)
+      } else {
+        setUser(null)
+      }
       setLoading(false)
     })
 
@@ -151,7 +185,14 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: error.message }
       }
       
-      return { success: true, user: data }
+      // Update user state with new profile data
+      const updatedUser = {
+        ...user,
+        ...data
+      }
+      setUser(updatedUser)
+      
+      return { success: true, user: updatedUser }
     } catch (error) {
       return { success: false, error: error.message }
     }
