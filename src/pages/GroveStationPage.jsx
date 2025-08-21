@@ -28,6 +28,7 @@ import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
 import { StationStats } from '@/components/radio/StationStats'
 import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
+import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
 
 export default function GroveStationPage() {
   const {
@@ -254,15 +255,29 @@ export default function GroveStationPage() {
             </div>
             <RadioScheduleGrid schedule={schedule} />
             
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
-                Global Personnel Assignment (Multi-Timezone Support)
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Schedule radio shows across different time zones. Times are automatically converted to show local time for each region.
-              </p>
-              <TimezoneSlotAssignment />
+            <div className="mt-8 space-y-8">
+              <div>
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Global Heretics Coverage Scheduler
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Manage worldwide 24/7 coverage by assigning heretics to their optimal daylight hours (6 AM - 8 PM local time).
+                  Ensure listeners always have someone broadcasting during reasonable hours somewhere in the world.
+                </p>
+                <GlobalDJScheduler />
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Multi-Timezone Slot Assignment
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Detailed scheduling interface with timezone conversion for specific date management.
+                </p>
+                <TimezoneSlotAssignment />
+              </div>
             </div>
           </TabsContent>
 
