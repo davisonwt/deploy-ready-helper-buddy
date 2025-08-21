@@ -30,7 +30,8 @@ export default function LiveActivityWidget() {
     radioHosts: [],
     groupCalls: [],
     communityChats: [],
-    lifeCourses: []
+    lifeCourses: [],
+    aodHereticFrequencies: null
   })
   const [loading, setLoading] = useState(true)
 
@@ -146,11 +147,26 @@ export default function LiveActivityWidget() {
         }
       ]
 
+      // Fetch AoD Heretic's Frequencies host info
+      const aodHereticFrequencies = {
+        id: 'aod-heretic-freq',
+        showName: "AoD Heretic's Frequencies",
+        currentHost: "The Heretic",
+        hostAvatar: "/aod-heretic-avatar.png",
+        isLive: Math.random() > 0.5, // Simulate live/offline status
+        listeners: Math.floor(Math.random() * 150) + 25, // 25-175 listeners
+        frequency: "666.6 MHz",
+        description: "Unconventional wisdom and alternative perspectives",
+        startedAt: new Date(Date.now() - Math.floor(Math.random() * 3600000)), // Random time in last hour
+        topic: "Breaking the Matrix of Conventional Thinking"
+      }
+
       setLiveData({
         radioHosts: radioData || [],
         groupCalls,
         communityChats: chatData || [],
-        lifeCourses
+        lifeCourses,
+        aodHereticFrequencies
       })
 
     } catch (err) {
@@ -230,7 +246,8 @@ export default function LiveActivityWidget() {
   const totalActivities = liveData.radioHosts.length + 
                          liveData.groupCalls.length + 
                          liveData.communityChats.length + 
-                         liveData.lifeCourses.filter(course => course.isLive).length
+                         liveData.lifeCourses.filter(course => course.isLive).length +
+                         (liveData.aodHereticFrequencies?.isLive ? 1 : 0)
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] w-80 max-w-[calc(100vw-3rem)]">
@@ -336,6 +353,55 @@ export default function LiveActivityWidget() {
                         </Button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* AoD Heretic's Frequencies */}
+                {liveData.aodHereticFrequencies && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-orange-600 flex items-center gap-1">
+                      <Radio className="h-3 w-3" />
+                      AoD Heretic's Frequencies
+                    </h4>
+                    <div className={`flex items-center justify-between p-2 rounded-lg border ${
+                      liveData.aodHereticFrequencies.isLive 
+                        ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800'
+                        : 'bg-gray-50 dark:bg-gray-950/20 border-gray-200 dark:border-gray-800'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={liveData.aodHereticFrequencies.hostAvatar} />
+                            <AvatarFallback className="text-xs bg-orange-500 text-white">AH</AvatarFallback>
+                          </Avatar>
+                          {liveData.aodHereticFrequencies.isLive && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium">
+                            {liveData.aodHereticFrequencies.currentHost}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {liveData.aodHereticFrequencies.frequency} • {liveData.aodHereticFrequencies.listeners} listeners
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className="text-xs px-1 py-0 h-4">
+                          {liveData.aodHereticFrequencies.isLive ? 'LIVE' : 'OFF-AIR'}
+                        </Badge>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-xs h-6"
+                          onClick={() => joinActivity('radio', liveData.aodHereticFrequencies.id)}
+                          disabled={!liveData.aodHereticFrequencies.isLive}
+                        >
+                          {liveData.aodHereticFrequencies.isLive ? 'Tune In' : 'Offline'}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
