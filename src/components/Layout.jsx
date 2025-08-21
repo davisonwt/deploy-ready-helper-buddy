@@ -255,6 +255,10 @@ export default function Layout({ children }) {
                                   : 'hover:bg-accent hover:text-accent-foreground'
                                 }
                               `}
+                              onClick={() => {
+                                console.log('🚨 NAVIGATION CLICK:', item.href, item.name);
+                                alert(`Clicking: ${item.name} -> ${item.href}`);
+                              }}
                             >
                               <ItemIcon className="h-4 w-4" />
                               <span>{item.name}</span>
