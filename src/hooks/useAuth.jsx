@@ -176,20 +176,17 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      // First check if user already exists to provide better error messaging
-      const { data: existingUsers, error: checkError } = await supabase
-        .from('auth.users')
-        .select('email')
-        .eq('email', userData.email)
-        .limit(1)
-
-      const redirectUrl = `${window.location.origin}/`
+      console.log('🔐 Registration attempt for:', userData.email);
+      
+      // Use the current domain for redirect URL
+      const currentDomain = window.location.origin;
+      console.log('🔐 Using redirect URL:', currentDomain);
       
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: currentDomain,
           data: {
             first_name: userData.first_name,
             last_name: userData.last_name,
@@ -202,7 +199,19 @@ export const AuthProvider = ({ children }) => {
         }
       })
       
+      console.log('🔐 Registration response:', { data: !!data, error: error?.message });
+      
       if (error) {
+        console.error('🚨 Registration error:', error);
+        
+        // Check for redirect URL configuration issues
+        if (error.message.includes('invalid') && error.message.includes('redirect')) {
+          return { 
+            success: false, 
+            error: 'Authentication configuration error. Please contact support or try again later.' 
+          };
+        }
+        
         // Provide user-friendly error messages for common issues
         let errorMessage = error.message
         
@@ -231,9 +240,10 @@ export const AuthProvider = ({ children }) => {
         }
       }
       
+      console.log('✅ Registration successful for user:', data.user?.id);
       return { success: true, user: data.user }
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error('💥 Registration exception:', error)
       return { 
         success: false, 
         error: 'Registration failed. Please check your details and try again. If the problem persists, contact support@sow2grow.org.' 
@@ -268,27 +278,48 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     try {
-      // Simple approach: Just use Supabase's built-in reset directly
+      console.log('🔐 Password reset request for:', email);
+      
+      // Use current domain for reset redirect
+      const currentDomain = window.location.origin;
+      const redirectUrl = `${currentDomain}/login?reset=true`;
+      
+      console.log('🔐 Using reset redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: redirectUrl,
       });
       
+      console.log('🔐 Reset password response:', { error: error?.message });
+      
       if (error) {
+        console.error('🚨 Reset password error:', error);
+        
+        // Check for configuration issues
+        if (error.message.includes('invalid') && (error.message.includes('redirect') || error.message.includes('URL'))) {
+          return { 
+            success: true, // Return success for security 
+            message: "Reset request processed. If you don't receive an email, please contact support@sow2grow.org" 
+          };
+        }
+        
         // If it fails, provide helpful message
         return { 
           success: true, // Return success for security 
-          message: "If an account exists with that email, you will receive a reset link. If you don't receive an email, please contact support@sow2grow.online" 
+          message: "If an account exists with that email, you will receive a reset link. If you don't receive an email, please contact support@sow2grow.org" 
         };
       }
       
+      console.log('✅ Password reset email sent successfully');
       return { 
         success: true, 
         message: "Password reset email sent! Check your inbox and spam folder." 
       };
     } catch (error) {
+      console.error('💥 Reset password exception:', error);
       return { 
         success: true, // Always return success for security
-        message: "Reset request processed. If you don't receive an email, please contact support@sow2grow.online" 
+        message: "Reset request processed. If you don't receive an email, please contact support@sow2grow.org" 
       };
     }
   }
