@@ -260,9 +260,11 @@ const App = () => (
               {/* Support Us - Phantom Wallet Payments */}
               <Route path="/support-us" element={
                 <ProtectedRoute>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <SupportUsPage />
-                  </Suspense>
+                  <Layout>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <SupportUsPage />
+                    </Suspense>
+                  </Layout>
                 </ProtectedRoute>
               } />
 
