@@ -115,6 +115,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
           orchard_type: orchard.orchard_type || "standard",
           seed_value: orchard.original_seed_value?.toString() || "",
           pocket_price: orchard.pocket_price?.toString() || "150",
+          number_of_pockets: orchard.total_pockets?.toString() || "1", // Map total_pockets from DB to number_of_pockets in form
           courier_cost: orchard.courier_cost?.toString() || "0",
           location: orchard.location || "",
           why_needed: orchard.why_needed || "",
@@ -320,6 +321,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
         pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
+        total_pockets: calculatePockets(), // Add calculated total pockets to database
         location: formData.location?.trim() || "",
         currency: "USDC",
         why_needed: formData.why_needed?.trim() || "",
