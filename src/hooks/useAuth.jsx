@@ -110,6 +110,13 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
+      // First check if user already exists to provide better error messaging
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('auth.users')
+        .select('email')
+        .eq('email', userData.email)
+        .limit(1)
+
       const redirectUrl = `${window.location.origin}/`
       
       const { data, error } = await supabase.auth.signUp({
@@ -130,12 +137,41 @@ export const AuthProvider = ({ children }) => {
       })
       
       if (error) {
-        return { success: false, error: error.message }
+        // Provide user-friendly error messages for common issues
+        let errorMessage = error.message
+        
+        if (error.message.includes('User already registered') || 
+            error.message.includes('already registered') ||
+            error.message.includes('email already exists') ||
+            error.code === 'email_already_exists' ||
+            error.code === 'signup_disabled_for_user') {
+          errorMessage = `An account with ${userData.email} already exists. Please use the login page instead or try a different email address.`
+        } else if (error.message.includes('Password should be')) {
+          errorMessage = 'Password must be at least 6 characters long and contain a mix of letters and numbers.'
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'Please enter a valid email address.'
+        } else if (error.message.includes('Signup is disabled')) {
+          errorMessage = 'Account registration is currently disabled. Please contact support@sow2grow.org for assistance.'
+        }
+        
+        return { success: false, error: errorMessage }
+      }
+      
+      // Check if user creation was successful but user already confirmed (edge case)
+      if (data.user && !data.user.email_confirmed_at && data.user.identities?.length === 0) {
+        return { 
+          success: false, 
+          error: `An account with ${userData.email} already exists. Please use the login page instead.` 
+        }
       }
       
       return { success: true, user: data.user }
     } catch (error) {
-      return { success: false, error: error.message }
+      console.error('Registration error:', error)
+      return { 
+        success: false, 
+        error: 'Registration failed. Please check your details and try again. If the problem persists, contact support@sow2grow.org.' 
+      }
     }
   }
 
