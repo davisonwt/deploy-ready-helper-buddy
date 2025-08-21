@@ -256,22 +256,43 @@ export default function GroveStationPage() {
             <RadioScheduleGrid schedule={schedule} />
             
             <div className="mt-8 space-y-8">
+              {/* Test visibility */}
+              <Card className="border-red-500 bg-red-50">
+                <CardHeader>
+                  <CardTitle className="text-red-900">🚨 TEST - Can you see this red card?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-red-700">If you can see this, the Schedule tab is working correctly.</p>
+                </CardContent>
+              </Card>
+
               <div>
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                   <Globe className="h-5 w-5 text-primary" />
-                  Global Heretics Coverage Scheduler
+                  🌍 Global Heretics Coverage Scheduler
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   Manage worldwide 24/7 coverage by assigning heretics to their optimal daylight hours (6 AM - 8 PM local time).
                   Ensure listeners always have someone broadcasting during reasonable hours somewhere in the world.
                 </p>
+                <Card className="border-blue-500">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <Globe className="h-12 w-12 mx-auto text-blue-600" />
+                      <h4 className="text-lg font-semibold">Global DJ Scheduler Loading...</h4>
+                      <p className="text-muted-foreground">
+                        This is the timezone scheduling interface for assigning heretics worldwide.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
                 <GlobalDJScheduler />
               </div>
               
               <div>
                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                   <Globe className="h-5 w-5 text-primary" />
-                  Multi-Timezone Slot Assignment
+                  📅 Multi-Timezone Slot Assignment
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   Detailed scheduling interface with timezone conversion for specific date management.
