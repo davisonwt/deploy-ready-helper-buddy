@@ -16,26 +16,33 @@ const getFileIcon = (fileType) => {
 };
 
 const ChatMessage = ({ message, isOwn = false }) => {
-  const sender = message.sender_profiles;
+  const sender = message.profiles;
   const FileIcon = getFileIcon(message.file_type);
+  
+  const getSenderName = () => {
+    if (!sender) return 'Unknown User';
+    return sender.display_name || 
+           `${sender.first_name || ''} ${sender.last_name || ''}`.trim() || 
+           'Anonymous User';
+  };
 
   return (
     <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
       <div className="flex-shrink-0">
         <Avatar className="h-8 w-8">
           <AvatarImage src={sender?.avatar_url} />
-          <AvatarFallback className="bg-primary/10 text-xs">
-            {sender?.display_name?.charAt(0) || 'U'}
+          <AvatarFallback className="bg-primary/20 text-primary font-bold border">
+            {sender?.display_name?.charAt(0) || sender?.first_name?.charAt(0) || 'U'}
           </AvatarFallback>
         </Avatar>
       </div>
       
       <div className={`flex-1 max-w-[80%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-          <span className="text-sm font-medium">
-            {sender?.display_name || 'Unknown User'}
+          <span className="text-sm font-bold text-foreground bg-background/80 px-2 py-1 rounded-md border shadow-sm">
+            {getSenderName()}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground bg-background/60 px-2 py-1 rounded-md">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
           </span>
           {message.is_edited && (

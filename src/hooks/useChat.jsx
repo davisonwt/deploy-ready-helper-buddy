@@ -53,7 +53,7 @@ export const useChat = () => {
         .from('chat_messages')
         .select(`
           *,
-          sender_profiles:profiles!sender_id(display_name, avatar_url, first_name, last_name)
+          profiles:sender_id(display_name, avatar_url, first_name, last_name)
         `)
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
@@ -81,7 +81,7 @@ export const useChat = () => {
         .from('chat_participants')
         .select(`
           *,
-          participant_profiles:profiles!user_id(display_name, avatar_url, first_name, last_name)
+          profiles:user_id(display_name, avatar_url, first_name, last_name)
         `)
         .eq('room_id', roomId)
         .eq('is_active', true);
