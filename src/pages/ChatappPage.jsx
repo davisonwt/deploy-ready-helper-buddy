@@ -143,6 +143,7 @@ const ChatappPage = () => {
   };
 
   const handleStartCall = async (otherUserId, callType) => {
+    console.log('🔥 Call started!', { otherUserId, callType });
     try {
       // Fetch user profile for the call
       const { data: userProfile, error } = await supabase
