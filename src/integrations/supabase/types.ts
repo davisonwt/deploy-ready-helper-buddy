@@ -2052,6 +2052,10 @@ export type Database = {
           display_name: string
         }[]
       }
+      grant_bootstrap_admin: {
+        Args: { target_email: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
