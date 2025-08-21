@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
+import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import CreateRoomModal from '@/components/chat/CreateRoomModal';
@@ -34,6 +35,7 @@ import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 
 const ChatappPage = () => {
   const { user } = useAuth();
+  const { uploadFile, uploading } = useFileUpload();
   const {
     rooms,
     currentRoom,
@@ -53,13 +55,58 @@ const ChatappPage = () => {
   const [showUserSelector, setShowUserSelector] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCall, setActiveCall] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentRoom) return;
+    if ((!newMessage.trim() && !selectedFile) || !currentRoom) return;
 
-    await sendMessage(currentRoom.id, newMessage.trim());
-    setNewMessage('');
+    try {
+      let fileData = null;
+      
+      // Upload file if selected
+      if (selectedFile) {
+        const uploadResult = await uploadFile(selectedFile, 'chat-files', 'attachments/');
+        if (uploadResult.success) {
+          fileData = {
+            url: uploadResult.data.url,
+            name: selectedFile.name,
+            type: selectedFile.type,
+            size: selectedFile.size
+          };
+        } else {
+          console.error('File upload failed:', uploadResult.error);
+          return;
+        }
+      }
+
+      await sendMessage(currentRoom.id, newMessage.trim(), 'text', fileData);
+      setNewMessage('');
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (limit to 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleAttachmentClick = () => {
+    document.getElementById('file-input').click();
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    document.getElementById('file-input').value = '';
   };
 
   const filteredRooms = rooms.filter(room => {
@@ -354,9 +401,42 @@ const ChatappPage = () => {
                   </div>
 
                    {/* Message Input */}
-                  <div className="border-t p-4">
+                  <div className="border-t p-4 space-y-2">
+                    {/* Hidden file input */}
+                    <input
+                      id="file-input"
+                      type="file"
+                      onChange={handleFileSelect}
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                      className="hidden"
+                    />
+                    
+                    {/* Selected file preview */}
+                    {selectedFile && (
+                      <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
+                        <Paperclip className="h-4 w-4 text-gray-600" />
+                        <span className="text-sm text-gray-700 flex-1 truncate">
+                          {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeSelectedFile}
+                          className="h-6 w-6 p-0"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    )}
+                    
                     <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <Button variant="outline" size="sm" type="button">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        type="button"
+                        onClick={handleAttachmentClick}
+                        disabled={uploading}
+                      >
                         <Paperclip className="h-4 w-4" />
                       </Button>
                       <Input
@@ -365,8 +445,11 @@ const ChatappPage = () => {
                         placeholder="Type your message..."
                         className="flex-1"
                       />
-                      <Button type="submit" disabled={!newMessage.trim()}>
-                        <Send className="h-4 w-4" />
+                      <Button 
+                        type="submit" 
+                        disabled={(!newMessage.trim() && !selectedFile) || uploading}
+                      >
+                        {uploading ? '...' : <Send className="h-4 w-4" />}
                       </Button>
                     </form>
                   </div>
