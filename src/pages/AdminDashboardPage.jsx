@@ -61,15 +61,19 @@ export default function AdminDashboardPage() {
   const loadUsers = async () => {
     try {
       setLoading(true)
+      console.log('🔄 Loading users from AdminDashboard...')
       const result = await fetchAllUsers()
       if (result.success) {
+        console.log('✅ AdminDashboard: Loaded users successfully:', result.data?.length || 0)
+        console.log('👥 Users with roles:', result.data?.filter(u => u.user_roles?.length > 0).length || 0)
         setUsers(result.data)
         setTotalRegistered(result.data.length)
       } else {
+        console.error('❌ AdminDashboard: Failed to load users:', result.error)
         toast.error(result.error || 'Failed to load users')
       }
     } catch (error) {
-      console.error('Error loading users:', error)
+      console.error('❌ AdminDashboard: Error loading users:', error)
       toast.error('Failed to load users')
     } finally {
       setLoading(false)
