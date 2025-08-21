@@ -41,34 +41,7 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat, loading: rolesLoading, error: rolesError } = useRoles()
-  
-  // EMERGENCY FIX: Force admin access for known admin user
-  const isKnownAdmin = user?.id === '04754d57-d41d-4ea7-93df-542047a6785b'
-  const shouldShowAdminButton = isAdminOrGosat() || isKnownAdmin
-  
-  // FORCE BUTTON TO ALWAYS SHOW FOR DEBUGGING
-  const forceShowButton = true
-  
-  // Log role status for debugging
-  React.useEffect(() => {
-    console.log('🔑 Layout roles debug:', { 
-      isAdminOrGosat: isAdminOrGosat(), 
-      rolesLoading, 
-      rolesError, 
-      user: user?.id,
-      userEmail: user?.email,
-      isAuthenticated: !!user,
-      isKnownAdmin,
-      shouldShowAdminButton,
-      forceShowButton
-    })
-    
-    // ALERT TO FORCE VISIBILITY
-    if (user?.id === '04754d57-d41d-4ea7-93df-542047a6785b') {
-      console.log('🚨 ADMIN USER DETECTED - BUTTON SHOULD BE VISIBLE!')
-    }
-  }, [isAdminOrGosat, rolesLoading, rolesError, user, isKnownAdmin, shouldShowAdminButton])
+  const { isAdminOrGosat, loading: rolesLoading } = useRoles()
   
   const location = useLocation()
   const navigate = useNavigate()
@@ -136,7 +109,7 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(forceShowButton ? [{
+    ...(isAdminOrGosat() ? [{
       name: "gosat's",
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
@@ -255,18 +228,7 @@ export default function Layout({ children }) {
                                   : 'hover:bg-accent hover:text-accent-foreground'
                                 }
                               `}
-                              onClick={() => {
-                                console.log('🚨 NAVIGATION CLICK:', item.href, item.name);
-                                alert(`Clicking: ${item.name} -> ${item.href}`);
-                                
-                                // FORCE NAVIGATION - bypass React Router if needed
-                                if (item.href === '/admin/dashboard') {
-                                  console.log('🚨 FORCING ADMIN DASHBOARD NAVIGATION');
-                                  setTimeout(() => {
-                                    window.location.href = item.href;
-                                  }, 100);
-                                }
-                              }}
+                              // Standard React Router navigation
                             >
                               <ItemIcon className="h-4 w-4" />
                               <span>{item.name}</span>
@@ -297,7 +259,6 @@ export default function Layout({ children }) {
                 <Link
                   to="/basket"
                   className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent"
-                  onClick={() => console.log('🛒 Basket link clicked, total items:', getTotalItems())}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {getTotalItems() > 0 && (
