@@ -401,12 +401,6 @@ export default function Layout({ children }) {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* DEBUG INFO - Remove after fixing */}
-        {user && (
-          <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <strong>Debug:</strong> rolesLoading: {String(rolesLoading)} | userRoles: {JSON.stringify(userRoles)} | shouldShow: {String(shouldShowAdminButton)}
-          </div>
-        )}
         {children}
       </main>
       
