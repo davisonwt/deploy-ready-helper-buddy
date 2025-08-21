@@ -27,14 +27,31 @@ const OrchardPage = () => {
 
   useEffect(() => {
     const loadOrchard = async () => {
+      if (!user) {
+        console.log('OrchardPage: No user found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+
+      console.log('OrchardPage: Loading orchard', orchardId, 'for user', user.id);
       const result = await fetchOrchardById(orchardId);
+      console.log('OrchardPage: Fetch result', result);
+      
       if (result.success) {
         setOrchard(result.data);
+      } else {
+        console.error('OrchardPage: Failed to load orchard:', result.error);
+        // If orchard not found or access denied, redirect to dashboard
+        if (result.error?.includes('not found') || result.error?.includes('access')) {
+          navigate('/dashboard');
+        }
       }
     };
 
-    loadOrchard();
-  }, [orchardId, fetchOrchardById]);
+    if (orchardId && user) {
+      loadOrchard();
+    }
+  }, [orchardId, fetchOrchardById, user, navigate]);
 
   const getCompletionPercentage = (orchard) => {
     if (!orchard.total_pockets) return 0;
