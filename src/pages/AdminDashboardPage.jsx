@@ -370,112 +370,213 @@ export default function AdminDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Shield className="h-5 w-5" />
-              <span>Grant User Roles</span>
+              <span>User Management & Roles</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Grant Role to User
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Grant Role to User</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Select User</Label>
-                    <Popover open={isUserDropdownOpen} onOpenChange={setIsUserDropdownOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={isUserDropdownOpen}
-                          className="w-full justify-between bg-background"
-                        >
-                          {selectedUser 
-                            ? (selectedUser.display_name || `${selectedUser.first_name} ${selectedUser.last_name}`)
-                            : "Search users by name or ID..."
-                          }
-                          <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search users..." 
-                            value={userSearchTerm}
-                            onValueChange={setUserSearchTerm}
-                          />
-                          <CommandList>
-                            <CommandEmpty>No users found.</CommandEmpty>
-                            <CommandGroup>
-                              {users
-                                .filter(user => 
-                                  user.display_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                  user.first_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                  user.last_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                  user.user_id?.toLowerCase().includes(userSearchTerm.toLowerCase())
-                                )
-                                .slice(0, 10)
-                                .map((user) => (
-                                  <CommandItem
-                                    key={user.user_id}
-                                    value={user.user_id}
-                                    onSelect={() => {
-                                      setSelectedUser(user)
-                                      setIsUserDropdownOpen(false)
-                                      setUserSearchTerm('')
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <div className="flex flex-col space-y-1 w-full">
-                                      <span className="font-medium">
-                                        {user.display_name || `${user.first_name} ${user.last_name}`}
-                                      </span>
-                                      <span className="text-sm text-muted-foreground">
-                                        ID: {user.user_id?.slice(0, 8)}...
-                                      </span>
-                                      {user.user_roles?.length > 0 && (
-                                        <div className="flex space-x-1">
-                                          {user.user_roles.map((role) => (
-                                            <Badge key={role.role} variant="outline" className="text-xs">
-                                              {role.role}
-                                            </Badge>
-                                          ))}
+            <div className="space-y-6">
+              {/* Quick Role Assignment */}
+              <div>
+                <h3 className="font-medium text-sm mb-3">Quick Role Assignment</h3>
+                <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Grant Role to User
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Grant Role to User</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Select User</Label>
+                        <Popover open={isUserDropdownOpen} onOpenChange={setIsUserDropdownOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={isUserDropdownOpen}
+                              className="w-full justify-between bg-background"
+                            >
+                              {selectedUser 
+                                ? (selectedUser.display_name || `${selectedUser.first_name} ${selectedUser.last_name}`)
+                                : "Search users by name or ID..."
+                              }
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput 
+                                placeholder="Search users..." 
+                                value={userSearchTerm}
+                                onValueChange={setUserSearchTerm}
+                              />
+                              <CommandList>
+                                <CommandEmpty>No users found.</CommandEmpty>
+                                <CommandGroup>
+                                  {users
+                                    .filter(user => 
+                                      user.display_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                                      user.first_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                                      user.last_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                                      user.user_id?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                                    )
+                                    .slice(0, 10)
+                                    .map((user) => (
+                                      <CommandItem
+                                        key={user.user_id}
+                                        value={user.user_id}
+                                        onSelect={() => {
+                                          setSelectedUser(user)
+                                          setIsUserDropdownOpen(false)
+                                          setUserSearchTerm('')
+                                        }}
+                                        className="cursor-pointer"
+                                      >
+                                        <div className="flex flex-col space-y-1 w-full">
+                                          <span className="font-medium">
+                                            {user.display_name || `${user.first_name} ${user.last_name}`}
+                                          </span>
+                                          <span className="text-sm text-muted-foreground">
+                                            ID: {user.user_id?.slice(0, 8)}...
+                                          </span>
+                                          {user.user_roles?.length > 0 && (
+                                            <div className="flex space-x-1">
+                                              {user.user_roles.map((role) => (
+                                                <Badge key={role.role} variant="outline" className="text-xs">
+                                                  {role.role}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div>
-                    <Label>Select Role</Label>
-                    <Select onValueChange={setSelectedRole}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose role..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gosat">Gosat (Manager)</SelectItem>
-                        <SelectItem value="radio_admin">Radio Admin</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleGrantRole} className="w-full" disabled={!selectedUser || !selectedRole}>
-                    Grant Role
-                  </Button>
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div>
+                        <Label>Select Role</Label>
+                        <Select onValueChange={setSelectedRole}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose role..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="gosat">Gosat (Manager)</SelectItem>
+                            <SelectItem value="radio_admin">Radio Admin</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedUser && selectedUser.user_roles?.length > 0 && (
+                        <div className="p-3 bg-muted/50 rounded-lg">
+                          <p className="text-sm font-medium mb-2">Current roles:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedUser.user_roles.map((role) => (
+                              <Badge key={role.role} variant="secondary">
+                                {role.role}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <Button onClick={handleGrantRole} className="w-full" disabled={!selectedUser || !selectedRole}>
+                        Grant Additional Role
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Users List with Roles Management */}
+              <div>
+                <h3 className="font-medium text-sm mb-3">All Users & Their Roles</h3>
+                <div className="max-h-96 overflow-y-auto border rounded-lg">
+                  {filteredUsers.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No users found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-0">
+                      {filteredUsers.map((user, index) => (
+                        <div 
+                          key={user.user_id}
+                          className={`flex items-center justify-between p-4 ${
+                            index < filteredUsers.length - 1 ? 'border-b' : ''
+                          } hover:bg-muted/30 transition-colors`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                  <User className="h-4 w-4 text-primary" />
+                                </div>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm truncate">
+                                  {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {user.user_id?.slice(0, 24)}...
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {user.user_roles && user.user_roles.length > 0 ? (
+                                user.user_roles.map((role) => (
+                                  <div key={role.role} className="flex items-center">
+                                    <Badge 
+                                      variant={getRoleBadgeVariant(role.role)}
+                                      className="text-xs flex items-center gap-1"
+                                    >
+                                      {getRoleIcon(role.role)}
+                                      {role.role}
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleRevokeRole(user.user_id, role.role, user.display_name || `${user.first_name} ${user.last_name}`)}
+                                      className="h-6 w-6 p-0 ml-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))
+                              ) : (
+                                <Badge variant="outline" className="text-xs text-muted-foreground">
+                                  No roles assigned
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setIsRoleDialogOpen(true)
+                              }}
+                              className="text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Role
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
