@@ -251,7 +251,7 @@ export default function LiveActivityWidget() {
 
   return (
     <div 
-      className="fixed bottom-20 right-6 w-80 max-w-[calc(100vw-3rem)] pointer-events-auto" 
+      className="fixed bottom-6 left-6 w-80 max-w-[calc(100vw-3rem)] pointer-events-auto" 
       style={{ 
         zIndex: 50, // Reasonable z-index - above content but below modals/dropdowns
         position: 'fixed'
