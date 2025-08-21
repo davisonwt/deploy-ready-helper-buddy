@@ -258,6 +258,14 @@ export default function Layout({ children }) {
                               onClick={() => {
                                 console.log('🚨 NAVIGATION CLICK:', item.href, item.name);
                                 alert(`Clicking: ${item.name} -> ${item.href}`);
+                                
+                                // FORCE NAVIGATION - bypass React Router if needed
+                                if (item.href === '/admin/dashboard') {
+                                  console.log('🚨 FORCING ADMIN DASHBOARD NAVIGATION');
+                                  setTimeout(() => {
+                                    window.location.href = item.href;
+                                  }, 100);
+                                }
                               }}
                             >
                               <ItemIcon className="h-4 w-4" />
