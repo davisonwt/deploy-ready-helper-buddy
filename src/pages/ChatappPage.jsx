@@ -286,16 +286,16 @@ const ChatappPage = () => {
           <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             {currentRoom ? (
               <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
-                <CardHeader className="border-b bg-purple-200/80 backdrop-blur-md">
+                <CardHeader className="border-b bg-purple-300 border-purple-400/50 text-purple-900">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-purple-900">
                         {currentRoom.name}
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-purple-300">
                           {currentRoom.room_type.replace('_', ' ')}
                         </Badge>
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-purple-700">
                         {currentRoom.room_type === 'direct' 
                           ? 'Direct Message' 
                           : `${participants.length} participants${currentRoom.category ? ` • ${currentRoom.category}` : ''}`
