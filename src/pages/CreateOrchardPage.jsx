@@ -309,6 +309,15 @@ export default function CreateOrchardPage({ isEdit = false }) {
       const breakdown = getSeedValueBreakdown()
       const finalSeedValue = breakdown ? breakdown.final : originalSeedValue
 
+      const calculatedPockets = calculatePockets()
+      console.log('🔧 Orchard creation debug:', {
+        orchard_type: formData.orchard_type,
+        number_of_pockets: formData.number_of_pockets,
+        calculatedPockets,
+        seedValue: parseFloat(formData.seed_value),
+        pocketPrice
+      })
+
       // Prepare orchard data
       const orchardData = {
         title: formData.title.trim(),
@@ -321,7 +330,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
         pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
-        total_pockets: calculatePockets(), // Add calculated total pockets to database
+        total_pockets: calculatedPockets, // Add calculated total pockets to database
         location: formData.location?.trim() || "",
         currency: "USDC",
         why_needed: formData.why_needed?.trim() || "",
@@ -333,6 +342,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         video_url: videoUrl
       }
 
+      console.log('🔧 Creating orchard with data:', orchardData)
       // Create or update orchard
       let result
       if (isEdit) {
@@ -340,6 +350,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
       } else {
         result = await createOrchard(orchardData)
       }
+      console.log('🔧 Create/update orchard result:', result)
 
       if (result.success) {
         // If created from a seed, delete the seed after successful orchard creation
