@@ -363,11 +363,30 @@ const ChatappPage = () => {
                         </Badge>
                       </CardTitle>
                       <p className="text-sm text-purple-700">
-                        {currentRoom.room_type === 'direct' 
+                        {currentRoom.room_type === 'direct' && participants.length <= 2
                           ? 'Direct Message' 
                           : `${participants.length} participants${currentRoom.category ? ` • ${currentRoom.category}` : ''}`
                         }
                       </p>
+                      {/* Show participant list for rooms with 3+ people */}
+                      {participants.length > 2 && (
+                        <div className="mt-2">
+                          <p className="text-xs text-purple-600 mb-1">Participants:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {participants.map((participant) => (
+                              <Badge 
+                                key={participant.user_id} 
+                                variant="outline" 
+                                className="text-xs bg-purple-50 text-purple-700 border-purple-200"
+                              >
+                                {participant.profiles?.display_name || 
+                                 `${participant.profiles?.first_name || ''} ${participant.profiles?.last_name || ''}`.trim() ||
+                                 'Unknown User'}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button 
