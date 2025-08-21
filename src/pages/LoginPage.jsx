@@ -72,7 +72,7 @@ export default function LoginPage() {
         // Small delay to ensure auth state is updated
         setTimeout(() => {
           navigate("/dashboard", { replace: true })
-        }, 100)
+        }, 50)
       } else {
         setError(result.error || "Login failed")
       }
