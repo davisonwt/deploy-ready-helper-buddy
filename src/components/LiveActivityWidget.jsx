@@ -50,7 +50,7 @@ export default function LiveActivityWidget() {
     try {
       setLoading(true)
       
-      // Fetch live radio hosts
+      // Fetch live radio hosts - fix query to use correct column
       const { data: radioData, error: radioError } = await supabase
         .from('radio_live_sessions')
         .select(`
@@ -63,7 +63,7 @@ export default function LiveActivityWidget() {
             )
           )
         `)
-        .eq('is_active', true)
+        .eq('status', 'live')
         .order('created_at', { ascending: false })
 
       // Fetch active group calls (simulated for now)
@@ -166,7 +166,7 @@ export default function LiveActivityWidget() {
         schema: 'public',
         table: 'radio_live_sessions'
       }, () => {
-        fetchLiveData()
+        setTimeout(() => fetchLiveData(), 0)
       })
       .subscribe()
 
@@ -177,7 +177,7 @@ export default function LiveActivityWidget() {
         schema: 'public',
         table: 'chat_rooms'
       }, () => {
-        fetchLiveData()
+        setTimeout(() => fetchLiveData(), 0)
       })
       .subscribe()
 

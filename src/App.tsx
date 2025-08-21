@@ -13,6 +13,7 @@ import { lazy, Suspense } from "react";
 // Lazy-loaded pages
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
+const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
 // Pages that exist
 import Index from "./pages/Index";
@@ -67,6 +68,13 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/start-your-journey" element={<RegisterPage />} />
+              
+              {/* Debug route for auth issues */}
+              <Route path="/auth-debug" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <AuthDebugPage />
+                </Suspense>
+              } />
               
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
