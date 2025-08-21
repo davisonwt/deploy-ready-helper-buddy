@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -169,12 +169,36 @@ const ChatappPage = () => {
         avatar_url: userProfile.avatar_url
       };
 
-      console.log(`Starting ${callType} call with user:`, otherUserId);
+      // Create call session in database
+      const { data: callSession, error: callError } = await supabase
+        .from('call_sessions')
+        .insert({
+          caller_id: user.id,
+          receiver_id: otherUserId,
+          call_type: callType,
+          status: 'ringing'
+        })
+        .select()
+        .single();
+
+      if (callError) {
+        console.error('Error creating call session:', callError);
+        toast({
+          title: "Error",
+          description: "Failed to initiate call",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('📞 Call session created:', callSession);
       setActiveCall({
+        id: callSession.id,
         type: callType,
         isIncoming: false,
         callerInfo,
-        otherUserId
+        otherUserId,
+        status: 'ringing'
       });
 
       toast({
@@ -192,7 +216,17 @@ const ChatappPage = () => {
     }
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
+    if (activeCall?.id) {
+      try {
+        await supabase
+          .from('call_sessions')
+          .update({ status: 'ended' })
+          .eq('id', activeCall.id);
+      } catch (error) {
+        console.error('Error ending call session:', error);
+      }
+    }
     setActiveCall(null);
   };
 
@@ -207,6 +241,120 @@ const ChatappPage = () => {
 
   const handleNavigateToOrchard = (orchardId) => {
     window.location.href = `/orchard/${orchardId}`;
+  };
+
+  // Listen for incoming calls
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('👂 Setting up call listener for user:', user.id);
+    const channel = supabase
+      .channel('call_sessions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `receiver_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('📞 Incoming call detected:', payload);
+          const callSession = payload.new;
+          
+          // Fetch caller profile
+          const { data: callerProfile, error } = await supabase
+            .from('profiles')
+            .select('display_name, avatar_url, first_name, last_name')
+            .eq('user_id', callSession.caller_id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching caller profile:', error);
+            return;
+          }
+
+          const callerInfo = {
+            display_name: callerProfile.display_name || 
+                         `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
+                         'Unknown User',
+            avatar_url: callerProfile.avatar_url
+          };
+
+          console.log('📱 Setting incoming call state:', {
+            id: callSession.id,
+            type: callSession.call_type,
+            callerInfo
+          });
+
+          setActiveCall({
+            id: callSession.id,
+            type: callSession.call_type,
+            isIncoming: true,
+            callerInfo,
+            otherUserId: callSession.caller_id,
+            status: 'ringing'
+          });
+
+          // Show notification
+          toast({
+            title: "Incoming Call",
+            description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔇 Cleaning up call listener');
+      supabase.removeChannel(channel);
+    };
+  }, [user, toast]);
+
+  // Handle call acceptance and rejection
+  const handleAcceptCall = async () => {
+    if (!activeCall?.id) return;
+    
+    try {
+      await supabase
+        .from('call_sessions')
+        .update({ status: 'accepted' })
+        .eq('id', activeCall.id);
+      
+      setActiveCall(prev => ({ ...prev, isIncoming: false, status: 'accepted' }));
+      
+      toast({
+        title: "Call Accepted",
+        description: "Call connected successfully",
+      });
+    } catch (error) {
+      console.error('Error accepting call:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept call",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeclineCall = async () => {
+    if (!activeCall?.id) return;
+    
+    try {
+      await supabase
+        .from('call_sessions')
+        .update({ status: 'declined' })
+        .eq('id', activeCall.id);
+      
+      setActiveCall(null);
+      
+      toast({
+        title: "Call Declined",
+        description: "Call was declined",
+      });
+    } catch (error) {
+      console.error('Error declining call:', error);
+    }
   };
 
   const getTabContent = (type) => {
@@ -579,8 +727,8 @@ const ChatappPage = () => {
             callType={activeCall.type}
             isIncoming={activeCall.isIncoming}
             callerInfo={activeCall.callerInfo}
-            onAccept={() => console.log('Call accepted')}
-            onDecline={() => setActiveCall(null)}
+            onAccept={handleAcceptCall}
+            onDecline={handleDeclineCall}
             onEnd={handleEndCall}
             onToggleVideo={() => console.log('Toggle video')}
             onToggleMic={() => console.log('Toggle mic')}
