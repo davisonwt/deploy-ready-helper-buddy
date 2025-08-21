@@ -150,6 +150,7 @@ export function useRoles() {
   }
 
   useEffect(() => {
+    console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id })
     fetchUserRoles()
   }, [user])
 
