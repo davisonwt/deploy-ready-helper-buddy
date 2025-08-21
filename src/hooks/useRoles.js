@@ -16,6 +16,7 @@ export function useRoles() {
 
     try {
       console.log('🔑 fetchUserRoles: Fetching roles for user:', user.id)
+      console.log('🔑 fetchUserRoles: User email:', user.email)
       setLoading(true)
       setError(null)
 
@@ -28,13 +29,18 @@ export function useRoles() {
 
       console.log('🔑 Direct query test result:', { testData, testError })
 
+      // Check if user can see their own roles by email
+      console.log('🔑 Testing query with current auth user...')
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      console.log('🔑 Current auth user:', { id: currentUser?.id, email: currentUser?.email })
+
       // Now try the actual user-specific query
       const { data, error: fetchError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
 
-      console.log('🔑 fetchUserRoles: Response:', { data, error: fetchError })
+      console.log('🔑 fetchUserRoles: Response:', { data, error: fetchError, userId: user.id })
 
       if (fetchError) throw fetchError
 
