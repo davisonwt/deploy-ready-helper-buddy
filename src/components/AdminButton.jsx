@@ -5,34 +5,32 @@ import { useAuth } from "../hooks/useAuth";
 import { useRoles } from "../hooks/useRoles";
 
 export function AdminButton() {
-  const { user, isAuthenticated } = useAuth();
-  const { userRoles, loading, isAdmin, isGosat, isAdminOrGosat } = useRoles();
+  const auth = useAuth();
+  const roles = useRoles();
 
   // Debug logging
-  console.log('🔥 AdminButton Debug:', {
-    user: !!user,
-    isAuthenticated,
-    userRoles,
-    loading,
-    isAdmin: isAdmin(),
-    isGosat: isGosat(),
-    isAdminOrGosat: isAdminOrGosat()
+  console.log('🔥 AdminButton Full Debug:', {
+    auth,
+    roles
   });
 
-  // Always show button for debugging - we'll see what's happening
+  // Show debug info  
   return (
-    <div className="border border-red-500 p-2">
+    <div className="border border-red-500 p-2 max-w-md">
       <div className="text-xs text-red-500 mb-1">
-        Auth: {isAuthenticated ? 'YES' : 'NO'} | Roles: {JSON.stringify(userRoles)} | Loading: {loading ? 'YES' : 'NO'}
+        Auth: {auth?.isAuthenticated ? 'YES' : 'NO'} | User ID: {auth?.user?.id || 'NONE'}
       </div>
-      {isAuthenticated && userRoles.length > 0 && (
+      <div className="text-xs text-red-500 mb-1">
+        Roles: {JSON.stringify(roles?.userRoles || [])} | Loading: {roles?.loading ? 'YES' : 'NO'}
+      </div>
+      {auth?.isAuthenticated && roles?.userRoles?.length > 0 && (
         <Link to="/admin/dashboard">
           <Button 
             variant="outline"
-            className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90"
+            className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
           >
-            <Settings className="w-4 h-4 mr-2" />
-            gosat's ({userRoles.join(', ')})
+            <Settings className="w-3 h-3 mr-1" />
+            gosat's ({roles.userRoles.join(', ')})
           </Button>
         </Link>
       )}

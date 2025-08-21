@@ -13,8 +13,6 @@ import {
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
 import { AdminButton } from "../components/AdminButton";
-import { AuthProvider } from "../hooks/useAuth";
-import { BasketProvider } from "../hooks/useBasket";
 
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
@@ -786,13 +784,9 @@ function IndexContent() {
 
 const Index = () => {
   return (
-    <AuthProvider>
-      <BasketProvider>
-        <AppContextProvider>
-          <IndexContent />
-        </AppContextProvider>
-      </BasketProvider>
-    </AuthProvider>
+    <AppContextProvider>
+      <IndexContent />
+    </AppContextProvider>
   );
 };
 
