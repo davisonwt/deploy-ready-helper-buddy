@@ -114,7 +114,9 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
   
   const handleSelectAllAvailable = () => {
     const availablePockets = []
-    const actualTotalPockets = orchard.intended_pockets || orchard.total_pockets || 1
+    const actualTotalPockets = (orchard.intended_pockets && orchard.intended_pockets > 1) 
+      ? orchard.intended_pockets 
+      : orchard.total_pockets || 1
     for (let i = 1; i <= actualTotalPockets; i++) {
       const isTaken = takenPockets.some(p => p.number === i)
       if (!isTaken) {
@@ -198,7 +200,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
     total_pockets: orchard.total_pockets,
     intended_pockets: orchard.intended_pockets,
     filled_pockets: orchard.filled_pockets,
-    actualTotalPockets: orchard.intended_pockets || orchard.total_pockets || 1
+    actualTotalPockets: (orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1
   })
 
   return (
@@ -226,7 +228,7 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
             </CardHeader>
             <CardContent className="p-8">
               <AnimatedOrchardGrid 
-                totalPockets={orchard.intended_pockets || orchard.total_pockets || 1}
+                totalPockets={(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1}
                 pocketPrice={orchard.pocket_price || 150}
                 selectedPockets={selectedPockets}
                 onPocketClick={handlePocketClick}

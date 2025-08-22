@@ -18,7 +18,8 @@ export function OrchardActions({
     total_pockets: orchard.total_pockets,
     intended_pockets: orchard.intended_pockets,
     filled_pockets: orchard.filled_pockets,
-    availablePockets: (orchard.intended_pockets || orchard.total_pockets || 0) - (orchard.filled_pockets || 0),
+    actualPockets: (orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0,
+    availablePockets: ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) - (orchard.filled_pockets || 0),
     selectedPockets: selectedPockets.length
   })
 
@@ -55,7 +56,7 @@ export function OrchardActions({
           variant="outline"
           className="border-green-600 text-green-600 hover:bg-green-50"
         >
-          Select All Available ({(orchard.intended_pockets || orchard.total_pockets || 0) - (orchard.filled_pockets || 0)} pockets)
+          Select All Available ({((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) - (orchard.filled_pockets || 0)} pockets)
         </Button>
         
         {selectedPockets.length > 0 && (
