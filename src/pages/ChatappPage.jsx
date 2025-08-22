@@ -306,6 +306,24 @@ const ChatappPage = () => {
           });
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `caller_id=eq.${user.id}`
+        },
+        async (payload) => {
+          console.log('📞 Call status update for caller:', payload);
+          const callSession = payload.new;
+          
+          if (callSession.status === 'accepted' && activeCall?.id === callSession.id) {
+            console.log('✅ Call was accepted by receiver');
+            setActiveCall(prev => prev ? { ...prev, status: 'accepted' } : null);
+          }
+        }
+      )
       .subscribe((status) => {
         console.log('📡 Real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
@@ -321,18 +339,23 @@ const ChatappPage = () => {
       console.log('🔇 Cleaning up call listener');
       supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [user, toast, activeCall?.id]);
 
   // Handle call acceptance and rejection
   const handleAcceptCall = async () => {
     if (!activeCall?.id) return;
     
+    console.log('📞 Accepting call:', activeCall.id);
     try {
       await supabase
         .from('call_sessions')
-        .update({ status: 'accepted' })
+        .update({ 
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
         .eq('id', activeCall.id);
       
+      // Keep the call active but mark as accepted for WebRTC
       setActiveCall(prev => ({ ...prev, isIncoming: false, status: 'accepted' }));
       
       toast({

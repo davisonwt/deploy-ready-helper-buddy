@@ -120,12 +120,15 @@ export const useWebRTC = (callSession, user) => {
 
   // Send signaling messages
   const sendSignalingMessage = (message) => {
+    console.log('📤 Sending signaling message:', message.type);
     if (signalingChannelRef.current) {
       signalingChannelRef.current.send({
         type: 'broadcast',
         event: 'webrtc_signal',
         payload: message
       });
+    } else {
+      console.error('❌ No signaling channel available');
     }
   };
 
@@ -133,30 +136,34 @@ export const useWebRTC = (callSession, user) => {
   const handleSignalingMessage = async (message) => {
     console.log('📨 Received signaling message:', message.type);
     
-    if (!peerConnectionRef.current) return;
+    if (!peerConnectionRef.current) {
+      console.log('❌ No peer connection available');
+      return;
+    }
 
     try {
       switch (message.type) {
         case 'offer':
           console.log('📥 Handling offer');
-          await peerConnectionRef.current.setRemoteDescription(message.offer);
+          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.offer));
           const answer = await peerConnectionRef.current.createAnswer();
           await peerConnectionRef.current.setLocalDescription(answer);
           sendSignalingMessage({
             type: 'answer',
             answer: answer,
-            callId: callSession.id
+            callId: callSession.id,
+            fromUser: user.id
           });
           break;
 
         case 'answer':
           console.log('📥 Handling answer');
-          await peerConnectionRef.current.setRemoteDescription(message.answer);
+          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.answer));
           break;
 
         case 'ice-candidate':
           console.log('📥 Handling ICE candidate');
-          await peerConnectionRef.current.addIceCandidate(message.candidate);
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(message.candidate));
           break;
       }
     } catch (error) {
@@ -166,17 +173,24 @@ export const useWebRTC = (callSession, user) => {
 
   // Start call (caller)
   const startCall = async () => {
-    if (!peerConnectionRef.current) return;
+    if (!peerConnectionRef.current) {
+      console.log('❌ No peer connection for starting call');
+      return;
+    }
     
     try {
       console.log('📞 Creating offer');
-      const offer = await peerConnectionRef.current.createOffer();
+      const offer = await peerConnectionRef.current.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false
+      });
       await peerConnectionRef.current.setLocalDescription(offer);
       
       sendSignalingMessage({
         type: 'offer',
         offer: offer,
-        callId: callSession.id
+        callId: callSession.id,
+        fromUser: user.id
       });
     } catch (error) {
       console.error('❌ Error creating offer:', error);
@@ -217,17 +231,32 @@ export const useWebRTC = (callSession, user) => {
   // Initialize when call session is available
   useEffect(() => {
     if (callSession && user) {
+      console.log('🎯 Starting WebRTC initialization for call:', callSession.id);
       initializeWebRTC();
       setupSignalingChannel();
       
-      // If this is the caller, start the call
+      // If this is the caller, start the call after a delay
       if (!callSession.isIncoming) {
-        setTimeout(() => startCall(), 1000); // Small delay to ensure setup
+        const timer = setTimeout(() => {
+          console.log('📞 Starting call as caller');
+          startCall();
+        }, 2000); // Give more time for setup
+        
+        return () => clearTimeout(timer);
       }
     }
 
-    return cleanup;
-  }, [callSession?.id]);
+    // Don't cleanup on every effect run, only when component unmounts
+  }, [callSession?.id, user?.id]);
+
+  
+  // Cleanup effect - separate from initialization
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Component unmounting, cleaning up WebRTC');
+      cleanup();
+    };
+  }, []);
 
   return {
     localAudioRef,
