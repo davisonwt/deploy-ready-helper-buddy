@@ -274,7 +274,22 @@ const ChatappPage = () => {
             .single();
 
           if (error) {
-            console.error('Error fetching caller profile:', error);
+            console.error('❌ Error fetching caller profile:', error);
+            console.log('📞 Profile fetch failed, caller_id:', callSession.caller_id);
+            
+            // Set activeCall anyway with minimal info
+            setActiveCall({
+              id: callSession.id,
+              type: callSession.call_type,
+              isIncoming: true,
+              callerInfo: {
+                display_name: 'Unknown User',
+                avatar_url: null
+              },
+              otherUserId: callSession.caller_id,
+              status: 'ringing'
+            });
+            console.log('📞 Active call set with minimal caller info');
             return;
           }
 
