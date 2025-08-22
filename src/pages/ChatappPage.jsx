@@ -261,78 +261,84 @@ const ChatappPage = () => {
           table: 'call_sessions',
           filter: `receiver_id=eq.${user.id}`
         },
-        async (payload) => {
+        (payload) => {
           console.log('📞 Incoming call detected - payload type:', typeof payload);
           console.log('📞 Setting activeCall with data:', payload.new);
           const callSession = payload.new;
           
-          try {
-            // Fetch caller profile
-            const { data: callerProfile, error } = await supabase
-              .from('profiles')
-              .select('display_name, avatar_url, first_name, last_name')
-              .eq('user_id', callSession.caller_id)
-              .maybeSingle();
+          // Fetch caller profile in a separate function to avoid async issues in real-time handler
+          const handleIncomingCall = async () => {
+            try {
+              // Fetch caller profile
+              const { data: callerProfile, error } = await supabase
+                .from('profiles')
+                .select('display_name, avatar_url, first_name, last_name')
+                .eq('user_id', callSession.caller_id)
+                .maybeSingle();
 
-            let callerInfo = {
-              display_name: 'Unknown User',
-              avatar_url: null
-            };
-
-            if (!error && callerProfile) {
-              callerInfo = {
-                display_name: callerProfile.display_name || 
-                             `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
-                             'Unknown User',
-                avatar_url: callerProfile.avatar_url
-              };
-            } else if (error) {
-              console.error('❌ Error fetching caller profile:', error);
-            }
-
-            console.log('📱 Setting incoming call state:', {
-              id: callSession.id,
-              type: callSession.call_type,
-              callerInfo
-            });
-
-            setActiveCall({
-              id: callSession.id,
-              type: callSession.call_type,
-              isIncoming: true,
-              callerInfo,
-              otherUserId: callSession.caller_id,
-              status: 'ringing'
-            });
-            console.log('📞 Active call state set to:', {
-              id: callSession.id,
-              type: callSession.call_type,
-              isIncoming: true,
-              callerInfo,
-              otherUserId: callSession.caller_id,
-              status: 'ringing'
-            });
-
-            // Show notification
-            toast({
-              title: "Incoming Call",
-              description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
-            });
-          } catch (err) {
-            console.error('❌ Error in incoming call handler:', err);
-            // Set minimal call info to allow the call to proceed
-            setActiveCall({
-              id: callSession.id,
-              type: callSession.call_type,
-              isIncoming: true,
-              callerInfo: {
+              let callerInfo = {
                 display_name: 'Unknown User',
                 avatar_url: null
-              },
-              otherUserId: callSession.caller_id,
-              status: 'ringing'
-            });
-          }
+              };
+
+              if (!error && callerProfile) {
+                callerInfo = {
+                  display_name: callerProfile.display_name || 
+                               `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
+                               'Unknown User',
+                  avatar_url: callerProfile.avatar_url
+                };
+              } else if (error) {
+                console.error('❌ Error fetching caller profile:', error);
+              }
+
+              console.log('📱 Setting incoming call state:', {
+                id: callSession.id,
+                type: callSession.call_type,
+                callerInfo
+              });
+
+              setActiveCall({
+                id: callSession.id,
+                type: callSession.call_type,
+                isIncoming: true,
+                callerInfo,
+                otherUserId: callSession.caller_id,
+                status: 'ringing'
+              });
+              console.log('📞 Active call state set to:', {
+                id: callSession.id,
+                type: callSession.call_type,
+                isIncoming: true,
+                callerInfo,
+                otherUserId: callSession.caller_id,
+                status: 'ringing'
+              });
+
+              // Show notification
+              toast({
+                title: "Incoming Call",
+                description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
+              });
+            } catch (err) {
+              console.error('❌ Error in incoming call handler:', err);
+              // Set minimal call info to allow the call to proceed
+              setActiveCall({
+                id: callSession.id,
+                type: callSession.call_type,
+                isIncoming: true,
+                callerInfo: {
+                  display_name: 'Unknown User',
+                  avatar_url: null
+                },
+                otherUserId: callSession.caller_id,
+                status: 'ringing'
+              });
+            }
+          };
+          
+          // Execute the async function
+          handleIncomingCall();
         }
       )
       .on(
