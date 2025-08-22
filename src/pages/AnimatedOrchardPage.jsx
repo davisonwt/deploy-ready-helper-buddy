@@ -191,6 +191,16 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
     )
   }
 
+  // Debug the orchard data being used
+  console.log('🌱 AnimatedOrchardPage Debug:', {
+    id,
+    title: orchard.title,
+    total_pockets: orchard.total_pockets,
+    intended_pockets: orchard.intended_pockets,
+    filled_pockets: orchard.filled_pockets,
+    actualTotalPockets: orchard.intended_pockets || orchard.total_pockets || 1
+  })
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-green-100">
       <OrchardHeader 
