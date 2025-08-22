@@ -8,17 +8,33 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 Script Function started, method:', req.method);
+  
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('📥 Parsing request body...');
     const { productDescription, targetAudience, videoLength, style, customPrompt } = await req.json();
+    console.log('✅ Request body parsed successfully');
 
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    console.log('🔧 Initializing Supabase client...');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Missing Supabase environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase client initialized');
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
@@ -155,8 +171,12 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
     });
 
   } catch (error) {
-    console.error('Error in generate-script function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('❌ CRITICAL ERROR in generate-script function:', error);
+    console.error('Error stack:', error.stack);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error: ' + error.message,
+      details: error.stack 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

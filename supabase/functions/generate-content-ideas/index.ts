@@ -8,21 +8,39 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🚀 Function started, method:', req.method);
+  
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('📥 Parsing request body...');
     const { productDescription, targetAudience, contentType, customPrompt } = await req.json();
+    console.log('✅ Request body parsed successfully');
 
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    console.log('🔧 Initializing Supabase client...');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Missing Supabase environment variables');
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase client initialized');
 
     // Get user from auth header
+    console.log('🔐 Checking authentication...');
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.log('❌ No authorization header');
       return new Response(JSON.stringify({ error: 'No authorization header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -30,14 +48,17 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log('🔍 Getting user from token...');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
+      console.log('❌ Invalid user token:', userError?.message);
       return new Response(JSON.stringify({ error: 'Invalid user token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    console.log('✅ User authenticated:', user.id);
 
     // Check rate limiting
     const { data: usageData } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
@@ -154,8 +175,12 @@ Include various formats and creative angles that would engage the target audienc
     });
 
   } catch (error) {
-    console.error('Error in generate-content-ideas function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('❌ CRITICAL ERROR in generate-content-ideas function:', error);
+    console.error('Error stack:', error.stack);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error: ' + error.message,
+      details: error.stack 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
