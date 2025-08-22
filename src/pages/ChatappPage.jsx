@@ -355,6 +355,7 @@ const ChatappPage = () => {
     if (!activeCall?.id) return;
     
     console.log('📞 Accepting call:', activeCall.id);
+    console.log('📞 Current activeCall state:', activeCall);
     try {
       await supabase
         .from('call_sessions')
@@ -367,6 +368,7 @@ const ChatappPage = () => {
       // Keep the call active but mark as accepted for WebRTC
       // Keep isIncoming: true for receiver to maintain proper signaling roles
       setActiveCall(prev => ({ ...prev, status: 'accepted' }));
+      console.log('📞 Call accepted, updated activeCall state');
       
       toast({
         title: "Call Accepted",
