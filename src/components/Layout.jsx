@@ -53,7 +53,7 @@ export default function Layout({ children }) {
     userRoles 
   })
 
-  const shouldShowAdminButton = !rolesLoading && isAdminOrGosat
+  const shouldShowAdminButton = isAdminOrGosat || (userRoles && (userRoles.includes('admin') || userRoles.includes('gosat')))
   console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { rolesLoading, isAdminResult: isAdminOrGosat, userRoles })
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
