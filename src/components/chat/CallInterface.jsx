@@ -38,6 +38,7 @@ const CallInterface = ({
     isAudioEnabled,
     connectionState,
     toggleAudio,
+    testAudio,
     cleanup
   } = useWebRTC(callSession, user);
 
@@ -265,20 +266,7 @@ const CallInterface = ({
                 variant="outline"
                 size="lg"
                 className="rounded-full h-12 w-12"
-                onClick={() => {
-                  // Test audio by playing a brief tone
-                  if (remoteAudioRef.current) {
-                    console.log('🔊 Testing audio element:', {
-                      volume: remoteAudioRef.current.volume,
-                      muted: remoteAudioRef.current.muted,
-                      paused: remoteAudioRef.current.paused,
-                      srcObject: !!remoteAudioRef.current.srcObject
-                    });
-                    
-                    // Try to play any existing stream
-                    remoteAudioRef.current.play().catch(e => console.log('Audio play error:', e));
-                  }
-                }}
+                onClick={testAudio}
               >
                 <Settings className="h-5 w-5" />
               </Button>

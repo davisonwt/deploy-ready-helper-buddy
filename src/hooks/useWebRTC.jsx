@@ -238,23 +238,88 @@ export const useWebRTC = (callSession, user) => {
     }
   };
 
-  // Clean up WebRTC connection
-  const cleanup = () => {
-    console.log('🧹 Cleaning up WebRTC connection');
+  // Test audio functionality
+  const testAudio = () => {
+    console.log('🔊 Testing audio setup...');
     
+    // Test local audio
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      console.log('🎤 Local audio tracks:', audioTracks.length);
+      audioTracks.forEach((track, index) => {
+        console.log(`🎤 Track ${index}:`, {
+          id: track.id,
+          enabled: track.enabled,
+          readyState: track.readyState,
+          settings: track.getSettings()
+        });
+      });
     }
     
+    // Test remote audio
+    if (remoteAudioRef.current) {
+      console.log('🔊 Remote audio element:', {
+        volume: remoteAudioRef.current.volume,
+        muted: remoteAudioRef.current.muted,
+        paused: remoteAudioRef.current.paused,
+        srcObject: !!remoteAudioRef.current.srcObject,
+        readyState: remoteAudioRef.current.readyState
+      });
+      
+      if (remoteAudioRef.current.srcObject) {
+        const remoteStream = remoteAudioRef.current.srcObject;
+        const remoteTracks = remoteStream.getAudioTracks();
+        console.log('🔊 Remote stream tracks:', remoteTracks.length);
+        remoteTracks.forEach((track, index) => {
+          console.log(`🔊 Remote track ${index}:`, {
+            id: track.id,
+            enabled: track.enabled,
+            readyState: track.readyState
+          });
+        });
+      }
+      
+      // Try to play
+      remoteAudioRef.current.play().catch(e => console.log('Audio play error:', e));
+    }
+    
+    // Test WebRTC connection
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
+      console.log('📡 WebRTC Connection State:', peerConnectionRef.current.connectionState);
+      console.log('📡 ICE Connection State:', peerConnectionRef.current.iceConnectionState);
+      console.log('📡 Signaling State:', peerConnectionRef.current.signalingState);
+      
+      // Check senders (outgoing audio)
+      const senders = peerConnectionRef.current.getSenders();
+      console.log('📤 Audio senders:', senders.length);
+      senders.forEach((sender, index) => {
+        if (sender.track) {
+          console.log(`📤 Sender ${index}:`, {
+            kind: sender.track.kind,
+            enabled: sender.track.enabled,
+            readyState: sender.track.readyState
+          });
+        }
+      });
+      
+      // Check receivers (incoming audio)
+      const receivers = peerConnectionRef.current.getReceivers();
+      console.log('📥 Audio receivers:', receivers.length);
+      receivers.forEach((receiver, index) => {
+        if (receiver.track) {
+          console.log(`📥 Receiver ${index}:`, {
+            kind: receiver.track.kind,
+            enabled: receiver.track.enabled,
+            readyState: receiver.track.readyState
+          });
+        }
+      });
     }
     
-    if (signalingChannelRef.current) {
-      supabase.removeChannel(signalingChannelRef.current);
-    }
-    
-    setConnectionState('closed');
+    toast({
+      title: "Audio Test",
+      description: "Check console for detailed audio information",
+    });
   };
 
   // Initialize when call session is available
@@ -278,6 +343,25 @@ export const useWebRTC = (callSession, user) => {
     // Don't cleanup on every effect run, only when component unmounts
   }, [callSession?.id, user?.id]);
 
+  // Clean up WebRTC connection
+  const cleanup = () => {
+    console.log('🧹 Cleaning up WebRTC connection');
+    
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+    }
+    
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+    }
+    
+    if (signalingChannelRef.current) {
+      supabase.removeChannel(signalingChannelRef.current);
+    }
+    
+    setConnectionState('closed');
+  };
+
   
   // Cleanup effect - separate from initialization
   useEffect(() => {
@@ -294,6 +378,7 @@ export const useWebRTC = (callSession, user) => {
     isVideoEnabled,
     connectionState,
     toggleAudio,
+    testAudio,
     cleanup
   };
 };
