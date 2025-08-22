@@ -54,7 +54,7 @@ export default function DashboardPage() {
             .from('profiles')
             .select('*')
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
           
           if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
             console.error('❌ Dashboard: Error fetching profile:', error)
