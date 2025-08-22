@@ -151,8 +151,8 @@ export default function LiveActivityWidget() {
       const aodHereticFrequencies = {
         id: 'aod-heretic-freq',
         showName: "AoD Heretic's Frequencies",
-        currentHost: "The Heretic",
-        hostAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        currentHost: "Ed",
+        hostAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
         isLive: Math.random() > 0.5, // Simulate live/offline status
         listeners: Math.floor(Math.random() * 150) + 25, // 25-175 listeners
         frequency: "777.7 MHz",
