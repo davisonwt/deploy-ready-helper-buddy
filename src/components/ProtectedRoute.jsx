@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useRoles } from "../hooks/useRoles"
 
-export default function ProtectedRoute({ children, allowedRoles = null }) {
+const ProtectedRoute = ({ children, allowedRoles = null }) => {
   try {
     const { isAuthenticated, loading: authLoading } = useAuth()
     const { hasRole, loading: rolesLoading } = useRoles()
@@ -44,3 +44,5 @@ export default function ProtectedRoute({ children, allowedRoles = null }) {
     return <Navigate to="/login" replace />
   }
 }
+
+export default ProtectedRoute
