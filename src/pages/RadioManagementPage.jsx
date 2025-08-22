@@ -24,10 +24,10 @@ export default function RadioManagementPage() {
 
       {/* Management Interface */}
       <Tabs defaultValue="schedule" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="schedule">
             <Calendar className="h-4 w-4 mr-2" />
-            Detailed Schedule Planning
+            Schedule Management
           </TabsTrigger>
           <TabsTrigger value="personnel">
             <Users className="h-4 w-4 mr-2" />
@@ -56,7 +56,7 @@ export default function RadioManagementPage() {
                 Detailed Schedule Planning
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8 min-h-[600px]">
               <TimezoneSlotAssignment />
             </CardContent>
           </Card>
