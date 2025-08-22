@@ -189,13 +189,31 @@ const CallInterface = ({
                   <p className="text-sm text-muted-foreground mt-1">
                     Connection: {connectionState}
                   </p>
+                  {/* Audio debug info */}
+                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                    <div>🎤 Mic: {isAudioEnabled ? 'ON' : 'OFF'}</div>
+                    <div>🔊 Audio elements: L:{!!localAudioRef?.current} R:{!!remoteAudioRef?.current}</div>
+                  </div>
                 </>
               )}
             </div>
             
             {/* Hidden audio elements for WebRTC */}
-            <audio ref={localAudioRef} muted autoPlay />
-            <audio ref={remoteAudioRef} autoPlay />
+            <audio 
+              ref={localAudioRef} 
+              muted 
+              autoPlay 
+              playsInline
+              style={{ display: 'none' }}
+            />
+            <audio 
+              ref={remoteAudioRef} 
+              autoPlay 
+              playsInline
+              controls={false}
+              volume={1.0}
+              style={{ display: 'none' }}
+            />
           </div>
         )}
       </div>
@@ -247,6 +265,20 @@ const CallInterface = ({
                 variant="outline"
                 size="lg"
                 className="rounded-full h-12 w-12"
+                onClick={() => {
+                  // Test audio by playing a brief tone
+                  if (remoteAudioRef.current) {
+                    console.log('🔊 Testing audio element:', {
+                      volume: remoteAudioRef.current.volume,
+                      muted: remoteAudioRef.current.muted,
+                      paused: remoteAudioRef.current.paused,
+                      srcObject: !!remoteAudioRef.current.srcObject
+                    });
+                    
+                    // Try to play any existing stream
+                    remoteAudioRef.current.play().catch(e => console.log('Audio play error:', e));
+                  }
+                }}
               >
                 <Settings className="h-5 w-5" />
               </Button>
