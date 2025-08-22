@@ -213,7 +213,12 @@ const CallInterface = ({
               playsInline
               controls={false}
               volume={1.0}
+              muted={false}
               style={{ display: 'none' }}
+              onLoadedMetadata={() => console.log('📺 [AUDIO] Remote audio loaded')}
+              onCanPlay={() => console.log('📺 [AUDIO] Remote audio can play')}
+              onPlay={() => console.log('📺 [AUDIO] Remote audio started')}
+              onError={(e) => console.error('📺 [AUDIO] Remote audio error:', e)}
             />
           </div>
         )}
