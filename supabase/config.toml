@@ -76,3 +76,6 @@ verify_jwt = true
 
 [functions.generate-marketing-tips]
 verify_jwt = true
+
+[functions.test-simple]
+verify_jwt = false
