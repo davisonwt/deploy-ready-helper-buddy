@@ -19,7 +19,7 @@ const BestowalUI = ({ orchard, onBestow }) => {
     target: orchard.seed_value || orchard.original_seed_value || 0,
     current: (orchard.filled_pockets || 0) * (orchard.pocket_price || 0),
     supporters: orchard.supporters || 0,
-    pockets: orchard.total_pockets || 0,
+    pockets: orchard.intended_pockets || orchard.total_pockets || 0,
     filledPockets: orchard.filled_pockets || 0,
     pocketValue: orchard.pocket_price || 0
   } : {
