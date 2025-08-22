@@ -232,7 +232,7 @@ export default function OrchardCreatedPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-card/50 rounded-lg">
                     <span className="text-muted-foreground font-medium">Total Pockets:</span>
-                    <span className="font-semibold text-foreground">{orchard.intended_pockets || orchard.total_pockets}</span>
+                    <span className="font-semibold text-foreground">{(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-card/50 rounded-lg">
                     <span className="text-muted-foreground font-medium">Pocket Price:</span>
