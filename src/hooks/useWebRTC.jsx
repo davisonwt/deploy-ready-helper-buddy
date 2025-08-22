@@ -344,7 +344,8 @@ export const useWebRTC = (callSession, user) => {
       hasCallSession: !!callSession,
       callSessionId: callSession?.id,
       hasUser: !!user,
-      userId: user?.id
+      userId: user?.id,
+      callSessionObject: callSession
     });
     
     if (callSession && user) {
