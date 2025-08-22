@@ -115,7 +115,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
           orchard_type: orchard.orchard_type || "standard",
           seed_value: orchard.original_seed_value?.toString() || "",
           pocket_price: orchard.pocket_price?.toString() || "150",
-          number_of_pockets: orchard.intended_pockets?.toString() || "1", // Use intended_pockets for form field
+          number_of_pockets: orchard.total_pockets?.toString() || "1", // Map total_pockets from DB to number_of_pockets in form
           courier_cost: orchard.courier_cost?.toString() || "0",
           location: orchard.location || "",
           why_needed: orchard.why_needed || "",
