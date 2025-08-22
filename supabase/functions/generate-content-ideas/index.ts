@@ -71,14 +71,23 @@ Include various formats and creative angles that would engage the target audienc
 
     console.log('Generating content ideas with OpenAI...');
     
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found in environment variables');
+      return new Response(JSON.stringify({ error: 'OpenAI API key not configured. Please contact support.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -117,7 +126,7 @@ Include various formats and creative angles that would engage the target audienc
         metadata: {
           content_type_focus: contentType,
           generated_at: new Date().toISOString(),
-          model: 'gpt-4o',
+          model: 'gpt-4.1-2025-04-14',
           prompt_tokens: openAIData.usage?.prompt_tokens,
           completion_tokens: openAIData.usage?.completion_tokens
         }
