@@ -23,24 +23,51 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Add session debugging
+// Add session monitoring (production-safe)
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('🔐 SUPABASE AUTH EVENT:', event, {
-    hasSession: !!session,
-    userId: session?.user?.id,
-    accessToken: session?.access_token ? 'present' : 'missing',
-    refreshToken: session?.refresh_token ? 'present' : 'missing'
-  });
+  // Only log essential auth events in production
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔐 SUPABASE AUTH EVENT:', event, {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      accessToken: session?.access_token ? 'present' : 'missing',
+      refreshToken: session?.refresh_token ? 'present' : 'missing'
+    });
+  }
   
-  // Force session refresh on errors
+  // Enhanced security monitoring for auth events
+  if (event === 'SIGNED_IN' && session) {
+    // Log successful authentication for security monitoring
+    supabase.rpc('log_security_event_enhanced', {
+      event_type: 'user_signed_in',
+      user_id_param: session.user.id,
+      details: { timestamp: new Date().toISOString() },
+      severity: 'info'
+    }).then(({ error }) => {
+      if (error && process.env.NODE_ENV === 'development') {
+        console.warn('Failed to log security event:', error);
+      }
+    });
+  }
+  
+  if (event === 'SIGNED_OUT') {
+    // Log sign out events
+    supabase.rpc('log_security_event_enhanced', {
+      event_type: 'user_signed_out',
+      details: { timestamp: new Date().toISOString() },
+      severity: 'info'
+    }).then(({ error }) => {
+      if (error && process.env.NODE_ENV === 'development') {
+        console.warn('Failed to log security event:', error);
+      }
+    });
+  }
+  
+  // Database connection validation (production-safe)
   if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-    console.log('🔄 Session refreshed/signed in, validating database connection...');
-    // Test database connection
     supabase.from('profiles').select('id').limit(1).then(({ error }) => {
-      if (error) {
+      if (error && process.env.NODE_ENV === 'development') {
         console.error('❌ Database connection failed after auth event:', error);
-      } else {
-        console.log('✅ Database connection verified after auth event');
       }
     });
   }

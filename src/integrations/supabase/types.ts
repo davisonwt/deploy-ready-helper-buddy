@@ -999,6 +999,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_config_secure: {
+        Row: {
+          bank_account_name_encrypted: string
+          bank_account_number_encrypted: string
+          bank_name_encrypted: string
+          bank_swift_code_encrypted: string
+          business_email_encrypted: string
+          created_at: string
+          encryption_key_id: string
+          id: string
+          last_accessed: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account_name_encrypted: string
+          bank_account_number_encrypted: string
+          bank_name_encrypted: string
+          bank_swift_code_encrypted: string
+          business_email_encrypted: string
+          created_at?: string
+          encryption_key_id?: string
+          id?: string
+          last_accessed?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account_name_encrypted?: string
+          bank_account_number_encrypted?: string
+          bank_name_encrypted?: string
+          bank_swift_code_encrypted?: string
+          business_email_encrypted?: string
+          created_at?: string
+          encryption_key_id?: string
+          id?: string
+          last_accessed?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number

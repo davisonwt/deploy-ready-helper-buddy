@@ -25,6 +25,11 @@ import { formatCurrency } from '../utils/formatters'
 import { WalletWidget } from '@/components/WalletWidget'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
 import { supabase } from "@/integrations/supabase/client"
+import { LiveActivityWidget } from '@/components/LiveActivityWidget'
+import { GamificationHUD } from '@/components/gamification/GamificationHUD'
+import { GamificationFloatingButton } from '@/components/gamification/GamificationFloatingButton'
+import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
+import { Heart, Users, MessageSquare, BarChart3, Trophy, Shield } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()

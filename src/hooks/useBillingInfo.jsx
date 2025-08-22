@@ -33,7 +33,7 @@ export const useBillingInfo = () => {
         throw profileError
       }
 
-      // Get the actual billing data from secure function
+      // Get the actual billing data from secure encrypted function
       const { data: billingData, error: billingError } = await supabase
         .rpc('get_user_billing_info_secure', { target_user_id: user.id })
 
