@@ -23,12 +23,8 @@ export default function RadioManagementPage() {
       </div>
 
       {/* Management Interface */}
-      <Tabs defaultValue="schedule" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="schedule">
-            <Calendar className="h-4 w-4 mr-2" />
-            Schedule Management
-          </TabsTrigger>
+      <Tabs defaultValue="personnel" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="personnel">
             <Users className="h-4 w-4 mr-2" />
             Personnel Assignment
@@ -46,21 +42,6 @@ export default function RadioManagementPage() {
             Analytics
           </TabsTrigger>
         </TabsList>
-
-        {/* Schedule Management */}
-        <TabsContent value="schedule" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Detailed Schedule Planning
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TimezoneSlotAssignment />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Personnel Assignment */}
         <TabsContent value="personnel" className="space-y-6">
