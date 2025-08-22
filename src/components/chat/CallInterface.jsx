@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useWebRTC } from '@/hooks/useWebRTC';
 import { 
   Phone, 
   PhoneOff, 
@@ -15,22 +16,30 @@ import {
 } from 'lucide-react';
 
 const CallInterface = ({ 
+  callSession,
+  user,
   callType, 
   isIncoming = false, 
   callerInfo, 
   onAccept, 
   onDecline, 
-  onEnd, 
-  onToggleVideo, 
-  onToggleMic,
-  isVideoEnabled = true,
-  isMicEnabled = true 
+  onEnd
 }) => {
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const intervalRef = useRef(null);
+
+  // Use WebRTC hook for real audio communication
+  const {
+    localAudioRef,
+    remoteAudioRef,
+    isAudioEnabled,
+    connectionState,
+    toggleAudio,
+    cleanup
+  } = useWebRTC(callSession, user);
 
   useEffect(() => {
     if (!isIncoming) {
@@ -173,11 +182,20 @@ const CallInterface = ({
               {isIncoming ? (
                 <p className="text-muted-foreground">Incoming call...</p>
               ) : (
-                <p className="text-muted-foreground">
-                  Call duration: {formatDuration(callDuration)}
-                </p>
+                <>
+                  <p className="text-muted-foreground">
+                    Call duration: {formatDuration(callDuration)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Connection: {connectionState}
+                  </p>
+                </>
               )}
             </div>
+            
+            {/* Hidden audio elements for WebRTC */}
+            <audio ref={localAudioRef} muted autoPlay />
+            <audio ref={remoteAudioRef} autoPlay />
           </div>
         )}
       </div>
@@ -207,22 +225,21 @@ const CallInterface = ({
           ) : (
             <>
               <Button
-                variant={isMicEnabled ? "outline" : "destructive"}
+                variant={isAudioEnabled ? "outline" : "destructive"}
                 size="lg"
-                onClick={onToggleMic}
+                onClick={toggleAudio}
                 className="rounded-full h-12 w-12"
               >
-                {isMicEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+                {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
               </Button>
               
               {callType === 'video' && (
                 <Button
-                  variant={isVideoEnabled ? "outline" : "destructive"}
+                  variant="outline"
                   size="lg"
-                  onClick={onToggleVideo}
                   className="rounded-full h-12 w-12"
                 >
-                  {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+                  <VideoOff className="h-5 w-5" />
                 </Button>
               )}
               

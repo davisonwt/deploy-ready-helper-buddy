@@ -741,14 +741,14 @@ const ChatappPage = () => {
         {/* Call Interface */}
         {activeCall && (
           <CallInterface
+            callSession={activeCall}
+            user={user}
             callType={activeCall.type}
             isIncoming={activeCall.isIncoming}
             callerInfo={activeCall.callerInfo}
             onAccept={handleAcceptCall}
             onDecline={handleDeclineCall}
             onEnd={handleEndCall}
-            onToggleVideo={() => console.log('Toggle video')}
-            onToggleMic={() => console.log('Toggle mic')}
           />
         )}
       </div>
