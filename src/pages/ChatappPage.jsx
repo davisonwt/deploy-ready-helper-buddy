@@ -263,6 +263,9 @@ const ChatappPage = () => {
         },
         async (payload) => {
           console.log('📞 Incoming call detected:', payload);
+          console.log('📞 Call session data:', payload.new);
+          console.log('📞 Expected receiver_id:', user.id);
+          console.log('📞 Actual receiver_id:', payload.new.receiver_id);
           const callSession = payload.new;
           
           // Fetch caller profile
