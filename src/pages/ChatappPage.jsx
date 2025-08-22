@@ -356,7 +356,8 @@ const ChatappPage = () => {
         .eq('id', activeCall.id);
       
       // Keep the call active but mark as accepted for WebRTC
-      setActiveCall(prev => ({ ...prev, isIncoming: false, status: 'accepted' }));
+      // Keep isIncoming: true for receiver to maintain proper signaling roles
+      setActiveCall(prev => ({ ...prev, status: 'accepted' }));
       
       toast({
         title: "Call Accepted",
