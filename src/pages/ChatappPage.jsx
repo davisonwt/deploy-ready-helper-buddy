@@ -313,7 +313,7 @@ const ChatappPage = () => {
         } else if (status === 'CLOSED') {
           console.log('❌ Call notification subscription closed');
         } else if (status === 'CHANNEL_ERROR') {
-          console.log('🚨 Error with call notification subscription');
+          console.log('🚨 Error with call notification subscription:', status);
         }
       });
 
