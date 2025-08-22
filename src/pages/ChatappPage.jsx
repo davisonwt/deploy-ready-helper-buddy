@@ -299,6 +299,14 @@ const ChatappPage = () => {
             otherUserId: callSession.caller_id,
             status: 'ringing'
           });
+          console.log('📞 Active call state set to:', {
+            id: callSession.id,
+            type: callSession.call_type,
+            isIncoming: true,
+            callerInfo,
+            otherUserId: callSession.caller_id,
+            status: 'ringing'
+          });
 
           // Show notification
           toast({
