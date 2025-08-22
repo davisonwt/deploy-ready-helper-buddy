@@ -102,7 +102,7 @@ export default function MyOrchardsPage() {
   }, [orchards, user, searchTerm, statusFilter, selectedCategory])
 
   const getCompletionPercentage = (orchard) => {
-    const totalPockets = orchard.total_pockets || orchard.intended_pockets || 1;
+    const totalPockets = orchard.intended_pockets || orchard.total_pockets || 1;
     if (!totalPockets || totalPockets === 0) return 0;
     return Math.round((orchard.filled_pockets / totalPockets) * 100);
   }
@@ -437,12 +437,12 @@ export default function MyOrchardsPage() {
                         </span>
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-orange-600">Goal:</span>
-                        <span className="font-medium text-orange-700">
-                          {formatCurrency((orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
-                        </span>
-                      </div>
+                       <div className="flex items-center justify-between text-sm">
+                         <span className="text-orange-600">Goal:</span>
+                         <span className="font-medium text-orange-700">
+                           {formatCurrency((orchard.intended_pockets || orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
+                         </span>
+                       </div>
                       
                       <div className="flex items-center text-sm text-orange-500">
                         <Calendar className="h-4 w-4 mr-1" />

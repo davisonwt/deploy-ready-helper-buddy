@@ -178,8 +178,9 @@ export default function DashboardPage() {
   }, [orchards, userBestowals, user])
 
   const getCompletionPercentage = (orchard) => {
-    if (!orchard.total_pockets) return 0
-    return Math.round((orchard.filled_pockets / orchard.total_pockets) * 100)
+    const totalPockets = orchard.intended_pockets || orchard.total_pockets || 1;
+    if (!totalPockets) return 0
+    return Math.round((orchard.filled_pockets / totalPockets) * 100)
   }
 
   // Show loading screen while auth is loading or data is loading

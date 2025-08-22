@@ -236,12 +236,12 @@ export default function YhvhOrchardsPage() {
                     <div className="mb-3">
                       <div className="flex justify-between text-xs text-muted-foreground mb-1">
                         <span>Progress</span>
-                        <span>{orchard.filled_pockets}/{orchard.total_pockets} pockets</span>
-                      </div>
-                      <div className="w-full bg-secondary rounded-full h-2">
-                        <div 
-                          className="bg-success h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${(orchard.filled_pockets / orchard.total_pockets) * 100}%` }}
+                         <span>{orchard.filled_pockets}/{orchard.intended_pockets || orchard.total_pockets} pockets</span>
+                       </div>
+                       <div className="w-full bg-secondary rounded-full h-2">
+                         <div 
+                           className="bg-success h-2 rounded-full transition-all duration-300" 
+                           style={{ width: `${(orchard.filled_pockets / (orchard.intended_pockets || orchard.total_pockets || 1)) * 100}%` }}
                         />
                       </div>
                     </div>
