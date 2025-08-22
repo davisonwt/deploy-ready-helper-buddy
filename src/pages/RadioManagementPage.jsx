@@ -22,6 +22,35 @@ export default function RadioManagementPage() {
         </div>
       </div>
 
+      {/* Expanded Management Interface */}
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="h-8 w-8 text-primary" />
+              <h3 className="text-xl font-semibold">Schedule Management</h3>
+            </div>
+            <p className="text-muted-foreground">Manage radio show schedules and time slots</p>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="h-8 w-8 text-primary" />
+              <h3 className="text-xl font-semibold">Personnel Assignment</h3>
+            </div>
+            <p className="text-muted-foreground">Assign DJs and staff to time slots</p>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Clock className="h-8 w-8 text-primary" />
+              <h3 className="text-xl font-semibold">Global Scheduling</h3>
+            </div>
+            <p className="text-muted-foreground">24/7 worldwide coverage management</p>
+          </Card>
+        </div>
+      </div>
+
       {/* Management Interface */}
       <Tabs defaultValue="schedule" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
