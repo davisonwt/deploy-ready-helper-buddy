@@ -334,6 +334,13 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Wallet Widget */}
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+              <CardContent className="p-6">
+                <WalletWidget />
+              </CardContent>
+            </Card>
+
             {/* Global Timezone Support */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
               <CardHeader>
@@ -363,7 +370,7 @@ export default function DashboardPage() {
             </Card>
             
             {/* My Orchards */}
-            <Card className="lg:col-span-2 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
