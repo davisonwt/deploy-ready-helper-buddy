@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Settings, Users, Calendar, Radio, BarChart3, Clock } from 'lucide-react'
@@ -9,6 +9,8 @@ import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
 import { StationStats } from '@/components/radio/StationStats'
 
 export default function RadioManagementPage() {
+  const [activeTab, setActiveTab] = useState('schedule')
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
@@ -25,7 +27,10 @@ export default function RadioManagementPage() {
       {/* Expanded Management Interface */}
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6">
+          <Card 
+            className={`p-6 cursor-pointer transition-all hover:shadow-lg ${activeTab === 'schedule' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+            onClick={() => setActiveTab('schedule')}
+          >
             <div className="flex items-center gap-3 mb-4">
               <Calendar className="h-8 w-8 text-primary" />
               <h3 className="text-xl font-semibold">Schedule Management</h3>
@@ -33,7 +38,10 @@ export default function RadioManagementPage() {
             <p className="text-muted-foreground">Manage radio show schedules and time slots</p>
           </Card>
           
-          <Card className="p-6">
+          <Card 
+            className={`p-6 cursor-pointer transition-all hover:shadow-lg ${activeTab === 'personnel' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+            onClick={() => setActiveTab('personnel')}
+          >
             <div className="flex items-center gap-3 mb-4">
               <Users className="h-8 w-8 text-primary" />
               <h3 className="text-xl font-semibold">Personnel Assignment</h3>
@@ -41,7 +49,10 @@ export default function RadioManagementPage() {
             <p className="text-muted-foreground">Assign DJs and staff to time slots</p>
           </Card>
           
-          <Card className="p-6">
+          <Card 
+            className={`p-6 cursor-pointer transition-all hover:shadow-lg ${activeTab === 'global' ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+            onClick={() => setActiveTab('global')}
+          >
             <div className="flex items-center gap-3 mb-4">
               <Clock className="h-8 w-8 text-primary" />
               <h3 className="text-xl font-semibold">Global Scheduling</h3>
@@ -52,30 +63,7 @@ export default function RadioManagementPage() {
       </div>
 
       {/* Management Interface */}
-      <Tabs defaultValue="schedule" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="schedule">
-            <Calendar className="h-4 w-4 mr-2" />
-            Schedule Management
-          </TabsTrigger>
-          <TabsTrigger value="personnel">
-            <Users className="h-4 w-4 mr-2" />
-            Personnel Assignment
-          </TabsTrigger>
-          <TabsTrigger value="global">
-            <Clock className="h-4 w-4 mr-2" />
-            Global Scheduling
-          </TabsTrigger>
-          <TabsTrigger value="admin">
-            <Settings className="h-4 w-4 mr-2" />
-            Station Admin
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-
+      <Tabs value={activeTab} className="w-full">
         {/* Schedule Management */}
         <TabsContent value="schedule" className="space-y-6">
           <Card>
