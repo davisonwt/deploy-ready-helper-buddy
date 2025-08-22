@@ -263,7 +263,7 @@ const ChatappPage = () => {
         },
         async (payload) => {
           console.log('📞 Incoming call detected - payload type:', typeof payload);
-          alert(`Call Debug - Status: ${payload.new?.status}, Caller: ${payload.new?.caller_id}, Receiver: ${payload.new?.receiver_id}, Expected: ${user.id}, Match: ${payload.new?.receiver_id === user.id}`);
+          console.log('📞 Setting activeCall with data:', payload.new);
           const callSession = payload.new;
           
           // Fetch caller profile
