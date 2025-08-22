@@ -262,8 +262,8 @@ const ChatappPage = () => {
           filter: `receiver_id=eq.${user.id}`
         },
         async (payload) => {
-          console.log('📞 Incoming call detected:', payload);
-          console.log('📞 Call session data:', payload.new);
+          console.log('📞 Incoming call detected:', JSON.stringify(payload, null, 2));
+          console.log('📞 Call session data:', JSON.stringify(payload.new, null, 2));
           console.log('📞 Expected receiver_id:', user.id);
           console.log('📞 Actual receiver_id:', payload.new.receiver_id);
           const callSession = payload.new;
