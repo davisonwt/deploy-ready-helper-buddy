@@ -65,6 +65,7 @@ export default function SeedSubmissionPage() {
     "The Gift of Social Impact",
     "The Gift of Software",
     "The Gift of Sports & Recreation",
+    "The Gift of Technology & Hardware (Consumer Electronics)",
     "The Gift of Tools & Equipment",
     "The Gift of Transportation",
     "The Gift of Travel & Tourism"

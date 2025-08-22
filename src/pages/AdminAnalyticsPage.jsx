@@ -54,6 +54,7 @@ export default function AdminAnalyticsPage() {
     "The Gift of Property",
     "The Gift of Services",
     "The Gift of Technology",
+    "The Gift of Technology & Hardware (Consumer Electronics)",
     "The Gift of Tithing",
     "The Gift of Tools",
     "The Gift of Vehicles",

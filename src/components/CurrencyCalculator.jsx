@@ -148,7 +148,7 @@ export default function CurrencyCalculator({ onUseAmount }) {
               <SelectTrigger>
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
-              <SelectContent className="max-h-60">
+              <SelectContent className="max-h-60 overflow-y-auto z-50">
                 {currencies.map((currency) => (
                   <SelectItem key={currency.code} value={currency.code}>
                     {currency.symbol} {currency.name} ({currency.code})
