@@ -292,7 +292,7 @@ export default function AdminRadioManagement() {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => approveSlot(slot.id)}
+                            onClick={async () => await approveSlot(slot.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <Check className="h-4 w-4 mr-1" />
@@ -301,7 +301,7 @@ export default function AdminRadioManagement() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => rejectSlot(slot.id)}
+                            onClick={async () => await rejectSlot(slot.id)}
                           >
                             <X className="h-4 w-4 mr-1" />
                             Reject
@@ -381,8 +381,8 @@ export default function AdminRadioManagement() {
               {selectedSlot.approval_status === 'pending' && (
                 <div className="flex gap-2 pt-4 border-t">
                   <Button
-                    onClick={() => {
-                      approveSlot(selectedSlot.id)
+                    onClick={async () => {
+                      await approveSlot(selectedSlot.id)
                       setShowDetailsDialog(false)
                     }}
                     className="bg-green-600 hover:bg-green-700"
@@ -392,8 +392,8 @@ export default function AdminRadioManagement() {
                   </Button>
                   <Button
                     variant="destructive"
-                    onClick={() => {
-                      rejectSlot(selectedSlot.id)
+                    onClick={async () => {
+                      await rejectSlot(selectedSlot.id)
                       setShowDetailsDialog(false)
                     }}
                   >
