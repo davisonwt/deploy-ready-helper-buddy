@@ -266,18 +266,61 @@ const ChatappPage = () => {
           console.log('📞 Setting activeCall with data:', payload.new);
           const callSession = payload.new;
           
-          // Fetch caller profile
-          const { data: callerProfile, error } = await supabase
-            .from('profiles')
-            .select('display_name, avatar_url, first_name, last_name')
-            .eq('user_id', callSession.caller_id)
-            .maybeSingle();
+          try {
+            // Fetch caller profile
+            const { data: callerProfile, error } = await supabase
+              .from('profiles')
+              .select('display_name, avatar_url, first_name, last_name')
+              .eq('user_id', callSession.caller_id)
+              .maybeSingle();
 
-          if (error) {
-            console.error('❌ Error fetching caller profile:', error);
-            console.log('📞 Profile fetch failed, caller_id:', callSession.caller_id);
-            
-            // Set activeCall anyway with minimal info
+            let callerInfo = {
+              display_name: 'Unknown User',
+              avatar_url: null
+            };
+
+            if (!error && callerProfile) {
+              callerInfo = {
+                display_name: callerProfile.display_name || 
+                             `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
+                             'Unknown User',
+                avatar_url: callerProfile.avatar_url
+              };
+            } else if (error) {
+              console.error('❌ Error fetching caller profile:', error);
+            }
+
+            console.log('📱 Setting incoming call state:', {
+              id: callSession.id,
+              type: callSession.call_type,
+              callerInfo
+            });
+
+            setActiveCall({
+              id: callSession.id,
+              type: callSession.call_type,
+              isIncoming: true,
+              callerInfo,
+              otherUserId: callSession.caller_id,
+              status: 'ringing'
+            });
+            console.log('📞 Active call state set to:', {
+              id: callSession.id,
+              type: callSession.call_type,
+              isIncoming: true,
+              callerInfo,
+              otherUserId: callSession.caller_id,
+              status: 'ringing'
+            });
+
+            // Show notification
+            toast({
+              title: "Incoming Call",
+              description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
+            });
+          } catch (err) {
+            console.error('❌ Error in incoming call handler:', err);
+            // Set minimal call info to allow the call to proceed
             setActiveCall({
               id: callSession.id,
               type: callSession.call_type,
@@ -289,45 +332,7 @@ const ChatappPage = () => {
               otherUserId: callSession.caller_id,
               status: 'ringing'
             });
-            console.log('📞 Active call set with minimal caller info');
-            return;
           }
-
-          const callerInfo = {
-            display_name: callerProfile?.display_name || 
-                         `${callerProfile?.first_name || ''} ${callerProfile?.last_name || ''}`.trim() ||
-                         'Unknown User',
-            avatar_url: callerProfile?.avatar_url
-          };
-
-          console.log('📱 Setting incoming call state:', {
-            id: callSession.id,
-            type: callSession.call_type,
-            callerInfo
-          });
-
-          setActiveCall({
-            id: callSession.id,
-            type: callSession.call_type,
-            isIncoming: true,
-            callerInfo,
-            otherUserId: callSession.caller_id,
-            status: 'ringing'
-          });
-          console.log('📞 Active call state set to:', {
-            id: callSession.id,
-            type: callSession.call_type,
-            isIncoming: true,
-            callerInfo,
-            otherUserId: callSession.caller_id,
-            status: 'ringing'
-          });
-
-          // Show notification
-          toast({
-            title: "Incoming Call",
-            description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
-          });
         }
       )
       .on(
