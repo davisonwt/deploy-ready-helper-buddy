@@ -108,8 +108,7 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 1000,
-        temperature: 0.8,
+        max_completion_tokens: 1000,
       }),
     });
 

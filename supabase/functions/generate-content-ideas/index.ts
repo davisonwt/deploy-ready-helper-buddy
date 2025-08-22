@@ -113,8 +113,7 @@ Include various formats and creative angles that would engage the target audienc
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 1500,
-        temperature: 0.9,
+        max_completion_tokens: 1500,
       }),
     });
 
