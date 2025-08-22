@@ -290,13 +290,13 @@ export default function AdminDashboardPage() {
     const iconProps = { className: "h-4 w-4" }
     switch (role) {
       case 'admin': 
-        return React.createElement(Crown, iconProps)
+        return <Crown {...iconProps} />
       case 'gosat': 
-        return React.createElement(Shield, iconProps)
+        return <Shield {...iconProps} />
       case 'radio_admin': 
-        return React.createElement(Radio, iconProps)
+        return <Radio {...iconProps} />
       default: 
-        return React.createElement(User, iconProps)
+        return <User {...iconProps} />
     }
   }
 
