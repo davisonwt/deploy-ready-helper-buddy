@@ -26,10 +26,17 @@ export const useWebRTC = (callSession, user) => {
   // Initialize WebRTC connection
   const initializeWebRTC = async () => {
     try {
-      console.log('🚀 Initializing WebRTC for call session:', callSession.id);
+      console.log('🚀 Initializing WebRTC for call session:', callSession?.id);
+      console.log('🚀 Call session details:', {
+        id: callSession?.id,
+        isIncoming: callSession?.isIncoming,
+        status: callSession?.status,
+        otherUserId: callSession?.otherUserId
+      });
       
       // Create peer connection
       peerConnectionRef.current = new RTCPeerConnection(rtcConfig);
+      console.log('📡 Peer connection created with config:', rtcConfig);
       
       // Set up connection state monitoring
       peerConnectionRef.current.onconnectionstatechange = () => {
@@ -132,27 +139,36 @@ export const useWebRTC = (callSession, user) => {
 
   // Set up signaling channel for WebRTC
   const setupSignalingChannel = () => {
+    if (!callSession?.id) {
+      console.error('❌ No call session ID for signaling channel');
+      return;
+    }
+    
     console.log('📡 Setting up signaling channel for call:', callSession.id);
     
     signalingChannelRef.current = supabase
       .channel(`webrtc_signaling:${callSession.id}`)
       .on('broadcast', { event: 'webrtc_signal' }, (payload) => {
+        console.log('📨 Received signaling message via Supabase:', payload);
         handleSignalingMessage(payload.payload);
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Signaling channel status:', status);
+      });
   };
 
   // Send signaling messages
   const sendSignalingMessage = (message) => {
-    console.log('📤 Sending signaling message:', message.type);
+    console.log('📤 Sending signaling message:', message.type, message);
     if (signalingChannelRef.current) {
-      signalingChannelRef.current.send({
+      const result = signalingChannelRef.current.send({
         type: 'broadcast',
         event: 'webrtc_signal',
         payload: message
       });
+      console.log('📤 Send result:', result);
     } else {
-      console.error('❌ No signaling channel available');
+      console.error('❌ No signaling channel available for sending:', message);
     }
   };
 
@@ -324,6 +340,13 @@ export const useWebRTC = (callSession, user) => {
 
   // Initialize when call session is available
   useEffect(() => {
+    console.log('🎯 WebRTC Effect triggered:', {
+      hasCallSession: !!callSession,
+      callSessionId: callSession?.id,
+      hasUser: !!user,
+      userId: user?.id
+    });
+    
     if (callSession && user) {
       console.log('🎯 Starting WebRTC initialization for call:', callSession.id);
       initializeWebRTC();
@@ -331,13 +354,24 @@ export const useWebRTC = (callSession, user) => {
       
       // If this is the caller, start the call after a delay
       if (!callSession.isIncoming) {
+        console.log('📞 This is an outgoing call, will create offer in 2 seconds');
         const timer = setTimeout(() => {
           console.log('📞 Starting call as caller');
           startCall();
-        }, 2000); // Give more time for setup
+        }, 2000);
         
-        return () => clearTimeout(timer);
+        return () => {
+          console.log('🧹 Clearing call start timer');
+          clearTimeout(timer);
+        };
+      } else {
+        console.log('📞 This is an incoming call, waiting for offer');
       }
+    } else {
+      console.log('❌ Missing requirements for WebRTC:', {
+        hasCallSession: !!callSession,
+        hasUser: !!user
+      });
     }
 
     // Don't cleanup on every effect run, only when component unmounts
