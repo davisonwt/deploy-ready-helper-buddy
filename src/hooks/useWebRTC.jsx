@@ -53,10 +53,25 @@ export const useWebRTC = (callSession, user) => {
 
       // Handle incoming remote stream
       peerConnectionRef.current.ontrack = (event) => {
-        console.log('🎵 Received remote audio stream');
+        console.log('🎵 Received remote audio stream:', event.streams[0]);
+        const remoteStream = event.streams[0];
+        
         if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.volume = 1.0;
+          
+          // Ensure audio plays
+          remoteAudioRef.current.play().then(() => {
+            console.log('✅ Remote audio playing');
+          }).catch(error => {
+            console.error('❌ Failed to play remote audio:', error);
+          });
         }
+        
+        // Check if tracks are active
+        remoteStream.getAudioTracks().forEach(track => {
+          console.log('🔊 Remote audio track:', track.id, 'enabled:', track.enabled, 'ready:', track.readyState);
+        });
       };
 
       // Handle ICE candidates
@@ -76,15 +91,23 @@ export const useWebRTC = (callSession, user) => {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: 44100
         },
         video: false
       });
 
+      console.log('🎤 Local stream created:', stream.id);
       localStreamRef.current = stream;
+      
+      // Check local audio tracks
+      stream.getAudioTracks().forEach(track => {
+        console.log('🎤 Local audio track:', track.id, 'enabled:', track.enabled, 'settings:', track.getSettings());
+      });
       
       // Add local audio track to peer connection
       stream.getTracks().forEach(track => {
+        console.log('➕ Adding track to peer connection:', track.kind);
         peerConnectionRef.current.addTrack(track, stream);
       });
 
@@ -92,6 +115,7 @@ export const useWebRTC = (callSession, user) => {
       if (localAudioRef.current) {
         localAudioRef.current.srcObject = stream;
         localAudioRef.current.muted = true; // Prevent feedback
+        localAudioRef.current.volume = 0; // Ensure no feedback
       }
 
       console.log('✅ WebRTC initialized successfully');
@@ -205,6 +229,11 @@ export const useWebRTC = (callSession, user) => {
         audioTrack.enabled = !audioTrack.enabled;
         setIsAudioEnabled(audioTrack.enabled);
         console.log('🔊 Audio toggled:', audioTrack.enabled ? 'ON' : 'OFF');
+        
+        toast({
+          title: audioTrack.enabled ? "Microphone On" : "Microphone Off",
+          description: audioTrack.enabled ? "You can now be heard" : "You are muted",
+        });
       }
     }
   };
