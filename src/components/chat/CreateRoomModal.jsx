@@ -32,6 +32,7 @@ const CATEGORIES = [
   'Agriculture & Farming',
   'Education & Training', 
   'Technology & Innovation',
+  'Technology & Hardware (Consumer Electronics)',
   'Healthcare & Wellness',
   'Arts & Culture',
   'Environment & Sustainability',
