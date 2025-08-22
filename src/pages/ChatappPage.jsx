@@ -262,10 +262,12 @@ const ChatappPage = () => {
           filter: `receiver_id=eq.${user.id}`
         },
         async (payload) => {
-          console.log('📞 Incoming call detected:', JSON.stringify(payload, null, 2));
-          console.log('📞 Call session data:', JSON.stringify(payload.new, null, 2));
+          console.log('📞 Incoming call detected - payload type:', typeof payload);
+          console.log('📞 Call session - status:', payload.new?.status);
+          console.log('📞 Call session - caller_id:', payload.new?.caller_id);
+          console.log('📞 Call session - receiver_id:', payload.new?.receiver_id);
           console.log('📞 Expected receiver_id:', user.id);
-          console.log('📞 Actual receiver_id:', payload.new.receiver_id);
+          console.log('📞 IDs match:', payload.new?.receiver_id === user.id);
           const callSession = payload.new;
           
           // Fetch caller profile
