@@ -11,6 +11,16 @@ export function OrchardActions({
   onClearSelection 
 }) {
   const { formatAmount } = useCurrency()
+  
+  // Debug logging for pocket values
+  console.log('🔍 OrchardActions Debug:', {
+    title: orchard.title,
+    total_pockets: orchard.total_pockets,
+    intended_pockets: orchard.intended_pockets,
+    filled_pockets: orchard.filled_pockets,
+    availablePockets: (orchard.intended_pockets || orchard.total_pockets || 0) - (orchard.filled_pockets || 0),
+    selectedPockets: selectedPockets.length
+  })
 
   return (
     <div className="mt-8 text-center">

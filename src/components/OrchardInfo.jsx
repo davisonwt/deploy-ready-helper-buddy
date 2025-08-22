@@ -6,6 +6,15 @@ import { useCurrency } from '../hooks/useCurrency'
 
 export function OrchardInfo({ orchard }) {
   const { formatAmount } = useCurrency()
+  
+  // Debug logging for pocket values
+  console.log('🔍 OrchardInfo Debug:', {
+    title: orchard.title,
+    total_pockets: orchard.total_pockets,
+    intended_pockets: orchard.intended_pockets,
+    filled_pockets: orchard.filled_pockets,
+    pocket_price: orchard.pocket_price
+  })
 
   return (
     <Card className="bg-white/95 backdrop-blur-sm border-green-200 shadow-xl">
