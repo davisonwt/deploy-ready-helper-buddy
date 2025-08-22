@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useWebRTC } from '@/hooks/useWebRTC';
+import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
 import { 
   Phone, 
   PhoneOff, 
@@ -31,16 +31,15 @@ const CallInterface = ({
   const remoteVideoRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Use WebRTC hook for real audio communication
+  // Use simple WebRTC hook for audio communication
   const {
     localAudioRef,
     remoteAudioRef,
     isAudioEnabled,
     connectionState,
     toggleAudio,
-    testAudio,
     cleanup
-  } = useWebRTC(callSession, user);
+  } = useSimpleWebRTC(callSession, user);
 
   useEffect(() => {
     if (!isIncoming) {
@@ -267,14 +266,14 @@ const CallInterface = ({
                 </Button>
               )}
               
-              <Button
-                variant="outline"
-                size="lg"
-                className="rounded-full h-12 w-12"
-                onClick={testAudio}
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
+               <Button
+                 variant="outline"
+                 size="lg"
+                 className="rounded-full h-12 w-12"
+                 onClick={() => console.log('Connection:', connectionState)}
+               >
+                 <Settings className="h-5 w-5" />
+               </Button>
               
               <Button
                 variant="destructive"
