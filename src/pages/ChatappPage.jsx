@@ -271,7 +271,7 @@ const ChatappPage = () => {
             .from('profiles')
             .select('display_name, avatar_url, first_name, last_name')
             .eq('user_id', callSession.caller_id)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('❌ Error fetching caller profile:', error);
@@ -294,10 +294,10 @@ const ChatappPage = () => {
           }
 
           const callerInfo = {
-            display_name: callerProfile.display_name || 
-                         `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
+            display_name: callerProfile?.display_name || 
+                         `${callerProfile?.first_name || ''} ${callerProfile?.last_name || ''}`.trim() ||
                          'Unknown User',
-            avatar_url: callerProfile.avatar_url
+            avatar_url: callerProfile?.avatar_url
           };
 
           console.log('📱 Setting incoming call state:', {
