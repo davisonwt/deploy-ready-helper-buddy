@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     console.log('Component mounted, loading data...')
-    console.log('isAdminOrGosat():', isAdminOrGosat())
+    console.log('isAdminOrGosat:', isAdminOrGosat)
     loadUsers()
     loadSeeds()
     loadUserStats()
@@ -315,7 +315,7 @@ export default function AdminDashboardPage() {
     user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  if (!isAdminOrGosat()) {
+  if (!isAdminOrGosat) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-destructive/10 flex items-center justify-center">
         <Card className="max-w-md">
@@ -642,7 +642,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Seeds Management Section - Only for Gosats/Admins */}
-        {isAdminOrGosat() && (
+        {isAdminOrGosat && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
