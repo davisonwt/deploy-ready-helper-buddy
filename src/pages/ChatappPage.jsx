@@ -252,7 +252,7 @@ const ChatappPage = () => {
 
     console.log('👂 Setting up call listener for user:', user.id);
     const channel = supabase
-      .channel('call_sessions')
+      .channel(`call_sessions:${user.id}`)
       .on(
         'postgres_changes',
         {
