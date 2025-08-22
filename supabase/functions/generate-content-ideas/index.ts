@@ -108,12 +108,13 @@ Include various formats and creative angles that would engage the target audienc
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_completion_tokens: 1500,
+        max_tokens: 1500,
+        temperature: 0.9,
       }),
     });
 

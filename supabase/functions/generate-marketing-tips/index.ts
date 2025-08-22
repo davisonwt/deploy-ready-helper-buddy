@@ -80,7 +80,8 @@ Guidelines:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_completion_tokens: 1200,
+        max_tokens: 1200,
+        temperature: 0.7,
       }),
     });
 
