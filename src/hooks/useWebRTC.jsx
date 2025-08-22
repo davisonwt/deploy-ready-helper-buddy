@@ -26,8 +26,8 @@ export const useWebRTC = (callSession, user) => {
   // Initialize WebRTC connection
   const initializeWebRTC = async () => {
     try {
-      console.log('🚀 Initializing WebRTC for call session:', callSession?.id);
-      console.log('🚀 Call session details:', {
+      console.log('🚀 [AUDIO DEBUG] Initializing WebRTC for call session:', callSession?.id);
+      console.log('🚀 [AUDIO DEBUG] Call session details:', {
         id: callSession?.id,
         isIncoming: callSession?.isIncoming,
         status: callSession?.status,
@@ -36,7 +36,7 @@ export const useWebRTC = (callSession, user) => {
       
       // Create peer connection
       peerConnectionRef.current = new RTCPeerConnection(rtcConfig);
-      console.log('📡 Peer connection created with config:', rtcConfig);
+      console.log('📡 [AUDIO DEBUG] Peer connection created with config:', rtcConfig);
       
       // Set up connection state monitoring
       peerConnectionRef.current.onconnectionstatechange = () => {
@@ -60,24 +60,58 @@ export const useWebRTC = (callSession, user) => {
 
       // Handle incoming remote stream
       peerConnectionRef.current.ontrack = (event) => {
-        console.log('🎵 Received remote audio stream:', event.streams[0]);
+        console.log('🎵 [AUDIO DEBUG] Received remote audio stream:', event.streams[0]);
+        console.log('🎵 [AUDIO DEBUG] Event details:', {
+          streams: event.streams.length,
+          track: event.track.kind,
+          trackEnabled: event.track.enabled,
+          trackState: event.track.readyState
+        });
+        
         const remoteStream = event.streams[0];
         
         if (remoteAudioRef.current) {
+          console.log('🎵 [AUDIO DEBUG] Setting remote stream to audio element');
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.muted = false;
+          
+          // Add event listeners for audio element
+          remoteAudioRef.current.onloadedmetadata = () => {
+            console.log('🎵 [AUDIO DEBUG] Remote audio metadata loaded');
+          };
+          
+          remoteAudioRef.current.oncanplay = () => {
+            console.log('🎵 [AUDIO DEBUG] Remote audio can play');
+          };
+          
+          remoteAudioRef.current.onplay = () => {
+            console.log('🎵 [AUDIO DEBUG] Remote audio started playing');
+          };
+          
+          remoteAudioRef.current.onerror = (error) => {
+            console.error('🎵 [AUDIO DEBUG] Remote audio error:', error);
+          };
           
           // Ensure audio plays
           remoteAudioRef.current.play().then(() => {
-            console.log('✅ Remote audio playing');
+            console.log('✅ [AUDIO DEBUG] Remote audio playing successfully');
           }).catch(error => {
-            console.error('❌ Failed to play remote audio:', error);
+            console.error('❌ [AUDIO DEBUG] Failed to play remote audio:', error);
           });
+        } else {
+          console.error('❌ [AUDIO DEBUG] No remote audio ref available!');
         }
         
         // Check if tracks are active
-        remoteStream.getAudioTracks().forEach(track => {
-          console.log('🔊 Remote audio track:', track.id, 'enabled:', track.enabled, 'ready:', track.readyState);
+        remoteStream.getAudioTracks().forEach((track, index) => {
+          console.log(`🔊 [AUDIO DEBUG] Remote audio track ${index}:`, {
+            id: track.id, 
+            enabled: track.enabled, 
+            readyState: track.readyState,
+            muted: track.muted,
+            label: track.label
+          });
         });
       };
 
@@ -94,6 +128,7 @@ export const useWebRTC = (callSession, user) => {
       };
 
       // Get user media (audio)
+      console.log('🎤 [AUDIO DEBUG] Requesting user media...');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -104,28 +139,45 @@ export const useWebRTC = (callSession, user) => {
         video: false
       });
 
-      console.log('🎤 Local stream created:', stream.id);
+      console.log('🎤 [AUDIO DEBUG] Local stream created:', {
+        id: stream.id,
+        active: stream.active,
+        audioTracks: stream.getAudioTracks().length
+      });
       localStreamRef.current = stream;
       
       // Check local audio tracks
-      stream.getAudioTracks().forEach(track => {
-        console.log('🎤 Local audio track:', track.id, 'enabled:', track.enabled, 'settings:', track.getSettings());
+      stream.getAudioTracks().forEach((track, index) => {
+        console.log(`🎤 [AUDIO DEBUG] Local audio track ${index}:`, {
+          id: track.id, 
+          enabled: track.enabled, 
+          readyState: track.readyState,
+          settings: track.getSettings(),
+          constraints: track.getConstraints()
+        });
       });
       
       // Add local audio track to peer connection
       stream.getTracks().forEach(track => {
-        console.log('➕ Adding track to peer connection:', track.kind);
+        console.log('➕ [AUDIO DEBUG] Adding track to peer connection:', {
+          kind: track.kind,
+          enabled: track.enabled,
+          readyState: track.readyState
+        });
         peerConnectionRef.current.addTrack(track, stream);
       });
 
       // Set up local audio reference (for muting)
       if (localAudioRef.current) {
+        console.log('🎤 [AUDIO DEBUG] Setting up local audio element');
         localAudioRef.current.srcObject = stream;
         localAudioRef.current.muted = true; // Prevent feedback
         localAudioRef.current.volume = 0; // Ensure no feedback
+      } else {
+        console.error('❌ [AUDIO DEBUG] No local audio ref available!');
       }
 
-      console.log('✅ WebRTC initialized successfully');
+      console.log('✅ [AUDIO DEBUG] WebRTC initialized successfully');
       
     } catch (error) {
       console.error('❌ Failed to initialize WebRTC:', error);
@@ -174,20 +226,23 @@ export const useWebRTC = (callSession, user) => {
 
   // Handle incoming signaling messages
   const handleSignalingMessage = async (message) => {
-    console.log('📨 Received signaling message:', message.type);
+    console.log('📨 [SIGNAL DEBUG] Received signaling message:', message.type);
     
     if (!peerConnectionRef.current) {
-      console.log('❌ No peer connection available');
+      console.log('❌ [SIGNAL DEBUG] No peer connection available');
       return;
     }
 
     try {
       switch (message.type) {
         case 'offer':
-          console.log('📥 Handling offer');
+          console.log('📥 [SIGNAL DEBUG] Handling offer from:', message.fromUser);
+          console.log('📥 [SIGNAL DEBUG] Offer SDP:', message.offer.sdp);
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.offer));
+          console.log('📥 [SIGNAL DEBUG] Remote description set, creating answer...');
           const answer = await peerConnectionRef.current.createAnswer();
           await peerConnectionRef.current.setLocalDescription(answer);
+          console.log('📥 [SIGNAL DEBUG] Answer created, sending back');
           sendSignalingMessage({
             type: 'answer',
             answer: answer,
@@ -197,17 +252,20 @@ export const useWebRTC = (callSession, user) => {
           break;
 
         case 'answer':
-          console.log('📥 Handling answer');
+          console.log('📥 [SIGNAL DEBUG] Handling answer from:', message.fromUser);
+          console.log('📥 [SIGNAL DEBUG] Answer SDP:', message.answer.sdp);
           await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(message.answer));
+          console.log('📥 [SIGNAL DEBUG] Remote description set with answer');
           break;
 
         case 'ice-candidate':
-          console.log('📥 Handling ICE candidate');
+          console.log('📥 [SIGNAL DEBUG] Handling ICE candidate:', message.candidate.candidate);
           await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(message.candidate));
+          console.log('📥 [SIGNAL DEBUG] ICE candidate added');
           break;
       }
     } catch (error) {
-      console.error('❌ Error handling signaling message:', error);
+      console.error('❌ [SIGNAL DEBUG] Error handling signaling message:', error);
     }
   };
 
