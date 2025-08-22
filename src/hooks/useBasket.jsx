@@ -71,7 +71,10 @@ export const BasketProvider = ({ children }) => {
   }
   
   const getTotalAmount = () => {
-    return basketItems.reduce((total, item) => total + (item.amount * item.quantity), 0)
+    return basketItems.reduce((total, item) => {
+      const pocketCount = Array.isArray(item.pockets) ? item.pockets.length : 1
+      return total + (item.amount * item.quantity * pocketCount)
+    }, 0)
   }
   
   return (
