@@ -178,7 +178,7 @@ export default function DashboardPage() {
   }, [orchards, userBestowals, user])
 
   const getCompletionPercentage = (orchard) => {
-    const totalPockets = orchard.intended_pockets || orchard.total_pockets || 1;
+    const totalPockets = (orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1;
     if (!totalPockets) return 0
     return Math.round((orchard.filled_pockets / totalPockets) * 100)
   }

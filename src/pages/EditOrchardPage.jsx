@@ -147,7 +147,7 @@ export default function EditOrchardPage() {
         expected_completion: orchardData.expected_completion || '',
         seed_value: orchardData.seed_value || '',
         pocket_price: orchardData.pocket_price || '',
-        number_of_pockets: orchardData.intended_pockets?.toString() || orchardData.total_pockets?.toString() || '1', // Use intended_pockets first, then total_pockets
+        number_of_pockets: ((orchardData.intended_pockets && orchardData.intended_pockets > 1) ? orchardData.intended_pockets : orchardData.total_pockets || 1).toString(),
         courier_cost: orchardData.courier_cost?.toString() || '0',
         features: orchardData.features ? orchardData.features.join(', ') : '',
         currency: orchardData.currency || 'USDC'
