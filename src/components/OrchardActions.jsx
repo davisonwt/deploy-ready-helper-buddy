@@ -45,7 +45,7 @@ export function OrchardActions({
           variant="outline"
           className="border-green-600 text-green-600 hover:bg-green-50"
         >
-          Select All Available ({(orchard.total_pockets || 0) - (orchard.filled_pockets || 0)} pockets)
+          Select All Available ({(orchard.intended_pockets || orchard.total_pockets || 0) - (orchard.filled_pockets || 0)} pockets)
         </Button>
         
         {selectedPockets.length > 0 && (

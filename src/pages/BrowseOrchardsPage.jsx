@@ -96,11 +96,11 @@ export default function BrowseOrchardsPage() {
   const processedOrchards = useMemo(() => {
     return orchards.map(orchard => ({
       ...orchard,
-      completion_percentage: orchard.total_pockets 
-        ? Math.round((orchard.filled_pockets / orchard.total_pockets) * 100)
+      completion_percentage: orchard.intended_pockets || orchard.total_pockets 
+        ? Math.round((orchard.filled_pockets / (orchard.intended_pockets || orchard.total_pockets)) * 100)
         : 0,
       raised_amount: (orchard.filled_pockets || 0) * (orchard.pocket_price || 0),
-      goal_amount: (orchard.total_pockets || 0) * (orchard.pocket_price || 0),
+      goal_amount: (orchard.intended_pockets || orchard.total_pockets || 0) * (orchard.pocket_price || 0),
       grower_name: orchard.profiles?.display_name || 
                    `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim() || 
                    'Anonymous Grower',

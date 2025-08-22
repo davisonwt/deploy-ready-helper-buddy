@@ -47,7 +47,7 @@ export function OrchardInfo({ orchard }) {
         {/* Compact Statistics */}
         <div className="flex gap-2 mb-4 justify-center">
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 rounded-xl flex-1 text-center max-w-[140px] shadow-sm">
-            <div className="text-xl font-bold text-green-800">{orchard.total_pockets || 0}</div>
+            <div className="text-xl font-bold text-green-800">{orchard.intended_pockets || orchard.total_pockets || 0}</div>
             <div className="text-xs text-green-600">Total</div>
           </div>
           <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-3 rounded-xl flex-1 text-center max-w-[140px] shadow-sm">
@@ -55,7 +55,7 @@ export function OrchardInfo({ orchard }) {
             <div className="text-xs text-amber-600">Growing</div>
           </div>
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 rounded-xl flex-1 text-center max-w-[140px] shadow-sm">
-            <div className="text-xl font-bold text-blue-800">{(orchard.total_pockets || 0) - (orchard.filled_pockets || 0)}</div>
+            <div className="text-xl font-bold text-blue-800">{(orchard.intended_pockets || orchard.total_pockets || 0) - (orchard.filled_pockets || 0)}</div>
             <div className="text-xs text-blue-600">Available</div>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 rounded-xl flex-1 text-center max-w-[140px] shadow-sm">

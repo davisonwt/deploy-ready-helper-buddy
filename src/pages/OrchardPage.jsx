@@ -88,7 +88,7 @@ const OrchardPage = () => {
   }, [orchardId, user?.id, navigate]);
 
   const getCompletionPercentage = (orchard) => {
-    const totalPockets = orchard.total_pockets || orchard.intended_pockets || 1;
+    const totalPockets = orchard.intended_pockets || orchard.total_pockets || 1;
     if (!totalPockets || totalPockets === 0) return 0;
     return Math.round((orchard.filled_pockets / totalPockets) * 100);
   };
@@ -270,13 +270,13 @@ const OrchardPage = () => {
                     </div>
                     <div>
                       <div className="text-lg font-semibold text-orange-700">
-                        {formatCurrency((orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
+                        {formatCurrency((orchard.intended_pockets || orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
                       </div>
                       <div className="text-sm text-orange-600">Goal</div>
                     </div>
                      <div>
                        <div className="text-lg font-semibold text-orange-700">
-                         {orchard.filled_pockets || 0} / {orchard.total_pockets || orchard.intended_pockets || 1}
+                         {orchard.filled_pockets || 0} / {orchard.intended_pockets || orchard.total_pockets || 1}
                        </div>
                        <div className="text-sm text-orange-600">Pockets</div>
                      </div>
