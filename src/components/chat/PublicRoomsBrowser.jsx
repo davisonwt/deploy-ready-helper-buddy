@@ -175,22 +175,51 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
           
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
-            {categoryFilters.map(({ key, label, icon: Icon }) => (
-              <Button
-                key={key}
-                variant={categoryFilter === key ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCategoryFilter(key)}
-                className={`${
-                  categoryFilter === key 
-                    ? 'bg-primary text-white' 
-                    : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                }`}
-              >
-                <Icon className="h-3 w-3 mr-1" />
-                {label}
-              </Button>
-            ))}
+            {categoryFilters.map(({ key, label, icon: Icon }, index) => {
+              const blueShades = [
+                { bg: '#1E40AF', border: '#1E40AF', hover: '#1E3A8A' }, // All Rooms - Deep blue
+                { bg: '#2563EB', border: '#2563EB', hover: '#1D4ED8' }, // Marketing - Primary blue
+                { bg: '#3B82F6', border: '#3B82F6', hover: '#2563EB' }, // Cooking & Nutrition - Medium blue
+                { bg: '#60A5FA', border: '#60A5FA', hover: '#3B82F6' }, // DIY & Home - Light blue
+                { bg: '#93C5FD', border: '#93C5FD', hover: '#60A5FA' }, // Natural Health - Lighter blue
+                { bg: '#BFDBFE', border: '#BFDBFE', hover: '#93C5FD' }, // Business Training - Very light blue
+                { bg: '#DBEAFE', border: '#DBEAFE', hover: '#BFDBFE' }, // Podcasts - Pale blue
+                { bg: '#EFF6FF', border: '#EFF6FF', hover: '#DBEAFE' }, // General Courses - Almost white blue
+              ];
+              const shade = blueShades[index] || blueShades[0];
+              
+              return (
+                <Button
+                  key={key}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCategoryFilter(key)}
+                  style={{
+                    backgroundColor: categoryFilter === key ? shade.bg : 'transparent',
+                    borderColor: shade.border,
+                    color: categoryFilter === key ? (index < 4 ? 'white' : '#1E40AF') : shade.bg,
+                  }}
+                  className={`transition-all duration-300 hover:shadow-md ${
+                    categoryFilter === key 
+                      ? 'shadow-lg' 
+                      : 'hover:bg-blue-50/10'
+                  }`}
+                  onMouseEnter={(e) => {
+                    if (categoryFilter !== key) {
+                      e.target.style.backgroundColor = shade.hover + '20';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (categoryFilter !== key) {
+                      e.target.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <Icon className="h-3 w-3 mr-1" />
+                  {label}
+                </Button>
+              );
+            })}
           </div>
         </div>
       </CardHeader>
