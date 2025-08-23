@@ -357,6 +357,77 @@ export const useChat = () => {
     }
   }, [user, toast, fetchRooms]);
 
+  // Delete a conversation (room and all its messages)
+  const deleteConversation = useCallback(async (roomId) => {
+    if (!user || !roomId) return;
+
+    try {
+      // First check if user is the room creator or has permission
+      const { data: room, error: roomError } = await supabase
+        .from('chat_rooms')
+        .select('created_by, room_type')
+        .eq('id', roomId)
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Only allow deletion if user is the creator or it's a direct message
+      if (room.created_by !== user.id && room.room_type !== 'direct') {
+        toast({
+          title: "Error",
+          description: "You can only delete conversations you created",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Delete all messages first
+      const { error: messagesError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (messagesError) throw messagesError;
+
+      // Delete all participants
+      const { error: participantsError } = await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (participantsError) throw participantsError;
+
+      // Delete the room
+      const { error: deleteError } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (deleteError) throw deleteError;
+
+      toast({
+        title: "Success",
+        description: "Conversation deleted successfully",
+      });
+
+      // Clear current room if it was deleted
+      if (currentRoom?.id === roomId) {
+        setCurrentRoom(null);
+        setMessages([]);
+        setParticipants([]);
+      }
+
+      fetchRooms();
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation",
+        variant: "destructive",
+      });
+    }
+  }, [user, toast, fetchRooms, currentRoom]);
+
   // Set up real-time subscriptions
   useEffect(() => {
     if (!user) return;
@@ -430,6 +501,7 @@ export const useChat = () => {
     createRoom,
     createDirectRoom,
     joinRoom,
+    deleteConversation,
     fetchRooms,
   };
 };

@@ -3,6 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   MessageSquare, 
   Users, 
@@ -11,7 +17,9 @@ import {
   Mic, 
   GraduationCap,
   Video,
-  UserPlus
+  UserPlus,
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 import InviteUsersModal from './InviteUsersModal';
 
@@ -41,7 +49,7 @@ const getRoomTypeLabel = (roomType) => {
   return labels[roomType] || 'Chat';
 };
 
-const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInviteButton = false, currentUserId }) => {
+const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInviteButton = false, currentUserId, onDeleteConversation }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const Icon = getRoomIcon(room.room_type);
   
@@ -50,8 +58,18 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
     setShowInviteModal(true);
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation(); // Prevent room selection when clicking delete
+    if (window.confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      onDeleteConversation(room.id);
+    }
+  };
+
   // Don't show invite for direct messages
   const canInvite = showInviteButton && room.room_type !== 'direct' && room.created_by === currentUserId;
+  
+  // Can delete if user created the room or it's a direct message (both participants can delete)
+  const canDelete = room.created_by === currentUserId || room.room_type === 'direct';
   
   return (
     <>
@@ -79,16 +97,36 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
                   {room.name || getRoomTypeLabel(room.room_type)}
                 </h3>
                 <div className="flex items-center gap-1">
-                  {canInvite && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleInviteClick}
-                      className="h-6 w-6 p-0 hover:bg-primary/10"
-                      title="Invite users"
-                    >
-                      <UserPlus className="h-3 w-3" />
-                    </Button>
+                  {(canInvite || canDelete) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 hover:bg-primary/10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        {canInvite && (
+                          <DropdownMenuItem onClick={handleInviteClick}>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Invite Users
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <DropdownMenuItem 
+                            onClick={handleDeleteClick}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                   <Badge variant="secondary" className="text-xs px-1.5 py-0.5 shrink-0">
                     {room.room_type === 'direct' ? 'DM' : room.room_type.split('_')[0]}
