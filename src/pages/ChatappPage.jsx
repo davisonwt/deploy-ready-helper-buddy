@@ -284,6 +284,10 @@ const ChatappPage = () => {
     })
   }
 
+  const handleStartLiveVideo = (room) => {
+    startLiveSession(room);
+  };
+
   // Listen for incoming calls
   useEffect(() => {
     if (!user?.id) {
@@ -665,6 +669,7 @@ const ChatappPage = () => {
                               showInviteButton={true}
                               currentUserId={user?.id}
                               onDeleteConversation={deleteConversation}
+                              onStartLiveVideo={handleStartLiveVideo}
                             />
                           ))}
                           {filteredRooms.length === 0 && (
