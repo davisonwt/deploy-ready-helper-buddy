@@ -287,6 +287,9 @@ export const useChat = () => {
     if (!user) return null;
 
     try {
+      console.log('Creating room with data:', roomData);
+      console.log('Moderators:', moderators);
+      
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
         .insert({
@@ -296,7 +299,12 @@ export const useChat = () => {
         .select()
         .single();
 
-      if (roomError) throw roomError;
+      if (roomError) {
+        console.error('Room creation error:', roomError);
+        throw roomError;
+      }
+
+      console.log('Room created successfully:', room);
 
       // Add creator as participant (always a moderator)
       const participantsToAdd = [
@@ -317,12 +325,19 @@ export const useChat = () => {
         participantsToAdd.push(...moderatorParticipants);
       }
 
+      console.log('Adding participants:', participantsToAdd);
+
       // Insert all participants (creator + moderators)
       const { error: participantError } = await supabase
         .from('chat_participants')
         .insert(participantsToAdd);
 
-      if (participantError) throw participantError;
+      if (participantError) {
+        console.error('Participant creation error:', participantError);
+        throw participantError;
+      }
+
+      console.log('Participants added successfully');
 
       toast({
         title: "Success",
@@ -332,10 +347,32 @@ export const useChat = () => {
       fetchRooms(); // Refresh rooms list
       return room;
     } catch (error) {
-      console.error('Error creating room:', error);
+      console.error('Error creating room - Full error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      console.error('Error code:', error.code);
+      
+      let errorMessage = "Failed to create chat room";
+      
+      // Provide more specific error messages based on the error
+      if (error.message) {
+        if (error.message.includes('violates unique constraint')) {
+          errorMessage = "A room with this name already exists";
+        } else if (error.message.includes('violates check constraint')) {
+          errorMessage = "Invalid room data provided";
+        } else if (error.message.includes('permission denied') || error.message.includes('insufficient_privilege')) {
+          errorMessage = "You don't have permission to create chat rooms";
+        } else if (error.message.includes('search_user_profiles')) {
+          errorMessage = "Error searching for users to add as moderators";
+        } else {
+          errorMessage = `Failed to create chat room: ${error.message}`;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to create chat room",
+        description: errorMessage,
         variant: "destructive",
       });
       return null;
