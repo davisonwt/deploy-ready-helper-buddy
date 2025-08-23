@@ -29,10 +29,10 @@ import {
   Pause
 } from 'lucide-react'
 import RadioModerationPanel from '@/components/radio/RadioModerationPanel'
+import { LiveVideoCallInterface } from '@/components/radio/LiveVideoCallInterface'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
-import RadioModerationPanel from './RadioModerationPanel'
 
 export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const { user } = useAuth()
@@ -49,6 +49,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const [showSettings, setShowSettings] = useState(false)
   const [messages, setMessages] = useState([])
   const [chatMessage, setChatMessage] = useState('')
+  const [approvedGuests, setApprovedGuests] = useState([])
   
   const audioRef = useRef(null)
   const peerConnectionRef = useRef(null)
@@ -129,7 +130,10 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
           table: 'radio_guest_requests',
           filter: `session_id=eq.${liveSession.id}`
         },
-        () => fetchGuestRequests()
+        () => {
+          fetchGuestRequests()
+          fetchApprovedGuests()
+        }
       )
       .subscribe()
 
@@ -164,6 +168,13 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       supabase.removeChannel(sessionSubscription)
     }
   }
+
+  // Fetch approved guests when component loads
+  useEffect(() => {
+    if (liveSession) {
+      fetchApprovedGuests()
+    }
+  }, [liveSession])
 
   const fetchActiveHosts = async () => {
     if (!liveSession) return
@@ -204,6 +215,27 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       setGuestRequests(data || [])
     } catch (error) {
       console.error('Error fetching guest requests:', error)
+    }
+  }
+
+  const fetchApprovedGuests = async () => {
+    if (!liveSession) return
+
+    try {
+      const { data, error } = await supabase
+        .from('radio_guest_requests')
+        .select(`
+          *,
+          profiles:user_id (display_name, avatar_url)
+        `)
+        .eq('session_id', liveSession.id)
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: true })
+
+      if (error) throw error
+      setApprovedGuests(data || [])
+    } catch (error) {
+      console.error('Error fetching approved guests:', error)
     }
   }
 
@@ -460,6 +492,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       })
 
       await fetchGuestRequests()
+      await fetchApprovedGuests()
     } catch (error) {
       console.error('Error approving guest:', error)
       toast({
@@ -702,6 +735,21 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Live Video Call Interface */}
+      {liveSession && isLive && (
+        <Card>
+          <CardContent className="p-6">
+            <LiveVideoCallInterface
+              liveSession={liveSession}
+              activeHosts={activeHosts}
+              approvedGuests={approvedGuests}
+              currentUser={user}
+              isHost={activeHosts.some(host => host.user_id === user?.id)}
+            />
           </CardContent>
         </Card>
       )}
