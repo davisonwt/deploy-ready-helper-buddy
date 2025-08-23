@@ -36,6 +36,7 @@ import CallInterface from '@/components/chat/CallInterface';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
+import { LiveSessionInterface } from '@/components/live/LiveSessionInterface';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -514,34 +515,14 @@ const ChatappPage = () => {
     );
   }
 
-  // If there's an active live session, show the universal interface
+  // If there's an active live session, show the new TikTok-style interface
   if (activeLiveSession && currentRoom) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" 
-        style={{ 
-          backgroundImage: 'url(/chatapp-background.jpg)',
-          minHeight: '100vh'
-        }}>
-        <div className="container mx-auto p-4">
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="outline"
-              onClick={endLiveSession}
-              className="bg-white/10 backdrop-blur-md border-white/20"
-            >
-              ← Back to Chat Rooms
-            </Button>
-          </div>
-          
-          <UniversalLiveSessionInterface
-            sessionData={activeLiveSession}
-            sessionType="chat"
-            currentUser={user}
-            isHost={currentRoom?.created_by === user?.id}
-            onSessionEnd={endLiveSession}
-          />
-        </div>
-      </div>
+      <LiveSessionInterface
+        room={currentRoom}
+        onEndSession={endLiveSession}
+        onLeaveSession={endLiveSession}
+      />
     )
   }
 
