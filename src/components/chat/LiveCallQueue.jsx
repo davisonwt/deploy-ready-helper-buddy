@@ -482,7 +482,6 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
                 </p>
               </div>
             )}
-            </div>
             
             {currentUser.hand_raised_at && currentUser.queue_position && (
               <div className="mt-2 text-sm text-muted-foreground">
