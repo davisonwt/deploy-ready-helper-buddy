@@ -330,7 +330,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
         courier_cost: breakdown ? breakdown.courierCost : 0,
         tithing_amount: breakdown ? breakdown.tithing : 0,
         payment_processing_fee: breakdown ? breakdown.paymentProcessing : 0,
-        pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue : pocketPrice,
+        pocket_price: formData.orchard_type === 'full_value' ? finalSeedValue / (parseInt(formData.number_of_pockets) || 1) : pocketPrice,
         intended_pockets: formData.orchard_type === 'full_value' ? parseInt(formData.number_of_pockets) || 1 : 1,
         // Note: total_pockets will be calculated automatically by the database trigger
         location: formData.location?.trim() || "",
