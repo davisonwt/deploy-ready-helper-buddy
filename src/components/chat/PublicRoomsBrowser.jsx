@@ -15,7 +15,8 @@ import {
   Heart,
   Briefcase,
   Mic,
-  BookOpen
+  BookOpen,
+  Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -40,10 +41,12 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [userAccess, setUserAccess] = useState({});
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchPublicRooms();
     fetchPremiumRooms();
+    getCurrentUser();
   }, []);
 
   useEffect(() => {
@@ -51,6 +54,15 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
       checkUserAccess();
     }
   }, [premiumRooms]);
+
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('Error getting current user:', error);
+    }
+  };
 
   const fetchPublicRooms = async () => {
     try {
@@ -130,6 +142,33 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
       setUserAccess(accessMap);
     } catch (error) {
       console.error('Error checking user access:', error);
+    }
+  };
+
+  const deleteRoom = async (roomId, roomName) => {
+    try {
+      const { error } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (error) throw error;
+
+      // Update the local state to remove the deleted room
+      setPublicRooms(prevRooms => prevRooms.filter(room => room.id !== roomId));
+      setPremiumRooms(prevRooms => prevRooms.filter(room => room.id !== roomId));
+
+      toast({
+        title: "Room Deleted",
+        description: `"${roomName}" has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete room. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -282,13 +321,26 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               )}
                             </div>
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={() => onJoinRoom(room.id)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            Join
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              size="sm"
+                              onClick={() => onJoinRoom(room.id)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              Join
+                            </Button>
+                            {currentUser && currentUser.id === room.created_by && (
+                              <Button 
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteRoom(room.id, room.name)}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                                title="Delete Room"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
