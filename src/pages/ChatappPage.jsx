@@ -483,6 +483,9 @@ const ChatappPage = () => {
                 color: '#3B82F6', 
                 textShadow: '2px 2px 4px #1D4ED8'
               }}>Chatapp</h1>
+              <p className="text-lg font-medium mb-2" style={{ color: '#90EE90' }}>
+                chat or shutapp
+              </p>
               <p style={{ color: '#b0e0e6' }}>
                 Connect, collaborate, and grow together in our farming community
               </p>
