@@ -12,15 +12,19 @@ export function useFileUpload() {
 
   const uploadFile = async (file, bucket, folder = '') => {
     try {
-      if (!user) throw new Error('User must be authenticated')
+      if (!user) {
+        console.error('❌ Upload failed: User not authenticated');
+        throw new Error('User must be authenticated');
+      }
 
-      console.log('Starting file upload:', { 
+      console.log('📤 UPLOAD DEBUG: Starting file upload:', { 
         fileName: file.name, 
         fileSize: file.size, 
         fileType: file.type, 
         bucket, 
         folder, 
-        userId: user.id 
+        userId: user.id,
+        timestamp: new Date().toISOString()
       });
 
       setUploading(true)

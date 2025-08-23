@@ -279,16 +279,30 @@ export default function CreateOrchardPage({ isEdit = false }) {
       }
 
       // Upload images first
+      console.log('📤 UPLOAD SUBMIT DEBUG: Starting image upload process');
       let imageUrls = []
       const newImages = selectedImages.filter(img => !img.isExisting && img.file)
       const existingImages = selectedImages.filter(img => img.isExisting).map(img => img.url)
       
+      console.log('📤 UPLOAD SUBMIT DEBUG:', {
+        totalSelectedImages: selectedImages.length,
+        newImagesCount: newImages.length,
+        existingImagesCount: existingImages.length,
+        newImages: newImages.map(img => ({ name: img.file?.name, size: img.file?.size }))
+      });
+      
       if (newImages.length > 0) {
+        console.log('📤 UPLOAD SUBMIT DEBUG: Uploading new images to orchard-images bucket');
         const imageFiles = newImages.map(img => img.file)
         const uploadResult = await uploadMultipleFiles(imageFiles, 'orchard-images', 'images/')
         
+        console.log('📤 UPLOAD SUBMIT DEBUG: Upload result:', uploadResult);
+        
         if (uploadResult.success) {
           imageUrls = uploadResult.data.map(item => item.url)
+          console.log('📤 UPLOAD SUBMIT DEBUG: Successfully uploaded image URLs:', imageUrls);
+        } else {
+          console.error('❌ UPLOAD SUBMIT DEBUG: Upload failed:', uploadResult.error);
         }
       }
       
@@ -457,8 +471,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
   }
 
   const handleImageUpload = (e) => {
+    console.log('🖼️ IMAGE UPLOAD DEBUG: handleImageUpload called');
     const files = Array.from(e.target.files)
+    console.log('🖼️ IMAGE UPLOAD DEBUG: Files selected:', files.length, files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    
     if (files.length > 3) {
+      console.error('❌ Too many files:', files.length);
       setError("You can only upload up to 3 images")
       return
     }
