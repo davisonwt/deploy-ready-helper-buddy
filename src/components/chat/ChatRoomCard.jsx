@@ -19,7 +19,9 @@ import {
   Video,
   UserPlus,
   MoreVertical,
-  Trash2
+  Trash2,
+  VideoIcon,
+  Play
 } from 'lucide-react';
 import InviteUsersModal from './InviteUsersModal';
 
@@ -49,7 +51,7 @@ const getRoomTypeLabel = (roomType) => {
   return labels[roomType] || 'Chat';
 };
 
-const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInviteButton = false, currentUserId, onDeleteConversation }) => {
+const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInviteButton = false, currentUserId, onDeleteConversation, onStartLiveVideo }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const Icon = getRoomIcon(room.room_type);
   
@@ -65,11 +67,19 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
     }
   };
 
+  const handleLiveVideoClick = (e) => {
+    e.stopPropagation(); // Prevent room selection when clicking live video
+    onStartLiveVideo(room);
+  };
+
   // Don't show invite for direct messages
   const canInvite = showInviteButton && room.room_type !== 'direct' && room.created_by === currentUserId;
   
   // Can delete if user created the room or it's a direct message (both participants can delete)
   const canDelete = room.created_by === currentUserId || room.room_type === 'direct';
+  
+  // Show live video button for live room types
+  const canGoLive = room.room_type && room.room_type.startsWith('live_');
   
   return (
     <>
@@ -145,11 +155,24 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
                   <Users className="h-3 w-3" />
                   {participantCount}
                 </span>
-                {room.category && (
-                  <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
-                    {room.category}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-1">
+                  {canGoLive && onStartLiveVideo && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-xs bg-red-500 hover:bg-red-600 text-white border-red-500 hover:border-red-600"
+                      onClick={handleLiveVideoClick}
+                    >
+                      <VideoIcon className="h-3 w-3 mr-1" />
+                      Go Live
+                    </Button>
+                  )}
+                  {room.category && (
+                    <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
+                      {room.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </div>
