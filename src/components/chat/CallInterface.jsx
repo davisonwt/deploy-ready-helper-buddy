@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
+import LiveCallQueue from './LiveCallQueue';
 import { 
   Phone, 
   PhoneOff, 
@@ -12,7 +13,8 @@ import {
   Mic, 
   MicOff, 
   Settings,
-  Minimize2 
+  Minimize2,
+  Users
 } from 'lucide-react';
 
 const CallInterface = ({ 
@@ -23,10 +25,13 @@ const CallInterface = ({
   callerInfo, 
   onAccept, 
   onDecline, 
-  onEnd
+  onEnd,
+  isHost = false,
+  isModerator = false
 }) => {
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const intervalRef = useRef(null);
@@ -108,42 +113,53 @@ const CallInterface = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={callerInfo?.avatar_url} />
-            <AvatarFallback>
-              {callerInfo?.display_name?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h2 className="font-semibold">{callerInfo?.display_name || 'Unknown User'}</h2>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                {callType === 'video' ? 'Video Call' : 'Voice Call'}
-              </Badge>
-              {!isIncoming && (
-                <span className="text-sm text-muted-foreground">
-                  {formatDuration(callDuration)}
-                </span>
-              )}
+    <div className="fixed inset-0 bg-background z-50 flex">
+      {/* Main Call Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={callerInfo?.avatar_url} />
+              <AvatarFallback>
+                {callerInfo?.display_name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="font-semibold">{callerInfo?.display_name || 'Unknown User'}</h2>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">
+                  {callType === 'video' ? 'Video Call' : 'Voice Call'}
+                </Badge>
+                {!isIncoming && (
+                  <span className="text-sm text-muted-foreground">
+                    {formatDuration(callDuration)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowQueue(!showQueue)}
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMinimized(true)}
+            >
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsMinimized(true)}
-        >
-          <Minimize2 className="h-4 w-4" />
-        </Button>
-      </div>
 
-      {/* Video Area */}
-      <div className="flex-1 bg-muted relative">
+        {/* Video Area */}
+        <div className="flex-1 bg-muted relative">
         {callType === 'video' && (
           <>
             {/* Remote video */}
@@ -221,72 +237,86 @@ const CallInterface = ({
             />
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Controls */}
-      <div className="p-6 border-t">
-        <div className="flex items-center justify-center gap-4">
-          {isIncoming ? (
-            <>
-              <Button
-                size="lg"
-                variant="destructive"
-                onClick={onDecline}
-                className="rounded-full h-14 w-14"
-              >
-                <PhoneOff className="h-6 w-6" />
-              </Button>
-              <Button
-                size="lg"
-                variant="default"
-                onClick={onAccept}
-                className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
-              >
-                <Phone className="h-6 w-6" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant={isAudioEnabled ? "outline" : "destructive"}
-                size="lg"
-                onClick={toggleAudio}
-                className="rounded-full h-12 w-12"
-              >
-                {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-              </Button>
-              
-              {callType === 'video' && (
+        {/* Controls */}
+        <div className="p-6 border-t">
+          <div className="flex items-center justify-center gap-4">
+            {isIncoming ? (
+              <>
+                <Button
+                  size="lg"
+                  variant="destructive"
+                  onClick={onDecline}
+                  className="rounded-full h-14 w-14"
+                >
+                  <PhoneOff className="h-6 w-6" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="default"
+                  onClick={onAccept}
+                  className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
+                >
+                  <Phone className="h-6 w-6" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant={isAudioEnabled ? "outline" : "destructive"}
+                  size="lg"
+                  onClick={toggleAudio}
+                  className="rounded-full h-12 w-12"
+                >
+                  {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+                </Button>
+                
+                {callType === 'video' && (
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full h-12 w-12"
+                  >
+                    <VideoOff className="h-5 w-5" />
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   size="lg"
                   className="rounded-full h-12 w-12"
+                  onClick={() => console.log('Connection:', connectionState)}
                 >
-                  <VideoOff className="h-5 w-5" />
+                  <Settings className="h-5 w-5" />
                 </Button>
-              )}
-              
-               <Button
-                 variant="outline"
-                 size="lg"
-                 className="rounded-full h-12 w-12"
-                 onClick={() => console.log('Connection:', connectionState)}
-               >
-                 <Settings className="h-5 w-5" />
-               </Button>
-              
-              <Button
-                variant="destructive"
-                size="lg"
-                onClick={onEnd}
-                className="rounded-full h-14 w-14"
-              >
-                <PhoneOff className="h-6 w-6" />
-              </Button>
-            </>
-          )}
+                
+                <Button
+                  variant="destructive"
+                  size="lg"
+                  onClick={onEnd}
+                  className="rounded-full h-14 w-14"
+                >
+                  <PhoneOff className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Queue Sidebar */}
+      {showQueue && (
+        <div className="w-80 border-l bg-background overflow-y-auto">
+          <div className="p-4">
+            <LiveCallQueue 
+              callSession={callSession}
+              isHost={isHost}
+              isModerator={isModerator}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

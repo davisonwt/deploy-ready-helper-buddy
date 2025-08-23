@@ -676,6 +676,48 @@ export type Database = {
           },
         ]
       }
+      live_call_participants: {
+        Row: {
+          call_session_id: string
+          created_at: string
+          hand_raised_at: string | null
+          id: string
+          is_active: boolean
+          is_muted: boolean
+          joined_at: string
+          queue_position: number | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          call_session_id: string
+          created_at?: string
+          hand_raised_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_muted?: boolean
+          joined_at?: string
+          queue_position?: number | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          call_session_id?: string
+          created_at?: string
+          hand_raised_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_muted?: boolean
+          joined_at?: string
+          queue_position?: number | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       live_session_messages: {
         Row: {
           content: string
@@ -2456,6 +2498,10 @@ export type Database = {
       remove_sensitive_profile_data: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      reorder_hand_raise_queue: {
+        Args: { call_session_id_param: string }
+        Returns: undefined
       }
       search_user_profiles: {
         Args: { search_term: string }
