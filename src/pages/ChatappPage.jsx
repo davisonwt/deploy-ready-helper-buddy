@@ -38,6 +38,7 @@ import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
 import { LiveSessionInterface } from '@/components/live/LiveSessionInterface';
 import { ComprehensiveLiveSession } from '@/components/live/ComprehensiveLiveSession';
+import PublicLiveSessionsBrowser from '@/components/live/PublicLiveSessionsBrowser';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -249,10 +250,22 @@ const ChatappPage = () => {
     window.location.href = `/orchard/${orchardId}`;
   };
 
-  const startLiveSession = async (room) => {
+  const startLiveSession = async (sessionData, sessionType = 'chat') => {
     try {
-      // Create a live session for the chat room
-      const sessionData = {
+      // If it's from the public browser, set it directly
+      if (sessionType && sessionData) {
+        setActiveLiveSession(sessionData);
+        
+        toast({
+          title: "Joining Live Session",
+          description: `Joining ${sessionType === 'radio' ? 'radio show' : 'live session'}`,
+        });
+        return;
+      }
+
+      // Legacy chat room handling
+      const room = sessionData;
+      const liveSessionData = {
         id: `chat-${room.id}`,
         title: room.name,
         room_id: room.id,
@@ -260,23 +273,23 @@ const ChatappPage = () => {
         created_by: room.created_by,
         status: 'live',
         started_at: new Date().toISOString()
-      }
+      };
       
-      setActiveLiveSession(sessionData)
+      setActiveLiveSession(liveSessionData);
       
       toast({
         title: "Live Session Started",
         description: `Started live session for ${room.name}`,
-      })
+      });
     } catch (error) {
-      console.error('Error starting live session:', error)
+      console.error('Error starting live session:', error);
       toast({
         title: "Error",
         description: "Failed to start live session",
         variant: "destructive"
-      })
+      });
     }
-  }
+  };
 
   const endLiveSession = () => {
     setActiveLiveSession(null)
@@ -517,7 +530,7 @@ const ChatappPage = () => {
   }
 
   // If there's an active live session, show the comprehensive live interface
-  if (activeLiveSession && currentRoom) {
+  if (activeLiveSession) {
     return (
       <ComprehensiveLiveSession
         sessionData={activeLiveSession}
@@ -632,10 +645,15 @@ const ChatappPage = () => {
                   </div>
                   
                   <TabsContent value="discover" className="flex-1 min-h-0 mt-0">
-                    <PublicRoomsBrowser 
-                      onJoinRoom={handleJoinPublicRoom}
-                      onNavigateToOrchard={handleNavigateToOrchard}
-                    />
+                    <div className="space-y-6">
+                      <PublicLiveSessionsBrowser 
+                        onJoinSession={startLiveSession}
+                      />
+                      <PublicRoomsBrowser 
+                        onJoinRoom={handleJoinPublicRoom}
+                        onNavigateToOrchard={handleNavigateToOrchard}
+                      />
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
