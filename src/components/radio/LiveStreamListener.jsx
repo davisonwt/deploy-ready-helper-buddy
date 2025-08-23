@@ -33,26 +33,6 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const audioRef = useRef(null)
   const peerConnectionRef = useRef(null)
 
-  useEffect(() => {
-    if (liveSession) {
-      fetchActiveHosts()
-      setupRealtimeSubscriptions()
-      setViewerCount(liveSession.viewer_count || 0)
-    }
-
-    return () => {
-      if (peerConnectionRef.current) {
-        peerConnectionRef.current.close()
-      }
-    }
-  }, [liveSession])
-
-  useEffect(() => {
-    if (user && liveSession) {
-      checkExistingGuestRequest()
-    }
-  }, [user, liveSession])
-
   const fetchActiveHosts = async () => {
     if (!liveSession) return
 
@@ -130,6 +110,26 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       supabase.removeChannel(sessionSubscription)
     }
   }
+
+  useEffect(() => {
+    if (liveSession) {
+      fetchActiveHosts()
+      setupRealtimeSubscriptions()
+      setViewerCount(liveSession.viewer_count || 0)
+    }
+
+    return () => {
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close()
+      }
+    }
+  }, [liveSession])
+
+  useEffect(() => {
+    if (user && liveSession) {
+      checkExistingGuestRequest()
+    }
+  }, [user, liveSession])
 
   const togglePlayPause = async () => {
     if (!isPlaying) {
