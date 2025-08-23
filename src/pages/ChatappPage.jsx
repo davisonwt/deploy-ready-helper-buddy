@@ -491,7 +491,7 @@ const ChatappPage = () => {
                 chat or shutapp
               </p>
               <p style={{ color: '#b0e0e6' }}>
-                Connect, collaborate, and grow together in our farming community
+                Connect, collaborate, and grow together in our 364yhvh / sow2grow community
               </p>
             </div>
             <div className="flex gap-2">
