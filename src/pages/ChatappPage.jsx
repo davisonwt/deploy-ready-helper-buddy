@@ -814,6 +814,8 @@ const ChatappPage = () => {
             onAccept={handleAcceptCall}
             onDecline={handleDeclineCall}
             onEnd={handleEndCall}
+            isHost={activeCall.callerInfo?.id === user?.id}
+            isModerator={false} // TODO: Add moderator logic based on room permissions
           />
         )}
       </div>
