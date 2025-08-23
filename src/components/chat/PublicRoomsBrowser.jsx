@@ -177,14 +177,14 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
           <div className="flex flex-wrap gap-2">
             {categoryFilters.map(({ key, label, icon: Icon }, index) => {
               const blueShades = [
-                { bg: '#1E40AF', border: '#1E40AF', hover: '#1E3A8A' }, // All Rooms - Deep blue
-                { bg: '#2563EB', border: '#2563EB', hover: '#1D4ED8' }, // Marketing - Primary blue
-                { bg: '#3B82F6', border: '#3B82F6', hover: '#2563EB' }, // Cooking & Nutrition - Medium blue
-                { bg: '#60A5FA', border: '#60A5FA', hover: '#3B82F6' }, // DIY & Home - Light blue
-                { bg: '#93C5FD', border: '#93C5FD', hover: '#60A5FA' }, // Natural Health - Lighter blue
-                { bg: '#BFDBFE', border: '#BFDBFE', hover: '#93C5FD' }, // Business Training - Very light blue
-                { bg: '#DBEAFE', border: '#DBEAFE', hover: '#BFDBFE' }, // Podcasts - Pale blue
-                { bg: '#EFF6FF', border: '#EFF6FF', hover: '#DBEAFE' }, // General Courses - Almost white blue
+                { bg: '#1E40AF', hover: '#1E3A8A' }, // All Rooms - Deep blue
+                { bg: '#2563EB', hover: '#1D4ED8' }, // Marketing - Primary blue
+                { bg: '#3B82F6', hover: '#2563EB' }, // Cooking & Nutrition - Medium blue
+                { bg: '#60A5FA', hover: '#3B82F6' }, // DIY & Home - Light blue
+                { bg: '#1976D2', hover: '#1565C0' }, // Natural Health - Material blue
+                { bg: '#42A5F5', hover: '#1E88E5' }, // Business Training - Light material blue
+                { bg: '#0288D1', hover: '#0277BD' }, // Podcasts - Cyan blue
+                { bg: '#0097A7', hover: '#00838F' }, // General Courses - Teal blue
               ];
               const shade = blueShades[index] || blueShades[0];
               
@@ -195,24 +195,20 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                   size="sm"
                   onClick={() => setCategoryFilter(key)}
                   style={{
-                    backgroundColor: categoryFilter === key ? shade.bg : 'transparent',
-                    borderColor: shade.border,
-                    color: categoryFilter === key ? (index < 4 ? 'white' : '#1E40AF') : shade.bg,
+                    backgroundColor: categoryFilter === key ? shade.bg : shade.bg + '80',
+                    borderColor: shade.bg,
+                    color: 'white',
                   }}
                   className={`transition-all duration-300 hover:shadow-md ${
                     categoryFilter === key 
-                      ? 'shadow-lg' 
-                      : 'hover:bg-blue-50/10'
+                      ? 'shadow-lg ring-2 ring-white/30' 
+                      : ''
                   }`}
                   onMouseEnter={(e) => {
-                    if (categoryFilter !== key) {
-                      e.target.style.backgroundColor = shade.hover + '20';
-                    }
+                    e.target.style.backgroundColor = shade.hover;
                   }}
                   onMouseLeave={(e) => {
-                    if (categoryFilter !== key) {
-                      e.target.style.backgroundColor = 'transparent';
-                    }
+                    e.target.style.backgroundColor = categoryFilter === key ? shade.bg : shade.bg + '80';
                   }}
                 >
                   <Icon className="h-3 w-3 mr-1" />
