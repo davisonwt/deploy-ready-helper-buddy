@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  Search, 
+  X, 
+  Crown, 
+  UserPlus,
+  Shield
+} from 'lucide-react';
 
 const ROOM_TYPES = [
   { value: 'group', label: 'Group Chat' },
@@ -54,6 +64,62 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
     max_participants: 500,
   });
   const [isCreating, setIsCreating] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedModerators, setSelectedModerators] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  // Search for users to add as moderators
+  const searchUsers = async (searchTerm) => {
+    if (!searchTerm.trim() || searchTerm.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const { data, error } = await supabase.rpc('search_user_profiles', {
+        search_term: searchTerm
+      });
+
+      if (error) throw error;
+      
+      // Filter out already selected moderators
+      const filteredResults = data?.filter(user => 
+        !selectedModerators.some(mod => mod.user_id === user.user_id)
+      ) || [];
+      
+      setSearchResults(filteredResults);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (userSearch) {
+        searchUsers(userSearch);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [userSearch]);
+
+  const addModerator = (user) => {
+    setSelectedModerators(prev => [...prev, user]);
+    setUserSearch('');
+    setSearchResults([]);
+  };
+
+  const removeModerator = (userId) => {
+    setSelectedModerators(prev => prev.filter(mod => mod.user_id !== userId));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +136,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
     setIsCreating(true);
     
     try {
-      const room = await onCreateRoom(formData);
+      const room = await onCreateRoom(formData, selectedModerators);
       if (room) {
         setFormData({
           name: '',
@@ -79,6 +145,9 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
           category: '',
           max_participants: 500,
         });
+        setSelectedModerators([]);
+        setUserSearch('');
+        setSearchResults([]);
         onClose();
       }
     } catch (error) {
@@ -173,6 +242,84 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
               min="2"
               max="500"
             />
+          </div>
+
+          {/* Moderator Selection Section */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Room Moderators
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Search and add users who will help moderate this room
+            </p>
+            
+            {/* Selected Moderators */}
+            {selectedModerators.length > 0 && (
+              <div className="flex flex-wrap gap-2 p-2 bg-muted/50 rounded-md">
+                {selectedModerators.map((mod) => (
+                  <Badge key={mod.user_id} variant="secondary" className="flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    {mod.display_name}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => removeModerator(mod.user_id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* User Search */}
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users to add as moderators..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Search Results */}
+              {(searchResults.length > 0 || searching) && (
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-lg">
+                  <ScrollArea className="max-h-40">
+                    {searching ? (
+                      <div className="p-3 text-center text-sm text-muted-foreground">
+                        Searching...
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      <div className="p-1">
+                        {searchResults.map((user) => (
+                          <div
+                            key={user.user_id}
+                            className="flex items-center gap-2 p-2 hover:bg-accent rounded-sm cursor-pointer"
+                            onClick={() => addModerator(user)}
+                          >
+                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-bold">
+                              {user.display_name?.[0] || 'U'}
+                            </div>
+                            <span className="text-sm">{user.display_name || 'Unknown User'}</span>
+                            <UserPlus className="h-4 w-4 ml-auto text-muted-foreground" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 text-center text-sm text-muted-foreground">
+                        No users found
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4">
