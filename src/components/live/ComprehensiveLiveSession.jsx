@@ -69,6 +69,8 @@ export function ComprehensiveLiveSession({
   const [coHosts, setCoHosts] = useState([])
   const [currentGuest, setCurrentGuest] = useState(null)
   const [sessionInfo, setSessionInfo] = useState(null)
+  const [hasRequestedToSpeak, setHasRequestedToSpeak] = useState(false)
+  const [channels, setChannels] = useState([])
   const chatRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -144,10 +146,30 @@ export function ComprehensiveLiveSession({
         fetchGuestRequests(),
         fetchListeners(),
         fetchSessionDocuments(),
-        updateViewerCount()
+        checkUserRequestStatus()
       ])
     } catch (error) {
       console.error('Error fetching initial data:', error)
+    }
+  }
+
+  const checkUserRequestStatus = async () => {
+    if (!sessionInfo || !user) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('radio_guest_requests')
+        .select('*')
+        .eq('session_id', sessionInfo.id)
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .single()
+
+      if (data && !error) {
+        setHasRequestedToSpeak(true)
+      }
+    } catch (error) {
+      // No pending request found, which is fine
     }
   }
 
@@ -373,46 +395,51 @@ export function ComprehensiveLiveSession({
   const setupRealtimeSubscriptions = () => {
     if (!sessionInfo) return
 
-    // Set up real-time subscriptions for messages, queue, etc.
-    if (sessionType === 'radio' && sessionData.id) {
-      // Messages subscription
-      const messagesChannel = supabase
-        .channel(`radio-messages-${sessionData.id}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'radio_live_messages',
-          filter: `session_id=eq.${sessionData.id}`
-        }, () => {
-          fetchMessages()
-        })
-        .subscribe()
+    const newChannels = []
 
-      // Queue subscription
-      const queueChannel = supabase
-        .channel(`radio-queue-${sessionData.id}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'radio_call_queue',
-          filter: `session_id=eq.${sessionData.id}`
-        }, () => {
-          fetchCallQueue()
-        })
-        .subscribe()
+    // Messages subscription for all session types
+    const messagesChannel = supabase
+      .channel(`session-messages-${sessionInfo.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: sessionType === 'radio' ? 'radio_live_messages' : 'live_session_messages',
+        filter: `session_id=eq.${sessionInfo.id}`
+      }, () => {
+        fetchMessages()
+      })
+      .subscribe()
+    newChannels.push(messagesChannel)
 
-      // Guest requests subscription
+    // Guest requests subscription for radio sessions
+    if (sessionType === 'radio') {
       const requestsChannel = supabase
-        .channel(`radio-requests-${sessionData.id}`)
+        .channel(`radio-requests-${sessionInfo.id}`)
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
           table: 'radio_guest_requests',
-          filter: `session_id=eq.${sessionData.id}`
+          filter: `session_id=eq.${sessionInfo.id}`
         }, () => {
           fetchGuestRequests()
+          checkUserRequestStatus()
         })
         .subscribe()
+      newChannels.push(requestsChannel)
+
+      // Call queue subscription
+      const queueChannel = supabase
+        .channel(`radio-queue-${sessionInfo.id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'radio_call_queue',
+          filter: `session_id=eq.${sessionInfo.id}`
+        }, () => {
+          fetchCallQueue()
+        })
+        .subscribe()
+      newChannels.push(queueChannel)
     }
 
     // Listeners subscription for all session types
@@ -427,6 +454,7 @@ export function ComprehensiveLiveSession({
         fetchListeners()
       })
       .subscribe()
+    newChannels.push(listenersChannel)
 
     // Documents subscription for all session types
     const documentsChannel = supabase
@@ -451,6 +479,9 @@ export function ComprehensiveLiveSession({
         }
       })
       .subscribe()
+    newChannels.push(documentsChannel)
+
+    setChannels(newChannels)
 
     // Auto-join as listener when session starts
     setTimeout(() => {
@@ -461,8 +492,10 @@ export function ComprehensiveLiveSession({
   }
 
   const cleanupSubscriptions = () => {
-    // Clean up all subscriptions
-    supabase.removeAllChannels()
+    channels.forEach(channel => {
+      supabase.removeChannel(channel)
+    })
+    setChannels([])
   }
 
   // Awards points for participation actions
@@ -482,7 +515,15 @@ export function ComprehensiveLiveSession({
     if (!newMessage.trim() || !sessionInfo) return
 
     try {
+      let insertData = {
+        session_id: sessionInfo.id,
+        sender_id: user.id,
+        content: newMessage.trim(),
+        message_type: 'message'
+      }
+
       if (sessionType === 'radio') {
+        // Insert into radio_live_messages for radio sessions
         const { error } = await supabase
           .from('radio_live_messages')
           .insert({
@@ -491,18 +532,24 @@ export function ComprehensiveLiveSession({
             message: newMessage.trim(),
             message_type: 'text'
           })
-
+        if (error) throw error
+      } else {
+        // Insert into live_session_messages for other session types
+        const { error } = await supabase
+          .from('live_session_messages')
+          .insert(insertData)
         if (error) throw error
       }
 
-      // Add to local messages immediately
+      // Add to local messages immediately for better UX
       const newMsg = {
         id: Date.now().toString(),
         sender_id: user.id,
         message: newMessage.trim(),
+        content: newMessage.trim(),
         created_at: new Date().toISOString(),
         profiles: {
-          display_name: user.user_metadata?.display_name || 'You',
+          display_name: user.user_metadata?.display_name || user.email || 'You',
           avatar_url: user.user_metadata?.avatar_url
         }
       }
@@ -513,9 +560,11 @@ export function ComprehensiveLiveSession({
       await awardPoints('sending a message', 2)
 
       // Scroll to bottom
-      if (chatRef.current) {
-        chatRef.current.scrollTop = chatRef.current.scrollHeight
-      }
+      setTimeout(() => {
+        if (chatRef.current) {
+          chatRef.current.scrollTop = chatRef.current.scrollHeight
+        }
+      }, 100)
     } catch (error) {
       console.error('Error sending message:', error)
       toast({
@@ -594,7 +643,7 @@ export function ComprehensiveLiveSession({
   })
 
   const requestToSpeak = async () => {
-    if (!sessionInfo || !user) return
+    if (!sessionInfo || !user || hasRequestedToSpeak) return
     
     try {
       const { error } = await supabase
@@ -607,12 +656,18 @@ export function ComprehensiveLiveSession({
 
       if (error) throw error
       
+      setHasRequestedToSpeak(true)
       toast({
         title: "Request sent!",
         description: "Host will review your request to speak",
       })
     } catch (error) {
       console.error('Error requesting to speak:', error)
+      toast({
+        title: "Error",
+        description: "Failed to send speaking request",
+        variant: "destructive"
+      })
     }
   }
 
@@ -632,7 +687,7 @@ export function ComprehensiveLiveSession({
 
       if (updateError) throw updateError
 
-      // Optionally move user to guest slot or queue
+      // Move user to guest slot
       await moveToGuestSlot(userId)
       
       toast({
@@ -641,14 +696,46 @@ export function ComprehensiveLiveSession({
       })
     } catch (error) {
       console.error('Error approving request:', error)
+      toast({
+        title: "Error",
+        description: "Failed to approve request",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const rejectGuestRequest = async (requestId) => {
+    if (!isHost) return
+    
+    try {
+      const { error } = await supabase
+        .from('radio_guest_requests')
+        .update({ 
+          status: 'rejected',
+          approved_by: user.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+
+      if (error) throw error
+      
+      toast({
+        title: "Request rejected",
+        description: "Guest request has been declined",
+      })
+    } catch (error) {
+      console.error('Error rejecting request:', error)
     }
   }
 
   const moveToGuestSlot = async (userId) => {
-    // Implementation to move user to guest slot
     const userProfile = listeners.find(l => l.user_id === userId)
     if (userProfile) {
-      setCurrentGuest(userProfile)
+      setCurrentGuest({
+        user_id: userProfile.user_id,
+        display_name: userProfile.display_name,
+        avatar_url: userProfile.avatar_url
+      })
     }
   }
 
@@ -656,11 +743,34 @@ export function ComprehensiveLiveSession({
     if (!isHost) return
     
     const userProfile = listeners.find(l => l.user_id === userId)
-    if (userProfile) {
-      setCoHosts(prev => [...prev, userProfile].slice(0, 3))
+    if (userProfile && coHosts.length < 3) {
+      setCoHosts(prev => [...prev, {
+        user_id: userProfile.user_id,
+        display_name: userProfile.display_name,
+        avatar_url: userProfile.avatar_url
+      }])
+      
       toast({
         title: "User promoted!",
         description: `${userProfile.display_name} is now a co-host`,
+      })
+    }
+  }
+
+  const removeFromStage = (userId, type) => {
+    if (!isHost) return
+    
+    if (type === 'guest') {
+      setCurrentGuest(null)
+      toast({
+        title: "Guest removed",
+        description: "Guest has been moved back to audience",
+      })
+    } else if (type === 'cohost') {
+      setCoHosts(prev => prev.filter(ch => ch.user_id !== userId))
+      toast({
+        title: "Co-host removed",
+        description: "Co-host has been moved back to audience",
       })
     }
   }
@@ -747,6 +857,20 @@ export function ComprehensiveLiveSession({
                     </Badge>
                   </div>
                   
+                  {/* Host Controls */}
+                  {isHost && currentGuest && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeFromStage(currentGuest.user_id, 'guest')}
+                        className="h-6 w-6 p-0 bg-red-500/20 hover:bg-red-500/40 text-red-400"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                  
                   <div className="w-full h-full flex items-center justify-center">
                     {currentGuest ? (
                       <Avatar className="w-32 h-32 border-4 border-green-400">
@@ -781,13 +905,27 @@ export function ComprehensiveLiveSession({
               {[0, 1, 2].map((index) => {
                 const coHost = coHosts[index]
                 return (
-                  <Card key={index} className="bg-white/5 border-white/10 backdrop-blur-sm h-32 overflow-hidden">
+                  <Card key={index} className="bg-white/5 border-white/10 backdrop-blur-sm h-32 overflow-hidden group">
                     <div className="relative h-full">
                       <div className="absolute top-2 left-2 z-10">
                         <Badge variant="secondary" className="bg-blue-500/80 text-white text-xs px-2 py-1">
                           Co-host
                         </Badge>
                       </div>
+                      
+                      {/* Host Controls */}
+                      {isHost && coHost && (
+                        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFromStage(coHost.user_id, 'cohost')}
+                            className="h-6 w-6 p-0 bg-red-500/20 hover:bg-red-500/40 text-red-400"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
                       
                       <div className="h-full flex items-center justify-center">
                         {coHost ? (
@@ -855,10 +993,15 @@ export function ComprehensiveLiveSession({
             {!isHost && (
               <Button
                 onClick={requestToSpeak}
-                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-full"
+                disabled={hasRequestedToSpeak}
+                className={`${
+                  hasRequestedToSpeak 
+                    ? 'bg-yellow-600 hover:bg-yellow-700' 
+                    : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                } text-white px-6 py-3 rounded-full`}
               >
                 <Hand className="w-5 h-5 mr-2" />
-                Request to Speak
+                {hasRequestedToSpeak ? 'Request Pending...' : 'Request to Speak'}
               </Button>
             )}
 
@@ -996,14 +1139,15 @@ export function ComprehensiveLiveSession({
                         <Button
                           size="sm"
                           onClick={() => approveGuestRequest(request.id, request.user_id)}
-                          className="bg-green-600 hover:bg-green-700 h-6 px-2"
+                          className="bg-green-600 hover:bg-green-700 h-6 px-2 text-xs"
                         >
                           ✓
                         </Button>
                         <Button
                           size="sm"
+                          onClick={() => rejectGuestRequest(request.id)}
                           variant="ghost"
-                          className="text-red-400 hover:bg-red-500/20 h-6 px-2"
+                          className="text-red-400 hover:bg-red-500/20 h-6 px-2 text-xs"
                         >
                           ✗
                         </Button>
