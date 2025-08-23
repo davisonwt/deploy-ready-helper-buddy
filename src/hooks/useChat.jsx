@@ -283,7 +283,7 @@ export const useChat = () => {
   }, [user, toast, fetchRooms]);
 
   // Create a new room
-  const createRoom = useCallback(async (roomData) => {
+  const createRoom = useCallback(async (roomData, moderators = []) => {
     if (!user) return null;
 
     try {
@@ -298,20 +298,35 @@ export const useChat = () => {
 
       if (roomError) throw roomError;
 
-      // Add creator as participant
-      const { error: participantError } = await supabase
-        .from('chat_participants')
-        .insert({
+      // Add creator as participant (always a moderator)
+      const participantsToAdd = [
+        {
           room_id: room.id,
           user_id: user.id,
           is_moderator: true,
-        });
+        }
+      ];
+
+      // Add selected moderators as participants
+      if (moderators && moderators.length > 0) {
+        const moderatorParticipants = moderators.map(mod => ({
+          room_id: room.id,
+          user_id: mod.user_id,
+          is_moderator: true,
+        }));
+        participantsToAdd.push(...moderatorParticipants);
+      }
+
+      // Insert all participants (creator + moderators)
+      const { error: participantError } = await supabase
+        .from('chat_participants')
+        .insert(participantsToAdd);
 
       if (participantError) throw participantError;
 
       toast({
         title: "Success",
-        description: "Chat room created successfully",
+        description: `Chat room created successfully${moderators?.length > 0 ? ` with ${moderators.length} moderator(s)` : ''}`,
       });
 
       fetchRooms(); // Refresh rooms list
