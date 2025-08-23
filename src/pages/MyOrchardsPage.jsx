@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import { formatCurrency } from '../utils/formatters';
+import { processOrchardsUrls } from '../utils/urlUtils';
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
@@ -77,8 +78,11 @@ export default function MyOrchardsPage() {
   }, [user])
 
   useEffect(() => {
+    // First process URLs to ensure they're public URLs
+    const processedOrchards = processOrchardsUrls(orchards);
+    
     // Filter to show only user's own orchards
-    let filtered = orchards.filter(orchard => {
+    let filtered = processedOrchards.filter(orchard => {
       return orchard.user_id === user?.id
     })
     
@@ -97,6 +101,13 @@ export default function MyOrchardsPage() {
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(orchard => orchard.category === selectedCategory)
     }
+    
+    console.log('🖼️ MyOrchards URL Debug:', {
+      originalOrchards: orchards.length,
+      processedOrchards: processedOrchards.length,
+      userOrchards: filtered.length,
+      sampleImageURLs: filtered.slice(0, 2).map(o => ({ id: o.id, images: o.images }))
+    });
     
     setUserOrchards(filtered)
   }, [orchards, user, searchTerm, statusFilter, selectedCategory])
