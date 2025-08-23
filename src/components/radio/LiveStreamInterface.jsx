@@ -29,7 +29,7 @@ import {
   Pause
 } from 'lucide-react'
 import RadioModerationPanel from '@/components/radio/RadioModerationPanel'
-import { LiveVideoCallInterface } from '@/components/radio/LiveVideoCallInterface'
+import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -739,23 +739,23 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         </Card>
       )}
 
-      {/* Live Video Call Interface */}
+      {/* Universal Live Session Interface */}
       {liveSession && isLive && (
-        <Card>
-          <CardContent className="p-6">
-            <LiveVideoCallInterface
-              liveSession={liveSession}
-              activeHosts={activeHosts}
-              approvedGuests={approvedGuests}
-              currentUser={user}
-              isHost={activeHosts.some(host => host.user_id === user?.id)}
-            />
-          </CardContent>
-        </Card>
+        <UniversalLiveSessionInterface
+          sessionData={{
+            id: liveSession.id,
+            title: currentShow?.show_name || 'Live Radio Session',
+            ...liveSession
+          }}
+          sessionType="radio"
+          currentUser={user}
+          isHost={activeHosts.some(host => host.user_id === user?.id)}
+          onSessionEnd={endLiveStream}
+        />
       )}
 
-      {/* Radio Moderation Panel - Enhanced Management */}
-      {liveSession && (
+      {/* Radio Moderation Panel - Enhanced Management (Host Only) */}
+      {liveSession && isHost && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
