@@ -34,6 +34,7 @@ import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
+import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -630,7 +631,15 @@ const ChatappPage = () => {
           )}
 
           {/* Main Chat Area */}
-          <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+          <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'} flex flex-col gap-4`}>
+            {currentRoom && (
+              <ChatModerationPanel 
+                currentRoom={currentRoom} 
+                currentUser={user} 
+              />
+            )}
+            <div className="flex-1">
+              {/* Chat Interface */}
             {currentRoom ? (
               <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader 
@@ -812,6 +821,7 @@ const ChatappPage = () => {
                 </CardContent>
               </Card>
             )}
+            </div>
           </div>
         </div>
 

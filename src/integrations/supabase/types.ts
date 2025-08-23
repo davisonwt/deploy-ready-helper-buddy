@@ -268,6 +268,50 @@ export type Database = {
           },
         ]
       }
+      chat_join_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          room_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          room_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          room_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_join_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string | null
@@ -347,6 +391,9 @@ export type Database = {
           is_active: boolean
           is_moderator: boolean
           joined_at: string
+          kick_reason: string | null
+          kicked_at: string | null
+          kicked_by: string | null
           profile_id: string | null
           room_id: string
           user_id: string
@@ -356,6 +403,9 @@ export type Database = {
           is_active?: boolean
           is_moderator?: boolean
           joined_at?: string
+          kick_reason?: string | null
+          kicked_at?: string | null
+          kicked_by?: string | null
           profile_id?: string | null
           room_id: string
           user_id: string
@@ -365,6 +415,9 @@ export type Database = {
           is_active?: boolean
           is_moderator?: boolean
           joined_at?: string
+          kick_reason?: string | null
+          kicked_at?: string | null
+          kicked_by?: string | null
           profile_id?: string | null
           room_id?: string
           user_id?: string
@@ -2265,6 +2318,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_join_request: {
+        Args: { request_id: string }
+        Returns: boolean
+      }
       approve_radio_schedule_slot: {
         Args: { approver_id_param: string; schedule_id_param: string }
         Returns: boolean
@@ -2453,6 +2510,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      kick_user_from_room: {
+        Args: {
+          kick_reason_param?: string
+          room_id_param: string
+          user_id_param: string
+        }
+        Returns: boolean
+      }
       log_admin_action: {
         Args: {
           action_details?: Json
@@ -2498,6 +2563,10 @@ export type Database = {
       }
       migrate_billing_data_for_user: {
         Args: { target_user_id: string }
+        Returns: boolean
+      }
+      reject_join_request: {
+        Args: { request_id: string }
         Returns: boolean
       }
       reject_radio_schedule_slot: {
