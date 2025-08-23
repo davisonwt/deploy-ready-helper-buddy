@@ -456,7 +456,11 @@ const ChatappPage = () => {
               <p className="text-muted-foreground mb-4">
                 Please log in to access the chat features and connect with the community.
               </p>
-              <Button onClick={() => window.location.href = '/login'}>
+              <Button 
+                onClick={() => window.location.href = '/login'}
+                style={{ backgroundColor: '#1E40AF', borderColor: '#1E40AF' }}
+                className="text-white hover:shadow-lg transition-all duration-300"
+              >
                 Log In to Continue
               </Button>
             </div>
@@ -673,15 +677,26 @@ const ChatappPage = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => setShowInviteModal(true)}
-                        className="gap-2"
+                        style={{ borderColor: '#93C5FD', color: '#1D4ED8', backgroundColor: 'transparent' }}
+                        className="gap-2 hover:bg-blue-50"
                       >
                         <UserPlus className="h-4 w-4" />
                         Invite
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        style={{ borderColor: '#60A5FA', color: '#2563EB', backgroundColor: 'transparent' }}
+                        className="hover:bg-blue-50"
+                      >
                         <Phone className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        style={{ borderColor: '#3B82F6', color: '#1E40AF', backgroundColor: 'transparent' }}
+                        className="hover:bg-blue-50"
+                      >
                         <VideoIcon className="h-4 w-4" />
                       </Button>
                     </div>
@@ -738,7 +753,8 @@ const ChatappPage = () => {
                           variant="ghost"
                           size="sm"
                           onClick={removeSelectedFile}
-                          className="h-6 w-6 p-0"
+                          style={{ color: '#2563EB' }}
+                          className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-700"
                         >
                           ×
                         </Button>
@@ -752,6 +768,8 @@ const ChatappPage = () => {
                         type="button"
                         onClick={handleAttachmentClick}
                         disabled={uploading}
+                        style={{ borderColor: '#BFDBFE', color: '#1D4ED8', backgroundColor: 'transparent' }}
+                        className="hover:bg-blue-50"
                       >
                         <Paperclip className="h-4 w-4" />
                       </Button>
@@ -764,6 +782,8 @@ const ChatappPage = () => {
                       <Button 
                         type="submit" 
                         disabled={(!newMessage.trim() && !selectedFile) || uploading}
+                        style={{ backgroundColor: '#1E40AF', borderColor: '#1E40AF' }}
+                        className="text-white hover:bg-blue-800 transition-all duration-300"
                       >
                         {uploading ? '...' : <Send className="h-4 w-4" />}
                       </Button>
