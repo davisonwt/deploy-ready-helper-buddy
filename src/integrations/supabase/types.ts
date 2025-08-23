@@ -729,6 +729,50 @@ export type Database = {
           },
         ]
       }
+      document_annotations: {
+        Row: {
+          annotation_type: string
+          content: string | null
+          created_at: string
+          document_id: string
+          id: string
+          page_number: number
+          user_id: string
+          x_position: number | null
+          y_position: number | null
+        }
+        Insert: {
+          annotation_type?: string
+          content?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          page_number?: number
+          user_id: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Update: {
+          annotation_type?: string
+          content?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          page_number?: number
+          user_id?: string
+          x_position?: number | null
+          y_position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_annotations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "session_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_call_participants: {
         Row: {
           call_session_id: string
@@ -1986,6 +2030,84 @@ export type Database = {
           },
         ]
       }
+      session_documents: {
+        Row: {
+          created_at: string
+          current_page: number | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          is_active: boolean | null
+          session_id: string
+          total_pages: number | null
+          updated_at: string
+          uploader_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_page?: number | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          is_active?: boolean | null
+          session_id: string
+          total_pages?: number | null
+          updated_at?: string
+          uploader_id: string
+        }
+        Update: {
+          created_at?: string
+          current_page?: number | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          is_active?: boolean | null
+          session_id?: string
+          total_pages?: number | null
+          updated_at?: string
+          uploader_id?: string
+        }
+        Relationships: []
+      }
+      session_listeners: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          id: string
+          is_active: boolean | null
+          joined_at: string
+          last_seen: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          last_seen?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          last_seen?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usdc_transactions: {
         Row: {
           amount: number
@@ -2716,6 +2838,10 @@ export type Database = {
           id: string
           user_id: string
         }[]
+      }
+      update_document_page: {
+        Args: { document_id_param: string; new_page: number }
+        Returns: boolean
       }
       update_payment_config_secure: {
         Args: {
