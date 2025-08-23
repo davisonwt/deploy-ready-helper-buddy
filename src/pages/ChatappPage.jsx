@@ -479,11 +479,11 @@ const ChatappPage = () => {
         <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-1 px-8 py-4 rounded-lg" style={{ 
+              <h1 className="text-3xl font-bold mb-0 px-8 py-4 rounded-lg leading-tight" style={{ 
                 color: '#3B82F6', 
                 textShadow: '2px 2px 4px #1D4ED8'
               }}>Chatapp</h1>
-              <p className="text-sm font-medium -mt-2 mb-4 px-8" style={{ 
+              <p className="text-xs font-medium -mt-6 mb-4 px-8 ml-32" style={{ 
                 color: '#87CEEB',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                 fontStyle: 'italic'
