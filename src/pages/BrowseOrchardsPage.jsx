@@ -17,6 +17,8 @@ import { useCurrency } from "../hooks/useCurrency"
 import { useOrchards } from "../hooks/useOrchards"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { processOrchardsUrls } from "../utils/urlUtils"
+
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
@@ -94,7 +96,10 @@ export default function BrowseOrchardsPage() {
 
   // Transform orchards data with safe defaults
   const processedOrchards = useMemo(() => {
-    return orchards.map(orchard => ({
+    // First process URLs for all orchards
+    const orchardsWithUrls = processOrchardsUrls(orchards);
+    
+    return orchardsWithUrls.map(orchard => ({
       ...orchard,
       completion_percentage: (orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets 
         ? Math.round((orchard.filled_pockets / ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets)) * 100)
@@ -104,7 +109,7 @@ export default function BrowseOrchardsPage() {
       grower_name: orchard.profiles?.display_name || 
                    `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim() || 
                    'Anonymous Grower',
-      main_image: orchard.images?.[0] || null
+      main_image: orchard.images?.[0] || null // Already processed by processOrchardsUrls
     }))
   }, [orchards])
 

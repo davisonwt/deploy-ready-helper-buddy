@@ -14,6 +14,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
 import { useRoles } from '../hooks/useRoles'
+import { processOrchardsUrls } from '../utils/urlUtils'
 
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
@@ -52,7 +53,8 @@ export default function YhvhOrchardsPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setOrchards(data || [])
+      const processedOrchards = processOrchardsUrls(data || [])
+      setOrchards(processedOrchards)
     } catch (error) {
       console.error('Error fetching orchards:', error)
       toast.error('Failed to load orchards')
