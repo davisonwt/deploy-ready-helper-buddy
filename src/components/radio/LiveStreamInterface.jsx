@@ -28,6 +28,7 @@ import {
   Play,
   Pause
 } from 'lucide-react'
+import RadioModerationPanel from '@/components/radio/RadioModerationPanel'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -700,6 +701,28 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Radio Moderation Panel - Enhanced Management */}
+      {liveSession && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Heretic Management - Live Session Control
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioModerationPanel
+              liveSession={liveSession}
+              djProfile={djProfile}
+              activeHosts={activeHosts}
+              guestRequests={guestRequests}
+              onHostsUpdate={fetchActiveHosts}
+              onGuestRequestsUpdate={fetchGuestRequests}
+            />
           </CardContent>
         </Card>
       )}

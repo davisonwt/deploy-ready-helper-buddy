@@ -1327,6 +1327,50 @@ export type Database = {
           },
         ]
       }
+      radio_call_queue: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          session_id: string
+          status: string
+          topic: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          session_id: string
+          status?: string
+          topic?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          session_id?: string
+          status?: string
+          topic?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_call_queue_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_djs: {
         Row: {
           avatar_url: string | null
@@ -1529,6 +1573,47 @@ export type Database = {
           },
         ]
       }
+      radio_live_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message_text: string
+          message_type: string
+          sender_id: string
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_text: string
+          message_type?: string
+          sender_id: string
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_text?: string
+          message_type?: string
+          sender_id?: string
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_live_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_live_sessions: {
         Row: {
           created_at: string
@@ -1569,6 +1654,48 @@ export type Database = {
             columns: ["schedule_id"]
             isOneToOne: false
             referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_message_responses: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          responder_id: string
+          response_text: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          responder_id: string
+          response_text: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          responder_id?: string
+          response_text?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_message_responses_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_message_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
             referencedColumns: ["id"]
           },
         ]
