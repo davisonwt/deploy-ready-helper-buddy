@@ -598,7 +598,7 @@ const ChatappPage = () => {
                               <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>No rooms found</p>
                               <Button 
                                 onClick={() => setShowCreateModal(true)}
-                                style={{ background: 'linear-gradient(to right, #EC4899, #DC2626)' }}
+                                style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
                                 className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                               >
                                 <Plus className="h-4 w-4 mr-2" />
@@ -782,7 +782,7 @@ const ChatappPage = () => {
                     </p>
                     <Button 
                       onClick={() => setShowCreateModal(true)}
-                      style={{ background: 'linear-gradient(to right, #10B981, #14B8A6)' }}
+                      style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
                       className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="h-4 w-4 mr-2" />
