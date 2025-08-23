@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useVoiceMemo } from '@/hooks/useVoiceMemo';
 import { 
   Hand, 
   Mic, 
@@ -14,7 +15,12 @@ import {
   Shield, 
   Users,
   CheckCircle,
-  XCircle 
+  XCircle,
+  MicIcon,
+  Square,
+  Play,
+  Trash2,
+  Clock
 } from 'lucide-react';
 
 const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
@@ -24,6 +30,14 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
   const [queuedParticipants, setQueuedParticipants] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { 
+    isRecording, 
+    isUploading, 
+    startRecording, 
+    stopRecording, 
+    uploadVoiceMemo, 
+    deleteVoiceMemo 
+  } = useVoiceMemo();
 
   // Fetch participants and queue
   const fetchParticipants = async () => {
@@ -252,6 +266,45 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
     }
   };
 
+  // Record voice memo
+  const handleRecordVoiceMemo = async () => {
+    if (!currentUser) return;
+
+    if (isRecording) {
+      const audioBlob = await stopRecording();
+      if (audioBlob) {
+        await uploadVoiceMemo(audioBlob, currentUser.id);
+      }
+    } else {
+      await startRecording();
+    }
+  };
+
+  // Play voice memo
+  const playVoiceMemo = (voiceMemoUrl) => {
+    const audio = new Audio(voiceMemoUrl);
+    audio.play().catch(error => {
+      console.error('Error playing voice memo:', error);
+      toast({
+        title: "Playback Error",
+        description: "Could not play voice memo",
+        variant: "destructive",
+      });
+    });
+  };
+
+  // Delete voice memo
+  const handleDeleteVoiceMemo = async (participantId, voiceMemoUrl) => {
+    await deleteVoiceMemo(participantId, voiceMemoUrl);
+  };
+
+  // Format duration for display
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Set up real-time subscriptions
   useEffect(() => {
     if (!callSession) return;
@@ -371,6 +424,66 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
               )}
             </div>
             
+            {/* Voice Memo Controls for Queued Participants */}
+            {currentUser && currentUser.hand_raised_at && currentUser.is_muted && (
+              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Voice Memo</span>
+                  {currentUser.voice_memo_url && (
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {formatDuration(currentUser.voice_memo_duration || 0)}
+                    </div>
+                  )}
+                </div>
+                
+                {currentUser.voice_memo_url ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => playVoiceMemo(currentUser.voice_memo_url)}
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      Play
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteVoiceMemo(currentUser.id, currentUser.voice_memo_url)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRecordVoiceMemo}
+                    disabled={isUploading}
+                  >
+                    {isRecording ? (
+                      <>
+                        <Square className="h-4 w-4 mr-1 text-red-500" />
+                        Stop Recording
+                      </>
+                    ) : (
+                      <>
+                        <MicIcon className="h-4 w-4 mr-1" />
+                        Record Message
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Record what you want to say while waiting. Your message will be saved to your queue position.
+                </p>
+              </div>
+            )}
+            </div>
+            
             {currentUser.hand_raised_at && currentUser.queue_position && (
               <div className="mt-2 text-sm text-muted-foreground">
                 Position in queue: #{currentUser.queue_position}
@@ -396,7 +509,7 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
                   key={participant.id} 
                   className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1">
                     <div className="text-sm font-medium">#{index + 1}</div>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={participant.profiles?.avatar_url} />
@@ -405,36 +518,58 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
                          participant.profiles?.first_name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {participant.profiles?.display_name || 
-                         `${participant.profiles?.first_name} ${participant.profiles?.last_name}` || 
-                         'Unknown User'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Waiting to speak
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">
+                          {participant.profiles?.display_name || 
+                           `${participant.profiles?.first_name} ${participant.profiles?.last_name}` || 
+                           'Unknown User'}
+                        </p>
+                        {participant.voice_memo_url && (
+                          <MicIcon className="h-3 w-3 text-blue-500" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Waiting to speak</span>
+                        {participant.voice_memo_url && (
+                          <>
+                            <span>•</span>
+                            <span>Has voice memo ({formatDuration(participant.voice_memo_duration || 0)})</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  {(isHost || isModerator) && (
-                    <div className="flex gap-1">
+                  <div className="flex gap-1">
+                    {participant.voice_memo_url && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => unmuteParticipant(participant.id)}
+                        onClick={() => playVoiceMemo(participant.voice_memo_url)}
                       >
-                        <CheckCircle className="h-4 w-4" />
+                        <Play className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeParticipant(participant.id)}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                    )}
+                    {(isHost || isModerator) && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => unmuteParticipant(participant.id)}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeParticipant(participant.id)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

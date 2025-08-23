@@ -686,9 +686,12 @@ export type Database = {
           is_muted: boolean
           joined_at: string
           queue_position: number | null
+          recorded_at: string | null
           role: string
           updated_at: string
           user_id: string
+          voice_memo_duration: number | null
+          voice_memo_url: string | null
         }
         Insert: {
           call_session_id: string
@@ -699,9 +702,12 @@ export type Database = {
           is_muted?: boolean
           joined_at?: string
           queue_position?: number | null
+          recorded_at?: string | null
           role?: string
           updated_at?: string
           user_id: string
+          voice_memo_duration?: number | null
+          voice_memo_url?: string | null
         }
         Update: {
           call_session_id?: string
@@ -712,9 +718,12 @@ export type Database = {
           is_muted?: boolean
           joined_at?: string
           queue_position?: number | null
+          recorded_at?: string | null
           role?: string
           updated_at?: string
           user_id?: string
+          voice_memo_duration?: number | null
+          voice_memo_url?: string | null
         }
         Relationships: []
       }
