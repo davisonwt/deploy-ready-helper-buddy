@@ -2,14 +2,19 @@ import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+const MAX_RECORDING_TIME = 120; // 2 minutes in seconds
+
 export const useVoiceMemo = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const timerRef = useRef(null);
+  const recordingTimerRef = useRef(null);
   const { toast } = useToast();
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (currentTopic = "General discussion") => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -26,12 +31,41 @@ export const useVoiceMemo = () => {
 
       chunksRef.current = [];
       mediaRecorderRef.current = mediaRecorder;
+      setRecordingTime(0);
+
+      // Add topic context as metadata
+      mediaRecorder.addEventListener('start', () => {
+        console.log(`Recording started for topic: ${currentTopic}`);
+      });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
+
+      // Start recording timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          const newTime = prev + 1;
+          if (newTime >= MAX_RECORDING_TIME) {
+            // Auto-stop at 2 minutes
+            stopRecording();
+            toast({
+              title: "Recording Stopped",
+              description: "Maximum recording time of 2 minutes reached.",
+            });
+          }
+          return newTime;
+        });
+      }, 1000);
+
+      // Auto-stop timer at 2 minutes
+      timerRef.current = setTimeout(() => {
+        if (isRecording) {
+          stopRecording();
+        }
+      }, MAX_RECORDING_TIME * 1000);
 
       mediaRecorder.start(100); // Record in 100ms chunks
       setIsRecording(true);
@@ -43,10 +77,20 @@ export const useVoiceMemo = () => {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, isRecording]);
 
   const stopRecording = useCallback(() => {
     return new Promise((resolve) => {
+      // Clear timers
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+
       if (mediaRecorderRef.current && isRecording) {
         mediaRecorderRef.current.onstop = async () => {
           const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
@@ -57,17 +101,19 @@ export const useVoiceMemo = () => {
           }
           
           setIsRecording(false);
+          setRecordingTime(0);
           resolve(audioBlob);
         };
 
         mediaRecorderRef.current.stop();
       } else {
+        setRecordingTime(0);
         resolve(null);
       }
     });
   }, [isRecording]);
 
-  const uploadVoiceMemo = useCallback(async (audioBlob, participantId) => {
+  const uploadVoiceMemo = useCallback(async (audioBlob, participantId, topic = "General discussion") => {
     if (!audioBlob) return null;
 
     setIsUploading(true);
@@ -75,12 +121,21 @@ export const useVoiceMemo = () => {
       const fileName = `voice-memo-${participantId}-${Date.now()}.webm`;
       const filePath = `chat-voice-memos/${fileName}`;
 
+      // Create metadata with topic information
+      const metadata = {
+        topic: topic,
+        participantId: participantId,
+        recordedAt: new Date().toISOString(),
+        duration: recordingTime
+      };
+
       // Upload to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat_files')
         .upload(filePath, audioBlob, {
           contentType: 'audio/webm',
-          upsert: false
+          upsert: false,
+          metadata: metadata
         });
 
       if (uploadError) throw uploadError;
@@ -90,8 +145,8 @@ export const useVoiceMemo = () => {
         .from('chat_files')
         .getPublicUrl(filePath);
 
-      // Calculate duration (approximate)
-      const duration = Math.round(audioBlob.size / 16000); // Rough estimate
+      // Calculate actual duration from recording time
+      const duration = recordingTime;
 
       // Update participant record with voice memo
       const { error: updateError } = await supabase
@@ -107,10 +162,10 @@ export const useVoiceMemo = () => {
 
       toast({
         title: "Voice Memo Saved",
-        description: "Your message has been recorded and saved to your queue position.",
+        description: `Your message about "${topic}" has been recorded and saved to your queue position.`,
       });
 
-      return { url: publicUrl, duration };
+      return { url: publicUrl, duration, topic };
     } catch (error) {
       console.error('Error uploading voice memo:', error);
       toast({
@@ -164,9 +219,20 @@ export const useVoiceMemo = () => {
     }
   }, [toast]);
 
+  // Format recording time for display
+  const formatRecordingTime = (seconds) => {
+    const remainingTime = MAX_RECORDING_TIME - seconds;
+    const mins = Math.floor(remainingTime / 60);
+    const secs = remainingTime % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')} left`;
+  };
+
   return {
     isRecording,
     isUploading,
+    recordingTime,
+    maxRecordingTime: MAX_RECORDING_TIME,
+    formatRecordingTime,
     startRecording,
     stopRecording,
     uploadVoiceMemo,
