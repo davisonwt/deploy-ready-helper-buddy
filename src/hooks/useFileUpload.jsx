@@ -65,23 +65,38 @@ export function useFileUpload() {
         throw uploadError;
       }
 
-      // Get signed URL for private bucket
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(fileName, 3600) // 1 hour expiry
+      // For public buckets, get public URL. For private buckets, get signed URL
+      let fileUrl;
+      
+      if (bucket === 'chat-files' || bucket === 'orchard-images' || bucket === 'orchard-videos' || bucket === 'orchard-audio') {
+        // Public bucket - get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+        
+        fileUrl = publicUrlData?.publicUrl;
+        console.log('Public URL generated:', fileUrl);
+      } else {
+        // Private bucket - get signed URL
+        const { data: urlData, error: urlError } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(fileName, 3600); // 1 hour expiry
 
-      console.log('Signed URL response:', { urlData, error: urlError });
+        console.log('Signed URL response:', { urlData, error: urlError });
 
-      if (urlError) {
-        console.error('Failed to create signed URL:', urlError);
-        throw urlError;
+        if (urlError) {
+          console.error('Failed to create signed URL:', urlError);
+          throw urlError;
+        }
+        
+        fileUrl = urlData.signedUrl;
       }
 
       return {
         success: true,
         data: {
           path: data.path,
-          url: urlData.signedUrl,
+          url: fileUrl,
           fileName
         }
       }
