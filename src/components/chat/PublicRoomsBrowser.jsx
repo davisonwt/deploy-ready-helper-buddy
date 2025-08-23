@@ -172,6 +172,36 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
     }
   };
 
+  const handleJoinRequest = async (roomId, roomName) => {
+    try {
+      const { error } = await supabase
+        .from('chat_join_requests')
+        .insert({
+          room_id: roomId,
+          user_id: currentUser.id,
+          message: `Request to join ${roomName}`
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Join Request Sent",
+        description: `Your request to join "${roomName}" has been sent to the moderators.`,
+      });
+    } catch (error) {
+      console.error('Error sending join request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send join request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isUserInRoom = (room) => {
+    return room.chat_participants?.some(p => p.user_id === currentUser?.id && p.is_active);
+  };
+
   const filteredPublicRooms = publicRooms.filter(room => {
     const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -322,13 +352,23 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button 
-                              size="sm"
-                              onClick={() => onJoinRoom(room.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              Join
-                            </Button>
+                            {isUserInRoom(room) ? (
+                              <Button 
+                                size="sm"
+                                onClick={() => onJoinRoom(room.id)}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                Enter Room
+                              </Button>
+                            ) : (
+                              <Button 
+                                size="sm"
+                                onClick={() => handleJoinRequest(room.id, room.name)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                Request to Join
+                              </Button>
+                            )}
                             {currentUser && currentUser.id === room.created_by && (
                               <Button 
                                 size="sm"
