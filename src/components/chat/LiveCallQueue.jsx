@@ -33,11 +33,19 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
   const { 
     isRecording, 
     isUploading, 
+    recordingTime,
+    formatRecordingTime,
     startRecording, 
     stopRecording, 
     uploadVoiceMemo, 
     deleteVoiceMemo 
   } = useVoiceMemo();
+
+  // Get current topic/conversation context
+  const getCurrentTopic = () => {
+    // You could enhance this to get actual topic from call session or room context
+    return "Live conversation topic";
+  };
 
   // Fetch participants and queue
   const fetchParticipants = async () => {
@@ -273,10 +281,12 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
     if (isRecording) {
       const audioBlob = await stopRecording();
       if (audioBlob) {
-        await uploadVoiceMemo(audioBlob, currentUser.id);
+        const topic = getCurrentTopic();
+        await uploadVoiceMemo(audioBlob, currentUser.id, topic);
       }
     } else {
-      await startRecording();
+      const topic = getCurrentTopic();
+      await startRecording(topic);
     }
   };
 
@@ -429,12 +439,17 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
               <div className="mt-4 p-3 bg-muted/30 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Voice Memo</span>
-                  {currentUser.voice_memo_url && (
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatDuration(currentUser.voice_memo_duration || 0)}
-                    </div>
-                  )}
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {isRecording && (
+                      <span className="mr-2 text-red-500">{formatRecordingTime(recordingTime)}</span>
+                    )}
+                    {currentUser.voice_memo_url && (
+                      <>
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatDuration(currentUser.voice_memo_duration || 0)}
+                      </>
+                    )}
+                  </div>
                 </div>
                 
                 {currentUser.voice_memo_url ? (
@@ -478,7 +493,7 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
                 )}
                 
                 <p className="text-xs text-muted-foreground mt-2">
-                  Record what you want to say while waiting. Your message will be saved to your queue position.
+                  Record what you want to say about the current topic while waiting (max 2 minutes). Your message will be saved to your queue position.
                 </p>
               </div>
             )}
