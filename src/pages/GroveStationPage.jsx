@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useGroveStation } from '@/hooks/useGroveStation'
+import RadioListenerInterface from '@/components/radio/RadioListenerInterface'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -176,20 +177,22 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6">
-            {currentShow ? (
-              <div className="space-y-6">
-                <LiveStreamListener 
-                  liveSession={currentShow.liveSession}
-                  currentShow={currentShow}
-                />
-                
-                {/* Enhanced Listener Interface for Messages and Call-ins */}
-                <RadioListenerInterface
-                  liveSession={currentShow.liveSession}
-                  currentShow={currentShow}
-                />
-              </div>
-            ) : (
+            <LiveStreamListener 
+              stationConfig={stationConfig}
+              currentShow={currentShow}
+              isPlaying={isPlaying}
+              onPlayPause={handlePlayPause}
+            />
+            
+            {/* Listener Interface for Messages and Call-ins */}
+            {currentShow && (
+              <RadioListenerInterface 
+                liveSession={{ id: currentShow.schedule_id }}
+                currentShow={currentShow}
+              />
+            )}
+            
+            {!currentShow && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

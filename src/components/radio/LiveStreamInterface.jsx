@@ -32,6 +32,7 @@ import RadioModerationPanel from '@/components/radio/RadioModerationPanel'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import RadioModerationPanel from './RadioModerationPanel'
 
 export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const { user } = useAuth()
