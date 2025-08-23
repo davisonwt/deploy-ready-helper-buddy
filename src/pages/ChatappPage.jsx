@@ -35,6 +35,7 @@ import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
+import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -62,6 +63,7 @@ const ChatappPage = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeCall, setActiveCall] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [activeLiveSession, setActiveLiveSession] = useState(null);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -244,6 +246,43 @@ const ChatappPage = () => {
   const handleNavigateToOrchard = (orchardId) => {
     window.location.href = `/orchard/${orchardId}`;
   };
+
+  const startLiveSession = async (room) => {
+    try {
+      // Create a live session for the chat room
+      const sessionData = {
+        id: `chat-${room.id}`,
+        title: room.name,
+        room_id: room.id,
+        type: 'chat',
+        created_by: room.created_by,
+        status: 'live',
+        started_at: new Date().toISOString()
+      }
+      
+      setActiveLiveSession(sessionData)
+      
+      toast({
+        title: "Live Session Started",
+        description: `Started live session for ${room.name}`,
+      })
+    } catch (error) {
+      console.error('Error starting live session:', error)
+      toast({
+        title: "Error",
+        description: "Failed to start live session",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const endLiveSession = () => {
+    setActiveLiveSession(null)
+    toast({
+      title: "Live Session Ended",
+      description: "Live session has been ended",
+    })
+  }
 
   // Listen for incoming calls
   useEffect(() => {
@@ -469,6 +508,37 @@ const ChatappPage = () => {
         </Card>
       </div>
     );
+  }
+
+  // If there's an active live session, show the universal interface
+  if (activeLiveSession && currentRoom) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed" 
+        style={{ 
+          backgroundImage: 'url(/chatapp-background.jpg)',
+          minHeight: '100vh'
+        }}>
+        <div className="container mx-auto p-4">
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="outline"
+              onClick={endLiveSession}
+              className="bg-white/10 backdrop-blur-md border-white/20"
+            >
+              ← Back to Chat Rooms
+            </Button>
+          </div>
+          
+          <UniversalLiveSessionInterface
+            sessionData={activeLiveSession}
+            sessionType="chat"
+            currentUser={user}
+            isHost={currentRoom?.created_by === user?.id}
+            onSessionEnd={endLiveSession}
+          />
+        </div>
+      </div>
+    )
   }
 
   return (
