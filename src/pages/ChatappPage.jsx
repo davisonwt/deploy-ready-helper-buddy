@@ -51,6 +51,7 @@ const ChatappPage = () => {
     createRoom,
     createDirectRoom,
     joinRoom,
+    deleteConversation,
   } = useChat();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -578,7 +579,10 @@ const ChatappPage = () => {
                               room={room}
                               isActive={currentRoom?.id === room.id}
                               onClick={setCurrentRoom}
-                              participantCount={participants.length}
+                              participantCount={room.chat_participants?.length || 0}
+                              showInviteButton={true}
+                              currentUserId={user?.id}
+                              onDeleteConversation={deleteConversation}
                             />
                           ))}
                           {filteredRooms.length === 0 && (
