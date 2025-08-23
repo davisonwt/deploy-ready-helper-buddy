@@ -11,6 +11,7 @@ import { OrchardHeader } from "../components/OrchardHeader"
 import { OrchardInfo } from "../components/OrchardInfo"
 import { OrchardImages } from "../components/OrchardImages"
 import { OrchardActions } from "../components/OrchardActions"
+import { VideoPlayer } from "@/components/ui/VideoPlayer"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
@@ -215,6 +216,27 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Orchard Info */}
           <OrchardInfo orchard={orchard} />
+          
+          {/* Orchard Video */}
+          {orchard.video_url && (
+            <Card className="bg-white/95 backdrop-blur-sm border-green-200 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-xl text-green-800 text-center">
+                  📹 Orchard Video
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="max-w-4xl mx-auto">
+                  <VideoPlayer
+                    src={orchard.video_url}
+                    className="w-full h-auto rounded-lg shadow-lg"
+                    playsInline
+                    fallbackImage="/placeholder.svg"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* Product Images */}
           <OrchardImages orchard={orchard} />
