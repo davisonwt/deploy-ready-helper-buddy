@@ -177,10 +177,18 @@ export default function GroveStationPage() {
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6">
             {currentShow ? (
-              <LiveStreamListener 
-                liveSession={currentShow.liveSession}
-                currentShow={currentShow}
-              />
+              <div className="space-y-6">
+                <LiveStreamListener 
+                  liveSession={currentShow.liveSession}
+                  currentShow={currentShow}
+                />
+                
+                {/* Enhanced Listener Interface for Messages and Call-ins */}
+                <RadioListenerInterface
+                  liveSession={currentShow.liveSession}
+                  currentShow={currentShow}
+                />
+              </div>
             ) : (
               <Card>
                 <CardHeader>
