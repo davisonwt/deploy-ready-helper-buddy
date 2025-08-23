@@ -399,13 +399,15 @@ export function UniversalLiveSessionInterface({
         <div className="lg:col-span-2">
           <Card>
             <CardContent className="p-6">
-              <LiveVideoCallInterface
-                liveSession={sessionData}
-                activeHosts={activeHosts}
-                approvedGuests={approvedGuests}
-                currentUser={user}
-                isHost={isHost}
-              />
+            <LiveVideoCallInterface
+              liveSession={sessionData}
+              activeHosts={activeHosts}
+              approvedGuests={approvedGuests}
+              currentUser={user}
+              isHost={isHost}
+              onHostsUpdate={fetchActiveHosts}
+              onGuestsUpdate={fetchGuestRequests}
+            />
             </CardContent>
           </Card>
         </div>
