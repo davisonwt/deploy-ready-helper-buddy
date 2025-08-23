@@ -37,6 +37,7 @@ import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
 import { LiveSessionInterface } from '@/components/live/LiveSessionInterface';
+import { ComprehensiveLiveSession } from '@/components/live/ComprehensiveLiveSession';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -515,11 +516,12 @@ const ChatappPage = () => {
     );
   }
 
-  // If there's an active live session, show the new TikTok-style interface
+  // If there's an active live session, show the comprehensive live interface
   if (activeLiveSession && currentRoom) {
     return (
-      <LiveSessionInterface
-        room={currentRoom}
+      <ComprehensiveLiveSession
+        sessionData={activeLiveSession}
+        sessionType={activeLiveSession.type || 'chat'}
         onEndSession={endLiveSession}
         onLeaveSession={endLiveSession}
       />
