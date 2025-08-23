@@ -499,8 +499,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
       return
     }
     
-    if (file.size > 50 * 1024 * 1024) {
-      setError("Video file is too large. Maximum size is 50MB.")
+    if (file.size > 200 * 1024 * 1024) {
+      setError("Video file is too large. Maximum size is 200MB. Large videos will be automatically compressed.")
       return
     }
     

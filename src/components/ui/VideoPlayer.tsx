@@ -99,10 +99,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         playsInline={playsInline}
         crossOrigin="anonymous"
         preload="metadata"
-        controls={false}
+        controls={true}
         style={{ display: hasError ? 'none' : 'block' }}
       >
         <source src={src} type="video/mp4" />
+        <source src={src} type="video/webm" />
+        <source src={src} type="video/quicktime" />
+        <source src={src} type="video/mov" />
         {/* Fallback for unsupported browsers */}
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 w-full h-full flex items-center justify-center">
           <p className="text-white/70">Your browser doesn't support video playback.</p>

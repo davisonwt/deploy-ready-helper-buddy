@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { compressVideo } from '@/utils/videoCompression'
 
 export function useFileUpload() {
   console.log('useFileUpload hook initializing - React:', React, 'useState:', useState)
@@ -25,6 +26,25 @@ export function useFileUpload() {
       setUploading(true)
       setError(null)
 
+      // Compress video files if they're too large
+      let fileToUpload = file;
+      if (file.type.startsWith('video/')) {
+        const fileSizeMB = file.size / (1024 * 1024);
+        console.log(`📹 Video file size: ${fileSizeMB.toFixed(2)}MB`);
+        
+        if (fileSizeMB > 50) { // 50MB threshold
+          console.log('📹 Video is large, compressing...');
+          try {
+            fileToUpload = await compressVideo(file, 50); // Compress to 50MB max
+            const newSizeMB = fileToUpload.size / (1024 * 1024);
+            console.log(`✅ Video compressed from ${fileSizeMB.toFixed(2)}MB to ${newSizeMB.toFixed(2)}MB`);
+          } catch (compressionError) {
+            console.warn('⚠️ Video compression failed, uploading original:', compressionError);
+            // Continue with original file if compression fails
+          }
+        }
+      }
+
       // Create unique filename
       const fileExt = file.name.split('.').pop()
       const fileName = `${user.id}/${folder}${Date.now()}.${fileExt}`
@@ -33,7 +53,7 @@ export function useFileUpload() {
 
       const { data, error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(fileName, file, {
+        .upload(fileName, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         })
