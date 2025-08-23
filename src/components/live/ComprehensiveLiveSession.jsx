@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Progress } from '@/components/ui/progress'
 import { 
   Video,
   VideoOff,
@@ -23,12 +22,13 @@ import {
   X,
   Upload,
   FileText,
-  Image as ImageIcon,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Eye,
-  Download
+  Settings,
+  UserPlus,
+  Hand,
+  ChevronRight,
+  MoreVertical
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -593,504 +593,490 @@ export function ComprehensiveLiveSession({
     }
   })
 
+  const requestToSpeak = async () => {
+    if (!sessionInfo || !user) return
+    
+    try {
+      const { error } = await supabase
+        .from('radio_guest_requests')
+        .insert({
+          session_id: sessionInfo.id,
+          user_id: user.id,
+          request_message: 'Requesting to speak'
+        })
+
+      if (error) throw error
+      
+      toast({
+        title: "Request sent!",
+        description: "Host will review your request to speak",
+      })
+    } catch (error) {
+      console.error('Error requesting to speak:', error)
+    }
+  }
+
+  const approveGuestRequest = async (requestId, userId) => {
+    if (!isHost) return
+    
+    try {
+      // Approve the request
+      const { error: updateError } = await supabase
+        .from('radio_guest_requests')
+        .update({ 
+          status: 'approved',
+          approved_by: user.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', requestId)
+
+      if (updateError) throw updateError
+
+      // Optionally move user to guest slot or queue
+      await moveToGuestSlot(userId)
+      
+      toast({
+        title: "Request approved!",
+        description: "Guest has been invited to speak",
+      })
+    } catch (error) {
+      console.error('Error approving request:', error)
+    }
+  }
+
+  const moveToGuestSlot = async (userId) => {
+    // Implementation to move user to guest slot
+    const userProfile = listeners.find(l => l.user_id === userId)
+    if (userProfile) {
+      setCurrentGuest(userProfile)
+    }
+  }
+
+  const promoteToCoHost = async (userId) => {
+    if (!isHost) return
+    
+    const userProfile = listeners.find(l => l.user_id === userId)
+    if (userProfile) {
+      setCoHosts(prev => [...prev, userProfile].slice(0, 3))
+      toast({
+        title: "User promoted!",
+        description: `${userProfile.display_name} is now a co-host`,
+      })
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex z-50">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header with close button */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+    <div className="fixed inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex overflow-hidden z-50">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 bg-black/20 backdrop-blur-sm border-b border-white/10 z-10">
+        <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
-            <Badge className="bg-red-500 text-white px-3 py-1">
-              🔴 LIVE
-            </Badge>
-            <span className="text-lg font-semibold">{sessionInfo?.title || 'Live Session'}</span>
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <div className="flex items-center gap-1">
-                <Heart className="h-4 w-4 text-red-500" />
-                {viewerCount}
-              </div>
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4 text-blue-400" />
-                {listeners.length} listening
-              </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-white font-medium">LIVE</span>
             </div>
+            <span className="text-white/80 text-lg">{sessionInfo?.title || 'Live Session'}</span>
           </div>
           
-          <div className="flex items-center gap-2">
-            {/* Document Controls */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDocumentViewer(!showDocumentViewer)}
-              className="text-white hover:bg-gray-700"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Documents ({sessionDocuments.length})
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-white hover:bg-gray-700"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Share (+10 pts)
-            </Button>
-            
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-sm text-white/60">
+              <div className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                <span>{listeners.length}</span>
+              </div>
+            </div>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={onLeaveSession}
-              className="text-white hover:bg-gray-700"
+              className="text-white/60 hover:text-white hover:bg-white/10"
             >
-              <X className="h-5 w-5" />
+              <X className="w-5 h-5" />
             </Button>
           </div>
         </div>
+      </div>
 
-        <div className="flex-1 flex">
-          {/* Video and Chat Section */}
-          <div className="flex-1 p-4 space-y-4">
-            {/* Top Video Section */}
-            <div className="grid grid-cols-3 gap-4 h-64">
+      {/* Main Content */}
+      <div className="flex w-full pt-20">
+        {/* Left Panel - Stage */}
+        <div className="flex-1 p-6 flex flex-col">
+          {/* Main Stage */}
+          <div className="flex-1 flex flex-col justify-center max-w-4xl mx-auto w-full">
+            {/* Host and Guest Section */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
               {/* Host */}
-              <Card className="bg-gray-800/50 border-gray-600 relative overflow-hidden">
-                <div className="absolute top-2 left-2 z-10">
-                  <Badge className="bg-yellow-500 text-black px-2 py-1 text-xs">
-                    <Crown className="h-3 w-3 mr-1" />
-                    host
-                  </Badge>
-                </div>
-                <div className="h-full flex items-center justify-center">
-                  {isVideoEnabled ? (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                      <Camera className="h-12 w-12 text-white/50" />
+              <Card className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-blue-500/30 backdrop-blur-sm overflow-hidden group hover:scale-105 transition-transform duration-200">
+                <div className="aspect-video relative">
+                  <div className="absolute top-4 left-4 z-10">
+                    <Badge className="bg-yellow-500 text-black font-medium px-3 py-1">
+                      <Crown className="w-3 h-3 mr-1" />
+                      Host
+                    </Badge>
+                  </div>
+                  
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/10 to-purple-500/10">
+                    {isVideoEnabled ? (
+                      <div className="text-6xl">🎥</div>
+                    ) : (
+                      <Avatar className="w-32 h-32 border-4 border-blue-400">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} />
+                        <AvatarFallback className="text-4xl bg-blue-600 text-white">
+                          {user?.user_metadata?.display_name?.[0] || 'H'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                  
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
+                      <p className="text-white font-medium truncate">
+                        {user?.user_metadata?.display_name || 'Host'}
+                      </p>
                     </div>
-                  ) : (
-                    <Avatar className="h-20 w-20">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-blue-600">
-                        {user?.user_metadata?.display_name?.[0] || 'H'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-                <div className="absolute bottom-2 left-2 right-2 text-center">
-                  <div className="text-white text-sm font-medium bg-black/50 rounded px-2 py-1">
-                    {user?.user_metadata?.display_name || 'Host'}
                   </div>
                 </div>
               </Card>
 
               {/* Guest */}
-              <Card className="bg-gray-800/50 border-gray-600 relative overflow-hidden">
-                <div className="absolute top-2 left-2 z-10">
-                  <Badge className="bg-green-500 text-white px-2 py-1 text-xs">
-                    guest
-                  </Badge>
-                </div>
-                <div className="h-full flex items-center justify-center">
-                  {currentGuest ? (
-                    <div className="w-full h-full bg-gradient-to-br from-green-500/20 to-teal-500/20 flex items-center justify-center">
-                      <Avatar className="h-20 w-20">
+              <Card className="bg-gradient-to-br from-green-600/20 to-teal-600/20 border-green-500/30 backdrop-blur-sm overflow-hidden group hover:scale-105 transition-transform duration-200">
+                <div className="aspect-video relative">
+                  <div className="absolute top-4 left-4 z-10">
+                    <Badge className="bg-green-500 text-white font-medium px-3 py-1">
+                      Guest
+                    </Badge>
+                  </div>
+                  
+                  <div className="w-full h-full flex items-center justify-center">
+                    {currentGuest ? (
+                      <Avatar className="w-32 h-32 border-4 border-green-400">
                         <AvatarImage src={currentGuest.avatar_url} />
-                        <AvatarFallback className="text-2xl bg-green-600">
+                        <AvatarFallback className="text-4xl bg-green-600 text-white">
                           {currentGuest.display_name?.[0] || 'G'}
                         </AvatarFallback>
                       </Avatar>
-                    </div>
-                  ) : (
-                    <div className="text-gray-500 text-center">
-                      <div className="text-4xl mb-2">👋</div>
-                      <div className="text-sm">Waiting for guest</div>
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-6xl mb-4">👋</div>
+                        <p className="text-white/60">Waiting for guest</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {currentGuest && (
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <div className="bg-black/50 backdrop-blur-sm rounded-lg px-3 py-2">
+                        <p className="text-white font-medium truncate">
+                          {currentGuest.display_name}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
-                {currentGuest && (
-                  <div className="absolute bottom-2 left-2 right-2 text-center">
-                    <div className="text-white text-sm font-medium bg-black/50 rounded px-2 py-1">
-                      {currentGuest.display_name}
-                    </div>
-                  </div>
-                )}
               </Card>
+            </div>
 
-              {/* Co-hosts */}
-              <div className="space-y-2">
-                {[1, 2, 3].map((slot) => {
-                  const coHost = coHosts[slot - 1]
-                  return (
-                    <Card key={slot} className="bg-gray-800/50 border-gray-600 relative h-20 overflow-hidden">
-                      <div className="absolute top-1 left-1 z-10">
-                        <Badge className="bg-blue-500 text-white px-1 py-0.5 text-xs">
-                          co-host
+            {/* Co-hosts Row */}
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              {[0, 1, 2].map((index) => {
+                const coHost = coHosts[index]
+                return (
+                  <Card key={index} className="bg-white/5 border-white/10 backdrop-blur-sm h-32 overflow-hidden">
+                    <div className="relative h-full">
+                      <div className="absolute top-2 left-2 z-10">
+                        <Badge variant="secondary" className="bg-blue-500/80 text-white text-xs px-2 py-1">
+                          Co-host
                         </Badge>
                       </div>
+                      
                       <div className="h-full flex items-center justify-center">
                         {coHost ? (
-                          <Avatar className="h-12 w-12">
+                          <Avatar className="w-16 h-16 border-2 border-blue-400">
                             <AvatarImage src={coHost.avatar_url} />
-                            <AvatarFallback className="bg-blue-600">
+                            <AvatarFallback className="bg-blue-600 text-white">
                               {coHost.display_name?.[0] || 'C'}
                             </AvatarFallback>
                           </Avatar>
                         ) : (
-                          <div className="text-gray-500 text-xs">Empty slot</div>
+                          <div className="text-white/30 text-sm">Empty</div>
                         )}
                       </div>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Bottom Section - Messages and Queue */}
-            <div className="grid grid-cols-3 gap-4 h-40">
-              {/* Messages */}
-              <div className="col-span-2">
-                <div className="text-sm font-medium mb-2 text-gray-300">messages:</div>
-                <Card className="bg-gray-800/30 border-gray-600 p-3 h-32">
-                  <ScrollArea className="h-20 mb-2" ref={chatRef}>
-                    {messages.map((msg) => (
-                      <div key={msg.id} className="mb-1 text-sm">
-                        <span className="text-blue-400 font-medium">
-                          {msg.profiles?.display_name || 'User'}:
-                        </span>
-                        <span className="ml-2 text-white">{msg.message}</span>
-                      </div>
-                    ))}
-                    {messages.length === 0 && (
-                      <div className="text-gray-500 text-sm">No messages yet...</div>
-                    )}
-                  </ScrollArea>
-                  <div className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="bg-gray-700 border-gray-600 text-white text-sm h-8 flex-1"
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    />
-                    <Button size="sm" onClick={sendMessage} className="h-8 px-3 bg-blue-600 hover:bg-blue-700">
-                      <Send className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Queue */}
-              <div>
-                <div className="text-sm font-medium mb-2 text-gray-300">queue:</div>
-                <Card className="bg-gray-800/30 border-gray-600 p-3 h-32">
-                  <div className="grid grid-cols-2 gap-1 h-full">
-                    {queueSlots.map((slot) => (
-                      <div 
-                        key={slot.number}
-                        className={`border border-gray-600 rounded-sm p-1 text-center flex flex-col items-center justify-center
-                          ${slot.participant ? 'bg-orange-500/20 border-orange-500' : 'bg-gray-700/30'}`}
-                      >
-                        <div className="text-xs font-bold mb-1">{slot.number}</div>
-                        {slot.participant ? (
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={slot.participant.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs bg-orange-600">
-                              {slot.participant.profiles?.display_name?.[0] || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <div className="h-6 w-6 bg-gray-600/50 rounded-full flex items-center justify-center">
-                            <div className="text-xs text-gray-400">-</div>
+                      
+                      {coHost && (
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="bg-black/50 backdrop-blur-sm rounded px-2 py-1">
+                            <p className="text-white text-xs truncate">
+                              {coHost.display_name}
+                            </p>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {!isHost && (
-                    <Button 
-                      size="sm" 
-                      onClick={joinCallQueue}
-                      className="w-full mt-2 h-6 text-xs bg-orange-600 hover:bg-orange-700"
-                    >
-                      Join Queue (+5 pts)
-                    </Button>
-                  )}
-                </Card>
-              </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
             </div>
+          </div>
 
-            {/* Bottom Controls Bar */}
-            <div className="border-t border-gray-700 pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Camera */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleVideo}
-                    className={`text-white hover:bg-gray-700 ${!isVideoEnabled ? 'text-red-400' : ''}`}
-                  >
-                    {isVideoEnabled ? <Camera className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-                    <span className="ml-2 text-sm">camera</span>
-                  </Button>
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-4 mt-auto">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={toggleAudio}
+              className={`w-14 h-14 rounded-full ${
+                isAudioEnabled 
+                  ? 'bg-white/10 hover:bg-white/20' 
+                  : 'bg-red-500/80 hover:bg-red-500'
+              }`}
+            >
+              {isAudioEnabled ? 
+                <Mic className="w-6 h-6 text-white" /> : 
+                <MicOff className="w-6 h-6 text-white" />
+              }
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={toggleVideo}
+              className={`w-14 h-14 rounded-full ${
+                isVideoEnabled 
+                  ? 'bg-white/10 hover:bg-white/20' 
+                  : 'bg-red-500/80 hover:bg-red-500'
+              }`}
+            >
+              {isVideoEnabled ? 
+                <Video className="w-6 h-6 text-white" /> : 
+                <VideoOff className="w-6 h-6 text-white" />
+              }
+            </Button>
 
-                  {/* Mic */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleAudio}
-                    className={`text-white hover:bg-gray-700 ${!isAudioEnabled ? 'text-red-400' : ''}`}
-                  >
-                    {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-                    <span className="ml-2 text-sm">mic</span>
-                  </Button>
+            {!isHost && (
+              <Button
+                onClick={requestToSpeak}
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-3 rounded-full"
+              >
+                <Hand className="w-5 h-5 mr-2" />
+                Request to Speak
+              </Button>
+            )}
 
-                  {/* Gifts Dropdown */}
-                  <div className="relative">
+            <div className="relative">
+              <Button
+                onClick={() => setShowGiftsMenu(!showGiftsMenu)}
+                variant="ghost"
+                className="w-14 h-14 rounded-full bg-white/10 hover:bg-white/20"
+              >
+                <Gift className="w-6 h-6 text-white" />
+              </Button>
+              
+              {showGiftsMenu && (
+                <Card className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-sm border-slate-600 p-3 min-w-48">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowGiftsMenu(!showGiftsMenu)}
-                      className="text-white hover:bg-gray-700 flex items-center gap-2"
+                      onClick={() => sendGift('hearts')}
+                      className="flex items-center gap-2 text-red-400 hover:bg-red-500/20"
                     >
-                      <Gift className="h-5 w-5" />
-                      <span className="text-sm">gifts:</span>
-                      <ChevronDown className="h-3 w-3" />
+                      <Heart className="w-4 h-4" />
+                      Hearts
                     </Button>
-                    
-                    {showGiftsMenu && (
-                      <Card className="absolute bottom-full left-0 mb-2 bg-gray-800 border-gray-600 p-2 min-w-40 z-10">
-                        <div className="space-y-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sendGift('usdc')}
-                            className="w-full justify-start text-green-400 hover:bg-gray-700"
-                          >
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            sent usdc (+20 pts)
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sendGift('hearts')}
-                            className="w-full justify-start text-red-400 hover:bg-gray-700"
-                          >
-                            <Heart className="h-4 w-4 mr-2" />
-                            sent hearts (+5 pts)
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sendGift('gifts')}
-                            className="w-full justify-start text-purple-400 hover:bg-gray-700"
-                          >
-                            <Gift className="h-4 w-4 mr-2" />
-                            sent gifts (+10 pts)
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sendGift('stars')}
-                            className="w-full justify-start text-yellow-400 hover:bg-gray-700"
-                          >
-                            <Star className="h-4 w-4 mr-2" />
-                            etc (+8 pts)
-                          </Button>
-                        </div>
-                      </Card>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => sendGift('usdc')}
+                      className="flex items-center gap-2 text-green-400 hover:bg-green-500/20"
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      USDC
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => sendGift('stars')}
+                      className="flex items-center gap-2 text-yellow-400 hover:bg-yellow-500/20"
+                    >
+                      <Star className="w-4 h-4" />
+                      Stars
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => sendGift('gifts')}
+                      className="flex items-center gap-2 text-purple-400 hover:bg-purple-500/20"
+                    >
+                      <Gift className="w-4 h-4" />
+                      Gifts
+                    </Button>
                   </div>
-                </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
 
-                {/* Share Life Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-500 text-blue-400 hover:bg-blue-500/20"
-                >
-                  <Share className="h-4 w-4 mr-2" />
-                  share life
-                </Button>
+        {/* Right Panel - Chat & Audience */}
+        <div className="w-96 border-l border-white/10 bg-black/20 backdrop-blur-sm flex flex-col">
+          {/* Chat Header */}
+          <div className="p-4 border-b border-white/10">
+            <h3 className="text-white font-medium">Live Chat</h3>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full p-4" ref={chatRef}>
+              <div className="space-y-3">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8 flex-shrink-0">
+                      <AvatarImage src={msg.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-slate-600 text-white text-xs">
+                        {msg.profiles?.display_name?.[0] || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-white/80 text-sm font-medium truncate">
+                          {msg.profiles?.display_name || 'User'}
+                        </span>
+                      </div>
+                      <p className="text-white/90 text-sm break-words">
+                        {msg.message}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
+            </ScrollArea>
+          </div>
+
+          {/* Message Input */}
+          <div className="p-4 border-t border-white/10">
+            <div className="flex gap-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={!newMessage.trim()}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 
-          {/* Document Viewer Sidebar */}
-          {showDocumentViewer && (
-            <div className="w-96 border-l border-gray-700 bg-gray-800/30 flex flex-col">
-              {/* Document Header */}
-              <div className="p-4 border-b border-gray-600">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-white">Shared Documents</h3>
+          {/* Audience & Requests Panel */}
+          <div className="border-t border-white/10">
+            {/* Guest Requests (Host Only) */}
+            {isHost && guestRequests.length > 0 && (
+              <div className="p-4 border-b border-white/10">
+                <h4 className="text-white/80 text-sm font-medium mb-3">Speaking Requests</h4>
+                <div className="space-y-2">
+                  {guestRequests.map((request) => (
+                    <div key={request.id} className="flex items-center justify-between bg-white/5 rounded-lg p-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={request.profiles?.avatar_url} />
+                          <AvatarFallback className="bg-slate-600 text-white text-xs">
+                            {request.profiles?.display_name?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-white/90 text-sm">
+                          {request.profiles?.display_name}
+                        </span>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          onClick={() => approveGuestRequest(request.id, request.user_id)}
+                          className="bg-green-600 hover:bg-green-700 h-6 px-2"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-400 hover:bg-red-500/20 h-6 px-2"
+                        >
+                          ✗
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Audience List */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-white/80 text-sm font-medium">
+                  Audience ({listeners.length})
+                </h4>
+                {isHost && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setShowDocumentViewer(false)}
+                    className="text-white/60 hover:text-white hover:bg-white/10"
                   >
-                    <X className="h-4 w-4" />
+                    <Settings className="w-4 h-4" />
                   </Button>
-                </div>
-
-                {/* Document List */}
-                <ScrollArea className="h-20">
-                  {sessionDocuments.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className={`flex items-center gap-2 p-2 rounded cursor-pointer mb-1 ${
-                        activeDocument?.id === doc.id ? 'bg-blue-600/20 border border-blue-500' : 'hover:bg-gray-700/50'
-                      }`}
-                      onClick={() => {
-                        setActiveDocument(doc)
-                        setCurrentPage(doc.current_page || 1)
-                      }}
-                    >
-                      {doc.file_type.includes('image') ? (
-                        <ImageIcon className="h-4 w-4 text-green-400" />
-                      ) : (
-                        <FileText className="h-4 w-4 text-blue-400" />
+                )}
+              </div>
+              
+              <ScrollArea className="h-32">
+                <div className="space-y-1">
+                  {listeners.map((listener) => (
+                    <div key={listener.id} className="flex items-center justify-between group py-1">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={listener.avatar_url} />
+                          <AvatarFallback className="bg-slate-600 text-white text-xs">
+                            {listener.display_name?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-white/70 text-sm truncate">
+                          {listener.display_name}
+                        </span>
+                      </div>
+                      
+                      {isHost && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => promoteToCoHost(listener.user_id)}
+                            className="h-6 px-2 text-blue-400 hover:bg-blue-500/20"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                          </Button>
+                        </div>
                       )}
-                      <span className="text-sm truncate">{doc.file_name}</span>
                     </div>
                   ))}
-                </ScrollArea>
-              </div>
-
-              {/* Active Document Viewer */}
-              {activeDocument && (
-                <div className="flex-1 flex flex-col">
-                  {/* Document Controls */}
-                  {isHost && (
-                    <div className="p-3 border-b border-gray-600 bg-gray-700/20">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-300">Page Controls (Host)</span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => changeDocumentPage(Math.max(1, currentPage - 1))}
-                            disabled={currentPage <= 1}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <span className="text-sm px-2">{currentPage} / {activeDocument.total_pages}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => changeDocumentPage(Math.min(activeDocument.total_pages, currentPage + 1))}
-                            disabled={currentPage >= activeDocument.total_pages}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Document Display */}
-                  <div className="flex-1 p-4 bg-white">
-                    {activeDocument.file_type.includes('image') ? (
-                      <img
-                        src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/session-documents/${activeDocument.file_path}`}
-                        alt={activeDocument.file_name}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-600">
-                        <div className="text-center">
-                          <FileText className="h-16 w-16 mx-auto mb-4" />
-                          <p className="font-medium">{activeDocument.file_name}</p>
-                          <p className="text-sm">Page {currentPage} of {activeDocument.total_pages}</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-4"
-                            onClick={() => {
-                              const url = `https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/session-documents/${activeDocument.file_path}`
-                              window.open(url, '_blank')
-                            }}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Open File
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Page Indicator for Viewers */}
-                  {!isHost && (
-                    <div className="p-2 border-t border-gray-600 bg-gray-700/20 text-center">
-                      <span className="text-sm text-gray-400">
-                        Following host: Page {activeDocument.current_page} / {activeDocument.total_pages}
-                      </span>
-                    </div>
-                  )}
                 </div>
-              )}
+              </ScrollArea>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Listeners Sidebar */}
-      <div className="w-64 border-l border-gray-700 bg-gray-800/50 flex flex-col">
-        <div className="p-4 border-b border-gray-600">
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="h-5 w-5 text-blue-400" />
-            <span className="font-semibold">Listeners ({listeners.length})</span>
           </div>
-          
-          {!listeners.some(l => l.user_id === user?.id) && (
-            <Button 
-              onClick={joinAsListener}
-              size="sm" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Join as Listener (+3 pts)
-            </Button>
-          )}
         </div>
-
-        <ScrollArea className="flex-1 p-2">
-          {listeners.map((listener) => (
-            <div key={listener.id} className="flex items-center gap-3 p-2 hover:bg-gray-700/30 rounded">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={listener.avatar_url} />
-                <AvatarFallback className="text-xs bg-gray-600">
-                  {listener.display_name?.[0] || 'L'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate text-white">
-                  {listener.display_name}
-                  {listener.user_id === user?.id && ' (You)'}
-                </div>
-                <div className="text-xs text-gray-400">
-                  {new Date(listener.joined_at).toLocaleTimeString()}
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {listeners.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
-              <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No listeners yet</p>
-            </div>
-          )}
-        </ScrollArea>
       </div>
 
-      {/* Hidden File Input */}
+      {/* Hidden file input */}
       <input
-        type="file"
         ref={fileInputRef}
+        type="file"
+        accept="image/*,.pdf,.doc,.docx"
         onChange={handleFileUpload}
-        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx"
         className="hidden"
       />
+
     </div>
   )
 }
