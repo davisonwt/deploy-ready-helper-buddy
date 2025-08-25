@@ -29,7 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
-import CreateRoomModal from '@/components/chat/CreateRoomModal';
+import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
@@ -901,12 +901,46 @@ const ChatappPage = () => {
           </div>
         </div>
 
-        {/* Create Room Modal */}
-        <CreateRoomModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onCreateRoom={createRoom}
-        />
+        {/* Clubhouse Room Creation */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-slate-900 to-black rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-gradient-to-r from-slate-900 to-black p-6 rounded-t-3xl border-b border-white/10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                    Create Your Live Session Room
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCreateModal(false)}
+                    className="text-white hover:bg-white/10"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </div>
+              <RoomCreationForm 
+                onRoomCreated={(room) => {
+                  setShowCreateModal(false);
+                  // Optionally start the live session immediately
+                  if (room) {
+                    const liveSessionData = {
+                      id: `room-${room.id}`,
+                      title: room.name,
+                      room_id: room.id,
+                      type: 'clubhouse',
+                      created_by: room.creator_id,
+                      status: 'live',
+                      started_at: new Date().toISOString()
+                    };
+                    setActiveLiveSession(liveSessionData);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Invite Modal */}
         <InviteModal

@@ -18,7 +18,10 @@ import {
   ChevronDown,
   Save,
   Play,
-  Settings
+  Settings,
+  DollarSign,
+  Calculator,
+  Wallet
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -31,6 +34,11 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
   const [roomName, setRoomName] = useState(existingRoom?.name || '')
   const [description, setDescription] = useState(existingRoom?.description || '')
   const [maxParticipants, setMaxParticipants] = useState(existingRoom?.max_participants || 8)
+  const [sessionType, setSessionType] = useState('free') // 'free' or 'paid'
+  const [bestowedAmount, setBestowedAmount] = useState(0)
+  const [hostAmount, setHostAmount] = useState(0)
+  const [platformFee, setPlatformFee] = useState(0)
+  const [serviceFee, setServiceFee] = useState(0)
   
   const [allUsers, setAllUsers] = useState([])
   const [admins, setAdmins] = useState(existingRoom?.admins || [])
@@ -41,6 +49,23 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
   const [showAdminPopover, setShowAdminPopover] = useState(false)
   const [showCoHostPopover, setShowCoHostPopover] = useState(false)
   const [showGuestPopover, setShowGuestPopover] = useState(false)
+
+  // Calculate fees when bestowal amount changes
+  useEffect(() => {
+    if (bestowedAmount > 0) {
+      const platform = bestowedAmount * 0.10 // 10%
+      const service = bestowedAmount * 0.005 // 0.5%
+      const host = bestowedAmount - platform - service
+
+      setPlatformFee(platform)
+      setServiceFee(service)
+      setHostAmount(host)
+    } else {
+      setPlatformFee(0)
+      setServiceFee(0)
+      setHostAmount(0)
+    }
+  }, [bestowedAmount])
 
   useEffect(() => {
     fetchUsers()
@@ -113,7 +138,12 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
         admins: admins,
         co_hosts: coHosts,
         starting_guests: startingGuests,
-        is_active: false
+        is_active: false,
+        session_type: sessionType,
+        bestowal_amount: sessionType === 'paid' ? bestowedAmount : 0,
+        platform_fee: sessionType === 'paid' ? platformFee : 0,
+        service_fee: sessionType === 'paid' ? serviceFee : 0,
+        host_amount: sessionType === 'paid' ? hostAmount : 0
       }
 
       if (existingRoom?.id) {
@@ -325,6 +355,111 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
               className="bg-white/5 border-white/10 min-h-[80px]"
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Session Payment Configuration */}
+      <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5" />
+            Session Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Session Type Selection */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card 
+              className={`cursor-pointer transition-all duration-300 ${
+                sessionType === 'free' 
+                  ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/50' 
+                  : 'bg-white/5 border-white/10 hover:bg-white/10'
+              }`}
+              onClick={() => setSessionType('free')}
+            >
+              <CardContent className="p-4 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-400" />
+                  </div>
+                  <h3 className="font-semibold text-white">Free Session</h3>
+                  <p className="text-xs text-white/60">Open to everyone</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={`cursor-pointer transition-all duration-300 ${
+                sessionType === 'paid' 
+                  ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/50' 
+                  : 'bg-white/5 border-white/10 hover:bg-white/10'
+              }`}
+              onClick={() => setSessionType('paid')}
+            >
+              <CardContent className="p-4 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <h3 className="font-semibold text-white">Premium Session</h3>
+                  <p className="text-xs text-white/60">Requires contribution</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Payment Configuration - Only show for paid sessions */}
+          {sessionType === 'paid' && (
+            <div className="space-y-4 mt-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+              <div className="space-y-2">
+                <Label htmlFor="bestowedAmount" className="flex items-center gap-2">
+                  <Calculator className="w-4 h-4" />
+                  Bestowal Amount (USDC)
+                </Label>
+                <Input
+                  id="bestowedAmount"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={bestowedAmount}
+                  onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
+                  placeholder="Enter amount participants need to contribute"
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+
+              {/* Fee Breakdown */}
+              {bestowedAmount > 0 && (
+                <div className="space-y-3 p-4 bg-black/20 rounded-lg">
+                  <h4 className="font-semibold text-white flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    Fee Breakdown
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                      <span className="text-green-300">Host Receives:</span>
+                      <span className="font-bold text-green-400">${hostAmount.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                      <span className="text-blue-300">Platform Fee (10%):</span>
+                      <span className="font-bold text-blue-400">${platformFee.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                      <span className="text-orange-300">Service Fee (0.5%):</span>
+                      <span className="font-bold text-orange-400">${serviceFee.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center text-white/60 text-xs">
+                    Total per participant: <span className="font-bold text-white">${bestowedAmount.toFixed(2)} USDC</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
