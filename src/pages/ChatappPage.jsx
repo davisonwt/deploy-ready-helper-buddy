@@ -30,6 +30,7 @@ import { useToast } from '@/components/ui/use-toast';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
+import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession';
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
@@ -529,8 +530,19 @@ const ChatappPage = () => {
     );
   }
 
-  // If there's an active live session, show the comprehensive live interface
+  // If there's an active live session, show the beautiful Clubhouse interface
   if (activeLiveSession) {
+    // Use the new beautiful ClubhouseLiveSession for clubhouse type rooms
+    if (activeLiveSession.type === 'clubhouse') {
+      return (
+        <ClubhouseLiveSession
+          roomData={activeLiveSession}
+          onLeave={endLiveSession}
+        />
+      )
+    }
+    
+    // Use ComprehensiveLiveSession for other types (radio, etc.)
     return (
       <ComprehensiveLiveSession
         sessionData={activeLiveSession}
