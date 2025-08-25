@@ -153,146 +153,128 @@ export function RoomCreationForm({ onRoomCreated }) {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white flex">
       
-      {/* Header with Live Topic */}
-      <div className="mb-8 text-center">
-        <div className="mb-4">
-          <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
+      {/* LEFT SIDE - Messages */}
+      <div className="w-80 bg-gray-50 border-r p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-5 h-5" />
+          <h3 className="font-semibold">Messages & Queue</h3>
         </div>
-        <Input
-          value={liveTopic}
-          onChange={(e) => setLiveTopic(e.target.value)}
-          placeholder="Enter your live topic here..."
-          className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
-        />
-      </div>
-
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* Main Session Layout - Left Side */}
-        <div className="lg:col-span-3">
-          
-          {/* Host and Co-host Row */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <SlotCard
-              title="host"
-              user={hostSlot}
-              onClick={() => handleSlotClick('host')}
-              className="border-yellow-300 bg-yellow-50"
-            />
-            <SlotCard
-              title="co-host"
-              user={coHostSlot}
-              onClick={() => handleSlotClick('cohost')}
-              className="border-blue-300 bg-blue-50"
-            />
-          </div>
-
-          {/* Invite/Request Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {inviteSlots.map((slot, index) => (
-              <SlotCard
-                key={index}
-                title="invite / request"
-                user={slot}
-                onClick={() => handleSlotClick('invite', index)}
-                className="border-green-300 bg-green-50"
-              />
+        <ScrollArea className="h-96">
+          <div className="space-y-3">
+            {messages.map((message, index) => (
+              <div key={index} className="p-3 bg-white rounded text-sm border-l-4 border-blue-400">
+                {message}
+              </div>
             ))}
           </div>
+        </ScrollArea>
+      </div>
 
-          {/* Session Settings */}
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <Label className="text-lg font-semibold">Session Type:</Label>
-                  <div className="flex items-center gap-2">
-                    <Switch 
-                      checked={sessionType === 'paid'} 
-                      onCheckedChange={(checked) => setSessionType(checked ? 'paid' : 'free')}
-                    />
-                    <span className="font-medium">
-                      {sessionType === 'free' ? 'Free Session' : 'Paid Session'}
-                    </span>
-                  </div>
-                </div>
-                
-                {sessionType === 'paid' && (
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    <Input
-                      type="number"
-                      value={entryFee}
-                      onChange={(e) => setEntryFee(parseFloat(e.target.value) || 0)}
-                      placeholder="Entry fee"
-                      className="w-32"
-                    />
-                  </div>
-                )}
+      {/* RIGHT SIDE - Main Layout */}
+      <div className="flex-1 p-6">
+        
+        {/* Header with Live Topic */}
+        <div className="mb-8 text-center">
+          <div className="mb-4">
+            <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
+          </div>
+          <Input
+            value={liveTopic}
+            onChange={(e) => setLiveTopic(e.target.value)}
+            placeholder="Enter your live topic here..."
+            className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
+          />
+        </div>
+
+        {/* Host and Co-host Row (2x1) */}
+        <div className="grid grid-cols-2 gap-6 mb-8 max-w-4xl mx-auto">
+          <SlotCard
+            title="host"
+            user={hostSlot}
+            onClick={() => handleSlotClick('host')}
+            className="border-yellow-300 bg-yellow-50 h-40"
+          />
+          <SlotCard
+            title="co-host"
+            user={coHostSlot}
+            onClick={() => handleSlotClick('cohost')}
+            className="border-blue-300 bg-blue-50 h-40"
+          />
+        </div>
+
+        {/* Invite/Request Grid (2x4) */}
+        <div className="grid grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
+          {inviteSlots.map((slot, index) => (
+            <SlotCard
+              key={index}
+              title="invite / request"
+              user={slot}
+              onClick={() => handleSlotClick('invite', index)}
+              className="border-green-300 bg-green-50 h-32"
+            />
+          ))}
+        </div>
+
+        {/* Session Settings */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Label className="text-lg font-semibold">Session Type:</Label>
+              <div className="flex items-center gap-2">
+                <Switch 
+                  checked={sessionType === 'paid'} 
+                  onCheckedChange={(checked) => setSessionType(checked ? 'paid' : 'free')}
+                />
+                <span className="font-medium">
+                  {sessionType === 'free' ? 'Free Session' : 'Paid Session'}
+                </span>
               </div>
-
-              <div className="flex gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Camera className="w-4 h-4" />
-                  <span>Camera can be on/off for hosts, co-host or guest</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  <span>Documents shareable for studies</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mic className="w-4 h-4" />
-                  <span>Voice recordings in messages</span>
-                </div>
+            </div>
+            
+            {sessionType === 'paid' && (
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={entryFee}
+                  onChange={(e) => setEntryFee(parseFloat(e.target.value) || 0)}
+                  placeholder="1.00"
+                  className="w-32"
+                />
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-center">
-            <Button onClick={saveRoom} variant="outline" size="lg" className="px-8">
-              <Save className="w-5 h-5 mr-2" />
-              Save Configuration
-            </Button>
-            <Button onClick={goLive} size="lg" className="px-8 bg-red-600 hover:bg-red-700">
-              <Play className="w-5 h-5 mr-2" />
-              Go Live
-            </Button>
+          <div className="flex gap-4 text-sm text-gray-600 justify-center">
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              <span>Camera on/off for hosts, co-host or guest</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span>Documents shareable for studies</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Mic className="w-4 h-4" />
+              <span>Voice recordings in messages</span>
+            </div>
           </div>
         </div>
 
-        {/* Messages Sidebar - Right Side */}
-        <div className="lg:col-span-1">
-          <Card className="h-full">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-5 h-5" />
-                <h3 className="font-semibold">Messages & Queue</h3>
-              </div>
-              
-              <ScrollArea className="h-96">
-                <div className="space-y-3">
-                  {messages.map((message, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded text-sm border-l-4 border-blue-400">
-                      {message}
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              <div className="mt-4 p-3 bg-yellow-50 rounded border-l-4 border-yellow-400 text-sm">
-                <strong>Notes:</strong>
-                <ul className="mt-2 space-y-1 text-xs">
-                  <li>• Messages scroll as typed</li>
-                  <li>• Voice recordings need approval</li>
-                  <li>• Each section hoverable to assign users</li>
-                  <li>• Complete form before going live</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center">
+          <Button onClick={saveRoom} variant="outline" size="lg" className="px-8">
+            <Save className="w-5 h-5 mr-2" />
+            Save Configuration
+          </Button>
+          <Button onClick={goLive} size="lg" className="px-8 bg-red-600 hover:bg-red-700">
+            <Play className="w-5 h-5 mr-2" />
+            Go Live
+          </Button>
         </div>
       </div>
     </div>
