@@ -300,9 +300,9 @@ export function RoomCreationForm({ onRoomCreated }) {
                                   <MessageSquare className="w-2 h-2" />
                                   <span className="truncate">Queue</span>
                                 </div>
-                                <div className="space-y-0.5">
+                                <div className="flex gap-0.5 flex-wrap">
                                   {Array(4).fill(0).map((_, i) => (
-                                    <div key={i} className="h-1 bg-blue-300 rounded"></div>
+                                    <div key={i} className="w-1.5 h-1.5 bg-blue-300 rounded-full"></div>
                                   ))}
                                 </div>
                               </div>
