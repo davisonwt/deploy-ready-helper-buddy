@@ -263,43 +263,49 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 
-                // Color schemes with inline styles for hex colors
+                // Color schemes with inline styles for hex colors with transparency
                 const colorSchemes = {
                   standard: {
-                    bg: '#D5AAFF', // Light Purple
+                    bg: '#D5AAFF', // Light Purple with transparency
                     text: '#2A2A2A', // Dark Gray
                     buttonBg: '#FFE156', // Bright Yellow
-                    buttonText: '#2A2A2A'
+                    buttonText: '#2A2A2A',
+                    opacity: 0.85
                   },
                   panel: {
-                    bg: '#E0BBE4', // Lavender
+                    bg: '#E0BBE4', // Lavender with transparency
                     text: '#2A2A2A', // Dark Gray
                     buttonBg: '#957DAD', // Dusty Purple
-                    buttonText: '#FFFFFF'
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   interview: {
-                    bg: '#957DAD', // Dusty Purple
+                    bg: '#957DAD', // Dusty Purple with transparency
                     text: '#FFFFFF', // White text for dark background
                     buttonBg: '#FFE156', // Bright Yellow
-                    buttonText: '#2A2A2A'
+                    buttonText: '#2A2A2A',
+                    opacity: 0.9
                   },
                   townhall: {
-                    bg: '#B9FBC0', // Mint Green
+                    bg: '#B9FBC0', // Mint Green with transparency
                     text: '#2A2A2A', // Dark Gray
                     buttonBg: '#957DAD', // Dusty Purple
-                    buttonText: '#FFFFFF'
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   intimate: {
-                    bg: '#FFE156', // Bright Yellow
+                    bg: '#FFE156', // Bright Yellow with transparency
                     text: '#2A2A2A', // Dark Gray
                     buttonBg: '#957DAD', // Dusty Purple
-                    buttonText: '#FFFFFF'
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   large: {
-                    bg: '#FFB7B7', // Soft Peach
+                    bg: '#FFB7B7', // Soft Peach with transparency
                     text: '#2A2A2A', // Dark Gray
                     buttonBg: '#957DAD', // Dusty Purple
-                    buttonText: '#FFFFFF'
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   }
                 }
                 
@@ -308,11 +314,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 return (
                   <Card 
                     key={key}
-                    className="cursor-pointer hover:shadow-xl transition-all duration-200 border-2 hover:scale-[1.02]"
+                    className="cursor-pointer hover:shadow-xl transition-all duration-200 border-2 hover:scale-[1.02] backdrop-blur-sm"
                     style={{ 
-                      backgroundColor: colors.bg,
+                      backgroundColor: `${colors.bg}${Math.round(colors.opacity * 255).toString(16).padStart(2, '0')}`,
                       borderColor: colors.bg,
-                      color: colors.text
+                      color: colors.text,
+                      boxShadow: `0 8px 32px ${colors.bg}40`
                     }}
                     onClick={() => handleLayoutSelect(key)}
                   >
@@ -333,7 +340,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                       </div>
                       
                       {/* Layout Preview */}
-                      <div className="bg-white/90 backdrop-blur rounded-lg p-4 mb-4 border border-white/50">
+                      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/70 shadow-sm">
                         <div className="flex gap-3 mb-3">
                           
                           {/* Speaking Area */}
@@ -448,11 +455,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                       </div>
                       
                       <Button 
-                        className="w-full font-semibold"
+                        className="w-full font-semibold transition-all duration-200 hover:shadow-lg"
                         style={{ 
-                          backgroundColor: colors.buttonBg,
+                          backgroundColor: `${colors.buttonBg}${Math.round(0.95 * 255).toString(16).padStart(2, '0')}`,
                           color: colors.buttonText,
-                          border: 'none'
+                          border: 'none',
+                          boxShadow: `0 4px 16px ${colors.buttonBg}30`
                         }}
                       >
                         Choose {layout.name}
