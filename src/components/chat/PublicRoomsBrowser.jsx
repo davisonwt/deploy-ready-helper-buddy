@@ -19,7 +19,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import PremiumRoomCard from './PremiumRoomCard';
 
 const categoryFilters = [
@@ -328,29 +328,56 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                   </Badge>
                 </div>
                 <div className="grid gap-3">
-                  {filteredPublicRooms.map((room) => (
-                    <Card key={room.id} className="bg-white/20 backdrop-blur-md border-white/30 hover:bg-white/30 transition-all duration-300 shadow-lg">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-white">{room.name}</h4>
-                            {room.description && (
-                              <p className="text-sm text-white/80 mt-1 line-clamp-1">
-                                {room.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-2">
-                              <div className="flex items-center gap-1 text-xs text-white/70">
-                                <Users className="h-3 w-3" />
-                                <span>{room.chat_participants?.length || 0} members</span>
-                              </div>
-                              {room.category && (
-                                <Badge variant="outline" className="text-xs border-white/40 text-white/90 bg-white/10">
-                                  {room.category}
-                                </Badge>
+                  {filteredPublicRooms.map((room, index) => {
+                    // Use the same color scheme as category buttons
+                    const blueShades = [
+                      { bg: '#1E40AF', hover: '#1E3A8A' }, // Deep blue
+                      { bg: '#2563EB', hover: '#1D4ED8' }, // Primary blue
+                      { bg: '#3B82F6', hover: '#2563EB' }, // Medium blue
+                      { bg: '#60A5FA', hover: '#3B82F6' }, // Light blue
+                      { bg: '#1976D2', hover: '#1565C0' }, // Material blue
+                      { bg: '#42A5F5', hover: '#1E88E5' }, // Light material blue
+                      { bg: '#0288D1', hover: '#0277BD' }, // Cyan blue
+                      { bg: '#0097A7', hover: '#00838F' }, // Teal blue
+                    ];
+                    const shade = blueShades[index % blueShades.length];
+                    
+                    return (
+                      <Card 
+                        key={room.id} 
+                        className="backdrop-blur-md border-white/30 transition-all duration-300 shadow-lg hover:shadow-xl"
+                        style={{
+                          backgroundColor: shade.bg + '40', // 40 for transparency
+                          borderColor: shade.bg + '60',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = shade.hover + '50';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = shade.bg + '40';
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-white">{room.name}</h4>
+                              {room.description && (
+                                <p className="text-sm text-white/80 mt-1 line-clamp-1">
+                                  {room.description}
+                                </p>
                               )}
+                              <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center gap-1 text-xs text-white/70">
+                                  <Users className="h-3 w-3" />
+                                  <span>{room.chat_participants?.length || 0} members</span>
+                                </div>
+                                {room.category && (
+                                  <Badge variant="outline" className="text-xs border-white/40 text-white/90 bg-white/10">
+                                    {room.category}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                          </div>
                           <div className="flex items-center gap-2">
                             {isUserInRoom(room) ? (
                               <Button 
@@ -384,7 +411,8 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
