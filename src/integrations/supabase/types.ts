@@ -507,6 +507,51 @@ export type Database = {
           },
         ]
       }
+      clubhouse_gifts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          giver_id: string
+          id: string
+          message: string | null
+          payment_reference: string | null
+          payment_status: string
+          receiver_id: string
+          room_id: string
+          session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          giver_id: string
+          id?: string
+          message?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          receiver_id: string
+          room_id: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          giver_id?: string
+          id?: string
+          message?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          receiver_id?: string
+          room_id?: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_videos: {
         Row: {
           comment_count: number | null
@@ -2838,6 +2883,21 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_profile_safe: {
+        Args: { target_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          facebook_url: string
+          instagram_url: string
+          show_social_media: boolean
+          tiktok_url: string
+          twitter_url: string
+          website: string
+          youtube_url: string
+        }[]
+      }
       get_radio_schedule_for_date: {
         Args: { target_date?: string }
         Returns: {
@@ -2849,6 +2909,21 @@ export type Database = {
           schedule_id: string
           show_name: string
           status: string
+        }[]
+      }
+      get_recent_gifts: {
+        Args: { limit_param?: number; room_id_param: string }
+        Returns: {
+          amount: number
+          created_at: string
+          currency: string
+          giver_avatar: string
+          giver_name: string
+          id: string
+          message: string
+          payment_status: string
+          receiver_avatar: string
+          receiver_name: string
         }[]
       }
       get_safe_profile_data: {
