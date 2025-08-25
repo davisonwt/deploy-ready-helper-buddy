@@ -109,7 +109,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   }, [selectedLayout])
 
   const handleLayoutSelect = (layoutKey) => {
+    console.log('🔍 Layout selected:', layoutKey)
     setSelectedLayout(layoutKey)
+    console.log('🔍 Setting step to form')
     setCurrentStep('form')
   }
 
@@ -225,6 +227,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
       description: "Your clubhouse session is now live",
     })
   }
+
+  console.log('🔍 RoomCreationForm render - currentStep:', currentStep, 'selectedLayout:', selectedLayout)
 
   // Layout Selection Step
   if (currentStep === 'layout') {
@@ -553,7 +557,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                               <div key={i} className="bg-green-200 border border-green-400 rounded h-3 w-3 flex items-center justify-center">
                                 <div className="w-1 h-1 bg-green-600 rounded-full"></div>
                               </div>
-                            ))}
+                     ))}
                           </div>
                         </div>
                         
