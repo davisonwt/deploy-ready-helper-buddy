@@ -479,22 +479,188 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
   // Form Step
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
       
       {/* Fixed Header */}
-      <div className="bg-white border-b px-6 py-4 flex-shrink-0 z-10">
+      <div className="bg-white/95 backdrop-blur-sm border-b px-6 py-4 flex-shrink-0 z-10 shadow-sm">
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setCurrentStep('layout')}>
+          <Button variant="outline" onClick={() => setCurrentStep('layout')} className="shadow-sm">
             ← Change Layout
           </Button>
           <div className="text-center">
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              {layouts[selectedLayout]?.name}
-            </Badge>
+            <h1 className="text-xl font-bold text-gray-900">Configure Your Session</h1>
           </div>
           <Button variant="ghost" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
+        </div>
+      </div>
+
+      {/* Beautiful Chosen Layout Display */}
+      <div className="bg-white/80 backdrop-blur-sm border-b px-6 py-6 flex-shrink-0">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Your Chosen Layout</h2>
+          </div>
+          
+          {selectedLayout && layouts[selectedLayout] && (() => {
+            const layout = layouts[selectedLayout]
+            const IconComponent = layout.icon
+            
+            const colorSchemes = {
+              standard: { bg: '#D5AAFF', text: '#2A2A2A', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.9 },
+              panel: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+              interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.95 },
+              townhall: { bg: '#B9FBC0', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+              intimate: { bg: '#FFE156', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+              large: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 }
+            }
+            
+            const colors = colorSchemes[selectedLayout]
+            
+            return (
+              <div className="flex justify-center">
+                <Card 
+                  className="animate-fade-in hover:scale-105 transition-all duration-300 border-2 backdrop-blur-sm shadow-2xl max-w-md"
+                  style={{ 
+                    backgroundColor: `${colors.bg}${Math.round(colors.opacity * 255).toString(16).padStart(2, '0')}`,
+                    borderColor: colors.bg,
+                    color: colors.text,
+                    boxShadow: `0 20px 50px ${colors.bg}60, 0 0 0 1px ${colors.bg}20`
+                  }}
+                >
+                  <CardContent className="p-6">
+                    
+                    {/* Header with Layout Name */}
+                    <div className="text-center mb-4">
+                      <IconComponent 
+                        className="w-12 h-12 mx-auto mb-3 animate-pulse" 
+                        style={{ color: colors.text }}
+                      />
+                      <h3 
+                        className="text-2xl font-bold" 
+                        style={{ color: colors.text }}
+                      >
+                        {layout.name}
+                      </h3>
+                    </div>
+                    
+                    {/* Layout Preview */}
+                    <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/70 shadow-lg">
+                      <div className="flex gap-3 mb-3">
+                        
+                        {/* Speaking Area */}
+                        <div className="flex-1">
+                          <div className="text-xs font-semibold text-gray-700 mb-3 text-center">SPEAKERS</div>
+                          
+                          {/* Host */}
+                          <div className="flex justify-center mb-3">
+                            <div className="bg-gradient-to-r from-yellow-100 to-yellow-200 border-2 border-yellow-300 rounded-lg px-3 py-2 text-center shadow-md hover:shadow-lg transition-shadow">
+                              <Crown className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
+                              <div className="text-xs font-bold text-yellow-800">HOST</div>
+                            </div>
+                          </div>
+                          
+                          {/* Co-hosts/Panelists */}
+                          {layout.coHostSlots > 0 && (
+                            <div className="flex justify-center gap-2 mb-3">
+                              {selectedLayout === 'interview' ? (
+                                <>
+                                  <div className="bg-gradient-to-r from-emerald-100 to-emerald-200 border-2 border-emerald-300 rounded-lg px-2 py-1 text-center shadow-sm">
+                                    <div className="text-xs font-bold text-emerald-800">GUEST</div>
+                                  </div>
+                                  {Array(2).fill(0).map((_, i) => (
+                                    <div key={i} className="bg-gradient-to-r from-blue-100 to-blue-200 border-2 border-blue-300 rounded-lg px-2 py-1 text-center shadow-sm">
+                                      <div className="text-xs font-bold text-blue-800">CO</div>
+                                    </div>
+                                  ))}
+                                </>
+                              ) : (
+                                Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
+                                  <div key={i} className="bg-gradient-to-r from-blue-100 to-blue-200 border-2 border-blue-300 rounded-lg px-2 py-1 text-center shadow-sm">
+                                    <div className="text-xs font-bold text-blue-800">
+                                      {selectedLayout === 'panel' ? 'PAN' : 'CO'}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                              {layout.coHostSlots > 4 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 4}</span>}
+                            </div>
+                          )}
+                          
+                          {/* Audience grid */}
+                          <div className={`grid gap-1 justify-center ${
+                            layout.inviteSlots <= 4 ? 'grid-cols-2' : 
+                            layout.inviteSlots <= 6 ? 'grid-cols-3' : 
+                            'grid-cols-4'
+                          } max-w-40 mx-auto`}>
+                            {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
+                              <div key={i} className="bg-gradient-to-r from-green-100 to-green-200 border-2 border-green-300 rounded-md h-7 w-7 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                              </div>
+                            ))}
+                          </div>
+                          {layout.inviteSlots > 8 && (
+                            <div className="text-xs text-center text-gray-500 mt-1">+{layout.inviteSlots - 8} more</div>
+                          )}
+                          <div className="text-xs text-center text-gray-600 mt-2 font-medium">
+                            {layout.inviteSlots} audience can speak
+                          </div>
+                        </div>
+                        
+                        {/* Messages/Queue Area */}
+                        <div className="w-1/3 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200 p-2 shadow-inner">
+                          <div className="text-xs font-semibold text-gray-700 mb-2 text-center flex items-center justify-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            CHAT & QUEUE
+                          </div>
+                          <div className="space-y-1">
+                            <div className="bg-white rounded-md p-1 text-xs text-gray-600 shadow-sm">Hi everyone! 👋</div>
+                            <div className="bg-white rounded-md p-1 text-xs text-gray-600 shadow-sm">Can I join to speak?</div>
+                            <div className="bg-gradient-to-r from-orange-100 to-orange-200 rounded-md p-1 text-xs text-orange-700 shadow-sm">🎤 Voice recording sent</div>
+                            <div className="bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-md p-1 text-xs text-yellow-700 shadow-sm">⏳ Awaiting host approval</div>
+                            <div className="bg-gradient-to-r from-green-100 to-green-200 rounded-md p-1 text-xs text-green-700 shadow-sm">✅ Recording approved</div>
+                            <div className="bg-gradient-to-r from-blue-100 to-blue-200 rounded-md p-1 text-xs text-blue-700 shadow-sm">🙋 In queue to speak</div>
+                          </div>
+                          <div className="text-xs text-center text-gray-500 mt-2 font-medium">Unlimited listeners</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Description */}
+                    <div className="text-center">
+                      <p 
+                        className="text-sm font-medium mb-3" 
+                        style={{ color: colors.text }}
+                      >
+                        {layout.description}
+                      </p>
+                      
+                      <div className="text-xs opacity-80" style={{ color: colors.text }}>
+                        {selectedLayout === 'standard' && 'Perfect for casual discussions and Q&A sessions'}
+                        {selectedLayout === 'panel' && 'Expert panels, multi-speaker discussions'}
+                        {selectedLayout === 'interview' && 'One-on-one interviews with guest + moderators'}
+                        {selectedLayout === 'townhall' && 'Large community meetings, announcements'}
+                        {selectedLayout === 'intimate' && 'Small group conversations, workshops'}
+                        {selectedLayout === 'large' && 'Presentations, lectures, big events'}
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className="mt-4 px-4 py-2 rounded-lg text-center text-sm font-semibold animate-pulse"
+                      style={{ 
+                        backgroundColor: `${colors.buttonBg}40`,
+                        color: colors.buttonText,
+                        border: `2px solid ${colors.buttonBg}`
+                      }}
+                    >
+                      ✨ Currently Configuring ✨
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )
+          })()}
         </div>
       </div>
 
