@@ -300,10 +300,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <div className="max-w-6xl mx-auto pb-4">
             
             {/* All sections side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
               
               {/* Enable Gifting Toggle */}
-              <Card className="bg-white/80 backdrop-blur-sm">
+              <Card className="bg-white/80 backdrop-blur-sm flex-1">
                 <CardContent className="p-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Enable Listener Gifting</h3>
                   <div className="flex items-center justify-center mb-3">
@@ -319,7 +319,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </Card>
 
               {/* Gift Amount Limits */}
-              <Card className={`backdrop-blur-sm ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
+              <Card className={`backdrop-blur-sm flex-1 ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
                 <CardContent className="p-4">
                   <h3 className={`text-lg font-semibold mb-3 ${giftingEnabled ? 'text-gray-900' : 'text-gray-500'}`}>
                     Gift Amount Limits
@@ -358,7 +358,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </Card>
 
               {/* Allowed Recipients */}
-              <Card className={`backdrop-blur-sm ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
+              <Card className={`backdrop-blur-sm flex-1 ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
                 <CardContent className="p-4">
                   <h3 className={`text-lg font-semibold mb-3 ${giftingEnabled ? 'text-gray-900' : 'text-gray-500'}`}>
                     Who Can Receive Gifts?
@@ -405,7 +405,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </Card>
 
               {/* Gift Preview */}
-              <Card className={`border-purple-200 ${giftingEnabled ? 'bg-gradient-to-r from-purple-50 to-pink-50' : 'bg-gray-100/80'}`}>
+              <Card className={`border-purple-200 flex-1 ${giftingEnabled ? 'bg-gradient-to-r from-purple-50 to-pink-50' : 'bg-gray-100/80'}`}>
                 <CardContent className="p-4">
                   <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${giftingEnabled ? 'text-purple-900' : 'text-gray-500'}`}>
                     <DollarSign className="w-4 h-4" />
