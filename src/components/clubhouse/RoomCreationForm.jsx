@@ -478,29 +478,81 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   }
 
   // Form Step
+  const layout = layouts[selectedLayout]
+  const colorSchemes = {
+    standard: { bg: '#D5AAFF', text: '#2A2A2A', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.9 },
+    panel: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+    interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.95 },
+    townhall: { bg: '#B9FBC0', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+    intimate: { bg: '#FFE156', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+    large: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 }
+  }
+  const colors = colorSchemes[selectedLayout] || colorSchemes.standard
+
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
+    <div 
+      className="h-screen flex flex-col"
+      style={{
+        background: `linear-gradient(135deg, ${colors.bg}30, ${colors.bg}15, ${colors.buttonBg}20)`
+      }}
+    >
       
       {/* Fixed Header */}
-      <div className="bg-white/95 backdrop-blur-sm border-b px-6 py-4 flex-shrink-0 z-10 shadow-sm">
+      <div 
+        className="backdrop-blur-sm border-b px-6 py-4 flex-shrink-0 z-10 shadow-lg"
+        style={{
+          backgroundColor: `${colors.bg}95`,
+          borderBottomColor: `${colors.bg}40`
+        }}
+      >
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setCurrentStep('layout')} className="shadow-sm">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentStep('layout')} 
+            className="shadow-md hover:shadow-lg transition-shadow"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.9)',
+              borderColor: colors.buttonBg,
+              color: colors.text
+            }}
+          >
             ← Change Layout
           </Button>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-900">Configure Your Session</h1>
+            <h1 
+              className="text-xl font-bold" 
+              style={{ color: colors.text }}
+            >
+              Configure Your Session
+            </h1>
           </div>
-          <Button variant="ghost" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            onClick={onClose}
+            style={{ color: colors.text }}
+            className="hover:bg-white/20"
+          >
             <X className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
       {/* Beautiful Chosen Layout Display */}
-      <div className="bg-white/80 backdrop-blur-sm border-b px-6 py-6 flex-shrink-0">
+      <div 
+        className="backdrop-blur-sm border-b px-6 py-6 flex-shrink-0 shadow-inner"
+        style={{
+          backgroundColor: `${colors.bg}20`,
+          borderBottomColor: `${colors.bg}30`
+        }}
+      >
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-700 mb-2">Your Chosen Layout</h2>
+            <h2 
+              className="text-lg font-semibold mb-2" 
+              style={{ color: colors.text }}
+            >
+              Your Chosen Layout
+            </h2>
           </div>
           
           {selectedLayout && layouts[selectedLayout] && (() => {
@@ -666,16 +718,38 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
       <div className="flex flex-1 min-h-0">
         {/* LEFT SIDE - Messages */}
-        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0">
+        <div 
+          className="w-80 border-r p-4 flex-shrink-0 backdrop-blur-sm"
+          style={{
+            backgroundColor: `${colors.bg}15`,
+            borderRightColor: `${colors.bg}30`
+          }}
+        >
           <div className="flex items-center gap-2 mb-4">
-            <MessageSquare className="w-5 h-5" />
-            <h3 className="font-semibold">Messages & Queue</h3>
+            <MessageSquare 
+              className="w-5 h-5" 
+              style={{ color: colors.text }}
+            />
+            <h3 
+              className="font-semibold" 
+              style={{ color: colors.text }}
+            >
+              Messages & Queue
+            </h3>
           </div>
           
           <ScrollArea className="h-96">
             <div className="space-y-3">
               {messages.map((message, index) => (
-                <div key={index} className="p-3 bg-white rounded text-sm border-l-4 border-blue-400">
+                <div 
+                  key={index} 
+                  className="p-3 rounded-lg text-sm shadow-sm backdrop-blur-sm"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    borderLeft: `4px solid ${colors.buttonBg}`,
+                    color: colors.text
+                  }}
+                >
                   {message}
                 </div>
               ))}
@@ -691,13 +765,23 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             {/* Topic Input */}
             <div className="text-center mb-12">
               <div className="mb-4">
-                <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
+                <Label 
+                  className="text-2xl font-bold" 
+                  style={{ color: colors.text }}
+                >
+                  live: topic
+                </Label>
               </div>
               <Input
                 value={liveTopic}
                 onChange={(e) => setLiveTopic(e.target.value)}
                 placeholder="Enter your live topic here..."
-                className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
+                className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto backdrop-blur-sm shadow-lg border-2"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.95)',
+                  borderColor: colors.buttonBg,
+                  color: colors.text
+                }}
               />
             </div>
 
@@ -707,7 +791,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 
                 {/* Host Section */}
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4">Host</h3>
+                  <h3 
+                    className="text-lg font-semibold mb-4" 
+                    style={{ color: colors.text }}
+                  >
+                    Host
+                  </h3>
                   <SlotCard
                     title="host"
                     user={hostSlot}
@@ -719,7 +808,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 {/* Co-hosts/Panelists Section */}
                 {layouts[selectedLayout].coHostSlots > 0 && (
                   <div className="text-center">
-                    <h3 className="text-lg font-semibold mb-4">
+                    <h3 
+                      className="text-lg font-semibold mb-4" 
+                      style={{ color: colors.text }}
+                    >
                       {selectedLayout === 'panel' ? 'Panelists' : 
                        selectedLayout === 'interview' ? 'Guest & Co-hosts' :
                        selectedLayout === 'townhall' ? 'Moderators' : 'Co-hosts'}
@@ -744,7 +836,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
                 {/* Audience/Participants Section */}
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-4">
+                  <h3 
+                    className="text-lg font-semibold mb-4" 
+                    style={{ color: colors.text }}
+                  >
                     {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
                   </h3>
                   {/* Horizontal grid for audience - smaller boxes */}
@@ -775,11 +870,17 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                     ))}
                   </div>
                   {layouts[selectedLayout].inviteSlots > 8 && (
-                    <div className="text-sm text-gray-600 mt-2">
+                    <div 
+                      className="text-sm mt-2" 
+                      style={{ color: colors.text }}
+                    >
                       +{layouts[selectedLayout].inviteSlots - 8} more slots available
                     </div>
                   )}
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div 
+                    className="mt-2 text-sm" 
+                    style={{ color: colors.text }}
+                  >
                     {layouts[selectedLayout].inviteSlots} people can speak from audience queue
                   </div>
                 </div>
@@ -790,13 +891,21 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             <div className="max-w-4xl mx-auto mb-8 mt-12">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <Label className="text-lg font-semibold">Session Type:</Label>
+                  <Label 
+                    className="text-lg font-semibold" 
+                    style={{ color: colors.text }}
+                  >
+                    Session Type:
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Switch 
                       checked={sessionType === 'paid'} 
                       onCheckedChange={(checked) => setSessionType(checked ? 'paid' : 'free')}
                     />
-                    <span className="font-medium">
+                    <span 
+                      className="font-medium" 
+                      style={{ color: colors.text }}
+                    >
                       {sessionType === 'free' ? 'Free Session' : 'Paid Session'}
                     </span>
                   </div>
@@ -804,7 +913,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 
                 {sessionType === 'paid' && (
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
+                    <DollarSign 
+                      className="w-4 h-4" 
+                      style={{ color: colors.text }}
+                    />
                     <Input
                       type="number"
                       step="0.01"
@@ -817,7 +929,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 )}
               </div>
 
-              <div className="flex gap-4 text-sm text-gray-600 justify-center flex-wrap">
+              <div 
+                className="flex gap-4 text-sm justify-center flex-wrap" 
+                style={{ color: colors.text }}
+              >
                 <div className="flex items-center gap-2">
                   <Camera className="w-4 h-4" />
                   <span>Camera on/off for hosts, co-host or guest</span>
@@ -835,11 +950,30 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
             {/* Action Buttons */}
             <div className="flex gap-4 justify-center pb-8">
-              <Button onClick={saveRoom} variant="outline" size="lg" className="px-8">
+              <Button 
+                onClick={saveRoom} 
+                variant="outline" 
+                size="lg" 
+                className="px-8 shadow-lg hover:shadow-xl transition-all duration-200"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  borderColor: colors.buttonBg,
+                  color: colors.text
+                }}
+              >
                 <Save className="w-5 h-5 mr-2" />
                 Save Configuration
               </Button>
-              <Button onClick={goLive} size="lg" className="px-8 bg-red-600 hover:bg-red-700">
+              <Button 
+                onClick={goLive} 
+                size="lg" 
+                className="px-8 shadow-lg hover:shadow-xl transition-all duration-200"
+                style={{
+                  backgroundColor: colors.buttonBg,
+                  color: colors.buttonText,
+                  border: 'none'
+                }}
+              >
                 <Play className="w-5 h-5 mr-2" />
                 Go Live
               </Button>
