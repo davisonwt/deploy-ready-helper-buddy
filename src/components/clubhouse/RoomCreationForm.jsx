@@ -477,7 +477,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
     )
   }
 
-  // Form Step - only show when currentStep is 'form'
+  // Form Step
   if (currentStep === 'form') {
     const layout = layouts[selectedLayout]
     const colorSchemes = {
@@ -490,7 +490,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
     }
     const colors = colorSchemes[selectedLayout] || colorSchemes.standard
 
-  return (
+    return (
     <div 
       className="h-screen flex flex-col"
       style={{
