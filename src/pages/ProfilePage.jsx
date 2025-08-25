@@ -38,6 +38,7 @@ import {
   Award,
   TreePine
 } from "lucide-react"
+import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -49,6 +50,7 @@ export default function ProfilePage() {
   const [pictureError, setPictureError] = useState("")
   const [socialLinksError, setSocialLinksError] = useState({})
   const [mounted, setMounted] = useState(false)
+  const [showQuickSetup, setShowQuickSetup] = useState(false)
   const fileInputRef = useRef(null)
   
   useEffect(() => {
@@ -279,6 +281,16 @@ export default function ProfilePage() {
     communityRank: "Faithful Grower",
     verificationLevel: "Verified"
   }
+
+  // Show Quick Setup if requested
+  if (showQuickSetup) {
+    return (
+      <QuickProfileSetup
+        onComplete={() => setShowQuickSetup(false)}
+        onClose={() => setShowQuickSetup(false)}
+      />
+    );
+  }
   
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -422,15 +434,25 @@ export default function ProfilePage() {
                 Personal Information
               </CardTitle>
               {!editing ? (
-                <Button
-                  onClick={() => setEditing(true)}
-                  variant="outline"
-                  size="sm"
-                  className="border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setShowQuickSetup(true)}
+                      size="sm"
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Quick Setup
+                    </Button>
+                    <Button
+                      onClick={() => setEditing(true)}
+                      variant="outline"
+                      size="sm"
+                      className="border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Full Edit
+                    </Button>
+                  </div>
               ) : (
                 <div className="flex gap-3">
                   <Button

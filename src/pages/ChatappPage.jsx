@@ -40,6 +40,7 @@ import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSe
 import { LiveSessionInterface } from '@/components/live/LiveSessionInterface';
 import { ComprehensiveLiveSession } from '@/components/live/ComprehensiveLiveSession';
 import PublicLiveSessionsBrowser from '@/components/live/PublicLiveSessionsBrowser';
+import { QuickRoomCreator } from '@/components/chat/QuickRoomCreator';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -61,6 +62,7 @@ const ChatappPage = () => {
   } = useChat();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showQuickCreator, setShowQuickCreator] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [showUserSelector, setShowUserSelector] = useState(false);

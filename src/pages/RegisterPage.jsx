@@ -10,6 +10,7 @@ import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { QuickRegistration } from "../components/auth/QuickRegistration"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -28,10 +29,16 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showQuickRegistration, setShowQuickRegistration] = useState(false)
   
   const { register } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+
+  // Show Quick Registration if user prefers it
+  if (showQuickRegistration) {
+    return <QuickRegistration />;
+  }
   
   const handleChange = (e) => {
     setFormData({
@@ -184,6 +191,21 @@ export default function RegisterPage() {
                   Join the sow2grow Community
                 </CardTitle>
                 <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
+                <div className="flex justify-center gap-2 mb-4">
+                  <Button 
+                    onClick={() => setShowQuickRegistration(true)}
+                    size="sm"
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    Quick & Easy
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                  >
+                    Complete Form
+                  </Button>
+                </div>
                 <div className="flex justify-center">
                   <Badge className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
                     sow2grow • community farm stall

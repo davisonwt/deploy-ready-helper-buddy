@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
+import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
 import { 
   Plus, 
   Sprout, 
@@ -48,6 +49,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
   const [loadingData, setLoadingData] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [showQuickCreator, setShowQuickCreator] = useState(false)
   
   // Debug logging
   console.log('🌱 CreateOrchardPage render:', { 
