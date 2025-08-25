@@ -481,12 +481,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   if (currentStep === 'form') {
     const layout = layouts[selectedLayout]
     const colorSchemes = {
-      standard: { bg: '#D5AAFF', text: '#2A2A2A', buttonBg: '#FFE156', buttonText: '#2A2A2A' },
-      panel: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF' },
-      interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A' },
-      townhall: { bg: '#B9FBC0', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF' },
-      intimate: { bg: '#FFE156', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF' },
-      large: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF' }
+      standard: { bg: '#D5AAFF', text: '#1A1A1A', buttonBg: '#FFE156', buttonText: '#1A1A1A', cardText: '#1A1A1A' },
+      panel: { bg: '#E0BBE4', text: '#1A1A1A', buttonBg: '#957DAD', buttonText: '#FFFFFF', cardText: '#1A1A1A' },
+      interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#1A1A1A', cardText: '#1A1A1A' },
+      townhall: { bg: '#B9FBC0', text: '#1A1A1A', buttonBg: '#957DAD', buttonText: '#FFFFFF', cardText: '#1A1A1A' },
+      intimate: { bg: '#FFE156', text: '#1A1A1A', buttonBg: '#957DAD', buttonText: '#FFFFFF', cardText: '#1A1A1A' },
+      large: { bg: '#FFB7B7', text: '#1A1A1A', buttonBg: '#957DAD', buttonText: '#FFFFFF', cardText: '#1A1A1A' }
     }
     const colors = colorSchemes[selectedLayout] || colorSchemes.standard
 
@@ -542,26 +542,26 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <div className="max-w-5xl mx-auto space-y-4">
             
             {/* 1. TOPIC INPUT - FIRST AND PROMINENT */}
-            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}>
               <CardContent className="p-4">
-                <Label className="text-lg font-bold mb-3 block text-center">📢 Live Topic</Label>
+                <Label className="text-lg font-bold mb-3 block text-center text-gray-900">📢 Live Topic</Label>
                 <Input
                   value={liveTopic}
                   onChange={(e) => setLiveTopic(e.target.value)}
                   placeholder="Enter your live topic here..."
-                  className="text-center font-semibold h-12 text-lg rounded-xl border-2"
+                  className="text-center font-semibold h-12 text-lg rounded-xl border-2 text-gray-900 placeholder:text-gray-500"
                   style={{
                     borderColor: colors.buttonBg,
-                    color: colors.text
+                    backgroundColor: 'white'
                   }}
                 />
               </CardContent>
             </Card>
 
             {/* 2. CO-HOST & GUEST ASSIGNMENTS */}
-            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}>
               <CardContent className="p-4">
-                <h3 className="text-lg font-bold mb-3 text-center">👥 Assign Co-Speakers</h3>
+                <h3 className="text-lg font-bold mb-3 text-center text-gray-900">👥 Assign Co-Speakers</h3>
                 
                 {/* Host Info */}
                 <div className="mb-4 p-3 bg-yellow-50 rounded-xl border-2 border-yellow-200">
@@ -574,7 +574,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 {/* Co-hosts */}
                 {layout.coHostSlots > 0 && (
                   <div>
-                    <Label className="font-semibold mb-2 block">
+                    <Label className="font-semibold mb-2 block text-gray-900">
                       {selectedLayout === 'panel' ? '🎤 Panelists' : 
                        selectedLayout === 'interview' ? '🤝 Guest & Co-hosts' :
                        selectedLayout === 'townhall' ? '⚖️ Moderators' : '🤝 Co-hosts'} 
@@ -599,9 +599,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             </Card>
 
             {/* 3. AUDIENCE QUEUE */}
-            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+            <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}>
               <CardContent className="p-4">
-                <h3 className="text-lg font-bold mb-3 text-center">
+                <h3 className="text-lg font-bold mb-3 text-center text-gray-900">
                   {selectedLayout === 'intimate' ? '👥 Participants' : '🎭 Audience Queue'} 
                   ({layout.inviteSlots} slots)
                 </h3>
@@ -616,7 +616,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         {slot ? (
                           <Avatar className="w-6 h-6">
                             <AvatarImage src={slot.avatar} />
-                            <AvatarFallback className="text-xs">{slot.name?.[0] || 'A'}</AvatarFallback>
+                            <AvatarFallback className="text-xs text-gray-900">{slot.name?.[0] || 'A'}</AvatarFallback>
                           </Avatar>
                         ) : (
                           <UserPlus className="w-4 h-4 text-gray-400" />
@@ -632,17 +632,17 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
               {/* Session Type */}
-              <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+              <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}>
                 <CardContent className="p-4">
-                  <h4 className="font-bold mb-3">💰 Session Settings</h4>
+                  <h4 className="font-bold mb-3 text-gray-900">💰 Session Settings</h4>
                   <div className="flex items-center justify-between mb-3">
-                    <Label className="font-semibold">Session Type</Label>
+                    <Label className="font-semibold text-gray-900">Session Type</Label>
                     <div className="flex items-center gap-2">
                       <Switch 
                         checked={sessionType === 'paid'} 
                         onCheckedChange={(checked) => setSessionType(checked ? 'paid' : 'free')}
                       />
-                      <span className="font-medium">
+                      <span className="font-medium text-gray-900">
                         {sessionType === 'free' ? '🆓 Free' : '💳 Paid'}
                       </span>
                     </div>
@@ -650,37 +650,38 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                   
                   {sessionType === 'paid' && (
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
+                      <DollarSign className="w-4 h-4 text-gray-900" />
                       <Input
                         type="number"
                         step="0.01"
                         value={entryFee}
                         onChange={(e) => setEntryFee(parseFloat(e.target.value) || 0)}
                         placeholder="1.00"
-                        className="flex-1 rounded-lg"
+                        className="flex-1 rounded-lg text-gray-900 placeholder:text-gray-500"
+                        style={{ backgroundColor: 'white' }}
                       />
-                      <span className="text-sm font-medium">USD</span>
+                      <span className="text-sm font-medium text-gray-900">USD</span>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
               {/* Features */}
-              <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
+              <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}>
                 <CardContent className="p-4">
-                  <h4 className="font-bold mb-3">✨ Features Included</h4>
+                  <h4 className="font-bold mb-3 text-gray-900">✨ Features Included</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Camera className="w-4 h-4 text-green-600" />
-                      <span className="text-sm">📹 Video for hosts & guests</span>
+                      <span className="text-sm text-gray-900">📹 Video for hosts & guests</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mic className="w-4 h-4 text-green-600" />
-                      <span className="text-sm">🎙️ Voice recordings in chat</span>
+                      <span className="text-sm text-gray-900">🎙️ Voice recordings in chat</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-green-600" />
-                      <span className="text-sm">📄 Document sharing</span>
+                      <span className="text-sm text-gray-900">📄 Document sharing</span>
                     </div>
                   </div>
                 </CardContent>
@@ -693,11 +694,11 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 onClick={saveRoom} 
                 variant="outline" 
                 size="lg" 
-                className="h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-bold"
+                className="h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-bold text-gray-900"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.95)',
                   borderColor: colors.buttonBg,
-                  color: colors.text
+                  color: '#1A1A1A'
                 }}
               >
                 <Save className="w-5 h-5 mr-2" />
