@@ -296,15 +296,15 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <p className="text-gray-600 mt-2">Set up listener gifting options for hosts and co-hosts</p>
         </div>
         
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-2xl mx-auto space-y-6 pb-6">
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="max-w-5xl mx-auto pb-4">
             
-            {/* Enable Gifting Toggle */}
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
+            {/* Enable Gifting Toggle - Full Width */}
+            <Card className="bg-white/80 backdrop-blur-sm mb-4">
+              <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Enable Listener Gifting</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Enable Listener Gifting</h3>
                     <p className="text-sm text-gray-600">Allow listeners to send gifts to hosts and co-hosts during the live session</p>
                   </div>
                   <Switch
@@ -316,14 +316,15 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             </Card>
 
             {giftingEnabled && (
-              <>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                
                 {/* Gift Amount Limits */}
                 <Card className="bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Gift Amount Limits</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Gift Amount Limits</h3>
+                    <div className="space-y-3">
                       <div>
-                        <Label htmlFor="minGift">Minimum Gift ($USDC)</Label>
+                        <Label htmlFor="minGift" className="text-sm">Minimum ($USDC)</Label>
                         <Input
                           id="minGift"
                           type="number"
@@ -336,7 +337,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="maxGift">Maximum Gift ($USDC)</Label>
+                        <Label htmlFor="maxGift" className="text-sm">Maximum ($USDC)</Label>
                         <Input
                           id="maxGift"
                           type="number"
@@ -354,8 +355,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
                 {/* Allowed Recipients */}
                 <Card className="bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Who Can Receive Gifts?</h3>
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Who Can Receive Gifts?</h3>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Switch
@@ -369,9 +370,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                             }
                           }}
                         />
-                        <Label htmlFor="host-gifts" className="flex items-center gap-2">
+                        <Label htmlFor="host-gifts" className="flex items-center gap-2 text-sm">
                           <Crown className="w-4 h-4 text-yellow-600" />
-                          Host can receive gifts
+                          Host
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -386,9 +387,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                             }
                           }}
                         />
-                        <Label htmlFor="cohost-gifts" className="flex items-center gap-2">
+                        <Label htmlFor="cohost-gifts" className="flex items-center gap-2 text-sm">
                           <Users className="w-4 h-4 text-blue-600" />
-                          Co-hosts can receive gifts
+                          Co-hosts
                         </Label>
                       </div>
                     </div>
@@ -397,25 +398,26 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
                 {/* Gift Preview */}
                 <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
-                      <DollarSign className="w-5 h-5" />
-                      Gifting Preview
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-3 flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Preview
                     </h3>
-                    <div className="bg-white/80 rounded-lg p-4">
-                      <p className="text-sm text-gray-700 mb-2">
-                        <strong>Range:</strong> ${minGiftAmount} - ${maxGiftAmount} USDC
+                    <div className="bg-white/80 rounded-lg p-3 space-y-2">
+                      <p className="text-sm text-gray-700">
+                        <strong>Range:</strong> ${minGiftAmount} - ${maxGiftAmount}
                       </p>
-                      <p className="text-sm text-gray-700 mb-2">
-                        <strong>Recipients:</strong> {allowedRecipients.length > 0 ? allowedRecipients.join(', ') : 'None selected'}
+                      <p className="text-sm text-gray-700">
+                        <strong>Recipients:</strong> {allowedRecipients.length > 0 ? allowedRecipients.join(', ') : 'None'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Listeners will see gift buttons during your live session
+                        Gift buttons will appear during live session
                       </p>
                     </div>
                   </CardContent>
                 </Card>
-              </>
+
+              </div>
             )}
           </div>
         </div>
