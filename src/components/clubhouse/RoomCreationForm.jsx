@@ -243,104 +243,74 @@ export function RoomCreationForm({ onRoomCreated }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="h-screen bg-white flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-1">
+      <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-2">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-2">
-              <h1 className="text-lg font-bold text-gray-800 mb-1">Choose Layout</h1>
-              <p className="text-xs text-gray-600">Select your session format</p>
+              <h1 className="text-lg font-bold text-white mb-1">Choose Layout</h1>
+              <p className="text-xs text-gray-300">Select your session format</p>
             </div>
 
-            {/* Scrollable Grid Container */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+            {/* Mobile-optimized Grid - TikTok style */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 return (
                   <Card 
                     key={key}
-                    className={`cursor-pointer hover:shadow-md transition-all duration-200 ${layout.color} border hover:scale-[1.01] h-32`}
+                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 bg-gray-900 border-gray-700 border hover:scale-[1.02] h-40`}
                     onClick={() => handleLayoutSelect(key)}
                   >
-                    <CardContent className="p-1.5 h-full">
-                      <div className="flex gap-1.5 h-full">
+                    <CardContent className="p-2 h-full">
+                      
+                      {/* TikTok-style Layout Preview */}
+                      <div className="flex gap-2 h-32">
                         
-                        {/* Left Side - Layout Info */}
-                        <div className="w-1/3 min-w-0 flex flex-col">
-                          <div className="text-center mb-1">
-                            <IconComponent className="w-4 h-4 mx-auto mb-0.5 text-gray-700" />
-                            <h3 className="text-xs font-bold text-gray-800 leading-tight">{layout.name}</h3>
-                          </div>
-
-                          {/* Feature Icons */}
-                          <div className="flex justify-center gap-1 mt-auto">
-                            <Camera className="w-2 h-2 text-gray-500" />
-                            <FileText className="w-2 h-2 text-gray-500" />
-                            <Mic className="w-2 h-2 text-gray-500" />
+                        {/* Host Area (Left) - Like TikTok */}
+                        <div className="w-1/2 bg-gray-800 rounded-lg p-2 flex flex-col items-center justify-center">
+                          <IconComponent className="w-6 h-6 mb-1 text-orange-400" />
+                          <div className="text-xs font-bold text-white text-center">Host</div>
+                          <div className="text-xs text-gray-400 mt-1 text-center leading-tight">
+                            {layout.name}
                           </div>
                         </div>
-
-                        {/* Right Side - Layout Preview */}
-                        <div className="flex-1 min-w-0 flex flex-col">
-                          <div className="bg-white rounded border border-gray-200 p-1 flex-1">
-                            
-                            <div className="flex gap-1 h-full">
-                              {/* Queue Preview */}
-                              <div className="w-1/5 bg-gray-50 rounded p-0.5">
-                                <div className="text-xs mb-0.5">Q</div>
-                                <div className="flex flex-col gap-0.5">
-                                  {Array(2).fill(0).map((_, i) => (
-                                    <div key={i} className="w-1 h-1 bg-blue-300 rounded-full"></div>
-                                  ))}
-                                </div>
-                              </div>
-                              
-                              {/* Main Area */}
-                              <div className="flex-1 p-0.5">
-                                {/* Host */}
-                                <div className="flex justify-center mb-0.5">
-                                  <div className="w-4 h-2 bg-yellow-300 rounded flex items-center justify-center">
-                                    <Crown className="w-1 h-1" />
-                                  </div>
-                                </div>
-                                
-                                {/* Co-hosts */}
-                                {layout.coHostSlots > 0 && (
-                                  <div className="flex justify-center gap-0.5 mb-0.5">
-                                    {Array(Math.min(layout.coHostSlots, 2)).fill(0).map((_, i) => (
-                                      <div key={i} className="w-3 h-1.5 bg-blue-300 rounded"></div>
-                                    ))}
-                                    {layout.coHostSlots > 2 && <span className="text-xs">+{layout.coHostSlots - 2}</span>}
-                                  </div>
-                                )}
-                                
-                                {/* Audience - max 4 visible */}
-                                <div className="grid grid-cols-2 gap-0.5">
-                                  {Array(Math.min(layout.inviteSlots, 4)).fill(0).map((_, i) => (
-                                    <div key={i} className="w-2 h-1 bg-green-300 rounded"></div>
-                                  ))}
-                                </div>
-                              </div>
+                        
+                        {/* Participants Grid (Right) - Like TikTok */}
+                        <div className="w-1/2 grid grid-cols-2 gap-1">
+                          
+                          {/* Co-host slots */}
+                          {Array(Math.min(layout.coHostSlots, 2)).fill(0).map((_, i) => (
+                            <div key={i} className="bg-blue-800 rounded-lg flex items-center justify-center">
+                              <Users className="w-3 h-3 text-blue-300" />
                             </div>
-
-                            {/* Content sharing indicator */}
-                            <div className="mt-0.5 bg-gray-50 rounded p-0.5 text-center">
-                              <div className="flex justify-center gap-1">
-                                <FileText className="w-1 h-1 text-gray-500" />
-                                <Camera className="w-1 h-1 text-gray-500" />
-                              </div>
+                          ))}
+                          
+                          {/* Audience slots - fill remaining */}
+                          {Array(4 - Math.min(layout.coHostSlots, 2)).fill(0).map((_, i) => (
+                            <div key={i} className="bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600 border-dashed">
+                              <UserPlus className="w-2 h-2 text-gray-400" />
                             </div>
-                          </div>
-
-                          <Button className="mt-1 w-full text-xs py-0.5 h-6" size="sm">
-                            Select
-                          </Button>
+                          ))}
                         </div>
                       </div>
                       
-                      {/* Description at bottom */}
-                      <div className="text-xs text-gray-600 text-center mt-1 leading-tight">
-                        {layout.description.split('(')[0].trim()}
+                      {/* Chat Preview (Bottom) */}
+                      <div className="mt-2 bg-gray-800 rounded p-1">
+                        <div className="flex items-center gap-1 mb-1">
+                          <MessageSquare className="w-2 h-2 text-gray-400" />
+                          <div className="flex gap-1">
+                            {Array(4).fill(0).map((_, i) => (
+                              <div key={i} className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 text-center">Live Chat</div>
                       </div>
+                      
+                      {/* Select Button */}
+                      <Button className="mt-2 w-full text-xs py-1 h-6 bg-orange-600 hover:bg-orange-700" size="sm">
+                        Select {layout.name}
+                      </Button>
                     </CardContent>
                   </Card>
                 )
