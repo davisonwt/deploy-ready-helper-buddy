@@ -477,17 +477,18 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
     )
   }
 
-  // Form Step
-  const layout = layouts[selectedLayout]
-  const colorSchemes = {
-    standard: { bg: '#D5AAFF', text: '#2A2A2A', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.9 },
-    panel: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
-    interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.95 },
-    townhall: { bg: '#B9FBC0', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
-    intimate: { bg: '#FFE156', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
-    large: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 }
-  }
-  const colors = colorSchemes[selectedLayout] || colorSchemes.standard
+  // Form Step - only show when currentStep is 'form'
+  if (currentStep === 'form') {
+    const layout = layouts[selectedLayout]
+    const colorSchemes = {
+      standard: { bg: '#D5AAFF', text: '#2A2A2A', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.9 },
+      panel: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+      interview: { bg: '#957DAD', text: '#FFFFFF', buttonBg: '#FFE156', buttonText: '#2A2A2A', opacity: 0.95 },
+      townhall: { bg: '#B9FBC0', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+      intimate: { bg: '#FFE156', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
+      large: { bg: '#FFB7B7', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 }
+    }
+    const colors = colorSchemes[selectedLayout] || colorSchemes.standard
 
   return (
     <div 
@@ -980,8 +981,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             </div>
             </div>
             </ScrollArea>
-          </div>
         </div>
+      </div>
     </div>
   )
+  }
+
+  // If no matching step, return null or default view
+  return null
 }
