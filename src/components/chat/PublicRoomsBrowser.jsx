@@ -329,23 +329,23 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                 </div>
                 <div className="grid gap-3">
                   {filteredPublicRooms.map((room) => (
-                    <Card key={room.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200">
+                    <Card key={room.id} className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-slate-700/50 hover:from-slate-800/95 hover:to-slate-700/95 transition-all duration-300 shadow-lg backdrop-blur-sm">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <h4 className="font-medium text-white">{room.name}</h4>
                             {room.description && (
-                              <p className="text-sm text-white/70 mt-1 line-clamp-1">
+                              <p className="text-sm text-slate-300 mt-1 line-clamp-1">
                                 {room.description}
                               </p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <div className="flex items-center gap-1 text-xs text-white/60">
+                              <div className="flex items-center gap-1 text-xs text-slate-400">
                                 <Users className="h-3 w-3" />
                                 <span>{room.chat_participants?.length || 0} members</span>
                               </div>
                               {room.category && (
-                                <Badge variant="outline" className="text-xs border-white/30 text-white/80">
+                                <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-800/50">
                                   {room.category}
                                 </Badge>
                               )}
