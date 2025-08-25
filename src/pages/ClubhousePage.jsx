@@ -332,6 +332,10 @@ export default function ClubhousePage() {
           
           <RoomCreationForm
             onRoomCreated={handleRoomCreated}
+            onClose={() => {
+              setShowCreateForm(false)
+              setEditingRoom(null)
+            }}
             existingRoom={editingRoom}
           />
         </div>
