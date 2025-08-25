@@ -244,84 +244,84 @@ export function RoomCreationForm({ onRoomCreated }) {
   if (currentStep === 'layout') {
     return (
       <div className="h-screen bg-white flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Choose Your Clubhouse Layout</h1>
-              <p className="text-sm text-gray-600">Select the format that best fits your session type</p>
+        <div className="flex-1 overflow-y-auto p-2">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-3">
+              <h1 className="text-xl font-bold text-gray-800 mb-1">Choose Your Clubhouse Layout</h1>
+              <p className="text-xs text-gray-600">Select the format that best fits your session type</p>
             </div>
 
             {/* Scrollable Grid Container */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 return (
                   <Card 
                     key={key}
-                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${layout.color} border-2 hover:scale-[1.01]`}
+                    className={`cursor-pointer hover:shadow-md transition-all duration-200 ${layout.color} border-2 hover:scale-[1.01] h-44`}
                     onClick={() => handleLayoutSelect(key)}
                   >
-                    <CardContent className="p-3">
-                      <div className="flex gap-3">
+                    <CardContent className="p-2 h-full">
+                      <div className="flex gap-2 h-full">
                         
                         {/* Left Side - Layout Info */}
-                        <div className="w-1/3 min-w-0">
-                          <div className="text-center mb-2">
-                            <IconComponent className="w-8 h-8 mx-auto mb-1 text-gray-700" />
-                            <h3 className="text-sm font-bold text-gray-800 leading-tight">{layout.name}</h3>
+                        <div className="w-1/3 min-w-0 flex flex-col">
+                          <div className="text-center mb-1">
+                            <IconComponent className="w-6 h-6 mx-auto mb-1 text-gray-700" />
+                            <h3 className="text-xs font-bold text-gray-800 leading-tight">{layout.name}</h3>
                             <p className="text-gray-600 text-xs leading-tight">{layout.description}</p>
                           </div>
 
                           {/* Feature List */}
-                          <div className="text-xs text-gray-600 space-y-1">
+                          <div className="text-xs text-gray-600 space-y-0.5 flex-1">
                             <div className="flex items-center gap-1">
-                              <Camera className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate">Video sharing</span>
+                              <Camera className="w-2 h-2 flex-shrink-0" />
+                              <span className="truncate">Video</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <FileText className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate">Document collaboration</span>
+                              <FileText className="w-2 h-2 flex-shrink-0" />
+                              <span className="truncate">Docs</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Mic className="w-3 h-3 flex-shrink-0" />
-                              <span className="truncate">Voice recordings</span>
+                              <Mic className="w-2 h-2 flex-shrink-0" />
+                              <span className="truncate">Voice</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Right Side - Complete Layout Preview */}
-                        <div className="flex-1 min-w-0">
-                          <div className="bg-white rounded border border-gray-200 p-2">
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <div className="bg-white rounded border border-gray-200 p-1 flex-1">
                             
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 h-full">
                               {/* Messages/Queue Sidebar Preview */}
                               <div className="w-1/4 bg-gray-50 rounded p-1 border border-gray-200">
-                                <div className="text-xs font-semibold mb-1 flex items-center gap-1">
-                                  <MessageSquare className="w-2 h-2" />
-                                  <span className="truncate">Queue</span>
+                                <div className="text-xs font-semibold mb-1 flex items-center gap-0.5">
+                                  <MessageSquare className="w-1.5 h-1.5" />
+                                  <span className="truncate text-xs">Q</span>
                                 </div>
                                 <div className="flex gap-0.5 flex-wrap">
-                                  {Array(4).fill(0).map((_, i) => (
-                                    <div key={i} className="w-1.5 h-1.5 bg-blue-300 rounded-full"></div>
+                                  {Array(3).fill(0).map((_, i) => (
+                                    <div key={i} className="w-1 h-1 bg-blue-300 rounded-full"></div>
                                   ))}
                                 </div>
                               </div>
                               
                               {/* Main Session Area */}
-                              <div className="flex-1 p-1">
+                              <div className="flex-1 p-0.5">
                                 {/* Host slot */}
-                                <div className="flex justify-center mb-1">
-                                  <div className="w-8 h-4 bg-yellow-300 rounded border border-yellow-400 flex items-center justify-center">
-                                    <Crown className="w-1.5 h-1.5" />
+                                <div className="flex justify-center mb-0.5">
+                                  <div className="w-6 h-3 bg-yellow-300 rounded border border-yellow-400 flex items-center justify-center">
+                                    <Crown className="w-1 h-1" />
                                   </div>
                                 </div>
                                 
                                 {/* Co-host slots */}
                                 {layout.coHostSlots > 0 && (
-                                  <div className="flex justify-center gap-0.5 mb-1">
+                                  <div className="flex justify-center gap-0.5 mb-0.5">
                                     {Array(Math.min(layout.coHostSlots, 3)).fill(0).map((_, i) => (
-                                      <div key={i} className="w-6 h-3 bg-blue-300 rounded border border-blue-400 flex items-center justify-center">
-                                        <Users className="w-1 h-1" />
+                                      <div key={i} className="w-4 h-2 bg-blue-300 rounded border border-blue-400 flex items-center justify-center">
+                                        <Users className="w-0.5 h-0.5" />
                                       </div>
                                     ))}
                                     {layout.coHostSlots > 3 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 3}</span>}
@@ -329,35 +329,35 @@ export function RoomCreationForm({ onRoomCreated }) {
                                 )}
                                 
                                 {/* Audience grid - Show max 8 boxes */}
-                                <div className="grid grid-cols-4 gap-0.5 mb-1">
+                                <div className="grid grid-cols-4 gap-0.5 mb-0.5">
                                   {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                    <div key={i} className="w-3 h-2 bg-green-300 rounded border border-green-400"></div>
+                                    <div key={i} className="w-2 h-1.5 bg-green-300 rounded border border-green-400"></div>
                                   ))}
                                 </div>
                                 {layout.inviteSlots > 8 && (
-                                  <div className="text-center text-xs text-gray-500">8 visible (∞ queue)</div>
+                                  <div className="text-center text-xs text-gray-500">8 max (∞ queue)</div>
                                 )}
                               </div>
                             </div>
 
                             {/* Document/Video Sharing Area */}
-                            <div className="mt-1 bg-gray-50 rounded p-1 border-t border-gray-200">
-                              <div className="text-xs font-semibold mb-1 text-center text-gray-600">Shared Content</div>
+                            <div className="mt-1 bg-gray-50 rounded p-0.5 border-t border-gray-200">
+                              <div className="text-xs font-semibold mb-0.5 text-center text-gray-600">Content</div>
                               <div className="grid grid-cols-2 gap-0.5">
                                 <div className="bg-white rounded p-0.5 border border-gray-200 text-center">
-                                  <FileText className="w-2 h-2 mx-auto mb-0.5 text-gray-500" />
-                                  <div className="text-xs text-gray-500">Docs</div>
+                                  <FileText className="w-1.5 h-1.5 mx-auto mb-0.5 text-gray-500" />
+                                  <div className="text-xs text-gray-500">Doc</div>
                                 </div>
                                 <div className="bg-white rounded p-0.5 border border-gray-200 text-center">
-                                  <Camera className="w-2 h-2 mx-auto mb-0.5 text-gray-500" />
-                                  <div className="text-xs text-gray-500">Video</div>
+                                  <Camera className="w-1.5 h-1.5 mx-auto mb-0.5 text-gray-500" />
+                                  <div className="text-xs text-gray-500">Vid</div>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          <Button className="mt-2 w-full" size="sm">
-                            Select This Layout
+                          <Button className="mt-1 w-full text-xs py-1" size="sm">
+                            Select Layout
                           </Button>
                         </div>
                       </div>
@@ -368,7 +368,7 @@ export function RoomCreationForm({ onRoomCreated }) {
             </div>
 
             {/* Bottom spacing for scrolling */}
-            <div className="h-4"></div>
+            <div className="h-2"></div>
           </div>
         </div>
       </div>
