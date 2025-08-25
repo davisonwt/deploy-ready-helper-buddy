@@ -164,7 +164,7 @@ export type Database = {
           ip_address: unknown | null
           success: boolean | null
           user_agent: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           access_type: string
@@ -174,7 +174,7 @@ export type Database = {
           ip_address?: unknown | null
           success?: boolean | null
           user_agent?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           access_type?: string
@@ -184,7 +184,7 @@ export type Database = {
           ip_address?: unknown | null
           success?: boolean | null
           user_agent?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -2838,6 +2838,10 @@ export type Database = {
         Returns: string
       }
       encrypt_pii_data: {
+        Args: { data_text: string }
+        Returns: string
+      }
+      encrypt_pii_data_secure: {
         Args: { data_text: string }
         Returns: string
       }
