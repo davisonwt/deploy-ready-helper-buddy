@@ -940,6 +940,7 @@ const ChatappPage = () => {
                     setActiveLiveSession(roomData);
                   }
                 }}
+                onClose={() => setShowCreateModal(false)}
               />
             </div>
           </div>
