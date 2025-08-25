@@ -140,6 +140,7 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
         co_hosts: coHosts,
         starting_guests: startingGuests,
         is_active: false,
+        type: 'clubhouse', // Set the type to clubhouse
         session_type: sessionType,
         bestowal_amount: sessionType === 'paid' ? bestowedAmount : 0,
         platform_fee: sessionType === 'paid' ? platformFee : 0,
@@ -188,10 +189,24 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
 
   const startLiveSession = async () => {
     await saveRoom()
-    // TODO: Navigate to live session
+    
+    // Create a live session with the room data
+    const sessionData = {
+      name: roomName.trim(),
+      description: description.trim(),
+      type: 'clubhouse',
+      session_type: sessionType,
+      bestowal_amount: sessionType === 'paid' ? bestowedAmount : 0,
+      creator_name: user?.email || 'Host',
+      is_active: true
+    }
+    
+    // Pass the session data to the parent to start the live session
+    onRoomCreated?.(sessionData)
+    
     toast({
-      title: "Starting live session...",
-      description: "Opening your room for live conversation",
+      title: "Live session started!",
+      description: "Your clubhouse room is now live",
     })
   }
 

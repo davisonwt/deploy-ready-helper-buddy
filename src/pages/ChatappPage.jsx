@@ -933,20 +933,11 @@ const ChatappPage = () => {
                 </div>
               </div>
               <RoomCreationForm 
-                onRoomCreated={(room) => {
+                onRoomCreated={(roomData) => {
                   setShowCreateModal(false);
-                  // Optionally start the live session immediately
-                  if (room) {
-                    const liveSessionData = {
-                      id: `room-${room.id}`,
-                      title: room.name,
-                      room_id: room.id,
-                      type: 'clubhouse',
-                      created_by: room.creator_id,
-                      status: 'live',
-                      started_at: new Date().toISOString()
-                    };
-                    setActiveLiveSession(liveSessionData);
+                  // If this is a live session start (has is_active: true), show the ClubhouseLiveSession
+                  if (roomData && roomData.is_active) {
+                    setActiveLiveSession(roomData);
                   }
                 }}
               />
