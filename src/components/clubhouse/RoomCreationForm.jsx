@@ -501,9 +501,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         
         {/* Header */}
         <div 
-          className="px-4 py-2 flex-shrink-0 border-b rounded-t-2xl"
+          className="px-4 py-2 flex-shrink-0 border-b rounded-t-2xl backdrop-blur-md"
           style={{
-            backgroundColor: `${colors.bg}90`,
+            backgroundColor: `${colors.bg}95`,
             borderBottomColor: `${colors.bg}60`
           }}
         >
@@ -511,26 +511,17 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep('layout')} 
-              className="rounded-full"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.95)',
-                borderColor: colors.buttonBg,
-                color: colors.text
-              }}
+              className="rounded-full bg-white text-gray-900 border-gray-300 hover:bg-gray-100"
             >
               ← Back
             </Button>
-            <h1 
-              className="text-lg font-bold" 
-              style={{ color: colors.text }}
-            >
+            <h1 className="text-lg font-bold text-gray-900 bg-white/90 px-4 py-1 rounded-full">
               Configure & Go Live: {layout.name}
             </h1>
             <Button 
               variant="ghost" 
               onClick={onClose}
-              style={{ color: colors.text }}
-              className="hover:bg-white/20 rounded-full"
+              className="hover:bg-white/20 rounded-full bg-white text-gray-900"
             >
               <X className="w-5 h-5" />
             </Button>
