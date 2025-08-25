@@ -713,7 +713,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         )}
                       </CardContent>
                     </Card>
-                  )))}
+                  ))}
                 </div>
                 <div 
                   className="text-center text-xs mt-1" 
