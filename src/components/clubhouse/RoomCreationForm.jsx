@@ -255,43 +255,49 @@ export function RoomCreationForm({ onRoomCreated }) {
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 
-                // Assign unique pastel color schemes
+                // Assign unique color schemes based on user's detailed color table
                 const colorSchemes = {
                   standard: {
-                    bg: 'bg-blue-50',
-                    border: 'border-blue-200 hover:border-blue-400',
-                    accent: 'text-blue-600',
-                    button: 'bg-blue-500 hover:bg-blue-600'
+                    bg: 'bg-[#D5AAFF]', // Light Purple
+                    border: 'border-[#D5AAFF] hover:border-[#c299ff]',
+                    text: 'text-[#2A2A2A]', // Dark Gray
+                    accent: 'text-[#2A2A2A]',
+                    button: 'bg-[#FFE156] hover:bg-[#fdd835] text-[#2A2A2A]' // Bright Yellow
                   },
                   panel: {
-                    bg: 'bg-purple-50', 
-                    border: 'border-purple-200 hover:border-purple-400',
-                    accent: 'text-purple-600',
-                    button: 'bg-purple-500 hover:bg-purple-600'
+                    bg: 'bg-[#E0BBE4]', // Lavender
+                    border: 'border-[#E0BBE4] hover:border-[#d8a8dd]',
+                    text: 'text-[#2A2A2A]', // Dark Gray
+                    accent: 'text-[#2A2A2A]',
+                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
                   },
                   interview: {
-                    bg: 'bg-emerald-50',
-                    border: 'border-emerald-200 hover:border-emerald-400', 
-                    accent: 'text-emerald-600',
-                    button: 'bg-emerald-500 hover:bg-emerald-600'
+                    bg: 'bg-[#957DAD]', // Dusty Purple
+                    border: 'border-[#957DAD] hover:border-[#8a6fa0]',
+                    text: 'text-white', // White text for dark background
+                    accent: 'text-white',
+                    button: 'bg-[#FFE156] hover:bg-[#fdd835] text-[#2A2A2A]' // Bright Yellow
                   },
                   townhall: {
-                    bg: 'bg-amber-50',
-                    border: 'border-amber-200 hover:border-amber-400',
-                    accent: 'text-amber-600', 
-                    button: 'bg-amber-500 hover:bg-amber-600'
+                    bg: 'bg-[#B9FBC0]', // Mint Green
+                    border: 'border-[#B9FBC0] hover:border-[#a8f7b1]',
+                    text: 'text-[#2A2A2A]', // Dark Gray
+                    accent: 'text-[#2A2A2A]',
+                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
                   },
                   intimate: {
-                    bg: 'bg-rose-50',
-                    border: 'border-rose-200 hover:border-rose-400',
-                    accent: 'text-rose-600',
-                    button: 'bg-rose-500 hover:bg-rose-600'
+                    bg: 'bg-[#FFE156]', // Bright Yellow
+                    border: 'border-[#FFE156] hover:border-[#fdd835]',
+                    text: 'text-[#2A2A2A]', // Dark Gray
+                    accent: 'text-[#2A2A2A]',
+                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
                   },
                   large: {
-                    bg: 'bg-indigo-50',
-                    border: 'border-indigo-200 hover:border-indigo-400',
-                    accent: 'text-indigo-600',
-                    button: 'bg-indigo-500 hover:bg-indigo-600'
+                    bg: 'bg-[#FFB7B7]', // Soft Peach
+                    border: 'border-[#FFB7B7] hover:border-[#ffa5a5]',
+                    text: 'text-[#2A2A2A]', // Dark Gray
+                    accent: 'text-[#2A2A2A]',
+                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
                   }
                 }
                 
@@ -308,7 +314,7 @@ export function RoomCreationForm({ onRoomCreated }) {
                       {/* Header with Layout Name */}
                       <div className="text-center mb-3">
                         <IconComponent className={`w-8 h-8 mx-auto mb-2 ${colors.accent}`} />
-                        <h3 className="text-lg font-bold text-gray-900">{layout.name}</h3>
+                        <h3 className={`text-lg font-bold ${colors.text}`}>{layout.name}</h3>
                       </div>
                       
                       {/* Layout Preview */}
@@ -396,7 +402,7 @@ export function RoomCreationForm({ onRoomCreated }) {
                       </div>
                       
                       {/* Features */}
-                      <div className="flex justify-center gap-4 mb-3 text-xs text-gray-600">
+                      <div className={`flex justify-center gap-4 mb-3 text-xs ${colors.text}`}>
                         <div className="flex items-center gap-1">
                           <Camera className="w-3 h-3 text-red-500" />
                           <span>Video</span>
@@ -413,8 +419,8 @@ export function RoomCreationForm({ onRoomCreated }) {
                       
                       {/* Best For */}
                       <div className="text-center mb-3">
-                        <div className="text-xs font-semibold text-gray-700 mb-1">BEST FOR:</div>
-                        <div className="text-xs text-gray-600">
+                        <div className={`text-xs font-semibold ${colors.text} mb-1`}>BEST FOR:</div>
+                        <div className={`text-xs ${colors.text} opacity-80`}>
                           {key === 'standard' && 'General discussions, Q&A sessions'}
                           {key === 'panel' && 'Expert panels, debates with multiple speakers'}
                           {key === 'interview' && 'One-on-one interviews with guest + moderators'}
@@ -424,7 +430,7 @@ export function RoomCreationForm({ onRoomCreated }) {
                         </div>
                       </div>
                       
-                      <Button className={`w-full ${colors.button} text-white font-semibold`}>
+                      <Button className={`w-full ${colors.button} font-semibold`}>
                         Choose {layout.name}
                       </Button>
                     </CardContent>
