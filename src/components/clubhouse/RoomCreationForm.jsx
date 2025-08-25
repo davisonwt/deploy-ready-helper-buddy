@@ -34,27 +34,27 @@ export function RoomCreationForm({ onRoomCreated }) {
   const layouts = {
     standard: {
       name: 'Standard Discussion',
-      description: '1 Host + 1 Co-host + 8 Audience',
+      description: '8 visible boxes: 1 Host + 1 Co-host + 6 Audience (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 1,
-      inviteSlots: 8,
+      inviteSlots: 6,
       grid: 'grid-cols-4',
       icon: Users,
       color: 'bg-blue-50 border-blue-200'
     },
     panel: {
       name: 'Panel Discussion',
-      description: '1 Host + 3 Panelists + 6 Audience',
+      description: '8 visible boxes: 1 Host + 3 Panelists + 4 Audience (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 3,
-      inviteSlots: 6,
+      inviteSlots: 4,
       grid: 'grid-cols-3',
       icon: Crown, 
       color: 'bg-purple-50 border-purple-200'
     },
     interview: {
       name: 'Interview Style',
-      description: '1 Host + 1 Guest + 2 Co-hosts + 4 Audience',
+      description: '8 visible boxes: 1 Host + 1 Guest + 2 Co-hosts + 4 Audience (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 3, // Guest + 2 co-hosts
       inviteSlots: 4,
@@ -64,17 +64,17 @@ export function RoomCreationForm({ onRoomCreated }) {
     },
     townhall: {
       name: 'Town Hall',
-      description: '1 Host + 2 Moderators + 12 Audience',
+      description: '8 visible boxes: 1 Host + 2 Moderators + 5 Audience (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 2,
-      inviteSlots: 12,
+      inviteSlots: 5,
       grid: 'grid-cols-4',
       icon: Users,
       color: 'bg-yellow-50 border-yellow-200'
     },
     intimate: {
       name: 'Intimate Circle',
-      description: '1 Host + 7 Participants',
+      description: '8 visible boxes: 1 Host + 7 Participants (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 0,
       inviteSlots: 7,
@@ -84,10 +84,10 @@ export function RoomCreationForm({ onRoomCreated }) {
     },
     large: {
       name: 'Large Audience',
-      description: '1 Host + 1 Co-host + 16 Audience',
+      description: '8 visible boxes: 1 Host + 1 Co-host + 6 Audience (Unlimited guests in chat/queue)',
       hostSlots: 1,
       coHostSlots: 1,
-      inviteSlots: 16,
+      inviteSlots: 6,
       grid: 'grid-cols-4',
       icon: Users,
       color: 'bg-indigo-50 border-indigo-200'
