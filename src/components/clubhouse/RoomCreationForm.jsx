@@ -297,128 +297,135 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         </div>
         
         <div className="flex-1 p-4 overflow-y-auto">
-          <div className="max-w-5xl mx-auto pb-4">
+          <div className="max-w-6xl mx-auto pb-4">
             
-            {/* Enable Gifting Toggle - Full Width */}
-            <Card className="bg-white/80 backdrop-blur-sm mb-4">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">Enable Listener Gifting</h3>
-                    <p className="text-sm text-gray-600">Allow listeners to send gifts to hosts and co-hosts during the live session</p>
+            {/* All sections side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+              
+              {/* Enable Gifting Toggle */}
+              <Card className="bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Enable Listener Gifting</h3>
+                  <div className="flex items-center justify-center mb-3">
+                    <Switch
+                      checked={giftingEnabled}
+                      onCheckedChange={setGiftingEnabled}
+                    />
                   </div>
-                  <Switch
-                    checked={giftingEnabled}
-                    onCheckedChange={setGiftingEnabled}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-gray-600 text-center">
+                    Allow listeners to send gifts during live session
+                  </p>
+                </CardContent>
+              </Card>
 
-            {giftingEnabled && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                
-                {/* Gift Amount Limits */}
-                <Card className="bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Gift Amount Limits</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="minGift" className="text-sm">Minimum ($USDC)</Label>
-                        <Input
-                          id="minGift"
-                          type="number"
-                          min="0.1"
-                          max="50"
-                          step="0.1"
-                          value={minGiftAmount}
-                          onChange={(e) => setMinGiftAmount(parseFloat(e.target.value) || 1)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="maxGift" className="text-sm">Maximum ($USDC)</Label>
-                        <Input
-                          id="maxGift"
-                          type="number"
-                          min="1"
-                          max="1000"
-                          step="1"
-                          value={maxGiftAmount}
-                          onChange={(e) => setMaxGiftAmount(parseFloat(e.target.value) || 100)}
-                          className="mt-1"
-                        />
-                      </div>
+              {/* Gift Amount Limits */}
+              <Card className={`backdrop-blur-sm ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
+                <CardContent className="p-4">
+                  <h3 className={`text-lg font-semibold mb-3 ${giftingEnabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Gift Amount Limits
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="minGift" className="text-sm">Minimum ($USDC)</Label>
+                      <Input
+                        id="minGift"
+                        type="number"
+                        min="0.1"
+                        max="50"
+                        step="0.1"
+                        value={minGiftAmount}
+                        onChange={(e) => setMinGiftAmount(parseFloat(e.target.value) || 1)}
+                        className="mt-1"
+                        disabled={!giftingEnabled}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Allowed Recipients */}
-                <Card className="bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Who Can Receive Gifts?</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="host-gifts"
-                          checked={allowedRecipients.includes('host')}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAllowedRecipients(prev => [...prev, 'host'])
-                            } else {
-                              setAllowedRecipients(prev => prev.filter(r => r !== 'host'))
-                            }
-                          }}
-                        />
-                        <Label htmlFor="host-gifts" className="flex items-center gap-2 text-sm">
-                          <Crown className="w-4 h-4 text-yellow-600" />
-                          Host
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="cohost-gifts"
-                          checked={allowedRecipients.includes('cohosts')}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAllowedRecipients(prev => [...prev, 'cohosts'])
-                            } else {
-                              setAllowedRecipients(prev => prev.filter(r => r !== 'cohosts'))
-                            }
-                          }}
-                        />
-                        <Label htmlFor="cohost-gifts" className="flex items-center gap-2 text-sm">
-                          <Users className="w-4 h-4 text-blue-600" />
-                          Co-hosts
-                        </Label>
-                      </div>
+                    <div>
+                      <Label htmlFor="maxGift" className="text-sm">Maximum ($USDC)</Label>
+                      <Input
+                        id="maxGift"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        step="1"
+                        value={maxGiftAmount}
+                        onChange={(e) => setMaxGiftAmount(parseFloat(e.target.value) || 100)}
+                        className="mt-1"
+                        disabled={!giftingEnabled}
+                      />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Gift Preview */}
-                <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-purple-900 mb-3 flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
-                      Preview
-                    </h3>
-                    <div className="bg-white/80 rounded-lg p-3 space-y-2">
-                      <p className="text-sm text-gray-700">
-                        <strong>Range:</strong> ${minGiftAmount} - ${maxGiftAmount}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        <strong>Recipients:</strong> {allowedRecipients.length > 0 ? allowedRecipients.join(', ') : 'None'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Gift buttons will appear during live session
-                      </p>
+              {/* Allowed Recipients */}
+              <Card className={`backdrop-blur-sm ${giftingEnabled ? 'bg-white/80' : 'bg-gray-100/80'}`}>
+                <CardContent className="p-4">
+                  <h3 className={`text-lg font-semibold mb-3 ${giftingEnabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Who Can Receive Gifts?
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="host-gifts"
+                        checked={allowedRecipients.includes('host')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setAllowedRecipients(prev => [...prev, 'host'])
+                          } else {
+                            setAllowedRecipients(prev => prev.filter(r => r !== 'host'))
+                          }
+                        }}
+                        disabled={!giftingEnabled}
+                      />
+                      <Label htmlFor="host-gifts" className="flex items-center gap-2 text-sm">
+                        <Crown className="w-4 h-4 text-yellow-600" />
+                        Host
+                      </Label>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="cohost-gifts"
+                        checked={allowedRecipients.includes('cohosts')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setAllowedRecipients(prev => [...prev, 'cohosts'])
+                          } else {
+                            setAllowedRecipients(prev => prev.filter(r => r !== 'cohosts'))
+                          }
+                        }}
+                        disabled={!giftingEnabled}
+                      />
+                      <Label htmlFor="cohost-gifts" className="flex items-center gap-2 text-sm">
+                        <Users className="w-4 h-4 text-blue-600" />
+                        Co-hosts
+                      </Label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              </div>
-            )}
+              {/* Gift Preview */}
+              <Card className={`border-purple-200 ${giftingEnabled ? 'bg-gradient-to-r from-purple-50 to-pink-50' : 'bg-gray-100/80'}`}>
+                <CardContent className="p-4">
+                  <h3 className={`text-lg font-semibold mb-3 flex items-center gap-2 ${giftingEnabled ? 'text-purple-900' : 'text-gray-500'}`}>
+                    <DollarSign className="w-4 h-4" />
+                    Preview
+                  </h3>
+                  <div className={`rounded-lg p-3 space-y-2 ${giftingEnabled ? 'bg-white/80' : 'bg-gray-200/50'}`}>
+                    <p className={`text-sm ${giftingEnabled ? 'text-gray-700' : 'text-gray-500'}`}>
+                      <strong>Range:</strong> ${minGiftAmount} - ${maxGiftAmount}
+                    </p>
+                    <p className={`text-sm ${giftingEnabled ? 'text-gray-700' : 'text-gray-500'}`}>
+                      <strong>Recipients:</strong> {giftingEnabled && allowedRecipients.length > 0 ? allowedRecipients.join(', ') : 'None'}
+                    </p>
+                    <p className={`text-xs ${giftingEnabled ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {giftingEnabled ? 'Gift buttons will appear during live session' : 'Enable gifting to configure'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
           </div>
         </div>
 
