@@ -329,23 +329,23 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                 </div>
                 <div className="grid gap-3">
                   {filteredPublicRooms.map((room) => (
-                    <Card key={room.id} className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 border-slate-700/50 hover:from-slate-800/95 hover:to-slate-700/95 transition-all duration-300 shadow-lg backdrop-blur-sm">
+                    <Card key={room.id} className="bg-white/20 backdrop-blur-md border-white/30 hover:bg-white/30 transition-all duration-300 shadow-lg">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <h4 className="font-medium text-white">{room.name}</h4>
                             {room.description && (
-                              <p className="text-sm text-slate-300 mt-1 line-clamp-1">
+                              <p className="text-sm text-white/80 mt-1 line-clamp-1">
                                 {room.description}
                               </p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <div className="flex items-center gap-1 text-xs text-slate-400">
+                              <div className="flex items-center gap-1 text-xs text-white/70">
                                 <Users className="h-3 w-3" />
                                 <span>{room.chat_participants?.length || 0} members</span>
                               </div>
                               {room.category && (
-                                <Badge variant="outline" className="text-xs border-slate-600 text-slate-300 bg-slate-800/50">
+                                <Badge variant="outline" className="text-xs border-white/40 text-white/90 bg-white/10">
                                   {room.category}
                                 </Badge>
                               )}
@@ -356,7 +356,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               <Button 
                                 size="sm"
                                 onClick={() => onJoinRoom(room.id)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md"
                               >
                                 Enter Room
                               </Button>
@@ -364,7 +364,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               <Button 
                                 size="sm"
                                 onClick={() => handleJoinRequest(room.id, room.name)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
                               >
                                 Request to Join
                               </Button>
@@ -374,7 +374,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => deleteRoom(room.id, room.name)}
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
                                 title="Delete Room"
                               >
                                 <Trash2 className="h-4 w-4" />
