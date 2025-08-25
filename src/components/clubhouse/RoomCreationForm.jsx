@@ -205,8 +205,23 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   }
 
   const goLive = async () => {
-    await saveRoom()
+    if (!liveTopic.trim()) {
+      toast({
+        title: "Topic required",
+        description: "Please enter a live topic",
+        variant: "destructive"
+      })
+      return
+    }
     
+    // Automatically set current user as host
+    const currentUserAsHost = {
+      id: user.id,
+      name: user.email || 'Host',
+      email: user.email,
+      avatar: user.avatar_url || null
+    }
+
     const sessionData = {
       name: liveTopic.trim(),
       type: 'clubhouse',
@@ -215,17 +230,36 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
       layout: selectedLayout,
       creator_name: user?.email || 'Host',
       is_active: true,
-      host_user: hostSlot,
+      host_user: currentUserAsHost, // Automatically set current user as host
       co_host_users: coHostSlots,
-      invite_slots: inviteSlots
+      invite_slots: inviteSlots,
+      creator_id: user.id
     }
     
-    onRoomCreated?.(sessionData)
-    
-    toast({
-      title: "Going Live!",
-      description: "Your clubhouse session is now live",
-    })
+    // Save to database first
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .insert(sessionData)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      onRoomCreated?.(data)
+      
+      toast({
+        title: "🚀 Going Live!",
+        description: "Your clubhouse session is now live as the host",
+      })
+    } catch (error) {
+      console.error('Error going live:', error)
+      toast({
+        title: "Error",
+        description: "Failed to start live session",
+        variant: "destructive"
+      })
+    }
   }
 
   console.log('🔍 RoomCreationForm render - currentStep:', currentStep, 'selectedLayout:', selectedLayout)
@@ -524,20 +558,17 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </CardContent>
             </Card>
 
-            {/* 2. HOST & CO-HOST ASSIGNMENTS */}
+            {/* 2. CO-HOST & GUEST ASSIGNMENTS */}
             <Card className="rounded-xl shadow-lg" style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}>
               <CardContent className="p-4">
-                <h3 className="text-lg font-bold mb-3 text-center">👥 Assign Speakers</h3>
+                <h3 className="text-lg font-bold mb-3 text-center">👥 Assign Co-Speakers</h3>
                 
-                {/* Host */}
-                <div className="mb-4">
-                  <Label className="font-semibold mb-2 block">👑 Host</Label>
-                  <SlotCard
-                    title="Click to assign host"
-                    user={hostSlot}
-                    onClick={() => handleSlotClick('host')}
-                    className="border-yellow-300 bg-yellow-50 h-14 rounded-xl hover:shadow-md transition-all"
-                  />
+                {/* Host Info */}
+                <div className="mb-4 p-3 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                  <div className="flex items-center justify-center gap-2">
+                    <Crown className="w-5 h-5 text-yellow-600" />
+                    <span className="font-bold text-yellow-800">You will be the HOST when you go live</span>
+                  </div>
                 </div>
 
                 {/* Co-hosts */}
@@ -547,13 +578,13 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                       {selectedLayout === 'panel' ? '🎤 Panelists' : 
                        selectedLayout === 'interview' ? '🤝 Guest & Co-hosts' :
                        selectedLayout === 'townhall' ? '⚖️ Moderators' : '🤝 Co-hosts'} 
-                      ({layout.coHostSlots} slots)
+                      ({layout.coHostSlots} slots available)
                     </Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {coHostSlots.map((slot, index) => (
                         <SlotCard
                           key={index}
-                          title={`Click to assign ${selectedLayout === 'interview' && index === 0 ? 'guest' : 
+                          title={`Click to invite ${selectedLayout === 'interview' && index === 0 ? 'guest' : 
                                  selectedLayout === 'panel' ? 'panelist' :
                                  selectedLayout === 'townhall' ? 'moderator' : 'co-host'}`}
                           user={slot}
