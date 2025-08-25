@@ -243,15 +243,16 @@ export function RoomCreationForm({ onRoomCreated }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="min-h-screen bg-white overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-3">Choose Your Clubhouse Layout</h1>
-            <p className="text-lg text-gray-600">Select the format that best fits your session type</p>
-          </div>
+      <div className="h-screen bg-white flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto p-6">
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-800 mb-3">Choose Your Clubhouse Layout</h1>
+              <p className="text-lg text-gray-600">Select the format that best fits your session type</p>
+            </div>
 
-          {/* Scrollable Grid Container */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-none">
+            {/* Scrollable Grid Container */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {Object.entries(layouts).map(([key, layout]) => {
               const IconComponent = layout.icon
               return (
