@@ -382,12 +382,14 @@ export function RoomCreationForm({ onRoomCreated }) {
                               <MessageSquare className="w-2 h-2" />
                               CHAT & QUEUE
                             </div>
-                            <div className="space-y-1">
-                              <div className="bg-white rounded p-1 text-xs text-gray-600">Hi everyone! 👋</div>
-                              <div className="bg-white rounded p-1 text-xs text-gray-600">Can I join to speak?</div>
-                              <div className="bg-blue-100 rounded p-1 text-xs text-blue-700">🙋 Wants to speak</div>
-                              <div className="bg-blue-100 rounded p-1 text-xs text-blue-700">🙋 In queue</div>
-                            </div>
+                             <div className="space-y-1">
+                               <div className="bg-white rounded p-1 text-xs text-gray-600">Hi everyone! 👋</div>
+                               <div className="bg-white rounded p-1 text-xs text-gray-600">Can I join to speak?</div>
+                               <div className="bg-orange-100 rounded p-1 text-xs text-orange-700">🎤 Voice recording sent</div>
+                               <div className="bg-yellow-100 rounded p-1 text-xs text-yellow-700">⏳ Awaiting host approval</div>
+                               <div className="bg-green-100 rounded p-1 text-xs text-green-700">✅ Recording approved</div>
+                               <div className="bg-blue-100 rounded p-1 text-xs text-blue-700">🙋 In queue to speak</div>
+                             </div>
                             <div className="text-xs text-center text-gray-500 mt-1">Unlimited listeners</div>
                           </div>
                         </div>
@@ -535,21 +537,31 @@ export function RoomCreationForm({ onRoomCreated }) {
               <h3 className="text-lg font-semibold mb-4">
                 {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
               </h3>
-              {/* Dynamic horizontal grid based on layout - smaller boxes */}
-              <div className={`grid gap-2 justify-center max-w-5xl mx-auto ${
-                layouts[selectedLayout].inviteSlots <= 4 ? 'grid-cols-4' :
-                layouts[selectedLayout].inviteSlots <= 6 ? 'grid-cols-6' :
-                layouts[selectedLayout].inviteSlots <= 8 ? 'grid-cols-8' :
-                'grid-cols-8'
-              }`}>
+              {/* Horizontal grid for audience - smaller boxes */}
+              <div className="flex flex-wrap gap-2 justify-center max-w-5xl mx-auto">
                 {inviteSlots.map((slot, index) => (
-                  <SlotCard
+                  <Card 
                     key={index}
-                    title={`${selectedLayout === 'intimate' ? 'participant' : 'audience'} ${index + 1}`}
-                    user={slot}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-2 border-green-300 bg-green-50 w-16 h-20"
                     onClick={() => handleSlotClick('invite', index)}
-                    className="border-green-300 bg-green-50 h-24 w-20"
-                  />
+                  >
+                    <CardContent className="p-1 h-full flex flex-col items-center justify-center">
+                      {slot ? (
+                        <>
+                          <Avatar className="w-8 h-8 mb-1">
+                            <AvatarImage src={slot.avatar} />
+                            <AvatarFallback className="text-xs">{slot.name?.[0] || 'A'}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-medium text-center leading-tight">{slot.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-6 h-6 text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-500 text-center leading-tight">audience {index + 1}</span>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
               {layouts[selectedLayout].inviteSlots > 8 && (
