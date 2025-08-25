@@ -90,7 +90,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
     }
   }
   
-  const [currentStep, setCurrentStep] = useState('layout') // 'layout', 'form', 'live'
+  const [currentStep, setCurrentStep] = useState('layout') // 'layout', 'gifting', 'form'
   const [selectedLayout, setSelectedLayout] = useState('')
   const [liveTopic, setLiveTopic] = useState('')
   const [sessionType, setSessionType] = useState('free')
@@ -98,6 +98,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   const [hostSlot, setHostSlot] = useState(null)
   const [coHostSlots, setCoHostSlots] = useState([])
   const [inviteSlots, setInviteSlots] = useState([])
+  
+  // Gifting configuration state
+  const [giftingEnabled, setGiftingEnabled] = useState(true)
+  const [minGiftAmount, setMinGiftAmount] = useState(1)
+  const [maxGiftAmount, setMaxGiftAmount] = useState(100)
+  const [allowedRecipients, setAllowedRecipients] = useState(['host', 'cohosts'])
   
   // Initialize slots when layout changes
   useEffect(() => {
@@ -111,8 +117,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   const handleLayoutSelect = (layoutKey) => {
     console.log('🔍 Layout selected:', layoutKey)
     setSelectedLayout(layoutKey)
-    console.log('🔍 Setting step to form')
-    setCurrentStep('form')
+    console.log('🔍 Setting step to gifting')
+    setCurrentStep('gifting')
   }
 
   const SlotCard = ({ title, user, onClick, className = '' }) => (
@@ -177,7 +183,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         co_host_users: coHostSlots,
         invite_slots: inviteSlots,
         is_active: false,
-        creator_id: user.id
+        creator_id: user.id,
+        // Gifting configuration
+        gifting_enabled: giftingEnabled,
+        min_gift_amount: minGiftAmount,
+        max_gift_amount: maxGiftAmount,
+        allowed_recipients: allowedRecipients
       }
 
       const { data, error } = await supabase
@@ -233,7 +244,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
       host_user: currentUserAsHost, // Automatically set current user as host
       co_host_users: coHostSlots,
       invite_slots: inviteSlots,
-      creator_id: user.id
+      creator_id: user.id,
+      // Gifting configuration
+      gifting_enabled: giftingEnabled,
+      min_gift_amount: minGiftAmount,
+      max_gift_amount: maxGiftAmount,
+      allowed_recipients: allowedRecipients
     }
     
     // Save to database first
@@ -263,6 +279,168 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   }
 
   console.log('🔍 RoomCreationForm render - currentStep:', currentStep, 'selectedLayout:', selectedLayout)
+
+  // Gifting Configuration Step
+  if (currentStep === 'gifting') {
+    return (
+      <div className="h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col rounded-3xl m-4 overflow-hidden shadow-2xl">
+        
+        {/* Header */}
+        <div className="bg-white/90 backdrop-blur-md border-b border-white/20 px-6 py-4 flex-shrink-0 rounded-t-3xl">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">Configure Gifting</h1>
+            <Button variant="ghost" onClick={onClose} className="rounded-full">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <p className="text-gray-600 mt-2">Set up listener gifting options for hosts and co-hosts</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-2xl mx-auto space-y-6">
+            
+            {/* Enable Gifting Toggle */}
+            <Card className="bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Enable Listener Gifting</h3>
+                    <p className="text-sm text-gray-600">Allow listeners to send gifts to hosts and co-hosts during the live session</p>
+                  </div>
+                  <Switch
+                    checked={giftingEnabled}
+                    onCheckedChange={setGiftingEnabled}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {giftingEnabled && (
+              <>
+                {/* Gift Amount Limits */}
+                <Card className="bg-white/80 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Gift Amount Limits</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="minGift">Minimum Gift ($USDC)</Label>
+                        <Input
+                          id="minGift"
+                          type="number"
+                          min="0.1"
+                          max="50"
+                          step="0.1"
+                          value={minGiftAmount}
+                          onChange={(e) => setMinGiftAmount(parseFloat(e.target.value) || 1)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="maxGift">Maximum Gift ($USDC)</Label>
+                        <Input
+                          id="maxGift"
+                          type="number"
+                          min="1"
+                          max="1000"
+                          step="1"
+                          value={maxGiftAmount}
+                          onChange={(e) => setMaxGiftAmount(parseFloat(e.target.value) || 100)}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Allowed Recipients */}
+                <Card className="bg-white/80 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Who Can Receive Gifts?</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="host-gifts"
+                          checked={allowedRecipients.includes('host')}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setAllowedRecipients(prev => [...prev, 'host'])
+                            } else {
+                              setAllowedRecipients(prev => prev.filter(r => r !== 'host'))
+                            }
+                          }}
+                        />
+                        <Label htmlFor="host-gifts" className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-yellow-600" />
+                          Host can receive gifts
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="cohost-gifts"
+                          checked={allowedRecipients.includes('cohosts')}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setAllowedRecipients(prev => [...prev, 'cohosts'])
+                            } else {
+                              setAllowedRecipients(prev => prev.filter(r => r !== 'cohosts'))
+                            }
+                          }}
+                        />
+                        <Label htmlFor="cohost-gifts" className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          Co-hosts can receive gifts
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Gift Preview */}
+                <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                      <DollarSign className="w-5 h-5" />
+                      Gifting Preview
+                    </h3>
+                    <div className="bg-white/80 rounded-lg p-4">
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Range:</strong> ${minGiftAmount} - ${maxGiftAmount} USDC
+                      </p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Recipients:</strong> {allowedRecipients.length > 0 ? allowedRecipients.join(', ') : 'None selected'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Listeners will see gift buttons during your live session
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="bg-white/90 backdrop-blur-md border-t border-white/20 px-6 py-4 flex-shrink-0 rounded-b-3xl">
+          <div className="flex justify-between gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep('layout')}
+              className="flex-1"
+            >
+              ← Back to Layout
+            </Button>
+            <Button 
+              onClick={() => setCurrentStep('form')}
+              className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+            >
+              Continue to Room Setup →
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Layout Selection Step
   if (currentStep === 'layout') {
