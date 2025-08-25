@@ -20,13 +20,14 @@ import {
   Camera,
   FileText,
   Mic,
-  Layout
+  Layout,
+  X
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 
-export function RoomCreationForm({ onRoomCreated }) {
+export function RoomCreationForm({ onRoomCreated, onClose }) {
   const { user } = useAuth()
   const { toast } = useToast()
   
@@ -243,15 +244,22 @@ export function RoomCreationForm({ onRoomCreated }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="h-screen bg-white flex flex-col">
-        <div className="flex-shrink-0 p-4 text-center border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Choose Your Clubhouse Setup</h1>
-          <p className="text-sm text-gray-600">Select how many people can speak and participate</p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
+        
+        {/* Header */}
+        <div className="bg-white border-b px-6 py-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">Choose Your Clubhouse Layout</h1>
+            <Button variant="ghost" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <p className="text-gray-600 mt-2">Select the perfect layout for your live session</p>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 
@@ -309,41 +317,41 @@ export function RoomCreationForm({ onRoomCreated }) {
                     className={`cursor-pointer hover:shadow-xl transition-all duration-200 ${colors.bg} border-2 ${colors.border} hover:scale-[1.02]`}
                     onClick={() => handleLayoutSelect(key)}
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-6">
                       
                       {/* Header with Layout Name */}
-                      <div className="text-center mb-3">
-                        <IconComponent className={`w-8 h-8 mx-auto mb-2 ${colors.accent}`} />
-                        <h3 className={`text-lg font-bold ${colors.text}`}>{layout.name}</h3>
+                      <div className="text-center mb-4">
+                        <IconComponent className={`w-10 h-10 mx-auto mb-3 ${colors.accent}`} />
+                        <h3 className={`text-xl font-bold ${colors.text}`}>{layout.name}</h3>
                       </div>
                       
                       {/* Layout Preview */}
-                      <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
-                        <div className="flex gap-2 mb-2">
+                      <div className="bg-white/90 backdrop-blur rounded-lg p-4 mb-4 border border-white/50">
+                        <div className="flex gap-3 mb-3">
                           
                           {/* Speaking Area */}
                           <div className="flex-1">
-                            <div className="text-xs font-semibold text-gray-700 mb-2 text-center">SPEAKERS</div>
+                            <div className="text-xs font-semibold text-gray-700 mb-3 text-center">SPEAKERS</div>
                             
                             {/* Host */}
-                            <div className="flex justify-center mb-2">
-                              <div className="bg-yellow-100 border border-yellow-300 rounded px-2 py-1 text-center">
-                                <Crown className="w-3 h-3 mx-auto mb-1 text-yellow-600" />
+                            <div className="flex justify-center mb-3">
+                              <div className="bg-yellow-100 border border-yellow-300 rounded px-3 py-2 text-center">
+                                <Crown className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
                                 <div className="text-xs font-bold text-yellow-800">HOST</div>
                               </div>
                             </div>
                             
                             {/* Co-hosts/Panelists - Different layouts */}
                             {layout.coHostSlots > 0 && (
-                              <div className="flex justify-center gap-1 mb-2">
+                              <div className="flex justify-center gap-2 mb-3">
                                 {key === 'interview' ? (
                                   // Interview: 1 Guest + 2 Co-hosts
                                   <>
-                                    <div className="bg-emerald-100 border border-emerald-300 rounded px-1 py-1 text-center">
+                                    <div className="bg-emerald-100 border border-emerald-300 rounded px-2 py-1 text-center">
                                       <div className="text-xs font-bold text-emerald-800">GUEST</div>
                                     </div>
                                     {Array(2).fill(0).map((_, i) => (
-                                      <div key={i} className="bg-blue-100 border border-blue-300 rounded px-1 py-1 text-center">
+                                      <div key={i} className="bg-blue-100 border border-blue-300 rounded px-2 py-1 text-center">
                                         <div className="text-xs font-bold text-blue-800">CO</div>
                                       </div>
                                     ))}
@@ -351,7 +359,7 @@ export function RoomCreationForm({ onRoomCreated }) {
                                 ) : (
                                   // Other layouts: Regular co-hosts/panelists
                                   Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
-                                    <div key={i} className="bg-blue-100 border border-blue-300 rounded px-1 py-1 text-center">
+                                    <div key={i} className="bg-blue-100 border border-blue-300 rounded px-2 py-1 text-center">
                                       <div className="text-xs font-bold text-blue-800">
                                         {key === 'panel' ? 'PAN' : 'CO'}
                                       </div>
@@ -367,25 +375,25 @@ export function RoomCreationForm({ onRoomCreated }) {
                               layout.inviteSlots <= 4 ? 'grid-cols-2' : 
                               layout.inviteSlots <= 6 ? 'grid-cols-3' : 
                               'grid-cols-4'
-                            } max-w-32 mx-auto`}>
+                            } max-w-40 mx-auto`}>
                               {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                <div key={i} className="bg-green-100 border border-green-300 rounded h-6 w-6 flex items-center justify-center">
-                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                <div key={i} className="bg-green-100 border border-green-300 rounded h-7 w-7 flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                 </div>
                               ))}
                             </div>
                             {layout.inviteSlots > 8 && (
                               <div className="text-xs text-center text-gray-500 mt-1">+{layout.inviteSlots - 8} more</div>
                             )}
-                            <div className="text-xs text-center text-gray-600 mt-1">
+                            <div className="text-xs text-center text-gray-600 mt-2">
                               {layout.inviteSlots} audience can speak
                             </div>
                           </div>
                           
                           {/* Messages/Queue Area */}
                           <div className="w-1/3 bg-gray-50 rounded border border-gray-200 p-2">
-                            <div className="text-xs font-semibold text-gray-700 mb-1 text-center flex items-center justify-center gap-1">
-                              <MessageSquare className="w-2 h-2" />
+                            <div className="text-xs font-semibold text-gray-700 mb-2 text-center flex items-center justify-center gap-1">
+                              <MessageSquare className="w-3 h-3" />
                               CHAT & QUEUE
                             </div>
                              <div className="space-y-1">
@@ -396,31 +404,31 @@ export function RoomCreationForm({ onRoomCreated }) {
                                <div className="bg-green-100 rounded p-1 text-xs text-green-700">✅ Recording approved</div>
                                <div className="bg-blue-100 rounded p-1 text-xs text-blue-700">🙋 In queue to speak</div>
                              </div>
-                            <div className="text-xs text-center text-gray-500 mt-1">Unlimited listeners</div>
+                            <div className="text-xs text-center text-gray-500 mt-2">Unlimited listeners</div>
                           </div>
                         </div>
                       </div>
                       
                       {/* Features */}
-                      <div className={`flex justify-center gap-4 mb-3 text-xs ${colors.text}`}>
+                      <div className={`flex justify-center gap-4 mb-4 text-sm ${colors.text}`}>
                         <div className="flex items-center gap-1">
-                          <Camera className="w-3 h-3 text-red-500" />
+                          <Camera className="w-4 h-4 text-red-500" />
                           <span>Video</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <FileText className="w-3 h-3 text-orange-500" />
+                          <FileText className="w-4 h-4 text-orange-500" />
                           <span>Docs</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Mic className="w-3 h-3 text-green-500" />
+                          <Mic className="w-4 h-4 text-green-500" />
                           <span>Audio</span>
                         </div>
                       </div>
                       
                       {/* Best For */}
-                      <div className="text-center mb-3">
-                        <div className={`text-xs font-semibold ${colors.text} mb-1`}>BEST FOR:</div>
-                        <div className={`text-xs ${colors.text} opacity-80`}>
+                      <div className="text-center mb-4">
+                        <div className={`text-sm font-semibold ${colors.text} mb-2`}>BEST FOR:</div>
+                        <div className={`text-sm ${colors.text} opacity-90`}>
                           {key === 'standard' && 'General discussions, Q&A sessions'}
                           {key === 'panel' && 'Expert panels, debates with multiple speakers'}
                           {key === 'interview' && 'One-on-one interviews with guest + moderators'}
@@ -447,56 +455,59 @@ export function RoomCreationForm({ onRoomCreated }) {
 
   // Form Step
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white">
       
-      {/* LEFT SIDE - Messages */}
-      <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0">
-        <div className="flex items-center gap-2 mb-4">
-          <MessageSquare className="w-5 h-5" />
-          <h3 className="font-semibold">Messages & Queue</h3>
-        </div>
-        
-        <ScrollArea className="h-96">
-          <div className="space-y-3">
-            {messages.map((message, index) => (
-              <div key={index} className="p-3 bg-white rounded text-sm border-l-4 border-blue-400">
-                {message}
-              </div>
-            ))}
+      {/* Fixed Header */}
+      <div className="bg-white border-b px-6 py-4 flex-shrink-0 sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => setCurrentStep('layout')}>
+            ← Change Layout
+          </Button>
+          <div className="text-center">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {layouts[selectedLayout]?.name}
+            </Badge>
           </div>
-        </ScrollArea>
+          <Button variant="ghost" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
-      {/* RIGHT SIDE - Main Layout with Scrolling */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        <ScrollArea className="flex-1">
-          <div className="p-6 pb-20">
+      <div className="flex">
+        {/* LEFT SIDE - Messages */}
+        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0 h-screen sticky top-16 overflow-y-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5" />
+            <h3 className="font-semibold">Messages & Queue</h3>
+          </div>
+          
+          <ScrollArea className="h-96">
+            <div className="space-y-3">
+              {messages.map((message, index) => (
+                <div key={index} className="p-3 bg-white rounded text-sm border-l-4 border-blue-400">
+                  {message}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* RIGHT SIDE - Main Layout with Full Scrolling */}
+        <div className="flex-1">
+          <div className="p-6 min-h-screen">
             
-            {/* Header with back button and selected layout */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <Button variant="outline" onClick={() => setCurrentStep('layout')}>
-                  ← Change Layout
-                </Button>
-                <div className="text-center">
-                  <Badge variant="secondary" className="text-lg px-4 py-2">
-                    {layouts[selectedLayout]?.name}
-                  </Badge>
-                </div>
-                <div></div>
+            {/* Topic Input */}
+            <div className="text-center mb-12">
+              <div className="mb-4">
+                <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
               </div>
-              
-              <div className="text-center">
-                <div className="mb-4">
-                  <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
-                </div>
-                <Input
-                  value={liveTopic}
-                  onChange={(e) => setLiveTopic(e.target.value)}
-                  placeholder="Enter your live topic here..."
-                  className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
-                />
-              </div>
+              <Input
+                value={liveTopic}
+                onChange={(e) => setLiveTopic(e.target.value)}
+                placeholder="Enter your live topic here..."
+                className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
+              />
             </div>
 
             {/* Dynamic Layout Rendering */}
@@ -632,7 +643,7 @@ export function RoomCreationForm({ onRoomCreated }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-4 justify-center pb-8">
               <Button onClick={saveRoom} variant="outline" size="lg" className="px-8">
                 <Save className="w-5 h-5 mr-2" />
                 Save Configuration
@@ -643,7 +654,7 @@ export function RoomCreationForm({ onRoomCreated }) {
               </Button>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )
