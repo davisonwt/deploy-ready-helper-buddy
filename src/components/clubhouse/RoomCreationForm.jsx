@@ -253,122 +253,123 @@ export function RoomCreationForm({ onRoomCreated }) {
 
             {/* Scrollable Grid Container */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {Object.entries(layouts).map(([key, layout]) => {
-              const IconComponent = layout.icon
-              return (
-                <Card 
-                  key={key}
-                  className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${layout.color} border-2 hover:scale-[1.02]`}
-                  onClick={() => handleLayoutSelect(key)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      
-                      {/* Left Side - Layout Info */}
-                      <div className="w-1/3">
-                        <div className="text-center mb-3">
-                          <IconComponent className="w-10 h-10 mx-auto mb-2 text-gray-700" />
-                          <h3 className="text-lg font-bold text-gray-800">{layout.name}</h3>
-                          <p className="text-gray-600 text-xs">{layout.description}</p>
-                        </div>
+              {Object.entries(layouts).map(([key, layout]) => {
+                const IconComponent = layout.icon
+                return (
+                  <Card 
+                    key={key}
+                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${layout.color} border-2 hover:scale-[1.02]`}
+                    onClick={() => handleLayoutSelect(key)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        
+                        {/* Left Side - Layout Info */}
+                        <div className="w-1/3">
+                          <div className="text-center mb-3">
+                            <IconComponent className="w-10 h-10 mx-auto mb-2 text-gray-700" />
+                            <h3 className="text-lg font-bold text-gray-800">{layout.name}</h3>
+                            <p className="text-gray-600 text-xs">{layout.description}</p>
+                          </div>
 
-                        {/* Feature List */}
-                        <div className="text-xs text-gray-600 space-y-1">
-                          <div className="flex items-center gap-1">
-                            <Camera className="w-3 h-3" />
-                            <span>Video sharing</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            <span>Document collaboration</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Mic className="w-3 h-3" />
-                            <span>Voice recordings</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Side - Complete Layout Preview */}
-                      <div className="flex-1">
-                        <div className="bg-white rounded border border-gray-200 p-3">
-                          
-                          <div className="flex gap-2">
-                            {/* Messages/Queue Sidebar Preview */}
-                            <div className="w-1/4 bg-gray-50 rounded p-2 border border-gray-200">
-                              <div className="text-xs font-semibold mb-2 flex items-center gap-1">
-                                <MessageSquare className="w-3 h-3" />
-                                Queue
-                              </div>
-                              <div className="space-y-1">
-                                {Array(5).fill(0).map((_, i) => (
-                                  <div key={i} className="h-1.5 bg-blue-300 rounded"></div>
-                                ))}
-                              </div>
+                          {/* Feature List */}
+                          <div className="text-xs text-gray-600 space-y-1">
+                            <div className="flex items-center gap-1">
+                              <Camera className="w-3 h-3" />
+                              <span>Video sharing</span>
                             </div>
+                            <div className="flex items-center gap-1">
+                              <FileText className="w-3 h-3" />
+                              <span>Document collaboration</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Mic className="w-3 h-3" />
+                              <span>Voice recordings</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Side - Complete Layout Preview */}
+                        <div className="flex-1">
+                          <div className="bg-white rounded border border-gray-200 p-3">
                             
-                            {/* Main Session Area */}
-                            <div className="flex-1 p-2">
-                              {/* Host slot */}
-                              <div className="flex justify-center mb-2">
-                                <div className="w-12 h-6 bg-yellow-300 rounded border border-yellow-400 flex items-center justify-center">
-                                  <Crown className="w-2 h-2" />
+                            <div className="flex gap-2">
+                              {/* Messages/Queue Sidebar Preview */}
+                              <div className="w-1/4 bg-gray-50 rounded p-2 border border-gray-200">
+                                <div className="text-xs font-semibold mb-2 flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3" />
+                                  Queue
                                 </div>
-                              </div>
-                              
-                              {/* Co-host slots */}
-                              {layout.coHostSlots > 0 && (
-                                <div className="flex justify-center gap-1 mb-2">
-                                  {Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
-                                    <div key={i} className="w-8 h-5 bg-blue-300 rounded border border-blue-400 flex items-center justify-center">
-                                      <Users className="w-2 h-2" />
-                                    </div>
+                                <div className="space-y-1">
+                                  {Array(5).fill(0).map((_, i) => (
+                                    <div key={i} className="h-1.5 bg-blue-300 rounded"></div>
                                   ))}
-                                  {layout.coHostSlots > 4 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 4}</span>}
                                 </div>
-                              )}
+                              </div>
                               
-                              {/* Audience grid */}
-                              <div className="grid grid-cols-4 gap-1 mb-2">
-                                {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                  <div key={i} className="w-4 h-3 bg-green-300 rounded border border-green-400"></div>
-                                ))}
+                              {/* Main Session Area */}
+                              <div className="flex-1 p-2">
+                                {/* Host slot */}
+                                <div className="flex justify-center mb-2">
+                                  <div className="w-12 h-6 bg-yellow-300 rounded border border-yellow-400 flex items-center justify-center">
+                                    <Crown className="w-2 h-2" />
+                                  </div>
+                                </div>
+                                
+                                {/* Co-host slots */}
+                                {layout.coHostSlots > 0 && (
+                                  <div className="flex justify-center gap-1 mb-2">
+                                    {Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
+                                      <div key={i} className="w-8 h-5 bg-blue-300 rounded border border-blue-400 flex items-center justify-center">
+                                        <Users className="w-2 h-2" />
+                                      </div>
+                                    ))}
+                                    {layout.coHostSlots > 4 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 4}</span>}
+                                  </div>
+                                )}
+                                
+                                {/* Audience grid - Show max 8 boxes */}
+                                <div className="grid grid-cols-4 gap-1 mb-2">
+                                  {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
+                                    <div key={i} className="w-4 h-3 bg-green-300 rounded border border-green-400"></div>
+                                  ))}
+                                </div>
+                                {layout.inviteSlots > 8 && (
+                                  <div className="text-center text-xs text-gray-500">Only 8 visible (unlimited in queue)</div>
+                                )}
                               </div>
-                              {layout.inviteSlots > 8 && (
-                                <div className="text-center text-xs text-gray-500">+{layout.inviteSlots - 8} more</div>
-                              )}
+                            </div>
+
+                            {/* Document/Video Sharing Area */}
+                            <div className="mt-2 bg-gray-50 rounded p-2 border-t border-gray-200">
+                              <div className="text-xs font-semibold mb-1 text-center text-gray-600">Shared Content</div>
+                              <div className="grid grid-cols-2 gap-1">
+                                <div className="bg-white rounded p-1 border border-gray-200 text-center">
+                                  <FileText className="w-3 h-3 mx-auto mb-1 text-gray-500" />
+                                  <div className="text-xs text-gray-500">Docs</div>
+                                </div>
+                                <div className="bg-white rounded p-1 border border-gray-200 text-center">
+                                  <Camera className="w-3 h-3 mx-auto mb-1 text-gray-500" />
+                                  <div className="text-xs text-gray-500">Video</div>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Document/Video Sharing Area */}
-                          <div className="mt-2 bg-gray-50 rounded p-2 border-t border-gray-200">
-                            <div className="text-xs font-semibold mb-1 text-center text-gray-600">Shared Content</div>
-                            <div className="grid grid-cols-2 gap-1">
-                              <div className="bg-white rounded p-1 border border-gray-200 text-center">
-                                <FileText className="w-3 h-3 mx-auto mb-1 text-gray-500" />
-                                <div className="text-xs text-gray-500">Docs</div>
-                              </div>
-                              <div className="bg-white rounded p-1 border border-gray-200 text-center">
-                                <Camera className="w-3 h-3 mx-auto mb-1 text-gray-500" />
-                                <div className="text-xs text-gray-500">Video</div>
-                              </div>
-                            </div>
-                          </div>
+                          <Button className="mt-3 w-full" size="sm">
+                            Select This Layout
+                          </Button>
                         </div>
-
-                        <Button className="mt-3 w-full" size="sm">
-                          Select This Layout
-                        </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
 
-          {/* Bottom spacing for scrolling */}
-          <div className="h-20"></div>
+            {/* Bottom spacing for scrolling */}
+            <div className="h-20"></div>
+          </div>
         </div>
       </div>
     )
