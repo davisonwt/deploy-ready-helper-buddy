@@ -243,10 +243,10 @@ export function RoomCreationForm({ onRoomCreated }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="h-screen bg-gray-900 text-white flex flex-col">
-        <div className="flex-shrink-0 p-4 text-center border-b border-gray-700">
-          <h1 className="text-xl font-bold text-white mb-1">Choose Your Clubhouse Setup</h1>
-          <p className="text-sm text-gray-300">Select how many people can speak and participate</p>
+      <div className="h-screen bg-white flex flex-col">
+        <div className="flex-shrink-0 p-4 text-center border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-900 mb-1">Choose Your Clubhouse Setup</h1>
+          <p className="text-sm text-gray-600">Select how many people can speak and participate</p>
         </div>
         
         <div className="flex-1 overflow-y-auto p-4">
@@ -257,78 +257,78 @@ export function RoomCreationForm({ onRoomCreated }) {
                 return (
                   <Card 
                     key={key}
-                    className={`cursor-pointer hover:shadow-xl transition-all duration-200 bg-gray-800 border-gray-600 border-2 hover:border-orange-500 hover:scale-[1.02]`}
+                    className={`cursor-pointer hover:shadow-xl transition-all duration-200 bg-white border-2 border-gray-200 hover:border-blue-500 hover:scale-[1.02]`}
                     onClick={() => handleLayoutSelect(key)}
                   >
                     <CardContent className="p-4">
                       
                       {/* Header with Layout Name */}
                       <div className="text-center mb-3">
-                        <IconComponent className="w-8 h-8 mx-auto mb-2 text-orange-400" />
-                        <h3 className="text-lg font-bold text-white">{layout.name}</h3>
+                        <IconComponent className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                        <h3 className="text-lg font-bold text-gray-900">{layout.name}</h3>
                       </div>
                       
                       {/* What You Get - Clear Layout */}
-                      <div className="bg-gray-700 rounded-lg p-3 mb-3">
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
                         <div className="text-center mb-2">
-                          <span className="text-xs font-semibold text-gray-300">SPEAKING POSITIONS</span>
+                          <span className="text-xs font-semibold text-gray-700">SPEAKING POSITIONS</span>
                         </div>
                         
                         <div className="flex justify-center gap-2 mb-2">
                           {/* Host */}
-                          <div className="bg-yellow-600 rounded p-2 text-center min-w-0 flex-1">
-                            <Crown className="w-4 h-4 mx-auto mb-1" />
-                            <div className="text-xs font-bold">HOST</div>
-                            <div className="text-xs">You</div>
+                          <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-center min-w-0 flex-1">
+                            <Crown className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
+                            <div className="text-xs font-bold text-yellow-800">HOST</div>
+                            <div className="text-xs text-yellow-700">You</div>
                           </div>
                           
                           {/* Co-hosts */}
                           {layout.coHostSlots > 0 && (
-                            <div className="bg-blue-600 rounded p-2 text-center min-w-0 flex-1">
-                              <Users className="w-4 h-4 mx-auto mb-1" />
-                              <div className="text-xs font-bold">CO-HOSTS</div>
-                              <div className="text-xs">{layout.coHostSlots} people</div>
+                            <div className="bg-blue-100 border border-blue-300 rounded p-2 text-center min-w-0 flex-1">
+                              <Users className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+                              <div className="text-xs font-bold text-blue-800">CO-HOSTS</div>
+                              <div className="text-xs text-blue-700">{layout.coHostSlots} people</div>
                             </div>
                           )}
                         </div>
                         
                         {/* Audience Box */}
-                        <div className="bg-green-700 rounded p-2 text-center">
-                          <Mic className="w-4 h-4 mx-auto mb-1" />
-                          <div className="text-xs font-bold">AUDIENCE CAN SPEAK</div>
-                          <div className="text-xs">Up to {layout.inviteSlots} people from queue</div>
+                        <div className="bg-green-100 border border-green-300 rounded p-2 text-center">
+                          <Mic className="w-4 h-4 mx-auto mb-1 text-green-600" />
+                          <div className="text-xs font-bold text-green-800">AUDIENCE CAN SPEAK</div>
+                          <div className="text-xs text-green-700">Up to {layout.inviteSlots} people from queue</div>
                         </div>
                       </div>
                       
                       {/* Queue Info */}
-                      <div className="bg-gray-700 rounded-lg p-3 mb-3">
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
                         <div className="text-center">
-                          <MessageSquare className="w-4 h-4 mx-auto mb-1 text-blue-400" />
-                          <div className="text-xs font-semibold text-gray-300 mb-1">UNLIMITED LISTENERS</div>
-                          <div className="text-xs text-gray-400">Anyone can join, chat, and request to speak</div>
+                          <MessageSquare className="w-4 h-4 mx-auto mb-1 text-purple-600" />
+                          <div className="text-xs font-semibold text-gray-700 mb-1">UNLIMITED LISTENERS</div>
+                          <div className="text-xs text-gray-600">Anyone can join, chat, and request to speak</div>
                         </div>
                       </div>
                       
                       {/* Features */}
-                      <div className="flex justify-center gap-4 mb-3 text-xs text-gray-400">
+                      <div className="flex justify-center gap-4 mb-3 text-xs text-gray-600">
                         <div className="flex items-center gap-1">
-                          <Camera className="w-3 h-3" />
+                          <Camera className="w-3 h-3 text-red-500" />
                           <span>Video</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <FileText className="w-3 h-3" />
+                          <FileText className="w-3 h-3 text-orange-500" />
                           <span>Docs</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Mic className="w-3 h-3" />
+                          <Mic className="w-3 h-3 text-green-500" />
                           <span>Audio</span>
                         </div>
                       </div>
                       
                       {/* Best For */}
                       <div className="text-center mb-3">
-                        <div className="text-xs font-semibold text-gray-300 mb-1">BEST FOR:</div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs font-semibold text-gray-700 mb-1">BEST FOR:</div>
+                        <div className="text-xs text-gray-600">
                           {key === 'standard' && 'General discussions, Q&A sessions'}
                           {key === 'panel' && 'Expert panels, debates, discussions'}
                           {key === 'interview' && 'One-on-one interviews, guest shows'}
@@ -338,7 +338,7 @@ export function RoomCreationForm({ onRoomCreated }) {
                         </div>
                       </div>
                       
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                         Choose {layout.name}
                       </Button>
                     </CardContent>
