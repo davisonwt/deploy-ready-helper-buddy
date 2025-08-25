@@ -500,7 +500,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
       <div className="flex flex-1 min-h-0">
         {/* LEFT SIDE - Messages */}
-        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0 overflow-y-auto">
+        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5" />
             <h3 className="font-semibold">Messages & Queue</h3>
@@ -518,9 +518,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         </div>
 
         {/* RIGHT SIDE - Main Layout with Full Scrolling */}
-        <div className="flex-1 overflow-y-auto">
-          <ScrollArea className="h-full">
-            <div className="p-6">
+        <div className="flex-1 flex flex-col min-h-0">
+          <ScrollArea className="flex-1">
+            <div className="p-6 pb-20">
             
             {/* Topic Input */}
             <div className="text-center mb-12">
