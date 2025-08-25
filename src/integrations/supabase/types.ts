@@ -1983,6 +1983,174 @@ export type Database = {
           },
         ]
       }
+      room_gifts: {
+        Row: {
+          amount: number
+          created_at: string
+          gift_type: string
+          id: string
+          message: string | null
+          recipient_id: string
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          gift_type: string
+          id?: string
+          message?: string | null
+          recipient_id: string
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          gift_type?: string
+          id?: string
+          message?: string | null
+          recipient_id?: string
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_gifts_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_participants: {
+        Row: {
+          hand_raised_at: string | null
+          id: string
+          is_muted: boolean | null
+          is_speaking: boolean | null
+          joined_at: string
+          left_at: string | null
+          queue_position: number | null
+          role: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          hand_raised_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          is_speaking?: boolean | null
+          joined_at?: string
+          left_at?: string | null
+          queue_position?: number | null
+          role: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          hand_raised_at?: string | null
+          id?: string
+          is_muted?: boolean | null
+          is_speaking?: boolean | null
+          joined_at?: string
+          left_at?: string | null
+          queue_position?: number | null
+          role?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_recordings: {
+        Row: {
+          audio_url: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          room_id: string
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          room_id: string
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          room_id?: string
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_recordings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          admins: string[] | null
+          co_hosts: string[] | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          name: string
+          starting_guests: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          admins?: string[] | null
+          co_hosts?: string[] | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          name: string
+          starting_guests?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          admins?: string[] | null
+          co_hosts?: string[] | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          name?: string
+          starting_guests?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seeds: {
         Row: {
           additional_details: Json | null
