@@ -26,6 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { InteractiveSection } from './InteractiveSection'
 
 export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
   const { user } = useAuth()
@@ -301,25 +302,19 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
   )
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-          {existingRoom ? 'Edit Room' : 'Create Your Room'}
+          {existingRoom ? 'Edit Room' : 'Create Your Clubhouse Room'}
         </h1>
-        <p className="text-white/60">Set up your Clubhouse-style conversation space</p>
+        <p className="text-white/60">Design your live session by configuring each section</p>
       </div>
 
-      {/* Basic Room Settings */}
+      {/* Room Configuration Header */}
       <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Room Settings
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="space-y-2">
               <Label htmlFor="roomName">Room Name *</Label>
               <Input
@@ -343,161 +338,197 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
                 className="bg-white/5 border-white/10"
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What's this room about?"
+                className="bg-white/5 border-white/10"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What's this room about?"
-              className="bg-white/5 border-white/10 min-h-[80px]"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Session Payment Configuration */}
-      <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5" />
-            Session Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Session Type Selection */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card 
-              className={`cursor-pointer transition-all duration-300 ${
-                sessionType === 'free' 
-                  ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/50' 
-                  : 'bg-white/5 border-white/10 hover:bg-white/10'
-              }`}
-              onClick={() => setSessionType('free')}
-            >
-              <CardContent className="p-4 text-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-green-400" />
-                  </div>
-                  <h3 className="font-semibold text-white">Free Session</h3>
-                  <p className="text-xs text-white/60">Open to everyone</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={`cursor-pointer transition-all duration-300 ${
-                sessionType === 'paid' 
-                  ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/50' 
-                  : 'bg-white/5 border-white/10 hover:bg-white/10'
-              }`}
-              onClick={() => setSessionType('paid')}
-            >
-              <CardContent className="p-4 text-center">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                    <Crown className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <h3 className="font-semibold text-white">Premium Session</h3>
-                  <p className="text-xs text-white/60">Requires contribution</p>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Session Type Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="flex bg-slate-800/50 rounded-lg p-1">
+              <button
+                onClick={() => setSessionType('free')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                  sessionType === 'free'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                    : 'text-white/60 hover:text-white/80'
+                }`}
+              >
+                Free Session
+              </button>
+              <button
+                onClick={() => setSessionType('paid')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                  sessionType === 'paid'
+                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
+                    : 'text-white/60 hover:text-white/80'
+                }`}
+              >
+                Premium Session
+              </button>
+            </div>
           </div>
 
-          {/* Payment Configuration - Only show for paid sessions */}
+          {/* Bestowal Configuration for Paid Sessions */}
           {sessionType === 'paid' && (
-            <div className="space-y-4 mt-6 p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-              <div className="space-y-2">
-                <Label htmlFor="bestowedAmount" className="flex items-center gap-2">
-                  <Calculator className="w-4 h-4" />
-                  Bestowal Amount (USDC)
-                </Label>
-                <Input
-                  id="bestowedAmount"
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={bestowedAmount}
-                  onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
-                  placeholder="Enter amount participants need to contribute"
-                  className="bg-white/5 border-white/10"
-                />
-              </div>
-
-              {/* Fee Breakdown */}
-              {bestowedAmount > 0 && (
-                <div className="space-y-3 p-4 bg-black/20 rounded-lg">
-                  <h4 className="font-semibold text-white flex items-center gap-2">
-                    <Wallet className="w-4 h-4" />
-                    Fee Breakdown
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                      <span className="text-green-300">Host Receives:</span>
-                      <span className="font-bold text-green-400">${hostAmount.toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                      <span className="text-blue-300">Platform Fee (10%):</span>
-                      <span className="font-bold text-blue-400">${platformFee.toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                      <span className="text-orange-300">Service Fee (0.5%):</span>
-                      <span className="font-bold text-orange-400">${serviceFee.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="text-center text-white/60 text-xs">
-                    Total per participant: <span className="font-bold text-white">${bestowedAmount.toFixed(2)} USDC</span>
-                  </div>
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-4 border border-purple-500/20">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bestowedAmount" className="text-purple-300">Bestowal Amount (USDC)</Label>
+                  <Input
+                    id="bestowedAmount"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={bestowedAmount}
+                    onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="bg-white/5 border-white/10"
+                  />
                 </div>
-              )}
+                
+                <div className="flex flex-col justify-center">
+                  <span className="text-green-300 text-sm">Host Gets:</span>
+                  <span className="font-bold text-green-400">${hostAmount.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex flex-col justify-center">
+                  <span className="text-blue-300 text-sm">Platform (10%):</span>
+                  <span className="font-bold text-blue-400">${platformFee.toFixed(2)}</span>
+                </div>
+                
+                <div className="flex flex-col justify-center">
+                  <span className="text-orange-300 text-sm">Service (0.5%):</span>
+                  <span className="font-bold text-orange-400">${serviceFee.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Role Assignment */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <RoleCard
-          title="Admins"
-          users={admins}
-          role="admin"
-          onAdd={addToRole}
-          onRemove={removeFromRole}
-          icon={Crown}
-          color="border-yellow-500/30 bg-yellow-500/5"
-          maxUsers={3}
-        />
-        
-        <RoleCard
-          title="Co-hosts"
-          users={coHosts}
-          role="co_host"
-          onAdd={addToRole}
-          onRemove={removeFromRole}
-          icon={Users}
-          color="border-blue-500/30 bg-blue-500/5"
-          maxUsers={5}
-        />
-        
-        <RoleCard
-          title="Starting Guests"
-          users={startingGuests}
-          role="guest"
-          onAdd={addToRole}
-          onRemove={removeFromRole}
-          icon={Mic}
-          color="border-green-500/30 bg-green-500/5"
-          maxUsers={3}
-        />
-      </div>
+      {/* Interactive Clubhouse Layout */}
+      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-center">
+            Live Session Layout Preview
+            <p className="text-sm text-white/60 font-normal mt-1">Hover over sections to configure roles and participants</p>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          
+          {/* Host Section */}
+          <div className="text-center mb-8">
+            <InteractiveSection
+              title="Host Section"
+              description="You'll be here as the main host"
+              icon={Crown}
+              color="border-yellow-500/50 bg-yellow-500/10"
+              users={[]} // Host is always current user
+              role="host"
+              isHostSection={true}
+              sessionType={sessionType}
+              bestowedAmount={bestowedAmount}
+            />
+          </div>
+
+          {/* Admins Row */}
+          <div className="mb-8">
+            <h3 className="text-center text-white/80 text-sm mb-4">Admin Positions (Max 3)</h3>
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+              {[0, 1, 2].map((index) => (
+                <InteractiveSection
+                  key={`admin-${index}`}
+                  title={`Admin ${index + 1}`}
+                  description="Room moderator"
+                  icon={Crown}
+                  color="border-yellow-500/30 bg-yellow-500/5"
+                  users={admins}
+                  role="admin"
+                  onAdd={addToRole}
+                  onRemove={removeFromRole}
+                  allUsers={allUsers}
+                  getUserInfo={getUserInfo}
+                  position={index}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Co-hosts Row */}
+          <div className="mb-8">
+            <h3 className="text-center text-white/80 text-sm mb-4">Co-host Positions (Max 5)</h3>
+            <div className="grid grid-cols-5 gap-3 max-w-2xl mx-auto">
+              {[0, 1, 2, 3, 4].map((index) => (
+                <InteractiveSection
+                  key={`cohost-${index}`}
+                  title={`Co-host ${index + 1}`}
+                  description="Assistant host"
+                  icon={Users}
+                  color="border-blue-500/30 bg-blue-500/5"
+                  users={coHosts}
+                  role="co_host"
+                  onAdd={addToRole}
+                  onRemove={removeFromRole}
+                  allUsers={allUsers}
+                  getUserInfo={getUserInfo}
+                  position={index}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Starting Guests Row */}
+          <div className="mb-8">
+            <h3 className="text-center text-white/80 text-sm mb-4">Starting Guest Speakers (Max 3)</h3>
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+              {[0, 1, 2].map((index) => (
+                <InteractiveSection
+                  key={`guest-${index}`}
+                  title={`Guest ${index + 1}`}
+                  description="Pre-approved speaker"
+                  icon={Mic}
+                  color="border-green-500/30 bg-green-500/5"
+                  users={startingGuests}
+                  role="guest"
+                  onAdd={addToRole}
+                  onRemove={removeFromRole}
+                  allUsers={allUsers}
+                  getUserInfo={getUserInfo}
+                  position={index}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Audience Section */}
+          <div className="border-t border-white/10 pt-6">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700/50 border-2 border-slate-600/50 rounded-full mb-3">
+                <Users className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">Audience Section</h3>
+              <p className="text-sm text-white/60">
+                {sessionType === 'paid' && bestowedAmount > 0 
+                  ? `Listeners who contribute $${bestowedAmount} USDC can request to speak`
+                  : 'Anyone can join and request to speak'
+                }
+              </p>
+              <div className="mt-2 text-xs text-white/40">
+                Max capacity: {maxParticipants} total participants
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
