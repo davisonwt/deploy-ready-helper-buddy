@@ -674,7 +674,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         onClick={() => handleSlotClick('cohost', index)}
                         className="border-blue-300 bg-blue-50 h-14 rounded-2xl shadow-md hover:shadow-lg transition-all"
                       />
-                    )))}
+                     ))}
                   </div>
                 </div>
               )}
