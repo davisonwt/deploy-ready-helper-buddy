@@ -296,8 +296,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <p className="text-gray-600 mt-2">Set up listener gifting options for hosts and co-hosts</p>
         </div>
         
-        <div className="flex-1 p-4 overflow-y-auto">
-          <div className="max-w-6xl mx-auto pb-4">
+        <div className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <div className="max-w-6xl mx-auto pb-20">{/* Added pb-20 for button space */}
             
             {/* All sections side by side */}
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -430,18 +430,18 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         </div>
 
         {/* Footer Actions - Fixed at bottom */}
-        <div className="bg-white/90 backdrop-blur-md border-t border-white/20 px-6 py-4 flex-shrink-0 rounded-b-3xl sticky bottom-0">
-          <div className="flex justify-between gap-4 max-w-2xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-md border-t border-white/20 px-6 py-6 flex-shrink-0 rounded-b-3xl">
+          <div className="flex justify-between gap-4 max-w-6xl mx-auto">
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep('layout')}
-              className="flex-1"
+              className="flex-1 py-3 text-lg font-semibold"
             >
               ← Back to Layout
             </Button>
             <Button 
               onClick={() => setCurrentStep('form')}
-              className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+              className="flex-1 py-3 text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
             >
               Continue to Room Setup →
             </Button>
