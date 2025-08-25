@@ -243,79 +243,110 @@ export function RoomCreationForm({ onRoomCreated }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-2">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-2">
-              <h1 className="text-lg font-bold text-white mb-1">Choose Layout</h1>
-              <p className="text-xs text-gray-300">Select your session format</p>
-            </div>
-
-            {/* Mobile-optimized Grid - TikTok style */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="h-screen bg-gray-900 text-white flex flex-col">
+        <div className="flex-shrink-0 p-4 text-center border-b border-gray-700">
+          <h1 className="text-xl font-bold text-white mb-1">Choose Your Clubhouse Setup</h1>
+          <p className="text-sm text-gray-300">Select how many people can speak and participate</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 return (
                   <Card 
                     key={key}
-                    className={`cursor-pointer hover:shadow-lg transition-all duration-200 bg-gray-900 border-gray-700 border hover:scale-[1.02] h-40`}
+                    className={`cursor-pointer hover:shadow-xl transition-all duration-200 bg-gray-800 border-gray-600 border-2 hover:border-orange-500 hover:scale-[1.02]`}
                     onClick={() => handleLayoutSelect(key)}
                   >
-                    <CardContent className="p-2 h-full">
+                    <CardContent className="p-4">
                       
-                      {/* TikTok-style Layout Preview */}
-                      <div className="flex gap-2 h-32">
-                        
-                        {/* Host Area (Left) - Like TikTok */}
-                        <div className="w-1/2 bg-gray-800 rounded-lg p-2 flex flex-col items-center justify-center">
-                          <IconComponent className="w-6 h-6 mb-1 text-orange-400" />
-                          <div className="text-xs font-bold text-white text-center">Host</div>
-                          <div className="text-xs text-gray-400 mt-1 text-center leading-tight">
-                            {layout.name}
-                          </div>
+                      {/* Header with Layout Name */}
+                      <div className="text-center mb-3">
+                        <IconComponent className="w-8 h-8 mx-auto mb-2 text-orange-400" />
+                        <h3 className="text-lg font-bold text-white">{layout.name}</h3>
+                      </div>
+                      
+                      {/* What You Get - Clear Layout */}
+                      <div className="bg-gray-700 rounded-lg p-3 mb-3">
+                        <div className="text-center mb-2">
+                          <span className="text-xs font-semibold text-gray-300">SPEAKING POSITIONS</span>
                         </div>
                         
-                        {/* Participants Grid (Right) - Like TikTok */}
-                        <div className="w-1/2 grid grid-cols-2 gap-1">
+                        <div className="flex justify-center gap-2 mb-2">
+                          {/* Host */}
+                          <div className="bg-yellow-600 rounded p-2 text-center min-w-0 flex-1">
+                            <Crown className="w-4 h-4 mx-auto mb-1" />
+                            <div className="text-xs font-bold">HOST</div>
+                            <div className="text-xs">You</div>
+                          </div>
                           
-                          {/* Co-host slots */}
-                          {Array(Math.min(layout.coHostSlots, 2)).fill(0).map((_, i) => (
-                            <div key={i} className="bg-blue-800 rounded-lg flex items-center justify-center">
-                              <Users className="w-3 h-3 text-blue-300" />
+                          {/* Co-hosts */}
+                          {layout.coHostSlots > 0 && (
+                            <div className="bg-blue-600 rounded p-2 text-center min-w-0 flex-1">
+                              <Users className="w-4 h-4 mx-auto mb-1" />
+                              <div className="text-xs font-bold">CO-HOSTS</div>
+                              <div className="text-xs">{layout.coHostSlots} people</div>
                             </div>
-                          ))}
-                          
-                          {/* Audience slots - fill remaining */}
-                          {Array(4 - Math.min(layout.coHostSlots, 2)).fill(0).map((_, i) => (
-                            <div key={i} className="bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600 border-dashed">
-                              <UserPlus className="w-2 h-2 text-gray-400" />
-                            </div>
-                          ))}
+                          )}
+                        </div>
+                        
+                        {/* Audience Box */}
+                        <div className="bg-green-700 rounded p-2 text-center">
+                          <Mic className="w-4 h-4 mx-auto mb-1" />
+                          <div className="text-xs font-bold">AUDIENCE CAN SPEAK</div>
+                          <div className="text-xs">Up to {layout.inviteSlots} people from queue</div>
                         </div>
                       </div>
                       
-                      {/* Chat Preview (Bottom) */}
-                      <div className="mt-2 bg-gray-800 rounded p-1">
-                        <div className="flex items-center gap-1 mb-1">
-                          <MessageSquare className="w-2 h-2 text-gray-400" />
-                          <div className="flex gap-1">
-                            {Array(4).fill(0).map((_, i) => (
-                              <div key={i} className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                            ))}
-                          </div>
+                      {/* Queue Info */}
+                      <div className="bg-gray-700 rounded-lg p-3 mb-3">
+                        <div className="text-center">
+                          <MessageSquare className="w-4 h-4 mx-auto mb-1 text-blue-400" />
+                          <div className="text-xs font-semibold text-gray-300 mb-1">UNLIMITED LISTENERS</div>
+                          <div className="text-xs text-gray-400">Anyone can join, chat, and request to speak</div>
                         </div>
-                        <div className="text-xs text-gray-400 text-center">Live Chat</div>
                       </div>
                       
-                      {/* Select Button */}
-                      <Button className="mt-2 w-full text-xs py-1 h-6 bg-orange-600 hover:bg-orange-700" size="sm">
-                        Select {layout.name}
+                      {/* Features */}
+                      <div className="flex justify-center gap-4 mb-3 text-xs text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Camera className="w-3 h-3" />
+                          <span>Video</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="w-3 h-3" />
+                          <span>Docs</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Mic className="w-3 h-3" />
+                          <span>Audio</span>
+                        </div>
+                      </div>
+                      
+                      {/* Best For */}
+                      <div className="text-center mb-3">
+                        <div className="text-xs font-semibold text-gray-300 mb-1">BEST FOR:</div>
+                        <div className="text-xs text-gray-400">
+                          {key === 'standard' && 'General discussions, Q&A sessions'}
+                          {key === 'panel' && 'Expert panels, debates, discussions'}
+                          {key === 'interview' && 'One-on-one interviews, guest shows'}
+                          {key === 'townhall' && 'Large community meetings, announcements'}
+                          {key === 'intimate' && 'Small group conversations, workshops'}
+                          {key === 'large' && 'Presentations, lectures, big events'}
+                        </div>
+                      </div>
+                      
+                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold">
+                        Choose {layout.name}
                       </Button>
                     </CardContent>
                   </Card>
                 )
               })}
             </div>
+            <div className="h-8"></div>
           </div>
         </div>
       </div>
