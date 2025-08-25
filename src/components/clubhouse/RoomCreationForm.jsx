@@ -302,32 +302,32 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
   )
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="w-full min-h-screen p-2 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+      <div className="text-center space-y-2 px-2">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
           {existingRoom ? 'Edit Room' : 'Create Your Clubhouse Room'}
         </h1>
-        <p className="text-white/60">Design your live session by configuring each section</p>
+        <p className="text-white/60 text-sm sm:text-base">Design your live session by configuring each section</p>
       </div>
 
       {/* Room Configuration Header */}
       <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <CardContent className="p-3 sm:p-4 lg:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
             <div className="space-y-2">
-              <Label htmlFor="roomName">Room Name *</Label>
+              <Label htmlFor="roomName" className="text-sm">Room Name *</Label>
               <Input
                 id="roomName"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 placeholder="My Awesome Room"
-                className="bg-white/5 border-white/10"
+                className="bg-white/5 border-white/10 text-sm"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="maxParticipants">Max Participants</Label>
+              <Label htmlFor="maxParticipants" className="text-sm">Max Participants</Label>
               <Input
                 id="maxParticipants"
                 type="number"
@@ -335,28 +335,28 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
                 max="50"
                 value={maxParticipants}
                 onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 8)}
-                className="bg-white/5 border-white/10"
+                className="bg-white/5 border-white/10 text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+              <Label htmlFor="description" className="text-sm">Description</Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What's this room about?"
-                className="bg-white/5 border-white/10"
+                className="bg-white/5 border-white/10 text-sm"
               />
             </div>
           </div>
 
           {/* Session Type Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="flex bg-slate-800/50 rounded-lg p-1">
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex bg-slate-800/50 rounded-lg p-1 w-full max-w-sm">
               <button
                 onClick={() => setSessionType('free')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 px-3 sm:px-6 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   sessionType === 'free'
                     ? 'bg-green-500/20 text-green-400 border border-green-500/50'
                     : 'text-white/60 hover:text-white/80'
@@ -366,7 +366,7 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
               </button>
               <button
                 onClick={() => setSessionType('paid')}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 px-3 sm:px-6 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
                   sessionType === 'paid'
                     ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
                     : 'text-white/60 hover:text-white/80'
@@ -379,10 +379,10 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
 
           {/* Bestowal Configuration for Paid Sessions */}
           {sessionType === 'paid' && (
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-4 border border-purple-500/20">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bestowedAmount" className="text-purple-300">Bestowal Amount (USDC)</Label>
+            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 sm:p-4 border border-purple-500/20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+                  <Label htmlFor="bestowedAmount" className="text-purple-300 text-sm">Bestowal Amount (USDC)</Label>
                   <Input
                     id="bestowedAmount"
                     type="number"
@@ -391,23 +391,23 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
                     value={bestowedAmount}
                     onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
-                    className="bg-white/5 border-white/10"
+                    className="bg-white/5 border-white/10 text-sm"
                   />
                 </div>
                 
-                <div className="flex flex-col justify-center">
-                  <span className="text-green-300 text-sm">Host Gets:</span>
-                  <span className="font-bold text-green-400">${hostAmount.toFixed(2)}</span>
+                <div className="flex flex-col justify-center text-center p-2 bg-green-500/10 rounded border border-green-500/20">
+                  <span className="text-green-300 text-xs sm:text-sm">Host Gets:</span>
+                  <span className="font-bold text-green-400 text-sm sm:text-base">${hostAmount.toFixed(2)}</span>
                 </div>
                 
-                <div className="flex flex-col justify-center">
-                  <span className="text-blue-300 text-sm">Platform (10%):</span>
-                  <span className="font-bold text-blue-400">${platformFee.toFixed(2)}</span>
+                <div className="flex flex-col justify-center text-center p-2 bg-blue-500/10 rounded border border-blue-500/20">
+                  <span className="text-blue-300 text-xs sm:text-sm">Platform (10%):</span>
+                  <span className="font-bold text-blue-400 text-sm sm:text-base">${platformFee.toFixed(2)}</span>
                 </div>
                 
-                <div className="flex flex-col justify-center">
-                  <span className="text-orange-300 text-sm">Service (0.5%):</span>
-                  <span className="font-bold text-orange-400">${serviceFee.toFixed(2)}</span>
+                <div className="flex flex-col justify-center text-center p-2 bg-orange-500/10 rounded border border-orange-500/20">
+                  <span className="text-orange-300 text-xs sm:text-sm">Service (0.5%):</span>
+                  <span className="font-bold text-orange-400 text-sm sm:text-base">${serviceFee.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -417,16 +417,18 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
 
       {/* Interactive Clubhouse Layout */}
       <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-center">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="text-center text-lg sm:text-xl">
             Live Session Layout Preview
-            <p className="text-sm text-white/60 font-normal mt-1">Hover over sections to configure roles and participants</p>
+            <p className="text-xs sm:text-sm text-white/60 font-normal mt-1">
+              {window.innerWidth < 640 ? 'Tap sections to configure' : 'Hover over sections to configure roles and participants'}
+            </p>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8">
+        <CardContent className="p-3 sm:p-4 lg:p-8 space-y-6 sm:space-y-8">
           
           {/* Host Section */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <InteractiveSection
               title="Host Section"
               description="You'll be here as the main host"
@@ -441,9 +443,9 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
           </div>
 
           {/* Admins Row */}
-          <div className="mb-8">
-            <h3 className="text-center text-white/80 text-sm mb-4">Admin Positions (Max 3)</h3>
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Admin Positions (Max 3)</h3>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-xs sm:max-w-md mx-auto">
               {[0, 1, 2].map((index) => (
                 <InteractiveSection
                   key={`admin-${index}`}
@@ -464,9 +466,9 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
           </div>
 
           {/* Co-hosts Row */}
-          <div className="mb-8">
-            <h3 className="text-center text-white/80 text-sm mb-4">Co-host Positions (Max 5)</h3>
-            <div className="grid grid-cols-5 gap-3 max-w-2xl mx-auto">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Co-host Positions (Max 5)</h3>
+            <div className="grid grid-cols-5 gap-1 sm:gap-2 lg:gap-3 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto">
               {[0, 1, 2, 3, 4].map((index) => (
                 <InteractiveSection
                   key={`cohost-${index}`}
@@ -487,9 +489,9 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
           </div>
 
           {/* Starting Guests Row */}
-          <div className="mb-8">
-            <h3 className="text-center text-white/80 text-sm mb-4">Starting Guest Speakers (Max 3)</h3>
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+          <div className="mb-6 sm:mb-8">
+            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Starting Guest Speakers (Max 3)</h3>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-xs sm:max-w-md mx-auto">
               {[0, 1, 2].map((index) => (
                 <InteractiveSection
                   key={`guest-${index}`}
@@ -510,13 +512,13 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
           </div>
 
           {/* Audience Section */}
-          <div className="border-t border-white/10 pt-6">
+          <div className="border-t border-white/10 pt-4 sm:pt-6">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700/50 border-2 border-slate-600/50 rounded-full mb-3">
-                <Users className="w-8 h-8 text-slate-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-slate-700/50 border-2 border-slate-600/50 rounded-full mb-3">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-1">Audience Section</h3>
-              <p className="text-sm text-white/60">
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-1">Audience Section</h3>
+              <p className="text-xs sm:text-sm text-white/60 px-4">
                 {sessionType === 'paid' && bestowedAmount > 0 
                   ? `Listeners who contribute $${bestowedAmount} USDC can request to speak`
                   : 'Anyone can join and request to speak'
@@ -531,11 +533,11 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
         <Button
           onClick={saveRoom}
           disabled={isLoading}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+          className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-12 sm:h-10"
         >
           <Save className="w-4 h-4 mr-2" />
           {existingRoom ? 'Update Room' : 'Save Room'}
@@ -544,7 +546,7 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
         <Button
           onClick={startLiveSession}
           disabled={isLoading || !roomName.trim()}
-          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+          className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-12 sm:h-10"
         >
           <Play className="w-4 h-4 mr-2" />
           Start Live Session
@@ -552,4 +554,5 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
       </div>
     </div>
   )
+
 }
