@@ -300,7 +300,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <div className="max-w-6xl mx-auto pb-4">
             
             {/* All sections side by side */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               
               {/* Enable Gifting Toggle */}
               <Card className="bg-white/80 backdrop-blur-sm">
