@@ -353,16 +353,6 @@ export default function RadioManagementPage() {
                   </div>
                 </div>
                 
-                <div 
-                  className="mt-4 px-4 py-2 rounded-lg text-center text-sm font-semibold animate-pulse"
-                  style={{ 
-                    backgroundColor: `${colors.buttonBg}40`,
-                    color: colors.buttonText,
-                    border: `2px solid ${colors.buttonBg}`
-                  }}
-                >
-                  ✨ Currently Active ✨
-                </div>
               </CardContent>
             </Card>
           </div>
