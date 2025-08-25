@@ -519,7 +519,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
         {/* RIGHT SIDE - Main Layout with Full Scrolling */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <ScrollArea className="h-full">
+            <div className="p-6">
             
             {/* Topic Input */}
             <div className="text-center mb-12">
@@ -677,9 +678,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 Go Live
               </Button>
             </div>
+            </div>
+            </ScrollArea>
           </div>
         </div>
-      </div>
     </div>
   )
 }
