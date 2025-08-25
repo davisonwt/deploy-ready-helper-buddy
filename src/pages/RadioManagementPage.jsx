@@ -363,6 +363,26 @@ export default function RadioManagementPage() {
       <div className="flex-1 overflow-hidden">
         <div className="h-full p-6">
           <div className="h-full">
+            
+            {/* Go Live Button */}
+            <div className="mb-6 text-center">
+              <Button 
+                size="lg"
+                className="shadow-xl hover:shadow-2xl transition-all duration-300 animate-pulse font-bold px-8 py-4 text-lg"
+                style={{
+                  backgroundColor: colors.buttonBg,
+                  color: colors.buttonText,
+                  border: 'none',
+                  boxShadow: `0 10px 30px ${colors.buttonBg}50`
+                }}
+                onClick={() => {
+                  // Add your go-live logic here
+                  alert(`Going live with ${option.name}! Your radio management system is now active.`)
+                }}
+              >
+                🚀 Go Live with {option.name}
+              </Button>
+            </div>
             {selectedOption === 'schedule' && (
               <Card className="h-full bg-white/95 backdrop-blur-sm shadow-xl">
                 <CardHeader>
