@@ -266,14 +266,15 @@ export default function RadioManagementPage() {
       >
         <div className="flex items-center justify-between">
           <Button 
-            variant="outline" 
-            onClick={handleBack} 
-            className="shadow-md hover:shadow-lg transition-shadow"
+            size="lg"
+            className="shadow-xl hover:shadow-2xl transition-all duration-300 font-bold border-2 animate-pulse"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              backgroundColor: colors.buttonBg,
+              color: colors.buttonText,
               borderColor: colors.buttonBg,
-              color: colors.text
+              boxShadow: `0 8px 25px ${colors.buttonBg}40`
             }}
+            onClick={handleBack}
           >
             ← Back to Options
           </Button>
