@@ -438,7 +438,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </Button>
               <Button 
                 onClick={() => setCurrentStep('form')}
-                className="flex-1 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white border-0"
+                className="flex-1 py-3 text-lg font-bold bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                style={{ color: 'white !important', backgroundColor: '#16a34a' }}
               >
                 Continue to Room Setup →
               </Button>
