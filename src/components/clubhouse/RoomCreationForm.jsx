@@ -356,14 +356,21 @@ export function RoomCreationForm({ onRoomCreated }) {
                               </div>
                             )}
                             
-                            {/* Audience grid */}
-                            <div className="grid grid-cols-4 gap-1">
+                            {/* Audience grid - Proper arrangements */}
+                            <div className={`grid gap-1 justify-center ${
+                              layout.inviteSlots <= 4 ? 'grid-cols-2' : 
+                              layout.inviteSlots <= 6 ? 'grid-cols-3' : 
+                              'grid-cols-4'
+                            } max-w-32 mx-auto`}>
                               {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                <div key={i} className="bg-green-100 border border-green-300 rounded h-4 flex items-center justify-center">
-                                  <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                                <div key={i} className="bg-green-100 border border-green-300 rounded h-6 w-6 flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                                 </div>
                               ))}
                             </div>
+                            {layout.inviteSlots > 8 && (
+                              <div className="text-xs text-center text-gray-500 mt-1">+{layout.inviteSlots - 8} more</div>
+                            )}
                             <div className="text-xs text-center text-gray-600 mt-1">
                               {layout.inviteSlots} audience can speak
                             </div>
@@ -528,16 +535,24 @@ export function RoomCreationForm({ onRoomCreated }) {
               <h3 className="text-lg font-semibold mb-4">
                 {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
               </h3>
-              <div className={`grid ${layouts[selectedLayout].grid} gap-4 justify-center max-w-6xl mx-auto`}>
+              {/* Dynamic grid based on layout */}
+              <div className={`grid gap-4 justify-center max-w-6xl mx-auto ${
+                layouts[selectedLayout].inviteSlots <= 4 ? 'grid-cols-2' :
+                layouts[selectedLayout].inviteSlots <= 6 ? 'grid-cols-3' :
+                'grid-cols-4'
+              }`}>
                 {inviteSlots.map((slot, index) => (
                   <SlotCard
                     key={index}
-                    title="invite / request"
+                    title={selectedLayout === 'intimate' ? 'participant' : 'audience member'}
                     user={slot}
                     onClick={() => handleSlotClick('invite', index)}
                     className="border-green-300 bg-green-50 h-32"
                   />
                 ))}
+              </div>
+              <div className="mt-2 text-sm text-gray-600">
+                {layouts[selectedLayout].inviteSlots} people can speak from audience queue
               </div>
             </div>
           </div>
