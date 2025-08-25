@@ -24,8 +24,16 @@ import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
 import { StationStats } from '@/components/radio/StationStats'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
+import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
 
 const radioOptions = {
+  setup: {
+    name: 'Quick Show Setup',
+    description: 'Complete radio show setup wizard with layout, hosts, listeners, and monetization',
+    icon: Radio,
+    color: { bg: '#FF6B6B', text: '#FFFFFF', buttonBg: '#4ECDC4', buttonText: '#FFFFFF', opacity: 0.95 },
+    features: ['Layout Selection', 'Co-Host Setup', 'Listener Interaction', 'Business Advertising']
+  },
   schedule: {
     name: 'Schedule Management',
     description: 'Advanced timezone-aware radio show scheduling and time slot coordination',
@@ -364,25 +372,40 @@ export default function RadioManagementPage() {
         <div className="h-full p-6">
           <div className="h-full">
             
-            {/* Go Live Button */}
-            <div className="mb-6 text-center">
-              <Button 
-                size="lg"
-                className="shadow-xl hover:shadow-2xl transition-all duration-300 animate-pulse font-bold px-8 py-4 text-lg"
-                style={{
-                  backgroundColor: colors.buttonBg,
-                  color: colors.buttonText,
-                  border: 'none',
-                  boxShadow: `0 10px 30px ${colors.buttonBg}50`
-                }}
-                onClick={() => {
-                  // Add your go-live logic here
-                  alert(`Going live with ${option.name}! Your radio management system is now active.`)
-                }}
-              >
-                🚀 Go Live with {option.name}
-              </Button>
-            </div>
+            {/* Go Live Button - Only show for non-setup options */}
+            {selectedOption !== 'setup' && (
+              <div className="mb-6 text-center">
+                <Button 
+                  size="lg"
+                  className="shadow-xl hover:shadow-2xl transition-all duration-300 animate-pulse font-bold px-8 py-4 text-lg"
+                  style={{
+                    backgroundColor: colors.buttonBg,
+                    color: colors.buttonText,
+                    border: 'none',
+                    boxShadow: `0 10px 30px ${colors.buttonBg}50`
+                  }}
+                  onClick={() => {
+                    // Add your go-live logic here
+                    alert(`Going live with ${option.name}! Your radio management system is now active.`)
+                  }}
+                >
+                  🚀 Go Live with {option.name}
+                </Button>
+              </div>
+            )}
+            {selectedOption === 'setup' && (
+              <div className="h-full">
+                <RadioSetupWizard 
+                  colors={colors}
+                  onComplete={(config) => {
+                    console.log('Radio setup completed:', config)
+                    // Handle the completed setup configuration
+                    // This could redirect to a live session or save the config
+                  }}
+                />
+              </div>
+            )}
+            
             {selectedOption === 'schedule' && (
               <Card className="h-full bg-white/95 backdrop-blur-sm shadow-xl">
                 <CardHeader>
