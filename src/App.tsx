@@ -50,6 +50,7 @@ import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
 import GroveStationPage from "./pages/GroveStationPage";
 import RadioManagementPage from "./pages/RadioManagementPage";
+import ClubhousePage from "./pages/ClubhousePage";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -259,6 +260,13 @@ const App = () => (
                   <Layout>
                     <RadioManagementPage />
                   </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Clubhouse - Live Audio Conversations */}
+              <Route path="/clubhouse" element={
+                <ProtectedRoute>
+                  <ClubhousePage />
                 </ProtectedRoute>
               } />
 
