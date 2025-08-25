@@ -244,70 +244,68 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
         
         {/* Header */}
-        <div className="bg-white/90 backdrop-blur-sm border-b px-6 py-4 flex-shrink-0 shadow-sm">
+        <div className="bg-white border-b px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Choose Your Clubhouse Layout
-            </h1>
-            <Button variant="ghost" onClick={onClose} className="hover:bg-red-50 hover:text-red-600 transition-colors">
+            <h1 className="text-2xl font-bold text-gray-900">Choose Your Clubhouse Layout</h1>
+            <Button variant="ghost" onClick={onClose}>
               <X className="w-5 h-5" />
             </Button>
           </div>
           <p className="text-gray-600 mt-2">Select the perfect layout for your live session</p>
         </div>
         
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {Object.entries(layouts).map(([key, layout], index) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 
-                // Enhanced color schemes with gradients
+                // Color schemes with inline styles for hex colors with transparency
                 const colorSchemes = {
                   standard: {
-                    gradient: 'from-blue-400 to-purple-500',
-                    bg: 'bg-gradient-to-br from-blue-50 to-purple-50',
-                    buttonGradient: 'from-yellow-400 to-orange-500',
-                    iconColor: 'text-blue-600',
-                    shadow: 'shadow-blue-200/50'
+                    bg: '#D5AAFF', // Light Purple with transparency
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#FFE156', // Bright Yellow
+                    buttonText: '#2A2A2A',
+                    opacity: 0.85
                   },
                   panel: {
-                    gradient: 'from-purple-400 to-pink-500',
-                    bg: 'bg-gradient-to-br from-purple-50 to-pink-50',
-                    buttonGradient: 'from-purple-500 to-indigo-600',
-                    iconColor: 'text-purple-600',
-                    shadow: 'shadow-purple-200/50'
+                    bg: '#E0BBE4', // Lavender with transparency
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   interview: {
-                    gradient: 'from-emerald-400 to-teal-500',
-                    bg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
-                    buttonGradient: 'from-emerald-500 to-green-600',
-                    iconColor: 'text-emerald-600',
-                    shadow: 'shadow-emerald-200/50'
+                    bg: '#957DAD', // Dusty Purple with transparency
+                    text: '#FFFFFF', // White text for dark background
+                    buttonBg: '#FFE156', // Bright Yellow
+                    buttonText: '#2A2A2A',
+                    opacity: 0.9
                   },
                   townhall: {
-                    gradient: 'from-amber-400 to-orange-500',
-                    bg: 'bg-gradient-to-br from-amber-50 to-orange-50',
-                    buttonGradient: 'from-amber-500 to-yellow-600',
-                    iconColor: 'text-amber-600',
-                    shadow: 'shadow-amber-200/50'
+                    bg: '#B9FBC0', // Mint Green with transparency
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   intimate: {
-                    gradient: 'from-rose-400 to-pink-500',
-                    bg: 'bg-gradient-to-br from-rose-50 to-pink-50',
-                    buttonGradient: 'from-rose-500 to-pink-600',
-                    iconColor: 'text-rose-600',
-                    shadow: 'shadow-rose-200/50'
+                    bg: '#FFE156', // Bright Yellow with transparency
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   },
                   large: {
-                    gradient: 'from-indigo-400 to-blue-500',
-                    bg: 'bg-gradient-to-br from-indigo-50 to-blue-50',
-                    buttonGradient: 'from-indigo-500 to-purple-600',
-                    iconColor: 'text-indigo-600',
-                    shadow: 'shadow-indigo-200/50'
+                    bg: '#FFB7B7', // Soft Peach with transparency
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF',
+                    opacity: 0.85
                   }
                 }
                 
@@ -316,186 +314,137 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 return (
                   <Card 
                     key={key}
-                    className={`group cursor-pointer transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-2 
-                              ${colors.bg} ${colors.shadow} shadow-xl hover:shadow-2xl 
-                              border-0 rounded-2xl backdrop-blur-sm hover:backdrop-blur-md
-                              animate-fade-in opacity-0`}
+                    className="cursor-pointer hover:shadow-xl transition-all duration-200 border-2 hover:scale-[1.02] backdrop-blur-sm"
                     style={{ 
-                      animationDelay: `${index * 100}ms`,
-                      animationFillMode: 'forwards'
+                      backgroundColor: `${colors.bg}${Math.round(colors.opacity * 255).toString(16).padStart(2, '0')}`,
+                      borderColor: colors.bg,
+                      color: colors.text,
+                      boxShadow: `0 8px 32px ${colors.bg}40`
                     }}
                     onClick={() => handleLayoutSelect(key)}
                   >
-                    <CardContent className="p-8 relative overflow-hidden">
+                    <CardContent className="p-6">
                       
-                      {/* Animated background pattern */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-5 
-                                     group-hover:opacity-10 transition-opacity duration-300`} />
-                      
-                      {/* Floating decorative elements */}
-                      <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-white/20 blur-xl 
-                                    group-hover:bg-white/30 transition-all duration-500 animate-pulse" />
-                      <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-lg 
-                                    group-hover:bg-white/20 transition-all duration-700" />
-                      
-                      {/* Header with animated icon */}
-                      <div className="text-center mb-6 relative z-10">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl 
-                                      bg-white/80 backdrop-blur-sm shadow-lg mb-4 
-                                      group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                          <IconComponent 
-                            className={`w-10 h-10 ${colors.iconColor} group-hover:scale-110 transition-transform duration-300`}
-                          />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                      {/* Header with Layout Name */}
+                      <div className="text-center mb-4">
+                        <IconComponent 
+                          className="w-10 h-10 mx-auto mb-3" 
+                          style={{ color: colors.text }}
+                        />
+                        <h3 
+                          className="text-xl font-bold" 
+                          style={{ color: colors.text }}
+                        >
                           {layout.name}
                         </h3>
                       </div>
                       
-                      {/* Enhanced Layout Preview */}
-                      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/50 
-                                    shadow-inner group-hover:bg-white/95 transition-all duration-300">
+                      {/* Layout Preview */}
+                      <div className="bg-white/95 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/70 shadow-sm">
                         <div className="flex gap-3 mb-3">
                           
                           {/* Speaking Area */}
                           <div className="flex-1">
-                            <div className="text-xs font-semibold text-gray-700 mb-3 text-center tracking-wide">
-                              SPEAKERS
-                            </div>
+                            <div className="text-xs font-semibold text-gray-700 mb-3 text-center">SPEAKERS</div>
                             
-                            {/* Animated Host */}
+                            {/* Host */}
                             <div className="flex justify-center mb-3">
-                              <div className="bg-gradient-to-r from-yellow-100 to-amber-100 border-2 border-yellow-300 
-                                            rounded-lg px-3 py-2 text-center shadow-sm hover:shadow-md transition-all duration-200
-                                            transform hover:scale-105">
-                                <Crown className="w-4 h-4 mx-auto mb-1 text-yellow-600 animate-pulse" />
+                              <div className="bg-yellow-100 border border-yellow-300 rounded px-3 py-2 text-center">
+                                <Crown className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
                                 <div className="text-xs font-bold text-yellow-800">HOST</div>
                               </div>
                             </div>
                             
-                            {/* Animated Co-hosts/Panelists */}
+                            {/* Co-hosts/Panelists - Different layouts */}
                             {layout.coHostSlots > 0 && (
                               <div className="flex justify-center gap-2 mb-3">
                                 {key === 'interview' ? (
+                                  // Interview: 1 Guest + 2 Co-hosts
                                   <>
-                                    <div className="bg-gradient-to-r from-emerald-100 to-green-100 border-2 border-emerald-300 
-                                                  rounded-lg px-2 py-1 text-center shadow-sm transform hover:scale-105 transition-all duration-200">
+                                    <div className="bg-emerald-100 border border-emerald-300 rounded px-2 py-1 text-center">
                                       <div className="text-xs font-bold text-emerald-800">GUEST</div>
                                     </div>
                                     {Array(2).fill(0).map((_, i) => (
-                                      <div key={i} className="bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 
-                                                           rounded-lg px-2 py-1 text-center shadow-sm transform hover:scale-105 
-                                                           transition-all duration-200 animate-fade-in"
-                                           style={{ animationDelay: `${(i + 1) * 50}ms` }}>
+                                      <div key={i} className="bg-blue-100 border border-blue-300 rounded px-2 py-1 text-center">
                                         <div className="text-xs font-bold text-blue-800">CO</div>
                                       </div>
                                     ))}
                                   </>
                                 ) : (
+                                  // Other layouts: Regular co-hosts/panelists
                                   Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
-                                    <div key={i} className="bg-gradient-to-r from-blue-100 to-indigo-100 border-2 border-blue-300 
-                                                         rounded-lg px-2 py-1 text-center shadow-sm transform hover:scale-105 
-                                                         transition-all duration-200 animate-fade-in"
-                                         style={{ animationDelay: `${i * 50}ms` }}>
+                                    <div key={i} className="bg-blue-100 border border-blue-300 rounded px-2 py-1 text-center">
                                       <div className="text-xs font-bold text-blue-800">
                                         {key === 'panel' ? 'PAN' : 'CO'}
                                       </div>
                                     </div>
                                   ))
                                 )}
-                                {layout.coHostSlots > 4 && 
-                                  <span className="text-xs text-gray-500 self-center">+{layout.coHostSlots - 4}</span>
-                                }
+                                {layout.coHostSlots > 4 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 4}</span>}
                               </div>
                             )}
                             
-                            {/* Animated Audience grid */}
+                            {/* Audience grid - Proper arrangements */}
                             <div className={`grid gap-1 justify-center ${
                               layout.inviteSlots <= 4 ? 'grid-cols-2' : 
                               layout.inviteSlots <= 6 ? 'grid-cols-3' : 
                               'grid-cols-4'
                             } max-w-40 mx-auto`}>
                               {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                <div key={i} className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 
-                                                     rounded-lg h-7 w-7 flex items-center justify-center shadow-sm
-                                                     transform hover:scale-110 transition-all duration-200 animate-scale-in"
-                                     style={{ animationDelay: `${i * 25}ms` }}>
-                                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" 
-                                       style={{ animationDelay: `${i * 100}ms` }} />
+                                <div key={i} className="bg-green-100 border border-green-300 rounded h-7 w-7 flex items-center justify-center">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                 </div>
                               ))}
                             </div>
                             {layout.inviteSlots > 8 && (
                               <div className="text-xs text-center text-gray-500 mt-1">+{layout.inviteSlots - 8} more</div>
                             )}
-                            <div className="text-xs text-center text-gray-600 mt-2 font-medium">
+                            <div className="text-xs text-center text-gray-600 mt-2">
                               {layout.inviteSlots} audience can speak
                             </div>
                           </div>
                           
-                          {/* Enhanced Messages/Queue Area */}
-                          <div className="w-1/3 bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl border-2 border-gray-200 p-2 
-                                        shadow-inner">
+                          {/* Messages/Queue Area */}
+                          <div className="w-1/3 bg-gray-50 rounded border border-gray-200 p-2">
                             <div className="text-xs font-semibold text-gray-700 mb-2 text-center flex items-center justify-center gap-1">
-                              <MessageSquare className="w-3 h-3 animate-pulse" />
+                              <MessageSquare className="w-3 h-3" />
                               CHAT & QUEUE
                             </div>
-                            <div className="space-y-1">
-                              <div className="bg-white rounded-md p-1 text-xs text-gray-600 shadow-sm animate-fade-in">
-                                Hi everyone! 👋
-                              </div>
-                              <div className="bg-white rounded-md p-1 text-xs text-gray-600 shadow-sm animate-fade-in"
-                                   style={{ animationDelay: '100ms' }}>
-                                Can I join to speak?
-                              </div>
-                              <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-md p-1 text-xs text-orange-700 
-                                            shadow-sm animate-fade-in border border-orange-200"
-                                   style={{ animationDelay: '200ms' }}>
-                                🎤 Voice recording sent
-                              </div>
-                              <div className="bg-gradient-to-r from-yellow-100 to-amber-100 rounded-md p-1 text-xs text-yellow-700 
-                                            shadow-sm animate-fade-in border border-yellow-200"
-                                   style={{ animationDelay: '300ms' }}>
-                                ⏳ Awaiting host approval
-                              </div>
-                              <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-md p-1 text-xs text-green-700 
-                                            shadow-sm animate-fade-in border border-green-200"
-                                   style={{ animationDelay: '400ms' }}>
-                                ✅ Recording approved
-                              </div>
-                              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-md p-1 text-xs text-blue-700 
-                                            shadow-sm animate-fade-in border border-blue-200"
-                                   style={{ animationDelay: '500ms' }}>
-                                🙋 In queue to speak
-                              </div>
-                            </div>
-                            <div className="text-xs text-center text-gray-500 mt-2 font-medium">Unlimited listeners</div>
+                             <div className="space-y-1">
+                               <div className="bg-white rounded p-1 text-xs text-gray-600">Hi everyone! 👋</div>
+                               <div className="bg-white rounded p-1 text-xs text-gray-600">Can I join to speak?</div>
+                               <div className="bg-orange-100 rounded p-1 text-xs text-orange-700">🎤 Voice recording sent</div>
+                               <div className="bg-yellow-100 rounded p-1 text-xs text-yellow-700">⏳ Awaiting host approval</div>
+                               <div className="bg-green-100 rounded p-1 text-xs text-green-700">✅ Recording approved</div>
+                               <div className="bg-blue-100 rounded p-1 text-xs text-blue-700">🙋 In queue to speak</div>
+                             </div>
+                            <div className="text-xs text-center text-gray-500 mt-2">Unlimited listeners</div>
                           </div>
                         </div>
                       </div>
                       
-                      {/* Enhanced Features Section */}
-                      <div className="flex justify-center gap-4 mb-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1 bg-white/50 rounded-lg px-2 py-1 backdrop-blur-sm shadow-sm">
+                      {/* Features */}
+                      <div className="flex justify-center gap-4 mb-4 text-sm" style={{ color: colors.text }}>
+                        <div className="flex items-center gap-1">
                           <Camera className="w-4 h-4 text-red-500" />
                           <span>Video</span>
                         </div>
-                        <div className="flex items-center gap-1 bg-white/50 rounded-lg px-2 py-1 backdrop-blur-sm shadow-sm">
+                        <div className="flex items-center gap-1">
                           <FileText className="w-4 h-4 text-orange-500" />
                           <span>Docs</span>
                         </div>
-                        <div className="flex items-center gap-1 bg-white/50 rounded-lg px-2 py-1 backdrop-blur-sm shadow-sm">
+                        <div className="flex items-center gap-1">
                           <Mic className="w-4 h-4 text-green-500" />
                           <span>Audio</span>
                         </div>
                       </div>
                       
-                      {/* Best For section with enhanced styling */}
-                      <div className="text-center mb-6 relative z-10">
-                        <div className="text-sm font-semibold mb-2 text-gray-700 tracking-wide">
+                      {/* Best For */}
+                      <div className="text-center mb-4">
+                        <div className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
                           BEST FOR:
                         </div>
-                        <div className="text-sm text-gray-600 font-medium px-3 py-2 bg-white/60 rounded-lg backdrop-blur-sm shadow-sm">
+                        <div className="text-sm opacity-90" style={{ color: colors.text }}>
                           {key === 'standard' && 'General discussions, Q&A sessions'}
                           {key === 'panel' && 'Expert panels, debates with multiple speakers'}
                           {key === 'interview' && 'One-on-one interviews with guest + moderators'}
@@ -505,32 +454,23 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         </div>
                       </div>
                       
-                      {/* Enhanced animated button */}
                       <Button 
-                        className={`w-full font-semibold text-white border-0 rounded-xl h-12 text-base
-                                  bg-gradient-to-r ${colors.buttonGradient} 
-                                  shadow-lg hover:shadow-xl
-                                  transform transition-all duration-300 
-                                  hover:scale-105 hover:-translate-y-1
-                                  focus:scale-105 focus:shadow-xl
-                                  relative overflow-hidden group`}
+                        className="w-full font-semibold transition-all duration-200 hover:shadow-lg"
+                        style={{ 
+                          backgroundColor: `${colors.buttonBg}${Math.round(0.95 * 255).toString(16).padStart(2, '0')}`,
+                          color: colors.buttonText,
+                          border: 'none',
+                          boxShadow: `0 4px 16px ${colors.buttonBg}30`
+                        }}
                       >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          <span>Choose {layout.name}</span>
-                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center 
-                                        group-hover:bg-white/30 transition-colors">
-                            <span className="text-sm">→</span>
-                          </div>
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 
-                                      transform -skew-x-12 -translate-x-full group-hover:translate-x-full 
-                                      transition-transform duration-700" />
+                        Choose {layout.name}
                       </Button>
                     </CardContent>
                   </Card>
                 )
               })}
             </div>
+            <div className="h-8"></div>
           </div>
         </div>
       </div>
