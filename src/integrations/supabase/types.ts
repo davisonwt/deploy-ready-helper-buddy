@@ -2112,41 +2112,62 @@ export type Database = {
       rooms: {
         Row: {
           admins: string[] | null
+          co_host_users: Json | null
           co_hosts: string[] | null
           created_at: string
           creator_id: string
           description: string | null
+          entry_fee: number | null
+          host_user: Json | null
           id: string
+          invite_slots: Json | null
           is_active: boolean | null
+          layout: string | null
           max_participants: number | null
           name: string
+          session_type: string | null
           starting_guests: string[] | null
+          type: string | null
           updated_at: string
         }
         Insert: {
           admins?: string[] | null
+          co_host_users?: Json | null
           co_hosts?: string[] | null
           created_at?: string
           creator_id: string
           description?: string | null
+          entry_fee?: number | null
+          host_user?: Json | null
           id?: string
+          invite_slots?: Json | null
           is_active?: boolean | null
+          layout?: string | null
           max_participants?: number | null
           name: string
+          session_type?: string | null
           starting_guests?: string[] | null
+          type?: string | null
           updated_at?: string
         }
         Update: {
           admins?: string[] | null
+          co_host_users?: Json | null
           co_hosts?: string[] | null
           created_at?: string
           creator_id?: string
           description?: string | null
+          entry_fee?: number | null
+          host_user?: Json | null
           id?: string
+          invite_slots?: Json | null
           is_active?: boolean | null
+          layout?: string | null
           max_participants?: number | null
           name?: string
+          session_type?: string | null
           starting_guests?: string[] | null
+          type?: string | null
           updated_at?: string
         }
         Relationships: []
