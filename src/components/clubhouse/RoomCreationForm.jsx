@@ -244,7 +244,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   // Layout Selection Step
   if (currentStep === 'layout') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
+      <div className="h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col">
         
         {/* Header */}
         <div className="bg-white border-b px-6 py-4 flex-shrink-0">
@@ -263,49 +263,43 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               {Object.entries(layouts).map(([key, layout]) => {
                 const IconComponent = layout.icon
                 
-                // Assign unique color schemes based on user's detailed color table
+                // Color schemes with inline styles for hex colors
                 const colorSchemes = {
                   standard: {
-                    bg: 'bg-[#D5AAFF]', // Light Purple
-                    border: 'border-[#D5AAFF] hover:border-[#c299ff]',
-                    text: 'text-[#2A2A2A]', // Dark Gray
-                    accent: 'text-[#2A2A2A]',
-                    button: 'bg-[#FFE156] hover:bg-[#fdd835] text-[#2A2A2A]' // Bright Yellow
+                    bg: '#D5AAFF', // Light Purple
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#FFE156', // Bright Yellow
+                    buttonText: '#2A2A2A'
                   },
                   panel: {
-                    bg: 'bg-[#E0BBE4]', // Lavender
-                    border: 'border-[#E0BBE4] hover:border-[#d8a8dd]',
-                    text: 'text-[#2A2A2A]', // Dark Gray
-                    accent: 'text-[#2A2A2A]',
-                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
+                    bg: '#E0BBE4', // Lavender
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF'
                   },
                   interview: {
-                    bg: 'bg-[#957DAD]', // Dusty Purple
-                    border: 'border-[#957DAD] hover:border-[#8a6fa0]',
-                    text: 'text-white', // White text for dark background
-                    accent: 'text-white',
-                    button: 'bg-[#FFE156] hover:bg-[#fdd835] text-[#2A2A2A]' // Bright Yellow
+                    bg: '#957DAD', // Dusty Purple
+                    text: '#FFFFFF', // White text for dark background
+                    buttonBg: '#FFE156', // Bright Yellow
+                    buttonText: '#2A2A2A'
                   },
                   townhall: {
-                    bg: 'bg-[#B9FBC0]', // Mint Green
-                    border: 'border-[#B9FBC0] hover:border-[#a8f7b1]',
-                    text: 'text-[#2A2A2A]', // Dark Gray
-                    accent: 'text-[#2A2A2A]',
-                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
+                    bg: '#B9FBC0', // Mint Green
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF'
                   },
                   intimate: {
-                    bg: 'bg-[#FFE156]', // Bright Yellow
-                    border: 'border-[#FFE156] hover:border-[#fdd835]',
-                    text: 'text-[#2A2A2A]', // Dark Gray
-                    accent: 'text-[#2A2A2A]',
-                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
+                    bg: '#FFE156', // Bright Yellow
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF'
                   },
                   large: {
-                    bg: 'bg-[#FFB7B7]', // Soft Peach
-                    border: 'border-[#FFB7B7] hover:border-[#ffa5a5]',
-                    text: 'text-[#2A2A2A]', // Dark Gray
-                    accent: 'text-[#2A2A2A]',
-                    button: 'bg-[#957DAD] hover:bg-[#8a6fa0] text-white' // Dusty Purple
+                    bg: '#FFB7B7', // Soft Peach
+                    text: '#2A2A2A', // Dark Gray
+                    buttonBg: '#957DAD', // Dusty Purple
+                    buttonText: '#FFFFFF'
                   }
                 }
                 
@@ -314,15 +308,28 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 return (
                   <Card 
                     key={key}
-                    className={`cursor-pointer hover:shadow-xl transition-all duration-200 ${colors.bg} border-2 ${colors.border} hover:scale-[1.02]`}
+                    className="cursor-pointer hover:shadow-xl transition-all duration-200 border-2 hover:scale-[1.02]"
+                    style={{ 
+                      backgroundColor: colors.bg,
+                      borderColor: colors.bg,
+                      color: colors.text
+                    }}
                     onClick={() => handleLayoutSelect(key)}
                   >
                     <CardContent className="p-6">
                       
                       {/* Header with Layout Name */}
                       <div className="text-center mb-4">
-                        <IconComponent className={`w-10 h-10 mx-auto mb-3 ${colors.accent}`} />
-                        <h3 className={`text-xl font-bold ${colors.text}`}>{layout.name}</h3>
+                        <IconComponent 
+                          className="w-10 h-10 mx-auto mb-3" 
+                          style={{ color: colors.text }}
+                        />
+                        <h3 
+                          className="text-xl font-bold" 
+                          style={{ color: colors.text }}
+                        >
+                          {layout.name}
+                        </h3>
                       </div>
                       
                       {/* Layout Preview */}
@@ -410,7 +417,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                       </div>
                       
                       {/* Features */}
-                      <div className={`flex justify-center gap-4 mb-4 text-sm ${colors.text}`}>
+                      <div className="flex justify-center gap-4 mb-4 text-sm" style={{ color: colors.text }}>
                         <div className="flex items-center gap-1">
                           <Camera className="w-4 h-4 text-red-500" />
                           <span>Video</span>
@@ -427,8 +434,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                       
                       {/* Best For */}
                       <div className="text-center mb-4">
-                        <div className={`text-sm font-semibold ${colors.text} mb-2`}>BEST FOR:</div>
-                        <div className={`text-sm ${colors.text} opacity-90`}>
+                        <div className="text-sm font-semibold mb-2" style={{ color: colors.text }}>
+                          BEST FOR:
+                        </div>
+                        <div className="text-sm opacity-90" style={{ color: colors.text }}>
                           {key === 'standard' && 'General discussions, Q&A sessions'}
                           {key === 'panel' && 'Expert panels, debates with multiple speakers'}
                           {key === 'interview' && 'One-on-one interviews with guest + moderators'}
@@ -438,7 +447,14 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                         </div>
                       </div>
                       
-                      <Button className={`w-full ${colors.button} font-semibold`}>
+                      <Button 
+                        className="w-full font-semibold"
+                        style={{ 
+                          backgroundColor: colors.buttonBg,
+                          color: colors.buttonText,
+                          border: 'none'
+                        }}
+                      >
                         Choose {layout.name}
                       </Button>
                     </CardContent>
@@ -455,10 +471,10 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
   // Form Step
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-screen bg-white flex flex-col">
       
       {/* Fixed Header */}
-      <div className="bg-white border-b px-6 py-4 flex-shrink-0 sticky top-0 z-10">
+      <div className="bg-white border-b px-6 py-4 flex-shrink-0 z-10">
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={() => setCurrentStep('layout')}>
             ← Change Layout
@@ -474,9 +490,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {/* LEFT SIDE - Messages */}
-        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0 h-screen sticky top-16 overflow-y-auto">
+        <div className="w-80 bg-gray-50 border-r p-4 flex-shrink-0 overflow-y-auto">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5" />
             <h3 className="font-semibold">Messages & Queue</h3>
@@ -494,8 +510,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
         </div>
 
         {/* RIGHT SIDE - Main Layout with Full Scrolling */}
-        <div className="flex-1">
-          <div className="p-6 min-h-screen">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
             
             {/* Topic Input */}
             <div className="text-center mb-12">
