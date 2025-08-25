@@ -54,13 +54,13 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
   
   // Participant states
   const [participantStates, setParticipantStates] = useState({
-    host: { canSpeak: true, isMuted: false, isCurrentSpeaker: false },
-    guest: { canSpeak: false, isMuted: true, isCurrentSpeaker: false },
-    'cohost-1': { canSpeak: true, isMuted: false, isCurrentSpeaker: false },
-    'cohost-2': { canSpeak: true, isMuted: false, isCurrentSpeaker: false },
-    'cohost-3': { canSpeak: true, isMuted: false, isCurrentSpeaker: false },
-    'queue-1': { canSpeak: false, isMuted: true, isCurrentSpeaker: false, inQueue: true, user: 'User 1' },
-    'queue-2': { canSpeak: false, isMuted: true, isCurrentSpeaker: false, inQueue: true, user: 'User 2' }
+    host: { canSpeak: true, isMuted: false, isCurrentSpeaker: false, handRaised: false },
+    guest: { canSpeak: false, isMuted: true, isCurrentSpeaker: false, handRaised: false },
+    'cohost-1': { canSpeak: true, isMuted: false, isCurrentSpeaker: false, handRaised: false },
+    'cohost-2': { canSpeak: true, isMuted: false, isCurrentSpeaker: false, handRaised: false },
+    'cohost-3': { canSpeak: true, isMuted: false, isCurrentSpeaker: false, handRaised: false },
+    'queue-1': { canSpeak: false, isMuted: true, isCurrentSpeaker: false, inQueue: true, user: 'User 1', handRaised: false },
+    'queue-2': { canSpeak: false, isMuted: true, isCurrentSpeaker: false, inQueue: true, user: 'User 2', handRaised: false }
   })
 
   const timerRef = useRef(null)
@@ -83,6 +83,25 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
     toast({
       title: handRaised ? "Hand lowered" : "Hand raised!",
       description: handRaised ? "You're no longer in the queue" : "You're now in the speaker queue",
+    })
+  }
+
+  const toggleParticipantHandRaise = (participantId) => {
+    setParticipantStates(prev => {
+      const newState = {
+        ...prev,
+        [participantId]: {
+          ...prev[participantId],
+          handRaised: !prev[participantId].handRaised
+        }
+      }
+      
+      toast({
+        title: newState[participantId].handRaised ? "Hand raised!" : "Hand lowered",
+        description: `${participantId} ${newState[participantId].handRaised ? 'wants to speak' : 'no longer wants to speak'}`,
+      })
+      
+      return newState
     })
   }
 
@@ -364,6 +383,24 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
                   </div>
                 )}
                 
+                {/* Hand raised indicator */}
+                {participantStates.guest?.handRaised && (
+                  <div className="absolute -top-2 -left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <Hand className="w-2 h-2" />
+                    ✋
+                  </div>
+                )}
+                
+                {/* Raise hand button */}
+                <Button
+                  size="sm"
+                  variant={participantStates.guest?.handRaised ? "default" : "outline"}
+                  className="absolute bottom-1 right-1 text-xs p-1 h-6"
+                  onClick={() => toggleParticipantHandRaise('guest')}
+                >
+                  {participantStates.guest?.handRaised ? '✋' : '🙋'}
+                </Button>
+                
                 {/* Give speaking turn button for hosts */}
                 <Button
                   size="sm"
@@ -412,6 +449,23 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
                           Speaking
                         </div>
                       )}
+                      
+                      {/* Hand raised indicator */}
+                      {participantStates[cohostId]?.handRaised && (
+                        <div className="absolute -top-1 -left-1 bg-orange-500 text-white text-xs px-1 py-0.5 rounded-full flex items-center gap-1">
+                          <Hand className="w-2 h-2" />
+                        </div>
+                      )}
+                      
+                      {/* Raise hand button */}
+                      <Button
+                        size="sm"
+                        variant={participantStates[cohostId]?.handRaised ? "default" : "outline"}
+                        className="absolute bottom-0 left-0 text-xs p-0.5 h-4"
+                        onClick={() => toggleParticipantHandRaise(cohostId)}
+                      >
+                        {participantStates[cohostId]?.handRaised ? '✋' : '🙋'}
+                      </Button>
                     </CardContent>
                   </Card>
                 )
