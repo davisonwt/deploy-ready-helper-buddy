@@ -21,7 +21,9 @@ import {
   Settings,
   DollarSign,
   Calculator,
-  Wallet
+  Wallet,
+  Plus,
+  Hand
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -316,256 +318,303 @@ export function RoomCreationForm({ onRoomCreated, existingRoom = null }) {
     </Card>
   )
 
+  // Format currency helper
+  const formatCurrency = (amount) => {
+    return `$${amount.toFixed(2)}`
+  }
+
   return (
-    <div className="w-full min-h-screen p-2 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2 px-2">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-          {existingRoom ? 'Edit Room' : 'Create Your Clubhouse Room'}
-        </h1>
-        <p className="text-white/60 text-sm sm:text-base">Design your live session by configuring each section</p>
-      </div>
-
-      {/* Room Configuration Header */}
-      <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50 backdrop-blur-sm">
-        <CardContent className="p-3 sm:p-4 lg:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div className="space-y-2">
-              <Label htmlFor="roomName" className="text-sm">Room Name *</Label>
-              <Input
-                id="roomName"
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
-                placeholder="My Awesome Room"
-                className="bg-white/5 border-white/10 text-sm"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="maxParticipants" className="text-sm">Max Participants</Label>
-              <Input
-                id="maxParticipants"
-                type="number"
-                min="2"
-                max="50"
-                value={maxParticipants}
-                onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 8)}
-                className="bg-white/5 border-white/10 text-sm"
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-              <Label htmlFor="description" className="text-sm">Description</Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What's this room about?"
-                className="bg-white/5 border-white/10 text-sm"
-              />
-            </div>
+    <div className="fixed inset-0 bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-4xl bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl">
+        
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-b border-white/20 p-6 rounded-t-2xl">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+              {existingRoom ? 'Edit Clubhouse Room' : 'Create Clubhouse Room'}
+            </h1>
+            <p className="text-white/70 text-lg">Design your live audio conversation space</p>
           </div>
+        </div>
 
-          {/* Session Type Toggle */}
-          <div className="flex items-center justify-center mb-4">
-            <div className="flex bg-slate-800/50 rounded-lg p-1 w-full max-w-sm">
-              <button
-                onClick={() => setSessionType('free')}
-                className={`flex-1 px-3 sm:px-6 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
-                  sessionType === 'free'
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                    : 'text-white/60 hover:text-white/80'
-                }`}
-              >
-                Free Session
-              </button>
-              <button
-                onClick={() => setSessionType('paid')}
-                className={`flex-1 px-3 sm:px-6 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
-                  sessionType === 'paid'
-                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                    : 'text-white/60 hover:text-white/80'
-                }`}
-              >
-                Premium Session
-              </button>
-            </div>
-          </div>
-
-          {/* Bestowal Configuration for Paid Sessions */}
-          {sessionType === 'paid' && (
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg p-3 sm:p-4 border border-purple-500/20">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                  <Label htmlFor="bestowedAmount" className="text-purple-300 text-sm">Bestowal Amount (USDC)</Label>
+        <div className="p-6 space-y-8">
+          
+          {/* Basic Room Configuration */}
+          <Card className="bg-white/5 border-white/20 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white text-xl flex items-center gap-2">
+                <Crown className="w-6 h-6 text-yellow-400" />
+                Room Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="roomName" className="text-white font-medium">Room Name *</Label>
                   <Input
-                    id="bestowedAmount"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    value={bestowedAmount}
-                    onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
-                    placeholder="0.00"
-                    className="bg-white/5 border-white/10 text-sm"
+                    id="roomName"
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    placeholder="e.g., Tech Talk Tuesday"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-lg h-12 focus:bg-white/15"
                   />
                 </div>
                 
-                <div className="flex flex-col justify-center text-center p-2 bg-green-500/10 rounded border border-green-500/20">
-                  <span className="text-green-300 text-xs sm:text-sm">Host Gets:</span>
-                  <span className="font-bold text-green-400 text-sm sm:text-base">${hostAmount.toFixed(2)}</span>
+                <div className="space-y-2">
+                  <Label htmlFor="maxParticipants" className="text-white font-medium">Max Participants</Label>
+                  <Input
+                    id="maxParticipants"
+                    type="number"
+                    min="2"
+                    max="50"
+                    value={maxParticipants}
+                    onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 8)}
+                    className="bg-white/10 border-white/20 text-white h-12 focus:bg-white/15"
+                  />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-white font-medium">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Tell people what this room is about..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[100px] focus:bg-white/15"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Session Type Configuration */}
+          <Card className="bg-white/5 border-white/20 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white text-xl flex items-center gap-2">
+                <DollarSign className="w-6 h-6 text-green-400" />
+                Session Type
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center mb-6">
+                <div className="flex bg-white/10 rounded-xl p-2 backdrop-blur-sm">
+                  <button
+                    onClick={() => setSessionType('free')}
+                    className={`px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                      sessionType === 'free'
+                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Free Session
+                  </button>
+                  <button
+                    onClick={() => setSessionType('paid')}
+                    className={`px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                      sessionType === 'paid'
+                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Premium Session
+                  </button>
+                </div>
+              </div>
+
+              {/* Premium Session Financial Details */}
+              {sessionType === 'paid' && (
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-6 border border-purple-500/30">
+                  <h3 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-purple-400" />
+                    Premium Session Pricing
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="bestowedAmount" className="text-purple-200 font-medium">Entry Fee (USDC)</Label>
+                      <Input
+                        id="bestowedAmount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={bestowedAmount}
+                        onChange={(e) => setBestowedAmount(parseFloat(e.target.value) || 0)}
+                        placeholder="10.00"
+                        className="bg-white/10 border-purple-300/30 text-white h-12 focus:bg-white/15"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Financial Breakdown */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-white/10 border-white/20">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-white">{formatCurrency(hostAmount)}</div>
+                        <div className="text-white/70 text-sm">Host Gets</div>
+                        <div className="text-white/50 text-xs">{((hostAmount / bestowedAmount) * 100).toFixed(1)}%</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-white/10 border-white/20">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-400">{formatCurrency(platformFee)}</div>
+                        <div className="text-white/70 text-sm">Platform Fee</div>
+                        <div className="text-white/50 text-xs">10%</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-white/10 border-white/20">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-green-400">{formatCurrency(serviceFee)}</div>
+                        <div className="text-white/70 text-sm">Service Fee</div>
+                        <div className="text-white/50 text-xs">0.5%</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Live Session Preview */}
+          <Card className="bg-white/5 border-white/20 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-white text-xl flex items-center gap-2">
+                <Users className="w-6 h-6 text-blue-400" />
+                Live Session Preview
+              </CardTitle>
+              <p className="text-white/60">Configure who can participate in your room</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
-                <div className="flex flex-col justify-center text-center p-2 bg-blue-500/10 rounded border border-blue-500/20">
-                  <span className="text-blue-300 text-xs sm:text-sm">Platform (10%):</span>
-                  <span className="font-bold text-blue-400 text-sm sm:text-base">${platformFee.toFixed(2)}</span>
+                {/* Host Section */}
+                <div className="space-y-4">
+                  <h3 className="text-yellow-400 font-semibold text-lg flex items-center gap-2">
+                    <Crown className="w-5 h-5" />
+                    Host (You)
+                  </h3>
+                  <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/40 h-32">
+                    <CardContent className="p-4 h-full flex flex-col items-center justify-center">
+                      <Badge className="bg-yellow-500/80 text-yellow-900 border-yellow-400 mb-2">
+                        <Crown className="w-3 h-3 mr-1" />
+                        Host
+                      </Badge>
+                      <Avatar className="w-12 h-12 border-2 border-yellow-400/50">
+                        <AvatarFallback className="bg-gradient-to-br from-yellow-600 to-orange-600 text-white font-bold">
+                          {user?.email?.[0]?.toUpperCase() || 'H'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-white font-semibold text-sm mt-2">{user?.email || 'Host'}</p>
+                    </CardContent>
+                  </Card>
                 </div>
-                
-                <div className="flex flex-col justify-center text-center p-2 bg-orange-500/10 rounded border border-orange-500/20">
-                  <span className="text-orange-300 text-xs sm:text-sm">Service (0.5%):</span>
-                  <span className="font-bold text-orange-400 text-sm sm:text-base">${serviceFee.toFixed(2)}</span>
+
+                {/* Guest Section */}
+                <div className="space-y-4">
+                  <h3 className="text-purple-400 font-semibold text-lg">Featured Guest</h3>
+                  <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 h-32">
+                    <CardContent className="p-4 h-full flex flex-col items-center justify-center">
+                      <Badge className="bg-purple-500/80 text-purple-100 border-purple-400 mb-2">
+                        Guest
+                      </Badge>
+                      <div className="w-12 h-12 border-2 border-dashed border-purple-400/50 rounded-full flex items-center justify-center">
+                        <Plus className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <p className="text-white/60 text-sm mt-2">Add guest speaker</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Interactive Clubhouse Layout */}
-      <Card className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 border-slate-700/50 backdrop-blur-sm">
-        <CardHeader className="pb-3 sm:pb-4">
-          <CardTitle className="text-center text-lg sm:text-xl">
-            Live Session Layout Preview
-            <p className="text-xs sm:text-sm text-white/60 font-normal mt-1">
-              {window.innerWidth < 640 ? 'Tap sections to configure' : 'Hover over sections to configure roles and participants'}
-            </p>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 sm:p-4 lg:p-8 space-y-6 sm:space-y-8">
-          
-          {/* Host Section */}
-          <div className="text-center mb-6 sm:mb-8">
-            <InteractiveSection
-              title="Host Section"
-              description="You'll be here as the main host"
-              icon={Crown}
-              color="border-yellow-500/50 bg-yellow-500/10"
-              users={[]} // Host is always current user
-              role="host"
-              isHostSection={true}
-              sessionType={sessionType}
-              bestowedAmount={bestowedAmount}
-            />
-          </div>
-
-          {/* Admins Row */}
-          <div className="mb-6 sm:mb-8">
-            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Admin Positions (Max 3)</h3>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-xs sm:max-w-md mx-auto">
-              {[0, 1, 2].map((index) => (
-                <InteractiveSection
-                  key={`admin-${index}`}
-                  title={`Admin ${index + 1}`}
-                  description="Room moderator"
-                  icon={Crown}
-                  color="border-yellow-500/30 bg-yellow-500/5"
-                  users={admins}
-                  role="admin"
-                  onAdd={addToRole}
-                  onRemove={removeFromRole}
-                  allUsers={allUsers}
-                  getUserInfo={getUserInfo}
-                  position={index}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Co-hosts Row */}
-          <div className="mb-6 sm:mb-8">
-            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Co-host Positions (Max 5)</h3>
-            <div className="grid grid-cols-5 gap-1 sm:gap-2 lg:gap-3 max-w-sm sm:max-w-xl lg:max-w-2xl mx-auto">
-              {[0, 1, 2, 3, 4].map((index) => (
-                <InteractiveSection
-                  key={`cohost-${index}`}
-                  title={`Co-host ${index + 1}`}
-                  description="Assistant host"
-                  icon={Users}
-                  color="border-blue-500/30 bg-blue-500/5"
-                  users={coHosts}
-                  role="co_host"
-                  onAdd={addToRole}
-                  onRemove={removeFromRole}
-                  allUsers={allUsers}
-                  getUserInfo={getUserInfo}
-                  position={index}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Starting Guests Row */}
-          <div className="mb-6 sm:mb-8">
-            <h3 className="text-center text-white/80 text-xs sm:text-sm mb-3 sm:mb-4">Starting Guest Speakers (Max 3)</h3>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-xs sm:max-w-md mx-auto">
-              {[0, 1, 2].map((index) => (
-                <InteractiveSection
-                  key={`guest-${index}`}
-                  title={`Guest ${index + 1}`}
-                  description="Pre-approved speaker"
-                  icon={Mic}
-                  color="border-green-500/30 bg-green-500/5"
-                  users={startingGuests}
-                  role="guest"
-                  onAdd={addToRole}
-                  onRemove={removeFromRole}
-                  allUsers={allUsers}
-                  getUserInfo={getUserInfo}
-                  position={index}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Audience Section */}
-          <div className="border-t border-white/10 pt-4 sm:pt-6">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-slate-700/50 border-2 border-slate-600/50 rounded-full mb-3">
-                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" />
+              {/* Co-hosts Section */}
+              <div className="mt-6 space-y-4">
+                <h3 className="text-blue-400 font-semibold text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Co-hosts
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i} className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border-2 border-blue-500/40 h-28">
+                      <CardContent className="p-3 h-full flex flex-col items-center justify-center">
+                        <Badge className="bg-blue-500/80 text-blue-100 border-blue-400 text-xs mb-2">
+                          Co-host {i}
+                        </Badge>
+                        <div className="w-10 h-10 border-2 border-dashed border-blue-400/50 rounded-full flex items-center justify-center">
+                          <Plus className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <p className="text-white/60 text-xs mt-1">Available</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-white mb-1">Audience Section</h3>
-              <p className="text-xs sm:text-sm text-white/60 px-4">
-                {sessionType === 'paid' && bestowedAmount > 0 
-                  ? `Listeners who contribute $${bestowedAmount} USDC can request to speak`
-                  : 'Anyone can join and request to speak'
-                }
-              </p>
-              <div className="mt-2 text-xs text-white/40">
-                Max capacity: {maxParticipants} total participants
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-        <Button
-          onClick={saveRoom}
-          disabled={isLoading}
-          className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 h-12 sm:h-10"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {existingRoom ? 'Update Room' : 'Save Room'}
-        </Button>
-        
-        <Button
-          onClick={startLiveSession}
-          disabled={isLoading || !roomName.trim()}
-          className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-12 sm:h-10"
-        >
-          <Play className="w-4 h-4 mr-2" />
-          Start Live Session
-        </Button>
+              {/* Queue Preview */}
+              <div className="mt-6 space-y-4">
+                <h3 className="text-green-400 font-semibold text-lg flex items-center gap-2">
+                  <Hand className="w-5 h-5" />
+                  Speaker Queue (8 positions)
+                </h3>
+                <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((pos) => (
+                    <Card key={pos} className="bg-white/10 border-white/20 aspect-square">
+                      <CardContent className="p-2 h-full flex flex-col items-center justify-center">
+                        <div className="text-xs text-white/90 font-bold mb-1 bg-white/20 rounded-full w-5 h-5 flex items-center justify-center">
+                          {pos}
+                        </div>
+                        <div className="w-6 h-6 border border-dashed border-white/40 rounded-full flex items-center justify-center">
+                          <span className="text-white/50 text-xs">+</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+            <Button
+              onClick={saveRoom}
+              disabled={isLoading}
+              size="lg"
+              className="bg-white/10 hover:bg-white/20 border-white/20 text-white backdrop-blur-sm px-8 py-3 h-auto"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  Save Room
+                </>
+              )}
+            </Button>
+            
+            <Button
+              onClick={startLiveSession}
+              disabled={isLoading}
+              size="lg"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/30 px-8 py-3 h-auto font-semibold"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5 mr-2" />
+                  Start Live Session
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
