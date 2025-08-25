@@ -535,22 +535,28 @@ export function RoomCreationForm({ onRoomCreated }) {
               <h3 className="text-lg font-semibold mb-4">
                 {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
               </h3>
-              {/* Dynamic grid based on layout */}
-              <div className={`grid gap-4 justify-center max-w-6xl mx-auto ${
-                layouts[selectedLayout].inviteSlots <= 4 ? 'grid-cols-2' :
-                layouts[selectedLayout].inviteSlots <= 6 ? 'grid-cols-3' :
-                'grid-cols-4'
+              {/* Dynamic horizontal grid based on layout - smaller boxes */}
+              <div className={`grid gap-2 justify-center max-w-5xl mx-auto ${
+                layouts[selectedLayout].inviteSlots <= 4 ? 'grid-cols-4' :
+                layouts[selectedLayout].inviteSlots <= 6 ? 'grid-cols-6' :
+                layouts[selectedLayout].inviteSlots <= 8 ? 'grid-cols-8' :
+                'grid-cols-8'
               }`}>
                 {inviteSlots.map((slot, index) => (
                   <SlotCard
                     key={index}
-                    title={selectedLayout === 'intimate' ? 'participant' : 'audience member'}
+                    title={`${selectedLayout === 'intimate' ? 'participant' : 'audience'} ${index + 1}`}
                     user={slot}
                     onClick={() => handleSlotClick('invite', index)}
-                    className="border-green-300 bg-green-50 h-32"
+                    className="border-green-300 bg-green-50 h-24 w-20"
                   />
                 ))}
               </div>
+              {layouts[selectedLayout].inviteSlots > 8 && (
+                <div className="text-sm text-gray-600 mt-2">
+                  +{layouts[selectedLayout].inviteSlots - 8} more slots available
+                </div>
+              )}
               <div className="mt-2 text-sm text-gray-600">
                 {layouts[selectedLayout].inviteSlots} people can speak from audience queue
               </div>
