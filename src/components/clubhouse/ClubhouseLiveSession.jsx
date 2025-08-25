@@ -223,19 +223,21 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
   )
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-800 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="bg-black/30 backdrop-blur-md border-b border-white/10 p-4 shadow-xl">
+      <div className="bg-black/40 backdrop-blur-xl border-b border-white/20 px-6 py-4 shadow-xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" />
-            <span className="text-white font-bold text-lg">{roomData?.name || 'Live Session'}</span>
-            <Badge className="bg-white/10 text-white border-white/20">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" />
+              <span className="text-white font-bold text-xl tracking-wide">{roomData?.name || 'Live Session'}</span>
+            </div>
+            <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 font-medium">
               <Users className="w-3 h-3 mr-1" />
               24 listening
             </Badge>
             {roomData?.session_type === 'paid' && (
-              <Badge className="bg-purple-500/80 text-purple-100 border-purple-400">
+              <Badge className="bg-purple-500/30 text-purple-200 border-purple-400/40 font-medium">
                 <DollarSign className="w-3 h-3 mr-1" />
                 Premium
               </Badge>
@@ -246,83 +248,160 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
             variant="ghost" 
             size="sm" 
             onClick={onLeave}
-            className="text-white/60 hover:text-white hover:bg-red-500/20"
+            className="text-white/60 hover:text-white hover:bg-red-500/30 transition-all duration-200"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Content Area */}
-        <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
-          <div className="max-w-4xl mx-auto space-y-6">
-            
-            {/* Host Section */}
+      {/* Main Layout - Following your exact design */}
+      <div className="flex-1 flex">
+        
+        {/* Left Side - Main Stage */}
+        <div className="flex-1 p-6 grid grid-cols-2 gap-6 overflow-y-auto">
+          
+          {/* Host Section - Top Left */}
+          <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-white/80 text-sm font-medium mb-4 flex items-center justify-center gap-2">
-                <Crown className="w-4 h-4 text-yellow-400" />
-                Host
-              </h3>
-              <div className="max-w-sm mx-auto">
-                <SpeakerCard participant={host} size="lg" />
-              </div>
+              <h2 className="text-white/90 font-semibold text-lg mb-1 tracking-wide">Host</h2>
+              <div className="text-white/60 text-sm">Live now</div>
             </div>
+            <Card className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/40 shadow-2xl shadow-yellow-500/20 backdrop-blur-lg h-48">
+              <CardContent className="p-6 h-full flex flex-col items-center justify-center relative">
+                <Badge className="absolute top-3 left-3 bg-yellow-500/80 text-yellow-900 border-yellow-400 font-semibold">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Host
+                </Badge>
+                
+                <div className="absolute top-3 right-3">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                    <Mic className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                
+                <Avatar className="w-20 h-20 mb-3 border-4 border-yellow-400/50 shadow-xl">
+                  <AvatarImage src={host.avatar} />
+                  <AvatarFallback className="bg-gradient-to-br from-yellow-600 to-orange-600 text-white font-bold text-xl">
+                    {host.name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <h3 className="text-white font-bold text-lg mb-1">{host.name}</h3>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="text-green-300 text-sm font-medium">Speaking</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Guest Section */}
+          {/* Guest Section - Top Right */}
+          <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-white/80 text-sm font-medium mb-4">Featured Guest</h3>
-              <div className="max-w-sm mx-auto">
-                <SpeakerCard participant={guests[0]} size="lg" />
-              </div>
+              <h2 className="text-white/90 font-semibold text-lg mb-1 tracking-wide">Guest</h2>
+              <div className="text-white/60 text-sm">Featured speaker</div>
             </div>
+            <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/40 shadow-2xl shadow-purple-500/20 backdrop-blur-lg h-48">
+              <CardContent className="p-6 h-full flex flex-col items-center justify-center relative">
+                <Badge className="absolute top-3 left-3 bg-purple-500/80 text-purple-100 border-purple-400 font-semibold">
+                  Guest
+                </Badge>
+                
+                <div className="absolute top-3 right-3">
+                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <MicOff className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+                
+                <Avatar className="w-20 h-20 mb-3 border-4 border-purple-400/50 shadow-xl">
+                  <AvatarImage src={guests[0].avatar} />
+                  <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold text-xl">
+                    {guests[0].name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <h3 className="text-white font-bold text-lg mb-1">{guests[0].name}</h3>
+                <div className="text-white/60 text-sm">Listening</div>
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Co-hosts Section */}
-            <div>
-              <h3 className="text-white/80 text-sm font-medium mb-4 text-center flex items-center justify-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
+          {/* Co-hosts Section - Bottom spanning both columns */}
+          <div className="col-span-2 space-y-4">
+            <div className="text-center">
+              <h2 className="text-white/90 font-semibold text-lg mb-1 tracking-wide flex items-center justify-center gap-2">
+                <Users className="w-5 h-5 text-blue-400" />
                 Co-hosts
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-                {coHosts.map((coHost, index) => (
-                  <SpeakerCard key={coHost.id} participant={coHost} size="md" />
-                ))}
-              </div>
+              </h2>
+              <div className="text-white/60 text-sm">Supporting the conversation</div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {coHosts.map((coHost, index) => (
+                <Card key={coHost.id} className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border-2 border-blue-500/40 shadow-xl shadow-blue-500/20 backdrop-blur-lg h-36">
+                  <CardContent className="p-4 h-full flex flex-col items-center justify-center relative">
+                    <Badge className="absolute top-2 left-2 bg-blue-500/80 text-blue-100 border-blue-400 text-xs font-semibold">
+                      <Users className="w-2 h-2 mr-1" />
+                      Co-host
+                    </Badge>
+                    
+                    <div className="absolute top-2 right-2">
+                      <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <MicOff className="w-2 h-2 text-white" />
+                      </div>
+                    </div>
+                    
+                    <Avatar className="w-14 h-14 mb-2 border-3 border-blue-400/50 shadow-lg">
+                      <AvatarImage src={coHost.avatar} />
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white font-bold">
+                        {coHost.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    
+                    <h4 className="text-white font-semibold text-sm text-center">{coHost.name}</h4>
+                    <div className="text-white/60 text-xs">Listening</div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 bg-black/20 backdrop-blur-sm border-l border-white/10 flex flex-col">
+        <div className="w-80 bg-black/30 backdrop-blur-xl border-l border-white/20 flex flex-col">
           
           {/* Queue Section */}
-          <div className="p-4 border-b border-white/10">
-            <h3 className="text-white font-medium mb-3 flex items-center gap-2">
-              <Hand className="w-4 h-4" />
+          <div className="p-4 border-b border-white/20">
+            <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+              <Hand className="w-5 h-5 text-yellow-400" />
               Queue
             </h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-3">
               {queue.map((slot, index) => (
-                <Card key={index} className={`aspect-square ${
-                  slot.user ? 'bg-green-500/20 border-green-500/50' : 'bg-white/5 border-white/10 border-dashed'
-                } transition-all hover:scale-105`}>
+                <Card key={index} className={`aspect-square transition-all duration-200 hover:scale-105 ${
+                  slot.user 
+                    ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/30 border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/20' 
+                    : 'bg-white/5 border-2 border-dashed border-white/30'
+                }`}>
                   <CardContent className="p-2 h-full flex flex-col items-center justify-center">
-                    <div className="text-xs text-white/80 mb-1">{slot.position}</div>
+                    <div className="text-xs text-white/90 font-bold mb-1 bg-white/20 rounded-full w-5 h-5 flex items-center justify-center">
+                      {slot.position}
+                    </div>
                     {slot.user ? (
                       <>
-                        <Avatar className="w-8 h-8 mb-1">
+                        <Avatar className="w-8 h-8 mb-1 border-2 border-emerald-400/50">
                           <AvatarImage src={slot.user.avatar} />
-                          <AvatarFallback className="text-xs bg-green-600">
+                          <AvatarFallback className="text-xs bg-emerald-600 text-white font-bold">
                             {slot.user.name[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="text-xs text-white/90 text-center truncate max-w-full">
+                        <div className="text-xs text-white/90 text-center truncate max-w-full font-medium">
                           {slot.user.name.split(' ')[0]}
                         </div>
                       </>
                     ) : (
-                      <div className="w-8 h-8 border-2 border-dashed border-white/30 rounded-full flex items-center justify-center">
-                        <span className="text-white/40 text-xs">+</span>
+                      <div className="w-8 h-8 border-2 border-dashed border-white/40 rounded-full flex items-center justify-center">
+                        <span className="text-white/50 text-sm font-bold">+</span>
                       </div>
                     )}
                   </CardContent>
@@ -333,9 +412,9 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
 
           {/* Messages Section */}
           <div className="flex-1 flex flex-col">
-            <div className="p-4 border-b border-white/10">
-              <h3 className="text-white font-medium flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
+            <div className="p-4 border-b border-white/20">
+              <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-400" />
                 Messages
               </h3>
             </div>
@@ -343,27 +422,27 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-3">
                 {messages.map((msg) => (
-                  <div key={msg.id} className="bg-white/5 rounded-lg p-3 border border-white/10">
+                  <div key={msg.id} className="bg-white/10 rounded-xl p-3 border border-white/20 backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white/90 font-medium text-sm">{msg.user}</span>
-                      <span className="text-white/50 text-xs">{msg.time}</span>
+                      <span className="text-white/95 font-semibold text-sm">{msg.user}</span>
+                      <span className="text-white/60 text-xs">{msg.time}</span>
                     </div>
-                    <p className="text-white/80 text-sm">{msg.content}</p>
+                    <p className="text-white/85 text-sm leading-relaxed">{msg.content}</p>
                   </div>
                 ))}
               </div>
             </ScrollArea>
             
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/20">
               <div className="flex gap-2">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/50"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60 backdrop-blur-sm focus:bg-white/15"
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 />
-                <Button size="sm" onClick={handleSendMessage} className="bg-blue-500 hover:bg-blue-600">
+                <Button size="sm" onClick={handleSendMessage} className="bg-blue-500/80 hover:bg-blue-500 border-blue-400/30">
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
@@ -372,64 +451,68 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
         </div>
       </div>
 
-      {/* Bottom Controls */}
-      <div className="bg-black/30 backdrop-blur-md border-t border-white/10 p-4 shadow-xl">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
+      {/* Bottom Controls Bar */}
+      <div className="bg-black/40 backdrop-blur-xl border-t border-white/20 px-6 py-4 shadow-xl">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
           
-          {/* Left Controls */}
-          <div className="flex items-center gap-3">
+          {/* Left Controls - Audio/Video */}
+          <div className="flex items-center gap-4">
             <Button
               variant={isVideoOn ? "default" : "secondary"}
-              size="sm"
+              size="lg"
               onClick={() => setIsVideoOn(!isVideoOn)}
-              className="w-12 h-12 rounded-full"
+              className="w-14 h-14 rounded-full bg-white/10 border-white/20 hover:bg-white/20 transition-all duration-200"
             >
-              {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+              {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
             </Button>
             
             <Button
               variant={isMuted ? "destructive" : "default"}
-              size="sm"
+              size="lg"
               onClick={() => setIsMuted(!isMuted)}
-              className="w-12 h-12 rounded-full"
+              className={`w-14 h-14 rounded-full transition-all duration-200 ${
+                isMuted 
+                  ? 'bg-red-500/80 hover:bg-red-500 border-red-400/50' 
+                  : 'bg-green-500/80 hover:bg-green-500 border-green-400/50'
+              }`}
             >
-              {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             </Button>
           </div>
 
-          {/* Center Controls */}
-          <div className="flex items-center gap-3">
+          {/* Center Controls - Interactive Actions */}
+          <div className="flex items-center gap-4">
             <div className="relative">
               <Button
                 variant="outline"
-                size="sm"
+                size="lg"
                 onClick={() => setShowGifts(!showGifts)}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm px-6"
               >
-                <Gift className="w-4 h-4 mr-2" />
+                <Gift className="w-5 h-5 mr-2" />
                 Gifts
-                <ChevronDown className="w-3 h-3 ml-1" />
+                <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
               
               {showGifts && (
-                <Card className="absolute bottom-full mb-2 left-0 bg-black/90 border-white/20 p-3 min-w-48">
-                  <div className="space-y-2">
+                <Card className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-black/90 border-white/30 p-4 min-w-56 backdrop-blur-xl">
+                  <div className="space-y-3">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSendGift('hearts', 5)}
-                      className="w-full justify-start text-pink-300 hover:bg-pink-500/20"
+                      className="w-full justify-start text-pink-300 hover:bg-pink-500/20 transition-colors"
                     >
-                      <Heart className="w-4 h-4 mr-2" />
+                      <Heart className="w-5 h-5 mr-3" />
                       Send Hearts (5)
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleSendGift('usdc', 1)}
-                      className="w-full justify-start text-green-300 hover:bg-green-500/20"
+                      className="w-full justify-start text-green-300 hover:bg-green-500/20 transition-colors"
                     >
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <DollarSign className="w-5 h-5 mr-3" />
                       Send 1 USDC
                     </Button>
                   </div>
@@ -439,33 +522,33 @@ export function ClubhouseLiveSession({ roomData, onLeave }) {
             
             <Button
               variant={handRaised ? "default" : "outline"}
-              size="sm"
+              size="lg"
               onClick={handleRaiseHand}
               disabled={handRaised}
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50 backdrop-blur-sm px-6"
             >
-              <Hand className="w-4 h-4 mr-2" />
+              <Hand className="w-5 h-5 mr-2" />
               {handRaised ? 'In Queue' : 'Raise Hand'}
             </Button>
           </div>
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-3">
+          {/* Right Controls - Share & Leave */}
+          <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              size="sm"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              size="lg"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm w-14 h-14 rounded-full"
             >
-              <Share className="w-4 h-4" />
+              <Share className="w-5 h-5" />
             </Button>
             
             <Button
               variant="destructive"
-              size="sm"
+              size="lg"
               onClick={onLeave}
-              className="bg-red-500/80 hover:bg-red-500"
+              className="bg-red-500/80 hover:bg-red-500 border-red-400/50 px-6"
             >
-              <PhoneOff className="w-4 h-4 mr-2" />
+              <PhoneOff className="w-5 h-5 mr-2" />
               Leave
             </Button>
           </div>
