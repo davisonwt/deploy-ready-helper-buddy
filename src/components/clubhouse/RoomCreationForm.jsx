@@ -283,7 +283,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
   // Gifting Configuration Step
   if (currentStep === 'gifting') {
     return (
-      <div className="h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col rounded-3xl m-4 overflow-hidden shadow-2xl">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col rounded-3xl m-4 shadow-2xl">
         
         {/* Header */}
         <div className="bg-white/90 backdrop-blur-md border-b border-white/20 px-6 py-4 flex-shrink-0 rounded-t-3xl">
@@ -296,8 +296,8 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           <p className="text-gray-600 mt-2">Set up listener gifting options for hosts and co-hosts</p>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="max-w-2xl mx-auto space-y-6 pb-6">
             
             {/* Enable Gifting Toggle */}
             <Card className="bg-white/80 backdrop-blur-sm">
@@ -420,9 +420,9 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="bg-white/90 backdrop-blur-md border-t border-white/20 px-6 py-4 flex-shrink-0 rounded-b-3xl">
-          <div className="flex justify-between gap-4">
+        {/* Footer Actions - Fixed at bottom */}
+        <div className="bg-white/90 backdrop-blur-md border-t border-white/20 px-6 py-4 flex-shrink-0 rounded-b-3xl sticky bottom-0">
+          <div className="flex justify-between gap-4 max-w-2xl mx-auto">
             <Button 
               variant="outline" 
               onClick={() => setCurrentStep('layout')}
