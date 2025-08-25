@@ -383,7 +383,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               <Button 
                                 size="sm"
                                 onClick={() => onJoinRoom(room.id)}
-                                className="bg-green-600 hover:bg-green-700 text-white font-semibold shadow-md"
+                                className="bg-green-500/30 hover:bg-green-500/50 text-white font-semibold shadow-md border border-green-500/50 backdrop-blur-sm"
                               >
                                 Enter Room
                               </Button>
@@ -391,7 +391,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                               <Button 
                                 size="sm"
                                 onClick={() => handleJoinRequest(room.id, room.name)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                                className="bg-green-500/30 hover:bg-green-500/50 text-white font-semibold shadow-md border border-green-500/50 backdrop-blur-sm"
                               >
                                 Request to Join
                               </Button>
@@ -401,7 +401,7 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => deleteRoom(room.id, room.name)}
-                                className="bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+                                className="bg-red-500/30 hover:bg-red-500/50 text-white font-semibold shadow-md border border-red-500/50 backdrop-blur-sm"
                                 title="Delete Room"
                               >
                                 <Trash2 className="h-4 w-4" />
