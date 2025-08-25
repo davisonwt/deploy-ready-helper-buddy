@@ -458,10 +458,11 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
     return (
       <div 
-        className="h-screen flex flex-col rounded-3xl m-4 overflow-hidden shadow-2xl"
+        className="h-screen flex flex-col rounded-3xl m-2 overflow-hidden shadow-2xl max-h-screen"
         style={{
           background: `linear-gradient(135deg, ${colors.bg}40, ${colors.bg}20)`,
-          backdropFilter: 'blur(20px)'
+          backdropFilter: 'blur(20px)',
+          maxHeight: 'calc(100vh - 1rem)'
         }}
       >
         
@@ -503,87 +504,38 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
           </div>
         </div>
 
-        {/* Main Content - Fully Responsive Layout */}
-        <div className="flex-1 overflow-auto p-4">
-          <div className="max-w-7xl mx-auto">
+        {/* Main Content - Compact Layout that fits viewport */}
+        <div className="flex-1 p-2 min-h-0">
+          <div className="max-w-6xl mx-auto h-full">
             
-            {/* Mobile: Stack vertically, Desktop: 3 columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+            {/* Compact 3-column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 h-full">
               
-              {/* Left Section - Layout Preview & Topic */}
-              <div className="lg:col-span-4 space-y-3">
+              {/* Left Section - Compact */}
+              <div className="space-y-2">
                 
-                {/* Compact Layout Preview */}
+                {/* Mini Layout Preview */}
                 <Card 
-                  className="rounded-2xl border-2 backdrop-blur-sm shadow-xl"
+                  className="rounded-xl border-2 backdrop-blur-sm shadow-lg"
                   style={{ 
                     backgroundColor: `${colors.bg}85`,
                     borderColor: colors.bg
                   }}
                 >
-                  <CardContent className="p-3">
-                    <div className="text-center mb-2">
-                      <h3 
-                        className="text-lg font-bold mb-2" 
-                        style={{ color: colors.text }}
-                      >
-                        ✨ {layout.name} ✨
-                      </h3>
-                      <div className="bg-white/95 rounded-xl p-3 shadow-inner">
-                        
-                        {/* Mini Layout Display */}
-                        <div className="flex gap-3 mb-2">
-                          <div className="flex-1">
-                            <div className="text-xs font-bold text-gray-700 mb-2 text-center">SPEAKERS</div>
-                            
-                            {/* Host */}
-                            <div className="flex justify-center mb-2">
-                              <div className="bg-yellow-200 border-2 border-yellow-400 rounded-lg px-2 py-1 text-center">
-                                <Crown className="w-3 h-3 mx-auto text-yellow-600" />
-                                <div className="text-xs font-bold">HOST</div>
-                              </div>
-                            </div>
-                            
-                            {/* Co-hosts */}
-                            {layout.coHostSlots > 0 && (
-                              <div className="flex justify-center gap-1 mb-2">
-                                {Array(Math.min(layout.coHostSlots, 3)).fill(0).map((_, i) => (
-                                  <div key={i} className="bg-blue-200 border border-blue-400 rounded px-1 py-1">
-                                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {/* Audience */}
-                            <div className="grid grid-cols-4 gap-1 justify-center max-w-20 mx-auto">
-                               {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
-                                 <div key={i} className="bg-green-200 border border-green-400 rounded h-4 w-4 flex items-center justify-center">
-                                   <div className="w-1 h-1 bg-green-600 rounded-full"></div>
-                                 </div>
-                               ))}
-                            </div>
-                          </div>
-                          
-                          {/* Chat */}
-                          <div className="w-1/3 bg-gray-100 rounded-lg p-2">
-                            <MessageSquare className="w-3 h-3 mx-auto mb-1 text-gray-600" />
-                            <div className="space-y-1">
-                              <div className="bg-white rounded h-2"></div>
-                              <div className="bg-orange-100 rounded h-2"></div>
-                              <div className="bg-green-100 rounded h-2"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <CardContent className="p-2">
+                    <h3 
+                      className="text-sm font-bold text-center mb-2" 
+                      style={{ color: colors.text }}
+                    >
+                      ✨ {layout.name}
+                    </h3>
                   </CardContent>
                 </Card>
 
                 {/* Topic Input */}
                 <div>
                   <Label 
-                    className="text-lg font-bold mb-3 block text-center" 
+                    className="text-sm font-bold mb-1 block text-center" 
                     style={{ color: colors.text }}
                   >
                     📢 Live Topic
@@ -592,7 +544,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                     value={liveTopic}
                     onChange={(e) => setLiveTopic(e.target.value)}
                     placeholder="Enter your live topic..."
-                    className="text-center font-semibold h-12 text-lg rounded-2xl backdrop-blur-sm shadow-lg border-2"
+                    className="text-center font-semibold h-10 rounded-xl backdrop-blur-sm shadow-lg border-2"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.95)',
                       borderColor: colors.buttonBg,
@@ -603,36 +555,35 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
 
                 {/* Session Settings */}
                 <Card 
-                  className="rounded-2xl backdrop-blur-sm"
+                  className="rounded-xl backdrop-blur-sm"
                   style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
                 >
-                  <CardContent className="p-4">
-                    <h4 className="font-bold mb-3 text-center">💰 Session Settings</h4>
-                    <div className="flex items-center justify-between mb-3">
-                      <Label className="font-semibold">Session Type</Label>
+                  <CardContent className="p-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-semibold">Session Type</Label>
                       <div className="flex items-center gap-2">
                         <Switch 
                           checked={sessionType === 'paid'} 
                           onCheckedChange={(checked) => setSessionType(checked ? 'paid' : 'free')}
                         />
-                        <span className="font-medium">
+                        <span className="text-xs font-medium">
                           {sessionType === 'free' ? '🆓 Free' : '💳 Paid'}
                         </span>
                       </div>
                     </div>
                     
                     {sessionType === 'paid' && (
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4" />
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3" />
                         <Input
                           type="number"
                           step="0.01"
                           value={entryFee}
                           onChange={(e) => setEntryFee(parseFloat(e.target.value) || 0)}
                           placeholder="1.00"
-                          className="flex-1 rounded-xl h-10"
+                          className="flex-1 rounded-lg h-8 text-sm"
                         />
-                        <span className="text-sm font-medium">USD</span>
+                        <span className="text-xs">USD</span>
                       </div>
                     )}
                   </CardContent>
@@ -640,12 +591,12 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </div>
 
               {/* Middle Section - Host & Co-hosts */}
-              <div className="lg:col-span-4 space-y-3">
+              <div className="space-y-2">
                 
                 {/* Host Section */}
                 <div>
                   <h3 
-                    className="text-lg font-bold mb-3 text-center" 
+                    className="text-sm font-bold mb-2 text-center" 
                     style={{ color: colors.text }}
                   >
                     👑 Host
@@ -654,7 +605,7 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                     title="Click to add host"
                     user={hostSlot}
                     onClick={() => handleSlotClick('host')}
-                    className="border-yellow-300 bg-yellow-50 h-20 rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                    className="border-yellow-300 bg-yellow-50 h-16 rounded-xl shadow-md hover:shadow-lg transition-all"
                   />
                 </div>
 
@@ -662,23 +613,23 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
                 {layout.coHostSlots > 0 && (
                   <div>
                     <h3 
-                      className="text-lg font-bold mb-3 text-center" 
+                      className="text-sm font-bold mb-2 text-center" 
                       style={{ color: colors.text }}
                     >
                       {selectedLayout === 'panel' ? '🎤 Panelists' : 
                        selectedLayout === 'interview' ? '🤝 Guest & Co-hosts' :
                        selectedLayout === 'townhall' ? '⚖️ Moderators' : '🤝 Co-hosts'}
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {coHostSlots.slice(0, 6).map((slot, index) => (
+                    <div className="grid grid-cols-2 gap-2">
+                      {coHostSlots.slice(0, 4).map((slot, index) => (
                         <SlotCard
                           key={index}
-                          title={`Click to add ${selectedLayout === 'interview' && index === 0 ? 'guest' : 
+                          title={`Add ${selectedLayout === 'interview' && index === 0 ? 'guest' : 
                                  selectedLayout === 'panel' ? 'panelist' :
                                  selectedLayout === 'townhall' ? 'moderator' : 'co-host'}`}
                           user={slot}
                           onClick={() => handleSlotClick('cohost', index)}
-                          className="border-blue-300 bg-blue-50 h-16 rounded-2xl shadow-md hover:shadow-lg transition-all"
+                          className="border-blue-300 bg-blue-50 h-12 rounded-xl shadow-md hover:shadow-lg transition-all"
                         />
                        ))}
                     </div>
@@ -687,100 +638,95 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               </div>
 
               {/* Right Section - Audience & Actions */}
-              <div className="lg:col-span-4 space-y-3">
+              <div className="space-y-2">
                 
                 {/* Audience Section */}
                 <div>
                   <h3 
-                    className="text-lg font-bold mb-3 text-center" 
+                    className="text-sm font-bold mb-2 text-center" 
                     style={{ color: colors.text }}
                   >
                     {selectedLayout === 'intimate' ? '👥 Participants' : '🎭 Audience Queue'}
                   </h3>
-                  <div className="grid grid-cols-5 gap-2">
-                    {inviteSlots.slice(0, 15).map((slot, index) => (
+                  <div className="grid grid-cols-4 gap-1">
+                    {inviteSlots.slice(0, 8).map((slot, index) => (
                       <Card 
                         key={index}
-                        className="cursor-pointer hover:shadow-md transition-all border border-green-300 bg-green-50 h-12 rounded-xl"
+                        className="cursor-pointer hover:shadow-md transition-all border border-green-300 bg-green-50 h-10 rounded-lg"
                         onClick={() => handleSlotClick('invite', index)}
                       >
-                        <CardContent className="p-1 h-full flex flex-col items-center justify-center">
+                        <CardContent className="p-1 h-full flex items-center justify-center">
                           {slot ? (
-                            <>
-                              <Avatar className="w-6 h-6">
-                                <AvatarImage src={slot.avatar} />
-                                <AvatarFallback className="text-xs">{slot.name?.[0] || 'A'}</AvatarFallback>
-                              </Avatar>
-                            </>
+                            <Avatar className="w-5 h-5">
+                              <AvatarImage src={slot.avatar} />
+                              <AvatarFallback className="text-xs">{slot.name?.[0] || 'A'}</AvatarFallback>
+                            </Avatar>
                           ) : (
-                            <>
-                              <UserPlus className="w-4 h-4 text-gray-400" />
-                              <span className="text-xs">{index + 1}</span>
-                            </>
+                            <UserPlus className="w-3 h-3 text-gray-400" />
                           )}
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                   <div 
-                    className="text-center text-sm mt-2 font-medium" 
+                    className="text-center text-xs mt-1" 
                     style={{ color: colors.text }}
                   >
-                    🎯 {layout.inviteSlots} people can speak from audience
+                    🎯 {layout.inviteSlots} can speak
                   </div>
                 </div>
 
                 {/* Features */}
                 <Card 
-                  className="rounded-2xl backdrop-blur-sm"
+                  className="rounded-xl backdrop-blur-sm"
                   style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
                 >
-                  <CardContent className="p-4">
-                    <h4 className="font-bold mb-3 text-center">✨ Features Included</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Camera className="w-4 h-4 text-green-600" />
-                        <span className="text-sm">📹 Video for hosts & guests</span>
+                  <CardContent className="p-2">
+                    <h4 className="text-xs font-bold mb-2 text-center">✨ Features</h4>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Camera className="w-3 h-3 text-green-600" />
+                        <span className="text-xs">📹 Video</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Mic className="w-4 h-4 text-green-600" />
-                        <span className="text-sm">🎙️ Voice recordings in chat</span>
+                      <div className="flex items-center gap-1">
+                        <Mic className="w-3 h-3 text-green-600" />
+                        <span className="text-xs">🎙️ Voice recordings</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-green-600" />
-                        <span className="text-sm">📄 Document sharing</span>
+                      <div className="flex items-center gap-1">
+                        <FileText className="w-3 h-3 text-green-600" />
+                        <span className="text-xs">📄 Document sharing</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
+                {/* Action Buttons - Always visible at bottom */}
+                <div className="space-y-2">
                   <Button 
                     onClick={saveRoom} 
                     variant="outline" 
-                    size="lg" 
-                    className="w-full h-12 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 font-bold"
+                    size="sm" 
+                    className="w-full h-10 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
                     style={{
                       backgroundColor: 'rgba(255,255,255,0.95)',
                       borderColor: colors.buttonBg,
                       color: colors.text
                     }}
                   >
-                    <Save className="w-5 h-5 mr-2" />
-                    💾 Save Configuration
+                    <Save className="w-4 h-4 mr-1" />
+                    💾 Save
                   </Button>
                   <Button 
                     onClick={goLive} 
-                    size="lg" 
-                    className="w-full h-14 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 animate-pulse font-bold text-lg"
+                    size="sm" 
+                    className="w-full h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 animate-pulse font-bold"
                     style={{
                       backgroundColor: colors.buttonBg,
                       color: colors.buttonText,
                       border: 'none'
                     }}
                   >
-                    <Play className="w-6 h-6 mr-2" />
+                    <Play className="w-5 h-5 mr-1" />
                     🚀 GO LIVE NOW!
                   </Button>
                 </div>
