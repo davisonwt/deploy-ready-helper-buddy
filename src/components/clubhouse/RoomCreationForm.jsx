@@ -432,13 +432,13 @@ export function RoomCreationForm({ onRoomCreated, onClose }) {
               <Button 
                 variant="outline" 
                 onClick={() => setCurrentStep('layout')}
-                className="flex-1 py-3 text-lg font-semibold"
+                className="flex-1 py-3 text-lg font-semibold bg-white text-gray-900 border-2 border-gray-300 hover:bg-gray-50"
               >
                 ← Back to Layout
               </Button>
               <Button 
                 onClick={() => setCurrentStep('form')}
-                className="flex-1 py-3 text-lg font-semibold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                className="flex-1 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white border-0"
               >
                 Continue to Room Setup →
               </Button>
