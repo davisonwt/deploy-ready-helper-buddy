@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -37,7 +38,9 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 1,
       inviteSlots: 8,
-      grid: 'grid-cols-4'
+      grid: 'grid-cols-4',
+      icon: Users,
+      color: 'bg-blue-50 border-blue-200'
     },
     panel: {
       name: 'Panel Discussion',
@@ -45,7 +48,9 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 3,
       inviteSlots: 6,
-      grid: 'grid-cols-3'
+      grid: 'grid-cols-3',
+      icon: Crown, 
+      color: 'bg-purple-50 border-purple-200'
     },
     interview: {
       name: 'Interview Style',
@@ -53,7 +58,9 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 3, // Guest + 2 co-hosts
       inviteSlots: 4,
-      grid: 'grid-cols-4'
+      grid: 'grid-cols-4',
+      icon: Mic,
+      color: 'bg-green-50 border-green-200'
     },
     townhall: {
       name: 'Town Hall',
@@ -61,7 +68,9 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 2,
       inviteSlots: 12,
-      grid: 'grid-cols-4'
+      grid: 'grid-cols-4',
+      icon: Users,
+      color: 'bg-yellow-50 border-yellow-200'
     },
     intimate: {
       name: 'Intimate Circle',
@@ -69,7 +78,9 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 0,
       inviteSlots: 7,
-      grid: 'grid-cols-4'
+      grid: 'grid-cols-4',
+      icon: Crown,
+      color: 'bg-pink-50 border-pink-200'
     },
     large: {
       name: 'Large Audience',
@@ -77,23 +88,28 @@ export function RoomCreationForm({ onRoomCreated }) {
       hostSlots: 1,
       coHostSlots: 1,
       inviteSlots: 16,
-      grid: 'grid-cols-4'
+      grid: 'grid-cols-4',
+      icon: Users,
+      color: 'bg-indigo-50 border-indigo-200'
     }
   }
   
+  const [currentStep, setCurrentStep] = useState('layout') // 'layout', 'form', 'live'
+  const [selectedLayout, setSelectedLayout] = useState('')
   const [liveTopic, setLiveTopic] = useState('')
   const [sessionType, setSessionType] = useState('free')
   const [entryFee, setEntryFee] = useState(0)
-  const [selectedLayout, setSelectedLayout] = useState('standard')
   const [hostSlot, setHostSlot] = useState(null)
   const [coHostSlots, setCoHostSlots] = useState([])
   const [inviteSlots, setInviteSlots] = useState([])
   
   // Initialize slots when layout changes
   useEffect(() => {
-    const layout = layouts[selectedLayout]
-    setCoHostSlots(Array(layout.coHostSlots).fill(null))
-    setInviteSlots(Array(layout.inviteSlots).fill(null))
+    if (selectedLayout && layouts[selectedLayout]) {
+      const layout = layouts[selectedLayout]
+      setCoHostSlots(Array(layout.coHostSlots).fill(null))
+      setInviteSlots(Array(layout.inviteSlots).fill(null))
+    }
   }, [selectedLayout])
   
   const [messages] = useState([
@@ -105,6 +121,11 @@ export function RoomCreationForm({ onRoomCreated }) {
     'messages show here (guests name and icon image also show) - this is the queueing line',
     'messages show here (guests name and icon image also show) - this is the queueing line',
   ])
+
+  const handleLayoutSelect = (layoutKey) => {
+    setSelectedLayout(layoutKey)
+    setCurrentStep('form')
+  }
 
   const SlotCard = ({ title, user, onClick, className = '' }) => (
     <Card 
@@ -219,6 +240,74 @@ export function RoomCreationForm({ onRoomCreated }) {
     })
   }
 
+  // Layout Selection Step
+  if (currentStep === 'layout') {
+    return (
+      <div className="min-h-screen bg-white p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">Choose Your Clubhouse Layout</h1>
+            <p className="text-lg text-gray-600">Select the format that best fits your session type</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Object.entries(layouts).map(([key, layout]) => {
+              const IconComponent = layout.icon
+              return (
+                <Card 
+                  key={key}
+                  className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${layout.color} border-2 hover:scale-105`}
+                  onClick={() => handleLayoutSelect(key)}
+                >
+                  <CardContent className="p-8 text-center">
+                    <div className="mb-6">
+                      <IconComponent className="w-16 h-16 mx-auto mb-4 text-gray-700" />
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">{layout.name}</h3>
+                      <p className="text-gray-600 text-lg">{layout.description}</p>
+                    </div>
+                    
+                    {/* Visual Preview */}
+                    <div className="space-y-4">
+                      {/* Host slot preview */}
+                      <div className="flex justify-center">
+                        <div className="w-12 h-8 bg-yellow-300 rounded border border-yellow-400 flex items-center justify-center">
+                          <Crown className="w-4 h-4" />
+                        </div>
+                      </div>
+                      
+                      {/* Co-host slots preview */}
+                      {layout.coHostSlots > 0 && (
+                        <div className="flex justify-center gap-2">
+                          {Array(Math.min(layout.coHostSlots, 4)).fill(0).map((_, i) => (
+                            <div key={i} className="w-8 h-6 bg-blue-300 rounded border border-blue-400"></div>
+                          ))}
+                          {layout.coHostSlots > 4 && <span className="text-xs text-gray-500">+{layout.coHostSlots - 4}</span>}
+                        </div>
+                      )}
+                      
+                      {/* Audience slots preview */}
+                      <div className="flex justify-center gap-1 flex-wrap">
+                        {Array(Math.min(layout.inviteSlots, 8)).fill(0).map((_, i) => (
+                          <div key={i} className="w-6 h-4 bg-green-300 rounded border border-green-400"></div>
+                        ))}
+                        {layout.inviteSlots > 8 && <span className="text-xs text-gray-500">+{layout.inviteSlots - 8}</span>}
+                      </div>
+                    </div>
+
+                    <Button className="mt-6 w-full" size="lg">
+                      Select This Layout
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Form Step
   return (
     <div className="min-h-screen bg-white flex">
       
@@ -243,105 +332,96 @@ export function RoomCreationForm({ onRoomCreated }) {
       {/* RIGHT SIDE - Main Layout */}
       <div className="flex-1 p-6">
         
-        {/* Header with Live Topic */}
-        <div className="mb-8 text-center">
-          <div className="mb-4">
-            <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
-          </div>
-          <Input
-            value={liveTopic}
-            onChange={(e) => setLiveTopic(e.target.value)}
-            placeholder="Enter your live topic here..."
-            className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
-          />
-        </div>
-
-        {/* Layout Selector */}
-        <div className="mb-8 max-w-2xl mx-auto">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 justify-center">
-              <Layout className="w-5 h-5" />
-              <Label className="text-lg font-semibold">Choose Room Layout:</Label>
+        {/* Header with back button and selected layout */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="outline" onClick={() => setCurrentStep('layout')}>
+              ← Change Layout
+            </Button>
+            <div className="text-center">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                {layouts[selectedLayout]?.name}
+              </Badge>
             </div>
-            <Select value={selectedLayout} onValueChange={setSelectedLayout}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a layout" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(layouts).map(([key, layout]) => (
-                  <SelectItem key={key} value={key}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{layout.name}</span>
-                      <span className="text-sm text-gray-500">{layout.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div></div>
+          </div>
+          
+          <div className="text-center">
+            <div className="mb-4">
+              <Label className="text-2xl font-bold text-gray-800">live: topic</Label>
+            </div>
+            <Input
+              value={liveTopic}
+              onChange={(e) => setLiveTopic(e.target.value)}
+              placeholder="Enter your live topic here..."
+              className="text-xl text-center font-semibold h-14 max-w-2xl mx-auto"
+            />
           </div>
         </div>
 
         {/* Dynamic Layout Rendering */}
-        <div className="space-y-8 max-w-6xl mx-auto">
-          
-          {/* Host Section */}
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-4">Host</h3>
-            <SlotCard
-              title="host"
-              user={hostSlot}
-              onClick={() => handleSlotClick('host')}
-              className="border-yellow-300 bg-yellow-50 h-40 w-64 mx-auto"
-            />
-          </div>
+        {selectedLayout && layouts[selectedLayout] && (
+          <div className="space-y-8 max-w-6xl mx-auto">
+            
+            {/* Host Section */}
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-4">Host</h3>
+              <SlotCard
+                title="host"
+                user={hostSlot}
+                onClick={() => handleSlotClick('host')}
+                className="border-yellow-300 bg-yellow-50 h-40 w-64 mx-auto"
+              />
+            </div>
 
-          {/* Co-hosts/Panelists Section */}
-          {layouts[selectedLayout].coHostSlots > 0 && (
+            {/* Co-hosts/Panelists Section */}
+            {layouts[selectedLayout].coHostSlots > 0 && (
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-4">
+                  {selectedLayout === 'panel' ? 'Panelists' : 
+                   selectedLayout === 'interview' ? 'Guest & Co-hosts' :
+                   selectedLayout === 'townhall' ? 'Moderators' : 'Co-hosts'}
+                </h3>
+                <div className={`grid ${layouts[selectedLayout].coHostSlots === 1 ? 'grid-cols-1' : 
+                                  layouts[selectedLayout].coHostSlots === 2 ? 'grid-cols-2' : 
+                                  'grid-cols-3'} gap-4 justify-center max-w-4xl mx-auto`}>
+                  {coHostSlots.map((slot, index) => (
+                    <SlotCard
+                      key={index}
+                      title={selectedLayout === 'interview' && index === 0 ? 'featured guest' : 
+                             selectedLayout === 'panel' ? 'panelist' :
+                             selectedLayout === 'townhall' ? 'moderator' : 'co-host'}
+                      user={slot}
+                      onClick={() => handleSlotClick('cohost', index)}
+                      className="border-blue-300 bg-blue-50 h-32"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Audience/Participants Section */}
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-4">
-                {selectedLayout === 'panel' ? 'Panelists' : 
-                 selectedLayout === 'interview' ? 'Guest & Co-hosts' :
-                 selectedLayout === 'townhall' ? 'Moderators' : 'Co-hosts'}
+                {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
               </h3>
-              <div className={`grid ${layouts[selectedLayout].coHostSlots === 1 ? 'grid-cols-1' : 
-                                layouts[selectedLayout].coHostSlots === 2 ? 'grid-cols-2' : 
-                                'grid-cols-3'} gap-4 justify-center max-w-4xl mx-auto`}>
-                {coHostSlots.map((slot, index) => (
+              <div className={`grid ${layouts[selectedLayout].grid} gap-4 justify-center max-w-6xl mx-auto`}>
+                {inviteSlots.map((slot, index) => (
                   <SlotCard
                     key={index}
-                    title={selectedLayout === 'interview' && index === 0 ? 'featured guest' : 
-                           selectedLayout === 'panel' ? 'panelist' :
-                           selectedLayout === 'townhall' ? 'moderator' : 'co-host'}
+                    title="invite / request"
                     user={slot}
-                    onClick={() => handleSlotClick('cohost', index)}
-                    className="border-blue-300 bg-blue-50 h-32"
+                    onClick={() => handleSlotClick('invite', index)}
+                    className="border-green-300 bg-green-50 h-32"
                   />
                 ))}
               </div>
             </div>
-          )}
-
-          {/* Audience/Participants Section */}
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-4">
-              {selectedLayout === 'intimate' ? 'Participants' : 'Audience Queue'}
-            </h3>
-            <div className={`grid ${layouts[selectedLayout].grid} gap-4 justify-center max-w-6xl mx-auto`}>
-              {inviteSlots.map((slot, index) => (
-                <SlotCard
-                  key={index}
-                  title="invite / request"
-                  user={slot}
-                  onClick={() => handleSlotClick('invite', index)}
-                  className="border-green-300 bg-green-50 h-32"
-                />
-              ))}
-            </div>
           </div>
-        </div>
+        )}
 
         {/* Session Settings */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-4xl mx-auto mb-8 mt-12">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <Label className="text-lg font-semibold">Session Type:</Label>
