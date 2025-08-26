@@ -78,7 +78,7 @@ export default function Layout({ children }) {
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' } },
     { name: "AI Assistant", href: "/ai-assistant", icon: Sparkles, color: { bg: '#e879f9', border: '#e879f9', text: '#ffffff' } },
-    { name: "community videos", href: "/community-videos", icon: Video, color: { bg: '#ff9f9b', border: '#ff9f9b', text: '#1e293b' } },
+    { name: "chatapp", href: "/community-videos", icon: Video, color: { bg: '#ff9f9b', border: '#ff9f9b', text: '#1e293b' } },
     { name: "create orchard", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' } }
   ]
 
