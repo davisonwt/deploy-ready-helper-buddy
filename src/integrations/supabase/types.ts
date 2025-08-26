@@ -700,6 +700,7 @@ export type Database = {
           fade_in_seconds: number | null
           fade_out_seconds: number | null
           id: string
+          is_active: boolean | null
           playlist_id: string
           start_time_seconds: number | null
           track_id: string
@@ -710,6 +711,7 @@ export type Database = {
           fade_in_seconds?: number | null
           fade_out_seconds?: number | null
           id?: string
+          is_active?: boolean | null
           playlist_id: string
           start_time_seconds?: number | null
           track_id: string
@@ -720,6 +722,7 @@ export type Database = {
           fade_in_seconds?: number | null
           fade_out_seconds?: number | null
           id?: string
+          is_active?: boolean | null
           playlist_id?: string
           start_time_seconds?: number | null
           track_id?: string
