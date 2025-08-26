@@ -971,6 +971,51 @@ export type Database = {
         }
         Relationships: []
       }
+      music_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          delivered_at: string | null
+          id: string
+          payment_reference: string | null
+          payment_status: string
+          platform_fee: number
+          sow2grow_fee: number
+          total_amount: number
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          buyer_id: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string
+          platform_fee?: number
+          sow2grow_fee?: number
+          total_amount: number
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string
+          platform_fee?: number
+          sow2grow_fee?: number
+          total_amount?: number
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orchards: {
         Row: {
           category: string
@@ -2926,6 +2971,10 @@ export type Database = {
           user_id_param: string
         }
         Returns: undefined
+      }
+      calculate_music_purchase_total: {
+        Args: { base_amount?: number }
+        Returns: Json
       }
       can_join_session_early: {
         Args: { schedule_id_param: string }

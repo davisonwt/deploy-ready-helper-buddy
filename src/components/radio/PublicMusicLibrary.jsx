@@ -1,28 +1,30 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { 
   Music, 
   Search, 
-  Filter, 
   Play, 
   Pause, 
-  
-  Trash2,
   Clock,
   Tag,
   Disc,
-  Volume2
+  Volume2,
+  ShoppingCart,
+  DollarSign
 } from 'lucide-react'
-import { useDJPlaylist } from '@/hooks/useDJPlaylist'
-import DJMusicUpload from './DJMusicUpload'
+import { supabase } from '@/integrations/supabase/client'
+import { useMusicPurchase } from '@/hooks/useMusicPurchase'
+import { useAuth } from '@/hooks/useAuth'
 
-export default function DJMusicLibrary() {
-  const { tracks, loading, deleteTrack } = useDJPlaylist()
+export default function PublicMusicLibrary() {
+  const { user } = useAuth()
+  const { purchaseTrack, loading: purchasing } = useMusicPurchase()
+  const [tracks, setTracks] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGenre, setSelectedGenre] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -42,11 +44,39 @@ export default function DJMusicLibrary() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
+  const fetchTracks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('dj_music_tracks')
+        .select(`
+          *,
+          radio_djs!inner (
+            dj_name,
+            avatar_url
+          )
+        `)
+        .eq('is_public', true)
+        .order('upload_date', { ascending: false })
+
+      if (error) throw error
+      setTracks(data || [])
+    } catch (error) {
+      console.error('Error fetching tracks:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTracks()
+  }, [])
+
   const filteredTracks = tracks
     .filter(track => {
       const matchesSearch = 
         track.track_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         track.artist_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        track.radio_djs?.dj_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         track.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       
       const matchesGenre = !selectedGenre || track.genre === selectedGenre
@@ -79,13 +109,8 @@ export default function DJMusicLibrary() {
     }
   }
 
-  const handleDelete = async (trackId) => {
-    if (confirm('Are you sure you want to delete this track? This action cannot be undone.')) {
-      await deleteTrack(trackId)
-      if (playingTrack?.id === trackId) {
-        setPlayingTrack(null)
-      }
-    }
+  const handlePurchase = async (track) => {
+    await purchaseTrack(track)
   }
 
   const getTrackTypeLabel = (type) => {
@@ -126,14 +151,12 @@ export default function DJMusicLibrary() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Music className="h-6 w-6" />
-            Music Library
+            Music Store
           </h2>
           <p className="text-muted-foreground">
-            Manage your uploaded tracks and audio files
+            Discover and purchase exclusive tracks from our DJs
           </p>
         </div>
-        
-        <DJMusicUpload />
       </div>
 
       {/* Filters and Search */}
@@ -144,7 +167,7 @@ export default function DJMusicLibrary() {
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search tracks, artists, tags..."
+                placeholder="Search tracks, artists, DJs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -193,12 +216,10 @@ export default function DJMusicLibrary() {
           
           {/* Stats */}
           <div className="flex items-center gap-6 mt-4 pt-4 border-t text-sm text-muted-foreground">
-            <span>{filteredTracks.length} of {tracks.length} tracks</span>
-            <span>
-              Total: {formatDuration(tracks.reduce((sum, track) => sum + (track.duration_seconds || 0), 0))}
-            </span>
-            <span>
-              Size: {formatFileSize(tracks.reduce((sum, track) => sum + (track.file_size || 0), 0))}
+            <span>{filteredTracks.length} tracks available</span>
+            <span className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              $1.38 USDC each (includes fees)
             </span>
           </div>
         </CardContent>
@@ -209,16 +230,10 @@ export default function DJMusicLibrary() {
         <Card>
           <CardContent className="p-12 text-center">
             <Music className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              {tracks.length === 0 ? 'No tracks uploaded yet' : 'No tracks match your search'}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {tracks.length === 0 
-                ? 'Upload your first music track to start building your radio library'
-                : 'Try adjusting your search or filter criteria'
-              }
+            <h3 className="text-lg font-medium mb-2">No tracks found</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search or filter criteria
             </p>
-            {tracks.length === 0 && <DJMusicUpload />}
           </CardContent>
         </Card>
       ) : (
@@ -243,10 +258,19 @@ export default function DJMusicLibrary() {
                       </Button>
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium truncate">{track.track_title}</h4>
+                        <button
+                          onClick={() => user ? handlePurchase(track) : null}
+                          className={`text-left ${user ? 'hover:text-primary cursor-pointer' : 'cursor-default'}`}
+                          disabled={!user || purchasing}
+                        >
+                          <h4 className="font-medium truncate">{track.track_title}</h4>
+                        </button>
                         {track.artist_name && (
                           <p className="text-sm text-muted-foreground truncate">{track.artist_name}</p>
                         )}
+                        <p className="text-xs text-muted-foreground">
+                          by {track.radio_djs?.dj_name}
+                        </p>
                       </div>
                       
                       <Badge variant={getTrackTypeColor(track.track_type)}>
@@ -294,14 +318,22 @@ export default function DJMusicLibrary() {
                   </div>
                   
                   <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(track.id)}
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {user ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handlePurchase(track)}
+                        disabled={purchasing}
+                        className="flex items-center gap-2"
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        $1.38 USDC
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        Login to Purchase
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -321,13 +353,16 @@ export default function DJMusicLibrary() {
                   {playingTrack.artist_name && (
                     <p className="text-xs text-muted-foreground truncate">{playingTrack.artist_name}</p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    by {playingTrack.radio_djs?.dj_name}
+                  </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setPlayingTrack(null)}
                 >
-                  <X className="h-4 w-4" />
+                  <Music className="h-4 w-4" />
                 </Button>
               </div>
               
