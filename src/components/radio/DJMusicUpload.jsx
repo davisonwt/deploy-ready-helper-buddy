@@ -88,16 +88,21 @@ export default function DJMusicUpload({ trigger }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    console.log('🎵 Form submitted', { file, trackData })
+    
     if (!file) {
+      console.error('❌ No file selected')
       alert('Please select an audio file')
       return
     }
 
     if (!trackData.title.trim()) {
+      console.error('❌ No title provided')
       alert('Please enter a track title')
       return
     }
 
+    console.log('🎵 About to call uploadTrack')
     const result = await uploadTrack(file, trackData)
     
     if (result) {
