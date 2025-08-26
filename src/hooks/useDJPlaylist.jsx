@@ -98,7 +98,12 @@ export const useDJPlaylist = () => {
   }
 
   const uploadTrack = async (file, trackData) => {
+    console.log('🎵 Upload started - DJ Profile:', djProfile)
+    console.log('🎵 Upload started - File:', file)
+    console.log('🎵 Upload started - Auth user:', (await supabase.auth.getUser()).data.user)
+    
     if (!djProfile) {
+      console.error('❌ No DJ profile found')
       toast.error('DJ profile required to upload tracks')
       return null
     }
