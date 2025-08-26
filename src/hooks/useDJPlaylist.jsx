@@ -116,12 +116,12 @@ export const useDJPlaylist = () => {
       
       const fileName = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
-      console.log('🎵 UPLOADING TO dj-music bucket:', fileName)
+      console.log('🎵 UPLOADING TO music-tracks bucket:', fileName)
       console.log('🎵 File details:', { name: file.name, size: file.size, type: file.type })
       
-      // FORCE USE dj-music bucket
+      // FORCE USE music-tracks bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('dj-music')
+        .from('music-tracks')
         .upload(fileName, file)
 
       console.log('🎵 Upload result:', { uploadData, uploadError })
@@ -133,7 +133,7 @@ export const useDJPlaylist = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('dj-music')
+        .from('music-tracks')
         .getPublicUrl(fileName)
 
       // Create track record
