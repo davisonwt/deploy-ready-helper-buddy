@@ -327,6 +327,7 @@ export type Database = {
           room_id: string
           sender_id: string
           sender_profile_id: string | null
+          system_metadata: Json | null
           updated_at: string
         }
         Insert: {
@@ -343,6 +344,7 @@ export type Database = {
           room_id: string
           sender_id: string
           sender_profile_id?: string | null
+          system_metadata?: Json | null
           updated_at?: string
         }
         Update: {
@@ -359,6 +361,7 @@ export type Database = {
           room_id?: string
           sender_id?: string
           sender_profile_id?: string | null
+          system_metadata?: Json | null
           updated_at?: string
         }
         Relationships: [
@@ -449,6 +452,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_premium: boolean | null
+          is_system_room: boolean | null
           max_participants: number | null
           name: string | null
           orchard_id: string | null
@@ -457,6 +461,9 @@ export type Database = {
             | null
           required_bestowal_amount: number | null
           room_type: Database["public"]["Enums"]["chat_room_type"]
+          room_type_detailed:
+            | Database["public"]["Enums"]["chat_room_type_enum"]
+            | null
           updated_at: string
         }
         Insert: {
@@ -468,6 +475,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_premium?: boolean | null
+          is_system_room?: boolean | null
           max_participants?: number | null
           name?: string | null
           orchard_id?: string | null
@@ -476,6 +484,9 @@ export type Database = {
             | null
           required_bestowal_amount?: number | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
+          room_type_detailed?:
+            | Database["public"]["Enums"]["chat_room_type_enum"]
+            | null
           updated_at?: string
         }
         Update: {
@@ -487,6 +498,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_premium?: boolean | null
+          is_system_room?: boolean | null
           max_participants?: number | null
           name?: string | null
           orchard_id?: string | null
@@ -495,6 +507,9 @@ export type Database = {
             | null
           required_bestowal_amount?: number | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
+          room_type_detailed?:
+            | Database["public"]["Enums"]["chat_room_type_enum"]
+            | null
           updated_at?: string
         }
         Relationships: [
@@ -1231,6 +1246,53 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_invoices: {
+        Row: {
+          amount: number
+          bestowal_id: string | null
+          chat_message_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          invoice_number: string
+          invoice_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bestowal_id?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_number: string
+          invoice_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bestowal_id?: string | null
+          chat_message_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_number?: string
+          invoice_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_invoices_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -1305,6 +1367,7 @@ export type Database = {
           verification_status:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at: string | null
           verifier_id: string | null
           website: string | null
           youtube_url: string | null
@@ -1335,6 +1398,7 @@ export type Database = {
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           verifier_id?: string | null
           website?: string | null
           youtube_url?: string | null
@@ -1365,6 +1429,7 @@ export type Database = {
           verification_status?:
             | Database["public"]["Enums"]["verification_status"]
             | null
+          verified_at?: string | null
           verifier_id?: string | null
           website?: string | null
           youtube_url?: string | null
@@ -2596,6 +2661,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_verification_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_wallets: {
         Row: {
           created_at: string
@@ -2861,6 +2950,10 @@ export type Database = {
       }
       encrypt_pii_data_secure: {
         Args: { data_text: string }
+        Returns: string
+      }
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_ai_usage_today: {
@@ -3202,6 +3295,13 @@ export type Database = {
         | "thumbnail"
         | "content_idea"
       app_role: "user" | "gosat" | "admin" | "radio_admin"
+      chat_message_type:
+        | "text"
+        | "verification"
+        | "acknowledgment"
+        | "invoice"
+        | "system"
+        | "file"
       chat_room_type:
         | "direct"
         | "group"
@@ -3210,6 +3310,12 @@ export type Database = {
         | "live_podcast"
         | "live_training"
         | "live_conference"
+      chat_room_type_enum:
+        | "direct"
+        | "group"
+        | "verification"
+        | "system"
+        | "payment"
       dj_role: "dj" | "program_director" | "station_manager" | "ai_host"
       file_type: "image" | "video" | "document" | "audio"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
@@ -3369,6 +3475,14 @@ export const Constants = {
         "content_idea",
       ],
       app_role: ["user", "gosat", "admin", "radio_admin"],
+      chat_message_type: [
+        "text",
+        "verification",
+        "acknowledgment",
+        "invoice",
+        "system",
+        "file",
+      ],
       chat_room_type: [
         "direct",
         "group",
@@ -3377,6 +3491,13 @@ export const Constants = {
         "live_podcast",
         "live_training",
         "live_conference",
+      ],
+      chat_room_type_enum: [
+        "direct",
+        "group",
+        "verification",
+        "system",
+        "payment",
       ],
       dj_role: ["dj", "program_director", "station_manager", "ai_host"],
       file_type: ["image", "video", "document", "audio"],
