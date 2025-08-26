@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Upload, Music, X, Plus } from 'lucide-react'
 import { useDJPlaylist } from '@/hooks/useDJPlaylist'
+import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload'
 
 export default function DJMusicUpload({ trigger }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -26,7 +27,8 @@ export default function DJMusicUpload({ trigger }) {
   })
   const [newTag, setNewTag] = useState('')
 
-  const { uploadTrack, loading } = useDJPlaylist()
+  const { fetchTracks, djProfile } = useDJPlaylist()
+  const { directUpload, uploading } = useDirectMusicUpload()
 
   const handleDrag = (e) => {
     e.preventDefault()
@@ -103,7 +105,7 @@ export default function DJMusicUpload({ trigger }) {
     }
 
     console.log('🎵 About to call uploadTrack')
-    const result = await uploadTrack(file, trackData)
+    const result = await directUpload(file, trackData, djProfile)
     
     if (result) {
       // Reset form
@@ -119,6 +121,7 @@ export default function DJMusicUpload({ trigger }) {
         isExplicit: false
       })
       setIsOpen(false)
+      fetchTracks() // Refresh the tracks list
     }
   }
 
@@ -326,8 +329,8 @@ export default function DJMusicUpload({ trigger }) {
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !file}>
-              {loading ? 'Uploading...' : 'Upload Track'}
+            <Button type="submit" disabled={uploading || !file}>
+              {uploading ? 'Uploading...' : 'Upload Track'}
             </Button>
           </div>
         </form>
