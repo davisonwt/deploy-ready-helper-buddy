@@ -101,11 +101,18 @@ export const useDJPlaylist = () => {
       const fileExt = file.name.split('.').pop()
       const fileName = `${djProfile.id}/${Date.now()}.${fileExt}`
       
+      console.log('🎵 Attempting to upload to dj-music bucket:', fileName)
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('dj-music')
         .upload(fileName, file)
 
-      if (uploadError) throw uploadError
+      console.log('🎵 Upload result:', { uploadData, uploadError })
+      
+      if (uploadError) {
+        console.error('🎵 Upload error details:', uploadError)
+        throw uploadError
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
