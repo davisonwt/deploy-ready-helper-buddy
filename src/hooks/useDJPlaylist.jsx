@@ -111,14 +111,21 @@ export const useDJPlaylist = () => {
     try {
       setLoading(true)
 
-      // First, let's test if the bucket exists
-      console.log('🎵 Testing bucket access...')
-      const { data: bucketTest, error: bucketError } = await supabase.storage.from('dj-music').list('', { limit: 1 })
-      console.log('🎵 Bucket test result:', { bucketTest, bucketError })
+      // Try to create the bucket if it doesn't exist
+      console.log('🎵 Ensuring bucket exists...')
+      const { data: buckets } = await supabase.storage.listBuckets()
+      console.log('🎵 Available buckets:', buckets)
       
-      if (bucketError) {
-        console.error('🎵 Bucket access failed:', bucketError)
-        throw new Error('Cannot access dj-music bucket: ' + bucketError.message)
+      const djMusicBucket = buckets?.find(b => b.id === 'dj-music')
+      if (!djMusicBucket) {
+        console.log('🎵 Creating dj-music bucket...')
+        const { data: newBucket, error: createError } = await supabase.storage.createBucket('dj-music', {
+          public: true,
+          fileSizeLimit: 104857600,
+          allowedMimeTypes: ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/flac']
+        })
+        console.log('🎵 Bucket creation result:', { newBucket, createError })
+        if (createError) throw createError
       }
 
       // Upload file to Supabase Storage
