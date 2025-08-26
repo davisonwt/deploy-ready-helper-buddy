@@ -16,7 +16,8 @@ import {
   X,
   Crown,
   Headphones,
-  Mic
+  Mic,
+  Music
 } from 'lucide-react'
 import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
 import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
@@ -25,6 +26,7 @@ import PersonnelSlotAssignment from '@/components/radio/PersonnelSlotAssignment'
 import { StationStats } from '@/components/radio/StationStats'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
+import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 
 const radioOptions = {
   setup: {
@@ -493,18 +495,18 @@ export default function RadioManagementPage() {
             )}
             
             {selectedOption === 'profiles' && (
-              <Card className="h-full bg-white/95 backdrop-blur-sm shadow-xl">
-                <CardHeader>
-                  <CardTitle 
-                    className="flex items-center gap-2" 
-                    style={{ color: colors.text }}
-                  >
-                    <Mic className="h-5 w-5" />
-                    DJ Profile Management
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-full overflow-auto p-6">
-                  <div className="space-y-6">
+              <div className="h-full space-y-6">
+                <Card className="bg-white/95 backdrop-blur-sm shadow-xl">
+                  <CardHeader>
+                    <CardTitle 
+                      className="flex items-center gap-2" 
+                      style={{ color: colors.text }}
+                    >
+                      <Mic className="h-5 w-5" />
+                      DJ Profile Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
                     <div className="text-center">
                       <Button
                         onClick={() => setShowDJProfileForm(true)}
@@ -520,19 +522,24 @@ export default function RadioManagementPage() {
                         Create New DJ Profile
                       </Button>
                     </div>
-                    
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {/* DJ Profile cards would go here */}
-                      <Card className="p-4 border-2 border-dashed border-gray-300 text-center">
-                        <div className="text-gray-500">
-                          <Mic className="w-12 h-12 mx-auto mb-2" />
-                          <p>DJ profiles will appear here</p>
-                        </div>
-                      </Card>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/95 backdrop-blur-sm shadow-xl flex-1">
+                  <CardHeader>
+                    <CardTitle 
+                      className="flex items-center gap-2" 
+                      style={{ color: colors.text }}
+                    >
+                      <Music className="h-5 w-5" />
+                      Playlist Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-full">
+                    <DJPlaylistManager />
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         </div>
