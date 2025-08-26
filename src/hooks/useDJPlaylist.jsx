@@ -113,7 +113,11 @@ export const useDJPlaylist = () => {
 
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop()
-      const fileName = `${djProfile.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      // Get current user ID for folder structure
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+      
+      const fileName = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
       console.log('🎵 Attempting to upload to dj-music bucket:', fileName)
       console.log('🎵 File details:', { name: file.name, size: file.size, type: file.type })
