@@ -1,105 +1,282 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Progress } from '@/components/ui/progress'
 import { 
-  Music, 
   Plus, 
+  Music, 
+  Upload, 
   Play, 
   Pause, 
   Clock, 
-  Users, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  Edit,
-  GripVertical,
-  MoreHorizontal
+  Hash,
+  Trash2,
+  Edit3,
+  Save,
+  X,
+  Download,
+  Users,
+  Lock,
+  Globe
 } from 'lucide-react'
-import { useDJPlaylist } from '@/hooks/useDJPlaylist'
-import { toast } from 'sonner'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function DJPlaylistManager() {
-  const { playlists, tracks, loading, createPlaylist, deletePlaylist, addTrackToPlaylist, removeTrackFromPlaylist } = useDJPlaylist()
-  
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [playlists, setPlaylists] = useState([])
   const [selectedPlaylist, setSelectedPlaylist] = useState(null)
-  const [showTrackSelector, setShowTrackSelector] = useState(false)
+  const [tracks, setTracks] = useState([])
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+
   const [newPlaylist, setNewPlaylist] = useState({
-    name: '',
+    playlist_name: '',
     description: '',
-    type: 'custom',
-    isPublic: false
+    playlist_type: 'custom',
+    is_public: false
   })
 
-  const formatDuration = (seconds) => {
-    const hours = Math.floor(seconds / 3600)
-    const mins = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    
-    if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  const [uploadData, setUploadData] = useState({
+    file: null,
+    title: '',
+    artist: '',
+    album: '',
+    genre: '',
+    bpm: ''
+  })
+
+  useEffect(() => {
+    fetchPlaylists()
+  }, [user])
+
+  useEffect(() => {
+    if (selectedPlaylist) {
+      fetchPlaylistTracks(selectedPlaylist.id)
     }
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }, [selectedPlaylist])
+
+  const fetchPlaylists = async () => {
+    try {
+      setLoading(true)
+      
+      // First get DJ profile
+      const { data: djProfile, error: djError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (djError) throw djError
+
+      if (!djProfile) {
+        toast({
+          title: "DJ Profile Required",
+          description: "You need to create a DJ profile first to manage playlists",
+          variant: "destructive"
+        })
+        return
+      }
+
+      // Fetch playlists for this DJ
+      const { data, error } = await supabase
+        .from('dj_playlists')
+        .select('*')
+        .eq('dj_id', djProfile.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setPlaylists(data || [])
+    } catch (error) {
+      console.error('Error fetching playlists:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load playlists",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleCreatePlaylist = async (e) => {
-    e.preventDefault()
-    
-    if (!newPlaylist.name.trim()) {
-      toast.error('Please enter a playlist name')
-      return
-    }
+  const fetchPlaylistTracks = async (playlistId) => {
+    try {
+      const { data, error } = await supabase
+        .from('dj_playlist_tracks')
+        .select('*')
+        .eq('playlist_id', playlistId)
+        .eq('is_active', true)
+        .order('track_order', { ascending: true })
 
-    const result = await createPlaylist(newPlaylist)
-    
-    if (result) {
-      setNewPlaylist({ name: '', description: '', type: 'custom', isPublic: false })
+      if (error) throw error
+      setTracks(data || [])
+    } catch (error) {
+      console.error('Error fetching tracks:', error)
+    }
+  }
+
+  const createPlaylist = async () => {
+    try {
+      // Get DJ profile first
+      const { data: djProfile, error: djError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (djError) throw djError
+
+      const { data, error } = await supabase
+        .from('dj_playlists')
+        .insert([{
+          dj_id: djProfile.id,
+          ...newPlaylist
+        }])
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setPlaylists(prev => [data, ...prev])
       setShowCreateDialog(false)
+      setNewPlaylist({
+        playlist_name: '',
+        description: '',
+        playlist_type: 'custom',
+        is_public: false
+      })
+
+      toast({
+        title: "Success",
+        description: "Playlist created successfully!"
+      })
+    } catch (error) {
+      console.error('Error creating playlist:', error)
+      toast({
+        title: "Error",
+        description: "Failed to create playlist",
+        variant: "destructive"
+      })
     }
   }
 
-  const handleDeletePlaylist = async (playlistId) => {
-    if (confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
-      await deletePlaylist(playlistId)
+  const uploadTrack = async () => {
+    if (!uploadData.file || !selectedPlaylist) return
+
+    try {
+      setUploading(true)
+      setUploadProgress(0)
+
+      // Create unique file path
+      const fileExt = uploadData.file.name.split('.').pop()
+      const fileName = `${Date.now()}-${uploadData.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      const filePath = `${user.id}/${fileName}`
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('radio-music')
+        .upload(filePath, uploadData.file, {
+          onUploadProgress: (progress) => {
+            setUploadProgress((progress.loaded / progress.total) * 100)
+          }
+        })
+
+      if (uploadError) throw uploadError
+
+      // Get file duration (simplified - in real app you'd use Web Audio API)
+      const audioDuration = await getAudioDuration(uploadData.file)
+
+      // Add track to playlist
+      const { error: trackError } = await supabase
+        .from('dj_playlist_tracks')
+        .insert([{
+          playlist_id: selectedPlaylist.id,
+          file_path: filePath,
+          file_name: uploadData.file.name,
+          file_size: uploadData.file.size,
+          duration_seconds: audioDuration,
+          title: uploadData.title || uploadData.file.name.split('.')[0],
+          artist: uploadData.artist || 'Unknown Artist',
+          album: uploadData.album || '',
+          genre: uploadData.genre || '',
+          bpm: uploadData.bpm ? parseInt(uploadData.bpm) : null,
+          uploaded_by: user.id
+        }])
+
+      if (trackError) throw trackError
+
+      // Refresh tracks
+      await fetchPlaylistTracks(selectedPlaylist.id)
+      
+      setShowUploadDialog(false)
+      setUploadData({
+        file: null,
+        title: '',
+        artist: '',
+        album: '',
+        genre: '',
+        bpm: ''
+      })
+
+      toast({
+        title: "Success",
+        description: "Track uploaded successfully!"
+      })
+    } catch (error) {
+      console.error('Error uploading track:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload track",
+        variant: "destructive"
+      })
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
     }
   }
 
-  const handleAddTrackToPlaylist = async (trackId) => {
-    if (!selectedPlaylist) return
-    
-    await addTrackToPlaylist(selectedPlaylist.id, trackId)
-    setShowTrackSelector(false)
+  const getAudioDuration = (file) => {
+    return new Promise((resolve) => {
+      const audio = new Audio()
+      audio.onloadedmetadata = () => {
+        resolve(Math.round(audio.duration))
+      }
+      audio.onerror = () => {
+        resolve(180) // Default 3 minutes if can't read duration
+      }
+      audio.src = URL.createObjectURL(file)
+    })
   }
 
-  const handleRemoveTrackFromPlaylist = async (trackId) => {
-    if (!selectedPlaylist) return
-    
-    await removeTrackFromPlaylist(selectedPlaylist.id, trackId)
-  }
-
-  const getPlaylistTypeLabel = (type) => {
-    const types = {
-      custom: 'Custom',
-      scheduled_session: 'Scheduled Session',
-      backup: 'Backup'
-    }
-    return types[type] || type
-  }
-
-  const getPlaylistTypeBadgeVariant = (type) => {
-    const variants = {
-      custom: 'default',
-      scheduled_session: 'secondary',
-      backup: 'outline'
-    }
-    return variants[type] || 'default'
+  const formatDuration = (seconds) => {
+    if (!seconds) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   if (loading) {
@@ -107,7 +284,7 @@ export default function DJPlaylistManager() {
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading playlists...</p>
+          <p>Loading playlists...</p>
         </div>
       </div>
     )
@@ -116,246 +293,339 @@ export default function DJPlaylistManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">DJ Playlists</h2>
-          <p className="text-muted-foreground">Manage your music playlists and automated sessions</p>
+          <h2 className="text-2xl font-bold">My Playlists</h2>
+          <p className="text-muted-foreground">Create and manage your music playlists for radio shows</p>
         </div>
-        
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Playlist
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Playlist</DialogTitle>
-            </DialogHeader>
-            
-            <form onSubmit={handleCreatePlaylist} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="playlist-name">Playlist Name *</Label>
-                <Input
-                  id="playlist-name"
-                  value={newPlaylist.name}
-                  onChange={(e) => setNewPlaylist(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter playlist name"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="playlist-description">Description</Label>
-                <Textarea
-                  id="playlist-description"
-                  value={newPlaylist.description}
-                  onChange={(e) => setNewPlaylist(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Optional description"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="playlist-type">Type</Label>
-                <Select 
-                  value={newPlaylist.type} 
-                  onValueChange={(value) => setNewPlaylist(prev => ({ ...prev, type: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">Custom Playlist</SelectItem>
-                    <SelectItem value="scheduled_session">2-Hour Session</SelectItem>
-                    <SelectItem value="backup">Backup Playlist</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="playlist-public"
-                  checked={newPlaylist.isPublic}
-                  onChange={(e) => setNewPlaylist(prev => ({ ...prev, isPublic: e.target.checked }))}
-                />
-                <Label htmlFor="playlist-public">Make this playlist public</Label>
-              </div>
-              
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">Create Playlist</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Playlist
+        </Button>
       </div>
 
-      {/* Playlists Grid */}
-      {playlists.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Music className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No playlists yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first playlist to organize your tracks for radio sessions
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {playlists.map((playlist) => (
-            <Card key={playlist.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg mb-1 flex items-center gap-2">
-                      {playlist.playlist_name}
-                      {playlist.is_public ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </CardTitle>
-                    <Badge variant={getPlaylistTypeBadgeVariant(playlist.playlist_type)}>
-                      {getPlaylistTypeLabel(playlist.playlist_type)}
-                    </Badge>
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePlaylist(playlist.id)}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Playlists List */}
+        <div className="lg:col-span-1 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Your Playlists</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {playlists.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-4">No playlists yet</p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowCreateDialog(true)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    Create Your First Playlist
                   </Button>
                 </div>
-                
-                {playlist.description && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {playlist.description}
-                  </p>
-                )}
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {/* Stats */}
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Music className="h-4 w-4" />
-                      {playlist.track_count} tracks
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {formatDuration(playlist.total_duration_seconds)}
-                    </span>
+              ) : (
+                playlists.map((playlist) => (
+                  <Card 
+                    key={playlist.id} 
+                    className={`cursor-pointer transition-colors ${
+                      selectedPlaylist?.id === playlist.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => setSelectedPlaylist(playlist)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium">{playlist.playlist_name}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {playlist.track_count || 0} tracks • {formatDuration(playlist.total_duration_seconds || 0)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline" size="sm">
+                              {playlist.playlist_type}
+                            </Badge>
+                            {playlist.is_public ? (
+                              <Globe className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <Lock className="h-3 w-3 text-gray-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Playlist Details */}
+        <div className="lg:col-span-2">
+          {selectedPlaylist ? (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Music className="h-5 w-5" />
+                      {selectedPlaylist.playlist_name}
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-1">
+                      {selectedPlaylist.description || 'No description'}
+                    </p>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Hash className="h-3 w-3" />
+                        {tracks.length} tracks
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatDuration(selectedPlaylist.total_duration_seconds || 0)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        {selectedPlaylist.is_public ? (
+                          <>
+                            <Globe className="h-3 w-3 text-green-600" />
+                            Public
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-3 w-3" />
+                            Private
+                          </>
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <Separator />
-                  
-                  {/* Track List Preview */}
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {playlist.dj_playlist_tracks?.slice(0, 5).map((playlistTrack, index) => (
-                      <div key={index} className="flex items-center justify-between text-xs">
-                        <span className="truncate flex-1">
-                          {index + 1}. {playlistTrack.dj_music_tracks?.track_title}
-                          {playlistTrack.dj_music_tracks?.artist_name && (
-                            <span className="text-muted-foreground">
-                              {' - '}{playlistTrack.dj_music_tracks.artist_name}
-                            </span>
+                  <Button onClick={() => setShowUploadDialog(true)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Track
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {tracks.length === 0 ? (
+                  <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">No tracks in this playlist</p>
+                    <Button onClick={() => setShowUploadDialog(true)}>
+                      Upload Your First Track
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {tracks.map((track, index) => (
+                      <div key={track.id} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 text-center text-sm text-muted-foreground">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{track.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {track.artist} {track.album && `• ${track.album}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {track.genre && (
+                            <Badge variant="secondary" size="sm">{track.genre}</Badge>
                           )}
-                        </span>
-                        <span className="text-muted-foreground ml-2">
-                          {formatDuration(playlistTrack.dj_music_tracks?.duration_seconds || 0)}
-                        </span>
+                          {track.bpm && (
+                            <span>{track.bpm} BPM</span>
+                          )}
+                          <span>{formatDuration(track.duration_seconds)}</span>
+                        </div>
                       </div>
                     ))}
-                    {playlist.track_count > 5 && (
-                      <div className="text-xs text-muted-foreground">
-                        +{playlist.track_count - 5} more tracks
-                      </div>
-                    )}
                   </div>
-                  
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        setSelectedPlaylist(playlist)
-                        setShowTrackSelector(true)
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Tracks
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Play className="h-4 w-4" />
-                    </Button>
-                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center h-64">
+                <div className="text-center text-muted-foreground">
+                  <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Select a playlist to view its tracks</p>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Track Selector Dialog */}
-      <Dialog open={showTrackSelector} onOpenChange={setShowTrackSelector}>
+      {/* Create Playlist Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Playlist</DialogTitle>
+            <DialogDescription>
+              Create a new playlist for your radio shows and upload tracks to it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="playlist_name">Playlist Name *</Label>
+              <Input
+                id="playlist_name"
+                placeholder="e.g., 2 Hour Live Set"
+                value={newPlaylist.playlist_name}
+                onChange={(e) => setNewPlaylist(prev => ({ ...prev, playlist_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe this playlist..."
+                value={newPlaylist.description}
+                onChange={(e) => setNewPlaylist(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="playlist_type">Type</Label>
+              <Select 
+                value={newPlaylist.playlist_type} 
+                onValueChange={(value) => setNewPlaylist(prev => ({ ...prev, playlist_type: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value="live">Live Show</SelectItem>
+                  <SelectItem value="automated">Automated</SelectItem>
+                  <SelectItem value="backup">Backup</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="is_public"
+                checked={newPlaylist.is_public}
+                onChange={(e) => setNewPlaylist(prev => ({ ...prev, is_public: e.target.checked }))}
+              />
+              <Label htmlFor="is_public">Make this playlist public</Label>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={createPlaylist}
+                disabled={!newPlaylist.playlist_name.trim()}
+              >
+                Create Playlist
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Track Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              Add Tracks to "{selectedPlaylist?.playlist_name}"
-            </DialogTitle>
+            <DialogTitle>Upload Track</DialogTitle>
+            <DialogDescription>
+              Add a new track to {selectedPlaylist?.playlist_name}
+            </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {tracks.length === 0 ? (
-              <div className="text-center py-8">
-                <Music className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">No tracks available</p>
-              </div>
-            ) : (
-              tracks.map((track) => {
-                const isInPlaylist = selectedPlaylist?.dj_playlist_tracks?.some(
-                  plt => plt.dj_music_tracks?.id === track.id
-                )
-                
-                return (
-                  <div key={track.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{track.track_title}</h4>
-                      {track.artist_name && (
-                        <p className="text-sm text-muted-foreground">{track.artist_name}</p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                        <span>{formatDuration(track.duration_seconds)}</span>
-                        {track.genre && <span>• {track.genre}</span>}
-                        {track.bpm && <span>• {track.bpm} BPM</span>}
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant={isInPlaylist ? "secondary" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        if (isInPlaylist) {
-                          handleRemoveTrackFromPlaylist(track.id)
-                        } else {
-                          handleAddTrackToPlaylist(track.id)
-                        }
-                      }}
-                      disabled={isInPlaylist}
-                    >
-                      {isInPlaylist ? 'In Playlist' : 'Add Track'}
-                    </Button>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="file">Audio File *</Label>
+              <Input
+                id="file"
+                type="file"
+                accept="audio/*"
+                onChange={(e) => setUploadData(prev => ({ ...prev, file: e.target.files[0] }))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Supported formats: MP3, WAV, FLAC, AAC
+              </p>
+            </div>
+            
+            {uploadData.file && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      placeholder="Track title"
+                      value={uploadData.title}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, title: e.target.value }))}
+                    />
                   </div>
-                )
-              })
+                  <div>
+                    <Label htmlFor="artist">Artist</Label>
+                    <Input
+                      id="artist"
+                      placeholder="Artist name"
+                      value={uploadData.artist}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, artist: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="album">Album</Label>
+                    <Input
+                      id="album"
+                      placeholder="Album name"
+                      value={uploadData.album}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, album: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="genre">Genre</Label>
+                    <Input
+                      id="genre"
+                      placeholder="Genre"
+                      value={uploadData.genre}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, genre: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bpm">BPM</Label>
+                    <Input
+                      id="bpm"
+                      type="number"
+                      placeholder="120"
+                      value={uploadData.bpm}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, bpm: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </>
             )}
+
+            {uploading && (
+              <div className="space-y-2">
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-center text-muted-foreground">
+                  Uploading... {Math.round(uploadProgress)}%
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowUploadDialog(false)}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={uploadTrack}
+                disabled={!uploadData.file || uploading}
+              >
+                {uploading ? 'Uploading...' : 'Upload Track'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
