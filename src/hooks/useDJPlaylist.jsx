@@ -111,6 +111,16 @@ export const useDJPlaylist = () => {
     try {
       setLoading(true)
 
+      // First, let's test if the bucket exists
+      console.log('🎵 Testing bucket access...')
+      const { data: bucketTest, error: bucketError } = await supabase.storage.from('dj-music').list('', { limit: 1 })
+      console.log('🎵 Bucket test result:', { bucketTest, bucketError })
+      
+      if (bucketError) {
+        console.error('🎵 Bucket access failed:', bucketError)
+        throw new Error('Cannot access dj-music bucket: ' + bucketError.message)
+      }
+
       // Upload file to Supabase Storage
       const fileExt = file.name.split('.').pop()
       // Get current user ID for folder structure
