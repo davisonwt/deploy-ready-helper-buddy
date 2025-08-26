@@ -116,13 +116,17 @@ export const useDJPlaylist = () => {
       
       const fileName = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
-      console.log('🎵 UPLOADING TO music-tracks bucket:', fileName)
-      console.log('🎵 File details:', { name: file.name, size: file.size, type: file.type })
+      // CRITICAL: Force browser cache refresh - using music-tracks bucket ONLY
+      console.log('🚀 CACHE BUSTER - UPLOADING TO music-tracks bucket:', fileName)
+      console.log('🚀 File details:', { name: file.name, size: file.size, type: file.type })
+      console.log('🚀 BUCKET: music-tracks (NOT radio-music)')
       
-      // FORCE USE music-tracks bucket
+      // FORCE USE music-tracks bucket - CACHE BUSTED VERSION
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('music-tracks')
-        .upload(fileName, file)
+        .upload(fileName, file, {
+          cacheControl: '0'
+        })
 
       console.log('🎵 Upload result:', { uploadData, uploadError })
       
