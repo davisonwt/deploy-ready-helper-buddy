@@ -1300,6 +1300,12 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           user_id: string
+          verification_chat_id: string | null
+          verification_expires_at: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_id: string | null
           website: string | null
           youtube_url: string | null
         }
@@ -1324,6 +1330,12 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id: string
+          verification_chat_id?: string | null
+          verification_expires_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_id?: string | null
           website?: string | null
           youtube_url?: string | null
         }
@@ -1348,6 +1360,12 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          verification_chat_id?: string | null
+          verification_expires_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          verifier_id?: string | null
           website?: string | null
           youtube_url?: string | null
         }
@@ -3025,6 +3043,10 @@ export type Database = {
       }
       is_admin_or_gosat: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_verified: {
+        Args: { user_id_param?: string }
         Returns: boolean
       }
       kick_user_from_room: {
