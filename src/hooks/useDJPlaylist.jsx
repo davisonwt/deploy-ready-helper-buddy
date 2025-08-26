@@ -100,7 +100,6 @@ export const useDJPlaylist = () => {
   const uploadTrack = async (file, trackData) => {
     console.log('🎵 Upload started - DJ Profile:', djProfile)
     console.log('🎵 Upload started - File:', file)
-    console.log('🎵 Upload started - Auth user:', (await supabase.auth.getUser()).data.user)
     
     if (!djProfile) {
       console.error('❌ No DJ profile found')
@@ -111,40 +110,19 @@ export const useDJPlaylist = () => {
     try {
       setLoading(true)
 
-      // Try to create the bucket if it doesn't exist
-      console.log('🎵 Ensuring bucket exists...')
-      const { data: buckets } = await supabase.storage.listBuckets()
-      console.log('🎵 Available buckets:', buckets)
-      
-      const djMusicBucket = buckets?.find(b => b.id === 'dj-music')
-      if (!djMusicBucket) {
-        console.log('🎵 Creating dj-music bucket...')
-        const { data: newBucket, error: createError } = await supabase.storage.createBucket('dj-music', {
-          public: true,
-          fileSizeLimit: 104857600,
-          allowedMimeTypes: ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg', 'audio/flac']
-        })
-        console.log('🎵 Bucket creation result:', { newBucket, createError })
-        if (createError) throw createError
-      }
-
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop()
       // Get current user ID for folder structure
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
       
       const fileName = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
-      console.log('🎵 Attempting to upload to dj-music bucket:', fileName)
+      console.log('🎵 UPLOADING TO dj-music bucket:', fileName)
       console.log('🎵 File details:', { name: file.name, size: file.size, type: file.type })
       
+      // FORCE USE dj-music bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('dj-music')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
+        .upload(fileName, file)
 
       console.log('🎵 Upload result:', { uploadData, uploadError })
       
