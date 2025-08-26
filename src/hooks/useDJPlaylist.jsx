@@ -21,20 +21,29 @@ export const useDJPlaylist = () => {
 
   const fetchDJProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('radio_djs')
-        .select('*')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching DJ profile:', error)
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData.user) {
+        console.error('❌ No authenticated user:', userError)
         return
       }
 
+      console.log('🎵 Fetching DJ profile for user:', userData.user.id)
+      
+      const { data, error } = await supabase
+        .from('radio_djs')
+        .select('*')
+        .eq('user_id', userData.user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('❌ Error fetching DJ profile:', error)
+        return
+      }
+
+      console.log('🎵 DJ Profile found:', data)
       setDjProfile(data)
     } catch (error) {
-      console.error('Error fetching DJ profile:', error)
+      console.error('❌ Exception fetching DJ profile:', error)
     }
   }
 
