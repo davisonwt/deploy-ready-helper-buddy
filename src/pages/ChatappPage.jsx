@@ -577,7 +577,7 @@ const ChatappPage = () => {
                 textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                 fontStyle: 'italic'
               }}>
-                chat or shutapp
+                chat or chutapp
               </p>
               <p style={{ color: '#b0e0e6' }}>
                 Connect, collaborate, and grow together in our 364yhvh / sow2grow community
