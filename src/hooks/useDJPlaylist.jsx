@@ -97,12 +97,13 @@ export const useDJPlaylist = () => {
     }
   }
 
+  // CACHE BUSTER v2.0 - FORCE REFRESH ${Date.now()}
   const uploadTrack = async (file, trackData) => {
-    console.log('🎵 Upload started - DJ Profile:', djProfile)
-    console.log('🎵 Upload started - File:', file)
+    console.log('🎵🎵🎵 UPLOAD STARTED v2.0 - DJ Profile:', djProfile)
+    console.log('🎵🎵🎵 UPLOAD STARTED v2.0 - File:', file)
     
     if (!djProfile) {
-      console.error('❌ No DJ profile found')
+      console.error('❌❌❌ No DJ profile found')
       toast.error('DJ profile required to upload tracks')
       return null
     }
@@ -116,22 +117,23 @@ export const useDJPlaylist = () => {
       
       const fileName = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
       
-      // CRITICAL: Force browser cache refresh - using music-tracks bucket ONLY
-      console.log('🚀 CACHE BUSTER - UPLOADING TO music-tracks bucket:', fileName)
-      console.log('🚀 File details:', { name: file.name, size: file.size, type: file.type })
-      console.log('🚀 BUCKET: music-tracks (NOT radio-music)')
+      // ABSOLUTE CACHE BUSTER - MUSIC-TRACKS BUCKET ONLY!!!
+      console.log('🚀🚀🚀 ABSOLUTE CACHE BUSTER v2.0 - UPLOADING TO music-tracks bucket:', fileName)
+      console.log('🚀🚀🚀 File details:', { name: file.name, size: file.size, type: file.type })
+      console.log('🚀🚀🚀 BUCKET: music-tracks (DEFINITELY NOT radio-music)')
       
-      // FORCE USE music-tracks bucket - CACHE BUSTED VERSION
+      // ABSOLUTE FORCE USE music-tracks bucket - CACHE BUSTED VERSION v2.0
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('music-tracks')
         .upload(fileName, file, {
-          cacheControl: '0'
+          cacheControl: '0',
+          upsert: false
         })
 
-      console.log('🎵 Upload result:', { uploadData, uploadError })
+      console.log('🎵🎵🎵 Upload result v2.0:', { uploadData, uploadError })
       
       if (uploadError) {
-        console.error('🎵 Upload error details:', uploadError)
+        console.error('🎵🎵🎵 Upload error details v2.0:', uploadError)
         throw uploadError
       }
 
