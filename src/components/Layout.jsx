@@ -95,7 +95,7 @@ export default function Layout({ children }) {
       ]
     },
     {
-      name: "Community",
+      name: "chatapp",
       icon: MessageSquare,
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
