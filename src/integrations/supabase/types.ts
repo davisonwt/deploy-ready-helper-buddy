@@ -1388,6 +1388,45 @@ export type Database = {
           },
         ]
       }
+      profile_access_logs: {
+        Row: {
+          access_reason: string | null
+          access_type: string
+          accessed_fields: string[] | null
+          accessed_profile_id: string
+          accessor_user_id: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          session_info: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          access_reason?: string | null
+          access_type: string
+          accessed_fields?: string[] | null
+          accessed_profile_id: string
+          accessor_user_id: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          session_info?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          access_reason?: string | null
+          access_type?: string
+          accessed_fields?: string[] | null
+          accessed_profile_id?: string
+          accessor_user_id?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          session_info?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3008,6 +3047,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_admin_profile_access_report: {
+        Args: { days_back?: number }
+        Returns: {
+          accessor_display_name: string
+          accessor_user_id: string
+          last_access: string
+          sensitive_field_accesses: number
+          total_accesses: number
+          unique_profiles_accessed: number
+        }[]
+      }
       get_ai_usage_today: {
         Args: { user_id_param: string }
         Returns: number
@@ -3037,6 +3087,27 @@ export type Database = {
         Returns: {
           supported_tokens: string[]
           wallet_address: string
+        }[]
+      }
+      get_profile_admin_secure: {
+        Args: {
+          access_reason: string
+          requested_fields?: string[]
+          target_user_id: string
+        }
+        Returns: {
+          avatar_url: string
+          bio: string
+          country: string
+          created_at: string
+          display_name: string
+          first_name: string
+          id: string
+          last_name: string
+          location: string
+          phone: string
+          timezone: string
+          user_id: string
         }[]
       }
       get_public_profile_info: {
