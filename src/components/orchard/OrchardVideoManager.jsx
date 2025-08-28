@@ -153,10 +153,14 @@ export default function OrchardVideoManager({ orchard }) {
                   <Input
                     id="video-file"
                     type="file"
-                    accept="video/*"
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/3gpp,video/3gp2,video/mpeg,video/ogg"
+                    capture="environment"
                     onChange={handleFileChange}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Supports MP4, MOV, AVI, WebM, 3GP, and other common video formats including WhatsApp videos
+                  </p>
                 </div>
                 
                 <div>
