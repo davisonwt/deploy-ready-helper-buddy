@@ -211,13 +211,16 @@ export default function VideoGifting({ video, onGiftSent }) {
             </div>
           ) : (
             <>
-              <div className="text-center">
+              <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
                   Support the creator of "{video.title}"
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground">
                   Your balance: {formatUSDC(balance)}
                 </p>
+                <div className="text-xs text-muted-foreground">
+                  Debug: Connected: {connected ? 'Yes' : 'No'}, Wallet Ready: {isWalletReady ? 'Yes' : 'No'}, Amount: {amount}
+                </div>
               </div>
 
               <div>
@@ -271,10 +274,10 @@ export default function VideoGifting({ video, onGiftSent }) {
               <Button
                 onClick={handleGift}
                 disabled={sending || !isWalletReady || amount < 1 || amount > 10}
-                className="w-full bg-pink-600 hover:bg-pink-700"
+                className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                {sending ? 'Sending Gift...' : `Send ${formatUSDC(amount)} Gift`}
+                {sending ? 'Sending Gift...' : !connected ? 'Connect Wallet First' : !isWalletReady ? 'Wallet Not Ready' : `Send ${formatUSDC(amount)} Gift`}
               </Button>
             </>
           )}

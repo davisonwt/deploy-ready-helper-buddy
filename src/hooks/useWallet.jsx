@@ -164,7 +164,10 @@ export function useWallet() {
 
   // Save wallet address to database
   const saveWalletToDatabase = useCallback(async (walletAddress) => {
-    if (!user) return;
+    if (!user?.id) {
+      console.log('User not authenticated, skipping wallet save');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -184,11 +187,14 @@ export function useWallet() {
     } catch (error) {
       console.error('Database error:', error);
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Update USDC balance in database
   const updateBalanceInDatabase = useCallback(async (walletAddress, usdcBalance) => {
-    if (!user) return;
+    if (!user?.id) {
+      console.log('User not authenticated, skipping balance update');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -199,7 +205,7 @@ export function useWallet() {
           usdc_balance: usdcBalance,
           updated_at: new Date().toISOString()
         }, {
-          onConflict: 'wallet_address'
+          onConflict: 'user_id,wallet_address'
         });
 
       if (error) {
@@ -208,7 +214,7 @@ export function useWallet() {
     } catch (error) {
       console.error('Database error:', error);
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Refresh current wallet balance
   const refreshBalance = useCallback(async () => {
