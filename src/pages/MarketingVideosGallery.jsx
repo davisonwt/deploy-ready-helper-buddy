@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
+import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 
 export default function MarketingVideosGallery() {
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -363,6 +364,9 @@ export default function MarketingVideosGallery() {
                           <ThumbsUp className="h-4 w-4 mr-1" />
                           Like
                         </Button>
+                        
+                        {/* Comments Button */}
+                        <VideoCommentsSection video={video} />
                         
                         {/* Share Button */}
                         <Button
