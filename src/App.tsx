@@ -45,6 +45,7 @@ import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
+import MarketingVideosGallery from "./pages/MarketingVideosGallery.jsx";
 import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
 import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
@@ -238,13 +239,22 @@ const App = () => (
               } />
               
                {/* Community Videos */}
-               <Route path="/community-videos" element={
-                 <ProtectedRoute>
-                   <Layout>
-                     <CommunityVideosPage />
-                   </Layout>
-                 </ProtectedRoute>
-                } />
+                <Route path="/community-videos" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <CommunityVideosPage />
+                    </Layout>
+                  </ProtectedRoute>
+                 } />
+
+                {/* Marketing Videos Gallery */}
+                <Route path="/marketing-videos" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <MarketingVideosGallery />
+                    </Layout>
+                  </ProtectedRoute>
+                 } />
 
                {/* Grove Station - 24hr Radio */}
               <Route path="/grove-station" element={
