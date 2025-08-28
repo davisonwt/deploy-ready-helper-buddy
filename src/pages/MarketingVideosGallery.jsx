@@ -137,7 +137,7 @@ export default function MarketingVideosGallery() {
                 <SelectTrigger className="w-full sm:w-64">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border border-border shadow-lg z-50">
                   {categories.map(category => (
                     <SelectItem key={category.value} value={category.value}>
                       {category.label}
