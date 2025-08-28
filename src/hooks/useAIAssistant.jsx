@@ -10,22 +10,40 @@ export const useAIAssistant = () => {
   const { session } = useAuth();
 
   const callAIFunction = useCallback(async (functionName, payload) => {
+    console.log('🔧 callAIFunction started:', { functionName, hasSession: !!session, hasAccessToken: !!session?.access_token });
+    
     if (!session?.access_token) {
+      console.error('❌ No session or access token found');
       throw new Error('Authentication required');
     }
 
-    const response = await supabase.functions.invoke(functionName, {
-      body: payload,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
+    console.log('📡 Invoking function:', functionName, 'with payload:', payload);
+    
+    try {
+      const response = await supabase.functions.invoke(functionName, {
+        body: payload,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-    if (response.error) {
-      throw new Error(response.error.message || 'AI generation failed');
+      console.log('📥 Function response:', { 
+        error: response.error, 
+        hasData: !!response.data,
+        statusText: response.statusText,
+        status: response.status 
+      });
+
+      if (response.error) {
+        console.error('❌ Function error:', response.error);
+        throw new Error(response.error.message || 'AI generation failed');
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Function invocation failed:', error);
+      throw error;
     }
-
-    return response.data;
   }, [session]);
 
   const generateScript = useCallback(async (params) => {
