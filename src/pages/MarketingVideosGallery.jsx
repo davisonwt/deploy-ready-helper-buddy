@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
 import VideoCommentsSection from '@/components/community/VideoCommentsSection'
+import VideoSocialShare from '@/components/community/VideoSocialShare'
 
 export default function MarketingVideosGallery() {
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -259,7 +260,7 @@ export default function MarketingVideosGallery() {
                 <Card key={video.id} className="overflow-hidden">
                   {/* Video Player Section */}
                   <div className="aspect-video relative bg-black">
-                    <VideoPlayer
+                     <VideoPlayer
                       src={video.video_url}
                       className="w-full h-full"
                       autoPlay={true}
@@ -268,7 +269,11 @@ export default function MarketingVideosGallery() {
                       playsInline={true}
                       fallbackImage={getVideoThumbnail(video)}
                       onError={(error) => {
-                        console.error('Video playback error:', error)
+                        console.error('Video playbook error:', error)
+                      }}
+                      onPlay={() => {
+                        // Increment view count when video starts playing
+                        incrementViews(video.id)
                       }}
                     />
                     
@@ -369,15 +374,7 @@ export default function MarketingVideosGallery() {
                         <VideoCommentsSection video={video} />
                         
                         {/* Share Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm" 
-                          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                          onClick={(e) => handleShare(video, e)}
-                        >
-                          <Share2 className="h-4 w-4 mr-1" />
-                          Share
-                        </Button>
+                        <VideoSocialShare video={video} />
                         
                         {/* Visit Orchard Button */}
                         <Button
@@ -391,15 +388,18 @@ export default function MarketingVideosGallery() {
                         </Button>
                       </div>
 
-                      {/* Free-Will Gift Button */}
-                      <VideoGifting
-                        video={video}
-                        onGiftSent={() => {
-                          // Refresh video data to show updated stats
-                          fetchVideos()
-                          toast.success('Gift sent to creator! 💝')
-                        }}
-                      />
+                      {/* Free-Will Gift Button - Prominent */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Send gift:</span>
+                        <VideoGifting
+                          video={video}
+                          onGiftSent={() => {
+                            // Refresh video data to show updated stats
+                            fetchVideos()
+                            toast.success('Gift sent to creator! 💝')
+                          }}
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

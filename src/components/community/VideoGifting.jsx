@@ -4,22 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, DollarSign, Wallet } from 'lucide-react'
+import { Heart, DollarSign, Wallet, CreditCard } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useWallet } from '@/hooks/useWallet'
 import { useUSDCPayments } from '@/hooks/useUSDCPayments'
 import { useToast } from '@/hooks/use-toast'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
+import WalletConnection from '@/components/WalletConnection'
+import FiatOnRamp from '@/components/FiatOnRamp'
 
 export default function VideoGifting({ video, onGiftSent }) {
   const { user } = useAuth()
   const { connected, balance } = useWallet()
   const { processBestowPart, formatUSDC, isWalletReady } = useUSDCPayments()
   const { toast } = useToast()
+  const navigate = useNavigate()
   const [amount, setAmount] = useState(5)
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [open, setOpen] = useState(false)
+  const [showTopUp, setShowTopUp] = useState(false)
 
   const isOwner = user && video.uploader_id === user.id
 
@@ -42,9 +47,10 @@ export default function VideoGifting({ video, onGiftSent }) {
     if (balance < amount) {
       toast({
         title: "Insufficient Balance",
-        description: "You don't have enough USDC for this gift",
+        description: "Please top up your wallet to send this gift",
         variant: "destructive"
       })
+      setShowTopUp(true)
       return
     }
 
@@ -158,11 +164,11 @@ export default function VideoGifting({ video, onGiftSent }) {
       <DialogTrigger asChild>
         <Button
           size="sm"
-          variant="ghost"
-          className="h-8 px-2 text-pink-600 hover:text-pink-700 hover:bg-pink-50"
+          className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 shadow-md"
           onClick={(e) => e.stopPropagation()}
         >
-          <Heart className="h-4 w-4" />
+          <DollarSign className="h-4 w-4 mr-1" />
+          Gift USDC
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -175,15 +181,34 @@ export default function VideoGifting({ video, onGiftSent }) {
         
         <div className="space-y-4">
           {!connected ? (
-            <Card className="border-amber-200 bg-amber-50">
-              <CardContent className="p-4 text-center">
-                <Wallet className="h-8 w-8 mx-auto mb-2 text-amber-600" />
-                <p className="text-amber-800 mb-3">Connect your wallet to send gifts</p>
-                <Button variant="outline" className="border-amber-600 text-amber-600">
-                  Connect Wallet
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-4 text-center">
+                  <Wallet className="h-8 w-8 mx-auto mb-2 text-amber-600" />
+                  <p className="text-amber-800 mb-3">Connect your wallet to send gifts</p>
+                </CardContent>
+              </Card>
+              <WalletConnection />
+            </div>
+          ) : showTopUp ? (
+            <div className="space-y-4">
+              <Card className="border-orange-200 bg-orange-50">
+                <CardContent className="p-4 text-center">
+                  <CreditCard className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                  <p className="text-orange-800 mb-3">
+                    Insufficient balance. You need {formatUSDC(amount)} but have {formatUSDC(balance)}
+                  </p>
+                </CardContent>
+              </Card>
+              <FiatOnRamp />
+              <Button 
+                onClick={() => setShowTopUp(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Back to Gift
+              </Button>
+            </div>
           ) : (
             <>
               <div className="text-center">
