@@ -180,7 +180,7 @@ export default function VideoGifting({ video, onGiftSent }) {
           onClick={(e) => e.stopPropagation()}
         >
           <Heart className="h-4 w-4 mr-1" />
-          send free-will gift:
+          Love Video
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

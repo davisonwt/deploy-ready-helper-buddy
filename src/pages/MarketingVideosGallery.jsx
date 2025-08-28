@@ -390,7 +390,7 @@ export default function MarketingVideosGallery() {
 
                       {/* Free-Will Gift Button - Prominent */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Send gift:</span>
+                        <span className="text-xs text-muted-foreground">send free-will gift:</span>
                         <VideoGifting
                           video={video}
                           onGiftSent={() => {
