@@ -58,17 +58,69 @@ export default function OrchardVideoManager({ orchard }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
+    console.log('🔍 DEBUG: File selected:', {
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType: file?.type,
+      filePath: e.target.value
+    })
+    
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('video/')) {
+        console.error('❌ Invalid file type:', file.type)
+        toast({
+          title: "Invalid File Type",
+          description: "Please select a video file (.mp4, .mov, .avi, .webm, etc.)",
+          variant: "destructive"
+        })
+        return
+      }
+      
+      // Check file size (max 100MB)
+      const maxSize = 100 * 1024 * 1024
+      if (file.size > maxSize) {
+        console.error('❌ File too large:', file.size, 'bytes')
+        toast({
+          title: "File Too Large",
+          description: `File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 100MB.`,
+          variant: "destructive"
+        })
+        return
+      }
+      
+      console.log('✅ File validation passed')
       setVideoData(prev => ({ ...prev, file }))
     }
   }
 
   const handleUpload = async (e) => {
     e.preventDefault()
+    console.log('🚀 DEBUG: Upload started with data:', {
+      hasFile: !!videoData.file,
+      fileName: videoData.file?.name,
+      fileSize: videoData.file?.size,
+      title: videoData.title,
+      description: videoData.description,
+      orchardId: orchard?.id,
+      userId: user?.id
+    })
+
     if (!videoData.file || !videoData.title) {
+      console.error('❌ Missing required data:', { hasFile: !!videoData.file, hasTitle: !!videoData.title })
       toast({
         title: "Missing Information",
         description: "Please provide a title and select a video file",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!orchard?.id) {
+      console.error('❌ No orchard ID available')
+      toast({
+        title: "Error",
+        description: "Orchard information is missing",
         variant: "destructive"
       })
       return
@@ -83,8 +135,12 @@ export default function OrchardVideoManager({ orchard }) {
         orchard_id: orchard.id
       }
 
+      console.log('📤 Calling uploadVideo with metadata:', metadata)
       const result = await uploadVideo(videoData.file, metadata)
+      console.log('📥 Upload result:', result)
+
       if (result.success) {
+        console.log('✅ Upload successful')
         toast({
           title: "Video Uploaded",
           description: "Your marketing video has been uploaded successfully!"
@@ -92,9 +148,16 @@ export default function OrchardVideoManager({ orchard }) {
         setVideoData({ title: '', description: '', tags: '', file: null })
         setShowUploadForm(false)
         fetchOrchardVideos()
+      } else {
+        console.error('❌ Upload failed:', result.error)
+        toast({
+          title: "Upload Failed",
+          description: result.error || "Failed to upload video. Please try again.",
+          variant: "destructive"
+        })
       }
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('💥 Upload exception:', error)
       toast({
         title: "Upload Failed",
         description: "Failed to upload video. Please try again.",
