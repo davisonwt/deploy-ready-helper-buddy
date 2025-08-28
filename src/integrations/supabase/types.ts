@@ -3246,7 +3246,7 @@ export type Database = {
         Returns: boolean
       }
       increment_ai_usage: {
-        Args: Record<PropertyKey, never> | { user_id_param: string }
+        Args: Record<PropertyKey, never> | { user_id_param?: string }
         Returns: number
       }
       increment_orchard_views: {

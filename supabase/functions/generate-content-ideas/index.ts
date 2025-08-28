@@ -130,8 +130,8 @@ Include various formats and creative angles that would engage the target audienc
     const openAIData = await openAIResponse.json();
     const generatedIdeas = openAIData.choices[0].message.content;
 
-    // Increment usage count
-    await supabase.rpc('increment_ai_usage', { user_id_param: user.id });
+    // Record usage tracking - this creation counts as usage
+    console.log('📊 Recording AI usage...');
 
     // Save to database
     const { data: creation, error: dbError } = await supabase
@@ -163,12 +163,14 @@ Include various formats and creative angles that would engage the target audienc
       });
     }
 
-    console.log('Content ideas generated successfully');
+    // Get current usage for response  
+    const { data: currentUsage } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
+    console.log('✅ Content ideas generated and saved successfully');
 
     return new Response(JSON.stringify({ 
       ideas: generatedIdeas,
       creation: creation,
-      usage: usageData + 1,
+      usage: currentUsage || 0,
       limit: dailyLimit
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
