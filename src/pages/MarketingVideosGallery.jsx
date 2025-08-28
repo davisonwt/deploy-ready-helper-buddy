@@ -3,17 +3,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2 } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { VideoPlayer } from '@/components/ui/VideoPlayer'
+import VideoGifting from '@/components/community/VideoGifting'
 
 export default function MarketingVideosGallery() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [filteredVideos, setFilteredVideos] = useState([])
+  const [playingVideos, setPlayingVideos] = useState(new Set())
   const { user } = useAuth()
-  const { videos, loading, likeVideo, fetchVideos } = useCommunityVideos()
+  const { videos, loading, toggleLike, fetchVideos, incrementViews } = useCommunityVideos()
   const navigate = useNavigate()
 
   // Categories for filtering - same as Create Orchard page
@@ -71,8 +74,20 @@ export default function MarketingVideosGallery() {
     setFilteredVideos(filtered)
   }, [videos, selectedCategory])
 
-  const handleVideoClick = (video) => {
-    // Navigate to the orchard page if the video is linked to an orchard
+  const toggleVideoPlay = (videoId) => {
+    setPlayingVideos(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(videoId)) {
+        newSet.delete(videoId)
+      } else {
+        newSet.add(videoId)
+      }
+      return newSet
+    })
+  }
+
+  const handleOrchardVisit = (video, e) => {
+    e.stopPropagation()
     if (video.orchard_id) {
       navigate(`/orchard/${video.orchard_id}`)
       toast.success('Taking you to the orchard - bestow to support this sower!')
@@ -130,7 +145,7 @@ export default function MarketingVideosGallery() {
     }
     
     try {
-      await likeVideo(videoId)
+      await toggleLike(videoId)
       toast.success('Video liked!')
     } catch (error) {
       toast.error('Failed to like video')
@@ -178,7 +193,7 @@ export default function MarketingVideosGallery() {
                   Marketing Videos Gallery
                 </h1>
                 <p className="text-lg text-slate-800 font-medium" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>
-                  Discover inspiring marketing content from fellow sowers - click to find their orchards and bestow!
+                  Discover inspiring marketing content from fellow sowers - watch videos with autoplay and send free-will gifts!
                 </p>
               </div>
             </div>
@@ -238,28 +253,33 @@ export default function MarketingVideosGallery() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {filteredVideos.map((video) => (
-                <Card 
-                  key={video.id}
-                  className="group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  onClick={() => handleVideoClick(video)}
-                >
-                  {/* Video Thumbnail */}
-                  <div className="aspect-video relative overflow-hidden rounded-t-lg bg-black">
-                    <img 
-                      src={getVideoThumbnail(video)}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                <Card key={video.id} className="overflow-hidden">
+                  {/* Video Player Section */}
+                  <div className="aspect-video relative bg-black">
+                    <VideoPlayer
+                      src={video.video_url}
+                      className="w-full h-full"
+                      autoPlay={true}
+                      muted={true}
+                      loop={true}
+                      playsInline={true}
+                      fallbackImage={getVideoThumbnail(video)}
+                      onError={(error) => {
+                        console.error('Video playback error:', error)
+                      }}
                     />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
                     
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-white/90 rounded-full p-3">
-                        <Play className="h-6 w-6 text-primary fill-current" />
-                      </div>
-                    </div>
+                    {/* Category Badge */}
+                    {video.tags && video.tags.length > 0 && (
+                      <Badge 
+                        variant="default"
+                        className="absolute top-2 left-2 bg-primary/90 text-white"
+                      >
+                        {video.tags[0]}
+                      </Badge>
+                    )}
 
                     {/* Duration Badge */}
                     {video.duration_seconds && (
@@ -270,102 +290,112 @@ export default function MarketingVideosGallery() {
                         {formatDuration(video.duration_seconds)}
                       </Badge>
                     )}
-
-                    {/* Category Badge */}
-                    {video.tags && video.tags.length > 0 && (
-                      <Badge 
-                        variant="default"
-                        className="absolute top-2 left-2 bg-primary/90"
-                      >
-                        {video.tags[0]}
-                      </Badge>
-                    )}
                   </div>
 
-                  {/* Video Info */}
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {video.title}
-                    </h3>
-                    
-                    {video.description && (
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {video.description}
-                      </p>
-                    )}
+                  {/* Video Info Section */}
+                  <CardContent className="p-6 space-y-4">
+                    {/* Title and Description */}
+                    <div>
+                      <h3 className="font-semibold text-xl mb-2 line-clamp-2">
+                        {video.title}
+                      </h3>
+                      {video.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {video.description}
+                        </p>
+                      )}
+                    </div>
 
                     {/* Creator Info */}
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-3">
                       {video.profiles?.avatar_url ? (
                         <img 
                           src={video.profiles.avatar_url} 
                           alt="Creator"
-                          className="w-6 h-6 rounded-full"
+                          className="w-8 h-8 rounded-full"
                         />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">
                             {(video.profiles?.display_name || video.profiles?.first_name || 'U')[0]}
                           </span>
                         </div>
                       )}
-                      <span className="text-sm text-muted-foreground">
-                        {video.profiles?.display_name || 
-                         `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
-                         'Anonymous Sower'}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">
+                          {video.profiles?.display_name || 
+                           `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
+                           'Anonymous Sower'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Creator</p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        {video.view_count || 0} views
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <ThumbsUp className="h-4 w-4" />
+                        {video.like_count || 0} likes
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="h-4 w-4" />
+                        {video.comment_count || 0} comments
                       </span>
                     </div>
 
-                    {/* Stats and Actions */}
-                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-4">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {video.view_count || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ThumbsUp className="h-3 w-3" />
-                          {video.like_count || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="h-3 w-3" />
-                          {video.comment_count || 0}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        {/* Share Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-primary/10"
-                          onClick={(e) => handleShare(video, e)}
-                          title="Share video"
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </Button>
-                        
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="flex items-center gap-2">
                         {/* Like Button */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 hover:bg-primary/10"
-                          onClick={(e) => handleLike(video.id, e)}
-                          title="Like video"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleLike(video.id, e)
+                          }}
                         >
-                          <Heart className="h-4 w-4" />
+                          <ThumbsUp className="h-4 w-4 mr-1" />
+                          Like
+                        </Button>
+                        
+                        {/* Share Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm" 
+                          className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                          onClick={(e) => handleShare(video, e)}
+                        >
+                          <Share2 className="h-4 w-4 mr-1" />
+                          Share
+                        </Button>
+                        
+                        {/* Visit Orchard Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={(e) => handleOrchardVisit(video, e)}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
                         </Button>
                       </div>
-                    </div>
 
-                    {/* Call to Action */}
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {video.orchard_id ? 'Click to visit orchard' : 'Click to find orchard'}
-                        </span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                      </div>
+                      {/* Free-Will Gift Button */}
+                      <VideoGifting
+                        video={video}
+                        onGiftSent={() => {
+                          // Refresh video data to show updated stats
+                          fetchVideos()
+                          toast.success('Gift sent to creator! 💝')
+                        }}
+                      />
                     </div>
                   </CardContent>
                 </Card>

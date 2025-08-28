@@ -2911,6 +2911,62 @@ export type Database = {
         }
         Relationships: []
       }
+      video_gifts: {
+        Row: {
+          amount: number
+          created_at: string
+          creator_amount: number
+          giver_id: string
+          id: string
+          message: string | null
+          payment_status: string
+          platform_fee: number
+          receiver_id: string
+          sow2grow_fee: number
+          transaction_hash: string | null
+          updated_at: string
+          video_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          creator_amount: number
+          giver_id: string
+          id?: string
+          message?: string | null
+          payment_status?: string
+          platform_fee?: number
+          receiver_id: string
+          sow2grow_fee?: number
+          transaction_hash?: string | null
+          updated_at?: string
+          video_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          creator_amount?: number
+          giver_id?: string
+          id?: string
+          message?: string | null
+          payment_status?: string
+          platform_fee?: number
+          receiver_id?: string
+          sow2grow_fee?: number
+          transaction_hash?: string | null
+          updated_at?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_gifts_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "community_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_likes: {
         Row: {
           created_at: string
