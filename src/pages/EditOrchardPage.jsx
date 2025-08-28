@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import OrchardVideoManager from '@/components/orchard/OrchardVideoManager'
 import { 
   TreePine, 
   Upload, 
@@ -773,6 +774,9 @@ export default function EditOrchardPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Marketing Video Manager */}
+        {orchard && <OrchardVideoManager orchard={orchard} />}
       </div>
     </div>
   )
