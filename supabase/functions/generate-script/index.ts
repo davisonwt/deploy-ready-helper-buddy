@@ -8,7 +8,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('🚀 Script Function started, method:', req.method);
+    console.log('🚀 Script Function started, method:', req.method);
+    console.log('📍 Request URL:', req.url);
+    console.log('🔍 Headers present:', Object.keys([...req.headers]).join(', '));
   
   if (req.method === 'OPTIONS') {
     console.log('✅ CORS preflight handled');
@@ -18,7 +20,7 @@ serve(async (req) => {
   try {
     console.log('📥 Parsing request body...');
     const { productDescription, targetAudience, videoLength, style, customPrompt } = await req.json();
-    console.log('✅ Request body parsed successfully');
+    console.log('✅ Request body parsed successfully:', { productDescription: productDescription?.substring(0, 50) + '...', targetAudience, videoLength, style });
 
     // Initialize Supabase client
     console.log('🔧 Initializing Supabase client...');
@@ -172,10 +174,13 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
 
   } catch (error) {
     console.error('❌ CRITICAL ERROR in generate-script function:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({ 
       error: 'Internal server error: ' + error.message,
-      details: error.stack 
+      details: error.stack,
+      errorName: error.name 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
