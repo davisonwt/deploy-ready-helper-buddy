@@ -28,16 +28,33 @@ export default function VideoGifting({ video, onGiftSent }) {
 
   const isOwner = user && video.uploader_id === user.id
 
-  // Calculate fees (10% + 0.5% to sow2grow)
-  const platformFee = amount * 0.10
-  const sow2growFee = amount * 0.005
-  const totalFees = platformFee + sow2growFee
-  const creatorAmount = amount - totalFees
+  // Calculate fees: 10.5% total to sow2grow
+  const sow2growFee = amount * 0.105 // 10.5% to sow2grow
+  const creatorAmount = amount - sow2growFee
 
   const handleGift = async () => {
-    if (!user || !connected || amount < 1 || amount > 10) {
+    if (!user) {
       toast({
-        title: "Invalid Gift",
+        title: "Login Required",
+        description: "Please login to send gifts",
+        variant: "destructive"
+      })
+      navigate('/login')
+      return
+    }
+
+    if (!connected) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet first",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (amount < 1 || amount > 10) {
+      toast({
+        title: "Invalid Amount",
         description: "Please enter an amount between 1 and 10 USDC",
         variant: "destructive"
       })
@@ -73,7 +90,7 @@ export default function VideoGifting({ video, onGiftSent }) {
         return
       }
 
-      // Get platform wallet
+      // Get sow2grow platform wallet
       const { data: platformWallet, error: platformError } = await supabase
         .rpc('get_payment_wallet_address')
         .single()
@@ -87,25 +104,25 @@ export default function VideoGifting({ video, onGiftSent }) {
         return
       }
 
-      // Process payment to creator
+      // Process payment to creator first
       const creatorPayment = await processBestowPart({
         amount: creatorAmount,
         recipient_address: creatorWallet.wallet_address,
-        orchard_id: null, // This is a direct gift, not orchard-related
-        notes: `Video gift: ${video.title} - ${message || 'Great video!'}`
+        orchard_id: null,
+        notes: `Video gift: ${video.title} - ${message || 'Love your video!'}`
       })
 
       if (!creatorPayment.success) {
-        throw new Error(creatorPayment.error)
+        throw new Error(creatorPayment.error || 'Failed to send payment to creator')
       }
 
-      // Process fees to platform (if totalFees > 0)
-      if (totalFees > 0) {
+      // Process fee to sow2grow (10.5%)
+      if (sow2growFee > 0) {
         await processBestowPart({
-          amount: totalFees,
+          amount: sow2growFee,
           recipient_address: platformWallet.wallet_address,
           orchard_id: null,
-          notes: `Platform fees for video gift - Video: ${video.title}`
+          notes: `Sow2Grow fee for video gift - Video: ${video.title}`
         })
       }
 
@@ -118,9 +135,9 @@ export default function VideoGifting({ video, onGiftSent }) {
           receiver_id: video.uploader_id,
           amount: amount,
           creator_amount: creatorAmount,
-          platform_fee: platformFee,
+          platform_fee: 0,
           sow2grow_fee: sow2growFee,
-          message: message || 'Great video!',
+          message: message || 'Love your video!',
           transaction_hash: creatorPayment.signature,
           payment_status: 'completed'
         })
@@ -130,7 +147,7 @@ export default function VideoGifting({ video, onGiftSent }) {
       }
 
       toast({
-        title: "Gift Sent! 🎉",
+        title: "Gift Sent! 💝",
         description: `Successfully sent ${formatUSDC(amount)} to the creator!`
       })
 
@@ -145,43 +162,13 @@ export default function VideoGifting({ video, onGiftSent }) {
     } catch (error) {
       console.error('Gift error:', error)
       toast({
-        title: "Gift Failed",
+        title: "Gift Failed", 
         description: error.message || "Failed to send gift. Please try again.",
         variant: "destructive"
       })
     } finally {
       setSending(false)
     }
-  }
-
-  // Show different states based on user authentication
-  if (!user) {
-    return (
-      <Button
-        size="sm"
-        variant="outline"
-        className="text-pink-600 hover:text-pink-700 border-pink-200"
-        onClick={() => navigate('/login')}
-      >
-        <DollarSign className="h-4 w-4 mr-1" />
-        Login to Gift
-      </Button>
-    )
-  }
-
-  // Don't show gift button for video owner
-  if (isOwner) {
-    return (
-      <Button
-        size="sm"
-        variant="outline"
-        disabled
-        className="text-muted-foreground cursor-not-allowed"
-      >
-        <Heart className="h-4 w-4 mr-1" />
-        Your Video
-      </Button>
-    )
   }
 
   return (
@@ -192,20 +179,35 @@ export default function VideoGifting({ video, onGiftSent }) {
           className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 shadow-md"
           onClick={(e) => e.stopPropagation()}
         >
-          <DollarSign className="h-4 w-4 mr-1" />
-          Gift USDC
+          <Heart className="h-4 w-4 mr-1" />
+          Love Video
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-pink-600" />
-            Send a Gift to Creator
+            Send Love Gift to Creator
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          {!connected ? (
+          {!user ? (
+            <div className="space-y-4">
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4 text-center">
+                  <Heart className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                  <p className="text-blue-800 mb-3">Login to send love gifts to creators</p>
+                  <Button 
+                    onClick={() => navigate('/login')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Login Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : !connected ? (
             <div className="space-y-4">
               <Card className="border-amber-200 bg-amber-50">
                 <CardContent className="p-4 text-center">
@@ -238,18 +240,20 @@ export default function VideoGifting({ video, onGiftSent }) {
             <>
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Support the creator of "{video.title}"
+                  Send love to the creator of "{video.title}"
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Your balance: {formatUSDC(balance)}
                 </p>
-                <div className="text-xs text-muted-foreground">
-                  Debug: Connected: {connected ? 'Yes' : 'No'}, Wallet Ready: {isWalletReady ? 'Yes' : 'No'}, Amount: {amount}
-                </div>
+                {isOwner && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    ⚠️ This is your own video
+                  </p>
+                )}
               </div>
 
               <div>
-                <Label htmlFor="gift-amount">Gift Amount (1-10 USDC)</Label>
+                <Label htmlFor="gift-amount">Love Gift Amount (1-10 USDC)</Label>
                 <Input
                   id="gift-amount"
                   type="number"
@@ -263,12 +267,12 @@ export default function VideoGifting({ video, onGiftSent }) {
               </div>
 
               <div>
-                <Label htmlFor="gift-message">Optional Message</Label>
+                <Label htmlFor="gift-message">Love Message (Optional)</Label>
                 <Input
                   id="gift-message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Great video! Keep it up!"
+                  placeholder="Love your video! Keep creating!"
                   className="mt-1"
                 />
               </div>
@@ -281,11 +285,7 @@ export default function VideoGifting({ video, onGiftSent }) {
                     <span className="font-medium text-green-600">{formatUSDC(creatorAmount)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Platform fee (10%):</span>
-                    <span>{formatUSDC(platformFee)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Sow2Grow fee (0.5%):</span>
+                    <span>Sow2Grow fee (10.5%):</span>
                     <span>{formatUSDC(sow2growFee)}</span>
                   </div>
                   <hr className="my-2" />
@@ -298,11 +298,11 @@ export default function VideoGifting({ video, onGiftSent }) {
 
               <Button
                 onClick={handleGift}
-                disabled={sending || !isWalletReady || amount < 1 || amount > 10}
+                disabled={sending || amount < 1 || amount > 10}
                 className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <DollarSign className="h-4 w-4 mr-2" />
-                {sending ? 'Sending Gift...' : !connected ? 'Connect Wallet First' : !isWalletReady ? 'Wallet Not Ready' : `Send ${formatUSDC(amount)} Gift`}
+                <Heart className="h-4 w-4 mr-2" />
+                {sending ? 'Sending Love Gift...' : isOwner ? 'Cannot Gift Own Video' : `Send ${formatUSDC(amount)} Love Gift`}
               </Button>
             </>
           )}
