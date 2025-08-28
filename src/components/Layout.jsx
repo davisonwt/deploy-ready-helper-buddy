@@ -77,7 +77,6 @@ export default function Layout({ children }) {
   // Primary navigation (direct buttons)
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' } },
-    { name: "AI Assistant", href: "/ai-assistant", icon: Sparkles, color: { bg: '#e879f9', border: '#e879f9', text: '#ffffff' } },
     { name: "create orchard", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' } }
   ]
 
@@ -88,6 +87,7 @@ export default function Layout({ children }) {
       icon: User,
       color: { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
       items: [
+        { name: "AI Assistant", href: "/ai-assistant", icon: Sparkles },
         { name: "My Orchards", href: "/my-orchards", icon: User },
         { name: "Browse Community Orchards", href: "/browse-orchards", icon: Users },
         { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video },
