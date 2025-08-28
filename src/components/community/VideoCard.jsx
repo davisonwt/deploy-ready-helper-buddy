@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Heart, MessageCircle, Play, Pause, Volume2, VolumeX, Maximize, Trash2, MoreVertical } from 'lucide-react'
+import { Heart, MessageCircle, Play, Pause, Volume2, VolumeX, Maximize, Trash2, MoreVertical, AlertCircle } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
 import { useAuth } from '@/hooks/useAuth'
 import { formatDistanceToNow } from 'date-fns'
+import { useToast } from '@/hooks/use-toast'
 import VideoCommentsModal from './VideoCommentsModal.jsx'
 
 export default function VideoCard({ video, onVideoClick }) {
@@ -14,22 +15,47 @@ export default function VideoCard({ video, onVideoClick }) {
   const [isMuted, setIsMuted] = useState(true)
   const [showComments, setShowComments] = useState(false)
   const [hasViewed, setHasViewed] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const videoRef = useRef(null)
   const { toggleLike, incrementViews, deleteVideo } = useCommunityVideos()
   const { user } = useAuth()
+  const { toast } = useToast()
+
+  const handleVideoError = (error) => {
+    console.error('❌ Video playback error:', error, 'Video URL:', video.video_url)
+    setVideoError(true)
+    setIsLoading(false)
+    toast({
+      title: "Video Error",
+      description: "This video format may not be supported on your device. Try uploading in MP4 format.",
+      variant: "destructive"
+    })
+  }
+
+  const handleVideoLoad = () => {
+    console.log('✅ Video loaded successfully:', video.video_url)
+    setIsLoading(false)
+    setVideoError(false)
+  }
 
   const handlePlayPause = async () => {
-    if (!videoRef.current) return
+    if (!videoRef.current || videoError) return
 
     if (isPlaying) {
       videoRef.current.pause()
     } else {
-      // Increment view count on first play
-      if (!hasViewed) {
-        await incrementViews(video.id)
-        setHasViewed(true)
+      try {
+        // Increment view count on first play
+        if (!hasViewed) {
+          await incrementViews(video.id)
+          setHasViewed(true)
+        }
+        await videoRef.current.play()
+      } catch (error) {
+        console.error('Play error:', error)
+        handleVideoError(error)
       }
-      videoRef.current.play()
     }
     setIsPlaying(!isPlaying)
   }
@@ -79,16 +105,46 @@ export default function VideoCard({ video, onVideoClick }) {
           className="relative aspect-[9/16] bg-black cursor-pointer group"
           onClick={handleVideoClick}
         >
-          <video
-            ref={videoRef}
-            src={video.video_url}
-            className="w-full h-full object-cover"
-            muted={isMuted}
-            loop
-            playsInline
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
+          {videoError ? (
+            <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+              <div className="text-center text-white/70">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm">Video format not supported</p>
+                <p className="text-xs mt-1">Try uploading as MP4</p>
+              </div>
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              muted={isMuted}
+              loop
+              playsInline
+              preload="metadata"
+              crossOrigin="anonymous"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onError={handleVideoError}
+              onLoadedData={handleVideoLoad}
+              onCanPlay={handleVideoLoad}
+            >
+              <source src={video.video_url} type="video/mp4" />
+              <source src={video.video_url} type="video/webm" />
+              <source src={video.video_url} type="video/quicktime" />
+              <source src={video.video_url} type="video/mov" />
+              <source src={video.video_url} type="video/3gpp" />
+              <source src={video.video_url} type="video/avi" />
+              Your browser does not support the video tag.
+            </video>
+          )}
+
+          {isLoading && !videoError && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <div className="text-white/70 text-center">
+                <div className="animate-pulse text-sm">Loading video...</div>
+              </div>
+            </div>
+          )}
           
           {/* Overlay Controls */}
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
