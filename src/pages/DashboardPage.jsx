@@ -540,57 +540,56 @@ export default function DashboardPage() {
                 </Button>
               </Link>
               
-              <div 
-                className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-4 cursor-pointer font-medium"
-                style={{
-                  backgroundColor: '#caffbf',
-                  color: '#166534'
-                }}
-              >
-                <div className="text-center mb-3">
-                  <TreePine className="h-6 w-6 mx-auto mb-2" />
-                  <span className="font-medium">Browse Orchards</span>
-                </div>
-                <div className="flex justify-center space-x-3">
-                  <Link to="/browse-orchards">
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        backgroundColor: '#caffbf',
-                        borderColor: '#166534'
-                      }}
-                    >
-                      <Users className="h-4 w-4" style={{ color: '#166534' }} />
-                    </div>
-                  </Link>
-                  <Link to="/my-orchards">
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        backgroundColor: '#ffd6a5',
-                        borderColor: '#9a3412'
-                      }}
-                    >
-                      <User className="h-4 w-4" style={{ color: '#9a3412' }} />
-                    </div>
-                  </Link>
-                  <Link 
-                    to="/364yhvh-orchards"
-                    onClick={(e) => {
-                      console.log('🔗 Navigating to 364yhvh-orchards page');
+              <div className="grid grid-cols-3 gap-3">
+                {/* Community Orchards - Green */}
+                <Link to="/browse-orchards">
+                  <div 
+                    className="h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 cursor-pointer"
+                    style={{
+                      backgroundColor: '#caffbf'
                     }}
                   >
-                    <div 
-                      className="w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                      style={{
-                        backgroundColor: '#e9d5ff',
-                        borderColor: '#7c3aed'
-                      }}
-                    >
-                      <Heart className="h-4 w-4" style={{ color: '#7c3aed' }} />
+                    <div className="text-center h-full flex flex-col justify-center">
+                      <Users className="h-5 w-5 mx-auto mb-1" style={{ color: '#86efac' }} />
+                      <span className="text-xs font-medium" style={{ color: '#86efac' }}>Community Orchards</span>
                     </div>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
+
+                {/* My Orchards - Orange */}
+                <Link to="/my-orchards">
+                  <div 
+                    className="h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 cursor-pointer"
+                    style={{
+                      backgroundColor: '#ffd6a5'
+                    }}
+                  >
+                    <div className="text-center h-full flex flex-col justify-center">
+                      <User className="h-5 w-5 mx-auto mb-1" style={{ color: '#fed7aa' }} />
+                      <span className="text-xs font-medium" style={{ color: '#fed7aa' }}>My Orchards</span>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* 364yhvh Community - Purple */}
+                <Link 
+                  to="/364yhvh-orchards"
+                  onClick={(e) => {
+                    console.log('🔗 Navigating to 364yhvh-orchards page');
+                  }}
+                >
+                  <div 
+                    className="h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 cursor-pointer"
+                    style={{
+                      backgroundColor: '#e9d5ff'
+                    }}
+                  >
+                    <div className="text-center h-full flex flex-col justify-center">
+                      <Heart className="h-5 w-5 mx-auto mb-1" style={{ color: '#f3e8ff' }} />
+                      <span className="text-xs font-medium" style={{ color: '#f3e8ff' }}>364yhvh Community</span>
+                    </div>
+                  </div>
+                </Link>
               </div>
               
               <Link to="/profile">
