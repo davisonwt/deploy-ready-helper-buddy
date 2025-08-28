@@ -390,6 +390,36 @@ export default function CreateOrchardPage({ isEdit = false }) {
             // Don't fail the orchard creation
           }
         }
+
+        // If video was uploaded and this is a new orchard, create community video entry
+        if (!isEdit && videoUrl && result.data) {
+          try {
+            const communityVideoData = {
+              uploader_id: user.id,
+              uploader_profile_id: user.profile?.id || null,
+              title: `${formData.title} - Marketing Video`,
+              description: formData.description || null,
+              tags: [formData.category, 'marketing', 'orchard'],
+              video_url: videoUrl,
+              status: 'approved', // Auto-approve orchard marketing videos
+              orchard_id: result.data.id // Link to the orchard
+            }
+
+            const { error: videoError } = await supabase
+              .from('community_videos')
+              .insert(communityVideoData)
+
+            if (videoError) {
+              console.error('Failed to create community video entry:', videoError)
+              // Don't fail orchard creation if video entry fails
+            } else {
+              console.log('✅ Successfully created community video entry for orchard marketing')
+            }
+          } catch (error) {
+            console.error('Error creating community video entry:', error)
+          }
+        }
+        
         
         if (isEdit) {
           navigate("/my-orchards")

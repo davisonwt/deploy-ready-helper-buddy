@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
@@ -57,7 +57,7 @@ export default function MarketingVideosGallery() {
     let filtered = videos.filter(video => 
       video.status === 'approved' && 
       video.tags && 
-      video.tags.some(tag => tag.toLowerCase().includes('marketing'))
+      (video.tags.includes('marketing') || video.orchard_id) // Include marketing tagged videos or orchard-linked videos
     )
 
     if (selectedCategory !== 'all') {
@@ -72,16 +72,54 @@ export default function MarketingVideosGallery() {
   }, [videos, selectedCategory])
 
   const handleVideoClick = (video) => {
-    // Find associated orchard through video metadata or tags
-    // For now, navigate to browse orchards with search
-    if (video.tags && video.tags.length > 0) {
-      const searchTerm = video.tags[0]
-      navigate(`/browse-orchards?search=${encodeURIComponent(searchTerm)}`)
+    // Navigate to the orchard page if the video is linked to an orchard
+    if (video.orchard_id) {
+      navigate(`/orchard/${video.orchard_id}`)
+      toast.success('Taking you to the orchard - bestow to support this sower!')
     } else {
-      navigate('/browse-orchards')
+      // Fallback: search orchards by category/tags
+      if (video.tags && video.tags.length > 0) {
+        const searchTerm = video.tags.find(tag => tag !== 'marketing' && tag !== 'orchard') || video.tags[0]
+        navigate(`/browse-orchards?search=${encodeURIComponent(searchTerm)}`)
+      } else {
+        navigate('/browse-orchards')
+      }
+      toast.success('Searching orchards - find the matching orchard to bestow!')
     }
+  }
+
+  const handleShare = async (video, e) => {
+    e.stopPropagation()
     
-    toast.success('Redirected to orchards - find the matching orchard to bestow!')
+    const shareUrl = video.orchard_id 
+      ? `${window.location.origin}/orchard/${video.orchard_id}?from=video` 
+      : `${window.location.origin}/marketing-videos`
+    
+    const shareData = {
+      title: video.title,
+      text: `Check out this marketing video from ${video.profiles?.display_name || 'a sower'} on sow2grow - the 364yhvh community farm! 🌱`,
+      url: shareUrl
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        toast.success('Video shared successfully!')
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`)
+        toast.success('Link copied to clipboard!')
+      }
+    } catch (error) {
+      console.error('Error sharing:', error)
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`)
+        toast.success('Link copied to clipboard!')
+      } catch (clipboardError) {
+        toast.error('Failed to share video')
+      }
+    }
   }
 
   const handleLike = async (videoId, e) => {
@@ -278,8 +316,8 @@ export default function MarketingVideosGallery() {
                       </span>
                     </div>
 
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    {/* Stats and Actions */}
+                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                       <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
@@ -295,22 +333,36 @@ export default function MarketingVideosGallery() {
                         </span>
                       </div>
                       
-                      {/* Like Button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-primary/10"
-                        onClick={(e) => handleLike(video.id, e)}
-                      >
-                        <Heart className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {/* Share Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-primary/10"
+                          onClick={(e) => handleShare(video, e)}
+                          title="Share video"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        
+                        {/* Like Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-primary/10"
+                          onClick={(e) => handleLike(video.id, e)}
+                          title="Like video"
+                        >
+                          <Heart className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Call to Action */}
                     <div className="mt-3 pt-3 border-t">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                          Click to find their orchard
+                          {video.orchard_id ? 'Click to visit orchard' : 'Click to find orchard'}
                         </span>
                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
                       </div>
