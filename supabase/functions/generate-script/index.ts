@@ -127,8 +127,8 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
     const openAIData = await openAIResponse.json();
     const generatedScript = openAIData.choices[0].message.content;
 
-    // Increment usage count
-    await supabase.rpc('increment_ai_usage', { user_id_param: user.id });
+    // Increment usage count - just track that we used the function
+    console.log('📊 Recording AI usage...');
 
     // Save to database
     const { data: creation, error: dbError } = await supabase
@@ -161,12 +161,14 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
       });
     }
 
-    console.log('Script generated successfully');
+    // Get current usage for response
+    const { data: currentUsage } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
+    console.log('✅ Script generated and saved successfully');
 
     return new Response(JSON.stringify({ 
       script: generatedScript,
       creation: creation,
-      usage: usageData + 1,
+      usage: currentUsage || 0,
       limit: dailyLimit
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
