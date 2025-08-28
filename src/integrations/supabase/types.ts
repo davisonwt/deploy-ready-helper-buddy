@@ -3059,7 +3059,7 @@ export type Database = {
         }[]
       }
       get_ai_usage_today: {
-        Args: Record<PropertyKey, never> | { user_id_param: string }
+        Args: Record<PropertyKey, never> | { user_id_param?: string }
         Returns: number
       }
       get_current_radio_show: {

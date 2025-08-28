@@ -108,13 +108,13 @@ Include various formats and creative angles that would engage the target audienc
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 1500,
-        temperature: 0.9,
+        max_completion_tokens: 1500,
+        // Note: temperature not supported for gpt-5 (defaults to 1.0)
       }),
     });
 
@@ -147,7 +147,7 @@ Include various formats and creative angles that would engage the target audienc
         metadata: {
           content_type_focus: contentType,
           generated_at: new Date().toISOString(),
-          model: 'gpt-4.1-2025-04-14',
+          model: 'gpt-5-2025-08-07',
           prompt_tokens: openAIData.usage?.prompt_tokens,
           completion_tokens: openAIData.usage?.completion_tokens
         }

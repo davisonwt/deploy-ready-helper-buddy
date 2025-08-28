@@ -75,13 +75,13 @@ Guidelines:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 1200,
-        temperature: 0.7,
+        max_completion_tokens: 1200,
+        // Note: temperature not supported for gpt-5 (defaults to 1.0)
       }),
     });
 
@@ -114,7 +114,7 @@ Guidelines:
         metadata: {
           platform: platform,
           generated_at: new Date().toISOString(),
-          model: 'gpt-4o',
+          model: 'gpt-5-2025-08-07',
           prompt_tokens: openAIData.usage?.prompt_tokens,
           completion_tokens: openAIData.usage?.completion_tokens
         }
