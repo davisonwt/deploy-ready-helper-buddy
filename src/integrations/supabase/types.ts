@@ -576,6 +576,7 @@ export type Database = {
           file_size: number | null
           id: string
           like_count: number | null
+          orchard_id: string | null
           status: string | null
           tags: string[] | null
           thumbnail_url: string | null
@@ -594,6 +595,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           like_count?: number | null
+          orchard_id?: string | null
           status?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -612,6 +614,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           like_count?: number | null
+          orchard_id?: string | null
           status?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -623,6 +626,13 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "community_videos_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_videos_uploader_profile_id_fkey"
             columns: ["uploader_profile_id"]
