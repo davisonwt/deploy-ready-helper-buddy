@@ -154,9 +154,34 @@ export default function VideoGifting({ video, onGiftSent }) {
     }
   }
 
+  // Show different states based on user authentication
+  if (!user) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="text-pink-600 hover:text-pink-700 border-pink-200"
+        onClick={() => navigate('/login')}
+      >
+        <DollarSign className="h-4 w-4 mr-1" />
+        Login to Gift
+      </Button>
+    )
+  }
+
   // Don't show gift button for video owner
-  if (isOwner || !user) {
-    return null
+  if (isOwner) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        disabled
+        className="text-muted-foreground cursor-not-allowed"
+      >
+        <Heart className="h-4 w-4 mr-1" />
+        Your Video
+      </Button>
+    )
   }
 
   return (
