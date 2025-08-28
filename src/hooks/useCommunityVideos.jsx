@@ -116,7 +116,8 @@ export function useCommunityVideos() {
           video_url: uploadResult.data.url,
           duration_seconds: Math.round(duration),
           file_size: file.size,
-          status: 'pending'
+          orchard_id: metadata.orchard_id || null,
+          status: 'approved'
         })
         .select()
         .single()
