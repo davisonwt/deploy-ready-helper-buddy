@@ -11,8 +11,8 @@ import { useUSDCPayments } from '@/hooks/useUSDCPayments'
 import { useToast } from '@/hooks/use-toast'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
-import WalletConnection from '@/components/WalletConnection'
-import FiatOnRamp from '@/components/FiatOnRamp'
+import { WalletConnection } from '@/components/WalletConnection'
+import { FiatOnRamp } from '@/components/FiatOnRamp'
 
 export default function VideoGifting({ video, onGiftSent }) {
   const { user } = useAuth()
