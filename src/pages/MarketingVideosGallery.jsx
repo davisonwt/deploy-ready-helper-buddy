@@ -16,17 +16,35 @@ export default function MarketingVideosGallery() {
   const { videos, loading, likeVideo, fetchVideos } = useCommunityVideos()
   const navigate = useNavigate()
 
-  // Categories for filtering
+  // Categories for filtering - same as Create Orchard page
   const categories = [
     { value: 'all', label: 'All Categories' },
-    { value: 'produce', label: '🥬 Fresh Produce' },
-    { value: 'livestock', label: '🐄 Livestock & Dairy' },
-    { value: 'organic', label: '🌱 Organic Farming' },
-    { value: 'sustainable', label: '♻️ Sustainable Practices' },
-    { value: 'farmstand', label: '🏪 Farm Stand Marketing' },
-    { value: 'seasonal', label: '🍂 Seasonal Products' },
-    { value: 'community', label: '👥 Community Outreach' },
-    { value: 'agritourism', label: '🚜 Agritourism' }
+    { value: 'The Gift of Accessories', label: 'The Gift of Accessories' },
+    { value: 'The Gift of Adventure Packages', label: 'The Gift of Adventure Packages' },
+    { value: 'The Gift of Appliances', label: 'The Gift of Appliances' },
+    { value: 'The Gift of Art', label: 'The Gift of Art' },
+    { value: 'The Gift of Books & Literature', label: 'The Gift of Books & Literature' },
+    { value: 'The Gift of Business Solutions', label: 'The Gift of Business Solutions' },
+    { value: 'The Gift of Clothing & Fashion', label: 'The Gift of Clothing & Fashion' },
+    { value: 'The Gift of Computers & Technology', label: 'The Gift of Computers & Technology' },
+    { value: 'The Gift of Education & Training', label: 'The Gift of Education & Training' },
+    { value: 'The Gift of Entertainment', label: 'The Gift of Entertainment' },
+    { value: 'The Gift of Food & Beverages', label: 'The Gift of Food & Beverages' },
+    { value: 'The Gift of Furniture & Home Decor', label: 'The Gift of Furniture & Home Decor' },
+    { value: 'The Gift of Gifts & Special Items', label: 'The Gift of Gifts & Special Items' },
+    { value: 'The Gift of Health & Medical', label: 'The Gift of Health & Medical' },
+    { value: 'The Gift of Industrial & Scientific', label: 'The Gift of Industrial & Scientific' },
+    { value: 'The Gift of Music', label: 'The Gift of Music' },
+    { value: 'The Gift of Personal Care', label: 'The Gift of Personal Care' },
+    { value: 'The Gift of Security', label: 'The Gift of Security' },
+    { value: 'The Gift of Services', label: 'The Gift of Services' },
+    { value: 'The Gift of Social Impact', label: 'The Gift of Social Impact' },
+    { value: 'The Gift of Software', label: 'The Gift of Software' },
+    { value: 'The Gift of Sports & Recreation', label: 'The Gift of Sports & Recreation' },
+    { value: 'The Gift of Technology & Hardware (Consumer Electronics)', label: 'The Gift of Technology & Hardware (Consumer Electronics)' },
+    { value: 'The Gift of Tools & Equipment', label: 'The Gift of Tools & Equipment' },
+    { value: 'The Gift of Transportation', label: 'The Gift of Transportation' },
+    { value: 'The Gift of Travel & Tourism', label: 'The Gift of Travel & Tourism' }
   ]
 
   useEffect(() => {
@@ -45,7 +63,7 @@ export default function MarketingVideosGallery() {
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(video =>
         video.tags && video.tags.some(tag => 
-          tag.toLowerCase().includes(selectedCategory.toLowerCase())
+          tag === selectedCategory || tag.toLowerCase().includes(selectedCategory.toLowerCase())
         )
       )
     }
