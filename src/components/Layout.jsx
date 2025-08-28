@@ -99,7 +99,7 @@ export default function Layout({ children }) {
       icon: MessageSquare,
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
-        { name: "Chat App", href: "/chatapp", icon: MessageSquare },
+        { name: "chatapp", href: "/chatapp", icon: MessageSquare },
         { name: "AOD Station", href: "/grove-station", icon: Mic },
         ...(roles?.userRoles?.includes('radio_admin') || roles?.userRoles?.includes('admin') || roles?.userRoles?.includes('gosat') ? [
           { name: "Heretic Management System", href: "/radio-management", icon: Settings }
