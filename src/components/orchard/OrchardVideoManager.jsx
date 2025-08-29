@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Upload, Video, Trash2, Plus } from 'lucide-react'
+import { Upload, Video, Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
+import VideoCard from '@/components/community/VideoCard.jsx'
 
 export default function OrchardVideoManager({ orchard }) {
   const { user } = useAuth()
@@ -285,27 +286,14 @@ export default function OrchardVideoManager({ orchard }) {
 
         {/* Existing Videos */}
         {orchardVideos.length > 0 ? (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {orchardVideos.map((video) => (
-              <Card key={video.id} className="flex items-center p-4">
-                <div className="flex-1">
-                  <h4 className="font-medium">{video.title}</h4>
-                  <p className="text-sm text-muted-foreground">{video.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                    <span>{video.view_count || 0} views</span>
-                    <span>{video.like_count || 0} likes</span>
-                    <span>Status: {video.status}</span>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => handleDelete(video.id)}
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </Card>
+              <VideoCard 
+                key={video.id} 
+                video={video}
+                showDeleteOption={isOwner}
+                onDelete={() => handleDelete(video.id)}
+              />
             ))}
           </div>
         ) : (

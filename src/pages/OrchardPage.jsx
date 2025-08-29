@@ -19,6 +19,7 @@ import { useOrchards } from '../hooks/useOrchards';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '../utils/formatters';
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
+import OrchardVideoManager from '@/components/orchard/OrchardVideoManager';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
@@ -299,14 +300,17 @@ const OrchardPage = () => {
                     <h3 className="text-lg font-semibold text-orange-700 mb-2">How Your Support Helps</h3>
                     <p className="text-orange-600">{orchard.how_it_helps}</p>
                   </div>
-                )}
-              </CardContent>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
+                 )}
+               </CardContent>
+             </div>
+           </Card>
 
-export default OrchardPage;
+           {/* Marketing Videos Section */}
+           <OrchardVideoManager orchard={orchard} />
+         </div>
+       </div>
+     </div>
+   );
+ };
+ 
+ export default OrchardPage;
