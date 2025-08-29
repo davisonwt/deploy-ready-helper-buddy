@@ -44,15 +44,30 @@ export default function VideoUploadModal({ isOpen, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!file || !title.trim()) return
+    console.log('🎬 VideoUploadModal: Form submitted', { file, title, uploading })
+    
+    if (!file || !title.trim()) {
+      console.warn('❌ Upload blocked: Missing file or title', { hasFile: !!file, title: title.trim() })
+      return
+    }
 
     const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    
+    console.log('🎬 VideoUploadModal: Starting upload with data:', {
+      title: title.trim(),
+      description: description.trim() || null,
+      tags: tagsArray,
+      fileSize: file.size,
+      fileName: file.name
+    })
     
     const result = await uploadVideo(file, {
       title: title.trim(),
       description: description.trim() || null,
       tags: tagsArray
     })
+
+    console.log('🎬 VideoUploadModal: Upload result:', result)
 
     if (result.success) {
       // Reset form
@@ -205,6 +220,15 @@ export default function VideoUploadModal({ isOpen, onClose }) {
               type="submit"
               disabled={!file || !title.trim() || uploading}
               className="flex-1"
+              onClick={(e) => {
+                console.log('🎬 Upload button clicked!', { 
+                  hasFile: !!file, 
+                  title: title.trim(), 
+                  uploading,
+                  disabled: !file || !title.trim() || uploading
+                })
+                // Don't prevent default - let form submission handle it
+              }}
             >
               {uploading ? 'Uploading...' : 'Upload Video'}
             </Button>
