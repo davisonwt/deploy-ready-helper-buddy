@@ -63,8 +63,7 @@ export default function MarketingVideosGallery() {
     
     let filtered = videos.filter(video => 
       video.status === 'approved' && 
-      video.tags && 
-      (video.tags.includes('marketing') || video.orchard_id) // Include marketing tagged videos or orchard-linked videos
+      video.orchard_id !== null // Only show videos connected to an orchard
     )
 
     if (selectedCategory !== 'all') {
