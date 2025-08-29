@@ -61,10 +61,16 @@ export default function MarketingVideosGallery() {
   useEffect(() => {
     if (!videos) return
     
+    console.log('🎬 MarketingVideos: All videos:', videos.length)
+    console.log('🎬 MarketingVideos: Sample videos:', videos.slice(0, 3).map(v => ({ title: v.title, status: v.status, orchard_id: v.orchard_id })))
+    
     let filtered = videos.filter(video => 
       video.status === 'approved' && 
       video.orchard_id !== null // Only show videos connected to an orchard
     )
+
+    console.log('🎬 MarketingVideos: Approved videos with orchards:', filtered.length)
+    console.log('🎬 MarketingVideos: Filtered videos:', filtered.map(v => ({ title: v.title, orchard_id: v.orchard_id })))
 
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(video =>
