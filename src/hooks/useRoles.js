@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -6,7 +6,29 @@ export function useRoles() {
   const [userRoles, setUserRoles] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const { user } = useAuth()
+  
+  // Check if React hooks are available (dispatcher check)
+  let user
+  try {
+    const authHook = useAuth()
+    user = authHook.user
+  } catch (err) {
+    console.error('🔥 useRoles dispatcher error:', err)
+    // Return safe defaults if React hooks fail
+    return {
+      userRoles: [],
+      loading: false,
+      error: 'React dispatcher error',
+      hasRole: () => false,
+      isAdmin: false,
+      isGosat: false,
+      isAdminOrGosat: false,
+      fetchUserRoles: () => Promise.resolve(),
+      fetchAllUsers: () => Promise.resolve({ success: false, error: 'React dispatcher error' }),
+      grantRole: () => Promise.resolve({ success: false, error: 'React dispatcher error' }),
+      revokeRole: () => Promise.resolve({ success: false, error: 'React dispatcher error' })
+    }
+  }
 
   const fetchUserRoles = async () => {
     if (!user) {
