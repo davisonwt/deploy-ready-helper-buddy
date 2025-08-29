@@ -10,7 +10,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import VideoCommentsModal from './VideoCommentsModal.jsx'
 
-export default function VideoCard({ video, onVideoClick }) {
+export default function VideoCard({ video, onVideoClick, showDeleteOption = false, onDelete }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
   const [showComments, setShowComments] = useState(false)
@@ -75,7 +75,11 @@ export default function VideoCard({ video, onVideoClick }) {
 
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
-      await deleteVideo(video.id)
+      if (onDelete) {
+        onDelete(video.id)
+      } else {
+        await deleteVideo(video.id)
+      }
     }
   }
 
@@ -253,8 +257,8 @@ export default function VideoCard({ video, onVideoClick }) {
                 <MessageCircle className="h-4 w-4" />
               </Button>
 
-              {/* Delete menu for video owner */}
-              {isOwner && (
+              {/* Delete menu for video owner or if showDeleteOption is true */}
+              {(isOwner || showDeleteOption) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
