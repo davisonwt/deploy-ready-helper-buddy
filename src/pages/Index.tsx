@@ -174,7 +174,7 @@ function IndexContent() {
             <Link to="/register">
               <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
                 <Heart className="w-5 h-5 mr-2" />
-                start your journey
+                sow your first seed
               </Button>
             </Link>
           </div>

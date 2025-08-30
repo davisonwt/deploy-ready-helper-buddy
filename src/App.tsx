@@ -280,11 +280,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-               {/* AI Assistant */}
+               {/* AI Assistant - Redirect to Create Orchard */}
                <Route path="/ai-assistant" element={
                  <ProtectedRoute>
                    <Layout>
-                     <AIAssistantPage />
+                     <CreateOrchardPage />
                    </Layout>
                  </ProtectedRoute>
                } />
