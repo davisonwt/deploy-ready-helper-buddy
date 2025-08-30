@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign, Upload } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
@@ -12,13 +12,13 @@ import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
 import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 import VideoSocialShare from '@/components/community/VideoSocialShare'
-import VideoUploadModal from '@/components/community/VideoUploadModal'
+
 
 export default function MarketingVideosGallery() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [filteredVideos, setFilteredVideos] = useState([])
   const [playingVideos, setPlayingVideos] = useState(new Set())
-  const [showUploadModal, setShowUploadModal] = useState(false)
+  
   const { user } = useAuth()
   const { videos, loading, toggleLike, fetchVideos, incrementViews } = useCommunityVideos()
   const navigate = useNavigate()
@@ -205,17 +205,6 @@ export default function MarketingVideosGallery() {
                   Discover inspiring marketing content from fellow sowers - watch videos with autoplay and send free-will gifts!
                 </p>
               </div>
-              
-              {/* Upload Button */}
-              {user && (
-                <Button 
-                  onClick={() => setShowUploadModal(true)}
-                  className="bg-primary hover:bg-primary/90 text-white"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Marketing Video
-                </Button>
-              )}
             </div>
 
             {/* Filter Section */}
@@ -443,14 +432,6 @@ export default function MarketingVideosGallery() {
         </div>
       </div>
 
-      {/* Upload Modal */}
-      <VideoUploadModal
-        isOpen={showUploadModal}
-        onClose={() => {
-          setShowUploadModal(false)
-          fetchVideos() // Refresh videos after upload
-        }}
-      />
     </div>
   )
 }
