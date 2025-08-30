@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
+import { OrchardMarketingAssistant } from "../components/ai/OrchardMarketingAssistant"
 import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
 import { 
   Plus, 
@@ -83,6 +84,8 @@ export default function CreateOrchardPage({ isEdit = false }) {
   
   const [selectedImages, setSelectedImages] = useState([])
   const [selectedVideo, setSelectedVideo] = useState(null)
+  const [allowCommissionMarketing, setAllowCommissionMarketing] = useState(false)
+  const [commissionRate, setCommissionRate] = useState("10")
   
   // Update currency when user's preferred currency changes
   useEffect(() => {
@@ -357,7 +360,9 @@ export default function CreateOrchardPage({ isEdit = false }) {
         expected_completion: formData.expected_completion?.trim() || "",
         features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
         images: allImageUrls,
-        video_url: videoUrl
+        video_url: videoUrl,
+        allow_commission_marketing: allowCommissionMarketing,
+        commission_rate: allowCommissionMarketing ? parseFloat(commissionRate) : null
       }
 
       console.log('🔧 Creating orchard with data:', orchardData)
@@ -734,7 +739,7 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   type="orchard-description"
                   onContentGenerated={(content) => setFormData(prev => ({ ...prev, description: content }))}
                   compact={true}
-                  suggestions={["startup business funding", "farm equipment purchase", "community garden project"]}
+                  suggestions={["solar energy for community", "equipment to boost productivity", "sustainable farming initiative"]}
                 />
               </div>
               
@@ -1049,6 +1054,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   placeholder="Explain why this orchard is important for you..."
                   required
                 />
+                <QuickAIHelper
+                  type="script"
+                  onContentGenerated={(content) => setFormData(prev => ({ ...prev, why_needed: content }))}
+                  compact={true}
+                  placeholder={`Generate compelling reasons why "${formData.title || 'this project'}" is needed`}
+                />
               </div>
               
               <div>
@@ -1063,6 +1074,12 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   placeholder="How will this benefit the community?"
                   required
                 />
+                <QuickAIHelper
+                  type="marketing-tips"
+                  onContentGenerated={(content) => setFormData(prev => ({ ...prev, community_impact: content }))}
+                  compact={true}
+                  placeholder={`Generate community impact ideas for "${formData.title || 'this project'}"`}
+                />
               </div>
               
               <div>
@@ -1074,9 +1091,59 @@ export default function CreateOrchardPage({ isEdit = false }) {
                   name="features"
                   value={formData.features}
                   onChange={handleChange}
-                  placeholder="e.g., Reliable, Fuel efficient, Low maintenance"
+                  placeholder="e.g., High efficiency, Eco-friendly, Cost-effective"
+                />
+                <QuickAIHelper
+                  type="content-ideas"
+                  onContentGenerated={(content) => setFormData(prev => ({ ...prev, features: content }))}
+                  compact={true}
+                  placeholder={`Generate key features and benefits for "${formData.title || 'this project'}"`}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Commission Marketing */}
+          <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-lg">
+            <CardHeader>
+              <CardTitle style={{ color: '#3b82f6' }} className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Commission Marketing
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="allowCommissionMarketing"
+                  checked={allowCommissionMarketing}
+                  onChange={(e) => setAllowCommissionMarketing(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="allowCommissionMarketing" className="text-sm font-medium">
+                  Allow other content marketers to promote this orchard for commissions
+                </label>
+              </div>
+              
+              {allowCommissionMarketing && (
+                <div>
+                  <label className="block text-sm font-medium text-blue-400 mb-2">Commission Rate (%)</label>
+                  <Select value={commissionRate} onValueChange={setCommissionRate}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select commission rate" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5% - Low commission</SelectItem>
+                      <SelectItem value="10">10% - Standard commission</SelectItem>
+                      <SelectItem value="15">15% - High commission</SelectItem>
+                      <SelectItem value="20">20% - Premium commission</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Higher commissions attract more marketers but reduce your final earnings
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -1189,6 +1256,15 @@ export default function CreateOrchardPage({ isEdit = false }) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Marketing Assistant */}
+          <OrchardMarketingAssistant 
+            orchardData={formData}
+            onContentGenerated={(data) => {
+              console.log('Marketing content generated:', data);
+              // You can handle the generated content here
+            }}
+          />
           
           {/* Error Display */}
           {error && (
