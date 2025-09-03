@@ -127,13 +127,33 @@ export default function DJPlaylistManager() {
     try {
       const { data, error } = await supabase
         .from('dj_playlist_tracks')
-        .select('*')
+        .select(`
+          *,
+          dj_music_tracks (
+            track_title,
+            artist_name,
+            genre,
+            bpm,
+            duration_seconds
+          )
+        `)
         .eq('playlist_id', playlistId)
         .eq('is_active', true)
         .order('track_order', { ascending: true })
 
       if (error) throw error
-      setTracks(data || [])
+      
+      // Transform the data to match the expected format
+      const transformedTracks = (data || []).map(track => ({
+        ...track,
+        title: track.dj_music_tracks?.track_title || 'Unknown Title',
+        artist: track.dj_music_tracks?.artist_name || 'Unknown Artist',
+        genre: track.dj_music_tracks?.genre,
+        bpm: track.dj_music_tracks?.bpm,
+        duration_seconds: track.dj_music_tracks?.duration_seconds
+      }))
+      
+      setTracks(transformedTracks)
     } catch (error) {
       console.error('Error fetching tracks:', error)
     }
@@ -210,24 +230,44 @@ export default function DJPlaylistManager() {
       // Get file duration (simplified - in real app you'd use Web Audio API)
       const audioDuration = await getAudioDuration(uploadData.file)
 
-      // Add track to playlist
-      const { error: trackError } = await supabase
+      // Get DJ profile for track creation
+      const { data: djProfile, error: djError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (djError) throw djError
+
+      // First, create the track in dj_music_tracks
+      const { data: trackData, error: trackInsertError } = await supabase
+        .from('dj_music_tracks')
+        .insert([{
+          dj_id: djProfile.id,
+          file_url: filePath,
+          track_title: uploadData.title || uploadData.file.name.split('.')[0],
+          artist_name: uploadData.artist || 'Unknown Artist',
+          genre: uploadData.genre || '',
+          bpm: uploadData.bpm ? parseInt(uploadData.bpm) : null,
+          file_size: uploadData.file.size,
+          duration_seconds: audioDuration,
+          track_type: 'music'
+        }])
+        .select()
+        .single()
+
+      if (trackInsertError) throw trackInsertError
+
+      // Then, add the track to the playlist
+      const { error: playlistTrackError } = await supabase
         .from('dj_playlist_tracks')
         .insert([{
           playlist_id: selectedPlaylist.id,
-          file_path: filePath,
-          file_name: uploadData.file.name,
-          file_size: uploadData.file.size,
-          duration_seconds: audioDuration,
-          title: uploadData.title || uploadData.file.name.split('.')[0],
-          artist: uploadData.artist || 'Unknown Artist',
-          album: uploadData.album || '',
-          genre: uploadData.genre || '',
-          bpm: uploadData.bpm ? parseInt(uploadData.bpm) : null,
-          uploaded_by: user.id
+          track_id: trackData.id,
+          track_order: 1 // You might want to get the next order number
         }])
 
-      if (trackError) throw trackError
+      if (playlistTrackError) throw playlistTrackError
 
       // Refresh tracks
       await fetchPlaylistTracks(selectedPlaylist.id)
