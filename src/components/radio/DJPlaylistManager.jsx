@@ -198,7 +198,7 @@ export default function DJPlaylistManager() {
 
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
-        .from('radio-music')
+        .from('music-tracks')
         .upload(filePath, uploadData.file, {
           onUploadProgress: (progress) => {
             setUploadProgress((progress.loaded / progress.total) * 100)
