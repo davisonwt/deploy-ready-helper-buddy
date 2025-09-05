@@ -15,6 +15,13 @@ export const useDirectMusicUpload = () => {
       return null
     }
 
+    // Check file size (Supabase free tier limit is 50MB)
+    const maxFileSize = 50 * 1024 * 1024 // 50MB in bytes
+    if (file.size > maxFileSize) {
+      toast.error(`File size too large. Maximum allowed size is 50MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`)
+      return null
+    }
+
     try {
       setUploading(true)
       
