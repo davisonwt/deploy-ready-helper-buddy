@@ -57,6 +57,13 @@ export default function DJMusicUpload({ trigger }) {
       return
     }
 
+    // Check file size (25MB limit for better upload reliability)
+    const maxFileSize = 25 * 1024 * 1024 // 25MB in bytes
+    if (selectedFile.size > maxFileSize) {
+      alert(`File too large! Maximum size is 25MB. Your file is ${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB. Please convert to MP3 or reduce quality.`)
+      return
+    }
+
     setFile(selectedFile)
     
     // Try to extract metadata from filename
