@@ -178,13 +178,17 @@ export default function AutomatedSessionScheduler() {
           </p>
         </div>
         
-        <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2" disabled={myScheduleSlots.length === 0 || sessionPlaylists.length === 0}>
-              <Settings className="h-4 w-4" />
-              Schedule Session
-            </Button>
-          </DialogTrigger>
+        <div className="flex flex-col items-end gap-2">
+          <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+            <DialogTrigger asChild>
+              <Button 
+                className="flex items-center gap-2" 
+                disabled={myScheduleSlots.length === 0 || sessionPlaylists.length === 0}
+              >
+                <Settings className="h-4 w-4" />
+                Schedule Playlist to Time Slot
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Schedule Automated Session</DialogTitle>
@@ -261,6 +265,29 @@ export default function AutomatedSessionScheduler() {
             </div>
           </DialogContent>
         </Dialog>
+          
+          {/* Requirements Status */}
+          <div className="text-right text-sm">
+            {myScheduleSlots.length === 0 && (
+              <div className="text-red-600 flex items-center gap-1">
+                <XCircle className="h-3 w-3" />
+                Need approved time slots first
+              </div>
+            )}
+            {sessionPlaylists.length === 0 && (
+              <div className="text-red-600 flex items-center gap-1">
+                <XCircle className="h-3 w-3" />
+                Need playlists to schedule
+              </div>
+            )}
+            {myScheduleSlots.length > 0 && sessionPlaylists.length > 0 && (
+              <div className="text-green-600 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                Ready to schedule!
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Status Cards */}
@@ -300,18 +327,69 @@ export default function AutomatedSessionScheduler() {
             <div className="text-center py-8">
               <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No automated sessions yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Schedule your first automated session to let your playlists play themselves!
+              <p className="text-muted-foreground mb-6">
+                Schedule your playlists to play automatically during your radio time slots!
               </p>
-              {myScheduleSlots.length === 0 ? (
-                <p className="text-sm text-yellow-600">
-                  You need approved radio slots to schedule automated sessions
-                </p>
-              ) : sessionPlaylists.length === 0 ? (
-                <p className="text-sm text-yellow-600">
-                  Create some playlists first to schedule automated sessions
-                </p>
-              ) : null}
+              
+              {/* Step-by-step guide */}
+              <div className="max-w-md mx-auto text-left space-y-4">
+                <h4 className="font-medium text-center mb-4">To schedule your music:</h4>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center flex-shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <div>
+                    <p className="font-medium">Book a radio time slot</p>
+                    <p className="text-sm text-muted-foreground">Go to Schedule tab and book a time slot</p>
+                    {myScheduleSlots.length === 0 && (
+                      <Badge variant="destructive" className="text-xs mt-1">
+                        ❌ No approved slots
+                      </Badge>
+                    )}
+                    {myScheduleSlots.length > 0 && (
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        ✅ {myScheduleSlots.length} available slots
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center flex-shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <div>
+                    <p className="font-medium">Create playlists</p>
+                    <p className="text-sm text-muted-foreground">Go to Playlists tab and add your music</p>
+                    {sessionPlaylists.length === 0 && (
+                      <Badge variant="destructive" className="text-xs mt-1">
+                        ❌ No playlists
+                      </Badge>
+                    )}
+                    {sessionPlaylists.length > 0 && (
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        ✅ {sessionPlaylists.length} playlists ready
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center flex-shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <div>
+                    <p className="font-medium">Schedule automation</p>
+                    <p className="text-sm text-muted-foreground">Use the button above to assign playlists to time slots</p>
+                    {myScheduleSlots.length > 0 && sessionPlaylists.length > 0 && (
+                      <Badge variant="default" className="text-xs mt-1">
+                        ✅ Ready to schedule!
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
