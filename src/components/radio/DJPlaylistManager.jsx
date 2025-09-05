@@ -258,13 +258,23 @@ export default function DJPlaylistManager() {
 
       if (trackInsertError) throw trackInsertError
 
+      // Get the next order number for the playlist
+      const { data: existingTracks } = await supabase
+        .from('dj_playlist_tracks')
+        .select('track_order')
+        .eq('playlist_id', selectedPlaylist.id)
+        .order('track_order', { ascending: false })
+        .limit(1)
+
+      const nextOrder = existingTracks?.[0]?.track_order ? existingTracks[0].track_order + 1 : 1
+
       // Then, add the track to the playlist
       const { error: playlistTrackError } = await supabase
         .from('dj_playlist_tracks')
         .insert([{
           playlist_id: selectedPlaylist.id,
           track_id: trackData.id,
-          track_order: 1 // You might want to get the next order number
+          track_order: nextOrder
         }])
 
       if (playlistTrackError) throw playlistTrackError
