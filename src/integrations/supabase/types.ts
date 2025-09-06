@@ -1539,14 +1539,17 @@ export type Database = {
           created_at: string
           current_position_seconds: number | null
           current_track_id: string | null
+          current_track_index: number | null
           error_message: string | null
           id: string
           listener_count: number | null
           playback_status: string
           playlist_id: string | null
           schedule_id: string
+          session_id: string | null
           session_type: string
           started_at: string | null
+          track_started_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1554,14 +1557,17 @@ export type Database = {
           created_at?: string
           current_position_seconds?: number | null
           current_track_id?: string | null
+          current_track_index?: number | null
           error_message?: string | null
           id?: string
           listener_count?: number | null
           playback_status?: string
           playlist_id?: string | null
           schedule_id: string
+          session_id?: string | null
           session_type?: string
           started_at?: string | null
+          track_started_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1569,14 +1575,17 @@ export type Database = {
           created_at?: string
           current_position_seconds?: number | null
           current_track_id?: string | null
+          current_track_index?: number | null
           error_message?: string | null
           id?: string
           listener_count?: number | null
           playback_status?: string
           playlist_id?: string | null
           schedule_id?: string
+          session_id?: string | null
           session_type?: string
           started_at?: string | null
+          track_started_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1592,6 +1601,13 @@ export type Database = {
             columns: ["schedule_id"]
             isOneToOne: false
             referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_automated_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
             referencedColumns: ["id"]
           },
         ]
