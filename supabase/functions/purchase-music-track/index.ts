@@ -147,18 +147,25 @@ serve(async (req) => {
         logStep("Failed to create direct room", { roomError });
         // Continue with purchase but log the error
       } else {
-        // Send track file to direct chat
+        // Send track file to direct chat with secure access
         const { error: messageError } = await supabaseService
           .from('chat_messages')
           .insert({
             room_id: directRoom,
             sender_id: user.id, // System message from buyer
-            content: `🎵 Music Purchase: ${track.track_title}`,
+            content: `🎵 Music Purchase: ${track.track_title}\n\n⚠️ This file is for your personal use only and cannot be shared with others.\n\nTo download: Click the attachment below to access your purchased MP3 file.`,
             message_type: 'file',
             file_url: track.file_url,
-            file_name: `${track.track_title}.${track.file_type}`,
+            file_name: `${track.track_title}.mp3`,
             file_size: track.file_size,
-            file_type: track.file_type
+            file_type: 'audio',
+            system_metadata: {
+              purchase_id: purchase.id,
+              track_id: trackId,
+              is_purchased_content: true,
+              access_restricted: true,
+              buyer_only: true
+            }
           });
 
         if (messageError) {
