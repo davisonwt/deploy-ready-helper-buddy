@@ -23,8 +23,8 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from '@/hooks/useAuth'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
+import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 
 export function RadioListenerInterface({ liveSession, currentShow }) {
   const { user } = useAuth()
@@ -268,17 +268,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
     }
   }
 
-  const handlePurchaseTrack = async (track) => {
-    const result = await purchaseTrack(track)
-    if (result.success) {
-      setShowTrackPurchase(false)
-      toast({
-        title: "🎵 Music Purchased!",
-        description: `"${track.track_title}" has been sent to your direct messages`,
-      })
-    }
-  }
-
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -316,92 +305,11 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
         </CardContent>
       </Card>
 
-      {/* Now Playing */}
-      {currentTrack && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music className="h-5 w-5" />
-              Now Playing
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4 className="font-medium">{currentTrack.track_title}</h4>
-                <p className="text-sm text-muted-foreground">{currentTrack.artist_name}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className="text-xs">
-                    {currentTrack.genre}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDuration(currentTrack.duration_seconds)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePurchaseTrack(currentTrack)}
-                  disabled={purchasing || !user}
-                  className="flex items-center gap-1"
-                >
-                  <ShoppingCart className="h-3 w-3" />
-                  $1.38 USDC
-                </Button>
-                <span className="text-xs text-muted-foreground text-center">
-                  Get MP3 file
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upcoming Tracks */}
-      {playlistTracks.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music className="h-5 w-5" />
-              Upcoming Tracks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-48">
-              <div className="space-y-3">
-                {playlistTracks.slice(1, 6).map((track, index) => (
-                  <div key={track.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center">
-                        {index + 2}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{track.track_title}</p>
-                        <p className="text-xs text-muted-foreground">{track.artist_name}</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePurchaseTrack(track)}
-                      disabled={purchasing || !user}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <ShoppingCart className="h-3 w-3" />
-                      $1.38
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            <p className="text-xs text-muted-foreground mt-3">
-              💡 Purchase any track to get the MP3 file sent directly to your messages
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Music Purchase Interface */}
+      <MusicPurchaseInterface 
+        tracks={playlistTracks}
+        currentTrack={currentTrack}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Send Message */}

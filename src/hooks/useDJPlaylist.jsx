@@ -285,13 +285,39 @@ export const useDJPlaylist = () => {
 
   const scheduleAutomatedSession = async (scheduleId, playlistId) => {
     try {
+      // First create a live session for this scheduled slot
+      const { data: scheduleData, error: scheduleError } = await supabase
+        .from('radio_schedule')
+        .select('*')
+        .eq('id', scheduleId)
+        .single()
+
+      if (scheduleError) throw scheduleError
+
+      // Create live session
+      const { data: liveSession, error: liveSessionError } = await supabase
+        .from('radio_live_sessions')
+        .insert({
+          schedule_id: scheduleId,
+          session_title: `Automated: ${scheduleData.show_name || 'Music Session'}`,
+          session_type: 'automated',
+          status: 'scheduled'
+        })
+        .select()
+        .single()
+
+      if (liveSessionError) throw liveSessionError
+
+      // Create automated session linked to live session
       const { data, error } = await supabase
         .from('radio_automated_sessions')
         .insert({
           schedule_id: scheduleId,
           playlist_id: playlistId,
+          session_id: liveSession.id,
           session_type: 'automated',
-          playback_status: 'scheduled'
+          playback_status: 'scheduled',
+          current_track_index: 0
         })
         .select()
         .single()
