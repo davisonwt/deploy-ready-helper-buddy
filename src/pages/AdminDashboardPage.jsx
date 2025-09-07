@@ -32,6 +32,7 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { useNavigate } from 'react-router-dom'
 import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
+import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApprovalInterface'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -637,7 +638,10 @@ export default function AdminDashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AdminRadioManagement />
+            <div className="space-y-6">
+              <RadioSlotApprovalInterface />
+              <AdminRadioManagement />
+            </div>
           </CardContent>
         </Card>
 
