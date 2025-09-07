@@ -1988,6 +1988,7 @@ export type Database = {
       radio_schedule: {
         Row: {
           ai_backup_enabled: boolean | null
+          approval_notes: string | null
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
@@ -1998,6 +1999,7 @@ export type Database = {
           id: string
           listener_count: number | null
           playlist_url: string | null
+          requires_review: boolean | null
           show_id: string | null
           show_notes: string | null
           show_subject: string | null
@@ -2009,6 +2011,7 @@ export type Database = {
         }
         Insert: {
           ai_backup_enabled?: boolean | null
+          approval_notes?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -2019,6 +2022,7 @@ export type Database = {
           id?: string
           listener_count?: number | null
           playlist_url?: string | null
+          requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
           show_subject?: string | null
@@ -2030,6 +2034,7 @@ export type Database = {
         }
         Update: {
           ai_backup_enabled?: boolean | null
+          approval_notes?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -2040,6 +2045,7 @@ export type Database = {
           id?: string
           listener_count?: number | null
           playlist_url?: string | null
+          requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
           show_subject?: string | null
@@ -2065,6 +2071,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      radio_show_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          mime_type: string | null
+          schedule_id: string
+          show_id: string
+          updated_at: string
+          upload_purpose: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          mime_type?: string | null
+          schedule_id: string
+          show_id: string
+          updated_at?: string
+          upload_purpose: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          schedule_id?: string
+          show_id?: string
+          updated_at?: string
+          upload_purpose?: string
+          uploaded_by?: string
+        }
+        Relationships: []
       }
       radio_shows: {
         Row: {
@@ -3085,6 +3136,10 @@ export type Database = {
         Args: { approver_id_param: string; schedule_id_param: string }
         Returns: boolean
       }
+      approve_radio_slot: {
+        Args: { approval_notes_param?: string; schedule_id_param: string }
+        Returns: boolean
+      }
       award_achievement: {
         Args: {
           achievement_type_param: string
@@ -3408,6 +3463,10 @@ export type Database = {
       }
       reject_radio_schedule_slot: {
         Args: { approver_id_param: string; schedule_id_param: string }
+        Returns: boolean
+      }
+      reject_radio_slot: {
+        Args: { rejection_reason: string; schedule_id_param: string }
         Returns: boolean
       }
       remove_sensitive_profile_data: {

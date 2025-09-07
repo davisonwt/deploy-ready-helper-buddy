@@ -26,7 +26,7 @@ import {
   Zap
 } from 'lucide-react'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
-import { ScheduleShowForm } from '@/components/radio/ScheduleShowForm'
+import { EnhancedScheduleShowForm } from '@/components/radio/EnhancedScheduleShowForm'
 import { LiveStreamInterface } from '@/components/radio/LiveStreamInterface'
 import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
@@ -511,7 +511,7 @@ export default function GroveStationPage() {
         )}
 
         {showScheduleForm && (
-          <ScheduleShowForm
+          <EnhancedScheduleShowForm
             open={showScheduleForm}
             onClose={() => setShowScheduleForm(false)}
             djProfile={userDJProfile}
