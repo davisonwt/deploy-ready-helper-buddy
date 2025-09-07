@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/hooks/useAuth'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 
