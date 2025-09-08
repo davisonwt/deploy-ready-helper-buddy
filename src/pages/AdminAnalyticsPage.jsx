@@ -44,6 +44,7 @@ export default function AdminAnalyticsPage() {
     "The Gift of DIY",
     "The Gift of Electronics",
     "The Gift of Energy",
+    "The Gift of Everything Bee's",
     "The Gift of Food",
     "The Gift of Free-will Gifting",
     "The Gift of Innovation",

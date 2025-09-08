@@ -68,6 +68,7 @@ export default function EditOrchardPage() {
     "The Gift of Computers & Technology",
     "The Gift of Education & Training",
     "The Gift of Entertainment",
+    "The Gift of Everything Bee's",
     "The Gift of Food & Beverages",
     "The Gift of Furniture & Home Decor",
     "The Gift of Gifts & Special Items",

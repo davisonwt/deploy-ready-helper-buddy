@@ -36,6 +36,7 @@ export default function MarketingVideosGallery() {
     { value: 'The Gift of Computers & Technology', label: 'The Gift of Computers & Technology' },
     { value: 'The Gift of Education & Training', label: 'The Gift of Education & Training' },
     { value: 'The Gift of Entertainment', label: 'The Gift of Entertainment' },
+    { value: 'The Gift of Everything Bee\'s', label: 'The Gift of Everything Bee\'s' },
     { value: 'The Gift of Food & Beverages', label: 'The Gift of Food & Beverages' },
     { value: 'The Gift of Furniture & Home Decor', label: 'The Gift of Furniture & Home Decor' },
     { value: 'The Gift of Gifts & Special Items', label: 'The Gift of Gifts & Special Items' },
