@@ -1031,7 +1031,9 @@ export type Database = {
       }
       orchards: {
         Row: {
+          allow_commission_marketing: boolean | null
           category: string
+          commission_rate: number | null
           community_impact: string | null
           completion_rate: number | null
           courier_cost: number | null
@@ -1065,7 +1067,9 @@ export type Database = {
           why_needed: string | null
         }
         Insert: {
+          allow_commission_marketing?: boolean | null
           category: string
+          commission_rate?: number | null
           community_impact?: string | null
           completion_rate?: number | null
           courier_cost?: number | null
@@ -1099,7 +1103,9 @@ export type Database = {
           why_needed?: string | null
         }
         Update: {
+          allow_commission_marketing?: boolean | null
           category?: string
+          commission_rate?: number | null
           community_impact?: string | null
           completion_rate?: number | null
           courier_cost?: number | null

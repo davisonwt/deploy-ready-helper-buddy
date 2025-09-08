@@ -831,10 +831,9 @@ export default function CreateOrchardPage({ isEdit = false }) {
                     <Input
                       type="number"
                       min="1"
-                      max="10"
                       value={formData.number_of_pockets}
                       onChange={(e) => setFormData(prev => ({ ...prev, number_of_pockets: e.target.value }))}
-                      placeholder="Enter number of pockets (1-10)"
+                      placeholder="Enter number of pockets"
                       className="border-green-300 focus:border-green-500"
                     />
                      <p className="text-xs text-gray-500 mt-1">
