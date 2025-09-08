@@ -44,7 +44,8 @@ const POPULAR_CATEGORIES = [
   "The Gift of Health & Medical",
   "The Gift of Business Solutions",
   "The Gift of Social Impact",
-  "The Gift of Community Development"
+  "The Gift of Community Development",
+  "The Gift of Everything Bee's"
 ];
 
 export function QuickOrchardCreator({ onCreateOrchard, onClose }) {

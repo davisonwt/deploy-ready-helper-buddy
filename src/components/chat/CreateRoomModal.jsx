@@ -41,6 +41,7 @@ const ROOM_TYPES = [
 const CATEGORIES = [
   'Agriculture & Farming',
   'Education & Training', 
+  'Everything Bee\'s',
   'Technology & Innovation',
   'Technology & Hardware (Consumer Electronics)',
   'Healthcare & Wellness',
