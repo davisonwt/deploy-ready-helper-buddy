@@ -158,7 +158,7 @@ const ChatappPage = () => {
       // Fetch user profile for the call
       const { data: userProfile, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, first_name, last_name')
+        .select('display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
         .eq('user_id', otherUserId)
         .single();
 
@@ -335,7 +335,7 @@ const ChatappPage = () => {
               // Fetch caller profile
               const { data: callerProfile, error } = await supabase
                 .from('profiles')
-                .select('display_name, avatar_url, first_name, last_name')
+                .select('display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
                 .eq('user_id', callSession.caller_id)
                 .maybeSingle();
 

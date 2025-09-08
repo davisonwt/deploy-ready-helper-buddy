@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*') // User can access their own complete profile
         .eq('user_id', authUser.id)
         .single()
 

@@ -3232,6 +3232,23 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      get_profile_admin_data: {
+        Args: { access_reason: string; profile_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          country: string
+          created_at: string
+          display_name: string
+          first_name: string
+          id: string
+          last_name: string
+          location: string
+          timezone: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
       get_profile_admin_secure: {
         Args: {
           access_reason: string
@@ -3251,6 +3268,25 @@ export type Database = {
           phone: string
           timezone: string
           user_id: string
+        }[]
+      }
+      get_public_profile: {
+        Args: { profile_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          created_at: string
+          display_name: string
+          facebook_url: string
+          id: string
+          instagram_url: string
+          show_social_media: boolean
+          tiktok_url: string
+          twitter_url: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          website: string
+          youtube_url: string
         }[]
       }
       get_public_profile_info: {
@@ -3323,6 +3359,10 @@ export type Database = {
           preferred_currency: string
           user_id: string
         }[]
+      }
+      get_safe_profile_fields: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
       }
       get_session_token_secure: {
         Args: { session_id_param: string }

@@ -61,7 +61,7 @@ export default function DashboardPage() {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*') // User can see their own complete profile
             .eq('user_id', user.id)
             .maybeSingle()
           
