@@ -3326,7 +3326,7 @@ export type Database = {
           tiktok_url: string
           twitter_url: string
           user_id: string
-          verification_status: Database["public"]["Enums"]["verification_status"]
+          verification_status: string
           website: string
           youtube_url: string
         }[]

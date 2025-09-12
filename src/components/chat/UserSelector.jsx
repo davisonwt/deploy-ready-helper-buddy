@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Phone, Video, Search } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSecureProfiles } from '@/hooks/useSecureProfiles';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
+  const { getPublicProfiles, loading: profilesLoading } = useSecureProfiles();
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,15 +24,25 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
 
     try {
       setLoading(true);
-      // Only select safe public profile data - no sensitive info
-      const { data, error } = await supabase
+      // Get all user IDs first (this is a simplified approach - in production you'd want pagination)
+      const { data: allUsers, error: usersError } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, created_at, verification_status') // Only safe fields
+        .select('user_id')
         .neq('user_id', user.id)
-        .order('display_name');
+        .limit(50); // Limit for performance
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (usersError) throw usersError;
+
+      if (allUsers && allUsers.length > 0) {
+        const userIds = allUsers.map(u => u.user_id);
+        const result = await getPublicProfiles(userIds);
+        
+        if (result.success) {
+          setUsers(result.data || []);
+        } else {
+          console.error('Error fetching user profiles:', result.error);
+        }
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {

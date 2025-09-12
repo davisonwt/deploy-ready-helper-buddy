@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Search, UserPlus, X, Send } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
+import { useSecureProfiles } from '@/hooks/useSecureProfiles'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 
