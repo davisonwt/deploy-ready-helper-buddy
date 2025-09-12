@@ -123,53 +123,58 @@ export default function LiveActivityWidget() {
         }))
       ]
 
-      // Fetch active group calls from live_call_participants
-      const { data: callData, error: callError } = await supabase
+      // Fetch active group calls from live_call_participants (no FK joins)
+      const { data: callData } = await supabase
         .from('live_call_participants')
-        .select(`
-          call_session_id,
-          role,
-          profiles!inner (
-            display_name
-          )
-        `)
+        .select('call_session_id, role, user_id, joined_at')
         .eq('is_active', true)
         .eq('role', 'host')
         .order('joined_at', { ascending: false })
 
+      // Map host user_ids to profile display names
+      const hostIds = Array.from(new Set((callData || []).map(c => c.user_id)))
+      const profileMap = {}
+      if (hostIds.length > 0) {
+        const { data: hostProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', hostIds)
+        ;(hostProfiles || []).forEach(p => {
+          profileMap[p.user_id] = p.display_name
+        })
+      }
+
       // Group calls by session and count participants
       const groupCallsMap = new Map()
-      if (callData) {
-        for (const call of callData) {
-          if (!groupCallsMap.has(call.call_session_id)) {
-            groupCallsMap.set(call.call_session_id, {
-              id: call.call_session_id,
-              title: `Live Session`,
-              host: call.profiles.display_name,
-              participants: 0,
-              isLive: true,
-              startedAt: new Date(),
-              type: "community"
-            })
-          }
-        }
-        
-        // Get participant counts for each session
-        const { data: participantCounts } = await supabase
-          .from('live_call_participants')
-          .select('call_session_id')
-          .eq('is_active', true)
-        
-        if (participantCounts) {
-          const counts = participantCounts.reduce((acc, p) => {
-            acc[p.call_session_id] = (acc[p.call_session_id] || 0) + 1
-            return acc
-          }, {})
-          
-          groupCallsMap.forEach((call, sessionId) => {
-            call.participants = counts[sessionId] || 0
+      for (const call of callData || []) {
+        if (!groupCallsMap.has(call.call_session_id)) {
+          groupCallsMap.set(call.call_session_id, {
+            id: call.call_session_id,
+            title: 'Live Session',
+            host: profileMap[call.user_id] || 'Host',
+            participants: 0,
+            isLive: true,
+            startedAt: new Date(),
+            type: 'community'
           })
         }
+      }
+      
+      // Get participant counts for each session
+      const { data: participantCounts } = await supabase
+        .from('live_call_participants')
+        .select('call_session_id')
+        .eq('is_active', true)
+      
+      if (participantCounts) {
+        const counts = participantCounts.reduce((acc, p) => {
+          acc[p.call_session_id] = (acc[p.call_session_id] || 0) + 1
+          return acc
+        }, {})
+        
+        groupCallsMap.forEach((call, sessionId) => {
+          call.participants = counts[sessionId] || 0
+        })
       }
       
       const groupCalls = Array.from(groupCallsMap.values())
@@ -203,28 +208,38 @@ export default function LiveActivityWidget() {
       }) || []
 
       // Fetch live courses from live_session_participants
-      const { data: sessionData, error: sessionError } = await supabase
+      const { data: sessionData } = await supabase
         .from('live_session_participants')
-        .select(`
-          session_id,
-          participant_type,
-          profiles!inner (
-            display_name
-          )
-        `)
+        .select('session_id, participant_type, user_id, joined_at')
         .eq('status', 'active')
         .eq('participant_type', 'host')
         .order('joined_at', { ascending: false })
 
-      const lifeCourses = sessionData?.map(session => ({
-        id: session.session_id,
-        title: `Live Session by ${session.profiles.display_name}`,
-        instructor: session.profiles.display_name,
-        isLive: true,
-        participants: 0, // Will be updated below
-        category: "live",
-        nextSession: new Date()
-      })) || []
+      // Resolve host names without relying on FK joins
+      const hostUserIds = Array.from(new Set((sessionData || []).map(s => s.user_id)))
+      const sessionProfileMap = {}
+      if (hostUserIds.length > 0) {
+        const { data: sessionProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', hostUserIds)
+        ;(sessionProfiles || []).forEach(p => {
+          sessionProfileMap[p.user_id] = p.display_name
+        })
+      }
+
+      const lifeCourses = (sessionData || []).map(session => {
+        const name = sessionProfileMap[session.user_id] || 'Host'
+        return {
+          id: session.session_id,
+          title: `Live Session by ${name}`,
+          instructor: name,
+          isLive: true,
+          participants: 0, // Will be updated below
+          category: 'live',
+          nextSession: new Date()
+        }
+      })
 
       // Get participant counts for live sessions
       if (sessionData?.length > 0) {
@@ -262,7 +277,7 @@ export default function LiveActivityWidget() {
         `)
         .ilike('radio_schedule.radio_shows.show_name', '%heretic%')
         .eq('status', 'live')
-        .single()
+        .maybeSingle()
 
       const aodHereticFrequencies = aodData ? {
         id: aodData.id,
