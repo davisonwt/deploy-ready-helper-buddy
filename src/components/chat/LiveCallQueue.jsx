@@ -54,18 +54,28 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
     try {
       const { data, error } = await supabase
         .from('live_call_participants')
-        .select(`
-          *,
-          profiles!inner(
-            display_name,
-            avatar_url,
-            first_name,
-            last_name
-          )
-        `)
+        .select('*')
         .eq('call_session_id', callSession)
         .eq('is_active', true)
         .order('joined_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Resolve participant profiles without FK join
+      const ids = Array.from(new Set((data || []).map(p => p.user_id)));
+      let profileMap = {};
+      if (ids.length > 0) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, first_name, last_name')
+          .in('user_id', ids);
+        profileMap = Object.fromEntries((profs || []).map(p => [p.user_id, p]));
+      }
+
+      const activeParticipants = (data || []).map(p => ({
+        ...p,
+        profiles: profileMap[p.user_id] || null,
+      }));
 
       if (error) throw error;
 
