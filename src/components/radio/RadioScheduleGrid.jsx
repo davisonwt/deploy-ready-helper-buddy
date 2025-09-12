@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Clock, Mic, Radio } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Clock, Mic, Radio, ChevronDown } from 'lucide-react'
 
 const SLOT_LABELS = Array.from({ length: 12 }, (_, i) => {
   const startHour = i * 2
@@ -28,8 +29,16 @@ const CATEGORY_COLORS = {
 }
 
 export function RadioScheduleGrid({ schedule = [] }) {
+  const [scheduleView, setScheduleView] = useState('2-hour')
   const currentHour = new Date().getHours()
   const currentSlotIndex = Math.floor(currentHour / 2)
+
+  const scheduleOptions = [
+    { value: '2-hour', label: "Today's Schedule (2-Hour Slots)" },
+    { value: '1-hour', label: "Today's Schedule (1-Hour Slots)" },
+    { value: 'weekly', label: "Weekly Schedule" },
+    { value: 'monthly', label: "Monthly Overview" }
+  ]
 
   // Group schedule into 2-hour slots
   const slotGroups = Array.from({ length: 12 }, (_, slotIndex) => {
@@ -54,10 +63,24 @@ export function RadioScheduleGrid({ schedule = [] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Today's Schedule (2-Hour Slots)
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            <CardTitle>Schedule View</CardTitle>
+          </div>
+          <Select value={scheduleView} onValueChange={setScheduleView}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Select schedule view" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border shadow-lg z-50">
+              {scheduleOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3">
