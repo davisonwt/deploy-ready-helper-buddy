@@ -178,12 +178,12 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6">
-            <LiveStreamListener 
-              stationConfig={stationConfig}
-              currentShow={currentShow}
-              isPlaying={isPlaying}
-              onPlayPause={handlePlayPause}
-            />
+            {currentShow && liveSession && currentShow.is_live && (
+              <LiveStreamListener 
+                liveSession={liveSession}
+                currentShow={currentShow}
+              />
+            )}
             
             {/* Listener Interface for Messages and Call-ins */}
             {currentShow && liveSession && currentShow.is_live && (
