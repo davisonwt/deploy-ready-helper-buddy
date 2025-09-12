@@ -178,7 +178,7 @@ export default function GroveStationPage() {
 
           {/* Listen Tab */}
           <TabsContent value="listen" className="space-y-6">
-            {currentShow && liveSession && currentShow.is_live && (
+            {currentShow && (
               <LiveStreamListener 
                 liveSession={liveSession}
                 currentShow={currentShow}
