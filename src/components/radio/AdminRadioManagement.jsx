@@ -156,25 +156,25 @@ export default function AdminRadioManagement() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="grid grid-cols-3 gap-6 flex-1">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{pendingSlots.length}</div>
-                <div className="text-sm text-muted-foreground whitespace-nowrap">Pending Approval</div>
+            <div className="flex flex-nowrap items-baseline gap-8 flex-1 overflow-x-auto">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-yellow-600">{pendingSlots.length}</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Pending Approval</span>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-green-600">
                   {allSlots.filter(s => s.approval_status === 'approved').length}
-                </div>
-                <div className="text-sm text-muted-foreground whitespace-nowrap">Approved</div>
+                </span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Approved</span>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-red-600">
                   {allSlots.filter(s => s.approval_status === 'rejected').length}
-                </div>
-                <div className="text-sm text-muted-foreground whitespace-nowrap">Rejected</div>
+                </span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Rejected</span>
               </div>
             </div>
-            <div className="ml-6">
+            <div className="ml-6 shrink-0">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filter by status" />
