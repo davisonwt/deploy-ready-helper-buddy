@@ -51,6 +51,8 @@ export function RadioSlotApprovalInterface() {
   const fetchRequests = async () => {
     try {
       setLoading(true)
+      console.log('📻 Fetching radio slot requests...')
+      
       const { data, error } = await supabase
         .from('radio_schedule')
         .select(`
@@ -77,13 +79,28 @@ export function RadioSlotApprovalInterface() {
         .eq('requires_review', true)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Radio slot requests query failed:', error)
+        throw error
+      }
+      
+      console.log('✅ Radio slot requests loaded:', data?.length || 0)
       setRequests(data || [])
+      
     } catch (error) {
-      console.error('Error fetching requests:', error)
+      console.error('❌ Error fetching requests:', error)
+      // More specific error handling
+      const errorMessage = error?.message || 'Failed to load radio slot requests'
+      console.log('Error details:', {
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        message: error?.message
+      })
+      
       toast({
         title: "Error",
-        description: "Failed to load radio slot requests",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
