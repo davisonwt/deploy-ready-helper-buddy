@@ -299,24 +299,24 @@ export function RadioSlotApprovalInterface() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 gap-4 mb-6 bg-transparent p-0">
+            <TabsList className="grid w-full grid-cols-3 gap-4 mb-6 bg-transparent p-0 h-auto">
               <TabsTrigger 
                 value="pending" 
-                className="text-center p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors data-[state=active]:bg-orange-200 dark:data-[state=active]:bg-orange-900/40 data-[state=active]:border-orange-400 border-2 border-transparent"
+                className="flex-col h-auto p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors data-[state=active]:bg-orange-200 dark:data-[state=active]:bg-orange-900/40 data-[state=active]:border-orange-400 border-2 border-transparent data-[state=active]:shadow-sm"
               >
                 <div className="text-2xl font-bold text-orange-600">{pendingRequests.length}</div>
                 <div className="text-sm text-orange-600">Pending Review</div>
               </TabsTrigger>
               <TabsTrigger 
                 value="approved" 
-                className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors data-[state=active]:bg-green-200 dark:data-[state=active]:bg-green-900/40 data-[state=active]:border-green-400 border-2 border-transparent"
+                className="flex-col h-auto p-4 bg-green-50 dark:bg-green-950/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors data-[state=active]:bg-green-200 dark:data-[state=active]:bg-green-900/40 data-[state=active]:border-green-400 border-2 border-transparent data-[state=active]:shadow-sm"
               >
                 <div className="text-2xl font-bold text-green-600">{approvedRequests.length}</div>
                 <div className="text-sm text-green-600">Approved</div>
               </TabsTrigger>
               <TabsTrigger 
                 value="rejected" 
-                className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg cursor-pointer hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors data-[state=active]:bg-red-200 dark:data-[state=active]:bg-red-900/40 data-[state=active]:border-red-400 border-2 border-transparent"
+                className="flex-col h-auto p-4 bg-red-50 dark:bg-red-950/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors data-[state=active]:bg-red-200 dark:data-[state=active]:bg-red-900/40 data-[state=active]:border-red-400 border-2 border-transparent data-[state=active]:shadow-sm"
               >
                 <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
                 <div className="text-sm text-red-600">Rejected</div>
