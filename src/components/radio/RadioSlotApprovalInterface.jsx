@@ -299,7 +299,7 @@ export function RadioSlotApprovalInterface() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending" className="w-full">
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <TabsList className="grid w-full grid-cols-3 gap-4 mb-6 bg-transparent p-0">
               <TabsTrigger 
                 value="pending" 
                 className="text-center p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors data-[state=active]:bg-orange-200 dark:data-[state=active]:bg-orange-900/40 data-[state=active]:border-orange-400 border-2 border-transparent"
@@ -321,9 +321,7 @@ export function RadioSlotApprovalInterface() {
                 <div className="text-2xl font-bold text-red-600">{rejectedRequests.length}</div>
                 <div className="text-sm text-red-600">Rejected</div>
               </TabsTrigger>
-            </div>
-
-            <TabsContent value="pending" className="space-y-4">
+            </TabsList>
               {pendingRequests.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle className="h-12 w-12 mx-auto mb-4" />
