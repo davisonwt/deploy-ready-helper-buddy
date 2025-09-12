@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import PersonnelSlotAssignment from './PersonnelSlotAssignment'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -147,19 +145,7 @@ export default function AdminRadioManagement() {
   }
 
   return (
-    <Tabs defaultValue="personnel" className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="personnel" className="bg-blue-100 data-[state=active]:bg-blue-200">
-          👥 Personnel Assignment
-        </TabsTrigger>
-        <TabsTrigger value="approvals">Show Approvals</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="personnel" className="space-y-6">
-        <PersonnelSlotAssignment />
-      </TabsContent>
-
-      <TabsContent value="approvals" className="space-y-6">
+    <div className="w-full">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -204,7 +190,7 @@ export default function AdminRadioManagement() {
       </Card>
 
       {/* Schedule List */}
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <CardTitle>Radio Schedule Slots</CardTitle>
         </CardHeader>
@@ -406,7 +392,6 @@ export default function AdminRadioManagement() {
           </DialogContent>
         </Dialog>
       )}
-      </TabsContent>
-    </Tabs>
+    </div>
   )
 }
