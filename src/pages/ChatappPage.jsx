@@ -807,21 +807,8 @@ const ChatappPage = () => {
           currentParticipants={participants}
         />
 
-        {/* Call Interface */}
-        {activeCall && (
-          <CallInterface
-            callSession={activeCall}
-            user={user}
-            callType={activeCall.type}
-            isIncoming={activeCall.isIncoming}
-            callerInfo={activeCall.callerInfo}
-            onAccept={handleAcceptCall}
-            onDecline={handleDeclineCall}
-            onEnd={handleEndCall}
-            isHost={activeCall.callerInfo?.id === user?.id}
-            isModerator={false} // TODO: Add moderator logic based on room permissions
-          />
-        )}
+        {/* Call Interface - Now handled by the activeCallData render at the top */}
+        {/* Old call interface removed - now using new call manager system */}
       </div>
     </div>
   );
