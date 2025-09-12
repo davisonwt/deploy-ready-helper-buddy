@@ -43,6 +43,8 @@ import SeedSubmissionPage from "./pages/SeedSubmissionPage";
 import YhvhOrchardsPage from "./pages/YhvhOrchardsPage";
 import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import { AdminRadioPage } from "./pages/AdminRadioPage";
+import { AdminSeedsPage } from "./pages/AdminSeedsPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import MarketingVideosGallery from "./pages/MarketingVideosGallery.jsx";
@@ -355,6 +357,22 @@ const App = () => (
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
                     <AdminDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/radio" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Layout>
+                    <AdminRadioPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/admin/seeds" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Layout>
+                    <AdminSeedsPage />
                   </Layout>
                 </ProtectedRoute>
               } />
