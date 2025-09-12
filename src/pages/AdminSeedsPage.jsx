@@ -18,17 +18,21 @@ export function AdminSeedsPage() {
 
   const fetchSubmissions = async () => {
     try {
+      console.log('🌱 Fetching seed submissions...');
       const { data, error } = await supabase
         .from('seed_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('🌱 Seed submissions query result:', { data, error });
+      
       if (error) throw error;
       setSubmissions(data || []);
     } catch (error) {
+      console.error('🌱 Error fetching seed submissions:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch seed submissions",
+        description: "Failed to fetch seed submissions: " + error.message,
         variant: "destructive"
       });
     } finally {
