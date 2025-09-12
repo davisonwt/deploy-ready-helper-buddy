@@ -3634,6 +3634,14 @@ export type Database = {
         Args: { room_id_param: string; user_id_param: string }
         Returns: boolean
       }
+      user_is_active_in_session: {
+        Args: { _session_id: string }
+        Returns: boolean
+      }
+      user_is_host_or_cohost: {
+        Args: { _session_id: string }
+        Returns: boolean
+      }
       user_is_in_room: {
         Args: { check_room_id: string; check_user_id: string }
         Returns: boolean

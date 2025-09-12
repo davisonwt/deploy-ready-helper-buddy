@@ -196,17 +196,17 @@ export function useWallet() {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('wallet_balances')
-        .upsert({
-          user_id: user.id,
-          wallet_address: walletAddress,
-          usdc_balance: usdcBalance,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'wallet_address'
-        });
+      try {
+        const { error } = await supabase
+          .from('wallet_balances')
+          .upsert({
+            user_id: user.id,
+            wallet_address: walletAddress,
+            usdc_balance: usdcBalance,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,wallet_address'
+          });
 
       if (error) {
         console.error('Failed to update balance in database:', error);
