@@ -156,30 +156,42 @@ export default function AdminRadioManagement() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="flex flex-nowrap items-baseline gap-8 flex-1 overflow-x-auto">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-yellow-600">{pendingSlots.length}</span>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Pending Approval</span>
+            <div className="flex items-center gap-6 flex-1">
+              <div className="flex items-center gap-3 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div>
+                  <div className="text-2xl font-bold text-yellow-700">{pendingSlots.length}</div>
+                  <div className="text-xs font-medium text-yellow-600 uppercase tracking-wide">Pending Approval</div>
+                </div>
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-green-600">
-                  {allSlots.filter(s => s.approval_status === 'approved').length}
-                </span>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Approved</span>
+              
+              <div className="flex items-center gap-3 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {allSlots.filter(s => s.approval_status === 'approved').length}
+                  </div>
+                  <div className="text-xs font-medium text-green-600 uppercase tracking-wide">Approved</div>
+                </div>
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-red-600">
-                  {allSlots.filter(s => s.approval_status === 'rejected').length}
-                </span>
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Rejected</span>
+              
+              <div className="flex items-center gap-3 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div>
+                  <div className="text-2xl font-bold text-red-700">
+                    {allSlots.filter(s => s.approval_status === 'rejected').length}
+                  </div>
+                  <div className="text-xs font-medium text-red-600 uppercase tracking-wide">Rejected</div>
+                </div>
               </div>
             </div>
+            
             <div className="ml-6 shrink-0">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 bg-background">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border shadow-lg z-50">
                   <SelectItem value="all">All Slots</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
