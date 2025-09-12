@@ -1,5 +1,5 @@
 import { RadioSlotApprovalInterface } from "../components/radio/RadioSlotApprovalInterface";
-import { AdminRadioManagement } from "../components/radio/AdminRadioManagement";
+import AdminRadioManagement from "../components/radio/AdminRadioManagement";
 import { RadioScheduleGrid } from "../components/radio/RadioScheduleGrid";
 
 export function AdminRadioPage() {
