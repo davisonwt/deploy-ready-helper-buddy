@@ -26,7 +26,8 @@ import {
   Settings,
   Cloud,
   Sparkles,
-  Mic
+  Mic,
+  Radio
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -127,7 +128,8 @@ export default function Layout({ children }) {
       icon: Settings,
       color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
       items: [
-        { name: "gosat's dashboard", href: "/admin/dashboard", icon: Church }
+        { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
+        { name: "Seeds Management", href: "/admin/seeds", icon: Sprout }
       ]
     }] : [])
   ]
