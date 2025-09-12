@@ -2470,6 +2470,45 @@ export type Database = {
         }
         Relationships: []
       }
+      seed_submissions: {
+        Row: {
+          admin_notes: string | null
+          content: string | null
+          created_at: string
+          description: string
+          id: string
+          reviewed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          content?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          content?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       seeds: {
         Row: {
           additional_details: Json | null
