@@ -38,22 +38,85 @@ export function useGroveStation() {
   // Fetch current show
   const fetchCurrentShow = async () => {
     try {
+      // Primary: use DB function
       const { data, error } = await supabase.rpc('get_current_radio_show')
       if (error) throw error
-      setCurrentShow(data)
-      
-      // If there's a current show that's live, check for existing live session
-      if (data && data.is_live && data.schedule_id) {
+
+      let show = data || null
+
+      // Fallback A: find any active live slot
+      if (!show) {
+        const { data: liveSlot } = await supabase
+          .from('radio_schedule')
+          .select(`
+            *,
+            radio_shows (show_name, description, category),
+            radio_djs (dj_name, avatar_url)
+          `)
+          .eq('status', 'live')
+          .order('start_time', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (liveSlot) {
+          show = {
+            schedule_id: liveSlot.id,
+            show_name: liveSlot.radio_shows?.show_name || 'Live Show',
+            dj_name: liveSlot.radio_djs?.dj_name || 'DJ Live',
+            dj_avatar: liveSlot.radio_djs?.avatar_url,
+            category: liveSlot.radio_shows?.category,
+            description: liveSlot.radio_shows?.description,
+            start_time: liveSlot.start_time,
+            end_time: liveSlot.end_time,
+            status: 'live',
+            listener_count: liveSlot.listener_count || 0,
+            is_live: true,
+          }
+        }
+      }
+
+      // Fallback B: nearest upcoming scheduled slot (for playlist browsing)
+      if (!show) {
+        const { data: nextSlot } = await supabase
+          .from('radio_schedule')
+          .select(`
+            *,
+            radio_shows (show_name, description, category),
+            radio_djs (dj_name, avatar_url)
+          `)
+          .gte('end_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+        if (nextSlot) {
+          show = {
+            schedule_id: nextSlot.id,
+            show_name: nextSlot.radio_shows?.show_name || 'Scheduled Show',
+            dj_name: nextSlot.radio_djs?.dj_name || 'DJ',
+            dj_avatar: nextSlot.radio_djs?.avatar_url,
+            category: nextSlot.radio_shows?.category,
+            description: nextSlot.radio_shows?.description,
+            start_time: nextSlot.start_time,
+            end_time: nextSlot.end_time,
+            status: nextSlot.status || 'scheduled',
+            listener_count: nextSlot.listener_count || 0,
+            is_live: nextSlot.status === 'live',
+          }
+        }
+      }
+
+      setCurrentShow(show)
+
+      // Attach existing live session if live
+      if (show && show.is_live && show.schedule_id) {
         const { data: existingSession } = await supabase
           .from('radio_live_sessions')
           .select('*')
-          .eq('schedule_id', data.schedule_id)
+          .eq('schedule_id', show.schedule_id)
           .eq('status', 'live')
-          .single()
-        
-        if (existingSession) {
-          setLiveSession(existingSession)
-        }
+          .maybeSingle()
+        if (existingSession) setLiveSession(existingSession)
       }
     } catch (err) {
       console.error('Error fetching current show:', err)

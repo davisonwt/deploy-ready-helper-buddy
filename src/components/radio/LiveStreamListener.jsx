@@ -449,19 +449,21 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-              <Badge variant="destructive" className="text-sm font-medium">
-                LIVE
+              <div className={`w-3 h-3 rounded-full ${liveSession ? 'bg-red-500 animate-pulse' : 'bg-muted-foreground/40'}`} />
+              <Badge variant={liveSession ? 'destructive' : 'secondary'} className="text-sm font-medium">
+                {liveSession ? 'LIVE' : 'Scheduled'}
               </Badge>
-              <span className="text-sm text-muted-foreground">
-                {viewerCount} listening
-              </span>
+              {liveSession && (
+                <span className="text-sm text-muted-foreground">
+                  {viewerCount} listening
+                </span>
+              )}
             </div>
 
             <div className="space-y-2">
               <h2 className="text-2xl font-bold">{currentShow?.show_name || 'AOD Station Live'}</h2>
               <p className="text-muted-foreground">
-                with {activeHosts.filter(h => h.role === 'main_host')[0]?.radio_djs?.dj_name || 'AOD Station'}
+                with {activeHosts.filter(h => h.role === 'main_host')[0]?.radio_djs?.dj_name || currentShow?.dj_name || 'AOD Station'}
               </p>
             </div>
 
