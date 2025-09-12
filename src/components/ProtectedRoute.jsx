@@ -6,7 +6,7 @@ import { useRoles } from "../hooks/useRoles"
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
-  const roles = shouldCheckRoles ? useRoles() : null
+  const roles = useRoles()
   const hasFetchedRolesRef = useRef(false)
 
   // Ensure roles are fetched before role-gated checks to avoid premature redirects
