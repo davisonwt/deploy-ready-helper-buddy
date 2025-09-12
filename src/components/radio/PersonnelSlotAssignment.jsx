@@ -557,9 +557,9 @@ export default function PersonnelSlotAssignment() {
                 </SelectTrigger>
                 <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
                   <SelectItem value="all">All Time Slots</SelectItem>
-                  {SLOT_LABELS.map((label, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {label}
+                  {TIME_SLOTS.map((slot) => (
+                    <SelectItem key={slot.value} value={slot.value.toString()}>
+                      {slot.displayTime}
                     </SelectItem>
                   ))}
                 </SelectContent>
