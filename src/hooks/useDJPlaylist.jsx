@@ -33,7 +33,8 @@ export const useDJPlaylist = () => {
         .from('radio_djs')
         .select('*')
         .eq('user_id', userData.user.id)
-        .maybeSingle()
+        .limit(1)
+        .single()
 
       if (error) {
         console.error('❌ Error fetching DJ profile:', error)
