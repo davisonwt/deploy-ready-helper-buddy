@@ -2781,6 +2781,7 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          metadata: Json | null
           read_at: string | null
           title: string
           type: string
@@ -2792,6 +2793,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          metadata?: Json | null
           read_at?: string | null
           title: string
           type: string
@@ -2803,6 +2805,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          metadata?: Json | null
           read_at?: string | null
           title?: string
           type?: string
