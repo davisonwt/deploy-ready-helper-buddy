@@ -132,6 +132,16 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   }, [user, liveSession])
 
   const togglePlayPause = async () => {
+    // Hard guard to prevent undefined liveSession usage
+    if (!liveSession || !liveSession.id) {
+      toast({
+        title: "Not Live Yet",
+        description: "The host hasn't started the live session yet.",
+        variant: "destructive"
+      })
+      return
+    }
+
     if (!isPlaying) {
       try {
         await initializeAudioStream()
@@ -264,6 +274,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
                 size="lg"
                 onClick={togglePlayPause}
                 className={isPlaying ? "bg-red-500 hover:bg-red-600" : ""}
+                disabled={!liveSession || !liveSession.id}
               >
                 {isPlaying ? (
                   <Pause className="h-5 w-5 mr-2" />
