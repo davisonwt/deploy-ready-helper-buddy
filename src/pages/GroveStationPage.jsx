@@ -48,6 +48,7 @@ export default function GroveStationPage() {
     loading,
     isDJ,
     canGoLive,
+    liveSession,
     updateShowStatus,
     submitFeedback
   } = useGroveStation()
@@ -185,11 +186,25 @@ export default function GroveStationPage() {
             />
             
             {/* Listener Interface for Messages and Call-ins */}
-            {currentShow && (
+            {currentShow && liveSession && currentShow.is_live && (
               <RadioListenerInterface 
-                liveSession={{ id: currentShow.schedule_id }}
+                liveSession={liveSession}
                 currentShow={currentShow}
               />
+            )}
+
+            {/* Show message when not live */}
+            {currentShow && !liveSession && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <div className="space-y-2">
+                    <Radio className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      Show will be live soon. Messages and call-ins will be available once the host goes live.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
             
             {!currentShow && (

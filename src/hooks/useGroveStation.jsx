@@ -12,6 +12,7 @@ export function useGroveStation() {
   const [stats, setStats] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [liveSession, setLiveSession] = useState(null)
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -40,6 +41,20 @@ export function useGroveStation() {
       const { data, error } = await supabase.rpc('get_current_radio_show')
       if (error) throw error
       setCurrentShow(data)
+      
+      // If there's a current show that's live, check for existing live session
+      if (data && data.is_live && data.schedule_id) {
+        const { data: existingSession } = await supabase
+          .from('radio_live_sessions')
+          .select('*')
+          .eq('schedule_id', data.schedule_id)
+          .eq('status', 'live')
+          .single()
+        
+        if (existingSession) {
+          setLiveSession(existingSession)
+        }
+      }
     } catch (err) {
       console.error('Error fetching current show:', err)
     }
@@ -280,7 +295,7 @@ export function useGroveStation() {
     }
   }
 
-  // Update show status (go live, end show, etc.)
+  // Update show status (go live, end show, etc.) with live session management
   const updateShowStatus = async (scheduleId, status) => {
     try {
       setLoading(true)
@@ -295,6 +310,13 @@ export function useGroveStation() {
         .single()
 
       if (error) throw error
+
+      // If going live, create or get the live session
+      if (status === 'live') {
+        await createLiveSession(scheduleId)
+      } else if (status === 'ended' && liveSession) {
+        await endLiveSession()
+      }
 
       // Refresh current show and schedule
       await Promise.all([fetchCurrentShow(), fetchSchedule()])
@@ -317,6 +339,71 @@ export function useGroveStation() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Create or get existing live session
+  const createLiveSession = async (scheduleId) => {
+    try {
+      const { data: existingSession } = await supabase
+        .from('radio_live_sessions')
+        .select('*')
+        .eq('schedule_id', scheduleId)
+        .eq('status', 'live')
+        .single()
+
+      if (existingSession) {
+        setLiveSession(existingSession)
+        return existingSession
+      }
+
+      // Create new live session
+      const { data: newSession, error } = await supabase
+        .from('radio_live_sessions')
+        .insert({
+          schedule_id: scheduleId,
+          status: 'live',
+          session_token: generateSessionToken(),
+          started_at: new Date().toISOString(),
+          viewer_count: 0
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setLiveSession(newSession)
+      return newSession
+    } catch (error) {
+      console.error('Error creating live session:', error)
+      throw error
+    }
+  }
+
+  // End live session
+  const endLiveSession = async () => {
+    try {
+      if (!liveSession) return
+
+      const { error } = await supabase
+        .from('radio_live_sessions')
+        .update({ 
+          status: 'ended',
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', liveSession.id)
+
+      if (error) throw error
+      setLiveSession(null)
+    } catch (error) {
+      console.error('Error ending live session:', error)
+      throw error
+    }
+  }
+
+  // Generate session token
+  const generateSessionToken = () => {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15)
   }
 
   // Submit feedback
@@ -420,6 +507,7 @@ export function useGroveStation() {
     stats,
     loading,
     error,
+    liveSession,
 
     // Actions
     createDJProfile,
