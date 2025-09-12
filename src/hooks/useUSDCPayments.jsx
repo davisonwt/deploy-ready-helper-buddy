@@ -7,7 +7,8 @@ import {
   getAssociatedTokenAddress, 
   createTransferInstruction,
   getAccount,
-  TOKEN_PROGRAM_ID 
+  TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction
 } from '@solana/spl-token';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -43,7 +44,7 @@ export function useUSDCPayments() {
       const senderPublicKey = wallet;
       const recipientPublicKey = new PublicKey(recipientAddress);
       
-      // Get associated token accounts
+      // Derive associated token accounts (ATAs)
       const senderTokenAccount = await getAssociatedTokenAddress(
         USDC_MINT,
         senderPublicKey
@@ -56,13 +57,41 @@ export function useUSDCPayments() {
 
       // Create transaction
       const transaction = new Transaction();
+
+      // Ensure sender ATA exists
+      try {
+        await getAccount(connection, senderTokenAccount);
+      } catch {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            senderPublicKey, // payer
+            senderTokenAccount,
+            senderPublicKey, // owner
+            USDC_MINT
+          )
+        );
+      }
+
+      // Ensure recipient ATA exists
+      try {
+        await getAccount(connection, recipientTokenAccount);
+      } catch {
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            senderPublicKey, // payer
+            recipientTokenAccount,
+            recipientPublicKey, // owner
+            USDC_MINT
+          )
+        );
+      }
       
       // Add transfer instruction
       const transferInstruction = createTransferInstruction(
         senderTokenAccount,
         recipientTokenAccount,
         senderPublicKey,
-        amount * 1000000, // Convert to smallest unit (6 decimals for USDC)
+        Math.round(amount * 1_000_000), // USDC has 6 decimals
         [],
         TOKEN_PROGRAM_ID
       );
@@ -81,8 +110,47 @@ export function useUSDCPayments() {
     }
   };
 
-  // Process bestowal payment
-  const processBestowPart = async (bestowData) => {
+  // Simple USDC transfer without creating DB records
+  const transferUSDC = async ({ recipientAddress, amount, memo }) => {
+    if (!connected || !wallet || !user) {
+      return { success: false, error: 'Wallet not connected' };
+    }
+
+    if (!checkSufficientBalance(amount)) {
+      return { success: false, error: 'Insufficient USDC balance' };
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const transaction = await createUSDCTransfer(recipientAddress, amount);
+
+      // Optional: add memo via SystemProgram if needed in future
+      // if (memo) { ... }
+
+      const signedTransaction = await window.solana.signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+      await connection.confirmTransaction(signature);
+
+      toast({
+        title: 'Payment Sent',
+        description: `Sent ${amount.toFixed(2)} USDC`,
+      });
+
+      return { success: true, signature };
+    } catch (err) {
+      console.error('USDC transfer failed:', err);
+      toast({
+        title: 'Payment Failed',
+        description: err.message || 'Failed to send USDC',
+        variant: 'destructive',
+      });
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
     if (!connected || !wallet || !user) {
       return { success: false, error: 'Wallet not connected' };
     }
@@ -232,6 +300,7 @@ export function useUSDCPayments() {
     error,
     checkSufficientBalance,
     processBestowPart,
+    transferUSDC,
     getTransactionHistory,
     formatUSDC,
     isWalletReady,
