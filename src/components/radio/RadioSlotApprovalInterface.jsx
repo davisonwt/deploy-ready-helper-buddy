@@ -322,6 +322,7 @@ export function RadioSlotApprovalInterface() {
                 <div className="text-sm text-red-600">Rejected</div>
               </TabsTrigger>
             </TabsList>
+            <TabsContent value="pending" className="space-y-4">
               {pendingRequests.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle className="h-12 w-12 mx-auto mb-4" />
