@@ -156,35 +156,37 @@ export default function AdminRadioManagement() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-6 flex-1">
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">{pendingSlots.length}</div>
-                <div className="text-sm text-muted-foreground">Pending Approval</div>
+                <div className="text-sm text-muted-foreground whitespace-nowrap">Pending Approval</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
                   {allSlots.filter(s => s.approval_status === 'approved').length}
                 </div>
-                <div className="text-sm text-muted-foreground">Approved</div>
+                <div className="text-sm text-muted-foreground whitespace-nowrap">Approved</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-600">
                   {allSlots.filter(s => s.approval_status === 'rejected').length}
                 </div>
-                <div className="text-sm text-muted-foreground">Rejected</div>
+                <div className="text-sm text-muted-foreground whitespace-nowrap">Rejected</div>
               </div>
             </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Slots</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="ml-6">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Slots</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
