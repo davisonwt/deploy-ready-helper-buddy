@@ -298,6 +298,15 @@ export default function PersonnelSlotAssignment() {
       setSelectedSlot(null)
       setSelectedAdmin('')
       await fetchSlotAssignments()
+      
+      // Emit custom event to notify other components about schedule changes
+      window.dispatchEvent(new CustomEvent('scheduleUpdated', { 
+        detail: { 
+          action: 'assigned', 
+          djName: adminData.dj_name, 
+          slot: selectedSlot 
+        } 
+      }))
     } catch (err) {
       console.error('Error assigning personnel:', err)
       toast.error('Failed to assign personnel: ' + err.message)
