@@ -494,6 +494,7 @@ export default function DJPlaylistManager() {
         variant: "destructive"
       })
     }
+  }
 
   const getAudioDuration = (file) => {
     return new Promise((resolve) => {
@@ -689,12 +690,12 @@ export default function DJPlaylistManager() {
                              <span>{track.bpm} BPM</span>
                            )}
                            <span>{formatDuration(track.duration_seconds)}</span>
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => removeTrackFromPlaylist(track.id)}
-                             className="text-red-500 hover:text-red-700"
-                           >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeTrackFromPlaylist(track.track_id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
                              <Trash2 className="h-4 w-4" />
                            </Button>
                          </div>
