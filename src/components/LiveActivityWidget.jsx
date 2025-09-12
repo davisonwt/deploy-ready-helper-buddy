@@ -53,118 +53,184 @@ export default function LiveActivityWidget() {
     try {
       setLoading(true)
       
-      // Fetch live radio hosts - fix query to use correct column
+      // Fetch live radio sessions
       const { data: radioData, error: radioError } = await supabase
         .from('radio_live_sessions')
         .select(`
           *,
-          radio_live_hosts (
+          radio_schedule!inner (
             *,
             radio_djs (
               dj_name,
               avatar_url
+            ),
+            radio_shows (
+              show_name,
+              category
             )
           )
         `)
         .eq('status', 'live')
         .order('created_at', { ascending: false })
 
-      // Fetch active group calls (simulated for now)
-      const groupCalls = [
-        {
-          id: 1,
-          title: "Daily Community Check-in",
-          participants: 12,
-          maxParticipants: 20,
-          host: "Sarah M.",
-          topic: "Personal Growth Discussion",
-          isLive: true,
-          startedAt: new Date(Date.now() - 1800000), // 30 mins ago
-          type: "community"
-        },
-        {
-          id: 2,
-          title: "Business Networking Call",
-          participants: 8,
-          maxParticipants: 15,
-          host: "Mike Chen",
-          topic: "Entrepreneurship & Innovation",
-          isLive: true,
-          startedAt: new Date(Date.now() - 900000), // 15 mins ago
-          type: "business"
-        }
-      ]
+      // Fetch active group calls from live_call_participants
+      const { data: callData, error: callError } = await supabase
+        .from('live_call_participants')
+        .select(`
+          call_session_id,
+          role,
+          profiles!inner (
+            display_name
+          )
+        `)
+        .eq('is_active', true)
+        .eq('role', 'host')
+        .order('joined_at', { ascending: false })
 
-      // Fetch community chats
+      // Group calls by session and count participants
+      const groupCallsMap = new Map()
+      if (callData) {
+        for (const call of callData) {
+          if (!groupCallsMap.has(call.call_session_id)) {
+            groupCallsMap.set(call.call_session_id, {
+              id: call.call_session_id,
+              title: `Live Session`,
+              host: call.profiles.display_name,
+              participants: 0,
+              isLive: true,
+              startedAt: new Date(),
+              type: "community"
+            })
+          }
+        }
+        
+        // Get participant counts for each session
+        const { data: participantCounts } = await supabase
+          .from('live_call_participants')
+          .select('call_session_id')
+          .eq('is_active', true)
+        
+        if (participantCounts) {
+          const counts = participantCounts.reduce((acc, p) => {
+            acc[p.call_session_id] = (acc[p.call_session_id] || 0) + 1
+            return acc
+          }, {})
+          
+          groupCallsMap.forEach((call, sessionId) => {
+            call.participants = counts[sessionId] || 0
+          })
+        }
+      }
+      
+      const groupCalls = Array.from(groupCallsMap.values())
+
+      // Fetch active community chats with recent activity
       const { data: chatData, error: chatError } = await supabase
         .from('chat_rooms')
         .select(`
           *,
-          chat_participants (
+          chat_participants!inner (
             id,
             user_id,
             is_active
+          ),
+          chat_messages (
+            created_at
           )
         `)
         .eq('is_active', true)
-        .eq('is_premium', false)
+        .eq('room_type', 'group')
+        .eq('chat_participants.is_active', true)
+        .order('updated_at', { ascending: false })
         .limit(5)
 
-      // Fetch life courses (mock data)
-      const lifeCourses = [
-        {
-          id: 1,
-          title: "Mindfulness & Meditation Basics",
-          instructor: "Dr. Emma Watson",
-          price: 0,
-          isPaid: false,
-          participants: 45,
-          nextSession: new Date(Date.now() + 3600000), // 1 hour from now
-          category: "wellness",
-          isLive: false
-        },
-        {
-          id: 2,
-          title: "Financial Freedom Masterclass",
-          instructor: "Robert Johnson",
-          price: 29.99,
-          isPaid: true,
-          participants: 23,
-          nextSession: new Date(Date.now() + 7200000), // 2 hours from now
-          category: "finance",
-          isLive: false
-        },
-        {
-          id: 3,
-          title: "Live Coding Workshop",
-          instructor: "Alex Kumar",
-          price: 0,
-          isPaid: false,
-          participants: 67,
-          nextSession: new Date(),
-          category: "technology",
-          isLive: true
-        }
-      ]
+      // Process chat data to show only recently active chats
+      const activeCommunityChats = chatData?.filter(chat => {
+        const hasRecentMessages = chat.chat_messages?.some(msg => 
+          new Date(msg.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+        )
+        return hasRecentMessages && chat.chat_participants?.length > 1
+      }) || []
 
-      // Fetch AoD Heretic's Frequencies host info
-      const aodHereticFrequencies = {
-        id: 'aod-heretic-freq',
-        showName: "AoD Heretic's Frequencies",
-        currentHost: "Ed",
-        hostAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-        isLive: Math.random() > 0.5, // Simulate live/offline status
-        listeners: Math.floor(Math.random() * 150) + 25, // 25-175 listeners
+      // Fetch live courses from live_session_participants
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('live_session_participants')
+        .select(`
+          session_id,
+          participant_type,
+          profiles!inner (
+            display_name
+          )
+        `)
+        .eq('status', 'active')
+        .eq('participant_type', 'host')
+        .order('joined_at', { ascending: false })
+
+      const lifeCourses = sessionData?.map(session => ({
+        id: session.session_id,
+        title: `Live Session by ${session.profiles.display_name}`,
+        instructor: session.profiles.display_name,
+        isLive: true,
+        participants: 0, // Will be updated below
+        category: "live",
+        nextSession: new Date()
+      })) || []
+
+      // Get participant counts for live sessions
+      if (sessionData?.length > 0) {
+        const { data: sessionParticipants } = await supabase
+          .from('live_session_participants')
+          .select('session_id')
+          .eq('status', 'active')
+        
+        if (sessionParticipants) {
+          const sessionCounts = sessionParticipants.reduce((acc, p) => {
+            acc[p.session_id] = (acc[p.session_id] || 0) + 1
+            return acc
+          }, {})
+          
+          lifeCourses.forEach(course => {
+            course.participants = sessionCounts[course.id] || 0
+          })
+        }
+      }
+
+      // Check for AoD Heretic's Frequencies - look for specific radio show
+      const { data: aodData } = await supabase
+        .from('radio_live_sessions')
+        .select(`
+          *,
+          radio_schedule!inner (
+            radio_shows!inner (
+              show_name
+            ),
+            radio_djs (
+              dj_name,
+              avatar_url
+            )
+          )
+        `)
+        .ilike('radio_schedule.radio_shows.show_name', '%heretic%')
+        .eq('status', 'live')
+        .single()
+
+      const aodHereticFrequencies = aodData ? {
+        id: aodData.id,
+        showName: aodData.radio_schedule?.radio_shows?.show_name || "AoD Heretic's Frequencies",
+        currentHost: aodData.radio_schedule?.radio_djs?.dj_name || "Ed",
+        hostAvatar: aodData.radio_schedule?.radio_djs?.avatar_url,
+        isLive: true,
+        listeners: aodData.viewer_count || 0,
         frequency: "777.7 MHz",
         description: "Unconventional wisdom and alternative perspectives",
-        startedAt: new Date(Date.now() - Math.floor(Math.random() * 3600000)), // Random time in last hour
-        topic: "Breaking the Matrix of Conventional Thinking"
-      }
+        startedAt: new Date(aodData.created_at),
+        topic: "Live Now"
+      } : null
 
       setLiveData({
         radioHosts: radioData || [],
         groupCalls,
-        communityChats: chatData || [],
+        communityChats: activeCommunityChats,
         lifeCourses,
         aodHereticFrequencies
       })
@@ -199,7 +265,40 @@ export default function LiveActivityWidget() {
       })
       .subscribe()
 
-    return [radioChannel, chatChannel]
+    const callParticipantsChannel = supabase
+      .channel('call-participants-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'live_call_participants'
+      }, () => {
+        setTimeout(() => fetchLiveData(), 0)
+      })
+      .subscribe()
+
+    const liveSessionChannel = supabase
+      .channel('live-session-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'live_session_participants'
+      }, () => {
+        setTimeout(() => fetchLiveData(), 0)
+      })
+      .subscribe()
+
+    const chatMessagesChannel = supabase
+      .channel('chat-messages-updates')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'chat_messages'
+      }, () => {
+        setTimeout(() => fetchLiveData(), 0)
+      })
+      .subscribe()
+
+    return [radioChannel, chatChannel, callParticipantsChannel, liveSessionChannel, chatMessagesChannel]
   }
 
   const joinActivity = async (type, activityId) => {
@@ -350,14 +449,14 @@ export default function LiveActivityWidget() {
                         <div className="flex items-center gap-2">
                           <div className="relative">
                             <Avatar className="h-6 w-6">
-                              <AvatarImage src={session.radio_live_hosts?.[0]?.radio_djs?.avatar_url} />
+                              <AvatarImage src={session.radio_schedule?.radio_djs?.avatar_url} />
                               <AvatarFallback className="text-xs">DJ</AvatarFallback>
                             </Avatar>
                             <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                           </div>
                           <div>
                             <div className="text-xs font-medium">
-                              {session.radio_live_hosts?.[0]?.radio_djs?.dj_name || 'DJ Live'}
+                              {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {session.viewer_count || 0} listeners
