@@ -35,7 +35,8 @@ import {
   Download,
   Users,
   Lock,
-  Globe
+  Globe,
+  Calendar
 } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -67,6 +68,16 @@ export default function DJPlaylistManager() {
     album: '',
     genre: '',
     bpm: ''
+  })
+
+  const [showAddTracksDialog, setShowAddTracksDialog] = useState(false)
+  const [availableTracks, setAvailableTracks] = useState([])
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false)
+  const [scheduleData, setScheduleData] = useState({
+    date: '',
+    hour_slot: '',
+    show_name: '',
+    category: 'music'
   })
 
   useEffect(() => {
@@ -310,6 +321,180 @@ export default function DJPlaylistManager() {
     }
   }
 
+  const removeTrackFromPlaylist = async (trackId) => {
+    try {
+      const { error } = await supabase
+        .from('dj_playlist_tracks')
+        .delete()
+        .eq('playlist_id', selectedPlaylist.id)
+        .eq('track_id', trackId)
+
+      if (error) throw error
+
+      fetchPlaylistTracks(selectedPlaylist.id)
+      toast({
+        title: "Success",
+        description: "Track removed from playlist"
+      })
+    } catch (error) {
+      console.error('Error removing track:', error)
+      toast({
+        title: "Error",
+        description: "Failed to remove track",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const fetchAvailableTracks = async () => {
+    try {
+      const { data: djProfile, error: djError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+
+      if (djError) throw djError
+
+      const { data, error } = await supabase
+        .from('dj_music_tracks')
+        .select('*')
+        .eq('dj_id', djProfile.id)
+        .order('upload_date', { ascending: false })
+
+      if (error) throw error
+
+      // Filter out tracks already in the current playlist
+      const playlistTrackIds = tracks.map(t => t.track_id)
+      const availableTracks = (data || []).filter(track => !playlistTrackIds.includes(track.id))
+      
+      setAvailableTracks(availableTracks)
+    } catch (error) {
+      console.error('Error fetching available tracks:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load available tracks",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const addExistingTrackToPlaylist = async (trackId) => {
+    try {
+      const { data: existingTracks } = await supabase
+        .from('dj_playlist_tracks')
+        .select('track_order')
+        .eq('playlist_id', selectedPlaylist.id)
+        .order('track_order', { ascending: false })
+        .limit(1)
+
+      const nextOrder = existingTracks?.[0]?.track_order ? existingTracks[0].track_order + 1 : 1
+
+      const { error } = await supabase
+        .from('dj_playlist_tracks')
+        .insert({
+          playlist_id: selectedPlaylist.id,
+          track_id: trackId,
+          track_order: nextOrder
+        })
+
+      if (error) throw error
+
+      fetchPlaylistTracks(selectedPlaylist.id)
+      fetchAvailableTracks()
+      toast({
+        title: "Success",
+        description: "Track added to playlist"
+      })
+    } catch (error) {
+      console.error('Error adding track:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add track to playlist",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const schedulePlaylistToSlot = async () => {
+    try {
+      const { data: djProfile, error: djError } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+
+      if (djError) throw djError
+
+      // Create radio show first
+      const { data: showData, error: showError } = await supabase
+        .from('radio_shows')
+        .insert({
+          show_name: scheduleData.show_name,
+          category: scheduleData.category,
+          description: `Automated playlist: ${selectedPlaylist.playlist_name}`,
+          dj_id: djProfile.id
+        })
+        .select()
+        .single()
+
+      if (showError) throw showError
+
+      // Create schedule entry
+      const scheduleTime = new Date(`${scheduleData.date}T${String(scheduleData.hour_slot).padStart(2, '0')}:00:00`)
+      
+      const { data: scheduleEntry, error: scheduleError } = await supabase
+        .from('radio_schedule')
+        .insert({
+          dj_id: djProfile.id,
+          show_id: showData.id,
+          time_slot_date: scheduleData.date,
+          hour_slot: parseInt(scheduleData.hour_slot),
+          start_time: scheduleTime,
+          end_time: new Date(scheduleTime.getTime() + 60 * 60 * 1000), // 1 hour
+          status: 'scheduled'
+        })
+        .select()
+        .single()
+
+      if (scheduleError) throw scheduleError
+
+      // Create automated session linked to the playlist
+      const { error: automatedError } = await supabase
+        .from('radio_automated_sessions')
+        .insert({
+          schedule_id: scheduleEntry.id,
+          playlist_id: selectedPlaylist.id,
+          session_type: 'automated',
+          playback_status: 'scheduled',
+          current_track_index: 0
+        })
+
+      if (automatedError) throw automatedError
+
+      setShowScheduleDialog(false)
+      setScheduleData({
+        date: '',
+        hour_slot: '',
+        show_name: '',
+        category: 'music'
+      })
+
+      toast({
+        title: "Success",
+        description: "Playlist scheduled to radio slot successfully!"
+      })
+    } catch (error) {
+      console.error('Error scheduling playlist:', error)
+      toast({
+        title: "Error",
+        description: "Failed to schedule playlist to radio slot",
+        variant: "destructive"
+      })
+    }
+
   const getAudioDuration = (file) => {
     return new Promise((resolve) => {
       const audio = new Audio()
@@ -452,6 +637,24 @@ export default function DJPlaylistManager() {
                     <Upload className="h-4 w-4 mr-2" />
                     Upload Track
                   </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      fetchAvailableTracks()
+                      setShowAddTracksDialog(true)
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Existing Tracks
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowScheduleDialog(true)}
+                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule to Radio Slot
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -478,15 +681,23 @@ export default function DJPlaylistManager() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          {track.genre && (
-                            <Badge variant="secondary" size="sm">{track.genre}</Badge>
-                          )}
-                          {track.bpm && (
-                            <span>{track.bpm} BPM</span>
-                          )}
-                          <span>{formatDuration(track.duration_seconds)}</span>
-                        </div>
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                           {track.genre && (
+                             <Badge variant="secondary" size="sm">{track.genre}</Badge>
+                           )}
+                           {track.bpm && (
+                             <span>{track.bpm} BPM</span>
+                           )}
+                           <span>{formatDuration(track.duration_seconds)}</span>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => removeTrackFromPlaylist(track.id)}
+                             className="text-red-500 hover:text-red-700"
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </div>
                       </div>
                     ))}
                   </div>
@@ -675,6 +886,136 @@ export default function DJPlaylistManager() {
                 disabled={!uploadData.file || uploading}
               >
                 {uploading ? 'Uploading...' : 'Upload Track'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Existing Tracks Dialog */}
+      <Dialog open={showAddTracksDialog} onOpenChange={setShowAddTracksDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Existing Tracks</DialogTitle>
+            <DialogDescription>
+              Add tracks from your library to {selectedPlaylist?.playlist_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {availableTracks.length === 0 ? (
+              <div className="text-center py-8">
+                <Music className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No available tracks to add</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {availableTracks.map((track) => (
+                  <div key={track.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-medium">{track.track_title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {track.artist_name} {track.genre && `• ${track.genre}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {track.bpm && (
+                        <Badge variant="secondary" size="sm">{track.bpm} BPM</Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => addExistingTrackToPlaylist(track.id)}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule to Radio Slot Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Playlist to Radio Slot</DialogTitle>
+            <DialogDescription>
+              Schedule {selectedPlaylist?.playlist_name} to play during a radio time slot
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="show_name">Show Name *</Label>
+              <Input
+                id="show_name"
+                placeholder="e.g., Morning Music Mix"
+                value={scheduleData.show_name}
+                onChange={(e) => setScheduleData(prev => ({ ...prev, show_name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="date">Date *</Label>
+              <Input
+                id="date"
+                type="date"
+                value={scheduleData.date}
+                onChange={(e) => setScheduleData(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="hour_slot">Hour Slot *</Label>
+              <Select 
+                value={scheduleData.hour_slot} 
+                onValueChange={(value) => setScheduleData(prev => ({ ...prev, hour_slot: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time slot" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <SelectItem key={i} value={i.toString()}>
+                      {i === 0 ? '12 AM' : i === 12 ? '12 PM' : i < 12 ? `${i} AM` : `${i - 12} PM`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select 
+                value={scheduleData.category} 
+                onValueChange={(value) => setScheduleData(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="music">Music</SelectItem>
+                  <SelectItem value="talk">Talk</SelectItem>
+                  <SelectItem value="educational">Educational</SelectItem>
+                  <SelectItem value="community">Community</SelectItem>
+                  <SelectItem value="news">News</SelectItem>
+                  <SelectItem value="comedy">Comedy</SelectItem>
+                  <SelectItem value="spiritual">Spiritual</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={schedulePlaylistToSlot}
+                disabled={!scheduleData.show_name.trim() || !scheduleData.date || !scheduleData.hour_slot}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule Playlist
               </Button>
             </div>
           </div>
