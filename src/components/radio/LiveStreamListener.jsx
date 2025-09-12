@@ -186,27 +186,148 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
   const initializeAudioStream = async () => {
     try {
-      // Create peer connection for receiving audio
-      peerConnectionRef.current = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' }
-        ]
-      })
-
-      // Handle incoming audio stream
-      peerConnectionRef.current.ontrack = (event) => {
-        if (audioRef.current) {
-          audioRef.current.srcObject = event.streams[0]
-        }
-      }
-
-      // For demo purposes, we'll simulate the connection
-      // In a real implementation, you'd connect to the actual stream
-      console.log('Audio stream initialized')
+      // Instead of WebRTC, let's fetch and play the actual music tracks
+      await fetchAndPlayCurrentTrack()
+      
+      console.log('Audio stream initialized - playing music tracks')
       
     } catch (error) {
       console.error('Error initializing audio stream:', error)
       throw error
+    }
+  }
+
+  const fetchAndPlayCurrentTrack = async () => {
+    try {
+      // Get the automated session for this live session
+      const { data: automatedSession, error: sessionError } = await supabase
+        .from('radio_automated_sessions')
+        .select(`
+          *,
+          dj_playlists (
+            *,
+            dj_playlist_tracks (
+              track_order,
+              dj_music_tracks (
+                id,
+                track_title,
+                artist_name,
+                duration_seconds,
+                file_url
+              )
+            )
+          )
+        `)
+        .eq('session_id', liveSession.id)
+        .eq('playback_status', 'playing')
+        .maybeSingle()
+
+      if (sessionError) {
+        console.log('No automated session found, creating one...')
+        // If no automated session exists, try to create one
+        await createAutomatedSessionForCurrentShow()
+        return
+      }
+
+      if (automatedSession && automatedSession.dj_playlists) {
+        const tracks = automatedSession.dj_playlists.dj_playlist_tracks
+          ?.sort((a, b) => a.track_order - b.track_order)
+          ?.map(pt => pt.dj_music_tracks) || []
+
+        if (tracks.length > 0) {
+          const currentTrackIndex = automatedSession.current_track_index || 0
+          const currentTrack = tracks[currentTrackIndex]
+          
+          if (currentTrack?.file_url && audioRef.current) {
+            audioRef.current.src = currentTrack.file_url
+            audioRef.current.load()
+            
+            // Auto-play the track
+            try {
+              await audioRef.current.play()
+              console.log(`Now playing: ${currentTrack.track_title} by ${currentTrack.artist_name}`)
+              
+              toast({
+                title: "Now Playing",
+                description: `${currentTrack.track_title} by ${currentTrack.artist_name}`,
+              })
+            } catch (playError) {
+              console.error('Error playing track:', playError)
+              toast({
+                title: "Autoplay Blocked",
+                description: "Click play to start the music - browser autoplay policy",
+                variant: "destructive"
+              })
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching current track:', error)
+    }
+  }
+
+  const createAutomatedSessionForCurrentShow = async () => {
+    try {
+      if (!currentShow?.schedule_id) return
+
+      // Get the DJ's default playlist
+      const { data: djData } = await supabase
+        .from('radio_schedule')
+        .select(`
+          radio_djs (
+            id,
+            dj_playlists (
+              id,
+              playlist_name
+            )
+          )
+        `)
+        .eq('id', currentShow.schedule_id)
+        .single()
+
+      const djPlaylists = djData?.radio_djs?.dj_playlists || []
+      if (djPlaylists.length === 0) {
+        toast({
+          title: "No Playlist Found",
+          description: "DJ hasn't uploaded any music yet",
+          variant: "destructive"
+        })
+        return
+      }
+
+      // Use the first available playlist
+      const playlist = djPlaylists[0]
+
+      // Create automated session
+      const { data: newSession, error } = await supabase
+        .from('radio_automated_sessions')
+        .insert({
+          session_id: liveSession.id,
+          schedule_id: currentShow.schedule_id,
+          playlist_id: playlist.id,
+          session_type: 'automated',
+          playback_status: 'playing',
+          current_track_index: 0,
+          track_started_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      console.log('Created automated session:', newSession)
+      
+      // Now fetch and play the track
+      await fetchAndPlayCurrentTrack()
+      
+    } catch (error) {
+      console.error('Error creating automated session:', error)
+      toast({
+        title: "Setup Error",
+        description: "Failed to set up music playback",
+        variant: "destructive"
+      })
     }
   }
 
@@ -310,7 +431,16 @@ export function LiveStreamListener({ liveSession, currentShow }) {
               </div>
             )}
 
-            <audio ref={audioRef} />
+            <audio 
+              ref={audioRef} 
+              controls={false}
+              loop={false}
+              onEnded={() => {
+                // Auto-advance to next track when current ends
+                console.log('Track ended, should advance to next')
+                setIsPlaying(false)
+              }}
+            />
           </div>
         </CardContent>
       </Card>
