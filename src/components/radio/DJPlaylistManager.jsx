@@ -62,12 +62,8 @@ export default function DJPlaylistManager() {
   })
 
   const [uploadData, setUploadData] = useState({
-    file: null,
-    title: '',
-    artist: '',
-    album: '',
-    genre: '',
-    bpm: ''
+    files: [],
+    tracks: []
   })
 
   const [showAddTracksDialog, setShowAddTracksDialog] = useState(false)
@@ -216,33 +212,43 @@ export default function DJPlaylistManager() {
     }
   }
 
-  const uploadTrack = async () => {
-    if (!uploadData.file || !selectedPlaylist) return
+  const handleFileSelection = (e) => {
+    const selectedFiles = Array.from(e.target.files)
+    const tracks = selectedFiles.map((file, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      file,
+      title: file.name.split('.')[0],
+      artist: '',
+      album: '',
+      genre: '',
+      bpm: '',
+      status: 'pending' // pending, uploading, success, error
+    }))
+    
+    setUploadData({
+      files: selectedFiles,
+      tracks
+    })
+  }
+
+  const updateTrackData = (trackId, field, value) => {
+    setUploadData(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(track => 
+        track.id === trackId ? { ...track, [field]: value } : track
+      )
+    }))
+  }
+
+  const uploadTracks = async () => {
+    if (!uploadData.tracks.length || !selectedPlaylist) return
 
     try {
       setUploading(true)
-      setUploadProgress(0)
+      let completedUploads = 0
+      const totalUploads = uploadData.tracks.length
 
-      // Create unique file path
-      const fileExt = uploadData.file.name.split('.').pop()
-      const fileName = `${Date.now()}-${uploadData.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-      const filePath = `${user.id}/${fileName}`
-
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('music-tracks')
-        .upload(filePath, uploadData.file, {
-          onUploadProgress: (progress) => {
-            setUploadProgress((progress.loaded / progress.total) * 100)
-          }
-        })
-
-      if (uploadError) throw uploadError
-
-      // Get file duration (simplified - in real app you'd use Web Audio API)
-      const audioDuration = await getAudioDuration(uploadData.file)
-
-      // Get DJ profile for track creation
+      // Get DJ profile once
       const { data: djProfile, error: djError } = await supabase
         .from('radio_djs')
         .select('id')
@@ -252,26 +258,7 @@ export default function DJPlaylistManager() {
 
       if (djError) throw djError
 
-      // First, create the track in dj_music_tracks
-      const { data: trackData, error: trackInsertError } = await supabase
-        .from('dj_music_tracks')
-        .insert([{
-          dj_id: djProfile.id,
-          file_url: filePath,
-          track_title: uploadData.title || uploadData.file.name.split('.')[0],
-          artist_name: uploadData.artist || 'Unknown Artist',
-          genre: uploadData.genre || '',
-          bpm: uploadData.bpm ? parseInt(uploadData.bpm) : null,
-          file_size: uploadData.file.size,
-          duration_seconds: audioDuration,
-          track_type: 'music'
-        }])
-        .select()
-        .single()
-
-      if (trackInsertError) throw trackInsertError
-
-      // Get the next order number for the playlist
+      // Get starting order number for playlist
       const { data: existingTracks } = await supabase
         .from('dj_playlist_tracks')
         .select('track_order')
@@ -279,41 +266,126 @@ export default function DJPlaylistManager() {
         .order('track_order', { ascending: false })
         .limit(1)
 
-      const nextOrder = existingTracks?.[0]?.track_order ? existingTracks[0].track_order + 1 : 1
+      let nextOrder = existingTracks?.[0]?.track_order ? existingTracks[0].track_order + 1 : 1
 
-      // Then, add the track to the playlist
-      const { error: playlistTrackError } = await supabase
-        .from('dj_playlist_tracks')
-        .insert([{
-          playlist_id: selectedPlaylist.id,
-          track_id: trackData.id,
-          track_order: nextOrder
-        }])
+      // Upload tracks in parallel
+      const uploadPromises = uploadData.tracks.map(async (track, index) => {
+        try {
+          // Update track status to uploading
+          setUploadData(prev => ({
+            ...prev,
+            tracks: prev.tracks.map(t => 
+              t.id === track.id ? { ...t, status: 'uploading' } : t
+            )
+          }))
 
-      if (playlistTrackError) throw playlistTrackError
+          // Create unique file path
+          const fileExt = track.file.name.split('.').pop()
+          const fileName = `${Date.now()}-${index}-${track.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+          const filePath = `${user.id}/${fileName}`
 
-      // Refresh tracks
-      await fetchPlaylistTracks(selectedPlaylist.id)
+          // Upload file to storage
+          const { error: uploadError } = await supabase.storage
+            .from('music-tracks')
+            .upload(filePath, track.file)
+
+          if (uploadError) throw uploadError
+
+          // Get file duration
+          const audioDuration = await getAudioDuration(track.file)
+
+          // Create track record
+          const { data: trackData, error: trackInsertError } = await supabase
+            .from('dj_music_tracks')
+            .insert([{
+              dj_id: djProfile.id,
+              file_url: filePath,
+              track_title: track.title || track.file.name.split('.')[0],
+              artist_name: track.artist || 'Unknown Artist',
+              genre: track.genre || '',
+              bpm: track.bpm ? parseInt(track.bpm) : null,
+              file_size: track.file.size,
+              duration_seconds: audioDuration,
+              track_type: 'music'
+            }])
+            .select()
+            .single()
+
+          if (trackInsertError) throw trackInsertError
+
+          // Add to playlist
+          const { error: playlistTrackError } = await supabase
+            .from('dj_playlist_tracks')
+            .insert([{
+              playlist_id: selectedPlaylist.id,
+              track_id: trackData.id,
+              track_order: nextOrder + index
+            }])
+
+          if (playlistTrackError) throw playlistTrackError
+
+          // Update track status to success
+          setUploadData(prev => ({
+            ...prev,
+            tracks: prev.tracks.map(t => 
+              t.id === track.id ? { ...t, status: 'success' } : t
+            )
+          }))
+
+          completedUploads++
+          setUploadProgress((completedUploads / totalUploads) * 100)
+
+          return { success: true, track }
+        } catch (error) {
+          console.error(`Error uploading track ${track.file.name}:`, error)
+          
+          // Update track status to error
+          setUploadData(prev => ({
+            ...prev,
+            tracks: prev.tracks.map(t => 
+              t.id === track.id ? { ...t, status: 'error', error: error.message } : t
+            )
+          }))
+
+          return { success: false, track, error: error.message }
+        }
+      })
+
+      const results = await Promise.all(uploadPromises)
       
-      setShowUploadDialog(false)
-      setUploadData({
-        file: null,
-        title: '',
-        artist: '',
-        album: '',
-        genre: '',
-        bpm: ''
-      })
+      // Show results
+      const successful = results.filter(r => r.success).length
+      const failed = results.filter(r => !r.success).length
 
-      toast({
-        title: "Success",
-        description: "Track uploaded successfully!"
-      })
+      if (successful > 0) {
+        await fetchPlaylistTracks(selectedPlaylist.id)
+        
+        if (failed === 0) {
+          toast({
+            title: "Success",
+            description: `All ${successful} tracks uploaded successfully!`
+          })
+          setShowUploadDialog(false)
+          setUploadData({ files: [], tracks: [] })
+        } else {
+          toast({
+            title: "Partial Success",
+            description: `${successful} tracks uploaded, ${failed} failed. Check the list for details.`
+          })
+        }
+      } else {
+        toast({
+          title: "Upload Failed",
+          description: "All tracks failed to upload. Please try again.",
+          variant: "destructive"
+        })
+      }
+
     } catch (error) {
-      console.error('Error uploading track:', error)
+      console.error('Error uploading tracks:', error)
       toast({
         title: "Error",
-        description: "Failed to upload track",
+        description: error.message || "Failed to upload tracks",
         variant: "destructive"
       })
     } finally {
@@ -321,6 +393,7 @@ export default function DJPlaylistManager() {
       setUploadProgress(0)
     }
   }
+
 
   const removeTrackFromPlaylist = async (trackId) => {
     try {
@@ -799,69 +872,87 @@ export default function DJPlaylistManager() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="file">Audio File *</Label>
+              <Label htmlFor="files">Audio Files</Label>
               <Input
-                id="file"
+                id="files"
                 type="file"
                 accept="audio/*"
-                onChange={(e) => setUploadData(prev => ({ ...prev, file: e.target.files[0] }))}
+                multiple
+                onChange={handleFileSelection}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Supported formats: MP3, WAV, FLAC, AAC
+                Select multiple files: MP3, WAV, FLAC, AAC • Hold Ctrl/Cmd to select multiple
               </p>
             </div>
             
-            {uploadData.file && (
+            {uploadData.tracks.length > 0 && (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      placeholder="Track title"
-                      value={uploadData.title}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="artist">Artist</Label>
-                    <Input
-                      id="artist"
-                      placeholder="Artist name"
-                      value={uploadData.artist}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, artist: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="album">Album</Label>
-                    <Input
-                      id="album"
-                      placeholder="Album name"
-                      value={uploadData.album}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, album: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="genre">Genre</Label>
-                    <Input
-                      id="genre"
-                      placeholder="Genre"
-                      value={uploadData.genre}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, genre: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="bpm">BPM</Label>
-                    <Input
-                      id="bpm"
-                      type="number"
-                      placeholder="120"
-                      value={uploadData.bpm}
-                      onChange={(e) => setUploadData(prev => ({ ...prev, bpm: e.target.value }))}
-                    />
-                  </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  <h4 className="font-medium">Selected Tracks ({uploadData.tracks.length})</h4>
+                  {uploadData.tracks.map((track) => (
+                    <div key={track.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Music className="h-4 w-4" />
+                          <span className="font-medium text-sm">{track.file.name}</span>
+                          {track.status === 'uploading' && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />}
+                          {track.status === 'success' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          {track.status === 'error' && <AlertCircle className="h-4 w-4 text-red-500" />}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {(track.file.size / (1024 * 1024)).toFixed(1)} MB
+                        </span>
+                      </div>
+                      
+                      {track.status === 'error' && (
+                        <p className="text-xs text-red-500">Error: {track.error}</p>
+                      )}
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Title</Label>
+                          <Input
+                            value={track.title}
+                            onChange={(e) => updateTrackData(track.id, 'title', e.target.value)}
+                            placeholder="Track title"
+                            className="h-8"
+                            disabled={track.status === 'uploading' || track.status === 'success'}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Artist</Label>
+                          <Input
+                            value={track.artist}
+                            onChange={(e) => updateTrackData(track.id, 'artist', e.target.value)}
+                            placeholder="Artist name"
+                            className="h-8"
+                            disabled={track.status === 'uploading' || track.status === 'success'}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Genre</Label>
+                          <Input
+                            value={track.genre}
+                            onChange={(e) => updateTrackData(track.id, 'genre', e.target.value)}
+                            placeholder="Genre"
+                            className="h-8"
+                            disabled={track.status === 'uploading' || track.status === 'success'}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">BPM</Label>
+                          <Input
+                            type="number"
+                            value={track.bpm}
+                            onChange={(e) => updateTrackData(track.id, 'bpm', e.target.value)}
+                            placeholder="120"
+                            className="h-8"
+                            disabled={track.status === 'uploading' || track.status === 'success'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
@@ -870,7 +961,7 @@ export default function DJPlaylistManager() {
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
                 <p className="text-sm text-center text-muted-foreground">
-                  Uploading... {Math.round(uploadProgress)}%
+                  Uploading tracks... {Math.round(uploadProgress)}%
                 </p>
               </div>
             )}
@@ -878,16 +969,19 @@ export default function DJPlaylistManager() {
             <div className="flex justify-end gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => setShowUploadDialog(false)}
+                onClick={() => {
+                  setShowUploadDialog(false)
+                  setUploadData({ files: [], tracks: [] })
+                }}
                 disabled={uploading}
               >
                 Cancel
               </Button>
               <Button 
-                onClick={uploadTrack}
-                disabled={!uploadData.file || uploading}
+                onClick={uploadTracks}
+                disabled={!uploadData.tracks.length || uploading}
               >
-                {uploading ? 'Uploading...' : 'Upload Track'}
+                {uploading ? 'Uploading...' : `Upload ${uploadData.tracks.length} Track${uploadData.tracks.length !== 1 ? 's' : ''}`}
               </Button>
             </div>
           </div>
