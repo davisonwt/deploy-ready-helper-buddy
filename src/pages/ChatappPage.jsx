@@ -302,7 +302,6 @@ const ChatappPage = () => {
     return configs[type] || configs.all;
   };
 
-  if (!user) {
   // Render WebRTC call interfaces
   const activeCallData = currentCall || outgoingCall || incomingCall;
   if (activeCallData) {
@@ -325,6 +324,9 @@ const ChatappPage = () => {
       />
     );
   }
+
+  if (!user) {
+    return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-96 bg-white/10 backdrop-blur-md border-white/20">
           <CardContent className="pt-6">
