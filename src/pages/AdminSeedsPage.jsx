@@ -67,7 +67,6 @@ export function AdminSeedsPage() {
         seed_value: seedValue,
         original_seed_value: seedValue,
         pocket_price: 150,
-        total_pockets: totalPockets,
         filled_pockets: 0,
         currency: 'USD',
         images: seed.images || [],
