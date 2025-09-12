@@ -120,13 +120,18 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       setupRealtimeSubscriptions()
       setViewerCount(liveSession.viewer_count || 0)
     }
+    
+    // Always try to load playlist for current show
+    if (currentShow) {
+      fetchPlaylistForCurrentShow()
+    }
 
     return () => {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
       }
     }
-  }, [liveSession])
+  }, [liveSession, currentShow])
 
   useEffect(() => {
     if (user && liveSession) {
