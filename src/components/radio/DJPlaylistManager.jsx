@@ -75,6 +75,8 @@ export default function DJPlaylistManager() {
     show_name: '',
     category: 'music'
   })
+  const [editingTrack, setEditingTrack] = useState(null)
+  const [editData, setEditData] = useState({})
 
   useEffect(() => {
     fetchPlaylists()
@@ -590,6 +592,55 @@ export default function DJPlaylistManager() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const startEditTrack = (track) => {
+    setEditingTrack(track.track_id)
+    setEditData({
+      track_title: track.title,
+      artist_name: track.artist || '',
+      genre: track.genre || '',
+      bpm: track.bpm || ''
+    })
+  }
+
+  const cancelEditTrack = () => {
+    setEditingTrack(null)
+    setEditData({})
+  }
+
+  const saveTrackEdit = async (trackId) => {
+    try {
+      const { error } = await supabase
+        .from('dj_music_tracks')
+        .update({
+          track_title: editData.track_title,
+          artist_name: editData.artist_name,
+          genre: editData.genre,
+          bpm: editData.bpm ? parseInt(editData.bpm) : null
+        })
+        .eq('id', trackId)
+
+      if (error) throw error
+
+      // Refresh the playlist tracks to show updated data
+      await fetchPlaylistTracks(selectedPlaylist.id)
+      
+      setEditingTrack(null)
+      setEditData({})
+      
+      toast({
+        title: "Success",
+        description: "Track updated successfully!"
+      })
+    } catch (error) {
+      console.error('Error updating track:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update track",
+        variant: "destructive"
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -745,34 +796,101 @@ export default function DJPlaylistManager() {
                   <div className="space-y-2">
                     {tracks.map((track, index) => (
                       <div key={track.id} className="flex items-center justify-between p-3 rounded-lg border">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <div className="w-8 text-center text-sm text-muted-foreground">
                             {index + 1}
                           </div>
-                          <div>
-                            <p className="font-medium">{track.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {track.artist} {track.album && `• ${track.album}`}
-                            </p>
-                          </div>
+                          {editingTrack === track.track_id ? (
+                            <div className="flex-1 space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  value={editData.track_title}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, track_title: e.target.value }))}
+                                  placeholder="Track title"
+                                  className="h-8"
+                                />
+                                <Input
+                                  value={editData.artist_name}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, artist_name: e.target.value }))}
+                                  placeholder="Artist name"
+                                  className="h-8"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  value={editData.genre}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, genre: e.target.value }))}
+                                  placeholder="Genre"
+                                  className="h-8"
+                                />
+                                <Input
+                                  type="number"
+                                  value={editData.bpm}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, bpm: e.target.value }))}
+                                  placeholder="BPM"
+                                  className="h-8"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex-1">
+                              <p className="font-medium">{track.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {track.artist} {track.album && `• ${track.album}`}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                           {track.genre && (
-                             <Badge variant="secondary" size="sm">{track.genre}</Badge>
-                           )}
-                           {track.bpm && (
-                             <span>{track.bpm} BPM</span>
-                           )}
-                           <span>{formatDuration(track.duration_seconds)}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeTrackFromPlaylist(track.track_id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                             <Trash2 className="h-4 w-4" />
-                           </Button>
-                         </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {!editingTrack && track.genre && (
+                            <Badge variant="secondary" size="sm">{track.genre}</Badge>
+                          )}
+                          {!editingTrack && track.bpm && (
+                            <span>{track.bpm} BPM</span>
+                          )}
+                          {!editingTrack && (
+                            <span>{formatDuration(track.duration_seconds)}</span>
+                          )}
+                          {editingTrack === track.track_id ? (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => saveTrackEdit(track.track_id)}
+                                className="text-green-500 hover:text-green-700"
+                              >
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={cancelEditTrack}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => startEditTrack(track)}
+                                className="text-blue-500 hover:text-blue-700"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeTrackFromPlaylist(track.track_id)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
