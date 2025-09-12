@@ -178,7 +178,7 @@ export function useWallet() {
           wallet_type: 'phantom',
           is_active: true
         }, {
-          onConflict: 'user_id,wallet_address'
+          onConflict: 'wallet_address'
         });
 
       if (error) {
@@ -205,7 +205,7 @@ export function useWallet() {
           usdc_balance: usdcBalance,
           updated_at: new Date().toISOString()
         }, {
-          onConflict: 'user_id,wallet_address'
+          onConflict: 'wallet_address'
         });
 
       if (error) {
