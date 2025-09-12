@@ -6,12 +6,11 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useToast } from '../hooks/use-toast';
 import { useRoles } from '../hooks/useRoles';
-import { Loader2, CheckCircle, XCircle, MessageCircle, ImageIcon } from 'lucide-react';
+import { CheckCircle, XCircle, MessageCircle, ImageIcon } from 'lucide-react';
 
 export function AdminSeedsPage() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [converting, setConverting] = useState(null);
   const { toast } = useToast();
   const { isAdminOrGosat, loading: rolesLoading } = useRoles();
 
@@ -43,79 +42,37 @@ export function AdminSeedsPage() {
     }
   };
 
-  const convertSeedToOrchard = async (seed) => {
+  const convertSeedToOrchard = (seed) => {
     if (!isAdminOrGosat) {
       toast({
-        title: "Access Denied",
+        title: "Access Denied", 
         description: "Only admins and gosats can convert seeds to orchards",
         variant: "destructive"
       });
       return;
     }
 
-    setConverting(seed.id);
-    try {
-      // Calculate seed value from additional_details or default
-      const seedValue = seed.additional_details?.value ? parseFloat(seed.additional_details.value) : 150;
-      const totalPockets = Math.max(1, Math.floor(seedValue / 150)); // Minimum 1 pocket, $150 per pocket
-
-      const orchardData = {
-        title: seed.title,
-        description: seed.description,
-        category: seed.category === 'other' ? 'General' : seed.category,
-        user_id: seed.gifter_id,
-        seed_value: seedValue,
-        original_seed_value: seedValue,
-        pocket_price: 150,
-        filled_pockets: 0,
-        currency: 'USD',
-        images: seed.images || [],
-        video_url: seed.video_url,
-        status: 'active',
-        verification_status: 'approved',
-        orchard_type: 'gifted'
-      };
-
-      const { data: newOrchard, error: orchardError } = await supabase
-        .from('orchards')
-        .insert([orchardData])
-        .select()
-        .single();
-
-      if (orchardError) throw orchardError;
-
-      // Delete the seed after successful conversion
-      const { error: deleteError } = await supabase
-        .from('seeds')
-        .delete()
-        .eq('id', seed.id);
-
-      if (deleteError) {
-        console.warn('Failed to delete seed after conversion:', deleteError);
-      }
-
-      toast({
-        title: "Success",
-        description: `Seed converted to orchard: ${newOrchard.title}`,
-      });
-      
-      fetchSubmissions();
-    } catch (error) {
-      console.error('Error converting seed to orchard:', error);
-      toast({
-        title: "Error",
-        description: "Failed to convert seed to orchard: " + error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setConverting(null);
-    }
+    // Redirect to orchard creation form with seed data pre-filled
+    const searchParams = new URLSearchParams({
+      from_seed: seed.id,
+      approve: 'true'
+    });
+    
+    window.open(`/create-orchard?${searchParams.toString()}`, '_blank');
+    
+    toast({
+      title: "Opening Orchard Form",
+      description: "Complete the orchard details to place it under 364yhvh orchards",
+    });
   };
 
   if (loading || rolesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -222,20 +179,10 @@ export function AdminSeedsPage() {
                     <div className="flex gap-2 pt-4 border-t">
                       <Button
                         onClick={() => convertSeedToOrchard(seed)}
-                        disabled={converting === seed.id}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        {converting === seed.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Converting...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Convert to Orchard
-                          </>
-                        )}
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Convert to Orchard
                       </Button>
                     </div>
                   </div>
