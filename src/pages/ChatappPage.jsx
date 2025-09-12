@@ -36,7 +36,7 @@ import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
 import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession';
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
-import CallInterface from '@/components/chat/CallInterface';
+
 import VideoCallInterface from '@/components/chat/VideoCallInterface';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
