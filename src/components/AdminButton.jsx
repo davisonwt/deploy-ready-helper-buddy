@@ -1,8 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Settings } from "lucide-react";
+import { Settings, ChevronDown, Radio, Sprout } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useRoles } from "../hooks/useRoles";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function AdminButton() {
   const auth = useAuth();
@@ -27,15 +33,32 @@ export function AdminButton() {
       </div>
       <div className="flex gap-2 items-center">
         {auth?.isAuthenticated && roles?.userRoles?.length > 0 && (
-          <Link to="/admin/dashboard">
-            <Button 
-              variant="outline"
-              className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
-            >
-              <Settings className="w-3 h-3 mr-1" />
-              gosat's ({roles.userRoles.join(', ')})
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
+              >
+                <Settings className="w-3 h-3 mr-1" />
+                gosat's ({roles.userRoles.join(', ')})
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link to="/admin/radio" className="flex items-center w-full">
+                  <Radio className="w-4 h-4 mr-2" />
+                  AOD Station Radio Management
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/seeds" className="flex items-center w-full">
+                  <Sprout className="w-4 h-4 mr-2" />
+                  Seeds Management
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
         {auth?.isAuthenticated && (
           <Button 
