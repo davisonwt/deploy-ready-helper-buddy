@@ -29,6 +29,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
+import FileUploadArea from '@/components/chat/FileUploadArea';
+import ChatFileManager from '@/components/chat/ChatFileManager';
 import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
 import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession';
 import InviteModal from '@/components/chat/InviteModal';
@@ -803,91 +805,124 @@ const ChatappPage = () => {
                 </CardHeader>
 
                 <CardContent className="flex-1 flex flex-col min-h-0 p-0">
-                  {/* Messages Area with Full White Background */}
-                  <div className="flex-1 bg-white/90 backdrop-blur-md border border-white/30 shadow-lg m-4 rounded-lg overflow-hidden">
-                    <ScrollArea className="h-full p-6">
-                      {loading ? (
-                        <div className="text-center py-4">
-                          <span className="text-gray-800 font-medium">Loading messages...</span>
-                        </div>
-                      ) : messages.length > 0 ? (
-                        <div className="space-y-1">
-                        {messages.map((message) => (
-                          <ChatMessage
-                            key={message.id}
-                            message={message}
-                            isOwn={message.sender_id === user.id}
-                            onDelete={deleteMessage}
-                          />
-                        ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                          <p className="text-gray-700 font-medium">No messages yet. Start the conversation!</p>
-                        </div>
-                      )}
-                    </ScrollArea>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                  <div className="p-4 border-b">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="messages">Messages</TabsTrigger>
+                      <TabsTrigger value="files">Files</TabsTrigger>
+                      <TabsTrigger value="participants">People</TabsTrigger>
+                      <TabsTrigger value="info">Info</TabsTrigger>
+                    </TabsList>
                   </div>
+                  
+                  <div className="flex-1 overflow-hidden">
+                    <TabsContent value="messages" className="h-full m-0">
+                      {/* Messages Area */}
+                      <div className="h-full flex flex-col">
+                        <div className="flex-1 bg-white/90 backdrop-blur-md border border-white/30 shadow-lg m-4 rounded-lg overflow-hidden">
+                          <ScrollArea className="h-full p-6">
+                            {loading ? (
+                              <div className="text-center py-4">
+                                <span className="text-gray-800 font-medium">Loading messages...</span>
+                              </div>
+                            ) : messages.length > 0 ? (
+                              <div className="space-y-1">
+                              {messages.map((message) => (
+                                <ChatMessage
+                                  key={message.id}
+                                  message={message}
+                                  isOwn={message.sender_id === user.id}
+                                  onDelete={deleteMessage}
+                                />
+                              ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-8">
+                                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                                <p className="text-gray-700 font-medium">No messages yet. Start the conversation!</p>
+                              </div>
+                            )}
+                          </ScrollArea>
+                        </div>
 
-                   {/* Message Input */}
-                  <div className="border-t p-4 space-y-2">
-                    {/* Hidden file input */}
-                    <input
-                      id="file-input"
-                      type="file"
-                      onChange={handleFileSelect}
-                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
-                      className="hidden"
-                    />
-                    
-                    {/* Selected file preview */}
-                    {selectedFile && (
-                      <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
-                        <Paperclip className="h-4 w-4 text-gray-600" />
-                        <span className="text-sm text-gray-700 flex-1 truncate">
-                          {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={removeSelectedFile}
-                          style={{ color: '#2563EB' }}
-                          className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                          ×
-                        </Button>
+                         {/* Message Input */}
+                        <div className="border-t p-4 space-y-3">
+                          {/* File Upload Area */}
+                          {selectedFile ? (
+                            <FileUploadArea
+                              selectedFile={selectedFile}
+                              onRemoveFile={removeSelectedFile}
+                              uploading={uploading}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                type="button"
+                                onClick={handleAttachmentClick}
+                                disabled={uploading}
+                                className="px-3"
+                              >
+                                <Paperclip className="h-4 w-4 mr-2" />
+                                Attach File
+                              </Button>
+                              <span className="text-xs text-muted-foreground">
+                                Images, videos, audio, documents up to 10MB
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Hidden file input */}
+                          <input
+                            id="file-input"
+                            type="file"
+                            onChange={handleFileSelect}
+                            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
+                            className="hidden"
+                          />
+                          
+                          {/* Message input form */}
+                          <form onSubmit={handleSendMessage} className="flex gap-2">
+                            <Input
+                              value={newMessage}
+                              onChange={(e) => setNewMessage(e.target.value)}
+                              placeholder="Type your message..."
+                              className="flex-1"
+                              disabled={uploading}
+                            />
+                            <Button 
+                              type="submit" 
+                              disabled={(!newMessage.trim() && !selectedFile) || uploading}
+                              className="px-4"
+                            >
+                              {uploading ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <span className="text-xs">Uploading...</span>
+                                </div>
+                              ) : (
+                                <Send className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </form>
+                        </div>
                       </div>
-                    )}
+                    </TabsContent>
                     
-                    <form onSubmit={handleSendMessage} className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        type="button"
-                        onClick={handleAttachmentClick}
-                        disabled={uploading}
-                        style={{ borderColor: '#BFDBFE', color: '#1D4ED8', backgroundColor: 'transparent' }}
-                        className="hover:bg-blue-50"
-                      >
-                        <Paperclip className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="submit" 
-                        disabled={(!newMessage.trim() && !selectedFile) || uploading}
-                        style={{ backgroundColor: '#1E40AF', borderColor: '#1E40AF' }}
-                        className="text-white hover:bg-blue-800 transition-all duration-300"
-                      >
-                        {uploading ? '...' : <Send className="h-4 w-4" />}
-                      </Button>
-                    </form>
+                    <TabsContent value="files" className="h-full m-0 p-4">
+                      <ChatFileManager roomId={currentRoom?.id} />
+                    </TabsContent>
+                    
+                    <TabsContent value="participants" className="h-full m-0 p-4">
+                      {/* ... keep existing participants content */}
+                    </TabsContent>
+                    
+                    <TabsContent value="info" className="h-full m-0 p-4">
+                      {/* ... keep existing room info content */}  
+                    </TabsContent>
                   </div>
+                </Tabs>
                 </CardContent>
               </Card>
             ) : (

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import FilePreview from './FilePreview';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -161,46 +162,14 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
           )}
           
           {message.file_url && (
-            <div className="mt-2 border border-white/50 rounded-lg p-3 bg-white/95 backdrop-blur-md shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <FileIcon className="h-4 w-4" />
-                <span className="text-sm font-medium truncate">
-                  {message.file_name}
-                </span>
-                <Badge variant="outline" className="text-xs">
-                  {message.file_type}
-                </Badge>
-              </div>
-              
-              {message.file_type === 'image' && (
-                <img 
-                  src={message.file_url}
-                  alt={message.file_name}
-                  className="max-w-full max-h-64 rounded object-cover"
-                />
-              )}
-              
-              {message.file_type === 'video' && (
-                <video 
-                  src={message.file_url}
-                  controls
-                  className="max-w-full max-h-64 rounded"
-                />
-              )}
-              
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-muted-foreground">
-                  {message.file_size && `${(message.file_size / 1024 / 1024).toFixed(2)} MB`}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(message.file_url, '_blank')}
-                  className="h-6 px-2"
-                >
-                  <Download className="h-3 w-3" />
-                </Button>
-              </div>
+            <div className="mt-2">
+              <FilePreview
+                fileUrl={message.file_url}
+                fileName={message.file_name}
+                fileType={message.file_type}
+                fileSize={message.file_size}
+                className="bg-white/95 backdrop-blur-md border-white/50"
+              />
             </div>
           )}
         </div>
