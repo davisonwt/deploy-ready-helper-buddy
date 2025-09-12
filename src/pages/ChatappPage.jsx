@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
+import { useCallManager } from '@/hooks/useCallManager';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -36,6 +37,7 @@ import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSessio
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 import CallInterface from '@/components/chat/CallInterface';
+import VideoCallInterface from '@/components/chat/VideoCallInterface';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
@@ -63,13 +65,24 @@ const ChatappPage = () => {
     deleteConversation,
   } = useChat();
 
+  // Advanced WebRTC call management
+  const {
+    currentCall,
+    incomingCall,
+    outgoingCall,
+    startCall,
+    answerCall,
+    declineCall,
+    endCall
+  } = useCallManager();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showQuickCreator, setShowQuickCreator] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [showUserSelector, setShowUserSelector] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [activeCall, setActiveCall] = useState(null);
+  // Remove old activeCall state - now using useCallManager
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeLiveSession, setActiveLiveSession] = useState(null);
 
@@ -155,12 +168,13 @@ const ChatappPage = () => {
   };
 
   const handleStartCall = async (otherUserId, callType) => {
-    console.log('🔥 Call started!', { otherUserId, callType });
+    console.log('🔥 Starting call with new system:', { otherUserId, callType });
+    
     try {
-      // Fetch user profile for the call
+      // Fetch user profile for display name
       const { data: userProfile, error } = await supabase
         .from('profiles')
-        .select('display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
+        .select('display_name, avatar_url, first_name, last_name, verification_status')
         .eq('user_id', otherUserId)
         .single();
 
@@ -174,50 +188,13 @@ const ChatappPage = () => {
         return;
       }
 
-      const callerInfo = {
-        display_name: userProfile.display_name || 
-                     `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() ||
-                     'Unknown User',
-        avatar_url: userProfile.avatar_url
-      };
+      const receiverName = userProfile.display_name || 
+                         `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() ||
+                         'Unknown User';
 
-      // Create call session in database
-      const { data: callSession, error: callError } = await supabase
-        .from('call_sessions')
-        .insert({
-          caller_id: user.id,
-          receiver_id: otherUserId,
-          call_type: callType,
-          status: 'ringing'
-        })
-        .select()
-        .single();
-
-      if (callError) {
-        console.error('Error creating call session:', callError);
-        toast({
-          title: "Error",
-          description: "Failed to initiate call",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('📞 Call session created:', callSession);
-      setActiveCall({
-        id: callSession.id,
-        type: callType,
-        isIncoming: false,
-        callerInfo,
-        otherUserId,
-        status: 'ringing'
-      });
-
-      toast({
-        title: "Call Started",
-        description: `${callType === 'video' ? 'Video' : 'Voice'} call with ${callerInfo.display_name}`,
-      });
-
+      // Use new call manager
+      await startCall(otherUserId, receiverName, callType, currentRoom?.id);
+      
     } catch (error) {
       console.error('Error starting call:', error);
       toast({
@@ -228,18 +205,17 @@ const ChatappPage = () => {
     }
   };
 
-  const handleEndCall = async () => {
-    if (activeCall?.id) {
-      try {
-        await supabase
-          .from('call_sessions')
-          .update({ status: 'ended' })
-          .eq('id', activeCall.id);
-      } catch (error) {
-        console.error('Error ending call session:', error);
+  const handleEndCall = async (callId) => {
+    console.log('🔚 Ending call with new system:', callId);
+    if (callId) {
+      await endCall(callId);
+    } else {
+      // Fallback for any active call
+      const activeCallId = currentCall?.id || outgoingCall?.id || incomingCall?.id;
+      if (activeCallId) {
+        await endCall(activeCallId);
       }
     }
-    setActiveCall(null);
   };
 
   const handleJoinPublicRoom = async (roomId) => {
@@ -308,192 +284,9 @@ const ChatappPage = () => {
     startLiveSession(room);
   };
 
-  // Listen for incoming calls
-  useEffect(() => {
-    if (!user?.id) {
-      console.log('❌ No user found for call listener');
-      return;
-    }
+  // Old real-time listeners removed - now handled by useCallManager
 
-    console.log('👂 Setting up call listener for user:', user.id);
-    const channel = supabase
-      .channel(`call_sessions:${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'call_sessions',
-          filter: `receiver_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('📞 Incoming call detected - payload type:', typeof payload);
-          console.log('📞 Setting activeCall with data:', payload.new);
-          const callSession = payload.new;
-          
-          // Fetch caller profile in a separate function to avoid async issues in real-time handler
-          const handleIncomingCall = async () => {
-            try {
-              // Fetch caller profile
-              const { data: callerProfile, error } = await supabase
-                .from('profiles')
-                .select('display_name, avatar_url, first_name, last_name, verification_status') // Only safe public fields
-                .eq('user_id', callSession.caller_id)
-                .maybeSingle();
-
-              let callerInfo = {
-                display_name: 'Unknown User',
-                avatar_url: null
-              };
-
-              if (!error && callerProfile) {
-                callerInfo = {
-                  display_name: callerProfile.display_name || 
-                               `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() ||
-                               'Unknown User',
-                  avatar_url: callerProfile.avatar_url
-                };
-              } else if (error) {
-                console.error('❌ Error fetching caller profile:', error);
-              }
-
-              console.log('📱 Setting incoming call state:', {
-                id: callSession.id,
-                type: callSession.call_type,
-                callerInfo
-              });
-
-              setActiveCall({
-                id: callSession.id,
-                type: callSession.call_type,
-                isIncoming: true,
-                callerInfo,
-                otherUserId: callSession.caller_id,
-                status: 'ringing'
-              });
-              console.log('📞 Active call state set to:', {
-                id: callSession.id,
-                type: callSession.call_type,
-                isIncoming: true,
-                callerInfo,
-                otherUserId: callSession.caller_id,
-                status: 'ringing'
-              });
-
-              // Show notification
-              toast({
-                title: "Incoming Call",
-                description: `${callSession.call_type === 'video' ? 'Video' : 'Voice'} call from ${callerInfo.display_name}`,
-              });
-            } catch (err) {
-              console.error('❌ Error in incoming call handler:', err);
-              // Set minimal call info to allow the call to proceed
-              setActiveCall({
-                id: callSession.id,
-                type: callSession.call_type,
-                isIncoming: true,
-                callerInfo: {
-                  display_name: 'Unknown User',
-                  avatar_url: null
-                },
-                otherUserId: callSession.caller_id,
-                status: 'ringing'
-              });
-            }
-          };
-          
-          // Execute the async function
-          handleIncomingCall();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'call_sessions',
-          filter: `caller_id=eq.${user.id}`
-        },
-        async (payload) => {
-          console.log('📞 Call status update for caller:', payload);
-          const callSession = payload.new;
-          
-          if (callSession.status === 'accepted' && activeCall?.id === callSession.id) {
-            console.log('✅ Call was accepted by receiver');
-            setActiveCall(prev => prev ? { ...prev, status: 'accepted' } : null);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Real-time subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to call notifications for user:', user.id);
-        } else if (status === 'CLOSED') {
-          console.log('❌ Call notification subscription closed');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.log('🚨 Error with call notification subscription:', status);
-        }
-      });
-
-    return () => {
-      console.log('🔇 Cleaning up call listener');
-      supabase.removeChannel(channel);
-    };
-  }, [user, toast, activeCall?.id]);
-
-  // Handle call acceptance and rejection
-  const handleAcceptCall = async () => {
-    if (!activeCall?.id) return;
-    
-    console.log('📞 Accepting call:', activeCall.id);
-    console.log('📞 Current activeCall state:', activeCall);
-    try {
-      await supabase
-        .from('call_sessions')
-        .update({ 
-          status: 'accepted',
-          accepted_at: new Date().toISOString()
-        })
-        .eq('id', activeCall.id);
-      
-      // Keep the call active but mark as accepted for WebRTC
-      // Keep isIncoming: true for receiver to maintain proper signaling roles
-      setActiveCall(prev => ({ ...prev, status: 'accepted' }));
-      console.log('📞 Call accepted, updated activeCall state');
-      
-      toast({
-        title: "Call Accepted",
-        description: "Call connected successfully",
-      });
-    } catch (error) {
-      console.error('Error accepting call:', error);
-      toast({
-        title: "Error",
-        description: "Failed to accept call",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeclineCall = async () => {
-    if (!activeCall?.id) return;
-    
-    try {
-      await supabase
-        .from('call_sessions')
-        .update({ status: 'declined' })
-        .eq('id', activeCall.id);
-      
-      setActiveCall(null);
-      
-      toast({
-        title: "Call Declined",
-        description: "Call was declined",
-      });
-    } catch (error) {
-      console.error('Error declining call:', error);
-    }
-  };
+  // Old call handlers removed - now using useCallManager
 
   const getTabContent = (type) => {
     const configs = {
@@ -510,7 +303,28 @@ const ChatappPage = () => {
   };
 
   if (!user) {
+  // Render WebRTC call interfaces
+  const activeCallData = currentCall || outgoingCall || incomingCall;
+  if (activeCallData) {
+    const callerInfo = {
+      display_name: activeCallData.caller_name || activeCallData.receiver_name || 'Unknown User',
+      avatar_url: null
+    };
+
     return (
+      <VideoCallInterface
+        callSession={activeCallData}
+        user={user}
+        callType={activeCallData.type || 'audio'}
+        isIncoming={!!incomingCall}
+        callerInfo={callerInfo}
+        onAccept={() => incomingCall && answerCall(incomingCall.id)}
+        onDecline={() => incomingCall && declineCall(incomingCall.id)}
+        onEnd={() => handleEndCall(activeCallData.id)}
+        isHost={activeCallData.caller_id === user?.id}
+      />
+    );
+  }
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-96 bg-white/10 backdrop-blur-md border-white/20">
           <CardContent className="pt-6">
