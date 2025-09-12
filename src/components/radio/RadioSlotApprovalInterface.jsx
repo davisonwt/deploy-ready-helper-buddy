@@ -69,11 +69,6 @@ export function RadioSlotApprovalInterface() {
             avatar_url,
             bio,
             user_id
-          ),
-          profiles!radio_schedule_approved_by_fkey (
-            display_name,
-            first_name,
-            last_name
           )
         `)
         .eq('requires_review', true)
@@ -85,7 +80,28 @@ export function RadioSlotApprovalInterface() {
       }
       
       console.log('✅ Radio slot requests loaded:', data?.length || 0)
-      setRequests(data || [])
+      
+      // Fetch approver profiles separately if needed
+      const requestsWithApproverInfo = []
+      for (const request of data || []) {
+        let approverProfile = null
+        if (request.approved_by) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('display_name, first_name, last_name')
+            .eq('user_id', request.approved_by)
+            .single()
+          
+          approverProfile = profileData
+        }
+        
+        requestsWithApproverInfo.push({
+          ...request,
+          approver_profile: approverProfile
+        })
+      }
+      
+      setRequests(requestsWithApproverInfo)
       
     } catch (error) {
       console.error('❌ Error fetching requests:', error)
