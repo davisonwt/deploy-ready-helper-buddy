@@ -35,8 +35,22 @@ export default function LiveActivityWidget() {
   })
   const [loading, setLoading] = useState(true)
 
+  // Set up listener for schedule updates from Personnel Assignments
   useEffect(() => {
-    // Always fetch mock data first to show something
+    const handleScheduleUpdate = (event) => {
+      console.log('📅 Schedule updated, refreshing Live Activities...', event.detail)
+      setTimeout(() => fetchLiveData(), 500)
+    }
+
+    window.addEventListener('scheduleUpdated', handleScheduleUpdate)
+    
+    return () => {
+      window.removeEventListener('scheduleUpdated', handleScheduleUpdate)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Always fetch data first to show something  
     fetchLiveData()
     
     if (user) {
@@ -53,7 +67,7 @@ export default function LiveActivityWidget() {
     try {
       setLoading(true)
       
-      // Fetch live radio sessions
+      // Fetch live radio sessions AND scheduled sessions
       const { data: radioData, error: radioError } = await supabase
         .from('radio_live_sessions')
         .select(`
@@ -72,6 +86,42 @@ export default function LiveActivityWidget() {
         `)
         .eq('status', 'live')
         .order('created_at', { ascending: false })
+
+      // ALSO fetch today's scheduled sessions that aren't necessarily live yet
+      const today = new Date().toISOString().split('T')[0]
+      const currentHour = new Date().getHours()
+      
+      const { data: scheduledData, error: scheduledError } = await supabase
+        .from('radio_schedule')
+        .select(`
+          *,
+          radio_shows (
+            show_name,
+            category,
+            subject
+          ),
+          radio_djs (
+            dj_name,
+            avatar_url
+          )
+        `)
+        .eq('time_slot_date', today)
+        .eq('approval_status', 'approved')
+        .gte('hour_slot', currentHour - 2) // Show sessions from 2 hours ago to future
+        .order('hour_slot', { ascending: true })
+        .limit(3)
+
+      // Combine live and scheduled data
+      const allRadioSessions = [
+        ...(radioData || []),
+        ...(scheduledData || []).map(schedule => ({
+          id: schedule.id,
+          status: schedule.status,
+          viewer_count: schedule.listener_count || 0,
+          created_at: schedule.start_time,
+          radio_schedule: schedule
+        }))
+      ]
 
       // Fetch active group calls from live_call_participants
       const { data: callData, error: callError } = await supabase
@@ -228,7 +278,7 @@ export default function LiveActivityWidget() {
       } : null
 
       setLiveData({
-        radioHosts: radioData || [],
+        radioHosts: allRadioSessions || [],
         groupCalls,
         communityChats: activeCommunityChats,
         lifeCourses,
@@ -249,6 +299,17 @@ export default function LiveActivityWidget() {
         event: '*',
         schema: 'public',
         table: 'radio_live_sessions'
+      }, () => {
+        setTimeout(() => fetchLiveData(), 0)
+      })
+      .subscribe()
+
+    const scheduleChannel = supabase
+      .channel('radio-schedule-updates')  
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'radio_schedule'
       }, () => {
         setTimeout(() => fetchLiveData(), 0)
       })
@@ -298,7 +359,7 @@ export default function LiveActivityWidget() {
       })
       .subscribe()
 
-    return [radioChannel, chatChannel, callParticipantsChannel, liveSessionChannel, chatMessagesChannel]
+    return [radioChannel, scheduleChannel, chatChannel, callParticipantsChannel, liveSessionChannel, chatMessagesChannel]
   }
 
   const joinActivity = async (type, activityId) => {

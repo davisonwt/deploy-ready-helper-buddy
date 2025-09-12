@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Clock, Mic, Radio, ChevronDown } from 'lucide-react'
+import { supabase } from '@/integrations/supabase/client'
 
 const SLOT_LABELS = Array.from({ length: 12 }, (_, i) => {
   const startHour = i * 2
@@ -30,8 +31,78 @@ const CATEGORY_COLORS = {
 
 export function RadioScheduleGrid({ schedule = [] }) {
   const [selectedSlot, setSelectedSlot] = useState('current')
+  const [liveSchedule, setLiveSchedule] = useState([])
+  const [loading, setLoading] = useState(true)
   const currentHour = new Date().getHours()
   const currentSlotIndex = Math.floor(currentHour / 2)
+
+  // Fetch schedule data directly if not provided via props
+  useEffect(() => {
+    if (schedule.length === 0) {
+      fetchTodaySchedule()
+    } else {
+      setLiveSchedule(schedule)
+      setLoading(false)
+    }
+  }, [schedule])
+
+  // Set up real-time subscription for schedule changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('radio-schedule-updates')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'radio_schedule'
+      }, () => {
+        console.log('🔄 Radio schedule changed, refetching...')
+        fetchTodaySchedule()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const fetchTodaySchedule = async () => {
+    try {
+      setLoading(true)
+      const today = new Date().toISOString().split('T')[0]
+      
+      const { data, error } = await supabase
+        .from('radio_schedule')
+        .select(`
+          *,
+          radio_shows (
+            show_name,
+            description,
+            category,
+            subject,
+            topic_description
+          ),
+          radio_djs (
+            dj_name,
+            user_id,
+            avatar_url
+          )
+        `)
+        .eq('time_slot_date', today)
+        .order('hour_slot', { ascending: true })
+
+      if (error) throw error
+      
+      console.log('📅 Fetched today\'s schedule:', data)
+      setLiveSchedule(data || [])
+      
+      // Emit custom event to notify other components
+      window.dispatchEvent(new CustomEvent('scheduleUpdated', { detail: data }))
+    } catch (err) {
+      console.error('Error fetching schedule:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Group schedule into 2-hour slots
   const slotGroups = Array.from({ length: 12 }, (_, slotIndex) => {
@@ -39,7 +110,7 @@ export function RadioScheduleGrid({ schedule = [] }) {
     const endHour = startHour + 2
     
     // Find schedules that fall within this 2-hour slot
-    const slotsInGroup = schedule.filter(slot => 
+    const slotsInGroup = liveSchedule.filter(slot => 
       slot.hour_slot >= startHour && slot.hour_slot < endHour
     )
     
@@ -49,7 +120,7 @@ export function RadioScheduleGrid({ schedule = [] }) {
       endHour,
       label: SLOT_LABELS[slotIndex],
       slots: slotsInGroup,
-      isEmpty: slotsInGroup.length === 0 || !slotsInGroup.some(s => s.schedule_id)
+      isEmpty: slotsInGroup.length === 0 || !slotsInGroup.some(s => s.id)
     }
   })
 
@@ -62,9 +133,20 @@ export function RadioScheduleGrid({ schedule = [] }) {
   }
 
   const currentSlotGroup = getCurrentSlot()
-  const mainSlot = currentSlotGroup.slots.find(s => s.schedule_id) || currentSlotGroup.slots[0]
+  const mainSlot = currentSlotGroup.slots.find(s => s.id) || currentSlotGroup.slots[0]
   const isLive = mainSlot?.status === 'live'
   const isCurrentSlot = currentSlotGroup.slotIndex === currentSlotIndex
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+          <p className="text-xs text-muted-foreground mt-2">Loading schedule...</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>
@@ -118,7 +200,7 @@ export function RadioScheduleGrid({ schedule = [] }) {
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{mainSlot?.show_name}</h4>
+                        <h4 className="font-medium">{mainSlot?.radio_shows?.show_name}</h4>
                         {isLive && (
                           <Badge variant="default" className="text-xs">
                             🔴 LIVE
@@ -126,16 +208,16 @@ export function RadioScheduleGrid({ schedule = [] }) {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        with {mainSlot?.dj_name}
+                        with {mainSlot?.radio_djs?.dj_name}
                       </p>
-                      {mainSlot?.subject && (
+                      {mainSlot?.radio_shows?.subject && (
                         <p className="text-sm font-medium text-primary mt-1">
-                          📻 {mainSlot.subject}
+                          📻 {mainSlot.radio_shows.subject}
                         </p>
                       )}
-                      {mainSlot?.topic_description && (
+                      {mainSlot?.radio_shows?.topic_description && (
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                          {mainSlot.topic_description}
+                          {mainSlot.radio_shows.topic_description}
                         </p>
                       )}
                     </div>
@@ -147,9 +229,9 @@ export function RadioScheduleGrid({ schedule = [] }) {
                 <div className="flex items-center gap-2">
                   <Badge 
                     variant="outline" 
-                    className={`text-xs ${CATEGORY_COLORS[mainSlot?.category] || ''}`}
+                    className={`text-xs ${CATEGORY_COLORS[mainSlot?.radio_shows?.category] || ''}`}
                   >
-                    {mainSlot?.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Generated'}
+                    {mainSlot?.radio_shows?.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Generated'}
                   </Badge>
                   
                   {isCurrentSlot && !isLive && (
