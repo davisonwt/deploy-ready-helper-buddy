@@ -8,7 +8,7 @@ export function useMusicPurchase() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { processBestowPart } = useUSDCPayments();
+  const { transferUSDC, checkSufficientBalance } = useUSDCPayments();
 
   const purchaseTrack = async (track) => {
     if (!user) {
@@ -23,59 +23,106 @@ export function useMusicPurchase() {
     try {
       setLoading(true);
 
-      // Calculate total price: $1.25 + 10% + 0.5%
+      // Pricing: 1.25 USDC to artist + 10.5% to Sow2Grow (total ≈ 1.38 USDC)
       const baseAmount = 1.25;
-      const platformFee = baseAmount * 0.10;
-      const sow2growFee = baseAmount * 0.005;
-      const totalAmount = baseAmount + platformFee + sow2growFee;
+      const sow2growFee = baseAmount * 0.105;
+      const totalAmount = baseAmount + sow2growFee;
 
-      toast({
-        title: "Processing Payment",
-        description: `Purchasing "${track.track_title}" for $${totalAmount.toFixed(2)} USDC`,
-      });
-
-      // Process USDC payment
-      const paymentResult = await processBestowPart({
-        amount: totalAmount,
-        orchard_id: null, // Not an orchard bestowal
-        notes: `Music purchase: ${track.track_title}`,
-        recipient_address: null // Will use platform wallet
-      });
-
-      if (!paymentResult.success) {
+      // Check wallet balance
+      if (!checkSufficientBalance(totalAmount)) {
         toast({
-          title: "Payment Failed",
-          description: paymentResult.error || "Failed to process USDC payment",
+          title: "Insufficient Balance",
+          description: `You need ${totalAmount.toFixed(2)} USDC to purchase this track`,
           variant: "destructive",
         });
         return { success: false };
       }
 
-      // Call edge function to complete purchase
+      toast({
+        title: "Processing Payment",
+        description: `Purchasing "${track.track_title}" for ${totalAmount.toFixed(2)} USDC`,
+      });
+
+      // 1) Resolve owner (artist) wallet
+      const { data: ownerLookup, error: ownerLookupError } = await supabase
+        .from('dj_music_tracks')
+        .select('id, radio_djs!inner(user_id)')
+        .eq('id', track.id)
+        .single();
+
+      if (ownerLookupError || !ownerLookup?.radio_djs?.user_id) {
+        throw new Error('Could not resolve track owner');
+      }
+
+      const ownerUserId = ownerLookup.radio_djs.user_id;
+
+      const { data: ownerWallet, error: ownerWalletError } = await supabase
+        .from('user_wallets')
+        .select('wallet_address')
+        .eq('user_id', ownerUserId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (ownerWalletError || !ownerWallet?.wallet_address) {
+        throw new Error("Artist hasn't set up a wallet yet");
+      }
+
+      // 2) Resolve Sow2Grow platform wallet
+      const { data: platformWallet, error: platformError } = await supabase
+        .rpc('get_payment_wallet_address')
+        .single();
+
+      if (platformError || !platformWallet?.wallet_address) {
+        throw new Error('Platform wallet not available');
+      }
+
+      // 3) Execute wallet-to-wallet transfers
+      const ownerPayment = await transferUSDC({
+        recipientAddress: ownerWallet.wallet_address,
+        amount: baseAmount,
+        memo: `Music purchase: ${track.track_title}`,
+      });
+
+      if (!ownerPayment.success) {
+        throw new Error(ownerPayment.error || 'Failed to send payment to artist');
+      }
+
+      let feePaymentSig = null;
+      if (sow2growFee > 0) {
+        const feePayment = await transferUSDC({
+          recipientAddress: platformWallet.wallet_address,
+          amount: sow2growFee,
+          memo: `Sow2Grow fee for music purchase: ${track.track_title}`,
+        });
+        if (!feePayment.success) {
+          throw new Error(feePayment.error || 'Failed to send platform fee');
+        }
+        feePaymentSig = feePayment.signature;
+      }
+
+      // 4) Complete purchase delivery via Edge Function
       const { data, error } = await supabase.functions.invoke('purchase-music-track', {
         body: {
           trackId: track.id,
-          paymentReference: paymentResult.signature
+          paymentReference: ownerPayment.signature,
         }
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Purchase Successful!",
+        title: 'Purchase Successful!',
         description: `${track.track_title} has been sent to your direct messages`,
       });
 
-      return { success: true, data };
+      return { success: true, data, signatures: [ownerPayment.signature, feePaymentSig].filter(Boolean) };
 
     } catch (error) {
       console.error('Music purchase failed:', error);
       toast({
-        title: "Purchase Failed",
-        description: error.message || "Failed to complete purchase",
-        variant: "destructive",
+        title: 'Purchase Failed',
+        description: error.message || 'Failed to complete purchase',
+        variant: 'destructive',
       });
       return { success: false };
     } finally {

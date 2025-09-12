@@ -274,6 +274,56 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
+  const fetchPlaylistForCurrentShow = async () => {
+    try {
+      if (!currentShow?.schedule_id) return
+      const { data: sched, error } = await supabase
+        .from('radio_schedule')
+        .select(`
+          id,
+          radio_djs (
+            id,
+            dj_playlists (
+              id,
+              playlist_name,
+              dj_playlist_tracks (
+                track_order,
+                dj_music_tracks (
+                  id,
+                  track_title,
+                  artist_name,
+                  duration_seconds,
+                  genre,
+                  file_url
+                )
+              )
+            )
+          )
+        `)
+        .eq('id', currentShow.schedule_id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('Error fetching playlist for show:', error)
+        return
+      }
+
+      const playlists = sched?.radio_djs?.dj_playlists || []
+      if (playlists.length === 0) return
+
+      const pl = playlists[0]
+      const tracks = (pl.dj_playlist_tracks || [])
+        .sort((a, b) => a.track_order - b.track_order)
+        .map(pt => pt.dj_music_tracks)
+        .filter(Boolean)
+
+      setPlaylistTracks(tracks)
+      if (!currentTrack && tracks.length > 0) setCurrentTrack(tracks[0])
+    } catch (e) {
+      console.error('Playlist preload failed:', e)
+    }
+  }
+
   const createAutomatedSessionForCurrentShow = async () => {
     try {
       if (!currentShow?.schedule_id) return
