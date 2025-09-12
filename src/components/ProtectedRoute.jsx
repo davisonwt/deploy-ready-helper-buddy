@@ -1,21 +1,13 @@
 import { Navigate } from "react-router-dom"
-import { useEffect, useRef } from "react"
 import { useAuth } from "../hooks/useAuth"
 import { useRoles } from "../hooks/useRoles"
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
-  const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
   const roles = useRoles()
-  const hasFetchedRolesRef = useRef(false)
+  const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
 
-  // Ensure roles are fetched before role-gated checks to avoid premature redirects
-  useEffect(() => {
-    if (shouldCheckRoles && roles && !roles.loading && (roles.userRoles?.length ?? 0) === 0 && !hasFetchedRolesRef.current) {
-      roles.fetchUserRoles?.()
-      hasFetchedRolesRef.current = true
-    }
-  }, [shouldCheckRoles, roles?.loading, roles?.userRoles?.length])
+  // Always call hooks at top-level; avoid conditional hooks to prevent React error #311
 
   // Show loading while auth is loading
   if (authLoading) {
@@ -31,9 +23,9 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
     return <Navigate to="/login" replace />
   }
   
-  // Check roles if specified and ensure we've attempted to fetch them
+  // Role-gated routes
   if (shouldCheckRoles) {
-    if (roles?.loading || (!hasFetchedRolesRef.current && (roles?.userRoles?.length ?? 0) === 0)) {
+    if (roles?.loading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -48,7 +40,6 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
     }
   }
 
-  
   return children
 }
 
