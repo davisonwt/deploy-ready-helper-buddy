@@ -561,9 +561,32 @@ export default function TimezoneSlotAssignment() {
       {/* Slot Grid with Timezone Display */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Personnel Assignments for {format(selectedDate, "EEEE, MMMM d, yyyy")}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              <CardTitle>Personnel Assignments</CardTitle>
+            </div>
+            <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
+              const newDate = new Date(dateStr)
+              setSelectedDate(newDate)
+            }}>
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select date" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border shadow-lg z-50">
+                {/* Generate options for next 7 days */}
+                {Array.from({ length: 7 }, (_, i) => {
+                  const date = new Date()
+                  date.setDate(date.getDate() + i)
+                  return (
+                    <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
+                      {format(date, "EEEE, MMMM d, yyyy")}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
