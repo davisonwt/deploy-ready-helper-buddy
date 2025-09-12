@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { GuestRequestModal } from './GuestRequestModal'
+import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
   const { user } = useAuth()
@@ -29,6 +30,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const [viewerCount, setViewerCount] = useState(0)
   const [showGuestModal, setShowGuestModal] = useState(false)
   const [hasRequestedGuest, setHasRequestedGuest] = useState(false)
+  const [currentTrack, setCurrentTrack] = useState(null)
+  const [playlistTracks, setPlaylistTracks] = useState([])
   
   const audioRef = useRef(null)
   const peerConnectionRef = useRef(null)
@@ -234,9 +237,13 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           ?.sort((a, b) => a.track_order - b.track_order)
           ?.map(pt => pt.dj_music_tracks) || []
 
+        setPlaylistTracks(tracks) // Store tracks for purchase interface
+
         if (tracks.length > 0) {
           const currentTrackIndex = automatedSession.current_track_index || 0
           const currentTrack = tracks[currentTrackIndex]
+          
+          setCurrentTrack(currentTrack) // Store current track for purchase interface
           
           if (currentTrack?.file_url && audioRef.current) {
             audioRef.current.src = currentTrack.file_url
@@ -518,6 +525,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Music Purchase Interface */}
+      <MusicPurchaseInterface 
+        tracks={playlistTracks}
+        currentTrack={currentTrack}
+      />
 
       {/* Guest Request Modal */}
       <GuestRequestModal
