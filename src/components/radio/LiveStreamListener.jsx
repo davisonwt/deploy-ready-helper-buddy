@@ -314,7 +314,21 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
 
       const playlists = sched?.radio_djs?.dj_playlists || []
-      if (playlists.length === 0) return
+      if (playlists.length === 0) {
+        // Fallback: show all DJ tracks if no public playlist accessible
+        const { data: djTracks, error: djErr } = await supabase
+          .from('dj_music_tracks')
+          .select('id, track_title, artist_name, duration_seconds, genre, file_url')
+          .eq('dj_id', sched?.radio_djs?.id)
+          .order('upload_date', { ascending: false })
+        if (djErr) {
+          console.error('Fallback DJ tracks error:', djErr)
+          return
+        }
+        setPlaylistTracks(djTracks || [])
+        if (!currentTrack && djTracks?.length > 0) setCurrentTrack(djTracks[0])
+        return
+      }
 
       const pl = playlists[0]
       const tracks = (pl.dj_playlist_tracks || [])
