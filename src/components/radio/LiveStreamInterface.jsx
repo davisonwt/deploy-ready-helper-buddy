@@ -71,34 +71,52 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     if (!currentShow?.schedule_id) return
 
     try {
-      const { data: sessionId, error } = await supabase.rpc('get_or_create_live_session', {
-        schedule_id_param: currentShow.schedule_id
-      })
-
-      if (error) throw error
-
-      // Fetch session details using secure view (excludes session tokens)
-      const { data: session, error: sessionError } = await supabase
-        .from('radio_sessions_public')
+      // Try to find an existing live session for this schedule
+      const { data: existing, error: findError } = await supabase
+        .from('radio_live_sessions')
         .select('*')
-        .eq('id', sessionId)
-        .single()
+        .eq('schedule_id', currentShow.schedule_id)
+        .eq('status', 'live')
+        .order('started_at', { ascending: false })
+        .limit(1)
 
-      if (sessionError) throw sessionError
+      if (findError) {
+        console.warn('findError checking live session:', findError)
+      }
+
+      let session = existing && existing.length > 0 ? existing[0] : null
+
+      // If none, create one
+      if (!session) {
+        const { data: created, error: createError } = await supabase
+          .from('radio_live_sessions')
+          .insert({
+            schedule_id: currentShow.schedule_id,
+            status: 'live',
+            session_token: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
+            started_at: new Date().toISOString(),
+            viewer_count: 0
+          })
+          .select()
+          .single()
+
+        if (createError) throw createError
+        session = created
+      }
 
       setLiveSession(session)
       setIsLive(session.status === 'live')
       setViewerCount(session.viewer_count || 0)
 
-      // Add current user as main host
+      // Add current user as main host (idempotent)
       await joinAsHost('main_host')
       
     } catch (error) {
       console.error('Error initializing live session:', error)
       toast({
-        title: "Error",
-        description: "Failed to initialize live session",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to initialize live session',
+        variant: 'destructive'
       })
     }
   }
