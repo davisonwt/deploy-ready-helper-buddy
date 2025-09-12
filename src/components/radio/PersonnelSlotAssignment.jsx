@@ -44,7 +44,7 @@ const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
 export default function PersonnelSlotAssignment() {
   const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('all') // New state for time slot dropdown
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(String(Math.floor(new Date().getHours() / 2))) // default to current 2-hour slot
   const [slotAssignments, setSlotAssignments] = useState([])
   const [radioAdmins, setRadioAdmins] = useState([])
   const [loading, setLoading] = useState(true)
@@ -570,7 +570,7 @@ export default function PersonnelSlotAssignment() {
         <CardContent>
           <div className="grid gap-4">
             {slotAssignments
-              .filter(item => selectedTimeSlot === 'all' || item.slot.slotIndex.toString() === selectedTimeSlot)
+              .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
               .map((item, index) => (
               <div
                 key={index}
