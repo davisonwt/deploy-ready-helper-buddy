@@ -20,7 +20,7 @@ export function AdminSeedsPage() {
     try {
       console.log('🌱 Fetching seed submissions...');
       const { data, error } = await supabase
-        .from('seed_submissions')
+        .from('seeds')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -99,12 +99,8 @@ export function AdminSeedsPage() {
                         Submitted: {new Date(submission.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <Badge variant={
-                      submission.status === 'approved' ? 'default' :
-                      submission.status === 'rejected' ? 'destructive' :
-                      'secondary'
-                    }>
-                      {submission.status}
+                    <Badge variant="secondary">
+                      {submission.category || 'Seed'}
                     </Badge>
                   </div>
                 </CardHeader>
