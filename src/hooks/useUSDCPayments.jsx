@@ -151,6 +151,9 @@ export function useUSDCPayments() {
       setLoading(false);
     }
   };
+
+  // Process bestowal payment
+  const processBestowPart = async (bestowData) => {
     if (!connected || !wallet || !user) {
       return { success: false, error: 'Wallet not connected' };
     }
