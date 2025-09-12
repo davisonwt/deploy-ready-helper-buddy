@@ -4,7 +4,8 @@ import { useRoles } from "../hooks/useRoles"
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
-  const { hasRole, loading: rolesLoading } = useRoles()
+  const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
+  const roles = shouldCheckRoles ? useRoles() : null
   
   // Show loading while auth is loading
   if (authLoading) {
@@ -20,8 +21,8 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
   }
   
   // Check roles if specified and roles are loaded
-  if (allowedRoles && allowedRoles.length > 0) {
-    if (rolesLoading) {
+  if (shouldCheckRoles) {
+    if (roles?.loading) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -29,7 +30,7 @@ const ProtectedRoute = ({ children, allowedRoles = null }) => {
       )
     }
     
-    const hasRequiredRole = allowedRoles.some(role => hasRole(role))
+    const hasRequiredRole = allowedRoles.some(role => roles?.hasRole(role))
     
     if (!hasRequiredRole) {
       return <Navigate to="/dashboard" replace />
