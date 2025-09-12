@@ -624,127 +624,145 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Radio Station Management */}
-        <Card className="mt-8 border-2 border-blue-200 bg-blue-50/50">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Radio className="h-5 w-5 text-blue-600" />
-                <span>📻 AOD Station Radio Management</span>
-              </div>
-              <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                Personnel & Schedule Control
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <RadioSlotApprovalInterface />
-              <AdminRadioManagement />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Seeds Management Section - Only for Gosats/Admins */}
-        {isAdminOrGosat && (
-          <Card className="mt-8">
+        {/* Radio Station Management Section */}
+        <div className="mt-12">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-primary mb-2">📻 AOD Station Radio Management</h2>
+            <p className="text-muted-foreground">Personnel & Schedule Control</p>
+          </div>
+          
+          <Card className="border-2 border-blue-200 bg-blue-50/50">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Sprout className="h-5 w-5 text-success" />
-                <span>Seeds Management</span>
-                <Badge variant="secondary">{seeds.length} seeds</Badge>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Radio className="h-5 w-5 text-blue-600" />
+                  <span>Radio Operations</span>
+                </div>
+                <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                  Active Management
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {seedsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : seeds.length === 0 ? (
-                <div className="text-center py-8">
-                  <Sprout className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No seeds submitted yet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {seeds.map((seed) => (
-                    <Card key={seed.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          {/* Seed Image */}
-                          {seed.images && seed.images.length > 0 && (
-                            <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
-                              <img 
-                                src={seed.images[0]} 
-                                alt={seed.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          
-                          {/* Seed Info */}
-                          <div>
-                            <h3 className="font-semibold text-sm mb-1 line-clamp-2">{seed.title}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{seed.description}</p>
-                            <Badge variant="outline" className="text-xs">{seed.category}</Badge>
-                          </div>
-                          
-                          {/* Gifter Info */}
-                          <div className="text-xs text-muted-foreground">
-                            <p>Gifted by: {seed.profiles?.display_name || `${seed.profiles?.first_name} ${seed.profiles?.last_name}` || 'Unknown'}</p>
-                            <p>Date: {new Date(seed.created_at).toLocaleDateString()}</p>
-                          </div>
-                          
-                          {/* Actions */}
-                          <div className="flex flex-col space-y-2">
-                            {/* Primary Actions */}
-                            <div className="flex space-x-2">
-                              <Button 
-                                size="sm" 
-                                className="flex-1"
-                                onClick={() => approveSeed(seed.id)}
-                              >
-                                <Check className="h-3 w-3 mr-1" />
-                                Approve
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                onClick={() => deleteSeed(seed.id, seed.title)}
-                                className="flex-1"
-                              >
-                                <X className="h-3 w-3 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                            {/* Secondary Actions */}
-                            <div className="flex space-x-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="flex-1"
-                                onClick={() => convertSeedToOrchard(seed.id)}
-                              >
-                                <TreePine className="h-3 w-3 mr-1" />
-                                Convert
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
-                              >
-                                <Eye className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <div className="space-y-6">
+                <RadioSlotApprovalInterface />
+                <AdminRadioManagement />
+              </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Seeds Management Section - Only for Gosats/Admins */}
+        {isAdminOrGosat && (
+          <div className="mt-16">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-primary mb-2">🌱 Seeds Management</h2>
+              <p className="text-muted-foreground">Review and manage community seed submissions</p>
+            </div>
+            
+            <Card className="border-2 border-green-200 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Sprout className="h-5 w-5 text-green-600" />
+                    <span>Community Seeds</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-100 text-green-800">
+                    {seeds.length} pending
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {seedsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : seeds.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Sprout className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No seeds submitted yet</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {seeds.map((seed) => (
+                      <Card key={seed.id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            {/* Seed Image */}
+                            {seed.images && seed.images.length > 0 && (
+                              <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
+                                <img 
+                                  src={seed.images[0]} 
+                                  alt={seed.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            
+                            {/* Seed Info */}
+                            <div>
+                              <h3 className="font-semibold text-sm mb-1 line-clamp-2">{seed.title}</h3>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{seed.description}</p>
+                              <Badge variant="outline" className="text-xs">{seed.category}</Badge>
+                            </div>
+                            
+                            {/* Gifter Info */}
+                            <div className="text-xs text-muted-foreground">
+                              <p>Gifted by: {seed.profiles?.display_name || `${seed.profiles?.first_name} ${seed.profiles?.last_name}` || 'Unknown'}</p>
+                              <p>Date: {new Date(seed.created_at).toLocaleDateString()}</p>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex flex-col space-y-2">
+                              {/* Primary Actions */}
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  className="flex-1"
+                                  onClick={() => approveSeed(seed.id)}
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => deleteSeed(seed.id, seed.title)}
+                                  className="flex-1"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Delete
+                                </Button>
+                              </div>
+                              {/* Secondary Actions */}
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => convertSeedToOrchard(seed.id)}
+                                >
+                                  <TreePine className="h-3 w-3 mr-1" />
+                                  Convert
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>
