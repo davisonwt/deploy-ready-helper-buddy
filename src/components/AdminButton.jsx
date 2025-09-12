@@ -44,15 +44,15 @@ export function AdminButton() {
                 <ChevronDown className="w-3 h-3 ml-1" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem asChild>
-                <Link to="/admin/radio" className="flex items-center w-full">
+            <DropdownMenuContent align="end" className="w-56 bg-background border shadow-lg z-50">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link to="/admin/radio" className="flex items-center w-full px-2 py-1.5">
                   <Radio className="w-4 h-4 mr-2" />
                   AOD Station Radio Management
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin/seeds" className="flex items-center w-full">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link to="/admin/seeds" className="flex items-center w-full px-2 py-1.5">
                   <Sprout className="w-4 h-4 mr-2" />
                   Seeds Management
                 </Link>
