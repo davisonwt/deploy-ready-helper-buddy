@@ -76,10 +76,6 @@ const LiveCallQueue = ({ callSession, isHost, isModerator }) => {
         ...p,
         profiles: profileMap[p.user_id] || null,
       }));
-
-      if (error) throw error;
-
-      const activeParticipants = data || [];
       
       // Separate queued participants (those with hand raised)
       const queued = activeParticipants
