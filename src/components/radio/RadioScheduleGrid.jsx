@@ -29,16 +29,9 @@ const CATEGORY_COLORS = {
 }
 
 export function RadioScheduleGrid({ schedule = [] }) {
-  const [scheduleView, setScheduleView] = useState('2-hour')
+  const [selectedSlot, setSelectedSlot] = useState('current')
   const currentHour = new Date().getHours()
   const currentSlotIndex = Math.floor(currentHour / 2)
-
-  const scheduleOptions = [
-    { value: '2-hour', label: "Today's Schedule (2-Hour Slots)" },
-    { value: '1-hour', label: "Today's Schedule (1-Hour Slots)" },
-    { value: 'weekly', label: "Weekly Schedule" },
-    { value: 'monthly', label: "Monthly Overview" }
-  ]
 
   // Group schedule into 2-hour slots
   const slotGroups = Array.from({ length: 12 }, (_, slotIndex) => {
@@ -60,22 +53,36 @@ export function RadioScheduleGrid({ schedule = [] }) {
     }
   })
 
+  // Get current slot or selected slot
+  const getCurrentSlot = () => {
+    if (selectedSlot === 'current') {
+      return slotGroups[currentSlotIndex]
+    }
+    return slotGroups.find(slot => slot.slotIndex.toString() === selectedSlot) || slotGroups[currentSlotIndex]
+  }
+
+  const currentSlotGroup = getCurrentSlot()
+  const mainSlot = currentSlotGroup.slots.find(s => s.schedule_id) || currentSlotGroup.slots[0]
+  const isLive = mainSlot?.status === 'live'
+  const isCurrentSlot = currentSlotGroup.slotIndex === currentSlotIndex
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            <CardTitle>Schedule View</CardTitle>
+            <CardTitle>Today's Schedule</CardTitle>
           </div>
-          <Select value={scheduleView} onValueChange={setScheduleView}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select schedule view" />
+          <Select value={selectedSlot} onValueChange={setSelectedSlot}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select time slot" />
             </SelectTrigger>
-            <SelectContent className="bg-background border shadow-lg z-50">
-              {scheduleOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+            <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
+              <SelectItem value="current">Current Slot</SelectItem>
+              {slotGroups.map((slotGroup) => (
+                <SelectItem key={slotGroup.slotIndex} value={slotGroup.slotIndex.toString()}>
+                  {slotGroup.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -83,97 +90,86 @@ export function RadioScheduleGrid({ schedule = [] }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-3">
-          {slotGroups.map((slotGroup) => {
-            const isCurrentSlot = slotGroup.slotIndex === currentSlotIndex
-            const mainSlot = slotGroup.slots.find(s => s.schedule_id) || slotGroup.slots[0]
-            const isLive = mainSlot?.status === 'live'
-            
-            return (
-              <div
-                key={slotGroup.slotIndex}
-                className={`p-4 rounded-lg border transition-all ${
-                  isCurrentSlot 
-                    ? 'ring-2 ring-primary ring-offset-2 bg-primary/5' 
-                    : 'border-border'
-                } ${isLive ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm font-mono w-24 text-center">
-                      <div className="font-medium">{slotGroup.label}</div>
-                      <div className="text-xs text-muted-foreground">2-hour slot</div>
-                    </div>
-                    
-                    {slotGroup.isEmpty ? (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Radio className="h-4 w-4" />
-                        <span className="text-sm">AI Radio Host</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={mainSlot?.dj_avatar} />
-                          <AvatarFallback>
-                            <Mic className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{mainSlot?.show_name}</h4>
-                            {isLive && (
-                              <Badge variant="default" className="text-xs">
-                                🔴 LIVE
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            with {mainSlot?.dj_name}
-                          </p>
-                          {mainSlot?.subject && (
-                            <p className="text-sm font-medium text-primary mt-1">
-                              📻 {mainSlot.subject}
-                            </p>
-                          )}
-                          {mainSlot?.topic_description && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                              {mainSlot.topic_description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+        <div className="p-4 rounded-lg border transition-all">
+          <div className={`${
+            isCurrentSlot 
+              ? 'ring-2 ring-primary ring-offset-2 bg-primary/5' 
+              : 'border-border'
+          } ${isLive ? 'bg-red-50 dark:bg-red-950/20' : ''} p-4 rounded-lg`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-sm font-mono w-24 text-center">
+                  <div className="font-medium">{currentSlotGroup.label}</div>
+                  <div className="text-xs text-muted-foreground">2-hour slot</div>
+                </div>
+                
+                {currentSlotGroup.isEmpty ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Radio className="h-4 w-4" />
+                    <span className="text-sm">AI Radio Host</span>
                   </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs ${CATEGORY_COLORS[mainSlot?.category] || ''}`}
-                      >
-                        {mainSlot?.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Generated'}
-                      </Badge>
-                      
-                      {isCurrentSlot && !isLive && (
-                        <Badge variant="secondary" className="text-xs">
-                          Current
-                        </Badge>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={mainSlot?.dj_avatar} />
+                      <AvatarFallback>
+                        <Mic className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{mainSlot?.show_name}</h4>
+                        {isLive && (
+                          <Badge variant="default" className="text-xs">
+                            🔴 LIVE
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        with {mainSlot?.dj_name}
+                      </p>
+                      {mainSlot?.subject && (
+                        <p className="text-sm font-medium text-primary mt-1">
+                          📻 {mainSlot.subject}
+                        </p>
+                      )}
+                      {mainSlot?.topic_description && (
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                          {mainSlot.topic_description}
+                        </p>
                       )}
                     </div>
-                    
-                    {mainSlot?.approval_status && mainSlot.approval_status !== 'approved' && (
-                      <Badge 
-                        variant={mainSlot.approval_status === 'pending' ? 'outline' : 'destructive'} 
-                        className="text-xs"
-                      >
-                        {mainSlot.approval_status}
-                      </Badge>
-                    )}
                   </div>
-                </div>
+                )}
               </div>
-            )
-          })}
+
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${CATEGORY_COLORS[mainSlot?.category] || ''}`}
+                  >
+                    {mainSlot?.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'AI Generated'}
+                  </Badge>
+                  
+                  {isCurrentSlot && !isLive && (
+                    <Badge variant="secondary" className="text-xs">
+                      Current
+                    </Badge>
+                  )}
+                </div>
+                
+                {mainSlot?.approval_status && mainSlot.approval_status !== 'approved' && (
+                  <Badge 
+                    variant={mainSlot.approval_status === 'pending' ? 'outline' : 'destructive'} 
+                    className="text-xs"
+                  >
+                    {mainSlot.approval_status}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Legend */}
