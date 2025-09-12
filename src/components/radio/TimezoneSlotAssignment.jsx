@@ -106,6 +106,7 @@ function TimezoneClock({ timezone, selectedDate, slot }) {
 export default function TimezoneSlotAssignment() {
   const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('all') // New state for time slot dropdown
   const [slotAssignments, setSlotAssignments] = useState([])
   const [radioAdmins, setRadioAdmins] = useState([])
   const [loading, setLoading] = useState(true)
@@ -566,31 +567,48 @@ export default function TimezoneSlotAssignment() {
               <Clock className="h-5 w-5" />
               <CardTitle>Personnel Assignments</CardTitle>
             </div>
-            <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
-              const newDate = new Date(dateStr)
-              setSelectedDate(newDate)
-            }}>
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select date" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border shadow-lg z-50">
-                {/* Generate options for next 7 days */}
-                {Array.from({ length: 7 }, (_, i) => {
-                  const date = new Date()
-                  date.setDate(date.getDate() + i)
-                  return (
-                    <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
-                      {format(date, "EEEE, MMMM d, yyyy")}
+            <div className="flex items-center gap-4">
+              <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
+                const newDate = new Date(dateStr)
+                setSelectedDate(newDate)
+              }}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select date" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  {/* Generate options for next 7 days */}
+                  {Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date()
+                    date.setDate(date.getDate() + i)
+                    return (
+                      <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
+                        {format(date, "EEEE, MMMM d, yyyy")}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select time slot" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
+                  <SelectItem value="all">All Time Slots</SelectItem>
+                  {TIME_SLOTS.map((slot) => (
+                    <SelectItem key={slot.value} value={slot.value.toString()}>
+                      {slot.displayTime}
                     </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {slotAssignments.map((item, index) => (
+            {slotAssignments
+              .filter(item => selectedTimeSlot === 'all' || item.slot.slotIndex.toString() === selectedTimeSlot)
+              .map((item, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
