@@ -100,10 +100,7 @@ export default function Layout({ children }) {
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       items: [
         { name: "chatapp", href: "/chatapp", icon: MessageSquare },
-        { name: "heretics radio station", href: "/grove-station", icon: Mic },
-        ...(roles?.userRoles?.includes('radio_admin') || roles?.userRoles?.includes('admin') || roles?.userRoles?.includes('gosat') ? [
-          { name: "Heretic Management System", href: "/radio-management", icon: Settings }
-        ] : [])
+        { name: "heretics radio station", href: "/grove-station", icon: Mic }
       ]
     },
     {
