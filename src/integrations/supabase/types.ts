@@ -3654,7 +3654,7 @@ export type Database = {
         | "marketing_tip"
         | "thumbnail"
         | "content_idea"
-      app_role: "user" | "gosat" | "admin" | "radio_admin"
+      app_role: "user" | "gosat" | "admin" | "radio_admin" | "moderator"
       chat_message_type:
         | "text"
         | "verification"
@@ -3834,7 +3834,7 @@ export const Constants = {
         "thumbnail",
         "content_idea",
       ],
-      app_role: ["user", "gosat", "admin", "radio_admin"],
+      app_role: ["user", "gosat", "admin", "radio_admin", "moderator"],
       chat_message_type: [
         "text",
         "verification",
