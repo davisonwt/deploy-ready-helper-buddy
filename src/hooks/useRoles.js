@@ -99,7 +99,7 @@ export function useRoles() {
       // Then get ALL user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('*')
+        .select('id, user_id, role, created_at, granted_by')
         .order('created_at', { ascending: false })
 
       if (rolesError) {
