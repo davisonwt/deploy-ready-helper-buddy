@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
-import { compressVideo } from '@/utils/videoCompression'
+import { compressVideoAdvanced } from '@/utils/videoProcessor'
 
 export function useFileUpload() {
   console.log('useFileUpload hook initializing - React:', React, 'useState:', useState)
@@ -39,7 +39,13 @@ export function useFileUpload() {
         if (fileSizeMB > 50) { // 50MB threshold
           console.log('📹 Video is large, compressing...');
           try {
-            fileToUpload = await compressVideo(file, 50); // Compress to 50MB max
+            fileToUpload = await compressVideoAdvanced(file, {
+              maxSizeMB: 50,
+              quality: 'medium',
+              onProgress: (progress, message) => {
+                console.log(`📹 Compression: ${progress}% - ${message}`);
+              }
+            });
             const newSizeMB = fileToUpload.size / (1024 * 1024);
             console.log(`✅ Video compressed from ${fileSizeMB.toFixed(2)}MB to ${newSizeMB.toFixed(2)}MB`);
           } catch (compressionError) {
