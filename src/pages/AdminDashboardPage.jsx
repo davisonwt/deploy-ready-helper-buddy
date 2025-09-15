@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -33,6 +34,10 @@ import { supabase } from '@/integrations/supabase/client'
 import { useNavigate } from 'react-router-dom'
 import AdminRadioManagement from '@/components/radio/AdminRadioManagement'
 import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApprovalInterface'
+import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
+import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
+import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
+import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -84,37 +89,25 @@ export default function AdminDashboardPage() {
   const loadUserStats = async () => {
     try {
       console.log('🔍 AdminDashboard: Fetching active users...')
-      // Get active users (users who have been active in the last 30 days)
-      // We'll count users who have created orchards, made bestowals, or sent messages recently
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       console.log('📅 AdminDashboard: Looking for activity since:', thirtyDaysAgo.toISOString())
 
-      // Get users who created orchards in last 30 days
       const { data: orchardUsers, error: orchardError } = await supabase
         .from('orchards')
         .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('🌳 AdminDashboard: Orchard users:', orchardUsers?.length || 0, orchardError)
-
-      // Get users who made bestowals in last 30 days
       const { data: bestowalUsers, error: bestowalError } = await supabase
         .from('bestowals')
         .select('bestower_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('💝 AdminDashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError)
-
-      // Get users who sent messages in last 30 days
       const { data: messageUsers, error: messageError } = await supabase
         .from('chat_messages')
         .select('sender_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('💬 AdminDashboard: Message users:', messageUsers?.length || 0, messageError)
-
-      // Combine all unique user IDs
       const activeUserIds = new Set([
         ...(orchardUsers?.map(u => u.user_id) || []),
         ...(bestowalUsers?.map(u => u.bestower_id) || []),
@@ -153,14 +146,13 @@ export default function AdminDashboardPage() {
         if (gifterIds.length > 0) {
           const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
-            .select('user_id, display_name') // Only safe public fields
+            .select('user_id, display_name')
             .in('user_id', gifterIds)
 
           if (profilesError) {
             console.error('Profiles query error:', profilesError)
           }
 
-          // Combine the data
           const seedsWithProfiles = seedsData.map(seed => ({
             ...seed,
             profiles: profilesData?.find(profile => profile.user_id === seed.gifter_id) || null
@@ -184,7 +176,6 @@ export default function AdminDashboardPage() {
   }
 
   const approveSeed = (seedId) => {
-    // Navigate to create orchard page with seed data for approval
     navigate(`/create-orchard?from_seed=${seedId}&approve=true`)
   }
 
@@ -202,7 +193,7 @@ export default function AdminDashboardPage() {
       if (error) throw error
 
       toast.success('Seed deleted successfully')
-      loadSeeds() // Reload seeds list
+      loadSeeds()
     } catch (error) {
       console.error('Error deleting seed:', error)
       toast.error('Failed to delete seed')
@@ -210,7 +201,6 @@ export default function AdminDashboardPage() {
   }
 
   const convertSeedToOrchard = (seedId) => {
-    // Navigate to create orchard page with seed data
     navigate(`/create-orchard?from_seed=${seedId}`)
   }
 
@@ -222,15 +212,10 @@ export default function AdminDashboardPage() {
       const result = await grantRole(selectedUser.user_id, selectedRole)
       if (result.success) {
         toast.success(`Successfully granted ${selectedRole} role to ${selectedUser.display_name}`)
-        
-        // Immediately reload users to get fresh data from database
         console.log('🔄 Reloading users immediately...')
         await loadUsers()
-        
-        // Reset the form but keep dialog open to show updated roles
         setSelectedRole('')
         
-        // Update selectedUser with fresh data from the reload
         const updatedUsersList = await fetchAllUsers()
         if (updatedUsersList.success) {
           const updatedUser = updatedUsersList.data.find(u => u.user_id === selectedUser.user_id)
@@ -239,7 +224,6 @@ export default function AdminDashboardPage() {
             console.log('✅ Updated selectedUser with fresh roles:', updatedUser.user_roles)
           }
         }
-        
       } else {
         console.error('❌ Failed to grant role:', result.error)
         toast.error(result.error || 'Failed to grant role')
@@ -260,12 +244,9 @@ export default function AdminDashboardPage() {
       const result = await revokeRole(userId, role)
       if (result.success) {
         toast.success(`Successfully revoked ${role} role from ${userName}`)
-        
-        // Immediately reload users to get fresh data
         console.log('🔄 Reloading users immediately...')
         await loadUsers()
         
-        // Update selectedUser if it's the same user
         if (selectedUser && selectedUser.user_id === userId) {
           const updatedUsersList = await fetchAllUsers()
           if (updatedUsersList.success) {
@@ -276,7 +257,6 @@ export default function AdminDashboardPage() {
             }
           }
         }
-        
       } else {
         console.error('❌ Failed to revoke role:', result.error)
         toast.error(result.error || 'Failed to revoke role')
@@ -349,421 +329,186 @@ export default function AdminDashboardPage() {
                 <Settings className="h-12 w-12 text-primary" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Gosat's Dashboard</h1>
-            <p className="text-muted-foreground">Manage user roles and permissions</p>
+            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Comprehensive management hub</p>
           </div>
         </div>
 
-        {/* Search and Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card className="md:col-span-2">
-            <CardContent className="pt-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Main Dashboard Tabs */}
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy Admin</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Registered</p>
-                  <p className="text-2xl font-bold text-foreground">{totalRegistered}</p>
-                </div>
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+          <TabsContent value="analytics">
+            <EnhancedAnalyticsDashboard />
+          </TabsContent>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active (30d)</p>
-                  <p className="text-2xl font-bold text-success">{activeUsers}</p>
-                </div>
-                <Calendar className="h-8 w-8 text-success" />
-              </div>
-            </CardContent>
-          </Card>
+          <TabsContent value="users">
+            <UserManagementDashboard />
+          </TabsContent>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Gosats</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {users.filter(u => u.user_roles?.some(r => r.role === 'gosat')).length}
-                  </p>
-                </div>
-                <Shield className="h-8 w-8 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Role Assignment */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>User Management & Roles</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Quick Role Assignment */}
-              <div>
-                <h3 className="font-medium text-sm mb-3">Quick Role Assignment</h3>
-                <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Grant Role to User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Grant Role to User</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Select User</Label>
-                        <Popover open={isUserDropdownOpen} onOpenChange={setIsUserDropdownOpen}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={isUserDropdownOpen}
-                              className="w-full justify-between bg-background"
-                            >
-                              {selectedUser 
-                                ? (selectedUser.display_name || `${selectedUser.first_name} ${selectedUser.last_name}`)
-                                : "Search users by name or ID..."
-                              }
-                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-full p-0" align="start">
-                            <Command>
-                              <CommandInput 
-                                placeholder="Search users..." 
-                                value={userSearchTerm}
-                                onValueChange={setUserSearchTerm}
-                              />
-                              <CommandList>
-                                <CommandEmpty>No users found.</CommandEmpty>
-                                <CommandGroup>
-                                  {users
-                                    .filter(user => 
-                                      user.display_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                      user.first_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                      user.last_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-                                      user.user_id?.toLowerCase().includes(userSearchTerm.toLowerCase())
-                                    )
-                                    .slice(0, 10)
-                                    .map((user) => (
-                                      <CommandItem
-                                        key={user.user_id}
-                                        value={user.user_id}
-                                        onSelect={() => {
-                                          setSelectedUser(user)
-                                          setIsUserDropdownOpen(false)
-                                          setUserSearchTerm('')
-                                        }}
-                                        className="cursor-pointer"
-                                      >
-                                        <div className="flex flex-col space-y-1 w-full">
-                                          <span className="font-medium">
-                                            {user.display_name || `${user.first_name} ${user.last_name}`}
-                                          </span>
-                                          <span className="text-sm text-muted-foreground">
-                                            ID: {user.user_id?.slice(0, 8)}...
-                                          </span>
-                                          {user.user_roles?.length > 0 && (
-                                            <div className="flex space-x-1">
-                                              {user.user_roles.map((role) => (
-                                                <Badge key={role.role} variant="outline" className="text-xs">
-                                                  {role.role}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div>
-                        <Label>Select Role</Label>
-                        <Select onValueChange={setSelectedRole}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose role..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="gosat">Gosat (Manager)</SelectItem>
-                            <SelectItem value="radio_admin">Radio Admin</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {selectedUser && selectedUser.user_roles?.length > 0 && (
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm font-medium mb-2">Current roles:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {selectedUser.user_roles.map((role) => (
-                              <Badge key={role.role} variant="secondary">
-                                {role.role}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      <Button onClick={handleGrantRole} className="w-full" disabled={!selectedUser || !selectedRole}>
-                        Grant Additional Role
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Users List with Roles Management */}
-              <div>
-                <h3 className="font-medium text-sm mb-3">All Users & Their Roles</h3>
-                <div className="max-h-96 overflow-y-auto border rounded-lg">
-                  {filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No users found</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-0">
-                      {filteredUsers.map((user, index) => (
-                        <div 
-                          key={user.user_id}
-                          className={`flex items-center justify-between p-4 ${
-                            index < filteredUsers.length - 1 ? 'border-b' : ''
-                          } hover:bg-muted/30 transition-colors`}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                  <User className="h-4 w-4 text-primary" />
-                                </div>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="font-medium text-sm truncate">
-                                  {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {user.user_id?.slice(0, 24)}...
-                                </p>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {user.user_roles && user.user_roles.length > 0 ? (
-                                user.user_roles.map((role) => (
-                                  <div key={role.role} className="flex items-center">
-                                    <Badge 
-                                      variant={getRoleBadgeVariant(role.role)}
-                                      className="text-xs flex items-center gap-1"
-                                    >
-                                      {getRoleIcon(role.role)}
-                                      {role.role}
-                                    </Badge>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleRevokeRole(user.user_id, role.role, user.display_name || `${user.first_name} ${user.last_name}`)}
-                                      className="h-6 w-6 p-0 ml-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ))
-                              ) : (
-                                <Badge variant="outline" className="text-xs text-muted-foreground">
-                                  No roles assigned
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex-shrink-0">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user)
-                                setIsRoleDialogOpen(true)
-                              }}
-                              className="text-xs"
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add Role
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+          <TabsContent value="payments">
+            <div className="bg-white rounded-lg border">
+              <AdminPaymentDashboard />
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        {/* Radio Station Management Section */}
-        <div className="mt-12">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-primary mb-2">📻 AOD Station Radio Management</h2>
-            <p className="text-muted-foreground">Personnel & Schedule Control</p>
-          </div>
-          
-          <Card className="border-2 border-blue-200 bg-blue-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Radio className="h-5 w-5 text-blue-600" />
-                  <span>Radio Operations</span>
-                </div>
-                <Badge variant="outline" className="bg-blue-100 text-blue-800">
-                  Active Management
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <RadioSlotApprovalInterface />
-                <AdminRadioManagement />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="moderation">
+            <ContentModerationDashboard />
+          </TabsContent>
 
-        {/* Seeds Management Section - Only for Gosats/Admins */}
-        {isAdminOrGosat && (
-          <div className="mt-16">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-primary mb-2">🌱 Seeds Management</h2>
-              <p className="text-muted-foreground">Review and manage community seed submissions</p>
-            </div>
-            
-            <Card className="border-2 border-green-200 bg-green-50/50">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Sprout className="h-5 w-5 text-green-600" />
-                    <span>Community Seeds</span>
+          <TabsContent value="legacy" className="space-y-6">
+            {/* Legacy admin content - search, stats, role management, seeds */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+              <Card className="md:col-span-2">
+                <CardContent className="pt-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search users..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                  <Badge variant="outline" className="bg-green-100 text-green-800">
-                    {seeds.length} pending
-                  </Badge>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Registered</p>
+                      <p className="text-2xl font-bold text-foreground">{totalRegistered}</p>
+                    </div>
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Active (30d)</p>
+                      <p className="text-2xl font-bold text-success">{activeUsers}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-success" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Gosats</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {users.filter(u => u.user_roles?.some(r => r.role === 'gosat')).length}
+                      </p>
+                    </div>
+                    <Shield className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Radio Management */}
+            <div className="space-y-6">
+              <AdminRadioManagement />
+              <RadioSlotApprovalInterface />
+            </div>
+
+            {/* Seeds Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Sprout className="h-5 w-5" />
+                  <span>Seeds Management</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {seedsLoading ? (
-                  <div className="flex items-center justify-center py-8">
+                  <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
-                ) : seeds.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Sprout className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No seeds submitted yet</p>
-                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {seeds.map((seed) => (
-                      <Card key={seed.id} className="hover:shadow-lg transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            {/* Seed Image */}
-                            {seed.images && seed.images.length > 0 && (
-                              <div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100">
-                                <img 
-                                  src={seed.images[0]} 
-                                  alt={seed.title}
-                                  className="w-full h-full object-cover"
-                                />
+                  <div className="space-y-4">
+                    {seeds.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">No seeds found</p>
+                    ) : (
+                      seeds.map((seed) => (
+                        <Card key={seed.id} className="border-l-4 border-l-primary">
+                          <CardContent className="pt-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{seed.title}</h3>
+                                <p className="text-muted-foreground text-sm mt-1">
+                                  {seed.description?.substring(0, 150)}...
+                                </p>
+                                <div className="flex items-center space-x-4 mt-3">
+                                  <div className="flex items-center space-x-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm">
+                                      {seed.profiles?.display_name || 'Anonymous'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm">
+                                      {new Date(seed.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                            
-                            {/* Seed Info */}
-                            <div>
-                              <h3 className="font-semibold text-sm mb-1 line-clamp-2">{seed.title}</h3>
-                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{seed.description}</p>
-                              <Badge variant="outline" className="text-xs">{seed.category}</Badge>
-                            </div>
-                            
-                            {/* Gifter Info */}
-                            <div className="text-xs text-muted-foreground">
-                              <p>Gifted by: {seed.profiles?.display_name || `${seed.profiles?.first_name} ${seed.profiles?.last_name}` || 'Unknown'}</p>
-                              <p>Date: {new Date(seed.created_at).toLocaleDateString()}</p>
-                            </div>
-                            
-                            {/* Actions */}
-                            <div className="flex flex-col space-y-2">
-                              {/* Primary Actions */}
-                              <div className="flex space-x-2">
-                                <Button 
-                                  size="sm" 
-                                  className="flex-1"
-                                  onClick={() => approveSeed(seed.id)}
-                                >
-                                  <Check className="h-3 w-3 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => deleteSeed(seed.id, seed.title)}
-                                  className="flex-1"
-                                >
-                                  <X className="h-3 w-3 mr-1" />
-                                  Delete
-                                </Button>
-                              </div>
-                              {/* Secondary Actions */}
-                              <div className="flex space-x-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="flex-1"
-                                  onClick={() => convertSeedToOrchard(seed.id)}
-                                >
-                                  <TreePine className="h-3 w-3 mr-1" />
-                                  Convert
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => window.open(`/seed/${seed.id}`, '_blank')}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
+                              <div className="flex flex-col space-y-2 ml-4">
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => approveSeed(seed.id)}
+                                    className="flex-1"
+                                  >
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => deleteSeed(seed.id, seed.title)}
+                                    className="flex-1"
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => convertSeedToOrchard(seed.id)}
+                                  >
+                                    <TreePine className="h-3 w-3 mr-1" />
+                                    Convert
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
