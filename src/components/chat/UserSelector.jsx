@@ -17,39 +17,29 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      // Get all user IDs first (this is a simplified approach - in production you'd want pagination)
-      const { data: allUsers, error: usersError } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .neq('user_id', user.id)
-        .limit(50); // Limit for performance
-
-      if (usersError) throw usersError;
-
-      if (allUsers && allUsers.length > 0) {
-        const userIds = allUsers.map(u => u.user_id);
-        const result = await getPublicProfiles(userIds);
-        
-        if (result.success) {
-          setUsers(result.data || []);
-        } else {
-          console.error('Error fetching user profiles:', result.error);
+    const run = async () => {
+      if (!user) return;
+      try {
+        setLoading(true);
+        if (!searchTerm || searchTerm.trim().length < 1) {
+          setUsers([]);
+          return;
         }
+        const { data, error } = await supabase.rpc('search_user_profiles', {
+          search_term: searchTerm.trim(),
+        });
+        if (error) throw error;
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error searching users:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    run();
+  }, [searchTerm, user]);
+
+  // Users list is populated via secure server-side search
 
   const filteredUsers = users.filter(profile => {
     const name = profile.display_name || `${profile.first_name} ${profile.last_name}`.trim();
@@ -81,7 +71,9 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
               <div className="text-center py-4">Loading users...</div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
-                No users found
+                {(!searchTerm || searchTerm.trim().length < 1)
+                  ? 'Type a name to search registered users'
+                  : 'No users found'}
               </div>
             ) : (
               filteredUsers.map((profile) => {
