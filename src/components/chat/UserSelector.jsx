@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureProfiles } from '@/hooks/useSecureProfiles';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
