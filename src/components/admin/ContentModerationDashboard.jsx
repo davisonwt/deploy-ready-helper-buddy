@@ -51,65 +51,54 @@ export function ContentModerationDashboard() {
   const loadReportedContent = async () => {
     try {
       setLoading(true);
-      
-      // For now, we'll create mock reported content since we don't have a reports table
-      // In a real implementation, this would fetch from a content_reports table
-      const mockReports = [
-        {
-          id: '1',
-          content_type: 'orchard',
-          content_id: 'orchard-1',
-          content_title: 'Suspicious Orchard Project',
-          content_preview: 'This project seems to be asking for money for questionable purposes...',
-          reporter_id: 'user-1',
-          reporter_name: 'John Doe',
-          reason: 'Fraudulent activity',
-          detailed_reason: 'This orchard appears to be a scam. The description is vague and the creator has no history.',
-          status: 'pending',
-          severity: 'high',
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          reviewed_by: null,
-          reviewed_at: null
-        },
-        {
-          id: '2',
-          content_type: 'message',
-          content_id: 'message-1',
-          content_title: 'Inappropriate Chat Message',
-          content_preview: 'User sent inappropriate content in the chat room...',
-          reporter_id: 'user-2',
-          reporter_name: 'Jane Smith',
-          reason: 'Inappropriate content',
-          detailed_reason: 'User was using offensive language and harassing other members.',
-          status: 'pending',
-          severity: 'medium',
-          created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          reviewed_by: null,
-          reviewed_at: null
-        },
-        {
-          id: '3',
-          content_type: 'video',
-          content_id: 'video-1',
-          content_title: 'Inappropriate Video Content',
-          content_preview: 'Video contains content that violates community guidelines...',
-          reporter_id: 'user-3',
-          reporter_name: 'Mike Johnson',
-          reason: 'Community guidelines violation',
-          detailed_reason: 'Video contains inappropriate content not suitable for our platform.',
-          status: 'approved',
-          severity: 'low',
-          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-          reviewed_by: user?.id,
-          reviewed_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
 
-      setReportedContent(mockReports);
-      
+      // Fetch real pending items for moderation from orchards (verification workflow)
+      const { data: pendingOrchards, error: orchardsError } = await supabase
+        .from('orchards')
+        .select('id, title, description, user_id, category, created_at, verification_status')
+        .eq('verification_status', 'pending')
+        .order('created_at', { ascending: true });
+
+      if (orchardsError) throw orchardsError;
+
+      // Fetch owner profiles for display
+      const userIds = (pendingOrchards || []).map(o => o.user_id);
+      let profilesMap = {};
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+        if (!profilesError && profiles) {
+          profilesMap = profiles.reduce((acc, p) => {
+            acc[p.user_id] = p;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Normalize into moderation items
+      const items = (pendingOrchards || []).map((o) => ({
+        id: o.id,
+        content_type: 'orchard',
+        content_id: o.id,
+        content_title: o.title,
+        content_preview: o.description || '',
+        reporter_id: o.user_id,
+        reporter_name: profilesMap[o.user_id]?.display_name || 'Orchard Owner',
+        reason: 'Verification pending',
+        detailed_reason: `Category: ${o.category || 'N/A'}`,
+        status: 'pending',
+        severity: 'medium',
+        created_at: o.created_at,
+        reviewed_by: null,
+        reviewed_at: null,
+      }));
+
+      setReportedContent(items);
     } catch (error) {
       console.error('Error loading reported content:', error);
-      toast.error('Failed to load reported content');
+      toast.error('Failed to load moderation queue');
     } finally {
       setLoading(false);
     }
@@ -117,53 +106,57 @@ export function ContentModerationDashboard() {
 
   const loadModerationStats = async () => {
     try {
-      // Mock stats - in real implementation, this would query the reports table
+      // Count orchards by verification status
+      const [{ count: pendingCount }, { count: approvedCount }, { count: rejectedCount }] = await Promise.all([
+        supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('verification_status', 'pending'),
+        supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('verification_status', 'verified'),
+        supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('verification_status', 'rejected'),
+      ]);
+
       setStats({
-        pending: 2,
-        approved: 1,
-        rejected: 0,
-        total: 3
+        pending: pendingCount || 0,
+        approved: approvedCount || 0,
+        rejected: rejectedCount || 0,
+        total: (pendingCount || 0) + (approvedCount || 0) + (rejectedCount || 0),
       });
     } catch (error) {
       console.error('Error loading moderation stats:', error);
     }
   };
 
-  const handleApproveContent = async (reportId) => {
+  const handleApproveContent = async (orchardId) => {
     try {
-      // In real implementation, this would update the report status
-      setReportedContent(prev => 
-        prev.map(item => 
-          item.id === reportId 
-            ? { ...item, status: 'approved', reviewed_by: user.id, reviewed_at: new Date().toISOString() }
-            : item
-        )
-      );
-      
-      toast.success('Content approved successfully');
+      const { error } = await supabase
+        .from('orchards')
+        .update({ verification_status: 'verified', updated_at: new Date().toISOString() })
+        .eq('id', orchardId);
+
+      if (error) throw error;
+
+      setReportedContent(prev => prev.filter(item => item.id !== orchardId));
+      toast.success('Orchard verified successfully');
       await loadModerationStats();
     } catch (error) {
       console.error('Error approving content:', error);
-      toast.error('Failed to approve content');
+      toast.error('Failed to verify orchard');
     }
   };
 
-  const handleRejectContent = async (reportId) => {
+  const handleRejectContent = async (orchardId) => {
     try {
-      // In real implementation, this would update the report status and potentially take action on the content
-      setReportedContent(prev => 
-        prev.map(item => 
-          item.id === reportId 
-            ? { ...item, status: 'rejected', reviewed_by: user.id, reviewed_at: new Date().toISOString() }
-            : item
-        )
-      );
-      
-      toast.success('Content rejected and action taken');
+      const { error } = await supabase
+        .from('orchards')
+        .update({ verification_status: 'rejected', updated_at: new Date().toISOString() })
+        .eq('id', orchardId);
+
+      if (error) throw error;
+
+      setReportedContent(prev => prev.filter(item => item.id !== orchardId));
+      toast.success('Orchard rejected');
       await loadModerationStats();
     } catch (error) {
       console.error('Error rejecting content:', error);
-      toast.error('Failed to reject content');
+      toast.error('Failed to reject orchard');
     }
   };
 
