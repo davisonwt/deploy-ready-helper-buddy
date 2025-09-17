@@ -7,6 +7,8 @@
   "background_color": "#ffffff",
   "theme_color": "#22c55e",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/placeholder.svg",
@@ -23,5 +25,29 @@
   ],
   "categories": ["agriculture", "community", "finance"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "screenshots": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Orchards",
+      "short_name": "Browse",
+      "description": "Browse available orchard projects",
+      "url": "/browse",
+      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Create Orchard",
+      "short_name": "Create",
+      "description": "Create a new orchard project",
+      "url": "/create",
+      "icons": [{ "src": "/placeholder.svg", "sizes": "96x96" }]
+    }
+  ]
 }

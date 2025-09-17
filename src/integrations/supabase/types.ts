@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliates: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          earnings: number
+          id: string
+          is_active: boolean
+          referral_code: string
+          total_referrals: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          earnings?: number
+          id?: string
+          is_active?: boolean
+          referral_code: string
+          total_referrals?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          earnings?: number
+          id?: string
+          is_active?: boolean
+          referral_code?: string
+          total_referrals?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_creations: {
         Row: {
           content_text: string | null
@@ -86,6 +122,42 @@ export type Database = {
           generations_count?: number
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      available_achievements: {
+        Row: {
+          achievement_type: string
+          created_at: string
+          criteria: Json | null
+          description: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          points_awarded: number
+          title: string
+        }
+        Insert: {
+          achievement_type: string
+          created_at?: string
+          criteria?: Json | null
+          description: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          points_awarded?: number
+          title: string
+        }
+        Update: {
+          achievement_type?: string
+          created_at?: string
+          criteria?: Json | null
+          description?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          points_awarded?: number
+          title?: string
         }
         Relationships: []
       }
@@ -1605,6 +1677,30 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          subscription: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subscription: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subscription?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       radio_automated_sessions: {
         Row: {
           completed_at: string | null
@@ -2343,6 +2439,50 @@ export type Database = {
             columns: ["show_id"]
             isOneToOne: false
             referencedRelation: "radio_shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          orchard_id: string | null
+          paid_at: string | null
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          orchard_id?: string | null
+          paid_at?: string | null
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          orchard_id?: string | null
+          paid_at?: string | null
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
             referencedColumns: ["id"]
           },
         ]
