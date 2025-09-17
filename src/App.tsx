@@ -59,6 +59,9 @@ import ClubhousePage from "./pages/ClubhousePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
+import CommissionDashboard from "./components/marketing/CommissionDashboard"
+import GamificationDashboard from "./components/gamification/GamificationDashboard"
+import AdvancedSearchPage from "./pages/AdvancedSearchPage"
 
 const queryClient = new QueryClient();
 
@@ -380,6 +383,27 @@ const App = () => (
               {/* Payment Routes */}
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
+              
+              {/* Advanced Features Routes */}
+              <Route path="/commissions" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CommissionDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/achievements" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <GamificationDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/search" element={
+                <Layout>
+                  <AdvancedSearchPage />
+                </Layout>
+              } />
               
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
