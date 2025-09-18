@@ -14,6 +14,27 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', '@tanstack/react-query'],
+          admin: [
+            './src/components/admin/EnhancedAnalyticsDashboard',
+            './src/components/admin/UserManagementDashboard',
+            './src/components/admin/ContentModerationDashboard'
+          ],
+          marketing: ['./src/components/marketing/CommissionDashboard'],
+          gamification: ['./src/components/gamification/GamificationDashboard'],
+        },
+      },
+    },
+  },
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: {
