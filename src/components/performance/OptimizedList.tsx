@@ -1,6 +1,32 @@
 import { memo, useMemo } from 'react';
-import { FixedSizeList as List } from 'react-window';
 import { Card, CardContent } from '@/components/ui/card';
+
+// Simple virtualized list without react-window for now
+interface ListItemProps {
+  index: number;
+  style: React.CSSProperties;
+}
+
+const VirtualizedList: React.FC<{
+  height: number;
+  itemCount: number;
+  itemSize: number;
+  children: React.ComponentType<ListItemProps>;
+}> = ({ height, itemCount, itemSize, children: ItemComponent }) => {
+  const items = Array.from({ length: itemCount }, (_, index) => (
+    <ItemComponent
+      key={index}
+      index={index}
+      style={{ height: itemSize }}
+    />
+  ));
+
+  return (
+    <div style={{ height, overflowY: 'auto' }}>
+      {items}
+    </div>
+  );
+};
 
 interface Item {
   id: number;
@@ -46,14 +72,13 @@ const OptimizedList = memo(({ items, height = 400, itemSize = 80 }: OptimizedLis
   }
 
   return (
-    <List
+    <VirtualizedList
       height={height}
       itemCount={sortedItems.length}
       itemSize={itemSize}
-      width="100%"
     >
       {Row}
-    </List>
+    </VirtualizedList>
   );
 });
 

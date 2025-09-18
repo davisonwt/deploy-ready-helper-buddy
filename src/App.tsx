@@ -1,26 +1,23 @@
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth";
-import { BasketProvider } from "./hooks/useBasket";
-import { ThemeProvider } from "./components/ui/theme-provider";
-import { AppContextProvider } from "./contexts/AppContext";
-import LiveActivityWidget from "./components/LiveActivityWidget";
-import { lazy, Suspense } from "react";
-import "./utils/errorDetection"; // Initialize error detection
-import "./utils/cookieConfig"; // Configure cookie policy
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
+import EnhancedErrorBoundary from "./components/error/EnhancedErrorBoundary";
+import PerformanceMonitor from "./components/performance/PerformanceMonitor";
+import { Card, CardContent } from "@/components/ui/card";
 
-// Initialize error detection system
-console.log('🚀 Error Detection System Initialized');
+// Lazy load heavy components for better performance
+const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
+const UserManagementDashboard = lazy(() => import('./components/admin/UserManagementDashboard'));
+const ContentModerationDashboard = lazy(() => import('./components/admin/ContentModerationDashboard'));
+const CommissionDashboard = lazy(() => import('./components/marketing/CommissionDashboard'));
+const GamificationDashboard = lazy(() => import('./components/gamification/GamificationDashboard'));
+const AdvancedSearchPage = lazy(() => import('./pages/AdvancedSearchPage'));
 
-// Lazy-loaded pages
-const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
-const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
-const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
-
-// Pages that exist
+// Import existing components
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -48,22 +45,54 @@ import { AdminSeedsPage } from "./pages/AdminSeedsPage";
 import ChatappPage from "./pages/ChatappPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import MarketingVideosGallery from "./pages/MarketingVideosGallery.jsx";
-import AIAssistantPage from "./pages/AIAssistantPage"; // AI Marketing Assistant
+import AIAssistantPage from "./pages/AIAssistantPage";
 import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
 import GroveStationPage from "./pages/GroveStationPage";
 import RadioManagementPage from "./pages/RadioManagementPage";
 import ClubhousePage from "./pages/ClubhousePage";
 
+// Lazy-loaded pages for performance
+const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
+const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
+const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
+
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
 import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
-import CommissionDashboard from "./components/marketing/CommissionDashboard"
-import GamificationDashboard from "./components/gamification/GamificationDashboard"
-import AdvancedSearchPage from "./pages/AdvancedSearchPage"
+import { AuthProvider } from "./hooks/useAuth";
+import { BasketProvider } from "./hooks/useBasket";
+import { AppContextProvider } from "./contexts/AppContext";
+import LiveActivityWidget from "./components/LiveActivityWidget";
+import "./utils/errorDetection"; // Initialize error detection
+import "./utils/cookieConfig"; // Configure cookie policy
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry on authentication errors
+        if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+
+// Loading component for Suspense fallback
+const LoadingFallback = () => (
+  <Card className="m-4">
+    <CardContent className="flex items-center justify-center h-32">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <span className="ml-2 text-muted-foreground">Loading...</span>
+    </CardContent>
+  </Card>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -75,6 +104,8 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <EnhancedErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -384,38 +415,46 @@ const App = () => (
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
               
-              {/* Advanced Features Routes */}
               <Route path="/commissions" element={
                 <ProtectedRoute>
                   <Layout>
-                    <CommissionDashboard />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <CommissionDashboard />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />
               <Route path="/achievements" element={
                 <ProtectedRoute>
                   <Layout>
-                    <GamificationDashboard />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <GamificationDashboard />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />
               <Route path="/search" element={
                 <Layout>
-                  <AdvancedSearchPage />
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AdvancedSearchPage />
+                  </Suspense>
                 </Layout>
               } />
               
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <LiveActivityWidget />
-        </TooltipProvider>
-      </AppContextProvider>
-    </BasketProvider>
-  </AuthProvider>
-</ThemeProvider>
-</QueryClientProvider>
+                  </Routes>
+                  </Suspense>
+                </EnhancedErrorBoundary>
+                <PerformanceMonitor />
+                <LiveActivityWidget />
+              </BrowserRouter>
+            </TooltipProvider>
+          </AppContextProvider>
+        </BasketProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
 );
 
 export default App;
