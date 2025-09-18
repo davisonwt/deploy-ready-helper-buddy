@@ -918,6 +918,48 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          component_stack: string | null
+          created_at: string
+          error_id: string | null
+          error_message: string
+          error_name: string | null
+          error_stack: string | null
+          id: string
+          timestamp: string
+          url: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component_stack?: string | null
+          created_at?: string
+          error_id?: string | null
+          error_message: string
+          error_name?: string | null
+          error_stack?: string | null
+          id?: string
+          timestamp?: string
+          url: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component_stack?: string | null
+          created_at?: string
+          error_id?: string | null
+          error_message?: string
+          error_name?: string | null
+          error_stack?: string | null
+          id?: string
+          timestamp?: string
+          url?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       live_call_participants: {
         Row: {
           call_session_id: string

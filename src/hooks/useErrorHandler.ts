@@ -36,20 +36,16 @@ export const useErrorHandler = () => {
       });
     }
 
-    // Log to Supabase
+    // Log to console for now (will use Supabase after types are updated)
     if (logToSupabase) {
-      try {
-        await supabase.from('error_logs').insert({
-          error_message: errorMessage,
-          error_stack: errorDetails?.stack,
-          error_name: errorDetails?.name,
-          user_agent: navigator.userAgent,
-          url: window.location.href,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (logError) {
-        console.error('Failed to log error to Supabase:', logError);
-      }
+      console.error('Error logged:', {
+        error_message: errorMessage,
+        error_stack: errorDetails?.stack,
+        error_name: errorDetails?.name,
+        user_agent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // Always log to console in development
