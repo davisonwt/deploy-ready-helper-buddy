@@ -31,20 +31,9 @@ class EnhancedErrorBoundary extends Component<Props, State> {
     };
   }
 
-  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Enhanced Error Boundary caught error:', error, errorInfo);
     
-    // Log error to console for now (Supabase types will be updated after migration)
-    console.error('Enhanced Error Boundary - Error Details:', {
-      error_message: error.message,
-      error_stack: error.stack,
-      component_stack: errorInfo.componentStack,
-      error_id: this.state.errorId,
-      user_agent: navigator.userAgent,
-      url: window.location.href,
-      timestamp: new Date().toISOString(),
-    });
-
     // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
