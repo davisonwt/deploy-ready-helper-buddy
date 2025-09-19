@@ -46,21 +46,6 @@ function IndexContent() {
     }
   }, [isAuthenticated, loading, navigate])
   
-  // Also check auth immediately on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      console.log('🏠 Index: Checking immediate auth state')
-      // Force check current session
-      const { data: { session } } = await supabase.auth.getSession()
-      console.log('🏠 Index: Current session:', !!session)
-      if (session) {
-        console.log('🏠 Index: Found session, redirecting to dashboard')
-        navigate('/dashboard', { replace: true })
-      }
-    }
-    checkAuth()
-  }, [navigate])
-  
   // Show loading while checking auth state
   if (loading) {
     return (
@@ -72,11 +57,7 @@ function IndexContent() {
   
   // Don't render the landing page if user is authenticated (they're being redirected)
   if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
+    return null // Return null instead of loading spinner to avoid visual flash
   }
 
 
