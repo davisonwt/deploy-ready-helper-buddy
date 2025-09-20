@@ -14,7 +14,7 @@ import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
 import { OrchardMarketingAssistant } from "../components/ai/OrchardMarketingAssistant"
 import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
-import { EnhancedImageUpload } from "../components/upload/EnhancedImageUpload"
+import EnhancedImageUpload from "../components/upload/EnhancedImageUpload"
 import { 
   Plus, 
   Sprout, 
