@@ -82,9 +82,20 @@ export default function MyOrchardsPage() {
     // First process URLs to ensure they're public URLs
     const processedOrchards = processOrchardsUrls(orchards);
     
-    // Filter to show only user's own orchards
+  // Filter to show only user's own orchards - Debug logging
+    console.log('🔍 MyOrchards Debug:', {
+      userHasId: !!user?.id,
+      userId: user?.id,
+      totalOrchards: processedOrchards.length,
+      orchardUserIds: processedOrchards.map(o => ({ id: o.id, user_id: o.user_id, title: o.title }))
+    });
+    
     let filtered = processedOrchards.filter(orchard => {
-      return orchard.user_id === user?.id
+      const isUserOrchard = orchard.user_id === user?.id;
+      if (!isUserOrchard) {
+        console.log(`❌ Orchard ${orchard.title} not owned by user:`, { orchard_user_id: orchard.user_id, current_user_id: user?.id });
+      }
+      return isUserOrchard;
     })
     
     if (searchTerm) {

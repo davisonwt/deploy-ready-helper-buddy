@@ -97,17 +97,28 @@ export default function DJPlaylistManager() {
         .from('radio_djs')
         .select('id')
         .eq('user_id', user.id)
-        .limit(1)
-        .single()
+        .maybeSingle()
 
-      if (djError) throw djError
+      console.log('🎵 DJ Profile fetch result:', { djProfile, djError, userId: user.id });
 
-      if (!djProfile) {
+      if (djError) {
+        console.error('DJ Profile error:', djError);
         toast({
-          title: "DJ Profile Required",
-          description: "You need to create a DJ profile first to manage playlists",
+          title: "Error fetching DJ profile",
+          description: djError.message,
           variant: "destructive"
         })
+        return
+      }
+
+      if (!djProfile) {
+        console.log('❌ No DJ profile found for user:', user.id);
+        toast({
+          title: "DJ Profile Required",
+          description: "You need to create a DJ profile first to manage playlists. Go to 'DJ Profiles' section.",
+          variant: "destructive"
+        })
+        setLoading(false)
         return
       }
 

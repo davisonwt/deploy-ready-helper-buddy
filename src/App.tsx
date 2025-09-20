@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import EnhancedErrorBoundary from "./components/error/EnhancedErrorBoundary";
 import PerformanceMonitor from "./components/performance/PerformanceMonitor";
 import { Card, CardContent } from "@/components/ui/card";
+import SolanaProvider from "./providers/SolanaProvider";
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -97,10 +98,11 @@ const LoadingFallback = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
-      <AuthProvider>
-        <BasketProvider>
-          <AppContextProvider>
-            <TooltipProvider>
+      <SolanaProvider>
+        <AuthProvider>
+          <BasketProvider>
+            <AppContextProvider>
+              <TooltipProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter>
@@ -453,6 +455,7 @@ const App = () => (
           </AppContextProvider>
         </BasketProvider>
       </AuthProvider>
+      </SolanaProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
