@@ -301,6 +301,16 @@ const OrchardPage = () => {
                     <p className="text-orange-600">{orchard.how_it_helps}</p>
                   </div>
                  )}
+
+                 {/* Enhanced Payment Section */}
+                 <div className="mt-8">
+                   <h3 className="text-lg font-semibold text-orange-700 mb-4">Support This Orchard</h3>
+                   <EnhancedPaymentWidget 
+                     orchardId={orchard.id}
+                     orchardTitle={orchard.title}
+                     defaultAmount={orchard.pocket_price || 150}
+                   />
+                 </div>
                </CardContent>
              </div>
            </Card>
