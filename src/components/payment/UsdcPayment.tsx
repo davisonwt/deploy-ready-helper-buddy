@@ -12,8 +12,13 @@ import { useParams } from 'react-router-dom';
 import { connection, USDC_MINT } from '@/lib/solana';
 import { PublicKey } from '@solana/web3.js';
 
-const UsdcPayment = ({ amount = 10 }: { amount?: number }) => {
-  const { id: orchardId } = useParams<{ id: string }>();
+const UsdcPayment = ({ amount = 10, orchardId, onSuccess }: { 
+  amount?: number; 
+  orchardId?: string;
+  onSuccess?: (signature: string) => void;
+}) => {
+  const { id: paramOrchardId } = useParams<{ id: string }>();
+  const targetOrchardId = orchardId || paramOrchardId;
   const wallet = useWallet();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +30,7 @@ const UsdcPayment = ({ amount = 10 }: { amount?: number }) => {
       setError('Wallet not connected');
       return;
     }
-    if (!orchardId) {
+    if (!targetOrchardId) {
       setError('Invalid orchard');
       return;
     }
@@ -80,11 +85,14 @@ const UsdcPayment = ({ amount = 10 }: { amount?: number }) => {
 
       setTxSignature(signature);
       toast({ title: 'Payment successful!', description: `Tx: ${signature}` });
+      
+      // Call success callback
+      onSuccess?.(signature);
 
       // Update DB bestowal with required fields
       const { data: userProfile } = await supabase.auth.getUser();
       await supabase.from('bestowals').insert({
-        orchard_id: orchardId,
+        orchard_id: targetOrchardId,
         bestower_id: userProfile.user?.id,
         amount,
         pockets_count: 1,

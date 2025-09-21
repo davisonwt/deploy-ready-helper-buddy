@@ -166,6 +166,7 @@ export type Database = {
           amount: number
           bestower_id: string
           bestower_profile_id: string | null
+          blockchain_network: string | null
           created_at: string
           currency: string
           id: string
@@ -176,12 +177,14 @@ export type Database = {
           payment_status: string
           pocket_numbers: number[] | null
           pockets_count: number
+          tx_signature: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           bestower_id: string
           bestower_profile_id?: string | null
+          blockchain_network?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -192,12 +195,14 @@ export type Database = {
           payment_status?: string
           pocket_numbers?: number[] | null
           pockets_count: number
+          tx_signature?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           bestower_id?: string
           bestower_profile_id?: string | null
+          blockchain_network?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -208,6 +213,7 @@ export type Database = {
           payment_status?: string
           pocket_numbers?: number[] | null
           pockets_count?: number
+          tx_signature?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1233,6 +1239,7 @@ export type Database = {
           payment_processing_fee: number
           pocket_price: number
           profile_id: string
+          recipient_pubkey: string | null
           seed_value: number
           status: Database["public"]["Enums"]["orchard_status"]
           supporters: number
@@ -1269,6 +1276,7 @@ export type Database = {
           payment_processing_fee?: number
           pocket_price?: number
           profile_id: string
+          recipient_pubkey?: string | null
           seed_value: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
@@ -1305,6 +1313,7 @@ export type Database = {
           payment_processing_fee?: number
           pocket_price?: number
           profile_id?: string
+          recipient_pubkey?: string | null
           seed_value?: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
