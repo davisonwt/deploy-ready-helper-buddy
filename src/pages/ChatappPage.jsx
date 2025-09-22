@@ -32,6 +32,7 @@ import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import FileUploadArea from '@/components/chat/FileUploadArea';
 import ChatFileManager from '@/components/chat/ChatFileManager';
+import ChatInput from '@/components/chat/ChatInput';
 import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
 import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession';
 import InviteModal from '@/components/chat/InviteModal';
