@@ -395,6 +395,16 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Layout>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <AdminDashboardPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
               <Route path="/admin/radio" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
