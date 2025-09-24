@@ -51,6 +51,8 @@ import TestBasketPage from "./pages/TestBasketPage";
 import GroveStationPage from "./pages/GroveStationPage";
 import RadioManagementPage from "./pages/RadioManagementPage";
 import ClubhousePage from "./pages/ClubhousePage";
+import VideoPage from "./pages/VideoPage";
+import VideoUploadPage from "./pages/VideoUploadPage";
 
 // Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
@@ -313,6 +315,14 @@ const App = () => (
               <Route path="/clubhouse" element={
                 <ProtectedRoute>
                   <ClubhousePage />
+                </ProtectedRoute>
+              } />
+
+              {/* Video System */}
+              <Route path="/video/:id" element={<VideoPage />} />
+              <Route path="/upload" element={
+                <ProtectedRoute requireAuth>
+                  <VideoUploadPage />
                 </ProtectedRoute>
               } />
 
