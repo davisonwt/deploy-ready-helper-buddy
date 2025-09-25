@@ -34,10 +34,10 @@ const VideoGeneration = () => {
         .from('ai_creations')
         .insert({
           user_id: user.id,
-          content_type: 'video',
+          content_type: 'voice_over', // Using existing enum value
           title: `Video: ${prompt.substring(0, 40)}...`,
           content_text: prompt,
-          metadata: { status: 'pending' }
+          metadata: { status: 'pending', type: 'video' }
         })
         .select()
         .single();
@@ -65,14 +65,17 @@ const VideoGeneration = () => {
           throw pollError;
         }
 
-        if (updated?.metadata?.status === 'completed' && updated?.metadata?.video_url) {
-          setVideoUrl(updated.metadata.video_url);
-          clearInterval(pollInterval);
-          toast({ title: 'Video generated successfully!' });
-          setGenerating(false);
-        } else if (updated?.metadata?.status === 'failed') {
-          clearInterval(pollInterval);
-          throw new Error('Video generation failed');
+        if (updated?.metadata && typeof updated.metadata === 'object') {
+          const metadata = updated.metadata as any;
+          if (metadata.status === 'completed' && metadata.video_url) {
+            setVideoUrl(metadata.video_url);
+            clearInterval(pollInterval);
+            toast({ title: 'Video generated successfully!' });
+            setGenerating(false);
+          } else if (metadata.status === 'failed') {
+            clearInterval(pollInterval);
+            throw new Error('Video generation failed');
+          }
         }
       }, 5000);
 
