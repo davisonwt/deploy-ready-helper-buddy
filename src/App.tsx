@@ -53,6 +53,7 @@ import RadioManagementPage from "./pages/RadioManagementPage";
 import ClubhousePage from "./pages/ClubhousePage";
 import VideoPage from "./pages/VideoPage";
 import VideoUploadPage from "./pages/VideoUploadPage";
+import RadioPage from "./components/radio/RadioPage";
 
 // Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
@@ -309,7 +310,16 @@ const App = () => (
                     <RadioManagementPage />
                   </Layout>
                 </ProtectedRoute>
-              } />
+               } />
+               
+               {/* Radio Station */}
+               <Route path="/radio" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <RadioPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
 
               {/* Clubhouse - Live Audio Conversations */}
               <Route path="/clubhouse" element={

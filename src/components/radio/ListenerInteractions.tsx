@@ -37,7 +37,7 @@ const ListenerInteractions = () => {
           event: 'INSERT', 
           schema: 'public', 
           table: 'live_session_messages',
-          filter: 'message_type=eq.comment'
+          filter: 'message_type=in.(comment,request)'
         },
         (payload) => {
           setComments((prev) => [payload.new as Comment, ...prev.slice(0, 49)]);
@@ -55,7 +55,7 @@ const ListenerInteractions = () => {
       const { data } = await supabase
         .from('live_session_messages')
         .select('id, sender_id, content, message_type, created_at')
-        .eq('message_type', 'comment')
+        .in('message_type', ['comment', 'request'])
         .order('created_at', { ascending: false })
         .limit(50);
 

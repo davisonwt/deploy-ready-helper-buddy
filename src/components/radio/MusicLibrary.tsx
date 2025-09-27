@@ -104,7 +104,7 @@ const MusicLibrary = () => {
           <div 
             {...getRootProps()} 
             className={`border-2 border-dashed p-8 rounded-lg text-center cursor-pointer transition-colors ${
-              isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/25 hover:border-primary/50'
+              isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
             }`}
           >
             <input {...getInputProps()} />

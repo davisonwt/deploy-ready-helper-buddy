@@ -101,6 +101,7 @@ export default function Layout({ children }) {
       items: [
         { name: "chatapp", href: "/chatapp", icon: MessageSquare },
         { name: "heretics radio station", href: "/grove-station", icon: Mic },
+        { name: "Radio Station", href: "/radio", icon: Radio },
         ...(roles?.userRoles?.includes('radio_admin') || roles?.userRoles?.includes('admin') || roles?.userRoles?.includes('gosat') ? [
           { name: "Heretic Management System", href: "/radio-management", icon: Settings }
         ] : [])
