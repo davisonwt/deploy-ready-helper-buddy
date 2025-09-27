@@ -16,8 +16,8 @@ const LiveStreamPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
-  // Demo stream URL - replace with actual stream
-  const streamUrl = 'https://radio.example.com/stream'; // Replace with real stream URL
+  // Grove Station stream URL (replace with your actual stream URL)
+  const streamUrl = 'https://s9.voscast.com:9525/stream'; // Example Shoutcast stream
 
   useEffect(() => {
     // Subscribe to live radio updates
