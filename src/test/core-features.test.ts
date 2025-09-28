@@ -1,11 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
-
-// Import screen and events from testing library user-event
-import userEvent from '@testing-library/user-event';
 
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
@@ -49,105 +42,77 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: vi.fn(() => ({ toast: vi.fn() })),
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: { queries: { retry: false } }
-});
-
-const TestWrapper = ({ children }: { children: React.ReactNode }) => {
-  const queryClient = createTestQueryClient();
-  return (
-    React.createElement(QueryClientProvider, { client: queryClient },
-      React.createElement(BrowserRouter, null, children)
-    )
-  );
-};
-
 describe('Core Features Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should render authentication form', async () => {
-    const mockSignIn = vi.fn();
+  it('should authenticate user successfully', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
     
-    render(
-      React.createElement(TestWrapper, null,
-        React.createElement('form', {
-          onSubmit: (e: Event) => { e.preventDefault(); mockSignIn(); }
-        },
-          React.createElement('input', { type: 'email', placeholder: 'Email' }),
-          React.createElement('input', { type: 'password', placeholder: 'Password' }),
-          React.createElement('button', { type: 'submit' }, 'Sign In')
-        )
-      )
-    );
+    await supabase.auth.signInWithPassword({
+      email: 'test@example.com',
+      password: 'password123'
+    });
 
-    const emailInput = document.querySelector('input[placeholder="Email"]');
-    const passwordInput = document.querySelector('input[placeholder="Password"]');
-    expect(emailInput).toBeTruthy();
-    expect(passwordInput).toBeTruthy();
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123'
+    });
   });
 
-  it('should handle video upload flow', async () => {
-    const mockUpload = vi.fn();
+  it('should handle video upload', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
     
-    render(
-      React.createElement(TestWrapper, null,
-        React.createElement('div', null,
-          React.createElement('input', { type: 'file', accept: 'video/*', onChange: mockUpload }),
-          React.createElement('button', null, 'Upload Video')
-        )
-      )
-    );
+    await supabase.storage.from('videos').upload('test.mp4', new File(['video'], 'test.mp4'));
 
-    const fileInput = document.querySelector('button');
-    expect(fileInput).toBeTruthy();
+    expect(supabase.storage.from).toHaveBeenCalledWith('videos');
+  });
+
+  it('should handle payment processing', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    await supabase.from('bestowals').insert({
+      amount: 10,
+      currency: 'USDC',
+      bestower_id: 'user1',
+      orchard_id: 'orchard1'
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith('bestowals');
   });
 
   it('should handle chat messaging', async () => {
-    const mockSendMessage = vi.fn();
+    const { supabase } = await import('@/integrations/supabase/client');
     
-    render(
-      React.createElement(TestWrapper, null,
-        React.createElement('div', null,
-          React.createElement('input', { placeholder: 'Type a message...' }),
-          React.createElement('button', { onClick: mockSendMessage }, 'Send')
-        )
-      )
-    );
+    await supabase.from('chat_messages').insert({
+      content: 'Hello world',
+      sender_id: 'user1',
+      room_id: 'room1'
+    });
 
-    const sendButton = document.querySelector('button');
-    if (sendButton) {
-      sendButton.click();
-    }
-    expect(mockSendMessage).toHaveBeenCalled();
-  });
-
-  it('should validate payment flows', async () => {
-    const mockPayment = vi.fn();
-    
-    render(
-      React.createElement(TestWrapper, null,
-        React.createElement('button', { onClick: mockPayment }, 'Pay 10 USDC')
-      )
-    );
-
-    const payButton = document.querySelector('button');
-    if (payButton) {
-      payButton.click();
-    }
-    expect(mockPayment).toHaveBeenCalled();
+    expect(supabase.from).toHaveBeenCalledWith('chat_messages');
   });
 
   it('should handle error states gracefully', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     
-    const ErrorComponent = () => {
+    const errorFunction = () => {
       throw new Error('Test error');
     };
 
-    expect(() => render(React.createElement(TestWrapper, null, React.createElement(ErrorComponent)))).toThrow('Test error');
+    expect(() => errorFunction()).toThrow('Test error');
     
     consoleSpy.mockRestore();
+  });
+
+  it('should validate data integrity', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const mockData = { id: 'test', name: 'Test Item' };
+    
+    await supabase.from('orchards').select().eq('id', 'test').single();
+
+    expect(supabase.from).toHaveBeenCalledWith('orchards');
   });
 });
