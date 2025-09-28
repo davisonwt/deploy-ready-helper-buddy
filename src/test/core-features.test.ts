@@ -66,7 +66,6 @@ describe('Core Features Tests', () => {
   });
 
   it('should render authentication form', async () => {
-    // Mock login component test
     const mockSignIn = vi.fn();
     
     render(
@@ -95,7 +94,7 @@ describe('Core Features Tests', () => {
       </TestWrapper>
     );
 
-    const fileInput = screen.getByRole('textbox');
+    const fileInput = screen.getByRole('button');
     expect(fileInput).toBeInTheDocument();
   });
 

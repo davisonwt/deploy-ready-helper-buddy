@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import EnhancedErrorBoundary from "./components/error/EnhancedErrorBoundary";
+import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/performance/PerformanceMonitor";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -75,14 +75,18 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error: any) => {
-        // Don't retry on authentication errors
         if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) {
           return false;
         }
         return failureCount < 3;
       },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    },
+    mutations: {
+      onError: (error: any) => {
+        console.error('Mutation error:', error);
+      },
     },
   },
 });
@@ -107,7 +111,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <EnhancedErrorBoundary>
+                <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Public Routes */}
@@ -475,7 +479,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
                   </Routes>
                   </Suspense>
-                </EnhancedErrorBoundary>
+                </ErrorBoundary>
                 <PerformanceMonitor />
                 <LiveActivityWidget />
               </BrowserRouter>
