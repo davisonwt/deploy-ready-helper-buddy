@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
 
 // Mock Supabase
 vi.mock('@/integrations/supabase/client', () => ({
@@ -52,11 +53,9 @@ const createTestQueryClient = () => new QueryClient({
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = createTestQueryClient();
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {children}
-      </BrowserRouter>
-    </QueryClientProvider>
+    React.createElement(QueryClientProvider, { client: queryClient },
+      React.createElement(BrowserRouter, null, children)
+    )
   );
 };
 
@@ -69,13 +68,15 @@ describe('Core Features Tests', () => {
     const mockSignIn = vi.fn();
     
     render(
-      <TestWrapper>
-        <form onSubmit={(e) => { e.preventDefault(); mockSignIn(); }}>
-          <input type="email" placeholder="Email" />
-          <input type="password" placeholder="Password" />
-          <button type="submit">Sign In</button>
-        </form>
-      </TestWrapper>
+      React.createElement(TestWrapper, null,
+        React.createElement('form', {
+          onSubmit: (e: Event) => { e.preventDefault(); mockSignIn(); }
+        },
+          React.createElement('input', { type: 'email', placeholder: 'Email' }),
+          React.createElement('input', { type: 'password', placeholder: 'Password' }),
+          React.createElement('button', { type: 'submit' }, 'Sign In')
+        )
+      )
     );
 
     expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
@@ -86,12 +87,12 @@ describe('Core Features Tests', () => {
     const mockUpload = vi.fn();
     
     render(
-      <TestWrapper>
-        <div>
-          <input type="file" accept="video/*" onChange={mockUpload} />
-          <button>Upload Video</button>
-        </div>
-      </TestWrapper>
+      React.createElement(TestWrapper, null,
+        React.createElement('div', null,
+          React.createElement('input', { type: 'file', accept: 'video/*', onChange: mockUpload }),
+          React.createElement('button', null, 'Upload Video')
+        )
+      )
     );
 
     const fileInput = screen.getByRole('button');
@@ -102,12 +103,12 @@ describe('Core Features Tests', () => {
     const mockSendMessage = vi.fn();
     
     render(
-      <TestWrapper>
-        <div>
-          <input placeholder="Type a message..." />
-          <button onClick={mockSendMessage}>Send</button>
-        </div>
-      </TestWrapper>
+      React.createElement(TestWrapper, null,
+        React.createElement('div', null,
+          React.createElement('input', { placeholder: 'Type a message...' }),
+          React.createElement('button', { onClick: mockSendMessage }, 'Send')
+        )
+      )
     );
 
     fireEvent.click(screen.getByText('Send'));
@@ -118,9 +119,9 @@ describe('Core Features Tests', () => {
     const mockPayment = vi.fn();
     
     render(
-      <TestWrapper>
-        <button onClick={mockPayment}>Pay 10 USDC</button>
-      </TestWrapper>
+      React.createElement(TestWrapper, null,
+        React.createElement('button', { onClick: mockPayment }, 'Pay 10 USDC')
+      )
     );
 
     fireEvent.click(screen.getByText('Pay 10 USDC'));
@@ -134,7 +135,7 @@ describe('Core Features Tests', () => {
       throw new Error('Test error');
     };
 
-    expect(() => render(<TestWrapper><ErrorComponent /></TestWrapper>)).toThrow('Test error');
+    expect(() => render(React.createElement(TestWrapper, null, React.createElement(ErrorComponent)))).toThrow('Test error');
     
     consoleSpy.mockRestore();
   });
