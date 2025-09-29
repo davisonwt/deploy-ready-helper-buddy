@@ -76,7 +76,8 @@ describe('Core Features Tests', () => {
       amount: 10,
       currency: 'USDC',
       bestower_id: 'user1',
-      orchard_id: 'orchard1'
+      orchard_id: 'orchard1',
+      pockets_count: 1
     });
 
     expect(supabase.from).toHaveBeenCalledWith('bestowals');
