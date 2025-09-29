@@ -20,10 +20,15 @@ export default defineConfig(({ mode }) => ({
     setupFiles: './src/test/setup.ts',
   },
   build: {
+    outDir: 'dist',
+    sourcemap: true, // For error tracking and debugging
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', '@tanstack/react-query'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
+          supabase: ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
+          solana: ['@solana/web3.js', '@solana/wallet-adapter-react'],
           admin: [
             './src/components/admin/EnhancedAnalyticsDashboard',
             './src/components/admin/UserManagementDashboard',
@@ -32,6 +37,13 @@ export default defineConfig(({ mode }) => ({
           marketing: ['./src/components/marketing/CommissionDashboard'],
           gamification: ['./src/components/gamification/GamificationDashboard'],
         },
+      },
+    },
+    minify: 'terser',
+    terserOptions: {
+      compress: { 
+        drop_console: false, // Keep console logs for debugging
+        drop_debugger: true 
       },
     },
   },
@@ -56,6 +68,7 @@ export default defineConfig(({ mode }) => ({
     'process.env': '{}',
     'process.version': '"v18.0.0"',
     'process.browser': 'true',
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
   },
   optimizeDeps: {
     include: [
