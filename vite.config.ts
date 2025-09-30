@@ -39,13 +39,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    minify: 'terser',
-    terserOptions: {
-      compress: { 
-        drop_console: false, // Keep console logs for debugging
-        drop_debugger: true 
-      },
-    },
+    minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
   resolve: {
     dedupe: ['react', 'react-dom'],
