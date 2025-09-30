@@ -1,225 +1,172 @@
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Play, X, MapPin, Users, Calendar, ChevronRight, BookOpen, Lightbulb, Target } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from 'react';
+import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+import { Button } from '@/components/ui/button';
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 
-interface Step {
-  id: string
-  title: string
-  description: string
-  icon: React.ReactNode
-  action?: () => void
-  progress?: number
-}
+const steps: Step[] = [
+  {
+    target: '.dashboard-tour',
+    content: 'Welcome to Sow2Grow! This is your main dashboard where you can see all your activities.',
+    placement: 'bottom',
+    disableBeacon: true,
+  },
+  {
+    target: '.browse-orchards-tour',
+    content: 'Browse and discover orchards created by other users in the community.',
+    placement: 'right',
+  },
+  {
+    target: '.create-orchard-tour', 
+    content: 'Ready to plant your first seed? Click here to create your own orchard.',
+    placement: 'bottom',
+  },
+  {
+    target: '.tithing-tour',
+    content: 'Support the community through tithing and contributions.',
+    placement: 'right',
+  },
+  {
+    target: '.profile-tour',
+    content: 'Manage your profile and account settings here.',
+    placement: 'left',
+  },
+];
 
-interface OnboardingTourProps {
-  isVisible: boolean
-  onClose: () => void
-  onComplete: () => void
-}
+const OnboardingTour = () => {
+  const [run, setRun] = useState(false);
+  const user = useUser();
+  const supabase = useSupabaseClient();
+  const queryClient = useQueryClient();
 
-export function OnboardingTour({ isVisible, onClose, onComplete }: OnboardingTourProps) {
-  const [currentStep, setCurrentStep] = useState(0)
+  // Check if user has completed onboarding
+  const { data: preferences } = useQuery({
+    queryKey: ['user-preferences', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('user_preferences')
+        .select('onboarding_complete')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
 
-  const steps: Step[] = [
-    {
-      id: "welcome",
-      title: "Welcome to Sow2Grow!",
-      description: "Your gateway to 364yhvh community farm's digital mall - sow2grow. Let's take a quick tour to get you started.",
-      icon: <Users className="h-8 w-8 text-primary" />,
+  // Mark onboarding as complete
+  const completeTourMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('No user');
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({ 
+          user_id: user.id, 
+          onboarding_complete: true,
+          updated_at: new Date().toISOString()
+        });
+      if (error) throw error;
     },
-    {
-      id: "orchards",
-      title: "Discover Orchards",
-      description: "Browse and support sow2grow projects from community members. Each orchard represents a real sow2grow sower's initiative that needs your support.",
-      icon: <MapPin className="h-8 w-8 text-green-600" />,
-      action: () => window.location.href = "/browse-orchards"
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      toast({
+        title: 'Welcome aboard!',
+        description: 'You can always restart the tour from your profile settings.',
+      });
     },
-    {
-      id: "create",
-      title: "Create Your Own Orchard",
-      description: "Have your own sow2grow digital farm stalls! Create your own orchards to receive bestowals from our community. Show your seeds and watch it grow!",
-      icon: <Target className="h-8 w-8 text-blue-600" />,
-      action: () => window.location.href = "/create-orchard"
-    },
-    {
-      id: "community",
-      title: "Join the Community",
-      description: "Connect with sow2grow's bestowers, share your videos, and chat with community members. Learn from experienced growers and share your knowledge.",
-      icon: <BookOpen className="h-8 w-8 text-purple-600" />,
-      action: () => window.location.href = "/community-videos"
-    },
-    {
-      id: "ai",
-      title: "AI Marketing Assistant",
-      description: "Use our AI-powered tools to create compelling content for your orchards. Generate scripts, marketing tips, thumbnails, and content ideas.",
-      icon: <Lightbulb className="h-8 w-8 text-yellow-600" />,
-      action: () => window.location.href = "/ai-assistant"
-    },
-    {
-      id: "gamification",
-      title: "Track Your Progress",
-      description: "Earn points and achievements as you participate in the community. Level up by creating orchards, supporting others, and engaging with content.",
-      icon: <Play className="h-8 w-8 text-orange-600" />,
+  });
+
+  // Auto-start tour for new users
+  useEffect(() => {
+    if (preferences && !preferences.onboarding_complete) {
+      const timer = setTimeout(() => setRun(true), 1000); // Delay to let page load
+      return () => clearTimeout(timer);
     }
-  ]
+  }, [preferences]);
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      onComplete()
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setRun(false);
+      completeTourMutation.mutate();
     }
+  };
+
+  const startTour = () => {
+    setRun(true);
+  };
+
+  const skipTour = () => {
+    setRun(false);
+    completeTourMutation.mutate();
+  };
+
+  // Don't show anything if user has completed onboarding
+  if (preferences?.onboarding_complete && !run) {
+    return (
+      <Button 
+        onClick={startTour}
+        variant="outline"
+        size="sm"
+        className="fixed bottom-4 right-4 z-50 shadow-lg"
+      >
+        Take Tour Again
+      </Button>
+    );
   }
-
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  const goToStep = (stepIndex: number) => {
-    setCurrentStep(stepIndex)
-  }
-
-  const progress = ((currentStep + 1) / steps.length) * 100
-
-  if (!isVisible) return null
-
-  const currentStepData = steps[currentStep]
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, y: 50 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 50 }}
-        className="relative max-w-2xl w-full mx-4 bg-background rounded-2xl shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="relative bg-gradient-to-r from-primary/10 to-secondary/10 p-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 hover-scale"
-          >
-            <X className="h-5 w-5" />
+    <>
+      <Joyride
+        steps={steps}
+        run={run}
+        continuous={true}
+        showSkipButton={true}
+        showProgress={true}
+        callback={handleJoyrideCallback}
+        styles={{
+          options: {
+            zIndex: 10000,
+            primaryColor: 'hsl(var(--primary))',
+            backgroundColor: 'hsl(var(--background))',
+            textColor: 'hsl(var(--foreground))',
+            arrowColor: 'hsl(var(--background))',
+          },
+          buttonNext: {
+            backgroundColor: 'hsl(var(--primary))',
+            color: 'hsl(var(--primary-foreground))',
+          },
+          buttonBack: {
+            color: 'hsl(var(--muted-foreground))',
+          },
+          buttonSkip: {
+            color: 'hsl(var(--muted-foreground))',
+          },
+        }}
+        locale={{
+          back: 'Previous',
+          close: 'Close',
+          last: 'Finish',
+          next: 'Next',
+          open: 'Open',
+          skip: 'Skip Tour',
+        }}
+      />
+      
+      {!run && !preferences?.onboarding_complete && (
+        <div className="fixed bottom-4 right-4 z-50 space-x-2">
+          <Button onClick={startTour} className="shadow-lg">
+            Start Tour
           </Button>
-          
-          <div className="flex items-center space-x-4 mb-4">
-            {currentStepData.icon}
-            <div>
-              <h2 className="text-2xl font-bold">{currentStepData.title}</h2>
-              <p className="text-sm text-muted-foreground">
-                Step {currentStep + 1} of {steps.length}
-              </p>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progress</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                {currentStepData.description}
-              </p>
-
-              {/* Step Navigation */}
-              <div className="grid grid-cols-6 gap-2">
-                {steps.map((step, index) => (
-                  <button
-                    key={step.id}
-                    onClick={() => goToStep(index)}
-                    className={`p-2 rounded-lg text-xs transition-all hover-scale ${
-                      index === currentStep
-                        ? 'bg-primary text-primary-foreground'
-                        : index < currentStep
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center space-y-1">
-                      <div className="scale-75">{step.icon}</div>
-                      <span className="truncate w-full">{step.title.split(' ')[0]}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Action Button */}
-              {currentStepData.action && (
-                <Card className="border-primary/20 bg-primary/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">Ready to explore?</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Click to go to this feature now
-                        </p>
-                      </div>
-                      <Button
-                        onClick={currentStepData.action}
-                        className="hover-scale"
-                      >
-                        Explore
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 bg-muted/30">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-          >
-            Previous
+          <Button onClick={skipTour} variant="outline" className="shadow-lg">
+            Skip
           </Button>
-          
-          <div className="flex space-x-2">
-            <Button variant="ghost" onClick={onClose}>
-              Skip Tour
-            </Button>
-            <Button onClick={nextStep}>
-              {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
         </div>
-      </motion.div>
-    </motion.div>
-  )
-}
+      )}
+    </>
+  );
+};
+
+export default OnboardingTour;
