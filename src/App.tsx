@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/performance/PerformanceMonitor";
@@ -110,7 +110,6 @@ const App = () => (
               <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
             <Routes>
@@ -482,13 +481,12 @@ const App = () => (
                 </ErrorBoundary>
                 <PerformanceMonitor />
                 <LiveActivityWidget />
-              </BrowserRouter>
-            </TooltipProvider>
-          </AppContextProvider>
-        </BasketProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+              </TooltipProvider>
+            </AppContextProvider>
+          </BasketProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
 );
 
 export default App;
