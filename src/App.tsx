@@ -7,6 +7,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import PerformanceMonitor from "./components/performance/PerformanceMonitor";
+import ResponsiveLayout from "./components/layout/ResponsiveLayout";
+import OnboardingTour from "./components/onboarding/OnboardingTour";
+import HelpModal from "./components/help/HelpModal";
+import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import { Card, CardContent } from "@/components/ui/card";
 
 // Lazy load heavy components for better performance
@@ -112,6 +116,8 @@ const App = () => (
               <Sonner />
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
+                    <AccessibilityChecker />
+                    <ResponsiveLayout>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -477,10 +483,13 @@ const App = () => (
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
                   </Routes>
+                  </ResponsiveLayout>
                   </Suspense>
                 </ErrorBoundary>
                 <PerformanceMonitor />
                 <LiveActivityWidget />
+                <OnboardingTour />
+                <HelpModal />
               </TooltipProvider>
             </AppContextProvider>
           </BasketProvider>
