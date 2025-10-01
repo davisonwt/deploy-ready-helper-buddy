@@ -66,17 +66,7 @@ const queryClient = new QueryClient({
       // Mutation error handling via onError callback in individual mutations
     },
   },
-  // Global error handling via MutationCache and QueryCache
-  mutationCache: new MutationCache({
-    onError: (error: any) => {
-      logError('Mutation error', { error: (error as any)?.message, stack: (error as any)?.stack });
-    },
-  }),
-  queryCache: new QueryCache({
-    onError: (error: any) => {
-      logError('Query error', { error: (error as any)?.message, stack: (error as any)?.stack });
-    },
-  }),
+  // No custom caches to ensure version-compatible internals
 });
 
 // Log app initialization

@@ -500,7 +500,7 @@ export default function Layout({ children }) {
         onClose={() => setShowGamificationHUD(false)} 
       />
       
-      <OnboardingTour />
+      {/* OnboardingTour rendered at App root only */}
       
       {/* Voice Commands */}
       <VoiceCommands 

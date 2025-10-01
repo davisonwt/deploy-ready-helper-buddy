@@ -792,7 +792,7 @@ function IndexContent() {
         onClose={() => setShowGamificationHUD(false)} 
       />
       
-      <OnboardingTour />
+      {/* OnboardingTour rendered at App root only */}
       
       {/* Voice Commands */}
       <VoiceCommands 
