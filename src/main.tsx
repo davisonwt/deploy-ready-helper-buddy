@@ -1,6 +1,6 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
@@ -67,16 +67,16 @@ const queryClient = new QueryClient({
     },
   },
   // Global error handling via MutationCache and QueryCache
-  mutationCache: {
+  mutationCache: new MutationCache({
     onError: (error: any) => {
-      logError('Mutation error', { error: error.message, stack: error.stack });
+      logError('Mutation error', { error: (error as any)?.message, stack: (error as any)?.stack });
     },
-  } as any,
-  queryCache: {
+  }),
+  queryCache: new QueryCache({
     onError: (error: any) => {
-      logError('Query error', { error: error.message, stack: error.stack });
+      logError('Query error', { error: (error as any)?.message, stack: (error as any)?.stack });
     },
-  } as any,
+  }),
 });
 
 // Log app initialization
