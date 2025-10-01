@@ -1,13 +1,10 @@
 import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
+import { axe } from 'jest-axe';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { vi, describe, it, expect } from 'vitest';
 import React from 'react';
-
-// Extend Jest matchers
-expect.extend(toHaveNoViolations);
 
 // Mock components that might cause issues in tests
 vi.mock('@/hooks/use-toast', () => ({
@@ -48,7 +45,7 @@ describe('Accessibility Tests', () => {
       },
     });
     
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have proper form labels', async () => {
@@ -70,7 +67,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have proper heading hierarchy', async () => {
@@ -88,7 +85,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have accessible navigation', async () => {
@@ -111,7 +108,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have accessible images', async () => {
@@ -132,7 +129,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have accessible modal dialogs', async () => {
@@ -158,7 +155,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have accessible tables', async () => {
@@ -187,7 +184,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should pass color contrast checks', async () => {
@@ -216,7 +213,7 @@ describe('Accessibility Tests', () => {
       },
     });
     
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have proper focus management', async () => {
@@ -233,7 +230,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 
   it('should have proper ARIA landmarks', async () => {
@@ -265,7 +262,7 @@ describe('Accessibility Tests', () => {
     );
     
     const results = await axe(container);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
   });
 });
 
