@@ -355,7 +355,7 @@ export default function MyOrchardsPage() {
         </div>
 
         {/* Orchards Grid */}
-        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6">
+        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6 md:p-8">
           {userOrchards.length === 0 ? (
             <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardContent className="p-12 text-center">
@@ -380,9 +380,9 @@ export default function MyOrchardsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {userOrchards.map((orchard) => (
-                <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl hover:shadow-lg transition-all">
+                <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl hover:shadow-2xl transition-all flex flex-col">
                   <div className="relative">
                     {orchard.images?.[0] ? (
                       <img 
@@ -410,10 +410,10 @@ export default function MyOrchardsPage() {
                     </div>
                   </div>
                   
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg text-orange-700 mb-2">{orchard.title}</CardTitle>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg text-orange-700 mb-2 line-clamp-2">{orchard.title}</CardTitle>
                         <div className="flex items-center space-x-4 text-sm text-orange-600">
                           <span className="flex items-center">
                             <Eye className="h-4 w-4 mr-1" />
@@ -434,8 +434,8 @@ export default function MyOrchardsPage() {
                     </div>
                   </CardHeader>
                   
-                  <CardContent>
-                    <div className="space-y-4">
+                  <CardContent className="flex-1 flex flex-col">
+                    <div className="space-y-4 flex-1">
                       <p className="text-orange-600 text-sm line-clamp-2">
                         {orchard.description}
                       </p>
@@ -502,14 +502,14 @@ export default function MyOrchardsPage() {
                         </div>
                       )}
                       
-                      <div className="flex gap-2 pt-2">
-                        <Link to={`/orchards/${orchard.id}`} className="flex-1">
+                      <div className="flex flex-wrap gap-2 pt-2 mt-auto">
+                        <Link to={`/orchards/${orchard.id}`} className="flex-1 min-w-[100px]">
                           <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                         </Link>
-                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
                           <Button variant="outline" size="sm" className="w-full border-nav-my/30 text-orange-700 hover:bg-nav-my/10">
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
@@ -518,6 +518,7 @@ export default function MyOrchardsPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="flex-1 min-w-[100px]"
                           onClick={() => {
                             const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                             navigator.clipboard.writeText(url)
