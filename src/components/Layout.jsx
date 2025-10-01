@@ -35,7 +35,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 import { GamificationFloatingButton } from "./gamification/GamificationFloatingButton"
 import { GamificationHUD } from "./gamification/GamificationHUD"
-import { OnboardingTour } from "./onboarding/OnboardingTour"
+import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
 
