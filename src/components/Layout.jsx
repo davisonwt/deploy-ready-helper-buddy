@@ -47,7 +47,7 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
 
   // Local role state to avoid cross-React hook issues
-  const [userRoles, setUserRoles] = React.useState<string[]>([] as any)
+  const [userRoles, setUserRoles] = React.useState([])
   const [rolesLoading, setRolesLoading] = React.useState(false)
 
   React.useEffect(() => {
