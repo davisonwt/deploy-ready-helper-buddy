@@ -3614,6 +3614,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      browse_public_rooms: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+          id: string
+          is_premium: boolean
+          name: string
+          participant_count: number
+          premium_category: Database["public"]["Enums"]["premium_room_category"]
+        }[]
+      }
       calculate_music_purchase_total: {
         Args: { base_amount?: number }
         Returns: Json
@@ -3729,6 +3740,16 @@ export type Database = {
           phone: string
           timezone: string
           user_id: string
+        }[]
+      }
+      get_public_dj_info: {
+        Args: { dj_id_param?: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          dj_name: string
+          id: string
+          is_active: boolean
         }[]
       }
       get_public_profile: {
