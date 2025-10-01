@@ -50,7 +50,7 @@ export function RadioScheduleGrid({ schedule }) {
   // Set up real-time subscription for schedule changes
   useEffect(() => {
     const channel = supabase
-      .channel('radio-schedule-updates')
+      .channel('schema-db-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -67,10 +67,16 @@ export function RadioScheduleGrid({ schedule }) {
   }, [])
 
   const fetchTodaySchedule = async () => {
+    // Safety timeout to avoid perpetual loading UI
+    const timeoutId = setTimeout(() => {
+      console.warn('⏱️ Schedule fetch timeout. Showing empty state.')
+      setLoading(false)
+    }, 8000)
+
     try {
       setLoading(true)
       const today = new Date().toISOString().split('T')[0]
-      
+
       const { data, error } = await supabase
         .from('radio_schedule')
         .select(`
@@ -92,15 +98,16 @@ export function RadioScheduleGrid({ schedule }) {
         .order('hour_slot', { ascending: true })
 
       if (error) throw error
-      
+
       console.log('📅 Fetched today\'s schedule:', data)
       setLiveSchedule(data || [])
-      
+
       // Emit custom event to notify other components
       window.dispatchEvent(new CustomEvent('scheduleUpdated', { detail: data }))
     } catch (err) {
       console.error('Error fetching schedule:', err)
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }
@@ -194,7 +201,7 @@ export function RadioScheduleGrid({ schedule }) {
                 ) : (
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={mainSlot?.dj_avatar} />
+                      <AvatarImage src={mainSlot?.radio_djs?.avatar_url || undefined} />
                       <AvatarFallback>
                         <Mic className="h-5 w-5" />
                       </AvatarFallback>
