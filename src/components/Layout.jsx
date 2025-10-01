@@ -2,7 +2,7 @@ import React from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
-import { useRoles } from "../hooks/useRoles"
+
 import { 
   Sprout, 
   Home, 
@@ -42,9 +42,10 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const roles = useRoles()
-  const { isAdminOrGosat, loading: rolesLoading, userRoles } = roles
-  const location = useLocation()
+const isAdminOrGosat = false
+const rolesLoading = false
+const userRoles = []
+const location = useLocation()
   
   console.log('🏗️ Layout render:', { 
     user: !!user, 
@@ -54,8 +55,8 @@ export default function Layout({ children }) {
     userRoles 
   })
 
-  const shouldShowAdminButton = isAdminOrGosat || (userRoles && (userRoles.includes('admin') || userRoles.includes('gosat')))
-  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { rolesLoading, isAdminResult: isAdminOrGosat, userRoles })
+const shouldShowAdminButton = false
+  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton)
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
@@ -102,9 +103,9 @@ export default function Layout({ children }) {
         { name: "chatapp", href: "/chatapp", icon: MessageSquare },
         { name: "heretics radio station", href: "/grove-station", icon: Mic },
         { name: "Radio Station", href: "/radio", icon: Radio },
-        ...(roles?.userRoles?.includes('radio_admin') || roles?.userRoles?.includes('admin') || roles?.userRoles?.includes('gosat') ? [
-          { name: "Heretic Management System", href: "/radio-management", icon: Settings }
-        ] : [])
+          ...(shouldShowAdminButton ? [
+            { name: "Heretic Management System", href: "/radio-management", icon: Settings }
+          ] : [])
       ]
     },
     {
