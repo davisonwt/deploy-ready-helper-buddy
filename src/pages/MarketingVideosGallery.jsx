@@ -263,9 +263,9 @@ export default function MarketingVideosGallery() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               {filteredVideos.map((video) => (
-                <Card key={video.id} className="overflow-hidden">
+                <Card key={video.id} className="overflow-hidden flex flex-col">
                   {/* Video Player Section */}
                   <div className="aspect-video relative bg-black">
                      <VideoPlayer
@@ -307,7 +307,7 @@ export default function MarketingVideosGallery() {
                   </div>
 
                   {/* Video Info Section */}
-                  <CardContent className="p-6 space-y-4">
+                  <CardContent className="p-6 pb-8 space-y-4 flex-1 flex flex-col">
                     {/* Title and Description */}
                     <div>
                       <h3 className="font-semibold text-xl mb-2 line-clamp-2">
@@ -362,8 +362,8 @@ export default function MarketingVideosGallery() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 mt-auto border-t">
+                      <div className="flex flex-wrap items-center gap-2">
                         {/* Like Button */}
                         <Button
                           variant="ghost"
@@ -397,8 +397,8 @@ export default function MarketingVideosGallery() {
                       </div>
 
                       {/* Free-Will Gift Button - Prominent */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">send free-will gift:</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">send free-will gift:</span>
                         <VideoGifting
                           video={video}
                           onGiftSent={() => {

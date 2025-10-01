@@ -40,9 +40,9 @@ supabase.auth.onAuthStateChange((event, session) => {
     // Log successful authentication for security monitoring
     supabase.rpc('log_security_event_enhanced', {
       event_type: 'user_signed_in',
-      user_id_param: session.user.id,
-      details: { timestamp: new Date().toISOString() },
-      severity: 'info'
+      target_user_id: session.user.id,
+      event_details: { timestamp: new Date().toISOString() },
+      severity_level: 'info'
     }).then(({ error }) => {
       if (error && process.env.NODE_ENV === 'development') {
         console.warn('Failed to log security event:', error);
@@ -54,8 +54,8 @@ supabase.auth.onAuthStateChange((event, session) => {
     // Log sign out events
     supabase.rpc('log_security_event_enhanced', {
       event_type: 'user_signed_out',
-      details: { timestamp: new Date().toISOString() },
-      severity: 'info'
+      event_details: { timestamp: new Date().toISOString() },
+      severity_level: 'info'
     }).then(({ error }) => {
       if (error && process.env.NODE_ENV === 'development') {
         console.warn('Failed to log security event:', error);
