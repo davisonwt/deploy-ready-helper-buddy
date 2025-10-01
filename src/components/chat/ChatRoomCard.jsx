@@ -91,7 +91,7 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
         }`}
         onClick={() => onClick(room)}
       >
-        <CardContent className="p-3">
+        <CardContent className="p-4 pb-3">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <Avatar className="h-9 w-9">
@@ -145,17 +145,17 @@ const ChatRoomCard = ({ room, isActive, onClick, participantCount = 0, showInvit
               </div>
               
               {room.description && (
-                <p className="text-xs text-muted-foreground line-clamp-1 mb-2 leading-relaxed">
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-2 leading-relaxed">
                   {room.description}
                 </p>
               )}
               
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground mt-2">
                 <span className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   {participantCount}
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   {canGoLive && onStartLiveVideo && (
                     <Button
                       variant="outline"
