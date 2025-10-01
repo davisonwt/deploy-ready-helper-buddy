@@ -18,7 +18,7 @@ import { supabase } from "../integrations/supabase/client";
 
 import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
 import { GamificationHUD } from "../components/gamification/GamificationHUD";
-import { OnboardingTour } from "../components/onboarding/OnboardingTour";
+import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 
@@ -792,11 +792,7 @@ function IndexContent() {
         onClose={() => setShowGamificationHUD(false)} 
       />
       
-      <OnboardingTour
-        isVisible={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={() => setShowOnboarding(false)}
-      />
+      <OnboardingTour />
       
       {/* Voice Commands */}
       <VoiceCommands 

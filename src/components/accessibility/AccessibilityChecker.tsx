@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import { useUser } from '@supabase/auth-helpers-react';
 
 // Only run accessibility checks in development
@@ -11,13 +11,9 @@ const AccessibilityChecker = () => {
     if (import.meta.env.DEV) {
       // Dynamically import axe-core in development only
       import('@axe-core/react').then((axe) => {
-        axe.default(React, ReactDOM, 1000, {
-          runOnly: {
-            type: 'tag',
-            values: ['wcag2a', 'wcag2aa', 'wcag21aa'],
-          },
-        });
-        
+        // Initialize axe with default configuration
+        axe.default(React, ReactDOM, 1000);
+
         console.log('♿ Accessibility checker enabled - check console for violations');
       }).catch((error) => {
         console.warn('Could not load accessibility checker:', error);
