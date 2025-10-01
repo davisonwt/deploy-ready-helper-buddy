@@ -471,11 +471,7 @@ export default function Layout({ children }) {
         onClose={() => setShowGamificationHUD(false)} 
       />
       
-      <OnboardingTour
-        isVisible={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onComplete={() => setShowOnboarding(false)}
-      />
+      <OnboardingTour />
       
       {/* Voice Commands */}
       <VoiceCommands 
