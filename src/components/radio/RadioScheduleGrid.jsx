@@ -29,7 +29,7 @@ const CATEGORY_COLORS = {
   live_call_in: 'bg-pink-500/10 border-pink-500/20 text-pink-700'
 }
 
-export function RadioScheduleGrid({ schedule = [] }) {
+export function RadioScheduleGrid({ schedule }) {
   const [selectedSlot, setSelectedSlot] = useState('current')
   const [liveSchedule, setLiveSchedule] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,14 +37,15 @@ export function RadioScheduleGrid({ schedule = [] }) {
   const currentSlotIndex = Math.floor(currentHour / 2)
 
   // Fetch schedule data directly if not provided via props
+  const hasSchedule = Array.isArray(schedule) && schedule.length > 0;
   useEffect(() => {
-    if (schedule.length === 0) {
-      fetchTodaySchedule()
+    if (!hasSchedule) {
+      fetchTodaySchedule();
     } else {
-      setLiveSchedule(schedule)
-      setLoading(false)
+      setLiveSchedule(schedule);
+      setLoading(false);
     }
-  }, [schedule])
+  }, [hasSchedule]);
 
   // Set up real-time subscription for schedule changes
   useEffect(() => {
