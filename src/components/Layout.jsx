@@ -2,6 +2,7 @@ import React from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
+import { useRoles } from "../hooks/useRoles"
 
 import { 
   Sprout, 
@@ -42,10 +43,8 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-const isAdminOrGosat = false
-const rolesLoading = false
-const userRoles = []
-const location = useLocation()
+  const { isAdminOrGosat, loading: rolesLoading, userRoles } = useRoles()
+  const location = useLocation()
   
   console.log('🏗️ Layout render:', { 
     user: !!user, 
@@ -55,8 +54,8 @@ const location = useLocation()
     userRoles 
   })
 
-const shouldShowAdminButton = false
-  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton)
+  const shouldShowAdminButton = isAdminOrGosat && !rolesLoading
+  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { isAdminOrGosat, rolesLoading, userRoles })
   const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
@@ -103,9 +102,9 @@ const shouldShowAdminButton = false
         { name: "chatapp", href: "/chatapp", icon: MessageSquare },
         { name: "heretics radio station", href: "/grove-station", icon: Mic },
         { name: "Radio Station", href: "/radio", icon: Radio },
-          ...(shouldShowAdminButton ? [
-            { name: "Heretic Management System", href: "/radio-management", icon: Settings }
-          ] : [])
+        ...(isAdminOrGosat ? [
+          { name: "Heretic Management System", href: "/radio-management", icon: Settings }
+        ] : [])
       ]
     },
     {
