@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Settings, ChevronDown, Radio, Sprout } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import { useRoles } from "../hooks/useRoles";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +13,39 @@ import {
 
 export function AdminButton() {
   const auth = useAuth();
-  const roles = useRoles();
+  const [userRoles, setUserRoles] = React.useState<string[]>([] as any)
+  const [loading, setLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    let isMounted = true
+    const load = async () => {
+      if (!auth?.user?.id) { setUserRoles([]); return }
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', auth.user.id)
+        if (error) throw error
+        if (!isMounted) return
+        setUserRoles((data || []).map(r => r.role))
+      } catch (e) {
+        console.error('AdminButton: roles fetch failed', e)
+        if (isMounted) setUserRoles([])
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+    load()
+    return () => { isMounted = false }
+  }, [auth?.user?.id])
 
   // Debug logging
   console.log('🔥 AdminButton Full Debug:', {
     'auth.user.id': auth?.user?.id,
     'auth.isAuthenticated': auth?.isAuthenticated,
-    'roles.userRoles': roles?.userRoles,
-    'roles.loading': roles?.loading
+    'roles.userRoles': userRoles,
+    'roles.loading': loading
   });
 
   // Show debug info  
@@ -29,10 +55,10 @@ export function AdminButton() {
         Auth: {auth?.isAuthenticated ? 'YES' : 'NO'} | User ID: {auth?.user?.id || 'NONE'}
       </div>
       <div className="text-xs text-red-500 mb-1">
-        Roles: {JSON.stringify(roles?.userRoles || [])} | Loading: {roles?.loading ? 'YES' : 'NO'}
+        Roles: {JSON.stringify(userRoles || [])} | Loading: {loading ? 'YES' : 'NO'}
       </div>
       <div className="flex gap-2 items-center">
-        {auth?.isAuthenticated && roles?.userRoles?.length > 0 && (
+        {auth?.isAuthenticated && (userRoles?.length > 0) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -40,7 +66,7 @@ export function AdminButton() {
                 className="bg-[#20b2aa] border-[#20b2aa] text-white hover:bg-[#20b2aa]/90 hover:border-[#20b2aa]/90 text-xs"
               >
                 <Settings className="w-3 h-3 mr-1" />
-                gosat's ({roles.userRoles.join(', ')})
+                gosat's ({userRoles.join(', ')})
                 <ChevronDown className="w-3 h-3 ml-1" />
               </Button>
             </DropdownMenuTrigger>

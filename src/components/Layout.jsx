@@ -2,7 +2,7 @@ import React from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
-import { useRoles } from "../hooks/useRoles"
+import { supabase } from "@/integrations/supabase/client"
 
 import { 
   Sprout, 
@@ -43,8 +43,38 @@ import { useAppContext } from "../contexts/AppContext"
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat, loading: rolesLoading, userRoles } = useRoles()
   const location = useLocation()
+  const navigate = useNavigate()
+
+  // Local role state to avoid cross-React hook issues
+  const [userRoles, setUserRoles] = React.useState<string[]>([] as any)
+  const [rolesLoading, setRolesLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    let isMounted = true
+    const loadRoles = async () => {
+      if (!user?.id) { setUserRoles([]); return }
+      try {
+        setRolesLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        if (!isMounted) return
+        setUserRoles((data || []).map(r => r.role))
+      } catch (e) {
+        console.error('Layout: roles fetch failed', e)
+        if (isMounted) setUserRoles([])
+      } finally {
+        if (isMounted) setRolesLoading(false)
+      }
+    }
+    loadRoles()
+    return () => { isMounted = false }
+  }, [user?.id])
+
+  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
   
   console.log('🏗️ Layout render:', { 
     user: !!user, 
@@ -56,7 +86,6 @@ export default function Layout({ children }) {
 
   const shouldShowAdminButton = isAdminOrGosat && !rolesLoading
   console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { isAdminOrGosat, rolesLoading, userRoles })
-  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
   
