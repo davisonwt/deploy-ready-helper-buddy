@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -3926,7 +3926,7 @@ export type Database = {
       }
       increment_ai_usage: {
         Args: Record<PropertyKey, never> | { user_id_param?: string }
-        Returns: number
+        Returns: undefined
       }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
