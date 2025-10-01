@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import React from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
 export function useRoles() {
-  const [userRoles, setUserRoles] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [userRoles, setUserRoles] = React.useState([])
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState(null)
   
   // Check if React hooks are available (dispatcher check)
   let user
@@ -232,7 +232,7 @@ export function useRoles() {
     }
   }
 
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id, userEmail: user?.email })
     if (!user) {
       console.log('🔑 useRoles: No user found, skipping fetchUserRoles')
