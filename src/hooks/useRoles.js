@@ -3,6 +3,24 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
 export function useRoles() {
+  const dispatcher = React?.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.ReactCurrentDispatcher?.current
+  if (!dispatcher) {
+    console.warn('useRoles called outside React render; returning safe defaults')
+    return {
+      userRoles: [],
+      loading: false,
+      error: 'React dispatcher not initialized',
+      hasRole: () => false,
+      isAdmin: false,
+      isGosat: false,
+      isAdminOrGosat: false,
+      fetchUserRoles: () => Promise.resolve(),
+      fetchAllUsers: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' }),
+      grantRole: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' }),
+      revokeRole: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' })
+    }
+  }
+
   const [userRoles, setUserRoles] = React.useState([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState(null)
