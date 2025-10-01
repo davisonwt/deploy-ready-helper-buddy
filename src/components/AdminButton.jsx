@@ -13,7 +13,7 @@ import {
 
 export function AdminButton() {
   const auth = useAuth();
-  const [userRoles, setUserRoles] = React.useState<string[]>([] as any)
+  const [userRoles, setUserRoles] = React.useState([])
   const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
