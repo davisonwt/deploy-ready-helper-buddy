@@ -13,13 +13,13 @@ import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useOrchards } from '../hooks/useOrchards'
+import { useRoles } from '../hooks/useRoles'
 import { processOrchardsUrls } from '../utils/urlUtils'
 
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
   const { deleteOrchard } = useOrchards()
-  const isAdminOrGosat = false
-  const userRoles = []
+  const { isAdminOrGosat, userRoles } = useRoles()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
