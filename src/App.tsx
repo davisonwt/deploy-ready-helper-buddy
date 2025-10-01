@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -75,25 +74,6 @@ import LiveActivityWidget from "./components/LiveActivityWidget";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        if (error?.message?.includes('401') || error?.message?.includes('unauthorized')) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-    },
-    mutations: {
-      onError: (error: any) => {
-        console.error('Mutation error:', error);
-      },
-    },
-  },
-});
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -106,8 +86,7 @@ const LoadingFallback = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+  <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
       <AuthProvider>
           <BasketProvider>
             <AppContextProvider>
@@ -495,7 +474,7 @@ const App = () => (
           </BasketProvider>
         </AuthProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    
 );
 
 export default App;
