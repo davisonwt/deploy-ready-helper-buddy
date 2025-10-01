@@ -3975,11 +3975,11 @@ export type Database = {
       }
       log_security_event_enhanced: {
         Args: {
-          details?: Json
+          event_details?: Json
           event_type: string
           ip_address_param?: unknown
-          severity?: string
-          user_id_param?: string
+          severity_level?: string
+          target_user_id?: string
         }
         Returns: undefined
       }
