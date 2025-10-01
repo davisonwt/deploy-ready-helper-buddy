@@ -492,7 +492,7 @@ const ChatappPage = () => {
                   <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
                     {activeTab !== 'discover' && (
                       <ScrollArea className="h-full pr-4">
-                        <div className="space-y-3 pb-4">
+                        <div className="space-y-4 pb-6">
                           {filteredRooms.map((room) => (
                             <ChatRoomCard
                               key={room.id}
