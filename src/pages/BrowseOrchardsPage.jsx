@@ -352,13 +352,13 @@ export default function BrowseOrchardsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className={`grid gap-6 pb-16 ${
+          <div className={`grid gap-6 md:gap-8 pb-16 ${
             viewMode === "grid" 
               ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
               : "grid-cols-1 max-w-4xl mx-auto"
           }`}>
             {filteredOrchards.map((orchard) => (
-              <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group">
+              <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group flex flex-col">
                 <div className="relative">
                   {orchard.main_image ? (
                     <img 
@@ -378,9 +378,9 @@ export default function BrowseOrchardsPage() {
                   </div>
                 </div>
                 
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <CardTitle className="text-lg text-green-700 mb-2 line-clamp-2">
                         {orchard.title}
                       </CardTitle>
@@ -400,8 +400,8 @@ export default function BrowseOrchardsPage() {
                   </div>
                 </CardHeader>
                 
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="flex-1 flex flex-col">
+                  <div className="space-y-4 flex-1">
                     <p className="text-green-600 text-sm line-clamp-3">
                       {orchard.description}
                     </p>
@@ -434,7 +434,7 @@ export default function BrowseOrchardsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm text-green-500">
+                    <div className="flex items-center justify-between text-sm text-green-500 mb-2">
                       <span className="flex items-center">
                         <Eye className="h-4 w-4 mr-1" />
                         {orchard.views || 0} views
@@ -445,7 +445,7 @@ export default function BrowseOrchardsPage() {
                       </span>
                     </div>
                     
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex gap-2 pt-2 mt-auto">
                       <Link to={`/animated-orchard/${orchard.id}`} className="flex-1">
                         <Button 
                           className="w-full text-white shadow-lg font-medium"
@@ -462,8 +462,8 @@ export default function BrowseOrchardsPage() {
                     
                     {/* Owner Actions */}
                     {user && orchard.user_id === user.id && (
-                      <div className="flex gap-2 pt-2 border-t border-nav-community/20 mt-4">
-                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
+                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -477,7 +477,7 @@ export default function BrowseOrchardsPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleDeleteOrchard(orchard.id)}
-                          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                          className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-[100px]"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Delete

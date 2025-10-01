@@ -382,27 +382,27 @@ const ChatappPage = () => {
         minHeight: '100vh'
       }}
     >
-      <div className="container mx-auto p-4 flex flex-col min-h-[80vh] pb-8">
+      <div className="container mx-auto p-6 flex flex-col min-h-screen pb-24">
         {/* Header */}
-        <div className="max-w-4xl mx-auto mb-6 p-8 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
-          <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto mb-8 p-6 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold mb-0 px-8 py-4 rounded-lg leading-tight" style={{ 
+              <h1 className="text-3xl font-bold mb-2 px-4 py-2 rounded-lg leading-tight" style={{ 
                 color: '#3B82F6', 
                 textShadow: '2px 2px 4px #1D4ED8'
               }}>Chatapp</h1>
-              <p className="text-xs font-medium -mt-6 mb-4 px-8 ml-32" style={{ 
+              <p className="text-xs font-medium mb-2 px-4" style={{ 
                 color: '#87CEEB',
                 textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                 fontStyle: 'italic'
               }}>
                 chat or chutapp
               </p>
-              <p style={{ color: '#b0e0e6' }}>
+              <p style={{ color: '#b0e0e6' }} className="px-4">
                 Connect, collaborate, and grow together in our 364yhvh / sow2grow community
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 onClick={() => {
                   console.log('🎯 Direct Chat button clicked!');
@@ -429,20 +429,20 @@ const ChatappPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
           {/* Sidebar - Room List */}
-          <div className="lg:col-span-1">
-            <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="lg:col-span-1 h-full">
+            <Card className="h-[calc(100vh-300px)] flex flex-col bg-white/10 backdrop-blur-md border-white/20">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-white">
                   <MessageSquare className="h-5 w-5" />
                   My Rooms
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 min-h-0">
+              <CardContent className="flex-1 overflow-hidden p-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Beautiful Tab Row */}
-                  <div className="flex gap-2 mb-4 overflow-x-auto">
+                  <div className="flex gap-2 mb-4 pb-4 border-b border-white/20 overflow-x-auto">
                     {[
                       { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
                       { type: 'group', label: 'Groups', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
@@ -455,12 +455,12 @@ const ChatappPage = () => {
                           backgroundColor: activeTab === type ? activeColor : inactiveColor,
                           backdropFilter: 'blur(8px)'
                         }}
-                        className="relative flex-1 p-3 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[80px]"
+                        className="relative flex-1 p-2 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[70px]"
                       >
                         <div className="flex flex-col items-center space-y-1">
-                          <div className={`p-2 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
+                          <div className={`p-1.5 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
                             <Icon 
-                              className="h-4 w-4 transition-all duration-300 text-white drop-shadow-lg" 
+                              className="h-3.5 w-3.5 transition-all duration-300 text-white drop-shadow-lg" 
                             />
                           </div>
                           <span 
@@ -477,22 +477,11 @@ const ChatappPage = () => {
                     ))}
                   </div>
                   
-                  <TabsContent value="discover" className="flex-1 min-h-0 mt-0">
-                    <div className="space-y-6">
-                      <PublicLiveSessionsBrowser 
-                        onJoinSession={startLiveSession}
-                      />
-                      <PublicRoomsBrowser 
-                        onJoinRoom={handleJoinPublicRoom}
-                        onNavigateToOrchard={handleNavigateToOrchard}
-                      />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value={activeTab} className="flex-1 min-h-0 mt-0">
+                  {/* Room Content */}
+                  <TabsContent value={activeTab} className="flex-1 overflow-hidden mt-0">
                     {activeTab !== 'discover' && (
-                      <ScrollArea className="h-full pr-4">
-                        <div className="space-y-4 pb-6">
+                      <ScrollArea className="h-full">
+                        <div className="space-y-3 pr-3">
                           {filteredRooms.map((room) => (
                             <ChatRoomCard
                               key={room.id}
@@ -540,19 +529,19 @@ const ChatappPage = () => {
           )}
 
           {/* Main Chat Area */}
-          <div className={`${showUserSelector ? 'lg:col-span-2' : 'lg:col-span-3'} flex flex-col gap-4`}>
+          <div className={`${showUserSelector ? 'lg:col-span-1' : 'lg:col-span-2'} flex flex-col gap-4`}>
             {currentRoom && (
               <ChatModerationPanel 
                 currentRoom={currentRoom} 
                 currentUser={user} 
               />
             )}
-            <div className="flex-1">
+            <div className="h-[calc(100vh-300px)]">
               {/* Chat Interface */}
             {currentRoom ? (
               <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">
                 <CardHeader 
-                  className="border-b border-purple-400/50 text-purple-900"
+                  className="border-b border-purple-400/50 text-purple-900 pb-3 pt-3"
                   style={{ backgroundColor: '#D8B4FE' }}
                 >
                   {console.log('Header rendering with currentRoom:', currentRoom)}
