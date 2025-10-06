@@ -1,16 +1,4 @@
 import { QueryClient } from '@tanstack/react-query';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-
-/**
- * Storage persister for React Query cache
- * Stores query results in localStorage for offline access
- */
-export const persister = createSyncStoragePersister({
-  storage: window.localStorage,
-  key: 'SOW2GROW_QUERY_CACHE',
-  serialize: (data) => JSON.stringify(data),
-  deserialize: (data) => JSON.parse(data),
-});
 
 /**
  * Enhanced Query Client with optimized defaults
