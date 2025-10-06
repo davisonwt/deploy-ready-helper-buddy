@@ -2494,6 +2494,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          identifier: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          identifier: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          identifier?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           commission_amount: number
@@ -3677,6 +3698,10 @@ export type Database = {
           time_window_minutes?: number
         }
         Returns: boolean
+      }
+      cleanup_old_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       decrypt_pii_data: {
         Args: { encrypted_data: string }
