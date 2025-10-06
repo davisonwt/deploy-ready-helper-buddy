@@ -1,8 +1,8 @@
 import { ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X, Home, Leaf, DollarSign, Users, BarChart, Settings } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Menu, Home, Leaf, DollarSign, Users, BarChart, Settings } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface Props { 
@@ -26,7 +26,7 @@ const SidebarContent = ({ mobile = false, onItemClick }: { mobile?: boolean; onI
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Sow2Grow</h2>
+        <h2 className="text-lg font-semibold text-foreground">Sow2Grow</h2>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {navigationItems.map((item) => {
@@ -34,20 +34,20 @@ const SidebarContent = ({ mobile = false, onItemClick }: { mobile?: boolean; onI
           const Icon = item.icon;
           
           return (
-            <Link
+            <NavLink
               key={item.name}
               to={item.href}
               onClick={onItemClick}
-              className={cn(
+              className={({ isActive }) => cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors",
                 "hover:bg-accent hover:text-accent-foreground",
-                isActive && "bg-primary text-primary-foreground",
+                isActive && "bg-primary text-primary-foreground font-medium",
                 mobile && "text-base py-3"
               )}
             >
               <Icon className="h-5 w-5" />
               <span>{item.name}</span>
-            </Link>
+            </NavLink>
           );
         })}
       </nav>
@@ -67,9 +67,9 @@ const ResponsiveLayout = ({ children, showSidebar = true }: Props) => {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r">
+    <div className="flex h-screen bg-background w-full">
+      {/* Desktop Sidebar - Responsive */}
+      <aside className="hidden md:flex md:w-64 lg:w-64 md:flex-col border-r bg-card">
         <SidebarContent />
       </aside>
 
@@ -79,7 +79,8 @@ const ResponsiveLayout = ({ children, showSidebar = true }: Props) => {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden fixed top-4 left-4 z-40 bg-background border shadow-sm"
+            className="md:hidden fixed top-4 left-4 z-40 bg-background border shadow-sm"
+            aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -89,14 +90,14 @@ const ResponsiveLayout = ({ children, showSidebar = true }: Props) => {
         </SheetContent>
       </Sheet>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content - Fully Responsive */}
+      <main className="flex-1 flex flex-col overflow-hidden w-full">
         {/* Mobile Header Spacer */}
-        <div className="lg:hidden h-16" />
+        <div className="md:hidden h-16" />
         
-        {/* Content Area */}
+        {/* Content Area - Responsive padding */}
         <div className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+          <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-4 sm:py-6 lg:py-8 max-w-7xl">
             {children}
           </div>
         </div>
