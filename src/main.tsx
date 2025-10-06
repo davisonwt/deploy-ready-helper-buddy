@@ -1,7 +1,6 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { BrowserRouter } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
@@ -10,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBoundary";
 import { logInfo, logError } from "@/lib/logging";
-import { queryClient, persister } from "./lib/queryPersistence";
+import { queryClient } from "./lib/queryPersistence";
 
 import "./index.css";
 
@@ -81,12 +80,12 @@ createRoot(rootElement).render(
   <StrictMode>
     <ProductionErrorBoundary>
       <SessionContextProvider supabaseClient={supabase}>
-        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <App />
           </BrowserRouter>
           <Toaster />
-        </PersistQueryClientProvider>
+        </QueryClientProvider>
       </SessionContextProvider>
     </ProductionErrorBoundary>
   </StrictMode>
