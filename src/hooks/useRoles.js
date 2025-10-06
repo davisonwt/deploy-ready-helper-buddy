@@ -22,7 +22,7 @@ export function useRoles() {
   }
 
   const [userRoles, setUserRoles] = React.useState([])
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(true) // Start with true to wait for initial role fetch
   const [error, setError] = React.useState(null)
   
   // Check if React hooks are available (dispatcher check)
@@ -254,6 +254,8 @@ export function useRoles() {
     console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id, userEmail: user?.email })
     if (!user) {
       console.log('🔑 useRoles: No user found, skipping fetchUserRoles')
+      setLoading(false) // No user means no roles to load
+      setUserRoles([]) // Clear any existing roles
       return
     }
     console.log('🔑 useRoles: User found, calling fetchUserRoles')
