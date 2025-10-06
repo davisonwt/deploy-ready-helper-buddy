@@ -2579,6 +2579,38 @@ export type Database = {
           },
         ]
       }
+      room_members: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_participants: {
         Row: {
           hand_raised_at: string | null
@@ -3629,6 +3661,10 @@ export type Database = {
         Args: { base_amount?: number }
         Returns: Json
       }
+      can_access_user_data: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       can_join_session_early: {
         Args: { schedule_id_param: string }
         Returns: boolean
@@ -3926,7 +3962,7 @@ export type Database = {
       }
       increment_ai_usage: {
         Args: Record<PropertyKey, never> | { user_id_param?: string }
-        Returns: undefined
+        Returns: number
       }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
