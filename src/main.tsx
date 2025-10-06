@@ -1,6 +1,7 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { BrowserRouter } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/toaster";
 import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBoundary";
 import { logInfo, logError } from "@/lib/logging";
+import { queryClient, persister } from "./lib/queryPersistence";
 
 import "./index.css";
 
@@ -48,26 +50,7 @@ if ('performance' in window && 'observe' in window.PerformanceObserver) {
   observer.observe({ entryTypes: ['navigation'] });
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error: any) => {
-        // Don't retry on auth errors
-        if (error?.message?.includes('auth') || error?.status === 401) {
-          return false;
-        }
-        return failureCount < 2;
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      refetchOnWindowFocus: false,
-    },
-    mutations: {
-      // Mutation error handling via onError callback in individual mutations
-    },
-  },
-  // No custom caches to ensure version-compatible internals
-});
+// Query client is now imported from lib/queryPersistence.ts for better caching
 
 // Log app initialization
 logInfo('Application starting', {
@@ -98,12 +81,12 @@ createRoot(rootElement).render(
   <StrictMode>
     <ProductionErrorBoundary>
       <SessionContextProvider supabaseClient={supabase}>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
           <BrowserRouter>
             <App />
           </BrowserRouter>
           <Toaster />
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SessionContextProvider>
     </ProductionErrorBoundary>
   </StrictMode>
