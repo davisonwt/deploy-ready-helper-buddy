@@ -106,8 +106,8 @@ export default function Layout({ children }) {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' } },
-    { name: "sow new seed", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' } }
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
+    { name: "sow new seed", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' }, className: 'create-orchard-tour' }
   ]
 
   // Grouped navigation (dropdowns)
@@ -116,6 +116,7 @@ export default function Layout({ children }) {
       name: "My Content",
       icon: User,
       color: { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
+      className: 'browse-orchards-tour',
       items: [
         { name: "My Orchards", href: "/my-orchards", icon: User },
         { name: "Browse Community Orchards", href: "/browse-orchards", icon: Users },
@@ -140,6 +141,7 @@ export default function Layout({ children }) {
       name: "Let It Rain",
       icon: "🌧️", // Using emoji instead of Lucide icon
       color: { bg: '#ffffff', border: '#3B82F6', text: '#1e293b' },
+      className: 'tithing-tour',
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
         { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
@@ -178,7 +180,7 @@ export default function Layout({ children }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-3 group">
+            <Link to="/dashboard" className="flex items-center space-x-3 group dashboard-tour">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
                 <img 
                   src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
@@ -206,6 +208,7 @@ export default function Layout({ children }) {
                     className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
                       hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                      ${item.className || ''}
                     `}
                     style={{
                       backgroundColor: item.color.bg,
@@ -236,6 +239,7 @@ export default function Layout({ children }) {
                         className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
                           hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
                           ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                          ${group.className || ''}
                         `}
                         style={{
                           backgroundColor: group.color.bg,
@@ -315,7 +319,7 @@ export default function Layout({ children }) {
                 
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors p-2 rounded-lg hover:bg-accent"
+                  className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors p-2 rounded-lg hover:bg-accent profile-tour"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-border">
                     {user?.profile_picture ? (
