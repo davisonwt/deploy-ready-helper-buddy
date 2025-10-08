@@ -8,28 +8,63 @@ import { toast } from '@/hooks/use-toast';
 const steps: Step[] = [
   {
     target: '.dashboard-tour',
-    content: 'Welcome to Sow2Grow! This is your main dashboard where you can see all your activities.',
+    content: 'Welcome to Sow2Grow! This is your main dashboard where you can see all your activities and navigate through the platform.',
     placement: 'bottom',
     disableBeacon: true,
   },
   {
-    target: '.browse-orchards-tour',
-    content: 'Browse and discover orchards created by other users in the community.',
-    placement: 'right',
-  },
-  {
-    target: '.create-orchard-tour', 
-    content: 'Ready to plant your first seed? Click here to create your own orchard.',
+    target: '.stats-tour',
+    content: 'Here are your key statistics at a glance - track your orchards, donations raised, active community members, and your support contributions.',
     placement: 'bottom',
   },
   {
+    target: '.my-orchards-stat-tour',
+    content: 'This shows the total number of orchards (projects) you have created.',
+    placement: 'bottom',
+  },
+  {
+    target: '.wallet-tour',
+    content: 'Your USDC Wallet - Connect your Solana wallet here to make and receive payments. You can top up your balance and see transaction details.',
+    placement: 'top',
+  },
+  {
+    target: '.timezone-tour',
+    content: 'Global Time Zones - See the current time in different zones and access the radio schedule for live broadcasts.',
+    placement: 'top',
+  },
+  {
+    target: '.my-orchards-section-tour',
+    content: 'My Orchards section - View and manage all your active orchards. Click "View All" to see your complete orchard list.',
+    placement: 'top',
+  },
+  {
+    target: '.bestowals-tour',
+    content: 'Recent Bestowals - Track the orchards you\'ve supported with donations. Click "Explore More" to find more projects to support.',
+    placement: 'top',
+  },
+  {
+    target: '.quick-actions-tour',
+    content: 'Quick Actions - Fast access to common tasks: Plant a new seed (create orchard), browse community orchards, and manage your profile.',
+    placement: 'top',
+  },
+  {
+    target: '.create-orchard-tour', 
+    content: 'Ready to plant your first seed? Click here to create your own orchard and start your project.',
+    placement: 'bottom',
+  },
+  {
+    target: '.browse-orchards-tour',
+    content: 'Browse and discover orchards created by other users in the community. Support projects that align with your values.',
+    placement: 'right',
+  },
+  {
     target: '.tithing-tour',
-    content: 'Support the community through tithing and contributions.',
+    content: 'Support the community through tithing and free-will gifting - give back to help the platform grow.',
     placement: 'right',
   },
   {
     target: '.profile-tour',
-    content: 'Manage your profile and account settings here.',
+    content: 'Manage your profile and account settings here. Update your information and preferences.',
     placement: 'left',
   },
 ];
