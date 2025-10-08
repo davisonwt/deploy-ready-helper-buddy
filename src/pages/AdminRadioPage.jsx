@@ -5,35 +5,59 @@ import PersonnelSlotAssignment from "../components/radio/PersonnelSlotAssignment
 
 export function AdminRadioPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-4 md:p-6">
-      <div className="max-w-[1800px] mx-auto space-y-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-primary mb-6">AOD Station Radio Management</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-8">
+      <div className="max-w-[2000px] mx-auto space-y-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            AOD Station Radio Management
+          </h1>
+          <p className="text-muted-foreground mt-2">Manage schedules, personnel, and show approvals</p>
+        </div>
         
-        {/* Top row - Today's Schedule and Personnel Assignments side by side */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-card rounded-lg border p-4 md:p-6 overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-semibold text-primary mb-4">Today's Schedule</h2>
-            <RadioScheduleGrid />
+        {/* Main Grid - Compact 3-column layout */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Today's Schedule - Compact Card */}
+          <div className="lg:col-span-1 bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                Today's Schedule
+              </h2>
+              <RadioScheduleGrid />
+            </div>
           </div>
           
-          <div className="bg-card rounded-lg border p-4 md:p-6 overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-semibold text-primary mb-4">Personnel Assignments</h2>
-            <div className="overflow-x-auto">
+          {/* Personnel Assignments - Takes 2 columns */}
+          <div className="lg:col-span-2 bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                Personnel Assignments
+              </h2>
               <PersonnelSlotAssignment />
             </div>
           </div>
         </div>
         
-        {/* Bottom row - Other admin components */}
-        <div className="grid gap-6">
-          <div className="bg-card rounded-lg border p-4 md:p-6 overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-semibold text-primary mb-4">Slot Approval Interface</h2>
-            <RadioSlotApprovalInterface />
+        {/* Bottom Section - Full Width Sections */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                Slot Approval Interface
+              </h2>
+              <RadioSlotApprovalInterface />
+            </div>
           </div>
           
-          <div className="bg-card rounded-lg border p-4 md:p-6 overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-semibold text-primary mb-4">Show Approvals</h2>
-            <div className="overflow-x-auto">
+          <div className="bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                Show Approvals
+              </h2>
               <AdminRadioManagement />
             </div>
           </div>
