@@ -126,43 +126,46 @@ export default function GroveStationPage() {
         {/* Prominent Tab Navigation */}
         <Card className="border-2 shadow-xl">
           <Tabs defaultValue="listen" className="w-full">
-            <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 p-3 rounded-t-lg">
-              <TabsList className="grid w-full grid-cols-5 h-auto bg-background/50 backdrop-blur-sm border border-border/50 shadow-lg p-1 rounded-xl">
+            <div className="p-6">
+              <TabsList className="w-full h-auto bg-transparent grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {/* First Row - 3 buttons */}
                 <TabsTrigger 
                   value="listen" 
-                  className="flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-lg transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-green-500/50 hover:bg-muted/50"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg bg-primary/10 hover:bg-primary/20"
                 >
-                  <Headphones className="h-6 w-6" />
-                  <span className="text-xs font-bold">Listen Now</span>
+                  <Headphones className="h-5 w-5" />
+                  <span>Listen Now</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="schedule"
-                  className="flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-lg transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-500/50 hover:bg-muted/50"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg bg-primary/10 hover:bg-primary/20"
                 >
-                  <Calendar className="h-6 w-6" />
-                  <span className="text-xs font-bold">Schedule</span>
+                  <Calendar className="h-5 w-5" />
+                  <span>Schedule</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="djs"
-                  className="flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-lg transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-purple-500/50 hover:bg-muted/50"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg bg-primary/10 hover:bg-primary/20"
                 >
-                  <Users className="h-6 w-6" />
-                  <span className="text-xs font-bold">Our DJs</span>
+                  <Users className="h-5 w-5" />
+                  <span>Our DJs</span>
                 </TabsTrigger>
+                
+                {/* Second Row - 2 buttons centered */}
                 <TabsTrigger 
                   value="broadcast" 
                   disabled={!isDJ}
-                  className="flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-lg transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-red-500/50 hover:bg-muted/50 disabled:opacity-40 disabled:hover:scale-100"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg bg-primary/10 hover:bg-primary/20 disabled:opacity-40 disabled:hover:scale-100 col-start-1 col-end-2"
                 >
-                  <Mic className="h-6 w-6" />
-                  <span className="text-xs font-bold">Go Live</span>
+                  <Mic className="h-5 w-5" />
+                  <span>Go Live</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="stats"
-                  className="flex flex-col items-center justify-center gap-2 py-4 px-3 rounded-lg transition-all duration-300 hover:scale-105 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-amber-500/50 hover:bg-muted/50"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg bg-primary/10 hover:bg-primary/20 col-start-2 col-end-3"
                 >
-                  <TrendingUp className="h-6 w-6" />
-                  <span className="text-xs font-bold">Stats</span>
+                  <TrendingUp className="h-5 w-5" />
+                  <span>Stats</span>
                 </TabsTrigger>
               </TabsList>
             </div>
