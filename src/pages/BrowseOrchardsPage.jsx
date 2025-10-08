@@ -193,52 +193,36 @@ export default function BrowseOrchardsPage() {
       <div className="relative z-20">
       {/* Welcome Section with Profile Picture */}
       <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-          <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
-              {user?.profile_picture ? (
-                <img 
-                  src={user.profile_picture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
-                  <User className="h-10 w-10 text-green-700" />
-                </div>
-              )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
+                {user?.profile_picture ? (
+                  <img 
+                    src={user.profile_picture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
+                    <User className="h-10 w-10 text-green-700" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
+                  color: 'hsl(137, 80%, 65%)', 
+                  textShadow: '2px 2px 4px hsl(137, 80%, 45%)'
+                }}>
+                  Community Orchards
+                </h1>
+                <p className="text-lg" style={{ color: '#0b6623' }}>
+                  Every bestowal helps dreams grow! 🌱
+                </p>
+                <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
+                  Payment Method: USDC (USD Coin)
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-                color: 'hsl(137, 80%, 65%)', 
-                textShadow: '2px 2px 4px hsl(137, 80%, 45%)'
-              }}>
-                Community Orchards
-              </h1>
-              <p className="text-lg" style={{ color: '#0b6623' }}>
-                Discover and support orchards in our community
-              </p>
-              <p className="text-sm mt-1" style={{ color: '#0b6623' }}>
-                Payment Method: USDC (USD Coin)
-              </p>
-            </div>
-          </div>
-        </div>
-
-      <div className="container mx-auto px-4 py-8 pb-32">
-        {/* Header */}
-        <div className="max-w-xl mx-auto text-center mb-8 bg-white/98 backdrop-blur-lg rounded-2xl p-4 shadow-xl border-2 border-white/70">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-nav-community/30 rounded-full flex items-center justify-center shadow-lg">
-              <Sprout className="h-8 w-8 text-green-700 animate-pulse" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-nav-community mb-4">
-            Browse Community Orchards
-          </h2>
-          <p className="text-lg text-green-600 max-w-2xl mx-auto mb-6">
-            Every bestowal helps dreams grow! 🌱
-          </p>
-          <div className="flex justify-center">
             <Button 
               variant="outline" 
               onClick={handleRefresh}
@@ -255,6 +239,7 @@ export default function BrowseOrchardsPage() {
           </div>
         </div>
 
+      <div className="container mx-auto px-4 py-8 pb-32">
         {/* Filters */}
         <div className="flex justify-center mb-8">
           <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg hover:shadow-xl transition-all">
