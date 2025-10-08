@@ -22,7 +22,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 
-export default function AdminRadioManagement() {
+export default function AdminRadioManagement({ showScheduleList = true }) {
   const { user } = useAuth()
   const [pendingSlots, setPendingSlots] = useState([])
   const [allSlots, setAllSlots] = useState([])
@@ -204,118 +204,113 @@ export default function AdminRadioManagement() {
       </Card>
 
       {/* Schedule List */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Radio Schedule Slots</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredSlots.length === 0 ? (
-            <div className="text-center py-8">
-              <Radio className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No radio slots found for the selected filter.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredSlots.map((slot) => (
-                <div key={slot.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {formatDateTime(slot.time_slot_date, slot.hour_slot)}
-                        </span>
-                        {getStatusBadge(slot.approval_status)}
-                      </div>
-                      
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-semibold text-lg">
-                            {slot.radio_shows?.show_name || 'Untitled Show'}
-                          </h4>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                            <User className="h-3 w-3" />
-                            {slot.radio_djs?.dj_name || 'Unknown DJ'}
-                          </div>
-                          
-                          {slot.radio_shows?.subject && (
-                            <div className="mb-2">
-                              <Badge variant="outline" className="text-xs">
-                                {slot.radio_shows.subject}
-                              </Badge>
-                            </div>
-                          )}
-                          
-                          {slot.radio_shows?.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {slot.radio_shows.description}
-                            </p>
-                          )}
+      {showScheduleList && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Radio Schedule Slots</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredSlots.length === 0 ? (
+              <div className="text-center py-8">
+                <Radio className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No radio slots found for the selected filter.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredSlots.map((slot) => (
+                  <div key={slot.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">
+                            {formatDateTime(slot.time_slot_date, slot.hour_slot)}
+                          </span>
+                          {getStatusBadge(slot.approval_status)}
                         </div>
-                        
-                        <div>
-                          {slot.radio_shows?.topic_description && (
-                            <div>
-                              <h5 className="font-medium text-sm mb-1">Episode Topic:</h5>
-                              <p className="text-sm text-muted-foreground line-clamp-3">
-                                {slot.radio_shows.topic_description}
-                              </p>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold text-lg">
+                              {slot.radio_shows?.show_name || 'Untitled Show'}
+                            </h4>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                              <User className="h-3 w-3" />
+                              {slot.radio_djs?.dj_name || 'Unknown DJ'}
                             </div>
-                          )}
-                          
-                          {slot.show_notes && (
-                            <div className="mt-2">
-                              <h5 className="font-medium text-sm mb-1">Show Notes:</h5>
+                            {slot.radio_shows?.subject && (
+                              <div className="mb-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {slot.radio_shows.subject}
+                                </Badge>
+                              </div>
+                            )}
+                            {slot.radio_shows?.description && (
                               <p className="text-sm text-muted-foreground line-clamp-2">
-                                {slot.show_notes}
+                                {slot.radio_shows.description}
                               </p>
-                            </div>
-                          )}
+                            )}
+                          </div>
+                          <div>
+                            {slot.radio_shows?.topic_description && (
+                              <div>
+                                <h5 className="font-medium text-sm mb-1">Episode Topic:</h5>
+                                <p className="text-sm text-muted-foreground line-clamp-3">
+                                  {slot.radio_shows.topic_description}
+                                </p>
+                              </div>
+                            )}
+                            {slot.show_notes && (
+                              <div className="mt-2">
+                                <h5 className="font-medium text-sm mb-1">Show Notes:</h5>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {slot.show_notes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedSlot(slot)
-                          setShowDetailsDialog(true)
-                        }}
-                      >
-                        <Settings className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                      
-                      {slot.approval_status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={async () => await approveSlot(slot.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={async () => await rejectSlot(slot.id)}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedSlot(slot)
+                            setShowDetailsDialog(true)
+                          }}
+                        >
+                          <Settings className="h-4 w-4 mr-1" />
+                          Details
+                        </Button>
+                        {slot.approval_status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={async () => await approveSlot(slot.id)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={async () => await rejectSlot(slot.id)}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Details Dialog */}
       {selectedSlot && (

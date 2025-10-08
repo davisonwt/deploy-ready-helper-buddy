@@ -46,7 +46,7 @@ export function AdminRadioPage() {
                 <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                 Radio Station Management
               </h2>
-              <AdminRadioManagement />
+              <AdminRadioManagement showScheduleList={false} />
             </div>
           </div>
         </div>
