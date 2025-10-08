@@ -29,7 +29,7 @@ const CATEGORY_COLORS = {
   live_call_in: 'bg-pink-500/10 border-pink-500/20 text-pink-700'
 }
 
-export function RadioScheduleGrid({ schedule }) {
+export function RadioScheduleGrid({ schedule, compact = false, showLegend = true }) {
   const [selectedSlot, setSelectedSlot] = useState('current')
   const [liveSchedule, setLiveSchedule] = useState([])
   const [loading, setLoading] = useState(true)
@@ -262,21 +262,18 @@ export function RadioScheduleGrid({ schedule }) {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-6 pt-4 border-t">
-          <h4 className="text-sm font-medium mb-3">Show Categories</h4>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(CATEGORY_COLORS).map(([category, colorClass]) => (
-              <Badge 
-                key={category}
-                variant="outline"
-                className={`text-xs ${colorClass}`}
-              >
-                {category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-              </Badge>
-            ))}
+        {showLegend && (
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="text-sm font-medium mb-3">Show Categories</h4>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(CATEGORY_COLORS).map(([category, colorClass]) => (
+                <Badge key={category} variant="outline" className={`text-xs ${colorClass}`}>
+                  {category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   )

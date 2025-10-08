@@ -15,28 +15,25 @@ export function AdminRadioPage() {
           <p className="text-muted-foreground mt-2">Manage schedules, personnel, and show approvals</p>
         </div>
         
-        {/* Main Grid - Compact 3-column layout */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Today's Schedule - Compact Card */}
-          <div className="lg:col-span-1 bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                Today's Schedule
-              </h2>
-              <RadioScheduleGrid />
-            </div>
+        {/* Today's Schedule - Full Width */}
+        <div className="bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              Today's Schedule
+            </h2>
+            <RadioScheduleGrid compact showLegend={false} />
           </div>
-          
-          {/* Personnel Assignments - Takes 2 columns */}
-          <div className="lg:col-span-2 bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                Personnel Assignments
-              </h2>
-              <PersonnelSlotAssignment />
-            </div>
+        </div>
+
+        {/* Personnel Assignments - Split inside component */}
+        <div className="bg-card/80 backdrop-blur-sm rounded-xl border shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-primary mb-4 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              Personnel Assignments
+            </h2>
+            <PersonnelSlotAssignment />
           </div>
         </div>
         

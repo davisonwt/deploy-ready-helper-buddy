@@ -436,360 +436,305 @@ export default function PersonnelSlotAssignment() {
 
   return (
     <div className="space-y-6">
-      {/* Instruction Card */}
-      <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Radio className="h-8 w-8 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg text-blue-900">Radio Personnel Slot Assignment</h3>
-              <p className="text-blue-700 text-sm">
-                Assign radio admins to 2-hour time slots based on their location and timezone for 24-hour global coverage.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Date Selector */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Radio className="h-5 w-5" />
-              Personnel Slot Assignment
-            </div>
-            <div className="text-sm font-normal">
-              12 × 2-hour slots per day
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Label>Date:</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bulk Reminder Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Automated Shift Reminders
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Send automated reminders to radio personnel about their upcoming shifts via chat
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => sendBulkReminders('24h')}
-                className="flex items-center gap-2 flex-1 min-w-[200px]"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Send 24h Reminders
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => sendBulkReminders('1h')}
-                className="flex items-center gap-2 flex-1 min-w-[200px]"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Send 1h Reminders
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Slot Grid */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              <CardTitle>Personnel Assignments</CardTitle>
-            </div>
-            <div className="flex items-center gap-4">
-              <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
-                const newDate = new Date(dateStr)
-                setSelectedDate(newDate)
-              }}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select date" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  {/* Generate options for next 7 days */}
-                  {Array.from({ length: 7 }, (_, i) => {
-                    const date = new Date()
-                    date.setDate(date.getDate() + i)
-                    return (
-                      <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
-                        {format(date, "EEEE, MMMM d, yyyy")}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-              <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time slot" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
-                  <SelectItem value="all">All Time Slots</SelectItem>
-                  {TIME_SLOTS.map((slot) => (
-                    <SelectItem key={slot.value} value={slot.value.toString()}>
-                      {slot.displayTime}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {slotAssignments
-              .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
-              .map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-24 text-center">
-                    <div className="font-mono text-sm font-medium">
-                      {item.slot.label}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.slot.displayTime}
-                    </div>
-                  </div>
-
-                  {item.isEmpty ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">No assignment</p>
-                        <p className="text-xs text-muted-foreground">Slot available</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={item.assignment.radio_djs?.avatar_url} />
-                        <AvatarFallback>
-                          {item.assignment.radio_djs?.dj_name?.charAt(0) || 'DJ'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">
-                          {item.assignment.radio_djs?.dj_name || 'Unknown DJ'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.assignment.radio_shows?.show_name || 'Live Show'}
-                        </p>
-                        
-                        {/* Enhanced timezone and location display */}
-                        {item.assignment.radio_djs && (
-                          <div className="text-xs text-blue-600 mt-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Globe className="h-3 w-3" />
-                              <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
-                              <MapPin className="h-3 w-3" />
-                              <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-3 w-3" />
-                              <span className="font-mono text-xs">{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
-                              <span className="font-medium">Local: {(() => {
-                                const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                                return getCurrentLocalTime(timezone);
-                              })()}</span>
-                              {(() => {
-                                const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                                return isNightTime(timezone) ? <span className="text-blue-500">🌙</span> : <span className="text-yellow-500">☀️</span>;
-                              })()}
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {item.assignment.status}
-                          </Badge>
-                          {item.assignment.approval_status && (
-                            <Badge 
-                              variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'} 
-                              className="text-xs"
-                            >
-                              {item.assignment.approval_status}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* LEFT COLUMN: Guidance, Date, and Slot Grid */}
+        <div className="space-y-6">
+          {/* Instruction Card */}
+          <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Radio className="h-8 w-8 text-blue-600" />
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {item.isEmpty ? (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSlot(item.slot)
-                        setShowAssignDialog(true)
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Assign Personnel
-                    </Button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendShiftReminder(item, 'immediate')}
-                        className="flex items-center gap-2"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        Send Reminder
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeSlotAssignment(item)}
-                        className="flex items-center gap-2 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Remove
-                      </Button>
-                    </div>
-                  )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-blue-900">Radio Personnel Slot Assignment</h3>
+                  <p className="text-blue-700 text-sm">
+                    Assign radio admins to 2-hour time slots based on their location and timezone for 24-hour global coverage.
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Available Radio Admins Panel */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Available Radio Admins ({radioAdmins.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {radioAdmins.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No radio admins found</p>
-              <p className="text-sm">Users with radio_admin role will appear here with their timezone info</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {radioAdmins.map((admin) => {
-                const localTime = getCurrentLocalTime(admin.timezone)
-                const nightTime = isNightTime(admin.timezone)
+          {/* Date Selector */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Radio className="h-5 w-5" />
+                  Personnel Slot Assignment
+                </div>
+                <div className="text-sm font-normal">12 × 2-hour slots per day</div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Label>Date:</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </CardContent>
+          </Card>
 
-                return (
-                  <div 
-                    key={admin.id} 
-                    className="p-4 border rounded-lg hover:shadow-lg transition-all duration-200 bg-card"
-                  >
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12 flex-shrink-0">
-                          <AvatarImage src={admin.avatar_url} />
-                          <AvatarFallback className="bg-primary/10 text-lg font-semibold">
-                            {admin.dj_name?.charAt(0) || 'A'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold truncate text-base">{admin.dj_name}</h3>
-                            {admin.is_active && (
-                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 animate-pulse"></div>
+          {/* Slot Grid */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  <CardTitle>Personnel Assignments</CardTitle>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
+                    const newDate = new Date(dateStr)
+                    setSelectedDate(newDate)
+                  }}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select date" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      {Array.from({ length: 7 }, (_, i) => {
+                        const date = new Date()
+                        date.setDate(date.getDate() + i)
+                        return (
+                          <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
+                            {format(date, "EEEE, MMMM d, yyyy")}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select time slot" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
+                      <SelectItem value="all">All Time Slots</SelectItem>
+                      {TIME_SLOTS.map((slot) => (
+                        <SelectItem key={slot.value} value={slot.value.toString()}>
+                          {slot.displayTime}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                {slotAssignments
+                  .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
+                  .map((item, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-24 text-center">
+                        <div className="font-mono text-sm font-medium">{item.slot.label}</div>
+                        <div className="text-xs text-muted-foreground">{item.slot.displayTime}</div>
+                      </div>
+
+                      {item.isEmpty ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <User className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">No assignment</p>
+                            <p className="text-xs text-muted-foreground">Slot available</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={item.assignment.radio_djs?.avatar_url} />
+                            <AvatarFallback>{item.assignment.radio_djs?.dj_name?.charAt(0) || 'DJ'}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{item.assignment.radio_djs?.dj_name || 'Unknown DJ'}</p>
+                            <p className="text-sm text-muted-foreground">{item.assignment.radio_shows?.show_name || 'Live Show'}</p>
+                            {item.assignment.radio_djs && (
+                              <div className="text-xs text-blue-600 mt-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Globe className="h-3 w-3" />
+                                  <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="font-mono text-xs">{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
+                                  <span className="font-medium">Local: {(() => {
+                                    const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
+                                    return getCurrentLocalTime(timezone);
+                                  })()}</span>
+                                  {(() => {
+                                    const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
+                                    return isNightTime(timezone) ? <span className="text-blue-500">🌙</span> : <span className="text-yellow-500">☀️</span>;
+                                  })()}
+                                </div>
+                              </div>
                             )}
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                              <Badge variant="secondary" className="text-xs">{item.assignment.status}</Badge>
+                              {item.assignment.approval_status && (
+                                <Badge variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'} className="text-xs">
+                                  {item.assignment.approval_status}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {item.isEmpty ? (
+                        <Button size="sm" onClick={() => { setSelectedSlot(item.slot); setShowAssignDialog(true); }} className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Assign Personnel
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => sendShiftReminder(item, 'immediate')} className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            Send Reminder
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => removeSlotAssignment(item)} className="flex items-center gap-2 text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                            Remove
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* RIGHT COLUMN: Quick Actions and Admin Directory */}
+        <div className="space-y-6">
+          {/* Bulk Reminder Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Automated Shift Reminders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Send automated reminders to radio personnel about their upcoming shifts via chat</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => sendBulkReminders('24h')} className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <MessageSquare className="h-4 w-4" />
+                    Send 24h Reminders
+                  </Button>
+                  <Button variant="outline" onClick={() => sendBulkReminders('1h')} className="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <MessageSquare className="h-4 w-4" />
+                    Send 1h Reminders
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Available Radio Admins Panel */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Available Radio Admins ({radioAdmins.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {radioAdmins.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No radio admins found</p>
+                  <p className="text-sm">Users with radio_admin role will appear here with their timezone info</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  {radioAdmins.map((admin) => {
+                    const localTime = getCurrentLocalTime(admin.timezone)
+                    const nightTime = isNightTime(admin.timezone)
+
+                    return (
+                      <div key={admin.id} className="p-4 border rounded-lg hover:shadow-lg transition-all duration-200 bg-card">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-12 w-12 flex-shrink-0">
+                              <AvatarImage src={admin.avatar_url} />
+                              <AvatarFallback className="bg-primary/10 text-lg font-semibold">
+                                {admin.dj_name?.charAt(0) || 'A'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-base line-clamp-1 md:line-clamp-none">{admin.dj_name}</h3>
+                                {admin.is_active && <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 animate-pulse"></div>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2 pl-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <span className="font-medium break-words">{admin.country}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4 flex-shrink-0" />
+                              <span className="break-words">{admin.location}</span>
+                            </div>
+                            <div className={`flex items-center gap-2 text-sm font-semibold ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
+                              <Clock className="h-4 w-4 flex-shrink-0" />
+                              <span>{localTime}</span>
+                              {nightTime ? <span className="text-xl">🌙</span> : <span className="text-xl">☀️</span>}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 font-mono break-all">
+                                {admin.timezone}
+                              </Badge>
+                              <Badge variant={nightTime ? 'secondary' : 'default'} className="text-xs px-2 py-0.5 whitespace-nowrap">
+                                {nightTime ? 'Night' : 'Daytime'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Location & Timezone Info */}
-                      <div className="space-y-2 pl-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span className="truncate font-medium">{admin.country}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{admin.location}</span>
-                        </div>
-                        
-                        {/* Current Local Time with Day/Night indicator */}
-                        <div className={`flex items-center gap-2 text-sm font-semibold ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
-                          <Clock className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{localTime}</span>
-                          {nightTime ? <span className="text-xl">🌙</span> : <span className="text-xl">☀️</span>}
-                        </div>
-                        
-                        {/* Timezone Badge */}
-                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                          <Badge variant="outline" className="text-xs px-2 py-0.5 font-mono truncate max-w-full">
-                            {admin.timezone}
-                          </Badge>
-                          <Badge 
-                            variant={nightTime ? "secondary" : "default"} 
-                            className="text-xs px-2 py-0.5 whitespace-nowrap"
-                          >
-                            {nightTime ? 'Night' : 'Daytime'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
 
-      {/* Assignment Dialog */}
+  {/* Assignment Dialog */
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
