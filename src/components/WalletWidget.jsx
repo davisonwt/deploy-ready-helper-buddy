@@ -112,7 +112,7 @@ export function WalletWidget() {
             className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold"
           >
             <Plus className="h-4 w-4 mr-2" />
-            💰 Top-up Wallet
+            Top Up
           </Button>
           <Button
             variant="outline"
