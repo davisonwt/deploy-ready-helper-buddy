@@ -23,8 +23,18 @@ const steps: Step[] = [
     placement: 'bottom',
   },
   {
+    target: '.chatapp-tour',
+    content: '"Chatapp" - Connect with the community through chat, listen to radio stations, and access live broadcasts.',
+    placement: 'bottom',
+  },
+  {
     target: '.tithing-tour',
     content: '"Let It Rain" - Support the community through tithing and free-will gifting to help the platform grow.',
+    placement: 'bottom',
+  },
+  {
+    target: '.support-tour',
+    content: '"Support" - Learn how to support the platform and contribute to its mission.',
     placement: 'bottom',
   },
   {
