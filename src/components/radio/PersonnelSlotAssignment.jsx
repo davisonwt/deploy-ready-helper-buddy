@@ -505,15 +505,15 @@ export default function PersonnelSlotAssignment() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground flex-1">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
               Send automated reminders to radio personnel about their upcoming shifts via chat
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={() => sendBulkReminders('24h')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-1 min-w-[200px]"
               >
                 <MessageSquare className="h-4 w-4" />
                 Send 24h Reminders
@@ -521,7 +521,7 @@ export default function PersonnelSlotAssignment() {
               <Button
                 variant="outline"
                 onClick={() => sendBulkReminders('1h')}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-1 min-w-[200px]"
               >
                 <MessageSquare className="h-4 w-4" />
                 Send 1h Reminders
@@ -721,7 +721,7 @@ export default function PersonnelSlotAssignment() {
               <p className="text-sm">Users with radio_admin role will appear here with their timezone info</p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {radioAdmins.map((admin) => {
                 const localTime = getCurrentLocalTime(admin.timezone)
                 const nightTime = isNightTime(admin.timezone)
@@ -729,54 +729,55 @@ export default function PersonnelSlotAssignment() {
                 return (
                   <div 
                     key={admin.id} 
-                    className="p-4 border rounded-lg hover:shadow-md transition-all duration-200 bg-card"
+                    className="p-4 border rounded-lg hover:shadow-lg transition-all duration-200 bg-card"
                   >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarImage src={admin.avatar_url} />
-                        <AvatarFallback className="bg-primary/10">
-                          {admin.dj_name?.charAt(0) || 'A'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium truncate text-sm">{admin.dj_name}</h3>
-                          {admin.is_active && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                          )}
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 flex-shrink-0">
+                          <AvatarImage src={admin.avatar_url} />
+                          <AvatarFallback className="bg-primary/10 text-lg font-semibold">
+                            {admin.dj_name?.charAt(0) || 'A'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold truncate text-base">{admin.dj_name}</h3>
+                            {admin.is_active && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 animate-pulse"></div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Location & Timezone Info */}
+                      <div className="space-y-2 pl-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="truncate font-medium">{admin.country}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{admin.location}</span>
                         </div>
                         
-                        {/* Enhanced Location & Timezone Info */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            <span className="truncate">{admin.location}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Globe className="h-3 w-3" />
-                            <span>{admin.country}</span>
-                          </div>
-                          
-                          {/* Current Local Time with Day/Night indicator */}
-                          <div className={`flex items-center gap-1 text-xs font-medium ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
-                            <Clock className="h-3 w-3" />
-                            <span>{localTime}</span>
-                            {nightTime && <span className="text-blue-500">🌙</span>}
-                            {!nightTime && <span className="text-yellow-500">☀️</span>}
-                          </div>
-                          
-                          {/* Timezone Badge */}
-                          <div className="flex items-center gap-1">
-                            <Badge variant="outline" className="text-xs px-2 py-0 font-mono">
-                              {admin.timezone}
-                            </Badge>
-                            <Badge 
-                              variant={nightTime ? "secondary" : "default"} 
-                              className="text-xs px-2 py-0"
-                            >
-                              {nightTime ? 'Night Time' : 'Day Time'}
-                            </Badge>
-                          </div>
+                        {/* Current Local Time with Day/Night indicator */}
+                        <div className={`flex items-center gap-2 text-sm font-semibold ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
+                          <Clock className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{localTime}</span>
+                          {nightTime ? <span className="text-xl">🌙</span> : <span className="text-xl">☀️</span>}
+                        </div>
+                        
+                        {/* Timezone Badge */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          <Badge variant="outline" className="text-xs px-2 py-0.5 font-mono truncate max-w-full">
+                            {admin.timezone}
+                          </Badge>
+                          <Badge 
+                            variant={nightTime ? "secondary" : "default"} 
+                            className="text-xs px-2 py-0.5 whitespace-nowrap"
+                          >
+                            {nightTime ? 'Night' : 'Daytime'}
+                          </Badge>
                         </div>
                       </div>
                     </div>
