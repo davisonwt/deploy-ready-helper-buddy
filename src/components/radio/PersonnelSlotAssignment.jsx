@@ -435,231 +435,215 @@ export default function PersonnelSlotAssignment() {
   }
 
   return (
-    <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-      {/* LEFT: Slot Grid */}
-      <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-primary mb-2">Radio Personnel Slot Assignment</h2>
+        <p className="text-sm text-muted-foreground">Assign radio admins to 2-hour time slots for 24-hour global coverage</p>
+      </div>
+
+      {/* Main 3-Column Layout */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Personnel Slot Assignment - Date/Time Picker */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Personnel Slot Assignments
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "justify-start text-left font-normal",
-                        !selectedDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "MMM d") : <span>Date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Slots</SelectItem>
-                    {TIME_SLOTS.map((slot) => (
-                      <SelectItem key={slot.value} value={slot.value.toString()}>
-                        {slot.displayTime}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Personnel Slot Assignment
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Date:</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
+            <div className="space-y-2">
+              <Label>Time Slot Filter:</Label>
+              <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Slots</SelectItem>
+                  {TIME_SLOTS.map((slot) => (
+                    <SelectItem key={slot.value} value={slot.value.toString()}>
+                      {slot.displayTime}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="pt-4 text-center text-sm text-muted-foreground border-t">
+              <p className="font-medium mb-1">Quick Info</p>
+              <p>12 × 2-hour slots per day</p>
+              <p>24-hour global coverage</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Personnel Assignments - Slot Grid */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Personnel Assignments
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
               {slotAssignments
                 .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
                 .map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-24 text-center">
-                        <div className="font-mono text-sm font-medium">{item.slot.label}</div>
-                        <div className="text-xs text-muted-foreground">{item.slot.displayTime}</div>
-                      </div>
-
-                      {item.isEmpty ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">No assignment</p>
-                            <p className="text-xs text-muted-foreground">Slot available</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={item.assignment.radio_djs?.avatar_url} />
-                            <AvatarFallback>{item.assignment.radio_djs?.dj_name?.charAt(0) || 'DJ'}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{item.assignment.radio_djs?.dj_name || 'Unknown DJ'}</p>
-                            <p className="text-sm text-muted-foreground">{item.assignment.radio_shows?.show_name || 'Live Show'}</p>
-                            {item.assignment.radio_djs && (
-                              <div className="text-xs text-blue-600 mt-1 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <Globe className="h-3 w-3" />
-                                  <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.country || 'Unknown'}</span>
-                                  <MapPin className="h-3 w-3" />
-                                  <span>{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.location || 'Not specified'}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="font-mono text-xs">{radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC'}</span>
-                                  <span className="font-medium">Local: {(() => {
-                                    const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                                    return getCurrentLocalTime(timezone);
-                                  })()}</span>
-                                  {(() => {
-                                    const timezone = radioAdmins.find(admin => admin.user_id === item.assignment.radio_djs?.user_id)?.timezone || 'UTC';
-                                    return isNightTime(timezone) ? <span className="text-blue-500">🌙</span> : <span className="text-yellow-500">☀️</span>;
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                              <Badge variant="secondary" className="text-xs">{item.assignment.status}</Badge>
-                              {item.assignment.approval_status && (
-                                <Badge variant={item.assignment.approval_status === 'approved' ? 'default' : 'outline'} className="text-xs">
-                                  {item.assignment.approval_status}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      {item.isEmpty ? (
-                        <Button size="sm" onClick={() => { setSelectedSlot(item.slot); setShowAssignDialog(true); }} className="flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
-                          Assign Personnel
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => sendShiftReminder(item, 'immediate')} className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4" />
-                            Send Reminder
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => removeSlotAssignment(item)} className="flex items-center gap-2 text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                            Remove
-                          </Button>
-                        </div>
-                      )}
+                      <div className="p-1.5 bg-primary/10 rounded">
+                        <Clock className="h-3 w-3 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-xs">{item.slot.displayTime}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
-      {/* RIGHT: Reminders and Available Admins */}
-      <div className="space-y-4">
-        {/* Bulk Reminder Actions */}
+                    {!item.isEmpty && item.assignment && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={item.assignment.radio_djs?.profiles?.avatar_url} />
+                          <AvatarFallback className="text-xs">
+                            {item.assignment.radio_djs?.dj_name?.charAt(0) || 'DJ'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-xs truncate">{item.assignment.radio_djs?.dj_name || 'Unknown DJ'}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {item.isEmpty ? (
+                      <Button size="sm" onClick={() => { setSelectedSlot(item.slot); setShowAssignDialog(true); }}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    ) : (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => sendShiftReminder(item, 'immediate')}>
+                          <MessageSquare className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => removeSlotAssignment(item)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Automated Shift Reminders */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              Shift Reminders
+              Automated Shift Reminders
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">Send automated reminders to personnel</p>
             <Button variant="outline" onClick={() => sendBulkReminders('24h')} className="w-full justify-start" size="sm">
               <MessageSquare className="h-4 w-4 mr-2" />
-              24h Reminders
+              Send 24h Reminders
             </Button>
             <Button variant="outline" onClick={() => sendBulkReminders('1h')} className="w-full justify-start" size="sm">
               <MessageSquare className="h-4 w-4 mr-2" />
-              1h Reminders
+              Send 1h Reminders
             </Button>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Available Radio Admins */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Radio Admins ({radioAdmins.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {radioAdmins.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No radio admins</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                {radioAdmins.map((admin) => {
-                  const localTime = getCurrentLocalTime(admin.timezone)
-                  const nightTime = isNightTime(admin.timezone)
+      {/* Available Radio Admins - Full Width Below */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Available Radio Admins ({radioAdmins.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {radioAdmins.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No radio admins found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {radioAdmins.map((admin) => {
+                const localTime = getCurrentLocalTime(admin.timezone)
+                const nightTime = isNightTime(admin.timezone)
 
-                  return (
-                    <div key={admin.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarImage src={admin.avatar_url} />
-                          <AvatarFallback className="text-sm">
-                            {admin.dj_name?.charAt(0) || 'A'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{admin.dj_name}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{admin.location}</span>
-                          </div>
+                return (
+                  <div key={admin.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={admin.avatar_url} />
+                        <AvatarFallback>
+                          {admin.dj_name?.charAt(0) || 'A'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="w-full">
+                        <div className="font-medium text-sm truncate">{admin.dj_name}</div>
+                        <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{admin.location}</span>
                         </div>
                       </div>
-                      <div className="space-y-1 text-xs">
+                      <div className="w-full space-y-1 text-xs pt-2 border-t">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 text-muted-foreground">
                             <Globe className="h-3 w-3" />
-                            <span className="truncate">{admin.country}</span>
+                            <span className="truncate text-xs">{admin.country}</span>
                           </div>
-                          <Badge variant={nightTime ? 'secondary' : 'default'} className="text-xs h-5 flex-shrink-0">
+                          <Badge variant={nightTime ? 'secondary' : 'default'} className="text-xs h-5">
                             {nightTime ? '🌙' : '☀️'}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-1 font-mono">
+                        <div className="flex items-center justify-center gap-1 font-mono">
                           <Clock className="h-3 w-3 text-muted-foreground" />
                           <span>{localTime}</span>
                         </div>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Assignment Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
