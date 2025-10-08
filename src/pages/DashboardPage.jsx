@@ -278,9 +278,9 @@ export default function DashboardPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
-          <div className="w-full p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90">
+          <div className="w-full p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90 stats-tour">
             <div className="flex flex-row flex-nowrap gap-3 w-full">
-              <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -345,14 +345,14 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Wallet Widget */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour">
               <CardContent className="p-6">
                 <WalletWidget />
               </CardContent>
             </Card>
 
             {/* Global Timezone Support */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl timezone-tour">
               <CardHeader>
                 <CardTitle className="flex items-center" style={{ 
                   color: 'hsl(200, 100%, 40%)', 
@@ -383,7 +383,7 @@ export default function DashboardPage() {
           {/* My Orchards and Recent Bestowals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* My Orchards */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl my-orchards-section-tour">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
@@ -454,7 +454,7 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl bestowals-tour">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
@@ -519,7 +519,7 @@ export default function DashboardPage() {
         </div>
 
           {/* Quick Actions */}
-          <Card className="mt-8 bg-white/80 border-white/40 shadow-xl">
+          <Card className="mt-8 bg-white/80 border-white/40 shadow-xl quick-actions-tour">
           <CardHeader>
             <CardTitle style={{ 
               color: 'hsl(280, 100%, 60%)', 
