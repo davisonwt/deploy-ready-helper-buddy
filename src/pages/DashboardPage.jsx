@@ -343,7 +343,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Wallet Widget */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
               <CardContent className="p-6">
@@ -378,7 +378,10 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-            
+          </div>
+
+          {/* My Orchards and Recent Bestowals */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* My Orchards */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
@@ -451,7 +454,7 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="lg:col-span-3 bg-white/80 border-white/40 shadow-xl">
+            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
