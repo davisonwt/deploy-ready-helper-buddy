@@ -79,105 +79,96 @@ export default function GroveStationPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-        {/* Station Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <div className="relative">
-              <Radio className="h-12 w-12 text-primary" />
-              {isPlaying && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              )}
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold">{stationConfig?.station_name || 'AOD Station'}</h1>
-              <p className="text-muted-foreground">{stationConfig?.station_tagline}</p>
-            </div>
-          </div>
-          
-          {/* Now Playing / Station Status */}
-          <Card className="max-w-2xl mx-auto">
-            <CardContent className="p-6">
-              {currentShow ? (
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={currentShow.dj_avatar} />
-                    <AvatarFallback>
-                      <Mic className="h-6 w-6" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={currentShow.is_live ? "default" : "secondary"}>
-                        {currentShow.is_live ? "🔴 LIVE" : "📅 Scheduled"}
-                      </Badge>
-                      <Badge variant="outline">{currentShow.category}</Badge>
-                    </div>
-                    <h3 className="font-semibold text-lg">{currentShow.show_name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      with {currentShow.dj_name} • {currentShow.listener_count || 0} listeners
-                    </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      <div className="container mx-auto py-6 space-y-6">
+        {/* Compact Station Header */}
+        <Card className="border-2 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
+                    <Radio className="h-7 w-7 text-primary-foreground" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={isPlaying ? "default" : "outline"}
-                      size="lg"
-                      onClick={handlePlayPause}
-                    >
-                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                      {isPlaying ? "Pause" : "Listen"}
-                    </Button>
-                    <Volume2 className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  {isPlaying && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
-                    <Radio className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">AI Radio Host</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Playing curated music and community updates
-                    </p>
-                  </div>
-                  <Button variant="outline" onClick={handlePlayPause}>
-                    <Headphones className="h-4 w-4 mr-2" />
-                    Tune In
-                  </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">{stationConfig?.station_name || 'The Set-Apart Heretics AOD Frequencies'}</h1>
+                  <p className="text-sm text-muted-foreground">{stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+              
+              {/* Quick Play Button */}
+              <Button
+                variant={isPlaying ? "default" : "outline"}
+                size="lg"
+                onClick={handlePlayPause}
+                className="gap-2"
+              >
+                {isPlaying ? (
+                  <>
+                    <Pause className="h-5 w-5" />
+                    Pause Stream
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-5 w-5" />
+                    Start Listening
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Main Interface */}
-        <Tabs defaultValue="listen" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="listen">
-              <Headphones className="h-4 w-4 mr-2" />
-              Listen
-            </TabsTrigger>
-            <TabsTrigger value="schedule">
-              <Calendar className="h-4 w-4 mr-2" />
-              Schedule
-            </TabsTrigger>
-            <TabsTrigger value="djs">
-              <Users className="h-4 w-4 mr-2" />
-              DJs
-            </TabsTrigger>
-            <TabsTrigger value="broadcast" disabled={!isDJ}>
-              <Mic className="h-4 w-4 mr-2" />
-              Broadcast
-            </TabsTrigger>
-            <TabsTrigger value="stats">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Stats
-            </TabsTrigger>
-          </TabsList>
+        {/* Prominent Tab Navigation */}
+        <Card className="border-2 shadow-xl">
+          <Tabs defaultValue="listen" className="w-full">
+            <div className="bg-muted/30 p-2 rounded-t-lg">
+              <TabsList className="grid w-full grid-cols-5 h-14 bg-background">
+                <TabsTrigger 
+                  value="listen" 
+                  className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Headphones className="h-5 w-5" />
+                  <span className="text-xs font-medium">Listen Now</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="schedule"
+                  className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-xs font-medium">Schedule</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="djs"
+                  className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Users className="h-5 w-5" />
+                  <span className="text-xs font-medium">Our DJs</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="broadcast" 
+                  disabled={!isDJ}
+                  className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground disabled:opacity-40"
+                >
+                  <Mic className="h-5 w-5" />
+                  <span className="text-xs font-medium">Go Live</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="stats"
+                  className="flex flex-col items-center justify-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="text-xs font-medium">Stats</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
           {/* Listen Tab */}
-          <TabsContent value="listen" className="space-y-6">
+          <TabsContent value="listen" className="space-y-6 p-6 bg-card">
             {currentShow && (
               <LiveStreamListener 
                 liveSession={liveSession}
@@ -208,40 +199,36 @@ export default function GroveStationPage() {
             )}
             
             {!currentShow && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Radio className="h-5 w-5" />
-                    The Set-Apart Heretics AOD Frequencies
-                  </CardTitle>
-                  <CardDescription>
-                    {stationConfig?.station_description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
-                    <div className="text-center space-y-4">
-                      <div className="w-24 h-24 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                        <Radio className="h-12 w-12 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold">AOD Station</h3>
-                        <p className="text-muted-foreground">24/7 Community Radio</p>
-                      </div>
-                      <div className="flex items-center gap-4 justify-center">
-                        <Button size="lg" onClick={handlePlayPause}>
-                          {isPlaying ? <Pause className="h-5 w-5 mr-2" /> : <Play className="h-5 w-5 mr-2" />}
-                          {isPlaying ? "Pause Stream" : "Play Stream"}
-                        </Button>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Volume2 className="h-4 w-4" />
-                          <span>High Quality Stream</span>
-                        </div>
-                      </div>
-                    </div>
+              <div className="text-center space-y-6 py-8">
+                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center">
+                  <Radio className="h-16 w-16 text-primary animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold">24/7 Community Radio</h3>
+                  <p className="text-muted-foreground max-w-lg mx-auto">
+                    {stationConfig?.station_description || 'Broadcasting from the Ancient of Days - Your 24/7 community radio station for those who dare to be different'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 justify-center">
+                  <Button size="lg" onClick={handlePlayPause} className="gap-2">
+                    {isPlaying ? (
+                      <>
+                        <Pause className="h-5 w-5" />
+                        Pause Stream
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-5 w-5" />
+                        Start Listening
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Volume2 className="h-4 w-4" />
+                    <span>High Quality</span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Feedback Section */}
@@ -272,7 +259,7 @@ export default function GroveStationPage() {
           </TabsContent>
 
           {/* Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-6">
+          <TabsContent value="schedule" className="space-y-6 p-6 bg-card">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">24/7 Schedule</h2>
@@ -314,7 +301,7 @@ export default function GroveStationPage() {
           </TabsContent>
 
           {/* DJs Tab */}
-          <TabsContent value="djs" className="space-y-6">
+          <TabsContent value="djs" className="space-y-6 p-6 bg-card">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">AOD Station DJs</h2>
@@ -366,7 +353,7 @@ export default function GroveStationPage() {
           </TabsContent>
 
           {/* Broadcast Tab (DJ Only) */}
-          <TabsContent value="broadcast" className="space-y-6">
+          <TabsContent value="broadcast" className="space-y-6 p-6 bg-card">
             {isDJ ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -512,12 +499,18 @@ export default function GroveStationPage() {
           </TabsContent>
 
           {/* Stats Tab */}
-          <TabsContent value="stats">
+          <TabsContent value="stats" className="space-y-6 p-6 bg-card">
             <StationStats stats={stats} />
           </TabsContent>
         </Tabs>
+      </Card>
 
-        {/* Modals */}
+      {/* Help Text */}
+      <div className="text-center text-sm text-muted-foreground py-4">
+        <p>Use the tabs above to navigate between listening live, checking the schedule, meeting our DJs, broadcasting your own show, and viewing stats.</p>
+      </div>
+
+      {/* Modals */}
         {showCreateDJ && (
           <CreateDJProfileForm 
             open={showCreateDJ}
@@ -533,5 +526,6 @@ export default function GroveStationPage() {
           />
         )}
       </div>
+    </div>
   )
 }
