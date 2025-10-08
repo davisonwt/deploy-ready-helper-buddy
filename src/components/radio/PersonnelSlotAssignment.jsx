@@ -435,118 +435,62 @@ export default function PersonnelSlotAssignment() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* LEFT COLUMN: Guidance, Date, and Slot Grid */}
-        <div className="space-y-6">
-          {/* Instruction Card */}
-          <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Radio className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-blue-900">Radio Personnel Slot Assignment</h3>
-                  <p className="text-blue-700 text-sm">
-                    Assign radio admins to 2-hour time slots based on their location and timezone for 24-hour global coverage.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Date Selector */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Radio className="h-5 w-5" />
-                  Personnel Slot Assignment
-                </div>
-                <div className="text-sm font-normal">12 × 2-hour slots per day</div>
+    <div className="grid lg:grid-cols-[1fr_400px] gap-6">
+      {/* LEFT: Slot Grid */}
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Personnel Slot Assignments
               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Label>Date:</Label>
+              <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      size="sm"
                       className={cn(
-                        "w-[240px] justify-start text-left font-normal",
+                        "justify-start text-left font-normal",
                         !selectedDate && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                      {selectedDate ? format(selectedDate, "MMM d") : <span>Date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0" align="end">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
                       onSelect={setSelectedDate}
                       initialFocus
-                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
+                <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Slots</SelectItem>
+                    {TIME_SLOTS.map((slot) => (
+                      <SelectItem key={slot.value} value={slot.value.toString()}>
+                        {slot.displayTime}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Slot Grid */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <CardTitle>Personnel Assignments</CardTitle>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Select value={format(selectedDate, "yyyy-MM-dd")} onValueChange={(dateStr) => {
-                    const newDate = new Date(dateStr)
-                    setSelectedDate(newDate)
-                  }}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select date" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border shadow-lg z-50">
-                      {Array.from({ length: 7 }, (_, i) => {
-                        const date = new Date()
-                        date.setDate(date.getDate() + i)
-                        return (
-                          <SelectItem key={date.toISOString()} value={format(date, "yyyy-MM-dd")}>
-                            {format(date, "EEEE, MMMM d, yyyy")}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select time slot" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border shadow-lg z-50 max-h-60 overflow-y-auto">
-                      <SelectItem value="all">All Time Slots</SelectItem>
-                      {TIME_SLOTS.map((slot) => (
-                        <SelectItem key={slot.value} value={slot.value.toString()}>
-                          {slot.displayTime}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {slotAssignments
-                  .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
-                  .map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+              {slotAssignments
+                .filter(item => selectedTimeSlot === 'all' || item.slot.value.toString() === selectedTimeSlot)
+                .map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-24 text-center">
                         <div className="font-mono text-sm font-medium">{item.slot.label}</div>
@@ -633,103 +577,88 @@ export default function PersonnelSlotAssignment() {
           </Card>
         </div>
 
-        {/* RIGHT COLUMN: Quick Actions and Admin Directory */}
-        <div className="space-y-6">
-          {/* Bulk Reminder Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Automated Shift Reminders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Send automated reminders to radio personnel about their upcoming shifts via chat</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => sendBulkReminders('24h')} className="flex items-center gap-2 flex-1 min-w-[200px]">
-                    <MessageSquare className="h-4 w-4" />
-                    Send 24h Reminders
-                  </Button>
-                  <Button variant="outline" onClick={() => sendBulkReminders('1h')} className="flex items-center gap-2 flex-1 min-w-[200px]">
-                    <MessageSquare className="h-4 w-4" />
-                    Send 1h Reminders
-                  </Button>
-                </div>
+      {/* RIGHT: Reminders and Available Admins */}
+      <div className="space-y-4">
+        {/* Bulk Reminder Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Shift Reminders
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" onClick={() => sendBulkReminders('24h')} className="w-full justify-start" size="sm">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              24h Reminders
+            </Button>
+            <Button variant="outline" onClick={() => sendBulkReminders('1h')} className="w-full justify-start" size="sm">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              1h Reminders
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Available Radio Admins */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Radio Admins ({radioAdmins.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {radioAdmins.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No radio admins</p>
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {radioAdmins.map((admin) => {
+                  const localTime = getCurrentLocalTime(admin.timezone)
+                  const nightTime = isNightTime(admin.timezone)
 
-          {/* Available Radio Admins Panel */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Available Radio Admins ({radioAdmins.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {radioAdmins.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No radio admins found</p>
-                  <p className="text-sm">Users with radio_admin role will appear here with their timezone info</p>
-                </div>
-              ) : (
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                  {radioAdmins.map((admin) => {
-                    const localTime = getCurrentLocalTime(admin.timezone)
-                    const nightTime = isNightTime(admin.timezone)
-
-                    return (
-                      <div key={admin.id} className="p-4 border rounded-lg hover:shadow-lg transition-all duration-200 bg-card">
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 flex-shrink-0">
-                              <AvatarImage src={admin.avatar_url} />
-                              <AvatarFallback className="bg-primary/10 text-lg font-semibold">
-                                {admin.dj_name?.charAt(0) || 'A'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-semibold text-base line-clamp-1 md:line-clamp-none">{admin.dj_name}</h3>
-                                {admin.is_active && <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 animate-pulse"></div>}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="space-y-2 pl-1">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                              <span className="font-medium break-words">{admin.country}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <MapPin className="h-4 w-4 flex-shrink-0" />
-                              <span className="break-words">{admin.location}</span>
-                            </div>
-                            <div className={`flex items-center gap-2 text-sm font-semibold ${nightTime ? 'text-blue-600' : 'text-green-600'}`}>
-                              <Clock className="h-4 w-4 flex-shrink-0" />
-                              <span>{localTime}</span>
-                              {nightTime ? <span className="text-xl">🌙</span> : <span className="text-xl">☀️</span>}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                              <Badge variant="outline" className="text-xs px-2 py-0.5 font-mono break-all">
-                                {admin.timezone}
-                              </Badge>
-                              <Badge variant={nightTime ? 'secondary' : 'default'} className="text-xs px-2 py-0.5 whitespace-nowrap">
-                                {nightTime ? 'Night' : 'Daytime'}
-                              </Badge>
-                            </div>
+                  return (
+                    <div key={admin.id} className="p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={admin.avatar_url} />
+                          <AvatarFallback className="text-sm">
+                            {admin.dj_name?.charAt(0) || 'A'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{admin.dj_name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{admin.location}</span>
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Globe className="h-3 w-3" />
+                            <span className="truncate">{admin.country}</span>
+                          </div>
+                          <Badge variant={nightTime ? 'secondary' : 'default'} className="text-xs h-5 flex-shrink-0">
+                            {nightTime ? '🌙' : '☀️'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 font-mono">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span>{localTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
       </div>
 
       {/* Assignment Dialog */}
