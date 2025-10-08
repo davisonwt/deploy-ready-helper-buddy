@@ -187,16 +187,6 @@ export default function YhvhOrchardsPage() {
         {/* Community Orchards Section */}
         {orchards.length > 0 ? (
           <div className="mb-12">
-            <div className="p-6 bg-white/90 rounded-2xl border border-white/50 shadow-lg backdrop-blur-sm mb-6">
-              <div className="flex items-center justify-center space-x-3 mb-4">
-                <TreePine className="h-6 w-6 text-success" />
-                <h2 className="text-2xl font-bold text-foreground">Community Orchards</h2>
-                <TreePine className="h-6 w-6 text-success" />
-              </div>
-              <p className="text-center text-muted-foreground text-sm">
-                Fully processed projects ready for community support • Click to bestow into any orchard
-              </p>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {orchards.map((orchard, index) => (
                 <Card 
