@@ -515,16 +515,15 @@ export default function MyOrchardsPage() {
                             Edit
                           </Button>
                         </Link>
-                        <Button 
+                          <Button 
                           variant="outline" 
                           size="sm"
-                          className="flex-1 min-w-[100px]"
+                          className="flex-1 min-w-[100px] border-nav-my/30 text-orange-700 hover:bg-nav-my/10"
                           onClick={() => {
                             const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                             navigator.clipboard.writeText(url)
                             toast.success('Orchard link copied to clipboard!')
                           }}
-                          className="border-nav-my/30 text-orange-700 hover:bg-nav-my/10"
                         >
                           <Share2 className="h-4 w-4" />
                         </Button>

@@ -731,10 +731,8 @@ export default function PersonnelSlotAssignment() {
           </Card>
         </div>
       </div>
-    </div>
-  )
 
-  {/* Assignment Dialog */
+      {/* Assignment Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
