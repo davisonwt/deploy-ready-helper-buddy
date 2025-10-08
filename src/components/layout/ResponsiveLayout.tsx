@@ -5,6 +5,9 @@ import { Menu, Home, Leaf, DollarSign, Users, BarChart, Settings } from 'lucide-
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
+// Routes where sidebar should be hidden
+const ROUTES_WITHOUT_SIDEBAR = ['/dashboard'];
+
 interface Props { 
   children: ReactNode;
   showSidebar?: boolean;
@@ -57,8 +60,12 @@ const SidebarContent = ({ mobile = false, onItemClick }: { mobile?: boolean; onI
 
 const ResponsiveLayout = ({ children, showSidebar = true }: Props) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  
+  // Check if current route should hide sidebar
+  const shouldHideSidebar = !showSidebar || ROUTES_WITHOUT_SIDEBAR.includes(location.pathname);
 
-  if (!showSidebar) {
+  if (shouldHideSidebar) {
     return (
       <div className="min-h-screen bg-background">
         {children}

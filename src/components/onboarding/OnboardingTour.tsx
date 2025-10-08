@@ -120,7 +120,7 @@ const OnboardingTour = () => {
         onClick={startTour}
         variant="outline"
         size="sm"
-        className="fixed bottom-4 left-4 z-50 shadow-lg"
+        className="fixed bottom-96 left-6 z-50 shadow-lg"
       >
         Take Tour Again
       </Button>
@@ -166,7 +166,7 @@ const OnboardingTour = () => {
       />
       
       {!run && !preferences?.onboarding_complete && (
-        <div className="fixed bottom-4 left-4 z-50 flex gap-2">
+        <div className="fixed bottom-96 left-6 z-50 flex gap-2">
           <Button onClick={startTour} className="shadow-lg">
             Start Tour
           </Button>
