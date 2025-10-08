@@ -128,6 +128,7 @@ export default function Layout({ children }) {
       name: "chatapp",
       icon: MessageSquare,
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
+      className: 'chatapp-tour',
       items: [
         { name: "chatapp", href: "/chatapp", icon: MessageSquare },
         { name: "heretics radio station", href: "/grove-station", icon: Mic },
@@ -151,6 +152,7 @@ export default function Layout({ children }) {
       name: "Support",
       icon: Heart,
       color: { bg: '#ffb3ba', border: '#ffb3ba', text: '#1e293b' },
+      className: 'support-tour',
       items: [
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
