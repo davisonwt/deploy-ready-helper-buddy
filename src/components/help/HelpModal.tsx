@@ -152,9 +152,9 @@ const HelpModal = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
-          variant="ghost" 
+          variant="default" 
           size="icon"
-          className="fixed top-4 right-20 z-40 bg-background border shadow-sm"
+          className="fixed top-4 right-20 z-50 shadow-lg hover:shadow-xl transition-shadow"
           aria-label="Help & Documentation"
         >
           <HelpCircle className="h-5 w-5" />
