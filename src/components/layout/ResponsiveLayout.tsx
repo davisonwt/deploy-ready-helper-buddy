@@ -58,12 +58,12 @@ const SidebarContent = ({ mobile = false, onItemClick }: { mobile?: boolean; onI
   );
 };
 
-const ResponsiveLayout = ({ children, showSidebar = true }: Props) => {
+const ResponsiveLayout = ({ children, showSidebar = false }: Props) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   
   // Check if current route should hide sidebar
-  const shouldHideSidebar = !showSidebar || ROUTES_WITHOUT_SIDEBAR.includes(location.pathname);
+  const shouldHideSidebar = true;
 
   if (shouldHideSidebar) {
     return (
