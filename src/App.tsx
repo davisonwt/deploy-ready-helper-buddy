@@ -57,6 +57,8 @@ import ClubhousePage from "./pages/ClubhousePage";
 import VideoPage from "./pages/VideoPage";
 import VideoUploadPage from "./pages/VideoUploadPage";
 import RadioPage from "./components/radio/RadioPage";
+import { RadioSlotApplicationPage } from "./pages/RadioSlotApplicationPage";
+import { CreatePremiumRoomPage } from "./pages/CreatePremiumRoomPage";
 
 // Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
@@ -298,6 +300,22 @@ const App = () => (
                     <RadioManagementPage />
                   </Layout>
                 </ProtectedRoute>
+               } />
+               
+               <Route path="/apply-radio-slot" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <RadioSlotApplicationPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
+               
+               <Route path="/create-premium-room" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <CreatePremiumRoomPage />
+                   </Layout>
+                 </ProtectedRoute>
                } />
                
                {/* Radio Station */}
