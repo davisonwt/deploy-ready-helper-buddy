@@ -512,14 +512,14 @@ export function RadioSlotApplicationWizard({ onClose }) {
               </p>
 
               <Select 
-                value={formData.playlist_id || ''} 
-                onValueChange={(value) => handleFieldChange('playlist_id', value || null)}
+                value={formData.playlist_id ?? 'none'} 
+                onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a playlist..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No playlist</SelectItem>
+                  <SelectItem value="none">No playlist</SelectItem>
                   {playlists.map((playlist) => (
                     <SelectItem key={playlist.id} value={playlist.id}>
                       {playlist.playlist_name} ({playlist.track_count} tracks)

@@ -32,32 +32,40 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
 
     const handleSecureChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       const originalValue = e.target.value;
-      let sanitizedValue: string;
+      const trailingSpaces = originalValue.match(/\s+$/)?.[0] ?? '';
+      let sanitizedCore: string;
 
       // Apply appropriate sanitization based on type
       switch (sanitizeType) {
         case 'email':
-          sanitizedValue = sanitizeInput.email(originalValue);
+          sanitizedCore = sanitizeInput.email(originalValue);
           break;
         case 'url':
-          sanitizedValue = sanitizeInput.url(originalValue);
+          sanitizedCore = sanitizeInput.url(originalValue);
           break;
         case 'phone':
-          sanitizedValue = sanitizeInput.phone(originalValue);
+          sanitizedCore = sanitizeInput.phone(originalValue);
           break;
         case 'filename':
-          sanitizedValue = sanitizeInput.filename(originalValue);
+          sanitizedCore = sanitizeInput.filename(originalValue);
           break;
         default:
-          sanitizedValue = sanitizeInput.text(originalValue, maxLength);
+          sanitizedCore = sanitizeInput.text(originalValue, maxLength);
       }
 
-      // Check for potential security issues
-      if (originalValue !== sanitizedValue && originalValue.length > 0) {
+      // Preserve trailing spaces during typing for better UX
+      let sanitizedValue = sanitizedCore;
+      if (trailingSpaces && !sanitizedCore.endsWith(trailingSpaces)) {
+        sanitizedValue = sanitizedCore + trailingSpaces;
+      }
+
+      // Only show toast if changes are more than whitespace trimming
+      const whitespaceOnlyChange = originalValue.trim() === sanitizedCore;
+      if (!whitespaceOnlyChange && originalValue !== sanitizedValue && originalValue.length > 0) {
         toast({
           title: "Input Sanitized",
           description: "Some potentially unsafe characters were removed from your input.",
-          variant: "destructive"
+          variant: "default"
         });
       }
 
@@ -108,23 +116,31 @@ export const SecureTextarea = forwardRef<HTMLTextAreaElement, SecureTextareaProp
 
     const handleSecureChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const originalValue = e.target.value;
-      let sanitizedValue: string;
+      const trailingSpaces = originalValue.match(/\s+$/)?.[0] ?? '';
+      let sanitizedCore: string;
 
       // Apply appropriate sanitization based on type
       switch (sanitizeType) {
         case 'html':
-          sanitizedValue = sanitizeInput.html(originalValue, maxLength);
+          sanitizedCore = sanitizeInput.html(originalValue, maxLength);
           break;
         default:
-          sanitizedValue = sanitizeInput.text(originalValue, maxLength);
+          sanitizedCore = sanitizeInput.text(originalValue, maxLength);
       }
 
-      // Check for potential security issues
-      if (originalValue !== sanitizedValue && originalValue.length > 0) {
+      // Preserve trailing spaces during typing for better UX
+      let sanitizedValue = sanitizedCore;
+      if (trailingSpaces && !sanitizedCore.endsWith(trailingSpaces)) {
+        sanitizedValue = sanitizedCore + trailingSpaces;
+      }
+
+      // Only show toast if changes are more than whitespace trimming
+      const whitespaceOnlyChange = originalValue.trim() === sanitizedCore;
+      if (!whitespaceOnlyChange && originalValue !== sanitizedValue && originalValue.length > 0) {
         toast({
           title: "Input Sanitized",
           description: "Some potentially unsafe characters were removed from your input.",
-          variant: "destructive"
+          variant: "default"
         });
       }
 
