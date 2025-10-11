@@ -20,7 +20,8 @@ import {
   Phone,
   VideoIcon,
   UserPlus,
-  Sparkles
+  Sparkles,
+  Radio
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
@@ -385,45 +386,94 @@ const ChatappPage = () => {
       <div className="container mx-auto p-6 flex flex-col min-h-screen pb-24">
         {/* Header */}
         <div className="max-w-6xl mx-auto mb-8 p-6 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 px-4 py-2 rounded-lg leading-tight" style={{ 
-                color: '#3B82F6', 
-                textShadow: '2px 2px 4px #1D4ED8'
-              }}>Chatapp</h1>
-              <p className="text-xs font-medium mb-2 px-4" style={{ 
-                color: '#87CEEB',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-                fontStyle: 'italic'
-              }}>
-                chat or chutapp
-              </p>
-              <p style={{ color: '#b0e0e6' }} className="px-4">
-                Connect, collaborate, and grow together in our 364yhvh / sow2grow community
-              </p>
+          <div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-3xl font-bold mb-2 px-4 py-2 rounded-lg leading-tight" style={{ 
+                  color: '#3B82F6', 
+                  textShadow: '2px 2px 4px #1D4ED8'
+                }}>Chatapp</h1>
+                <p className="text-xs font-medium mb-2 px-4" style={{ 
+                  color: '#87CEEB',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                  fontStyle: 'italic'
+                }}>
+                  chat or chutapp
+                </p>
+                <p style={{ color: '#b0e0e6' }} className="px-4">
+                  Connect, collaborate, and grow together in our 364yhvh / sow2grow community
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  onClick={() => {
+                    console.log('🎯 Direct Chat button clicked!');
+                    console.log('Current showUserSelector state:', showUserSelector);
+                    setShowUserSelector(!showUserSelector);
+                    console.log('New showUserSelector state:', !showUserSelector);
+                  }} 
+                  style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
+                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Direct Chat
+                </Button>
+                <Button 
+                  onClick={() => setShowCreateModal(true)} 
+                  style={{ backgroundColor: '#1D4ED8', color: 'white' }}
+                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Room
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={() => {
-                  console.log('🎯 Direct Chat button clicked!');
-                  console.log('Current showUserSelector state:', showUserSelector);
-                  setShowUserSelector(!showUserSelector);
-                  console.log('New showUserSelector state:', !showUserSelector);
-                }} 
-                style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
-                className="gap-2 hover:shadow-lg transition-all duration-300"
+
+            {/* Featured Actions - Radio & Premium Rooms */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <Card 
+                className="group cursor-pointer hover:scale-105 transition-all duration-300 bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-md border-white/30 hover:border-purple-400/50"
+                onClick={() => window.location.href = '/apply-radio-slot'}
               >
-                <MessageSquare className="h-4 w-4" />
-                Direct Chat
-              </Button>
-              <Button 
-                onClick={() => setShowCreateModal(true)} 
-                style={{ backgroundColor: '#1D4ED8', color: 'white' }}
-                className="gap-2 hover:shadow-lg transition-all duration-300"
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-purple-500/30 group-hover:bg-purple-500/50 transition-all">
+                      <Radio className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-lg">Apply for Radio Slot</CardTitle>
+                      <p className="text-xs text-purple-100 mt-1">Host your own 2-hour live radio show</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-white/80">
+                    Upload documents, set your playlist, configure ads, and schedule your live broadcast on Grove Station.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="group cursor-pointer hover:scale-105 transition-all duration-300 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-md border-white/30 hover:border-blue-400/50"
+                onClick={() => window.location.href = '/create-premium-room'}
               >
-                <Plus className="h-4 w-4" />
-                Create Room
-              </Button>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-blue-500/30 group-hover:bg-blue-500/50 transition-all">
+                      <MessageSquare className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-lg">Create Premium Room</CardTitle>
+                      <p className="text-xs text-blue-100 mt-1">Launch interactive sessions & courses</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-white/80">
+                    Set up classrooms, seminars, training, or podcasts with document sharing, playlists, and monetization options.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
