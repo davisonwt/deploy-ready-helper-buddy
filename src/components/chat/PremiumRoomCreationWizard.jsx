@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WizardContainer } from '@/components/wizard/WizardContainer';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useGroveStation } from '@/hooks/useGroveStation';
 import { 
   MessageSquare, 
   Target, 
@@ -27,7 +28,10 @@ import {
   Megaphone,
   GraduationCap,
   Radio as RadioIcon,
-  Briefcase
+  Briefcase,
+  Music,
+  X,
+  Upload
 } from 'lucide-react';
 
 const ROOM_PURPOSES = [
@@ -64,8 +68,11 @@ export function PremiumRoomCreationWizard({ onClose }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { userDJProfile } = useGroveStation();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   const [formData, setFormData] = useState({
     // Step 1: Purpose
@@ -76,25 +83,46 @@ export function PremiumRoomCreationWizard({ onClose }) {
     description: '',
     category: '',
     
-    // Step 3: Access Control
+    // Step 3: Content (Documents & Playlists)
+    documents: [],
+    playlist_id: null,
+    
+    // Step 4: Access Control
     is_premium: false,
     access_type: 'public', // public, premium, orchard_based
     required_bestowal_amount: 0,
     orchard_id: null,
     max_participants: 100,
     
-    // Step 4: Features
+    // Step 5: Features
     enable_video_calls: true,
     enable_screen_share: true,
     enable_file_sharing: true,
     enable_voice_memos: true,
     
-    // Step 5: Monetization
+    // Step 6: Monetization
     enable_paid_entry: false,
     entry_fee: 0,
     enable_ads: false,
     ad_slots: []
   });
+
+  // Fetch user's playlists
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      if (!userDJProfile?.id) return;
+      
+      const { data } = await supabase
+        .from('dj_playlists')
+        .select('*')
+        .eq('dj_id', userDJProfile.id)
+        .order('created_at', { ascending: false });
+      
+      if (data) setPlaylists(data);
+    };
+    
+    fetchPlaylists();
+  }, [userDJProfile]);
 
   const steps = [
     {
@@ -106,6 +134,11 @@ export function PremiumRoomCreationWizard({ onClose }) {
       title: 'Room Details',
       description: 'Basic information about your room',
       icon: <MessageSquare className="h-5 w-5" />
+    },
+    {
+      title: 'Prepare Content',
+      description: 'Upload documents and select playlists',
+      icon: <Upload className="h-5 w-5" />
     },
     {
       title: 'Access Control',
@@ -131,6 +164,59 @@ export function PremiumRoomCreationWizard({ onClose }) {
 
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDocumentUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    setUploadingDoc(true);
+
+    try {
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `chat-room-docs/${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('chat_files')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat_files')
+          .getPublicUrl(filePath);
+
+        setFormData(prev => ({
+          ...prev,
+          documents: [...prev.documents, {
+            name: file.name,
+            url: publicUrl,
+            path: filePath,
+            size: file.size
+          }]
+        }));
+      }
+
+      toast({
+        title: "Success",
+        description: `${files.length} document(s) uploaded successfully`,
+      });
+    } catch (error) {
+      console.error('Error uploading documents:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const removeDocument = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
   };
 
   const addAdSlot = () => {
@@ -215,6 +301,36 @@ export function PremiumRoomCreationWizard({ onClose }) {
 
       if (participantError) throw participantError;
 
+      // Store documents metadata (if any)
+      if (formData.documents.length > 0) {
+        const { error: docError } = await supabase
+          .from('chat_room_documents')
+          .insert(
+            formData.documents.map(doc => ({
+              room_id: room.id,
+              file_name: doc.name,
+              file_path: doc.path,
+              file_size: doc.size,
+              uploader_id: user.id
+            }))
+          );
+
+        if (docError) console.error('Error saving documents:', docError);
+      }
+
+      // Link playlist if selected
+      if (formData.playlist_id) {
+        const { error: playlistError } = await supabase
+          .from('room_playlists')
+          .insert({
+            room_id: room.id,
+            playlist_id: formData.playlist_id,
+            created_by: user.id
+          });
+
+        if (playlistError) console.error('Error linking playlist:', playlistError);
+      }
+
       // Store monetization settings if enabled
       if (formData.enable_paid_entry || formData.enable_ads) {
         const { error: monetizationError } = await supabase
@@ -256,12 +372,14 @@ export function PremiumRoomCreationWizard({ onClose }) {
       case 1:
         return formData.name.trim() && formData.category;
       case 2:
-        return true;
+        return true; // Content step is optional
       case 3:
         return true;
       case 4:
-        return !formData.enable_ads || formData.ad_slots.length > 0;
+        return true;
       case 5:
+        return !formData.enable_ads || formData.ad_slots.length > 0;
+      case 6:
         return true;
       default:
         return true;
@@ -361,6 +479,83 @@ export function PremiumRoomCreationWizard({ onClose }) {
       case 2:
         return (
           <div className="space-y-6">
+            {/* Documents Section */}
+            <div>
+              <Label className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4" />
+                Room Documents (Optional)
+              </Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Upload materials, presentations, or resources for your session
+              </p>
+              
+              <Input
+                type="file"
+                multiple
+                onChange={handleDocumentUpload}
+                disabled={uploadingDoc}
+                accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
+                className="mb-3"
+              />
+
+              {formData.documents.length > 0 && (
+                <div className="space-y-2">
+                  {formData.documents.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm">{doc.name}</span>
+                        <Badge variant="outline">
+                          {(doc.size / 1024).toFixed(1)} KB
+                        </Badge>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDocument(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Playlist Selection */}
+            <div>
+              <Label className="flex items-center gap-2 mb-3">
+                <Music className="h-4 w-4" />
+                Background Playlist (Optional)
+              </Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Choose music to play during your session
+              </p>
+
+              <Select 
+                value={formData.playlist_id ?? 'none'} 
+                onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a playlist..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No playlist</SelectItem>
+                  {playlists.map((playlist) => (
+                    <SelectItem key={playlist.id} value={playlist.id}>
+                      {playlist.playlist_name} ({playlist.track_count} tracks)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
             <div>
               <Label className="text-base font-semibold mb-3 block">Access Level</Label>
               <RadioGroup 
@@ -438,7 +633,7 @@ export function PremiumRoomCreationWizard({ onClose }) {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground mb-4">
@@ -525,7 +720,7 @@ export function PremiumRoomCreationWizard({ onClose }) {
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -637,7 +832,7 @@ export function PremiumRoomCreationWizard({ onClose }) {
           </div>
         );
 
-      case 5:
+      case 6:
         const selectedPurpose = ROOM_PURPOSES.find(p => p.value === formData.purpose);
         
         return (

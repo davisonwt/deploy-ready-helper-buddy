@@ -619,23 +619,6 @@ export default function DashboardPage() {
                 </Button>
               </Link>
 
-              <Link to="/apply-radio-slot">
-                <Button className="w-full h-20 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium">
-                  <div className="text-center">
-                    <Clock className="h-6 w-6 mx-auto mb-2" />
-                    <span>Apply for Radio Slot</span>
-                  </div>
-                </Button>
-              </Link>
-
-              <Link to="/create-premium-room">
-                <Button className="w-full h-20 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium">
-                  <div className="text-center">
-                    <MessageSquare className="h-6 w-6 mx-auto mb-2" />
-                    <span>Create Premium Room</span>
-                  </div>
-                </Button>
-              </Link>
             </div>
           </CardContent>
         </Card>
