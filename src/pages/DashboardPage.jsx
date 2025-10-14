@@ -50,6 +50,32 @@ export default function DashboardPage() {
   })
   const [activeUsers, setActiveUsers] = useState(0)
   const [error, setError] = useState(null)
+  const [userRoles, setUserRoles] = useState([])
+  const [rolesLoading, setRolesLoading] = useState(false)
+  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
+
+  useEffect(() => {
+    let mounted = true
+    const loadRoles = async () => {
+      if (!user?.id) { setUserRoles([]); return }
+      try {
+        setRolesLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        if (!mounted) return
+        setUserRoles((data || []).map(r => r.role))
+      } catch (e) {
+        if (mounted) setUserRoles([])
+      } finally {
+        if (mounted) setRolesLoading(false)
+      }
+    }
+    loadRoles()
+    return () => { mounted = false }
+  }, [user?.id])
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -275,6 +301,22 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+        {isAdminOrGosat && (
+          <div className="max-w-4xl mx-auto px-4">
+            <Card className="mb-6 border-primary/30">
+              <CardContent className="pt-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Admin quick access</p>
+                  <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
+                </div>
+                <Link to="/admin/dashboard">
+                  <Button className="ml-4">Open Admin Dashboard</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
