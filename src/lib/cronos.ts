@@ -38,3 +38,20 @@ export const parseUSDC = (amount: string | number): bigint => {
     return BigInt(0);
   }
 };
+
+export const getUSDCBalance = async (provider: any, address: string): Promise<string> => {
+  try {
+    if (!provider || !address) return '0';
+    
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, ethersProvider);
+    
+    const balance = await usdcContract.balanceOf(address);
+    // USDC has 6 decimals
+    const formatted = ethers.formatUnits(balance, 6);
+    return formatted;
+  } catch (error) {
+    console.error('Error fetching USDC balance:', error);
+    return '0';
+  }
+};

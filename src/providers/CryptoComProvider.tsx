@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 interface CryptoComContextType {
   connector: any | null;
   connected: boolean;

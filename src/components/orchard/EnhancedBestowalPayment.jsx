@@ -9,7 +9,6 @@ import { Loader2, DollarSign, Heart, CheckCircle, AlertTriangle } from 'lucide-r
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useBestowals } from '@/hooks/useBestowals';
-import { useWallet } from '@/hooks/useWallet';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
@@ -32,7 +31,6 @@ const EnhancedBestowalPayment = () => {
   const { id: orchardId } = useParams();
   const { user } = useAuth();
   const { createBestowal, updateBestowStatus } = useBestowals();
-  const { connected, walletAddress, balance, refreshBalance } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
 

@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { useUSDCPayments } from './useUSDCPayments';
 
 export function useMusicPurchase() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { transferUSDC, checkSufficientBalance } = useUSDCPayments();
 
   const purchaseTrack = async (track) => {
     if (!user) {
