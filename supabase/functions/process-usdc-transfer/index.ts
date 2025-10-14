@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,7 +42,26 @@ serve(async (req) => {
 
     const user = data.user;
 
-    // Parse the request body
+    // Define validation schema
+    const transferSchema = z.object({
+      signature: z.string().min(64).max(150),
+      amount: z.number().positive().max(1000000),
+      orchardId: z.string().uuid(),
+      pocketsCount: z.number().int().positive().max(10000),
+      pocketNumbers: z.array(z.number().int().positive()).optional(),
+      fromWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+      toWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/)
+    });
+
+    // Parse and validate the request body
+    const rawBody = await req.json();
+    const validationResult = transferSchema.safeParse(rawBody);
+    
+    if (!validationResult.success) {
+      console.error("Input validation failed:", validationResult.error);
+      throw new Error(`Invalid input: ${validationResult.error.errors.map(e => e.message).join(", ")}`);
+    }
+    
     const { 
       signature, 
       amount, 
@@ -50,7 +70,7 @@ serve(async (req) => {
       pocketNumbers,
       fromWallet,
       toWallet 
-    } = await req.json();
+    } = validationResult.data;
 
     console.log("Processing USDC transfer:", {
       signature,
