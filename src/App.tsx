@@ -414,7 +414,7 @@ const App = () => (
               } />
               
               <Route path="/admin/dashboard" element={
-                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                <ProtectedRoute>
                   <Layout>
                     <AdminDashboardPage />
                   </Layout>
@@ -422,7 +422,7 @@ const App = () => (
               } />
               
               <Route path="/admin" element={
-                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                <ProtectedRoute>
                   <Layout>
                     <Suspense fallback={<div>Loading...</div>}>
                       <AdminDashboardPage />
