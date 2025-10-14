@@ -327,21 +327,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-        {isAdminOrGosat && (
-          <div className="max-w-4xl mx-auto px-4">
-            <Card className="mb-6 border-primary/30">
-              <CardContent className="pt-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Admin quick access</p>
-                  <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
-                </div>
-                <Link to="/admin/dashboard">
-                  <Button className="ml-4">Open Admin Dashboard</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        <div className="max-w-4xl mx-auto px-4">
+          <Card className="mb-6 border-primary/30">
+            <CardContent className="pt-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Quick access</p>
+                <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
+              </div>
+              <Link to="/wallet-settings">
+                <Button className="ml-4">Open Wallet Settings</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}

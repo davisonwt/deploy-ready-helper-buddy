@@ -59,6 +59,7 @@ import VideoUploadPage from "./pages/VideoUploadPage";
 import RadioPage from "./components/radio/RadioPage";
 import { RadioSlotApplicationPage } from "./pages/RadioSlotApplicationPage";
 import { CreatePremiumRoomPage } from "./pages/CreatePremiumRoomPage";
+import WalletSettingsPage from "./pages/WalletSettingsPage";
 
 // Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
@@ -400,6 +401,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <ProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/wallet-settings" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <WalletSettingsPage />
                   </Layout>
                 </ProtectedRoute>
               } />
