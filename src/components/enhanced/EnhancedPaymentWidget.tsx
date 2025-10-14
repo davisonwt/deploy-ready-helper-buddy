@@ -82,7 +82,7 @@ const EnhancedPaymentWidget: React.FC<EnhancedPaymentWidgetProps> = ({
                 </span>
               </div>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Pay directly with USDC on Solana blockchain. No fees, instant settlement.
+                Pay directly with USDC on Cronos blockchain. Low fees, instant settlement.
               </p>
             </div>
             

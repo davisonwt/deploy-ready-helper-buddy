@@ -53,19 +53,19 @@ export function WalletConnection({ compact = false }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Install Phantom Wallet
+            Connect Crypto.com Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-            <h4 className="font-semibold text-blue-800 mb-2">🚀 Get Started with Ultra-Low Fee Payments</h4>
+            <h4 className="font-semibold text-blue-800 mb-2">🚀 Get Started with Low Fee Payments</h4>
             <p className="text-blue-700 text-sm mb-3">
-              Create a secure USDC wallet to make instant payments with fees under $0.01. Your wallet will be linked to your Sow2Grow account.
+              Connect your Crypto.com DeFi Wallet to make instant payments with low fees on Cronos network.
             </p>
             <div className="space-y-2 text-sm text-blue-600">
               <div className="flex items-center gap-2">
                 <span>✓</span>
-                <span>Ultra-low transaction fees (~$0.001)</span>
+                <span>Low transaction fees on Cronos</span>
               </div>
               <div className="flex items-center gap-2">
                 <span>✓</span>
