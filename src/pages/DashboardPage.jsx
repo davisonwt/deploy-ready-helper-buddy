@@ -23,7 +23,8 @@ import {
   MessageSquare,
   BarChart3,
   Trophy,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -32,6 +33,9 @@ import LiveActivityWidget from '@/components/LiveActivityWidget'
 import { GamificationHUD } from '@/components/gamification/GamificationHUD'
 import { GamificationFloatingButton } from '@/components/gamification/GamificationFloatingButton'
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
+import { useWallet } from '@/hooks/useWallet'
+import { ethers } from 'ethers'
+import { USDC_ADDRESS, USDC_ABI, CRONOS_RPC_URL, formatUSDC } from '@/lib/cronos'
 
 
 export default function DashboardPage() {
@@ -77,6 +81,57 @@ export default function DashboardPage() {
   const [userRoles, setUserRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(false)
   const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
+
+  // Wallet visibility (connected or saved wallet)
+  const { connected, walletAddress: connectedAddress, balance: hookBalance, connectWallet } = useWallet()
+  const [walletAddress, setWalletAddress] = useState(null)
+  const [walletBalance, setWalletBalance] = useState('0')
+  const [walletLoading, setWalletLoading] = useState(false)
+
+  const fetchBalanceForAddress = async (addr) => {
+    try {
+      setWalletLoading(true)
+      const provider = new ethers.JsonRpcProvider(CRONOS_RPC_URL)
+      const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider)
+      const bal = await usdc.balanceOf(addr)
+      setWalletBalance(ethers.formatUnits(bal, 6))
+    } catch (e) {
+      console.error('Dashboard: balance fetch error', e)
+    } finally {
+      setWalletLoading(false)
+    }
+  }
+
+  const loadWalletInfo = async () => {
+    try {
+      if (connected && connectedAddress) {
+        setWalletAddress(connectedAddress)
+        setWalletBalance(hookBalance || '0')
+        return
+      }
+      if (!user?.id) return
+      const { data, error } = await supabase
+        .from('user_wallets')
+        .select('wallet_address')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle()
+      if (error) {
+        console.warn('Dashboard: user_wallets lookup error', error)
+      }
+      const addr = data?.wallet_address
+      if (addr) {
+        setWalletAddress(addr)
+        await fetchBalanceForAddress(addr)
+      }
+    } catch (e) {
+      console.error('Dashboard: loadWalletInfo error', e)
+    }
+  }
+
+  useEffect(() => {
+    loadWalletInfo()
+  }, [connected, connectedAddress, hookBalance, user?.id])
 
   useEffect(() => {
     let mounted = true
@@ -420,14 +475,38 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Configure your organization's Crypto.com wallet to receive payments
-                </p>
-                <Link to="/wallet-settings">
-                  <Button className="w-full">
-                    Manage Wallet
-                  </Button>
-                </Link>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Configure your wallet and view your USDC balance.
+                  </p>
+
+                  <div className="rounded-lg border border-border p-4 bg-card/50">
+                    <div className="text-xs text-muted-foreground">Address</div>
+                    <div className="font-mono text-sm text-foreground break-all">
+                      {walletAddress ? `${walletAddress.slice(0, 10)}...${walletAddress.slice(-8)}` : 'Not connected'}
+                    </div>
+                    <div className="mt-3 text-xs text-muted-foreground">Balance (USDC)</div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-semibold text-foreground">
+                        {walletLoading ? '...' : `${formatUSDC(walletBalance)} USDC`}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={loadWalletInfo} disabled={walletLoading}>
+                        {walletLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/wallet-settings">
+                      <Button className="w-full">Manage Wallet</Button>
+                    </Link>
+                    {!connected && (
+                      <Button variant="secondary" className="w-full" onClick={connectWallet}>
+                        Connect Wallet
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
