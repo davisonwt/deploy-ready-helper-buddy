@@ -37,7 +37,32 @@ import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
-  const { orchards, loading: orchardsLoading, fetchOrchards } = useOrchards()
+  // Replaced useOrchards hook to avoid hook dispatcher bug
+  const [orchards, setOrchards] = useState([])
+  const [orchardsLoading, setOrchardsLoading] = useState(false)
+  const fetchOrchards = async (filters = {}) => {
+    try {
+      setOrchardsLoading(true)
+      let query = supabase
+        .from('orchards')
+        .select(`*`)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      if (filters.category && filters.category !== 'all') {
+        query = query.eq('category', filters.category)
+      }
+      if (filters.search) {
+        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+      }
+      const { data, error: fetchError } = await query
+      if (fetchError) throw fetchError
+      setOrchards(data || [])
+    } catch (err) {
+      console.error('Dashboard: Error fetching orchards:', err)
+    } finally {
+      setOrchardsLoading(false)
+    }
+  }
   const { getUserBestowals, loading: bestowalsLoading } = useBestowals()
   const [userOrchards, setUserOrchards] = useState([])
   const [userBestowals, setUserBestowals] = useState([])
