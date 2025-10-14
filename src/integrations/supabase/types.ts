@@ -1384,6 +1384,7 @@ export type Database = {
       }
       organization_wallets: {
         Row: {
+          blockchain: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -1391,8 +1392,10 @@ export type Database = {
           updated_at: string
           wallet_address: string
           wallet_name: string
+          wallet_type: string | null
         }
         Insert: {
+          blockchain?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1400,8 +1403,10 @@ export type Database = {
           updated_at?: string
           wallet_address: string
           wallet_name?: string
+          wallet_type?: string | null
         }
         Update: {
+          blockchain?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1409,6 +1414,7 @@ export type Database = {
           updated_at?: string
           wallet_address?: string
           wallet_name?: string
+          wallet_type?: string | null
         }
         Relationships: []
       }

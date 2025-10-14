@@ -37,7 +37,7 @@ import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApproval
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
-import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
+import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -336,11 +336,12 @@ export default function AdminDashboardPage() {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="legacy">Legacy Admin</TabsTrigger>
           </TabsList>
 
@@ -360,6 +361,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="moderation">
             <ContentModerationDashboard />
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <OrganizationWalletSetup />
           </TabsContent>
 
           <TabsContent value="legacy" className="space-y-6">

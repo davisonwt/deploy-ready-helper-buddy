@@ -1,132 +1,178 @@
-import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { Transaction } from '@solana/web3.js';
-import { createTransferCheckedInstruction, getAssociatedTokenAddress, getMint } from '@solana/spl-token';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ethers } from 'ethers';
+import { USDC_ADDRESS, USDC_ABI, parseUSDC, formatUSDC } from '@/lib/cronos';
 import { useParams } from 'react-router-dom';
-import { connection, USDC_MINT } from '@/lib/solana';
-import { PublicKey } from '@solana/web3.js';
 
-const UsdcPayment = ({ amount = 10, orchardId, onSuccess }: { 
-  amount?: number; 
+interface UsdcPaymentProps {
+  amount: number;
   orchardId?: string;
   onSuccess?: (signature: string) => void;
-}) => {
-  const { id: paramOrchardId } = useParams<{ id: string }>();
-  const targetOrchardId = orchardId || paramOrchardId;
-  const wallet = useWallet();
+}
+
+export default function UsdcPayment({ amount, orchardId, onSuccess }: UsdcPaymentProps) {
+  const { connected, publicKey, connectWallet } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { toast } = useToast();
-  const [txSignature, setTxSignature] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const params = useParams();
+  const targetOrchardId = orchardId || params.id;
 
   const handlePayment = async () => {
-    if (!wallet.publicKey || !wallet.signTransaction) {
-      setError('Wallet not connected');
+    if (!connected || !publicKey) {
+      toast.error('Please connect your Crypto.com wallet first');
       return;
     }
+
     if (!targetOrchardId) {
-      setError('Invalid orchard');
+      toast.error('No orchard specified for payment');
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError(null);
+    setSuccess(false);
 
     try {
-      // Fetch orchard owner's wallet from organization_wallets
-      const { data: orgWallet } = await supabase
+      // Get organization wallet address (site receiving wallet)
+      const { data: orgWallet, error: walletError } = await supabase
         .from('organization_wallets')
         .select('wallet_address')
         .eq('is_active', true)
-        .single();
-      
-      if (!orgWallet?.wallet_address) {
-        throw new Error('No recipient wallet set');
+        .eq('blockchain', 'cronos')
+        .maybeSingle();
+
+      if (walletError || !orgWallet) {
+        throw new Error('Organization wallet not configured. Please contact admin.');
       }
-      const recipient = new PublicKey(orgWallet.wallet_address);
 
-      // Get USDC decimals
-      const mint = await getMint(connection, USDC_MINT);
-      const decimals = mint.decimals;
+      // Get provider from Crypto.com wallet
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-      // Sender ATA
-      const senderAta = await getAssociatedTokenAddress(USDC_MINT, wallet.publicKey);
+      // Create USDC contract instance
+      const usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
 
-      // Recipient ATA (assume exists; create if not in prod)
-      const recipientAta = await getAssociatedTokenAddress(USDC_MINT, recipient);
+      // Parse amount to correct units (6 decimals for USDC)
+      const amountToSend = parseUSDC(amount);
 
-      // Create transfer instruction
-      const transferIx = createTransferCheckedInstruction(
-        senderAta,
-        USDC_MINT,
-        recipientAta,
-        wallet.publicKey,
-        BigInt(amount * 10 ** decimals),
-        decimals
-      );
+      // Send transaction to organization wallet
+      const tx = await usdcContract.transfer(orgWallet.wallet_address, amountToSend);
 
-      // Build tx
-      const tx = new Transaction().add(transferIx);
-      tx.feePayer = wallet.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      toast.success('Transaction sent! Waiting for confirmation...');
 
-      // Sign and send
-      const signedTx = await wallet.signTransaction(tx);
-      const signature = await connection.sendRawTransaction(signedTx.serialize());
+      // Wait for confirmation
+      const receipt = await tx.wait();
 
-      // Confirm
-      await connection.confirmTransaction(signature);
+      setTxHash(receipt.hash);
+      setSuccess(true);
 
-      setTxSignature(signature);
-      toast({ title: 'Payment successful!', description: `Tx: ${signature}` });
+      // Record in database
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Call success callback
-      onSuccess?.(signature);
+      const { error: insertError } = await supabase
+        .from('bestowals')
+        .insert({
+          orchard_id: targetOrchardId,
+          bestower_id: user?.id,
+          amount: amount,
+          currency: 'USDC',
+          pockets_count: 1,
+          payment_method: 'cryptocom',
+          payment_status: 'completed',
+          payment_reference: receipt.hash,
+          blockchain_network: 'cronos',
+        });
 
-      // Update DB bestowal with required fields
-      const { data: userProfile } = await supabase.auth.getUser();
-      await supabase.from('bestowals').insert({
-        orchard_id: targetOrchardId,
-        bestower_id: userProfile.user?.id,
-        amount,
-        pockets_count: 1,
-        payment_status: 'completed',
-        payment_reference: signature,
-        currency: 'USDC',
-        payment_method: 'solana_usdc'
-      });
+      if (insertError) {
+        console.error('Error recording payment:', insertError);
+      }
+
+      toast.success(`Payment successful! Sent ${formatUSDC(amount)} USDC`);
+
+      if (onSuccess) {
+        onSuccess(receipt.hash);
+      }
     } catch (err: any) {
-      setError(err.message || 'Payment failed');
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      console.error('Payment error:', err);
+      const errorMessage = err?.message || 'Payment failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto mt-8">
+    <Card>
       <CardHeader>
-        <CardTitle>Bestow USDC</CardTitle>
+        <CardTitle>Pay with USDC</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!wallet.connected && <Button onClick={() => wallet.connect()}>Connect Wallet</Button>}
-        {wallet.connected && (
-          <Button onClick={handlePayment} disabled={loading} className="w-full">
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Pay {amount} USDC
+        {!connected ? (
+          <Button onClick={connectWallet} className="w-full">
+            Connect Crypto.com Wallet
           </Button>
+        ) : (
+          <>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Amount to pay</p>
+              <p className="text-3xl font-bold">{formatUSDC(amount)} USDC</p>
+            </div>
+
+            <Button 
+              onClick={handlePayment} 
+              disabled={loading || success}
+              className="w-full"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Payment Complete
+                </>
+              ) : (
+                'Pay Now'
+              )}
+            </Button>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && txHash && (
+              <Alert>
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>
+                  Payment successful!{' '}
+                  <a
+                    href={`https://cronoscan.com/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    View transaction
+                  </a>
+                </AlertDescription>
+              </Alert>
+            )}
+          </>
         )}
-        {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-        {txSignature && <Alert><AlertDescription>Tx: {txSignature}</AlertDescription></Alert>}
       </CardContent>
     </Card>
   );
-};
-
-export default UsdcPayment;
+}
