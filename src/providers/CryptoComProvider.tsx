@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 declare global {
   interface Window {
@@ -11,6 +11,7 @@ interface CryptoComContextType {
   connected: boolean;
   address: string | null;
   chainId: number | null;
+  connect: () => Promise<void>;
 }
 
 const CryptoComContext = createContext<CryptoComContextType>({
@@ -18,6 +19,7 @@ const CryptoComContext = createContext<CryptoComContextType>({
   connected: false,
   address: null,
   chainId: null,
+  connect: async () => {},
 });
 
 export const useCryptoComWallet = () => useContext(CryptoComContext);
@@ -28,6 +30,24 @@ export function CryptoComProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
 
+  const connect = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new Error('Wallet provider not found');
+      }
+      const provider = window.ethereum;
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      if (accounts && accounts.length > 0) {
+        setAddress(accounts[0]);
+        setConnected(true);
+        const network = await provider.request({ method: 'eth_chainId' });
+        setChainId(parseInt(network, 16));
+      }
+    } catch (error) {
+      console.error('Wallet connect error:', error);
+    }
+  }, []);
+
   useEffect(() => {
     // Check if Crypto.com DeFi Wallet is available
     const checkConnection = async () => {
@@ -35,15 +55,13 @@ export function CryptoComProvider({ children }: { children: React.ReactNode }) {
         if (typeof window !== 'undefined' && window.ethereum) {
           const provider = window.ethereum;
           
-          // Check if it's Crypto.com DeFi Wallet
-          if (provider.isDefiWallet || provider.isCryptoCom) {
-            const accounts = await provider.request({ method: 'eth_accounts' });
-            if (accounts && accounts.length > 0) {
-              setAddress(accounts[0]);
-              setConnected(true);
-              const network = await provider.request({ method: 'eth_chainId' });
-              setChainId(parseInt(network, 16));
-            }
+          // Check if it's Crypto.com DeFi Wallet OR any EVM provider
+          const accounts = await provider.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            setAddress(accounts[0]);
+            setConnected(true);
+            const network = await provider.request({ method: 'eth_chainId' });
+            setChainId(parseInt(network, 16));
           }
         }
       } catch (error) {
@@ -72,7 +90,7 @@ export function CryptoComProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CryptoComContext.Provider value={{ connector, connected, address, chainId }}>
+    <CryptoComContext.Provider value={{ connector, connected, address, chainId, connect }}>
       {children}
     </CryptoComContext.Provider>
   );
