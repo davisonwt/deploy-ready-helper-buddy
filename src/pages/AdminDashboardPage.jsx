@@ -38,7 +38,7 @@ import { UserManagementDashboard } from '@/components/admin/UserManagementDashbo
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
-import AdminPaymentDashboard from '@/components/AdminPaymentDashboard'
+import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
