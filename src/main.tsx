@@ -13,6 +13,11 @@ import { queryClient } from "./lib/queryPersistence";
 
 import "./index.css";
 
+// Ensure React is available globally for any modules that reference it directly
+// This prevents "React is not defined" runtime errors from legacy or misconfigured modules
+// Safe no-op if already defined
+;(window as any).React = (window as any).React || React;
+
 // Global error handling
 window.addEventListener('error', (event) => {
   logError('Global error caught', {
