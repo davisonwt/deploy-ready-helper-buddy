@@ -34,7 +34,6 @@ import OrchardErrorPage from "./pages/OrchardErrorPage";
 import TithingPage from "./pages/TithingPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import DashboardPage from "./pages/DashboardPage";
 import MyOrchardsPage from "./pages/MyOrchardsPage";
@@ -68,7 +67,6 @@ const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
-import WalletProtectedRoute from "./components/WalletProtectedRoute";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
@@ -352,7 +350,7 @@ const App = () => (
                  </ProtectedRoute>
                } />
 
-              {/* Support Us - Phantom Wallet Payments */}
+              {/* Support Us */}
               <Route path="/support-us" element={
                 <ProtectedRoute>
                   <Layout>
@@ -373,11 +371,11 @@ const App = () => (
               } />
               
               <Route path="/basket" element={
-                <WalletProtectedRoute>
+                <ProtectedRoute>
                   <Layout>
                     <BasketPage />
                   </Layout>
-                </WalletProtectedRoute>
+                </ProtectedRoute>
               } />
               
               <Route path="/test-basket" element={
@@ -457,7 +455,6 @@ const App = () => (
               } />
               
               {/* Payment Routes */}
-              <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
               
               <Route path="/commissions" element={
