@@ -4,18 +4,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
+import { toast as toastFn } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useWallet } from '@/hooks/useWallet';
 import { Wallet, CheckCircle2, AlertCircle, Copy } from 'lucide-react';
 import { formatUSDC } from '@/lib/cronos';
 
+interface OrganizationWallet {
+  id: string;
+  wallet_address: string;
+  wallet_name: string;
+  is_active: boolean;
+  blockchain: string;
+  wallet_type: string;
+}
+
 export function OrganizationWalletSetup() {
   const { connected, publicKey, balance, connectWallet } = useWallet();
   const [loading, setLoading] = useState(false);
-  const [currentWallet, setCurrentWallet] = useState<any>(null);
+  const [currentWallet, setCurrentWallet] = useState<OrganizationWallet | null>(null);
   const [walletName, setWalletName] = useState('Sow2Grow Main Wallet');
-  const { toast } = useToast();
 
   useEffect(() => {
     fetchCurrentWallet();
@@ -28,10 +36,11 @@ export function OrganizationWalletSetup() {
         .select('*')
         .eq('is_active', true)
         .eq('blockchain', 'cronos')
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.error('Error fetching wallet:', error);
+        return;
       }
 
       setCurrentWallet(data);
@@ -45,11 +54,7 @@ export function OrganizationWalletSetup() {
 
   const handleSetOrganizationWallet = async () => {
     if (!connected || !publicKey) {
-      toast({
-        title: 'Wallet Not Connected',
-        description: 'Please connect your Crypto.com wallet first',
-        variant: 'destructive',
-      });
+      toastFn.error('Please connect your Crypto.com wallet first');
       return;
     }
 
@@ -79,21 +84,14 @@ export function OrganizationWalletSetup() {
 
       if (error) throw error;
 
-      setCurrentWallet(data);
+      setCurrentWallet(data as OrganizationWallet);
 
-      toast({
-        title: 'Organization Wallet Set!',
-        description: `All payments will now be sent to ${publicKey.slice(0, 6)}...${publicKey.slice(-4)}`,
-      });
+      toastFn.success(`All payments will now be sent to ${publicKey.slice(0, 6)}...${publicKey.slice(-4)}`);
 
       await fetchCurrentWallet();
     } catch (error: any) {
       console.error('Error setting organization wallet:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to set organization wallet',
-        variant: 'destructive',
-      });
+      toastFn.error(error.message || 'Failed to set organization wallet');
     } finally {
       setLoading(false);
     }
@@ -102,10 +100,7 @@ export function OrganizationWalletSetup() {
   const handleCopyAddress = () => {
     if (currentWallet?.wallet_address) {
       navigator.clipboard.writeText(currentWallet.wallet_address);
-      toast({
-        title: 'Copied!',
-        description: 'Wallet address copied to clipboard',
-      });
+      toastFn.success('Wallet address copied to clipboard');
     }
   };
 
