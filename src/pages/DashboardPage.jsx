@@ -329,14 +329,17 @@ export default function DashboardPage() {
 
         <div className="max-w-4xl mx-auto px-4">
           <Card className="mb-6 border-primary/30">
-            <CardContent className="pt-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Quick access</p>
-                <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Quick access</p>
+                  <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Manage your organization's payment wallet</p>
+                </div>
+                <Link to="/wallet-settings">
+                  <Button className="ml-4">Open Wallet Settings</Button>
+                </Link>
               </div>
-              <Link to="/wallet-settings">
-                <Button className="ml-4">Open Wallet Settings</Button>
-              </Link>
             </CardContent>
           </Card>
         </div>
