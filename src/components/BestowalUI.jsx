@@ -5,6 +5,8 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Heart, Users, Target, TrendingUp, Gift } from 'lucide-react';
 import PaymentModal from './PaymentModal';
+import { WalletOnboardingGuide } from '@/components/wallet/WalletOnboardingGuide';
+import { WalletHelpModal } from '@/components/wallet/WalletHelpModal';
 
 const BestowalUI = ({ orchard, onBestow }) => {
   const [selectedPockets, setSelectedPockets] = useState([]);
@@ -81,9 +83,17 @@ const BestowalUI = ({ orchard, onBestow }) => {
     <div className="bestowal-ui">
       {/* Orchard Header */}
       <div className="orchard-header">
-        <h2 className="text-2xl font-bold text-foreground mb-2">{orchardData.title}</h2>
-        <p className="text-muted-foreground">{orchardData.description}</p>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">{orchardData.title}</h2>
+            <p className="text-muted-foreground">{orchardData.description}</p>
+          </div>
+          <WalletHelpModal triggerText="Payment Help" variant="outline" />
+        </div>
       </div>
+
+      {/* Wallet Onboarding Guide - Compact Version */}
+      <WalletOnboardingGuide compact />
 
       {/* Orchard Stats */}
       <div className="orchard-stats">
