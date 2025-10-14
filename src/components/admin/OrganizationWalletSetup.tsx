@@ -36,6 +36,8 @@ export function OrganizationWalletSetup() {
         .select('*')
         .eq('is_active', true)
         .eq('blockchain', 'cronos')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
