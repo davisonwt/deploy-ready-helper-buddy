@@ -157,15 +157,16 @@ export default function Layout({ children }) {
         { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
-    ...(shouldShowAdminButton ? [{
-      name: "gosat's",
-      icon: Settings,
-      color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
-      items: [
-        { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
-        { name: "Seeds Management", href: "/admin/seeds", icon: Sprout }
-      ]
-    }] : [])
+      ...(shouldShowAdminButton ? [{
+        name: "gosat's",
+        icon: Settings,
+        color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
+        items: [
+          { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
+          { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
+          { name: "Seeds Management", href: "/admin/seeds", icon: Sprout }
+        ]
+      }] : [])
   ]
 
   // Check if current path is in any dropdown
