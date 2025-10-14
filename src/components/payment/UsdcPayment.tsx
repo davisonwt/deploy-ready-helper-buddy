@@ -53,6 +53,8 @@ export default function UsdcPayment({ amount, orchardId, onSuccess }: UsdcPaymen
         .select('wallet_address')
         .eq('is_active', true)
         .eq('blockchain', 'cronos')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (walletError || !orgWallet) {

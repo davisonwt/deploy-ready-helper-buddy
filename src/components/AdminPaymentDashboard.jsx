@@ -18,18 +18,84 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { useOrganizationWallet } from '@/hooks/useOrganizationWallet';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AdminPaymentDashboard() {
-  const {
-    organizationWallet,
-    payments,
-    loading,
-    fetchPayments,
-    updateWalletAddress
-  } = useOrganizationWallet();
+  const [organizationWallet, setOrganizationWallet] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWallet = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('organization_wallets')
+        .select('*')
+        .eq('is_active', true)
+        .eq('blockchain', 'cronos')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error && data) setOrganizationWallet(data);
+    } catch (e) {
+      console.error('Error fetching wallet:', e);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const { data } = await supabase
+        .from('bestowals')
+        .select('id, created_at, amount, currency, payment_status, payment_reference')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setPayments(
+        (data || []).map((b) => ({
+          id: b.id,
+          created_at: b.created_at,
+          amount: b.amount,
+          token_symbol: b.currency,
+          confirmation_status: b.payment_status,
+          transaction_signature: b.payment_reference,
+          sender_address: null,
+          memo: null,
+        }))
+      );
+    } catch (e) {
+      console.error('Error fetching payments:', e);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateWalletAddress = async (addr) => {
+    try {
+      await supabase.from('organization_wallets').update({ is_active: false }).eq('is_active', true);
+      const { error } = await supabase
+        .from('organization_wallets')
+        .upsert({
+          wallet_address: addr,
+          wallet_name: organizationWallet?.wallet_name || 'Sow2Grow Main Wallet',
+          is_active: true,
+          blockchain: 'cronos',
+          wallet_type: 'cryptocom',
+          supported_tokens: ['USDC', 'CRO'],
+        }, { onConflict: 'wallet_address' });
+      if (!error) {
+        setOrganizationWallet((prev) => ({ ...(prev || {}), wallet_address: addr, is_active: true }));
+      }
+    } catch (e) {
+      console.error('Error updating wallet:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchWallet();
+    fetchPayments();
+  }, []);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -72,8 +138,9 @@ export function AdminPaymentDashboard() {
     }
   };
 
-  const openSolscan = (signature) => {
-    const url = `https://solscan.io/tx/${signature}`;
+  const openExplorer = (hash) => {
+    if (!hash) return;
+    const url = `https://cronoscan.com/tx/${hash}`;
     window.open(url, '_blank');
   };
 
@@ -105,7 +172,7 @@ export function AdminPaymentDashboard() {
   };
 
   const formatAddress = (address) => {
-    if (!address) return '';
+    if (!address || typeof address !== 'string') return '-';
     return `${address.slice(0, 6)}...${address.slice(-6)}`;
   };
 
@@ -338,7 +405,7 @@ export function AdminPaymentDashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openSolscan(payment.transaction_signature)}
+                              onClick={() => openExplorer(payment.transaction_signature)}
                             >
                               <ExternalLink className="h-3 w-3" />
                             </Button>
