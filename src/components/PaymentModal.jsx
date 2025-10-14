@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { 
-  X, 
-  Loader2, 
-  CheckCircle, 
+import {
+  X,
+  Loader2,
+  CheckCircle,
   AlertCircle,
   Wallet,
   Plus,
@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { FiatOnRamp } from './FiatOnRamp';
+import { useWallet } from '@/hooks/useWallet';
+import { supabase } from '@/integrations/supabase/client';
+import { ethers } from 'ethers';
+import { USDC_ADDRESS, USDC_ABI, parseUSDC, formatUSDC } from '@/lib/cronos';
 
 const PaymentModal = ({ 
   isOpen, 
@@ -29,7 +33,13 @@ const PaymentModal = ({
   const [processing, setProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
-  const { toast } = useToast();
+  const { connected, balance: balanceStr, connectWallet, refreshBalance, loading: usdcLoading } = useWallet();
+  const balance = parseFloat(balanceStr || '0') || 0;
+
+  const checkSufficientBalance = (amt) => {
+    const needed = typeof amt === 'number' ? amt : parseFloat(amt) || 0;
+    return balance >= needed;
+  };
 
   const paymentMethods = [
     {
@@ -61,6 +71,51 @@ const PaymentModal = ({
     };
   }, [isOpen, processing, onClose]);
 
+  // Perform on-chain USDC transfer and record bestowal
+  const processBestowPart = async ({ amount, orchardId, pocketsCount, pocketNumbers }) => {
+    if (!window.ethereum) throw new Error('Crypto wallet provider not found');
+
+    // 1) Resolve destination (organization) wallet
+    const { data: orgWallet, error: walletError } = await supabase
+      .from('organization_wallets')
+      .select('wallet_address')
+      .eq('is_active', true)
+      .eq('blockchain', 'cronos')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (walletError || !orgWallet?.wallet_address) {
+      throw new Error('Organization wallet not configured');
+    }
+
+    // 2) Send USDC transfer
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+    const amountToSend = parseUSDC(amount);
+
+    const tx = await usdc.transfer(orgWallet.wallet_address, amountToSend);
+    toast({ title: 'Transaction sent', description: 'Waiting for confirmation...' });
+    const receipt = await tx.wait();
+
+    // 3) Record bestowal
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('bestowals').insert({
+      orchard_id: orchardId,
+      bestower_id: user?.id,
+      amount: amount,
+      currency: 'USDC',
+      pockets_count: pocketsCount || (Array.isArray(pocketNumbers) ? pocketNumbers.length : 0),
+      payment_method: 'cryptocom',
+      payment_status: 'completed',
+      payment_reference: receipt.hash,
+      blockchain_network: 'cronos',
+    });
+
+    return { success: true, txHash: receipt.hash };
+  };
+
   const handleUSDCPayment = async () => {
     try {
       if (!connected) {
@@ -84,9 +139,10 @@ const PaymentModal = ({
 
       if (result.success) {
         setPaymentCompleted(true);
+        toast({ title: 'Payment successful', description: `Sent ${formatUSDC(amount)} USDC` });
         setTimeout(() => {
           onClose();
-          onPaymentComplete?.();
+          onPaymentComplete?.(result.txHash);
           setPaymentCompleted(false);
         }, 2000);
       }
@@ -94,9 +150,9 @@ const PaymentModal = ({
     } catch (error) {
       console.error('USDC payment error:', error);
       toast({
-        title: "Payment Error",
-        description: error.message || "Failed to process USDC payment",
-        variant: "destructive",
+        title: 'Payment Error',
+        description: error?.message || 'Failed to process USDC payment',
+        variant: 'destructive',
       });
     } finally {
       setProcessing(false);
