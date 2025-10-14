@@ -48,7 +48,7 @@ export function FiatOnRamp({ requiredAmount = null, onSuccess = null }) {
     if (!connected || !wallet) {
       toast({
         title: "Wallet Required",
-        description: "Please connect your Phantom wallet first.",
+        description: "Please connect your Crypto.com wallet first.",
         variant: "destructive"
       });
       return;
