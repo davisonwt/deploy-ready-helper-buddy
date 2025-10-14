@@ -10,7 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBoundary";
 import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
-
+import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import "./index.css";
 
 // Ensure React is available globally for any modules that reference it directly
@@ -87,7 +87,9 @@ createRoot(rootElement).render(
       <SessionContextProvider supabaseClient={supabase}>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
-            <App />
+            <CryptoComProvider>
+              <App />
+            </CryptoComProvider>
           </BrowserRouter>
           <Toaster />
         </QueryClientProvider>

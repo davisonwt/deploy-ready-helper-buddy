@@ -11,27 +11,33 @@ declare global {
 }
 
 export function useWallet() {
-  const { connector, connected, address, chainId } = useCryptoComWallet();
+  const { connected, address, chainId, connect } = useCryptoComWallet();
   const [balance, setBalance] = useState<string>('0');
   const [loading, setLoading] = useState(false);
 
   const connectWallet = useCallback(async () => {
-    if (!connector) {
-      toast.error('Crypto.com DeFi Wallet not detected');
-      return;
-    }
-
     try {
       setLoading(true);
-      await connector.activate();
-      toast.success('Wallet connected successfully');
+      if (typeof window === 'undefined' || !window.ethereum) {
+        toast.error('Crypto wallet provider not found');
+        return;
+      }
+      if (connect) {
+        await connect();
+        toast.success('Wallet connected');
+      } else {
+        // Fallback direct request
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) throw new Error('No accounts returned');
+        toast.success('Wallet connected');
+      }
     } catch (error: any) {
       console.error('Error connecting wallet:', error);
       toast.error(error.message || 'Failed to connect wallet');
     } finally {
       setLoading(false);
     }
-  }, [connector]);
+  }, [connect]);
 
   const refreshBalance = useCallback(async () => {
     if (!connected || !address) {
@@ -75,7 +81,7 @@ export function useWallet() {
     connectWallet,
     refreshBalance,
     loading,
-    wallet: connector,
+    wallet: null,
     chainId,
   };
 }
