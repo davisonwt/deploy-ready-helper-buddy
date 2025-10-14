@@ -10,6 +10,12 @@ import { ethers } from 'ethers';
 import { USDC_ADDRESS, USDC_ABI, parseUSDC, formatUSDC } from '@/lib/cronos';
 import { useParams } from 'react-router-dom';
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 interface UsdcPaymentProps {
   amount: number;
   orchardId?: string;

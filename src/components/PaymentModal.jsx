@@ -12,9 +12,6 @@ import {
   Coins
 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
-import { useWallet } from '../hooks/useWallet';
-import { useUSDCPayments } from '../hooks/useUSDCPayments';
-import { WalletConnection } from './WalletConnection';
 import { FiatOnRamp } from './FiatOnRamp';
 
 const PaymentModal = ({ 
@@ -33,8 +30,6 @@ const PaymentModal = ({
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [showTopUp, setShowTopUp] = useState(false);
   const { toast } = useToast();
-  const { wallet, connected, balance, connectWallet, refreshBalance } = useWallet();
-  const { processBestowPart, checkSufficientBalance, loading: usdcLoading } = useUSDCPayments();
 
   const paymentMethods = [
     {
@@ -206,8 +201,10 @@ const PaymentModal = ({
           {/* Wallet Connection for USDC */}
           {!showTopUp && selectedMethod === 'usdc' && !connected && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Connect Your Wallet</h3>
-              <WalletConnection />
+              <h3 className="font-semibold text-foreground">Payment Options</h3>
+              <p className="text-sm text-muted-foreground">
+                Configure your wallet in the Wallet Settings page to make payments.
+              </p>
             </div>
           )}
 

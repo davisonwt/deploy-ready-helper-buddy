@@ -26,7 +26,6 @@ import {
   Shield
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
-import { WalletWidget } from '@/components/WalletWidget'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
 import { supabase } from "@/integrations/supabase/client"
 import LiveActivityWidget from '@/components/LiveActivityWidget'
@@ -412,10 +411,23 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Wallet Widget */}
+            {/* Wallet Settings Link */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour">
-              <CardContent className="p-6">
-                <WalletWidget />
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Wallet Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Configure your organization's Crypto.com wallet to receive payments
+                </p>
+                <Link to="/wallet-settings">
+                  <Button className="w-full">
+                    Manage Wallet
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
