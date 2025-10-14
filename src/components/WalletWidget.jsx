@@ -88,7 +88,7 @@ export function WalletWidget() {
           <div className="text-3xl font-bold text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
             {loadingBalance ? 'Loading...' : formatBalance(balance)}
           </div>
-          <div className="text-sm text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>USDC on Solana</div>
+          <div className="text-sm text-black" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>USDC on Cronos</div>
         </div>
 
         {/* Quick Stats */}
