@@ -181,10 +181,7 @@ export function UniversalLiveSessionInterface({
     try {
       const { data, error } = await supabase
         .from('radio_call_queue')
-        .select(`
-          *,
-          profiles:user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('session_id', sessionData.id)
         .eq('status', 'waiting')
         .order('created_at', { ascending: true })
@@ -202,16 +199,7 @@ export function UniversalLiveSessionInterface({
     try {
       const { data, error } = await supabase
         .from('radio_live_messages')
-        .select(`
-          *,
-          profiles:sender_id (display_name, avatar_url),
-          radio_message_responses (
-            id,
-            response_text,
-            created_at,
-            responder_profile:responder_id (display_name, avatar_url)
-          )
-        `)
+        .select('*')
         .eq('session_id', sessionData.id)
         .order('created_at', { ascending: true })
         .limit(50)
@@ -229,10 +217,7 @@ export function UniversalLiveSessionInterface({
     try {
       const { data, error } = await supabase
         .from('radio_guest_requests')
-        .select(`
-          *,
-          profiles:user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('session_id', sessionData.id)
         .in('status', ['pending', 'approved'])
         .order('created_at', { ascending: true })
@@ -477,16 +462,16 @@ export function UniversalLiveSessionInterface({
                     <div className="space-y-3">
                       {messages.map((message) => (
                         <div key={message.id} className="flex items-start space-x-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={message.profiles?.avatar_url} />
-                            <AvatarFallback className="text-xs">
-                              {message.profiles?.display_name?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={message.profiles?.avatar_url} />
+                              <AvatarFallback className="text-xs">
+                                {(message.profiles?.display_name?.charAt(0) || 'L')}
+                              </AvatarFallback>
+                            </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
                               <span className="text-sm font-medium">
-                                {message.profiles?.display_name}
+                                {message.profiles?.display_name || 'Listener'}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {new Date(message.created_at).toLocaleTimeString()}
@@ -550,10 +535,10 @@ export function UniversalLiveSessionInterface({
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={caller.profiles?.avatar_url} />
                               <AvatarFallback className="text-xs">
-                                {caller.profiles?.display_name?.charAt(0)}
+                                {(caller.profiles?.display_name?.charAt(0) || 'C')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{caller.profiles?.display_name}</span>
+                            <span className="text-sm">{caller.profiles?.display_name || 'Caller'}</span>
                           </div>
                           {isHost && (
                             <Button size="sm" variant="outline" onClick={() => approveCallRequest(caller.id)}>
@@ -588,10 +573,10 @@ export function UniversalLiveSessionInterface({
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={request.profiles?.avatar_url} />
                               <AvatarFallback className="text-xs">
-                                {request.profiles?.display_name?.charAt(0)}
+                                {(request.profiles?.display_name?.charAt(0) || 'G')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{request.profiles?.display_name}</span>
+                            <span className="text-sm">{request.profiles?.display_name || 'Guest'}</span>
                           </div>
                           {isHost && (
                             <Button size="sm" variant="outline" onClick={() => approveGuestRequest(request.id)}>
