@@ -64,7 +64,7 @@ export function CoHostInviteCard({ invite, onUpdate }) {
       <CardContent className="space-y-4">
         {/* Show Details */}
         <div className="space-y-2">
-          <h3 className="font-bold">{invite.radio_shows?.show_name || 'Radio Show'}</h3>
+          <h3 className="font-bold">{invite.radio_schedule?.radio_shows?.show_name || 'Radio Show'}</h3>
           
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -78,8 +78,8 @@ export function CoHostInviteCard({ invite, onUpdate }) {
             </div>
           </div>
 
-          {invite.radio_shows?.description && (
-            <p className="text-sm text-muted-foreground">{invite.radio_shows.description}</p>
+          {invite.radio_schedule?.radio_shows?.description && (
+            <p className="text-sm text-muted-foreground">{invite.radio_schedule.radio_shows.description}</p>
           )}
 
           {invite.invitation_message && (

@@ -64,12 +64,12 @@ export function CoHostInvites() {
             start_time,
             end_time,
             time_slot_date,
-            hour_slot
-          ),
-          radio_shows (
-            show_name,
-            description,
-            category
+            hour_slot,
+            radio_shows (
+              show_name,
+              description,
+              category
+            )
           ),
           host_dj:radio_djs!radio_co_host_invites_host_dj_id_fkey (
             dj_name,
