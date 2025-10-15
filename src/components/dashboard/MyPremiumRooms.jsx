@@ -118,47 +118,11 @@ export function MyPremiumRooms() {
   };
 
   if (loading) {
-    return (
-      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
-        <CardContent className="p-8 text-center flex-1 flex items-center justify-center">
-          <div>
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground mt-2" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>Loading your rooms...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   if (rooms.length === 0) {
-    return (
-      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2" style={{ 
-            color: 'hsl(280, 60%, 50%)', 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-          }}>
-            <Crown className="h-5 w-5 text-yellow-600" />
-            My Premium Rooms
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center">
-          <div className="text-center py-8 space-y-4">
-            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
-            <div>
-              <p className="font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>No premium rooms yet</p>
-              <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
-                Complete an orchard to create a premium room automatically
-              </p>
-            </div>
-            <Button onClick={() => navigate('/create-orchard')}>
-              <Video className="h-4 w-4 mr-2" />
-              Create Orchard
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
