@@ -439,7 +439,7 @@ export function UniversalLiveSessionInterface({
             <TabsList className="grid w-full grid-cols-3 bg-slate-800 border-slate-700">
               <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <MessageSquare className="h-4 w-4 mr-1" />
-                Messages
+                Message Hosts
               </TabsTrigger>
               <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Clock className="h-4 w-4 mr-1" />
@@ -447,7 +447,7 @@ export function UniversalLiveSessionInterface({
               </TabsTrigger>
               <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Hand className="h-4 w-4 mr-1" />
-                Requests ({guestRequests.filter(r => r.status === 'pending').length})
+                Call In to Show ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
 
@@ -623,7 +623,7 @@ export function UniversalLiveSessionInterface({
                 <CardHeader className="border-b border-slate-700 pb-3">
                   <div className="flex items-center space-x-2">
                     <Hand className="h-5 w-5 text-yellow-400" />
-                    <CardTitle className="text-sm text-white">Speaking Requests</CardTitle>
+                    <CardTitle className="text-sm text-white">Call In to Show</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="p-4">
