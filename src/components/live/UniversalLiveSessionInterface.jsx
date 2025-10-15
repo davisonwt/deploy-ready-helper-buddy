@@ -378,22 +378,22 @@ export function UniversalLiveSessionInterface({
 
   return (
     <div className="space-y-6">
-      {/* Session Header */}
-      <Card>
+      {/* Session Header - Darker Theme */}
+      <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-slate-700">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <SessionIcon className={`h-6 w-6 ${sessionColor}`} />
               <div>
-                <h2 className="text-xl font-bold">{sessionTitle}</h2>
-                <p className="text-sm text-muted-foreground">{sessionData.title || 'Live Session'}</p>
+                <h2 className="text-xl font-bold text-white">{sessionTitle}</h2>
+                <p className="text-sm text-slate-300">{sessionData.title || 'Live Session'}</p>
               </div>
-              <Badge variant="outline" className="bg-red-500/20 text-red-700 border-red-500/30">
+              <Badge variant="outline" className="bg-red-500/30 text-red-400 border-red-500/50 animate-pulse">
                 🔴 LIVE
               </Badge>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 text-slate-300">
                 <Users className="h-4 w-4" />
                 <span className="text-sm">{viewerCount} viewers</span>
               </div>
@@ -403,7 +403,7 @@ export function UniversalLiveSessionInterface({
                   size="sm"
                   onClick={handRaised ? null : requestToSpeak}
                   disabled={handRaised}
-                  className={handRaised ? "bg-yellow-500/20 text-yellow-700" : ""}
+                  className={handRaised ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-slate-700 text-slate-200 border-slate-600 hover:bg-slate-600"}
                 >
                   <Hand className="h-4 w-4 mr-1" />
                   {handRaised ? "Hand Raised" : "Raise Hand"}
@@ -414,11 +414,11 @@ export function UniversalLiveSessionInterface({
         </CardHeader>
       </Card>
 
-      {/* Main Interface */}
+      {/* Main Interface - Darker Theme */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Video Call Interface - Takes up 2 columns */}
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="bg-slate-900 border-slate-700">
             <CardContent className="p-6">
             <LiveVideoCallInterface
               liveSession={sessionData}
@@ -433,160 +433,229 @@ export function UniversalLiveSessionInterface({
           </Card>
         </div>
 
-        {/* Right Sidebar - Queue, Messages, Controls */}
+        {/* Right Sidebar - Interactive Feed with Darker Theme */}
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="messages">
+            <TabsList className="grid w-full grid-cols-3 bg-slate-800 border-slate-700">
+              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Messages
               </TabsTrigger>
-              <TabsTrigger value="queue">
+              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Clock className="h-4 w-4 mr-1" />
                 Queue ({callQueue.length})
               </TabsTrigger>
-              <TabsTrigger value="requests">
+              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Hand className="h-4 w-4 mr-1" />
                 Requests ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
 
-            {/* Messages Tab */}
+            {/* Messages Tab - Integrated Send Message */}
             <TabsContent value="messages" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Live Chat</CardTitle>
+              <Card className="bg-slate-900 border-slate-700">
+                <CardHeader className="border-b border-slate-700 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <MessageCircle className="h-5 w-5 text-green-400" />
+                    <CardTitle className="text-sm text-white">Send Message to Hosts</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <ScrollArea className="h-64 mb-4">
-                    <div className="space-y-3">
-                      {messages.map((message) => (
-                        <div key={message.id} className="flex items-start space-x-2">
+                  {/* Message Input - Prominent */}
+                  <div className="space-y-3 mb-4">
+                    <Textarea
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder="Type your message to the hosts..."
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          sendMessage()
+                        }
+                      }}
+                      className="min-h-[80px] bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 focus:border-green-500"
+                    />
+                    <Button 
+                      onClick={sendMessage} 
+                      disabled={!messageText.trim()}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      size="lg"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send Message
+                    </Button>
+                    <p className="text-xs text-slate-400 text-center">
+                      Your message will be visible to all hosts and co-hosts during the live show.
+                    </p>
+                  </div>
+
+                  <Separator className="my-4 bg-slate-700" />
+
+                  {/* Live Chat Feed */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-medium text-slate-300 uppercase">Live Chat</h4>
+                    <ScrollArea className="h-64">
+                      <div className="space-y-3">
+                        {messages.map((message) => (
+                          <div key={message.id} className="flex items-start space-x-2 p-2 bg-slate-800/50 rounded">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={message.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs">
+                              <AvatarFallback className="text-xs bg-slate-700">
                                 {(message.profiles?.display_name?.charAt(0) || 'L')}
                               </AvatarFallback>
                             </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm font-medium">
-                                {message.profiles?.display_name || 'Listener'}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(message.created_at).toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground break-words">
-                              {message.message_text}
-                            </p>
-                            {/* Show responses if any */}
-                            {message.radio_message_responses?.map((response) => (
-                              <div key={response.id} className="mt-2 ml-4 p-2 bg-primary/10 rounded text-xs">
-                                <span className="font-medium">
-                                  {response.responder_profile?.display_name}:
-                                </span> {response.response_text}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm font-medium text-white">
+                                  {message.profiles?.display_name || 'Listener'}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  {new Date(message.created_at).toLocaleTimeString()}
+                                </span>
                               </div>
-                            ))}
+                              <p className="text-sm text-slate-300 break-words">
+                                {message.message_text}
+                              </p>
+                              {message.radio_message_responses?.map((response) => (
+                                <div key={response.id} className="mt-2 ml-4 p-2 bg-green-500/20 rounded text-xs">
+                                  <span className="font-medium text-green-400">
+                                    {response.responder_profile?.display_name}:
+                                  </span> <span className="text-slate-300">{response.response_text}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </ScrollArea>
-                  
-                  <div className="flex space-x-2">
-                    <Input
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      placeholder="Type a message..."
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      className="flex-1"
-                    />
-                    <Button size="sm" onClick={sendMessage} disabled={!messageText.trim()}>
-                      <Send className="h-4 w-4" />
-                    </Button>
+                        ))}
+                        {messages.length === 0 && (
+                          <p className="text-sm text-slate-400 text-center py-4">
+                            No messages yet. Be the first to send a message!
+                          </p>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Call Queue Tab */}
+            {/* Call Queue Tab - Integrated Call In */}
             <TabsContent value="queue" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center justify-between">
-                    Call Queue
-                    {!isHost && (
-                      <Button size="sm" variant="outline" onClick={joinCallQueue}>
-                        <Phone className="h-4 w-4 mr-1" />
-                        Join Queue
-                      </Button>
-                    )}
-                  </CardTitle>
+              <Card className="bg-slate-900 border-slate-700">
+                <CardHeader className="border-b border-slate-700 pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-5 w-5 text-blue-400" />
+                      <CardTitle className="text-sm text-white">Call In to Show</CardTitle>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <ScrollArea className="h-64">
-                    <div className="space-y-2">
-                      {callQueue.map((caller, index) => (
-                        <div key={caller.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="text-xs">#{index + 1}</Badge>
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={caller.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs">
-                                {(caller.profiles?.display_name?.charAt(0) || 'C')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{caller.profiles?.display_name || 'Caller'}</span>
-                          </div>
-                          {isHost && (
-                            <Button size="sm" variant="outline" onClick={() => approveCallRequest(caller.id)}>
-                              <PhoneCall className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      {callQueue.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          No callers in queue
-                        </p>
-                      )}
+                  {/* Call Request - Prominent */}
+                  {!isHost && (
+                    <div className="space-y-3 mb-4">
+                      <Textarea
+                        placeholder="What would you like to talk about?"
+                        className="min-h-[80px] bg-slate-800 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                      />
+                      <Button 
+                        onClick={joinCallQueue}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        size="lg"
+                      >
+                        <PhoneCall className="h-4 w-4 mr-2" />
+                        Request to Call In
+                      </Button>
+                      <p className="text-xs text-slate-400 text-center">
+                        Briefly describe what you'd like to discuss. The hosts will review your request.
+                      </p>
                     </div>
-                  </ScrollArea>
+                  )}
+
+                  <Separator className="my-4 bg-slate-700" />
+
+                  {/* Call Queue List */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-medium text-slate-300 uppercase">Queue ({callQueue.length})</h4>
+                    <ScrollArea className="h-64">
+                      <div className="space-y-2">
+                        {callQueue.map((caller, index) => (
+                          <div key={caller.id} className="flex items-center justify-between p-2 bg-slate-800/50 rounded">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                #{index + 1}
+                              </Badge>
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={caller.profiles?.avatar_url} />
+                                <AvatarFallback className="text-xs bg-slate-700">
+                                  {(caller.profiles?.display_name?.charAt(0) || 'C')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm text-white">{caller.profiles?.display_name || 'Caller'}</span>
+                            </div>
+                            {isHost && (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => approveCallRequest(caller.id)}
+                                className="bg-green-600 hover:bg-green-700 text-white border-green-500"
+                              >
+                                <PhoneCall className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        {callQueue.length === 0 && (
+                          <p className="text-sm text-slate-400 text-center py-4">
+                            No callers in queue
+                          </p>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Guest Requests Tab */}
+            {/* Guest Requests Tab - Darker Theme */}
             <TabsContent value="requests" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Speaking Requests</CardTitle>
+              <Card className="bg-slate-900 border-slate-700">
+                <CardHeader className="border-b border-slate-700 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <Hand className="h-5 w-5 text-yellow-400" />
+                    <CardTitle className="text-sm text-white">Speaking Requests</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <ScrollArea className="h-64">
+                  <ScrollArea className="h-80">
                     <div className="space-y-2">
                       {guestRequests.filter(req => req.status === 'pending').map((request) => (
-                        <div key={request.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                        <div key={request.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded">
                           <div className="flex items-center space-x-2">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-8 w-8">
                               <AvatarImage src={request.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs">
+                              <AvatarFallback className="text-xs bg-slate-700">
                                 {(request.profiles?.display_name?.charAt(0) || 'G')}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm">{request.profiles?.display_name || 'Guest'}</span>
+                            <div>
+                              <span className="text-sm font-medium text-white">{request.profiles?.display_name || 'Guest'}</span>
+                              <p className="text-xs text-slate-400">{request.request_message}</p>
+                            </div>
                           </div>
                           {isHost && (
-                            <Button size="sm" variant="outline" onClick={() => approveGuestRequest(request.id)}>
+                            <Button 
+                              size="sm" 
+                              onClick={() => approveGuestRequest(request.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
                               Approve
                             </Button>
                           )}
                         </div>
                       ))}
                       {guestRequests.filter(req => req.status === 'pending').length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">
+                        <p className="text-sm text-slate-400 text-center py-4">
                           No pending requests
                         </p>
                       )}
