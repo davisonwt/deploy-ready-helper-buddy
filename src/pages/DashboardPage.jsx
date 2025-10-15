@@ -36,6 +36,7 @@ import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 import { useWallet } from '@/hooks/useWallet'
 import { ethers } from 'ethers'
 import { USDC_ADDRESS, USDC_ABI, CRONOS_RPC_URL, formatUSDC } from '@/lib/cronos'
+import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 
 
 export default function DashboardPage() {
@@ -537,6 +538,11 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* My Radio Slots - Prominent for hosts */}
+          <div className="mt-8">
+            <MyApprovedSlots />
           </div>
 
           {/* My Orchards and Recent Bestowals */}
