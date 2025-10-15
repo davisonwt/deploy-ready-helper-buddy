@@ -91,10 +91,12 @@ export function CoHostInvites() {
 
   if (loading) {
     return (
-      <Card className="bg-white/80 border-white/40 shadow-xl">
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground mt-2">Loading invitations...</p>
+      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
+        <CardContent className="p-8 text-center flex-1 flex items-center justify-center">
+          <div>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground mt-2">Loading invitations...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -102,7 +104,7 @@ export function CoHostInvites() {
 
   if (invites.length === 0) {
     return (
-      <Card className="bg-white/80 border-white/40 shadow-xl">
+      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ 
             color: 'hsl(340, 100%, 50%)', 
@@ -112,7 +114,7 @@ export function CoHostInvites() {
             Co-Host Invitations
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center py-8 space-y-4">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
             <div>
