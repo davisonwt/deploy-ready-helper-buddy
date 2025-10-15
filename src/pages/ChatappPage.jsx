@@ -432,45 +432,39 @@ const ChatappPage = () => {
             {/* Featured Actions - Radio & Premium Rooms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <Card 
-                className="group cursor-pointer hover:scale-105 transition-all duration-300 bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-md border-white/30 hover:border-purple-400/50"
+                className="group cursor-pointer transition-all duration-300 bg-white/90 backdrop-blur-sm border-primary/20 hover:border-primary/40 hover:shadow-lg"
                 onClick={() => window.location.href = '/apply-radio-slot'}
               >
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-purple-500/30 group-hover:bg-purple-500/50 transition-all">
-                      <Radio className="h-6 w-6 text-white" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-base">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Radio className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <CardTitle className="text-white text-lg">Apply for Radio Slot</CardTitle>
-                      <p className="text-xs text-purple-100 mt-1">Host your own 2-hour live radio show</p>
-                    </div>
-                  </div>
+                    Apply for Radio Slot
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white/80">
-                    Upload documents, set your playlist, configure ads, and schedule your live broadcast on Grove Station.
+                  <p className="text-sm text-muted-foreground">
+                    Host your own 2-hour live radio show with Grove Station. Upload content, set playlists, and broadcast live.
                   </p>
                 </CardContent>
               </Card>
 
               <Card 
-                className="group cursor-pointer hover:scale-105 transition-all duration-300 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-md border-white/30 hover:border-blue-400/50"
+                className="group cursor-pointer transition-all duration-300 bg-white/90 backdrop-blur-sm border-primary/20 hover:border-primary/40 hover:shadow-lg"
                 onClick={() => window.location.href = '/create-premium-room'}
               >
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-blue-500/30 group-hover:bg-blue-500/50 transition-all">
-                      <MessageSquare className="h-6 w-6 text-white" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-3 text-base">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <MessageSquare className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <CardTitle className="text-white text-lg">Create Premium Room</CardTitle>
-                      <p className="text-xs text-blue-100 mt-1">Launch interactive sessions & courses</p>
-                    </div>
-                  </div>
+                    Create Premium Room
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white/80">
-                    Set up classrooms, seminars, training, or podcasts with document sharing, playlists, and monetization options.
+                  <p className="text-sm text-muted-foreground">
+                    Launch interactive sessions & courses with document sharing, playlists, and monetization options.
                   </p>
                 </CardContent>
               </Card>
