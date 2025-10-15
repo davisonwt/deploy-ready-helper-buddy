@@ -3,7 +3,7 @@ import { WizardContainer } from '@/components/wizard/WizardContainer';
 import { useGroveStation } from '@/hooks/useGroveStation';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { SecureInput, SecureTextarea } from '@/components/ui/secure-input';
+import { PermissiveInput, PermissiveTextarea } from '@/components/ui/permissive-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import DJMusicUpload from '@/components/radio/DJMusicUpload';
 import { 
   Radio, 
   Calendar, 
@@ -83,23 +84,43 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
   const [playlists, setPlaylists] = useState([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [tracks, setTracks] = useState([]);
 
-  // Fetch user's playlists
+  // Fetch user's playlists and tracks
   useEffect(() => {
-    const fetchPlaylists = async () => {
+    const fetchPlaylistsAndTracks = async () => {
       if (!userDJProfile?.id) return;
       
-      const { data } = await supabase
+      const { data: playlistData } = await supabase
         .from('dj_playlists')
         .select('*')
         .eq('dj_id', userDJProfile.id)
         .order('created_at', { ascending: false });
       
-      if (data) setPlaylists(data);
+      if (playlistData) setPlaylists(playlistData);
+
+      const { data: trackData } = await supabase
+        .from('dj_music_tracks')
+        .select('*')
+        .eq('dj_id', userDJProfile.id)
+        .order('created_at', { ascending: false });
+      
+      if (trackData) setTracks(trackData);
     };
     
-    fetchPlaylists();
+    fetchPlaylistsAndTracks();
   }, [userDJProfile]);
+
+  // Refetch tracks after upload
+  const refreshTracks = async () => {
+    if (!userDJProfile?.id) return;
+    const { data: trackData } = await supabase
+      .from('dj_music_tracks')
+      .select('*')
+      .eq('dj_id', userDJProfile.id)
+      .order('created_at', { ascending: false });
+    if (trackData) setTracks(trackData);
+  };
 
   const steps = [
     {
@@ -327,25 +348,23 @@ export function RadioSlotApplicationWizard({ onClose }) {
           <div className="space-y-4">
             <div>
               <Label htmlFor="show_name">Show Name *</Label>
-              <SecureInput
+              <PermissiveInput
                 id="show_name"
-                placeholder="e.g., Morning Grove Mix"
+                placeholder="e.g., Morning Grove Mix, Love & Light?!"
                 value={formData.show_name}
                 onChange={(e) => handleFieldChange('show_name', e.target.value)}
                 maxLength={100}
-                sanitizeType="text"
               />
             </div>
 
             <div>
               <Label htmlFor="subject">Subject/Topic *</Label>
-              <SecureInput
+              <PermissiveInput
                 id="subject"
-                placeholder="e.g., Love & Relationships, Business Growth"
+                placeholder="e.g., Love & Relationships, Business Growth!"
                 value={formData.subject}
                 onChange={(e) => handleFieldChange('subject', e.target.value)}
                 maxLength={100}
-                sanitizeType="text"
               />
             </div>
 
@@ -370,26 +389,24 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
             <div>
               <Label htmlFor="description">Description</Label>
-              <SecureTextarea
+              <PermissiveTextarea
                 id="description"
-                placeholder="What can listeners expect from your show?"
+                placeholder="What can listeners expect from your show? Use any characters you like!"
                 value={formData.description}
                 onChange={(e) => handleFieldChange('description', e.target.value)}
                 maxLength={500}
-                sanitizeType="text"
                 rows={3}
               />
             </div>
 
             <div>
               <Label htmlFor="topic_description">Episode Topic Details</Label>
-              <SecureTextarea
+              <PermissiveTextarea
                 id="topic_description"
-                placeholder="Describe what this specific episode will cover..."
+                placeholder="Describe what this specific episode will cover... (special characters allowed!)"
                 value={formData.topic_description}
                 onChange={(e) => handleFieldChange('topic_description', e.target.value)}
                 maxLength={500}
-                sanitizeType="text"
                 rows={3}
               />
             </div>
@@ -441,13 +458,12 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
             <div>
               <Label htmlFor="show_notes">Show Notes (Optional)</Label>
-              <SecureTextarea
+              <PermissiveTextarea
                 id="show_notes"
-                placeholder="Any special notes about this show..."
+                placeholder="Any special notes about this show... (all characters allowed)"
                 value={formData.show_notes}
                 onChange={(e) => handleFieldChange('show_notes', e.target.value)}
                 maxLength={300}
-                sanitizeType="text"
                 rows={2}
               />
             </div>
@@ -501,32 +517,72 @@ export function RadioSlotApplicationWizard({ onClose }) {
               )}
             </div>
 
-            {/* Playlist Selection */}
-            <div>
+            {/* Playlist & Music Selection */}
+            <div className="space-y-4">
               <Label className="flex items-center gap-2 mb-3">
                 <Music className="h-4 w-4" />
-                Select Playlist (Optional)
+                Music for Your Show
               </Label>
               <p className="text-sm text-muted-foreground mb-3">
-                Choose a playlist to play during your show
+                Select a playlist or upload tracks you want to play during your show
               </p>
 
-              <Select 
-                value={formData.playlist_id ?? 'none'} 
-                onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a playlist..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No playlist</SelectItem>
-                  {playlists.map((playlist) => (
-                    <SelectItem key={playlist.id} value={playlist.id}>
-                      {playlist.playlist_name} ({playlist.track_count} tracks)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Playlist Selector */}
+              <div>
+                <Label className="text-sm mb-2">Choose Playlist</Label>
+                <Select 
+                  value={formData.playlist_id ?? 'none'} 
+                  onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a playlist..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No playlist</SelectItem>
+                    {playlists.map((playlist) => (
+                      <SelectItem key={playlist.id} value={playlist.id}>
+                        {playlist.playlist_name} ({playlist.track_count} tracks)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Music Upload */}
+              <div className="border-t pt-4">
+                <Label className="text-sm mb-2">Or Upload Tracks</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Upload individual tracks to play during your slot
+                </p>
+                <DJMusicUpload 
+                  trigger={
+                    <Button type="button" variant="outline" className="w-full">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Music Track
+                    </Button>
+                  }
+                />
+                {tracks.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Your uploaded tracks ({tracks.length})
+                    </p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {tracks.slice(0, 5).map((track) => (
+                        <div key={track.id} className="flex items-center gap-2 text-xs p-2 bg-muted rounded">
+                          <Music className="h-3 w-3" />
+                          <span className="truncate">{track.track_title}</span>
+                        </div>
+                      ))}
+                      {tracks.length > 5 && (
+                        <p className="text-xs text-muted-foreground pl-5">
+                          +{tracks.length - 5} more tracks
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -630,13 +686,12 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
                           <div>
                             <Label className="text-xs">Description</Label>
-                            <SecureTextarea
-                              placeholder="What type of ads fit here..."
+                            <PermissiveTextarea
+                              placeholder="What type of ads fit here? (all characters allowed)"
                               value={slot.description}
                               onChange={(e) => updateAdSlot(slot.id, 'description', e.target.value)}
                               rows={2}
                               maxLength={200}
-                              sanitizeType="text"
                             />
                           </div>
                         </div>
