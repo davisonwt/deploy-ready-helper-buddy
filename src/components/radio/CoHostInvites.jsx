@@ -118,8 +118,8 @@ export function CoHostInvites() {
           <div className="text-center py-8 space-y-4">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
             <div>
-              <p className="font-medium">No pending invitations</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>No pending invitations</p>
+              <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
                 You'll see invitations here when hosts invite you to co-host their shows
               </p>
             </div>

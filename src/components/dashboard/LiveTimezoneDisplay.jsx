@@ -57,7 +57,7 @@ export default function LiveTimezoneDisplay() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-3">
         <Globe className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium">World Clock</span>
+        <span className="text-sm font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>World Clock</span>
       </div>
       
       <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
@@ -94,7 +94,7 @@ export default function LiveTimezoneDisplay() {
         </Badge>
       </div>
       
-      <div className="text-xs text-center text-muted-foreground pt-2 border-t">
+      <div className="text-xs text-center text-muted-foreground pt-2 border-t" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
         <Radio className="h-3 w-3 inline mr-1" />
         Radio shows scheduled across all zones
       </div>
