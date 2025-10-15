@@ -88,6 +88,20 @@ export function UniversalLiveSessionInterface({
     if (!sessionData?.id) return
 
     const setupSubscriptions = () => {
+      // Subscribe to active hosts changes
+      const hostsSubscription = supabase
+        .channel(`live-hosts-${sessionData.id}`)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'radio_live_hosts',
+            filter: `session_id=eq.${sessionData.id}`
+          },
+          () => fetchActiveHosts()
+        )
+        .subscribe()
+
       // Subscribe to call queue changes
       const queueSubscription = supabase
         .channel(`call-queue-${sessionData.id}`)
@@ -131,6 +145,7 @@ export function UniversalLiveSessionInterface({
         .subscribe()
 
       return () => {
+        supabase.removeChannel(hostsSubscription)
         supabase.removeChannel(queueSubscription)
         supabase.removeChannel(messagesSubscription)
         supabase.removeChannel(guestsSubscription)
@@ -139,6 +154,26 @@ export function UniversalLiveSessionInterface({
 
     return setupSubscriptions()
   }, [sessionData?.id])
+
+  const fetchActiveHosts = async () => {
+    if (!sessionData?.id) return
+
+    try {
+      const { data, error } = await supabase
+        .from('radio_live_hosts')
+        .select(`
+          *,
+          radio_djs (dj_name, avatar_url)
+        `)
+        .eq('session_id', sessionData.id)
+        .eq('is_active', true)
+
+      if (error) throw error
+      setActiveHosts(data || [])
+    } catch (error) {
+      console.error('Error fetching active hosts:', error)
+    }
+  }
 
   const fetchCallQueue = async () => {
     if (!sessionData?.id) return
@@ -339,6 +374,7 @@ export function UniversalLiveSessionInterface({
   // Initialize data on component mount
   useEffect(() => {
     if (sessionData?.id) {
+      fetchActiveHosts()
       fetchCallQueue()
       fetchMessages()
       fetchGuestRequests()
