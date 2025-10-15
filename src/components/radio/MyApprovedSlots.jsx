@@ -180,10 +180,12 @@ export function MyApprovedSlots() {
 
   if (loading) {
     return (
-      <Card className="bg-white/80 border-white/40 shadow-xl">
-        <CardContent className="p-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground mt-2">Loading your slots...</p>
+      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
+        <CardContent className="p-8 text-center flex-1 flex items-center justify-center">
+          <div>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p className="text-muted-foreground mt-2">Loading your slots...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -191,7 +193,7 @@ export function MyApprovedSlots() {
 
   if (slots.length === 0) {
     return (
-      <Card className="bg-white/80 border-white/40 shadow-xl">
+      <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ 
             color: 'hsl(280, 100%, 40%)', 
@@ -201,7 +203,7 @@ export function MyApprovedSlots() {
             My Approved Radio Slots
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center py-8 space-y-4">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
             <div>
@@ -234,7 +236,7 @@ export function MyApprovedSlots() {
           Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1">
         {slots.map((slot) => {
           const status = getSlotStatus(slot);
           const StatusIcon = status.icon;
