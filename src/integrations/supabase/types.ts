@@ -520,6 +520,47 @@ export type Database = {
           },
         ]
       }
+      chat_room_documents: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          room_id: string
+          updated_at: string | null
+          uploader_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          room_id: string
+          updated_at?: string | null
+          uploader_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          room_id?: string
+          updated_at?: string | null
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_documents_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_rooms: {
         Row: {
           access_description: string | null
@@ -538,6 +579,7 @@ export type Database = {
             | Database["public"]["Enums"]["premium_room_category"]
             | null
           required_bestowal_amount: number | null
+          room_features: Json | null
           room_type: Database["public"]["Enums"]["chat_room_type"]
           room_type_detailed:
             | Database["public"]["Enums"]["chat_room_type_enum"]
@@ -561,6 +603,7 @@ export type Database = {
             | Database["public"]["Enums"]["premium_room_category"]
             | null
           required_bestowal_amount?: number | null
+          room_features?: Json | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
           room_type_detailed?:
             | Database["public"]["Enums"]["chat_room_type_enum"]
@@ -584,6 +627,7 @@ export type Database = {
             | Database["public"]["Enums"]["premium_room_category"]
             | null
           required_bestowal_amount?: number | null
+          room_features?: Json | null
           room_type?: Database["public"]["Enums"]["chat_room_type"]
           room_type_detailed?:
             | Database["public"]["Enums"]["chat_room_type_enum"]
@@ -2699,6 +2743,47 @@ export type Database = {
           },
         ]
       }
+      room_monetization: {
+        Row: {
+          ad_slots: Json | null
+          created_at: string | null
+          enable_ads: boolean | null
+          enable_paid_entry: boolean | null
+          entry_fee: number | null
+          id: string
+          room_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ad_slots?: Json | null
+          created_at?: string | null
+          enable_ads?: boolean | null
+          enable_paid_entry?: boolean | null
+          entry_fee?: number | null
+          id?: string
+          room_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ad_slots?: Json | null
+          created_at?: string | null
+          enable_ads?: boolean | null
+          enable_paid_entry?: boolean | null
+          entry_fee?: number | null
+          id?: string
+          room_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_monetization_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: true
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_participants: {
         Row: {
           hand_raised_at: string | null
@@ -2742,6 +2827,48 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_playlists: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          playlist_id: string
+          room_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          playlist_id: string
+          room_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          playlist_id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_playlists_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "dj_playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_playlists_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
             referencedColumns: ["id"]
           },
         ]
