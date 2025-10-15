@@ -39,6 +39,7 @@ import { USDC_ADDRESS, USDC_ABI, CRONOS_RPC_URL, formatUSDC } from '@/lib/cronos
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
+import { MyPremiumRooms } from '@/components/dashboard/MyPremiumRooms'
 
 
 export default function DashboardPage() {
@@ -555,6 +556,11 @@ export default function DashboardPage() {
             <div className="lg:col-span-1">
               <CoHostInvites />
             </div>
+          </div>
+
+          {/* My Premium Rooms */}
+          <div className="mt-8">
+            <MyPremiumRooms />
           </div>
 
           {/* My Orchards and Recent Bestowals */}
