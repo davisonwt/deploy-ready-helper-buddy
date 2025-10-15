@@ -221,7 +221,7 @@ export function MyApprovedSlots() {
   }
 
   return (
-    <Card className="bg-white/80 border-white/40 shadow-xl">
+    <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2" style={{ 
           color: 'hsl(280, 100%, 40%)', 
