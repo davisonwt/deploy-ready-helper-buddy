@@ -33,6 +33,7 @@ import {
   X,
   Upload
 } from 'lucide-react';
+import DJMusicUpload from '@/components/radio/DJMusicUpload';
 
 const ROOM_PURPOSES = [
   { value: 'classroom', label: 'Classroom / Educational', icon: GraduationCap, description: 'Interactive learning sessions' },
@@ -245,6 +246,30 @@ export function PremiumRoomCreationWizard({ onClose }) {
         slot.id === id ? { ...slot, [field]: value } : slot
       )
     }));
+  };
+
+  const handleCreatePlaylist = async () => {
+    const name = prompt('New playlist name');
+    if (!name || !userDJProfile?.id) return;
+    const { data, error } = await supabase
+      .from('dj_playlists')
+      .insert({
+        dj_id: userDJProfile.id,
+        playlist_name: name,
+        playlist_type: 'custom',
+        is_public: false
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      toast({ title: 'Playlist error', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setPlaylists((prev) => [data, ...prev]);
+    setFormData((prev) => ({ ...prev, playlist_id: data.id }));
+    toast({ title: 'Playlist created', description: 'Now upload or add tracks to it.' });
   };
 
   const handleSubmit = async () => {
@@ -549,6 +574,15 @@ export function PremiumRoomCreationWizard({ onClose }) {
                   ))}
                 </SelectContent>
               </Select>
+
+              <div className="mt-3 flex gap-2 flex-wrap">
+                <DJMusicUpload
+                  trigger={<Button type="button" variant="secondary" size="sm">Upload Track</Button>}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={handleCreatePlaylist}>
+                  Create New Playlist
+                </Button>
+              </div>
             </div>
           </div>
         );
