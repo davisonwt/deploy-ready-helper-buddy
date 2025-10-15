@@ -547,14 +547,14 @@ export default function DashboardPage() {
             <LiveSessionsWidget />
           </div>
 
-          {/* My Radio Slots - Prominent for hosts */}
-          <div className="mt-8">
-            <MyApprovedSlots />
-          </div>
-
-          {/* Co-Host Invitations */}
-          <div className="mt-8">
-            <CoHostInvites />
+          {/* My Radio Slots and Co-Host Invitations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div className="lg:col-span-1">
+              <MyApprovedSlots />
+            </div>
+            <div className="lg:col-span-1">
+              <CoHostInvites />
+            </div>
           </div>
 
           {/* My Orchards and Recent Bestowals */}
