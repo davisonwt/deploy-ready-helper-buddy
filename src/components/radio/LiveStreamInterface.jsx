@@ -231,10 +231,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     try {
       const { data, error } = await supabase
         .from('radio_guest_requests')
-        .select(`
-          *,
-          profiles:user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('session_id', liveSession.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: true })
@@ -252,10 +249,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     try {
       const { data, error } = await supabase
         .from('radio_guest_requests')
-        .select(`
-          *,
-          profiles:user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('session_id', liveSession.id)
         .eq('status', 'approved')
         .order('approved_at', { ascending: true })

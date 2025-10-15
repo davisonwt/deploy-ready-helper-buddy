@@ -329,10 +329,7 @@ export function ComprehensiveLiveSession({
       try {
         const { data, error } = await supabase
           .from('radio_live_messages')
-          .select(`
-            *,
-            profiles:sender_id (display_name, avatar_url)
-          `)
+          .select('*')
           .eq('session_id', sessionData.id)
           .order('created_at', { ascending: true })
           .limit(50)
@@ -350,10 +347,7 @@ export function ComprehensiveLiveSession({
       try {
         const { data, error } = await supabase
           .from('radio_call_queue')
-          .select(`
-            *,
-            profiles:user_id (display_name, avatar_url)
-          `)
+          .select('*')
           .eq('session_id', sessionData.id)
           .eq('status', 'waiting')
           .order('created_at', { ascending: true })
@@ -371,10 +365,7 @@ export function ComprehensiveLiveSession({
       try {
         const { data, error } = await supabase
           .from('radio_guest_requests')
-          .select(`
-            *,
-            profiles:user_id (display_name, avatar_url)
-          `)
+          .select('*')
           .eq('session_id', sessionData.id)
           .eq('status', 'pending')
           .order('created_at', { ascending: true })
