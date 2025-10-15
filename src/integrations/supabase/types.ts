@@ -2563,6 +2563,7 @@ export type Database = {
           peak_listeners: number | null
           show_id: string | null
           total_listeners: number | null
+          updated_at: string | null
         }
         Insert: {
           audio_quality_score?: number | null
@@ -2575,6 +2576,7 @@ export type Database = {
           peak_listeners?: number | null
           show_id?: string | null
           total_listeners?: number | null
+          updated_at?: string | null
         }
         Update: {
           audio_quality_score?: number | null
@@ -2587,6 +2589,7 @@ export type Database = {
           peak_listeners?: number | null
           show_id?: string | null
           total_listeners?: number | null
+          updated_at?: string | null
         }
         Relationships: [
           {
