@@ -58,7 +58,7 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
         .eq('session_id', liveSession.id)
         .eq('user_id', user.id)
         .eq('status', 'waiting')
-        .single()
+        .maybeSingle()
 
       if (data && !error) {
         setIsInCallQueue(true)

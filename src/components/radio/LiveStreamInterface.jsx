@@ -757,19 +757,35 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         </Card>
       )}
 
-      {/* Universal Live Session Interface */}
+      {/* HOST INTERFACE - Messages & Call Management */}
       {liveSession && isLive && (
-        <UniversalLiveSessionInterface
-          sessionData={{
-            id: liveSession.id,
-            title: currentShow?.show_name || 'Live Radio Session',
-            ...liveSession
-          }}
-          sessionType="radio"
-          currentUser={user}
-          isHost={activeHosts.some(host => host.user_id === user?.id)}
-          onSessionEnd={endLiveStream}
-        />
+        <Card className="border-4 border-primary/50 shadow-xl">
+          <CardHeader className="bg-primary/10">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-6 w-6 text-primary" />
+              <span className="text-xl">Host Control Center</span>
+              <Badge variant="default" className="ml-auto">
+                LIVE MESSAGES & CALLS HERE
+              </Badge>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Monitor and respond to listener messages, manage call queue, and approve guest requests below
+            </p>
+          </CardHeader>
+          <CardContent className="p-6">
+            <UniversalLiveSessionInterface
+              sessionData={{
+                id: liveSession.id,
+                title: currentShow?.show_name || 'Live Radio Session',
+                ...liveSession
+              }}
+              sessionType="radio"
+              currentUser={user}
+              isHost={activeHosts.some(host => host.user_id === user?.id)}
+              onSessionEnd={endLiveStream}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Radio Moderation Panel - Enhanced Management (Host Only) */}

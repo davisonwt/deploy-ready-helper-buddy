@@ -65,7 +65,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         .eq('session_id', liveSession.id)
         .eq('user_id', user.id)
         .in('status', ['pending', 'approved'])
-        .single()
+        .maybeSingle()
 
       if (data) {
         setHasRequestedGuest(true)
