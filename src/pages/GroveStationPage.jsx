@@ -36,6 +36,7 @@ import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
 import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
+import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
 
 export default function GroveStationPage() {
   const {
@@ -185,6 +186,25 @@ export default function GroveStationPage() {
                 liveSession={liveSession}
                 currentShow={currentShow}
               />
+            )}
+
+            {currentShow && liveSession && (
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Live Interaction Feed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UniversalLiveSessionInterface
+                    sessionData={{ id: liveSession.id, title: currentShow?.show_name || 'Live Radio Session', ...liveSession }}
+                    sessionType="radio"
+                    currentUser={null}
+                    isHost={false}
+                  />
+                </CardContent>
+              </Card>
             )}
 
             {/* Show message when not live */}
