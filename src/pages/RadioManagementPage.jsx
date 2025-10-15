@@ -28,6 +28,7 @@ import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
+import { CoHostInvites } from '@/components/radio/CoHostInvites'
 
 const radioOptions = {
   setup: {
@@ -85,6 +86,13 @@ const radioOptions = {
     icon: Radio,
     color: { bg: '#FF6B6B', text: '#FFFFFF', buttonBg: '#FF3838', buttonText: '#FFFFFF', opacity: 0.95 },
     features: ['Approved Slots', 'Go Live Button', 'Schedule Overview', 'Quick Start']
+  },
+  cohosts: {
+    name: 'Co-Host Invitations',
+    description: 'View and respond to co-host invitations from other DJs',
+    icon: UserPlus,
+    color: { bg: '#A78BFA', text: '#FFFFFF', buttonBg: '#8B5CF6', buttonText: '#FFFFFF', opacity: 0.95 },
+    features: ['View Invites', 'Accept/Decline', 'Upload Content', 'Acknowledge Availability']
   }
 }
 
@@ -553,6 +561,12 @@ export default function RadioManagementPage() {
             {selectedOption === 'myslots' && (
               <div className="h-full space-y-6">
                 <MyApprovedSlots />
+              </div>
+            )}
+
+            {selectedOption === 'cohosts' && (
+              <div className="h-full space-y-6">
+                <CoHostInvites />
               </div>
             )}
           </div>

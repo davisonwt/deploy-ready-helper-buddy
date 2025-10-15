@@ -37,6 +37,8 @@ import { useWallet } from '@/hooks/useWallet'
 import { ethers } from 'ethers'
 import { USDC_ADDRESS, USDC_ABI, CRONOS_RPC_URL, formatUSDC } from '@/lib/cronos'
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
+import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
+import { CoHostInvites } from '@/components/radio/CoHostInvites'
 
 
 export default function DashboardPage() {
@@ -540,9 +542,19 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          {/* Live Sessions - Show what's happening now */}
+          <div className="mt-8">
+            <LiveSessionsWidget />
+          </div>
+
           {/* My Radio Slots - Prominent for hosts */}
           <div className="mt-8">
             <MyApprovedSlots />
+          </div>
+
+          {/* Co-Host Invitations */}
+          <div className="mt-8">
+            <CoHostInvites />
           </div>
 
           {/* My Orchards and Recent Bestowals */}
