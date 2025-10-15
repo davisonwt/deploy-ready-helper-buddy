@@ -16,7 +16,7 @@ import {
   FileText
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { DJMusicUpload } from '@/components/radio/DJMusicUpload';
+import DJMusicUpload from '@/components/radio/DJMusicUpload';
 import { Textarea } from '@/components/ui/textarea';
 
 export function CoHostInviteCard({ invite, onUpdate }) {
