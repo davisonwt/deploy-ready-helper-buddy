@@ -27,6 +27,7 @@ import { StationStats } from '@/components/radio/StationStats'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
+import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 
 const radioOptions = {
   setup: {
@@ -77,6 +78,13 @@ const radioOptions = {
     icon: Mic,
     color: { bg: '#E0BBE4', text: '#2A2A2A', buttonBg: '#957DAD', buttonText: '#FFFFFF', opacity: 0.9 },
     features: ['Profile Creation', 'Skill Management', 'Bio & Specialties', 'Emergency Availability']
+  },
+  myslots: {
+    name: 'My Radio Slots',
+    description: 'View your approved time slots and start broadcasting with one click',
+    icon: Radio,
+    color: { bg: '#FF6B6B', text: '#FFFFFF', buttonBg: '#FF3838', buttonText: '#FFFFFF', opacity: 0.95 },
+    features: ['Approved Slots', 'Go Live Button', 'Schedule Overview', 'Quick Start']
   }
 }
 
@@ -539,6 +547,12 @@ export default function RadioManagementPage() {
                     <DJPlaylistManager />
                   </CardContent>
                 </Card>
+              </div>
+            )}
+            
+            {selectedOption === 'myslots' && (
+              <div className="h-full space-y-6">
+                <MyApprovedSlots />
               </div>
             )}
           </div>
