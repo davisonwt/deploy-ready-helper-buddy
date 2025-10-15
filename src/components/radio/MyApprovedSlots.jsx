@@ -207,8 +207,8 @@ export function MyApprovedSlots() {
           <div className="text-center py-8 space-y-4">
             <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
             <div>
-              <p className="font-medium">No approved slots yet</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>No approved slots yet</p>
+              <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
                 Apply for a time slot to start broadcasting
               </p>
             </div>
@@ -232,7 +232,7 @@ export function MyApprovedSlots() {
           <Calendar className="h-5 w-5 text-purple-600" />
           My Approved Radio Slots
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
           Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
         </p>
       </CardHeader>
