@@ -47,6 +47,7 @@ import { LiveSessionInterface } from '@/components/live/LiveSessionInterface';
 import { ComprehensiveLiveSession } from '@/components/live/ComprehensiveLiveSession';
 import PublicLiveSessionsBrowser from '@/components/live/PublicLiveSessionsBrowser';
 import { QuickRoomCreator } from '@/components/chat/QuickRoomCreator';
+import { UpcomingSessionsWidget } from '@/components/chat/UpcomingSessionsWidget';
 
 const ChatappPage = () => {
   const { user } = useAuth();
@@ -428,6 +429,9 @@ const ChatappPage = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Upcoming Sessions Widget */}
+            <UpcomingSessionsWidget onJoinSession={setCurrentRoom} />
 
             {/* Featured Actions - Radio & Premium Rooms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
