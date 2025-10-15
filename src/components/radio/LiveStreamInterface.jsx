@@ -50,6 +50,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const [messages, setMessages] = useState([])
   const [chatMessage, setChatMessage] = useState('')
   const [approvedGuests, setApprovedGuests] = useState([])
+  const isHost = activeHosts.some(host => host.user_id === user?.id)
   
   const audioRef = useRef(null)
   const peerConnectionRef = useRef(null)
@@ -66,6 +67,16 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       cleanupConnections()
     }
   }, [currentShow, djProfile])
+
+  useEffect(() => {
+    if (liveSession) {
+      const cleanup = setupRealtimeSubscriptions()
+      fetchActiveHosts()
+      fetchGuestRequests()
+      fetchApprovedGuests()
+      return () => { if (typeof cleanup === 'function') cleanup() }
+    }
+  }, [liveSession])
 
   const initializeLiveSession = async () => {
     if (!currentShow?.schedule_id) return
@@ -202,8 +213,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         .from('radio_live_hosts')
         .select(`
           *,
-          radio_djs (dj_name, avatar_url),
-          profiles:user_id (display_name)
+          radio_djs (dj_name, avatar_url)
         `)
         .eq('session_id', liveSession.id)
         .eq('is_active', true)

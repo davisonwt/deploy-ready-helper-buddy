@@ -44,8 +44,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         .from('radio_live_hosts')
         .select(`
           *,
-          radio_djs (dj_name, avatar_url),
-          profiles:user_id (display_name, avatar_url)
+          radio_djs (dj_name, avatar_url)
         `)
         .eq('session_id', liveSession.id)
         .eq('is_active', true)
