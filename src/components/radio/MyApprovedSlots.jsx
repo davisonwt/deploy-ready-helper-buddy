@@ -180,7 +180,7 @@ export function MyApprovedSlots() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-white/80 border-white/40 shadow-xl">
         <CardContent className="p-8 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground mt-2">Loading your slots...</p>
@@ -191,10 +191,13 @@ export function MyApprovedSlots() {
 
   if (slots.length === 0) {
     return (
-      <Card>
+      <Card className="bg-white/80 border-white/40 shadow-xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2" style={{ 
+            color: 'hsl(280, 100%, 40%)', 
+            textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+          }}>
+            <Calendar className="h-5 w-5 text-purple-600" />
             My Approved Radio Slots
           </CardTitle>
         </CardHeader>
@@ -218,10 +221,13 @@ export function MyApprovedSlots() {
   }
 
   return (
-    <Card>
+    <Card className="bg-white/80 border-white/40 shadow-xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2" style={{ 
+          color: 'hsl(280, 100%, 40%)', 
+          textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+        }}>
+          <Calendar className="h-5 w-5 text-purple-600" />
           My Approved Radio Slots
         </CardTitle>
         <p className="text-sm text-muted-foreground">
