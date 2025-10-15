@@ -128,18 +128,18 @@ export function CoHostInvites() {
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="bg-white/80 border-white/40 shadow-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2" style={{ 
-            color: 'hsl(340, 100%, 50%)', 
+    <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2" style={{ 
+          color: 'hsl(340, 100%, 50%)', 
             textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
           }}>
-            <UserPlus className="h-5 w-5 text-pink-600" />
-            Co-Host Invitations ({invites.filter(i => i.status === 'pending').length} pending)
-          </CardTitle>
-        </CardHeader>
-      </Card>
+          <UserPlus className="h-5 w-5 text-pink-600" />
+          Co-Host Invitations ({invites.filter(i => i.status === 'pending').length} pending)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <div className="space-y-4">
 
       {invites.map((invite) => (
         <CoHostInviteCard
@@ -148,6 +148,8 @@ export function CoHostInvites() {
           onUpdate={fetchInvites}
         />
       ))}
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
