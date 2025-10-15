@@ -72,6 +72,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
+import { FloatingLiveWidget } from "./components/dashboard/FloatingLiveWidget";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
 
@@ -491,6 +492,7 @@ const App = () => (
                 </ErrorBoundary>
                 <PerformanceMonitor />
                 <LiveActivityWidget />
+                <FloatingLiveWidget />
                 <OnboardingTour />
                 <HelpModal />
               </TooltipProvider>

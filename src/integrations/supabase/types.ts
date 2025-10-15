@@ -1881,6 +1881,67 @@ export type Database = {
           },
         ]
       }
+      radio_co_host_invites: {
+        Row: {
+          co_host_dj_id: string
+          co_host_notes: string | null
+          co_host_user_id: string
+          created_at: string
+          host_dj_id: string
+          id: string
+          invitation_message: string | null
+          responded_at: string | null
+          schedule_id: string
+          status: string
+        }
+        Insert: {
+          co_host_dj_id: string
+          co_host_notes?: string | null
+          co_host_user_id: string
+          created_at?: string
+          host_dj_id: string
+          id?: string
+          invitation_message?: string | null
+          responded_at?: string | null
+          schedule_id: string
+          status?: string
+        }
+        Update: {
+          co_host_dj_id?: string
+          co_host_notes?: string | null
+          co_host_user_id?: string
+          created_at?: string
+          host_dj_id?: string
+          id?: string
+          invitation_message?: string | null
+          responded_at?: string | null
+          schedule_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_co_host_invites_co_host_dj_id_fkey"
+            columns: ["co_host_dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_co_host_invites_host_dj_id_fkey"
+            columns: ["host_dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_co_host_invites_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_djs: {
         Row: {
           avatar_url: string | null
