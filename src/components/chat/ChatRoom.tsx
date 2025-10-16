@@ -20,6 +20,9 @@ import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 import Peer from 'peerjs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ChatRoomProps {
   roomId: string;
@@ -48,6 +51,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
+
+  // In-room invites
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [selectedInvitees, setSelectedInvitees] = useState<string[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (roomId && user) {
@@ -113,6 +124,80 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
+  // Participants
+  const fetchParticipants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_participants')
+        .select('user_id')
+        .eq('room_id', roomId)
+        .eq('is_active', true);
+      if (error) throw error;
+      setParticipantIds((data || []).map((r: any) => r.user_id));
+    } catch (e) {
+      console.error('Error fetching participants:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (roomId && user) {
+      fetchParticipants();
+    }
+  }, [roomId, user]);
+
+  // Load available users when invite dialog is open or search changes
+  useEffect(() => {
+    const run = async () => {
+      if (!inviteOpen) return;
+      try {
+        setLoadingUsers(true);
+        let query = supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .neq('user_id', user.id)
+          .limit(20);
+        if (inviteSearch.trim()) {
+          query = query.or(`display_name.ilike.%${inviteSearch}%,first_name.ilike.%${inviteSearch}%,last_name.ilike.%${inviteSearch}%`);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        const filtered = (data || []).filter((u: any) => !participantIds.includes(u.user_id));
+        setAvailableUsers(filtered);
+      } catch (e: any) {
+        console.error('Error loading users:', e);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    run();
+  }, [inviteOpen, inviteSearch, participantIds, user?.id]);
+
+  const toggleInvitee = (uid: string) => {
+    setSelectedInvitees(prev => prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]);
+  };
+
+  const handleInvite = async () => {
+    if (selectedInvitees.length === 0) return;
+    try {
+      const rows = selectedInvitees.map(uid => ({
+        room_id: roomId,
+        user_id: uid,
+        is_moderator: false,
+        is_active: true
+      }));
+      const { error } = await supabase.from('chat_participants').insert(rows);
+      if (error) throw error;
+      toast({ title: 'Invitations sent', description: `${selectedInvitees.length} user(s) invited` });
+      setInviteOpen(false);
+      setSelectedInvitees([]);
+      setInviteSearch('');
+      fetchParticipants();
+    } catch (e: any) {
+      console.error('Invite error:', e);
+      toast({ variant: 'destructive', title: 'Invite failed', description: e.message });
+    }
+  };
+
   const setupRealtimeSubscription = () => {
     const channel = supabase
       .channel(`room:${roomId}`)
@@ -157,7 +242,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
     try {
       setSending(true);
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('chat_messages')
         .insert([{
           room_id: roomId,
@@ -165,10 +250,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           sender_profile_id: null,
           content: message.trim(),
           message_type: 'text'
-        }]);
+        }])
+        .select(`
+          *,
+          sender_profile:profiles!chat_messages_sender_profile_id_fkey(
+            id, user_id, display_name, avatar_url
+          )
+        `)
+        .single();
 
       if (error) throw error;
       setMessage('');
+      if (inserted) setMessages(prev => [...prev, inserted]);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -203,17 +296,26 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       else if (file.type.startsWith('video/')) fileType = 'video';
       else if (file.type.startsWith('audio/')) fileType = 'audio';
 
-      // Send file message
-      await supabase.from('chat_messages').insert([{
-        room_id: roomId,
-        sender_id: user.id,
-        sender_profile_id: null,
-        message_type: 'file',
-        file_url: publicUrl,
-        file_name: file.name,
-        file_type: fileType,
-        file_size: file.size
-      }]);
+      const { data: inserted, error } = await supabase.from('chat_messages')
+        .insert([{
+          room_id: roomId,
+          sender_id: user.id,
+          sender_profile_id: null,
+          message_type: 'file',
+          file_url: publicUrl,
+          file_name: file.name,
+          file_type: fileType,
+          file_size: file.size
+        }])
+        .select(`
+          *,
+          sender_profile:profiles!chat_messages_sender_profile_id_fkey(
+            id, user_id, display_name, avatar_url
+          )
+        `)
+        .single();
+      if (error) throw error;
+      if (inserted) setMessages(prev => [...prev, inserted]);
       
       toast({
         title: 'File uploaded',
@@ -381,6 +483,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setInviteOpen(true)}
+            >
+              Invite
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowDonate(true)}
             >
               <DollarSign className="h-4 w-4" />
@@ -445,6 +554,57 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         </div>
       </div>
 
+      {/* Invite Users Modal */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Invite users</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Search users by name..."
+              value={inviteSearch}
+              onChange={(e) => setInviteSearch(e.target.value)}
+            />
+            <div className="text-xs text-muted-foreground">Selected: {selectedInvitees.length}</div>
+            <ScrollArea className="h-56 border rounded-md p-2">
+              {loadingUsers ? (
+                <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">Loading...</div>
+              ) : availableUsers.length === 0 ? (
+                <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">No users found</div>
+              ) : (
+                <div className="space-y-2">
+                  {availableUsers.map((u: any) => (
+                    <div
+                      key={u.user_id}
+                      className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-md cursor-pointer"
+                      onClick={() => toggleInvitee(u.user_id)}
+                    >
+                      <Checkbox
+                        checked={selectedInvitees.includes(u.user_id)}
+                        onCheckedChange={() => toggleInvitee(u.user_id)}
+                      />
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={u.avatar_url} />
+                        <AvatarFallback>{(u.display_name || u.first_name || 'U')?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-sm truncate">
+                        {u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown User'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
+              <Button onClick={handleInvite} disabled={selectedInvitees.length === 0}>Invite</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Donate Modal */}
       <DonateModal
         isOpen={showDonate}
         onClose={() => setShowDonate(false)}
