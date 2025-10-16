@@ -1,7 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Music, Radio, PlayCircle, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Music, Radio, PlayCircle, MessageCircle, Users, Disc, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import MusicLibrary from './MusicLibrary';
 import PlaylistManager from './PlaylistManager';
 import LiveStreamPlayer from './LiveStreamPlayer';
@@ -10,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const RadioPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -39,7 +42,7 @@ const RadioPage = () => {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Your complete radio station management system. Upload music, create playlists, stream live, and interact with listeners.
         </p>
-        <div className="flex justify-center space-x-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Badge variant="secondary" className="flex items-center space-x-1">
             <Music className="h-3 w-3" />
             <span>Music Library</span>
@@ -52,6 +55,39 @@ const RadioPage = () => {
             <MessageCircle className="h-3 w-3" />
             <span>Listener Chat</span>
           </Badge>
+        </div>
+        
+        {/* Quick Access Navigation */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8">
+          <Button 
+            variant="outline" 
+            className="h-auto py-6 flex flex-col gap-2"
+            onClick={() => navigate('/radio-sessions')}
+          >
+            <Disc className="h-8 w-8" />
+            <span className="font-semibold">Radio Sessions</span>
+            <span className="text-xs text-muted-foreground">Browse pre-recorded shows</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="h-auto py-6 flex flex-col gap-2"
+            onClick={() => navigate('/live-rooms')}
+          >
+            <Radio className="h-8 w-8" />
+            <span className="font-semibold">Live Rooms</span>
+            <span className="text-xs text-muted-foreground">Join live audio sessions</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="h-auto py-6 flex flex-col gap-2"
+            onClick={() => navigate('/radio-generator')}
+          >
+            <Sparkles className="h-8 w-8" />
+            <span className="font-semibold">Create Slot</span>
+            <span className="text-xs text-muted-foreground">Generate your radio show</span>
+          </Button>
         </div>
       </div>
 
