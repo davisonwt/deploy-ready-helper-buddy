@@ -8,17 +8,11 @@ import {
   Search,
   Plus,
   LogIn,
-  X,
-  Mic,
-  Image as ImageIcon,
-  Video,
-  Phone,
-  PhoneOff,
-  DollarSign,
-  Paperclip
+  X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
+import { ChatRoom } from '@/components/chat/ChatRoom';
 import {
   Dialog,
   DialogContent,
@@ -33,14 +27,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import Peer from 'peerjs';
-import { DonateModal } from '@/components/chat/DonateModal';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const ChatApp = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
@@ -52,18 +45,8 @@ const ChatApp = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   
-  // Voice recording
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  
-  // WebRTC call
-  const [callActive, setCallActive] = useState(false);
-  const [videoOn, setVideoOn] = useState(false);
-  const peerRef = useRef(null);
-  const localStreamRef = useRef(null);
-  
-  // Donations
-  const [showDonate, setShowDonate] = useState(false);
+  // Get current room from URL
+  const currentRoomId = searchParams.get('room');
 
   // Fetch users when search term changes
   useEffect(() => {
@@ -188,8 +171,12 @@ const ChatApp = () => {
       setUserSearchTerm('');
       setIsCreateDialogOpen(false);
       
-      // Refresh the chat list
-      window.location.reload();
+      // Navigate to the new chat room
+      setSearchParams({ room: room.id });
+      setIsCreateDialogOpen(false);
+      setNewChatName('');
+      setSelectedUsers([]);
+      setUserSearchTerm('');
     } catch (error) {
       console.error('Error creating chat:', error);
       toast({
@@ -202,129 +189,8 @@ const ChatApp = () => {
     }
   };
 
-  // File upload handler
-  const handleFileUpload = async (file) => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `chat-files/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('chat-files')
-        .upload(filePath, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat-files')
-        .getPublicUrl(filePath);
-      
-      toast({
-        title: 'File uploaded',
-        description: 'File uploaded successfully',
-      });
-      
-      return publicUrl;
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Upload failed',
-        description: error.message,
-      });
-      return null;
-    }
-  };
-
-  // Voice recording handlers
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      const chunks = [];
-      
-      mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const file = new File([blob], 'voice-note.wav', { type: 'audio/wav' });
-        await handleFileUpload(file);
-        stream.getTracks().forEach((track) => track.stop());
-      };
-      
-      mediaRecorderRef.current.start();
-      setRecording(true);
-      
-      // Max 60 seconds
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          mediaRecorderRef.current.stop();
-          setRecording(false);
-        }
-      }, 60000);
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Recording failed',
-        description: 'Could not access microphone',
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  };
-
-  // WebRTC call handlers
-  const toggleCall = async () => {
-    if (!callActive) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: videoOn, 
-          audio: true 
-        });
-        
-        localStreamRef.current = stream;
-        peerRef.current = new Peer(user.id);
-        
-        setCallActive(true);
-        
-        toast({
-          title: 'Call started',
-          description: 'You are now in the call',
-        });
-      } catch (error) {
-        console.error('Call error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Call failed',
-          description: 'Could not start call',
-        });
-      }
-    } else {
-      // End call
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (peerRef.current) {
-        peerRef.current.destroy();
-      }
-      setCallActive(false);
-      setVideoOn(false);
-    }
-  };
-
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoOn;
-        setVideoOn(!videoOn);
-      }
-    }
+  const handleBackToList = () => {
+    setSearchParams({});
   };
 
   if (!user) {
@@ -355,233 +221,178 @@ const ChatApp = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      {/* Header */}
-      <div className="mb-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Chats</h1>
-            <p className="text-sm text-muted-foreground">
-              Connect and collaborate with others
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={recording ? 'destructive' : 'outline'}
-              size="sm"
-              onClick={recording ? stopRecording : startRecording}
-            >
-              <Mic className="h-4 w-4 mr-2" />
-              {recording ? 'Stop' : 'Voice'}
-            </Button>
-            <Button
-              variant={callActive ? 'destructive' : 'outline'}
-              size="sm"
-              onClick={toggleCall}
-            >
-              {callActive ? <PhoneOff className="h-4 w-4 mr-2" /> : <Phone className="h-4 w-4 mr-2" />}
-              {callActive ? 'End Call' : 'Call'}
-            </Button>
-            {callActive && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleVideo}
-              >
-                <Video className="h-4 w-4 mr-2" />
-                {videoOn ? 'Video Off' : 'Video On'}
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDonate(true)}
-            >
-              <DollarSign className="h-4 w-4 mr-2" />
-              Donate
-            </Button>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                className="hidden"
-                multiple
-                accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-                onChange={(e) => {
-                  const files = Array.from(e.target.files || []);
-                  files.forEach(handleFileUpload);
-                }}
+    <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)]">
+      {currentRoomId ? (
+        <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
+      ) : (
+        <>
+          {/* Header */}
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Chats</h1>
+                <p className="text-sm text-muted-foreground">
+                  Connect and collaborate with others
+                </p>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chats..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
               />
-              <Button variant="outline" size="sm" asChild>
-                <span>
-                  <Paperclip className="h-4 w-4 mr-2" />
-                  Upload
-                </span>
-              </Button>
-            </label>
+            </div>
           </div>
-        </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">
-            Your Conversations
-          </h2>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" data-lov-name="NewChatButton">
-                <Plus className="h-4 w-4 mr-2" />
-                New Chat
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
+          {/* Main Content */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">
+                Your Conversations
+              </h2>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" data-lov-name="NewChatButton">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Chat
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
               <DialogHeader>
                 <DialogTitle>Create New Chat</DialogTitle>
                 <DialogDescription>
                   Create a new group chat and invite others to join.
                 </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="chatName">Chat Name *</Label>
-                  <Input
-                    id="chatName"
-                    placeholder="Enter chat name..."
-                    value={newChatName}
-                    onChange={(e) => setNewChatName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !isCreating) {
-                        handleCreateChat();
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* User Search */}
-                <div className="space-y-2">
-                  <Label>Invite Users (Optional)</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chatName">Chat Name *</Label>
                     <Input
-                      placeholder="Search users by name..."
-                      value={userSearchTerm}
-                      onChange={(e) => setUserSearchTerm(e.target.value)}
-                      className="pl-10"
+                      id="chatName"
+                      placeholder="Enter chat name..."
+                      value={newChatName}
+                      onChange={(e) => setNewChatName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !isCreating) {
+                          handleCreateChat();
+                        }
+                      }}
                     />
                   </div>
-                </div>
 
-                {/* Selected Users */}
-                {selectedUsers.length > 0 && (
+                  {/* User Search */}
                   <div className="space-y-2">
-                    <div className="text-sm font-medium">Selected ({selectedUsers.length}):</div>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUsers.map(userId => {
-                        const userData = availableUsers.find(u => u.user_id === userId);
-                        return (
-                          <Badge key={userId} variant="secondary" className="flex items-center gap-1">
-                            {userData ? getUserDisplayName(userData) : 'User'}
-                            <button
-                              onClick={() => handleUserToggle(userId)}
-                              className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        );
-                      })}
+                    <Label>Invite Users (Optional)</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search users by name..."
+                        value={userSearchTerm}
+                        onChange={(e) => setUserSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
                     </div>
                   </div>
-                )}
 
-                {/* Users List */}
-                <div className="space-y-2">
-                  <div className="text-sm font-medium">Available Users:</div>
-                  <ScrollArea className="h-48 border rounded-md p-2 bg-background">
-                    {loadingUsers ? (
-                      <div className="text-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                        <p className="text-sm text-muted-foreground mt-2">Searching users...</p>
+                  {/* Selected Users */}
+                  {selectedUsers.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Selected ({selectedUsers.length}):</div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedUsers.map(userId => {
+                          const userData = availableUsers.find(u => u.user_id === userId);
+                          return (
+                            <Badge key={userId} variant="secondary" className="flex items-center gap-1">
+                              {userData ? getUserDisplayName(userData) : 'User'}
+                              <button
+                                onClick={() => handleUserToggle(userId)}
+                                className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          );
+                        })}
                       </div>
-                    ) : availableUsers.length === 0 ? (
-                      <div className="text-center py-4">
-                        <p className="text-sm text-muted-foreground">
-                          {userSearchTerm ? 'No users found' : 'Start typing to search for users'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {availableUsers.map((userData) => (
-                          <div 
-                            key={userData.user_id}
-                            className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
-                            onClick={() => handleUserToggle(userData.user_id)}
-                          >
-                            <Checkbox 
-                              checked={selectedUsers.includes(userData.user_id)}
-                              onCheckedChange={() => handleUserToggle(userData.user_id)}
-                            />
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={userData.avatar_url} />
-                              <AvatarFallback>
-                                {getUserDisplayName(userData).charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">
-                                {getUserDisplayName(userData)}
+                    </div>
+                  )}
+
+                  {/* Users List */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Available Users:</div>
+                    <ScrollArea className="h-48 border rounded-md p-2 bg-background">
+                      {loadingUsers ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                          <p className="text-sm text-muted-foreground mt-2">Searching users...</p>
+                        </div>
+                      ) : availableUsers.length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">
+                            {userSearchTerm ? 'No users found' : 'Start typing to search for users'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {availableUsers.map((userData) => (
+                            <div 
+                              key={userData.user_id}
+                              className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
+                              onClick={() => handleUserToggle(userData.user_id)}
+                            >
+                              <Checkbox 
+                                checked={selectedUsers.includes(userData.user_id)}
+                                onCheckedChange={() => handleUserToggle(userData.user_id)}
+                              />
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={userData.avatar_url} />
+                                <AvatarFallback>
+                                  {getUserDisplayName(userData).charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {getUserDisplayName(userData)}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2 justify-end border-t pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsCreateDialogOpen(false);
-                    setNewChatName('');
-                    setSelectedUsers([]);
-                    setUserSearchTerm('');
-                  }}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateChat} disabled={isCreating}>
-                  {isCreating ? 'Creating...' : 'Create Chat'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+                <div className="flex gap-2 justify-end border-t pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCreateDialogOpen(false);
+                      setNewChatName('');
+                      setSelectedUsers([]);
+                      setUserSearchTerm('');
+                    }}
+                    disabled={isCreating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateChat} disabled={isCreating}>
+                    {isCreating ? 'Creating...' : 'Create Chat'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <ScrollArea className="h-[calc(100vh-300px)]">
+            <ChatList searchQuery={searchQuery} />
+          </ScrollArea>
         </div>
-        <ScrollArea className="h-[calc(100vh-300px)]">
-          <ChatList searchQuery={searchQuery} />
-        </ScrollArea>
-      </div>
-      
-      <DonateModal
-        isOpen={showDonate}
-        onClose={() => setShowDonate(false)}
-        hostWallet="host_wallet_address"
-        hostName="Room Host"
-      />
+        </>
+      )}
     </div>
   );
 };
