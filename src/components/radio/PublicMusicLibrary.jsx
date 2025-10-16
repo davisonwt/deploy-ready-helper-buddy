@@ -55,7 +55,6 @@ export default function PublicMusicLibrary() {
             avatar_url
           )
         `)
-        .eq('is_public', true)
         .order('upload_date', { ascending: false })
 
       if (error) throw error

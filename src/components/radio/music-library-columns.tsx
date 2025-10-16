@@ -62,10 +62,23 @@ export const columns: ColumnDef<any>[] = [
       const { toast } = useToast();
       
       const handlePlay = () => {
+        // Create audio element properly
         const audio = new Audio(row.original.file_url);
-        audio.play().catch(() => {
-          toast({ variant: 'destructive', description: 'Failed to play track' });
+        audio.volume = 0.7;
+        
+        audio.play().catch((error) => {
+          console.error('Audio play error:', error);
+          toast({ 
+            variant: 'destructive', 
+            title: 'Playback Error',
+            description: 'Failed to play track. Check audio file or permissions.' 
+          });
         });
+        
+        // Clean up on end
+        audio.onended = () => {
+          audio.remove();
+        };
       };
 
       const handleDelete = async () => {
