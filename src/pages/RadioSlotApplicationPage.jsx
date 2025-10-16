@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { RadioSlotApplicationWizard } from '@/components/radio/RadioSlotApplicationWizard';
 import { useNavigate } from 'react-router-dom';
 
-export function RadioSlotApplicationPage() {
+const RadioSlotApplicationPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,4 +16,6 @@ export function RadioSlotApplicationPage() {
       <RadioSlotApplicationWizard onClose={() => navigate('/radio-management')} />
     </div>
   );
-}
+};
+
+export default RadioSlotApplicationPage;
