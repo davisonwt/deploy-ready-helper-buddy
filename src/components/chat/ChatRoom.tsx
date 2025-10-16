@@ -60,6 +60,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   // Message editing
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  
+  // Message replies
+  const [replyingTo, setReplyingTo] = useState<any>(null);
 
   // In-room invites
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -311,7 +314,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       // Use secure RPC that enforces membership and inserts as the current user
       const { data: inserted, error } = await supabase.rpc('send_chat_message', {
         p_room_id: roomId,
-        p_content: message.trim(),
+        p_content: replyingTo ? `@${replyingTo.sender_profile?.display_name || 'user'}: ${message.trim()}` : message.trim(),
         p_message_type: 'text'
       });
 
@@ -320,6 +323,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       // Optimistically append so it shows even if realtime publication isn't enabled
       if (inserted) setMessages(prev => [...prev, inserted]);
       setMessage('');
+      setReplyingTo(null);
 
       // Typing clear best-effort
       try {
@@ -340,6 +344,28 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       setSending(false);
     }
   };
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!confirm('Delete this message?')) return;
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', user.id);
+
+      if (error) throw error;
+
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      toast({ title: 'Message deleted' });
+    } catch (error: any) {
+      toast({
+        title: 'Delete failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleEditMessage = async (messageId: string, newContent: string) => {
     try {
       const { error } = await supabase
@@ -570,6 +596,29 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             >
               Invite
             </Button>
+            
+            {roomInfo?.created_by === user?.id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  if (!confirm('Delete this entire chat room? This cannot be undone.')) return;
+                  try {
+                    await supabase.from('chat_messages').delete().eq('room_id', roomId);
+                    await supabase.from('chat_participants').delete().eq('room_id', roomId);
+                    await supabase.from('chat_rooms').delete().eq('id', roomId);
+                    toast({ title: 'Room deleted' });
+                    onBack();
+                  } catch (error: any) {
+                    toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
+                  }
+                }}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                Delete Room
+              </Button>
+            )}
+            
             <Button
               variant="ghost"
               size="sm"
@@ -626,44 +675,57 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             const isOwn = msg.sender_id === user.id;
 
             return (
-              <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                  {isEditing ? (
-                    <div className="flex items-center gap-2 w-full">
-                      <Input
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleEditMessage(msg.id, editText);
-                          }
-                        }}
-                        className="flex-1"
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleEditMessage(msg.id, editText)}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditingMessageId(null)}
-                      >
+              <div key={msg.id} className="group">
+                {replyingTo?.id === msg.id && (
+                  <div className="mb-2 ml-12 p-2 bg-muted/50 rounded-lg border-l-2 border-primary text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Replying to this message</span>
+                      <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-5 px-1">
                         Cancel
                       </Button>
                     </div>
-                  ) : (
-                    <>
+                  </div>
+                )}
+                
+                {isEditing ? (
+                  <div className="flex items-center gap-2 w-full px-4">
+                    <Input
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleEditMessage(msg.id, editText);
+                        }
+                      }}
+                      className="flex-1"
+                      autoFocus
+                    />
+                    <Button size="sm" onClick={() => handleEditMessage(msg.id, editText)}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingMessageId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} px-4`}>
+                    <div className="flex flex-col gap-1">
                       <ChatMessage
                         message={msg}
                         isOwn={isOwn}
+                        onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
                       />
-                      {isOwn && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setReplyingTo(msg)}
+                          className="h-6 px-2 text-xs hover:bg-muted"
+                        >
+                          Reply
+                        </Button>
+                        {isOwn && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -671,15 +733,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                               setEditingMessageId(msg.id);
                               setEditText(msg.content || '');
                             }}
-                            className="h-6 px-2 text-xs"
+                            className="h-6 px-2 text-xs hover:bg-muted"
                           >
-                            <Edit2 className="h-3 w-3" />
+                            Edit
                           </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -688,6 +750,17 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
       {/* Input Area */}
       <div className="border-t bg-card p-4">
+        {replyingTo && (
+          <div className="mb-2 p-2 bg-muted rounded-lg border-l-2 border-primary text-xs flex items-center justify-between">
+            <div>
+              <span className="font-semibold">Replying to:</span>
+              <span className="ml-2 text-muted-foreground">{replyingTo.content?.substring(0, 50)}...</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 px-2">
+              Cancel
+            </Button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <Input
             value={message}
@@ -701,7 +774,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                 handleSendMessage();
               }
             }}
-            placeholder="Type a message..."
+            placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
             disabled={sending}
             onFocus={handleTyping}
           />
