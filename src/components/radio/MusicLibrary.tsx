@@ -30,20 +30,20 @@ const MusicLibrary = () => {
   }, []);
 
   const handlePlayTrack = useCallback(async (trackId: string, fileUrl: string) => {
-    // Stop current audio if playing
+    // Stop current audio completely
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      } catch (e) {
+        console.warn('Error stopping audio:', e);
+      }
     }
 
     // If clicking the same track, just stop it
     if (playingTrackId === trackId) {
       setPlayingTrackId(null);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
-      audioRef.current = null;
       return;
     }
 
@@ -126,36 +126,29 @@ const MusicLibrary = () => {
 
     console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
 
-    // Create and play new audio with fallback on error
-    const prev = audioRef.current;
-    if (prev) {
-      try {
-        prev.pause();
-        prev.src = '';
-      } catch {}
-    }
-    const audio = new Audio(playableUrl);
+    // Create fresh Audio instance
+    const audio = new Audio();
     (audio as any).crossOrigin = 'anonymous';
     audio.volume = 0.7;
     audioRef.current = audio;
     setPlayingTrackId(trackId);
 
+    // Set up error handler with fallbacks
     audio.onerror = () => {
-      if (playableUrl !== encodedFallbackUrl) {
-        console.warn('Primary URL failed, falling back to encoded URL', { encodedFallbackUrl });
+      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
+      if (audio.src !== encodedFallbackUrl) {
         audio.src = encodedFallbackUrl;
         audio.load();
         audio.play().catch((error) => {
-          console.error('Audio play error (encoded fallback failed):', error, { fileUrl, derivedPath });
+          console.error('Encoded fallback failed:', error);
           if (encodedFallbackUrl !== fileUrl) {
             audio.src = fileUrl;
             audio.load();
-            audio.play().catch((err2) => {
-              console.error('Audio play error (raw fallback failed):', err2, { fileUrl, derivedPath });
+            audio.play().catch(() => {
               toast({ 
                 variant: 'destructive', 
                 title: 'Playback Error',
-                description: 'Failed to play track. Check audio file.' 
+                description: 'Cannot play this track. File may be corrupted or inaccessible.' 
               });
               setPlayingTrackId(null);
               audioRef.current = null;
@@ -165,21 +158,25 @@ const MusicLibrary = () => {
       }
     };
 
-    audio.play().catch((error) => {
-      console.error('Audio play error:', error, { fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
-      toast({ 
-        variant: 'destructive', 
-        title: 'Playback Error',
-        description: 'Failed to play track. Check audio file.' 
-      });
-      setPlayingTrackId(null);
-      audioRef.current = null;
-    });
-
+    // Set up ended handler
     audio.onended = () => {
       setPlayingTrackId(null);
       audioRef.current = null;
     };
+
+    // Load and play
+    audio.src = playableUrl;
+    audio.load();
+    audio.play().catch((error) => {
+      console.error('Initial play failed:', error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Playback Error',
+        description: 'Failed to play track.' 
+      });
+      setPlayingTrackId(null);
+      audioRef.current = null;
+    });
   }, [playingTrackId, toast]);
 
   const { data: tracks } = useQuery({
