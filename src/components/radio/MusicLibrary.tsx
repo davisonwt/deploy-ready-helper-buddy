@@ -92,7 +92,21 @@ const MusicLibrary = () => {
       console.warn('URL signing error', e, { fileUrl, derivedPath });
     }
 
-    console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl });
+    // Encode path as a robust fallback for filenames with spaces/parentheses
+    const encodedFallbackUrl = (() => {
+      try {
+        const u = new URL(fileUrl);
+        u.pathname = u.pathname
+          .split('/')
+          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
+          .join('/');
+        return u.toString();
+      } catch {
+        return fileUrl;
+      }
+    })();
+
+    console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
 
     // Create and play new audio with fallback on error
     const audio = new Audio(playableUrl);
@@ -102,25 +116,32 @@ const MusicLibrary = () => {
     setPlayingTrackId(trackId);
 
     audio.onerror = () => {
-      // Fallback to original url if signed one fails
-      if (playableUrl !== fileUrl) {
-        console.warn('Primary URL failed, falling back to original', { fileUrl, derivedPath });
-        audio.src = fileUrl;
+      // Fallback to encoded original url first
+      if (playableUrl !== encodedFallbackUrl) {
+        console.warn('Primary URL failed, falling back to encoded URL', { encodedFallbackUrl });
+        audio.src = encodedFallbackUrl;
         audio.play().catch((error) => {
-          console.error('Audio play error (fallback failed):', error, { fileUrl, derivedPath });
-          toast({ 
-            variant: 'destructive', 
-            title: 'Playback Error',
-            description: 'Failed to play track. Check audio file.' 
-          });
-          setPlayingTrackId(null);
-          audioRef.current = null;
+          console.error('Audio play error (encoded fallback failed):', error, { fileUrl, derivedPath });
+          // Final fallback to raw fileUrl
+          if (encodedFallbackUrl !== fileUrl) {
+            audio.src = fileUrl;
+            audio.play().catch((err2) => {
+              console.error('Audio play error (raw fallback failed):', err2, { fileUrl, derivedPath });
+              toast({ 
+                variant: 'destructive', 
+                title: 'Playback Error',
+                description: 'Failed to play track. Check audio file.' 
+              });
+              setPlayingTrackId(null);
+              audioRef.current = null;
+            });
+          }
         });
       }
     };
 
     audio.play().catch((error) => {
-      console.error('Audio play error:', error, { fileUrl, derivedPath, playableUrl });
+      console.error('Audio play error:', error, { fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
       toast({ 
         variant: 'destructive', 
         title: 'Playback Error',
