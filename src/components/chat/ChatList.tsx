@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   MessageSquare, 
@@ -35,6 +36,7 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'private' | 'community'>('all');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -232,7 +234,7 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
             <Card
               key={room.id}
               className="hover:shadow-md transition-shadow cursor-pointer border-emerald-100"
-              onClick={() => window.location.href = `/chatapp?room=${room.id}`}
+              onClick={() => navigate(`/chatapp?room=${room.id}`)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
