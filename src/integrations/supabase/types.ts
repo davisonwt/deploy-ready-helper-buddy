@@ -4394,6 +4394,34 @@ export type Database = {
           user_id: string
         }[]
       }
+      send_chat_message: {
+        Args: {
+          p_content?: string
+          p_file_name?: string
+          p_file_size?: number
+          p_file_type?: Database["public"]["Enums"]["file_type"]
+          p_file_url?: string
+          p_message_type?: string
+          p_room_id: string
+        }
+        Returns: {
+          content: string | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: Database["public"]["Enums"]["file_type"] | null
+          file_url: string | null
+          id: string
+          is_edited: boolean
+          message_type: string
+          reply_to_id: string | null
+          room_id: string
+          sender_id: string
+          sender_profile_id: string | null
+          system_metadata: Json | null
+          updated_at: string
+        }
+      }
       update_document_page: {
         Args: { document_id_param: string; new_page: number }
         Returns: boolean

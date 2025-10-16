@@ -308,33 +308,24 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
     try {
       setSending(true);
-      
-      const { data: inserted, error } = await supabase
-        .from('chat_messages')
-        .insert({
-          room_id: roomId,
-          sender_id: user.id,
-          content: message.trim(),
-          message_type: 'text'
-        })
-        .select()
-        .single();
+      // Use secure RPC that enforces membership and inserts as the current user
+      const { data: inserted, error } = await supabase.rpc('send_chat_message', {
+        p_room_id: roomId,
+        p_content: message.trim(),
+        p_message_type: 'text'
+      });
 
       if (error) throw error;
-      
       setMessage('');
-      
-      // Clear typing indicator
+
+      // Typing clear best-effort
       try {
         await supabase
           .from('typing' as any)
           .delete()
           .eq('room_id', roomId)
           .eq('user_id', user.id);
-      } catch (e) {
-        // Ignore if typing table doesn't exist
-      }
-
+      } catch (e) {}
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
@@ -346,7 +337,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       setSending(false);
     }
   };
-
   const handleEditMessage = async (messageId: string, newContent: string) => {
     try {
       const { error } = await supabase
@@ -396,18 +386,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       else if (file.type.startsWith('video/')) fileType = 'video';
       else if (file.type.startsWith('audio/')) fileType = 'audio';
 
-      const { data: inserted, error } = await supabase.from('chat_messages')
-        .insert({
-          room_id: roomId,
-          sender_id: user.id,
-          message_type: 'file',
-          file_url: publicUrl,
-          file_name: file.name,
-          file_type: fileType,
-          file_size: file.size
-        })
-        .select()
-        .single();
+      const { data: inserted, error } = await supabase.rpc('send_chat_message', {
+        p_room_id: roomId,
+        p_content: '[File]',
+        p_message_type: 'file',
+        p_file_url: publicUrl,
+        p_file_name: file.name,
+        p_file_type: fileType,
+        p_file_size: file.size
+      });
       if (error) throw error;
       if (inserted) setMessages(prev => [...prev, inserted]);
       
@@ -424,7 +411,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       });
     }
   };
-
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
