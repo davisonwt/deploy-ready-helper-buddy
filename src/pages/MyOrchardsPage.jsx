@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards.js'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -39,8 +39,41 @@ export default function MyOrchardsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
   
-  // Then call the hook
-  const { orchards, loading, fetchOrchards, deleteOrchard } = useOrchards()
+  // Data state and loaders
+  const [orchards, setOrchards] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  const fetchOrchards = async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('orchards')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      setOrchards(data || [])
+    } catch (err) {
+      console.error('Error fetching orchards:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteOrchard = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('orchards')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      // refresh
+      await fetchOrchards()
+    } catch (err) {
+      console.error('Error deleting orchard:', err)
+      throw err
+    }
+  }
 
   // Categories list - same as other pages
   const categories = [
