@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '../utils/formatters';
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import OrchardVideoManager from '@/components/orchard/OrchardVideoManager';
-import EnhancedBestowalPayment from '@/components/orchard/EnhancedBestowalPayment';
+import OrchardPaymentWidget from '@/components/orchard/OrchardPaymentWidget';
 
 const OrchardPage = () => {
   const { orchardId } = useParams();
@@ -303,15 +303,13 @@ const OrchardPage = () => {
                   </div>
                  )}
 
-                 {/* Enhanced Payment Section */}
-                 <div className="mt-8">
-                   <h3 className="text-lg font-semibold text-orange-700 mb-4">Support This Orchard</h3>
-                   <EnhancedBestowalPayment 
-                     orchardId={orchard.id}
-                     orchardTitle={orchard.title}
-                     pocketPrice={orchard.pocket_price || 150}
-                   />
-                 </div>
+                 {/* Payment Section */}
+                 <OrchardPaymentWidget 
+                   orchardId={orchard.id}
+                   orchardTitle={orchard.title}
+                   pocketPrice={orchard.pocket_price || 150}
+                   availablePockets={(orchard.intended_pockets && orchard.intended_pockets > 1 ? orchard.intended_pockets : orchard.total_pockets || 1) - (orchard.filled_pockets || 0)}
+                 />
                </CardContent>
              </div>
            </Card>
