@@ -44,7 +44,7 @@ import EditOrchardPage from "./pages/EditOrchardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { AdminRadioPage } from "./pages/AdminRadioPage";
 import { AdminSeedsPage } from "./pages/AdminSeedsPage";
-import ChatappPage from "./pages/ChatappPage";
+import ChatApp from "./pages/ChatApp";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import MarketingVideosGallery from "./pages/MarketingVideosGallery.jsx";
 import AIAssistantPage from "./pages/AIAssistantPage";
@@ -262,12 +262,10 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-               {/* Chatapp */}
+               {/* ChatApp - Clean Organized Interface */}
               <Route path="/chatapp" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <ChatappPage />
-                  </Layout>
+                  <ChatApp />
                 </ProtectedRoute>
               } />
               
