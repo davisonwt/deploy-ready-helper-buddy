@@ -3941,6 +3941,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_room: {
+        Args: { target_room_id: string }
+        Returns: boolean
+      }
       approve_join_request: {
         Args: { request_id: string }
         Returns: boolean
