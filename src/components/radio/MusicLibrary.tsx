@@ -36,10 +36,14 @@ const MusicLibrary = () => {
       audioRef.current.src = '';
     }
 
-    // If clicking the same track, just stop it
+    // If clicking the same track, just stop it and reset the element
     if (playingTrackId === trackId) {
       setPlayingTrackId(null);
-      audioRef.current = null;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+      }
       return;
     }
 
@@ -122,11 +126,14 @@ const MusicLibrary = () => {
 
     console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
 
-    // Create and play new audio with fallback on error
-    const audio = new Audio(playableUrl);
+    // Use single hidden <audio> element for reliable switching
+    const audio = audioRef.current as HTMLAudioElement | null;
+    if (!audio) {
+      console.error('Audio element not ready');
+      return;
+    }
     (audio as any).crossOrigin = 'anonymous';
     audio.volume = 0.7;
-    audioRef.current = audio;
     setPlayingTrackId(trackId);
 
     audio.onerror = () => {
@@ -134,11 +141,13 @@ const MusicLibrary = () => {
       if (playableUrl !== encodedFallbackUrl) {
         console.warn('Primary URL failed, falling back to encoded URL', { encodedFallbackUrl });
         audio.src = encodedFallbackUrl;
+        audio.load();
         audio.play().catch((error) => {
           console.error('Audio play error (encoded fallback failed):', error, { fileUrl, derivedPath });
           // Final fallback to raw fileUrl
           if (encodedFallbackUrl !== fileUrl) {
             audio.src = fileUrl;
+            audio.load();
             audio.play().catch((err2) => {
               console.error('Audio play error (raw fallback failed):', err2, { fileUrl, derivedPath });
               toast({ 
@@ -147,13 +156,14 @@ const MusicLibrary = () => {
                 description: 'Failed to play track. Check audio file.' 
               });
               setPlayingTrackId(null);
-              audioRef.current = null;
             });
           }
         });
       }
     };
 
+    audio.src = playableUrl;
+    audio.load();
     audio.play().catch((error) => {
       console.error('Audio play error:', error, { fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
       toast({ 
@@ -162,12 +172,10 @@ const MusicLibrary = () => {
         description: 'Failed to play track. Check audio file.' 
       });
       setPlayingTrackId(null);
-      audioRef.current = null;
     });
 
     audio.onended = () => {
       setPlayingTrackId(null);
-      audioRef.current = null;
     };
   }, [playingTrackId, toast]);
 
@@ -261,6 +269,7 @@ const MusicLibrary = () => {
 ...
         </CardContent>
       </Card>
+      <audio ref={audioRef} preload="metadata" crossOrigin="anonymous" />
       <DataTable columns={columnsWithHandlers} data={tracks || []} />
     </div>
   );
