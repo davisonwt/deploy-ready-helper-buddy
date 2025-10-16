@@ -14,7 +14,8 @@ import {
   PhoneOff,
   Video,
   DollarSign,
-  Loader2
+  Loader2,
+  Edit2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
@@ -86,7 +87,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'typing',
+          table: 'typing' as any,
           filter: `room_id=eq.${roomId}`
         },
         (payload: any) => {
@@ -283,17 +284,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       clearTimeout(typingTimeoutRef.current);
     }
 
+    // Send typing status (ignore errors if table doesn't exist yet)
     supabase
-      .from('typing')
+      .from('typing' as any)
       .upsert({ room_id: roomId, user_id: user.id, is_typing: true })
       .then(() => {
-        typingTimeoutRef.current = setTimeout(() => {
-          supabase
-            .from('typing')
-            .delete()
-            .eq('room_id', roomId)
-            .eq('user_id', user.id)
-            .then();
+        typingTimeoutRef.current = setTimeout(async () => {
+          try {
+            await supabase
+              .from('typing' as any)
+              .delete()
+              .eq('room_id', roomId)
+              .eq('user_id', user.id);
+          } catch (e) {
+            // Ignore typing errors
+          }
         }, 2000);
       });
   };
@@ -320,11 +325,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       setMessage('');
       
       // Clear typing indicator
-      await supabase
-        .from('typing')
-        .delete()
-        .eq('room_id', roomId)
-        .eq('user_id', user.id);
+      try {
+        await supabase
+          .from('typing' as any)
+          .delete()
+          .eq('room_id', roomId)
+          .eq('user_id', user.id);
+      } catch (e) {
+        // Ignore if typing table doesn't exist
+      }
 
     } catch (error: any) {
       console.error('Error sending message:', error);
