@@ -12,13 +12,26 @@ import {
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards'
+
 import { useRoles } from '../hooks/useRoles'
 import { processOrchardsUrls } from '../utils/urlUtils'
 
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
-  const { deleteOrchard } = useOrchards()
+  const deleteOrchard = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('orchards')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      return { success: true }
+    } catch (err) {
+      console.error('Error deleting orchard:', err)
+      return { success: false, error: err.message }
+    }
+  }
   const { isAdminOrGosat, userRoles } = useRoles()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
