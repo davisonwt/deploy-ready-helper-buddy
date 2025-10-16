@@ -10,6 +10,7 @@ import {
   MessageSquare, 
   Users, 
   Trash2, 
+  LogOut,
   ArrowRight,
   Loader2 
 } from 'lucide-react';
@@ -151,7 +152,33 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
       });
     }
   };
+  
+  const handleLeaveRoom = async (roomId: string) => {
+    if (!user) return;
+    if (!confirm('Leave this conversation?')) return;
+    try {
+      const { error } = await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('user_id', user.id);
+      if (error) throw error;
 
+      toast({
+        title: 'Left conversation',
+        description: 'You will no longer receive messages from this chat.'
+      });
+      fetchRooms();
+    } catch (error) {
+      console.error('Error leaving room:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to leave conversation',
+        variant: 'destructive'
+      });
+    }
+  };
+  
   const filteredRooms = rooms
     .filter((room) => {
       // Filter by search query
@@ -261,7 +288,7 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {room.created_by === user?.id && (
+                    {room.created_by === user?.id ? (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -270,8 +297,22 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
                           handleDeleteRoom(room.id);
                         }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Delete room"
                       >
                         <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLeaveRoom(room.id);
+                        }}
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        title="Leave chat"
+                      >
+                        <LogOut className="h-4 w-4" />
                       </Button>
                     )}
                     <ArrowRight className="h-5 w-5 text-emerald-600" />
