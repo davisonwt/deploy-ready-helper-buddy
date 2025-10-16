@@ -42,7 +42,56 @@ export default function CreateOrchardPage({ isEdit = false }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currency } = useCurrency()
-  const { createOrchard, updateOrchard, fetchOrchardById } = useOrchards()
+// Use local API instead of hook to avoid any hook dispatcher issues in this page
+const createOrchard = async (orchardData) => {
+  try {
+    if (!user) throw new Error('User must be authenticated')
+    const { data, error } = await supabase
+      .from('orchards')
+      .insert([{ ...orchardData, user_id: user.id }])
+      .select()
+      .single()
+    if (error) throw error
+    return { success: true, data }
+  } catch (err) {
+    console.error('CreateOrchardPage: createOrchard error', err)
+    return { success: false, error: err.message }
+  }
+}
+
+const updateOrchard = async (id, updates) => {
+  try {
+    if (!user) throw new Error('User must be authenticated')
+    const { data, error } = await supabase
+      .from('orchards')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+    if (error) throw error
+    return { success: true, data }
+  } catch (err) {
+    console.error('CreateOrchardPage: updateOrchard error', err)
+    return { success: false, error: err.message }
+  }
+}
+
+const fetchOrchardById = async (oid) => {
+  try {
+    const { data, error } = await supabase
+      .from('orchards')
+      .select('*')
+      .eq('id', oid)
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return { success: false, error: 'Orchard not found' }
+    return { success: true, data }
+  } catch (err) {
+    console.error('CreateOrchardPage: fetchOrchardById error', err)
+    return { success: false, error: err.message }
+  }
+}
   const { uploadFile, uploadMultipleFiles, uploading } = useFileUpload()
   
   const seedId = searchParams.get('from_seed')
