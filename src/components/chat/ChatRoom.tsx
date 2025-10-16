@@ -52,6 +52,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   // Donations
   const [showDonate, setShowDonate] = useState(false);
 
+  // Typing indicators
+  const [usersTyping, setUsersTyping] = useState<string[]>([]);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Message editing
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
   // In-room invites
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
@@ -65,8 +73,40 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       fetchRoomInfo();
       fetchMessages();
       setupRealtimeSubscription();
+      setupTypingSubscription();
     }
   }, [roomId, user]);
+
+  // Setup typing indicator subscription
+  const setupTypingSubscription = () => {
+    const channel = supabase
+      .channel(`typing:${roomId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'typing',
+          filter: `room_id=eq.${roomId}`
+        },
+        (payload: any) => {
+          if (payload.new && payload.new.user_id !== user.id) {
+            setUsersTyping(prev => {
+              const filtered = prev.filter(id => id !== payload.new.user_id);
+              if (payload.new.is_typing) {
+                return [...filtered, payload.new.user_id];
+              }
+              return filtered;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -237,12 +277,32 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     };
   };
 
+  // Handle typing indicator
+  const handleTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    supabase
+      .from('typing')
+      .upsert({ room_id: roomId, user_id: user.id, is_typing: true })
+      .then(() => {
+        typingTimeoutRef.current = setTimeout(() => {
+          supabase
+            .from('typing')
+            .delete()
+            .eq('room_id', roomId)
+            .eq('user_id', user.id)
+            .then();
+        }, 2000);
+      });
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || sending) return;
 
     try {
       setSending(true);
-      console.log('Sending message:', message.trim());
       
       const { data: inserted, error } = await supabase
         .from('chat_messages')
@@ -255,31 +315,53 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         .select()
         .single();
 
-      console.log('Insert result:', { inserted, error });
-
-      if (error) {
-        console.error('Insert error:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       setMessage('');
-      if (inserted) {
-        setMessages(prev => [...prev, inserted]);
-      }
       
-      toast({
-        title: 'Message sent',
-        description: 'Your message was sent successfully'
-      });
+      // Clear typing indicator
+      await supabase
+        .from('typing')
+        .delete()
+        .eq('room_id', roomId)
+        .eq('user_id', user.id);
+
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
-        title: 'Error',
-        description: error?.message || 'Failed to send message',
+        title: 'Failed to send',
+        description: error?.message || 'Could not send message',
         variant: 'destructive'
       });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ content: newContent, is_edited: true })
+        .eq('id', messageId)
+        .eq('sender_id', user.id);
+
+      if (error) throw error;
+
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, content: newContent, is_edited: true } : msg
+        )
+      );
+
+      setEditingMessageId(null);
+      toast({ title: 'Message updated' });
+    } catch (error: any) {
+      toast({
+        title: 'Edit failed',
+        description: error.message,
+        variant: 'destructive'
+      });
     }
   };
 
@@ -521,14 +603,88 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
       {/* Messages Area */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        {/* Typing Indicator */}
+        {usersTyping.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 p-2 bg-muted/30 rounded-lg">
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-1.5 w-1.5 bg-primary rounded-full animate-bounce"
+                  style={{ animationDelay: `${i * 150}ms` }}
+                />
+              ))}
+            </div>
+            <span>
+              {usersTyping.slice(0, 2).join(', ')}
+              {usersTyping.length > 2 && ' and others'} typing...
+            </span>
+          </div>
+        )}
+
         <div className="space-y-4">
-          {messages.map((msg) => (
-            <ChatMessage
-              key={msg.id}
-              message={msg}
-              isOwn={msg.sender_id === user.id}
-            />
-          ))}
+          {messages.map((msg) => {
+            const isEditing = editingMessageId === msg.id;
+            const isOwn = msg.sender_id === user.id;
+
+            return (
+              <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-md ${isOwn ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                  {isEditing ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <Input
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleEditMessage(msg.id, editText);
+                          }
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleEditMessage(msg.id, editText)}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingMessageId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <ChatMessage
+                        message={msg}
+                        isOwn={isOwn}
+                      />
+                      {isOwn && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingMessageId(msg.id);
+                              setEditText(msg.content || '');
+                            }}
+                            className="h-6 px-2 text-xs"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
 
@@ -537,7 +693,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         <div className="flex items-center gap-2">
           <Input
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleTyping();
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -546,13 +705,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             }}
             placeholder="Type a message..."
             disabled={sending}
+            onFocus={handleTyping}
           />
           <Button
             onClick={handleSendMessage}
             disabled={!message.trim() || sending}
             size="icon"
           >
-            <Send className="h-4 w-4" />
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
