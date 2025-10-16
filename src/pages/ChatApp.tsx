@@ -11,10 +11,88 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const ChatApp = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newChatName, setNewChatName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateChat = async () => {
+    if (!newChatName.trim()) {
+      toast({
+        title: 'Chat name required',
+        description: 'Please enter a name for your chat room.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      // Create new chat room
+      const { data: room, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          name: newChatName.trim(),
+          room_type: 'group',
+          created_by: user.id,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Add creator as participant
+      const { error: participantError } = await supabase
+        .from('chat_participants')
+        .insert({
+          room_id: room.id,
+          user_id: user.id,
+          is_moderator: true,
+          is_active: true,
+        });
+
+      if (participantError) throw participantError;
+
+      toast({
+        title: 'Chat created!',
+        description: `${newChatName} has been created successfully.`,
+      });
+
+      setNewChatName('');
+      setIsCreateDialogOpen(false);
+      
+      // Refresh the chat list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast({
+        title: 'Failed to create chat',
+        description: error.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -74,12 +152,50 @@ const ChatApp = () => {
           <h2 className="text-xl font-semibold">
             Your Conversations
           </h2>
-          <Button 
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Chat
-          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" data-lov-name="NewChatButton">
+                <Plus className="h-4 w-4 mr-2" />
+                New Chat
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Chat</DialogTitle>
+                <DialogDescription>
+                  Create a new group chat or conversation. You can invite others later.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="chatName">Chat Name</Label>
+                  <Input
+                    id="chatName"
+                    placeholder="Enter chat name..."
+                    value={newChatName}
+                    onChange={(e) => setNewChatName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !isCreating) {
+                        handleCreateChat();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateChat} disabled={isCreating}>
+                  {isCreating ? 'Creating...' : 'Create Chat'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
         <ScrollArea className="h-[calc(100vh-300px)]">
           <ChatList searchQuery={searchQuery} />
