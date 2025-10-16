@@ -153,11 +153,24 @@ export default function PublicMusicLibrary() {
     audioRef.current = audio
     setPlayingTrack(track)
 
+    const encodedFallbackUrl = (() => {
+      try {
+        const u = new URL(track.file_url)
+        u.pathname = u.pathname
+          .split('/')
+          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
+          .join('/')
+        return u.toString()
+      } catch {
+        return track.file_url
+      }
+    })()
+
     audio.onerror = () => {
-      if (playableUrl !== track.file_url) {
-        audio.src = track.file_url
+      if (playableUrl !== encodedFallbackUrl) {
+        audio.src = encodedFallbackUrl
         audio.play().catch((error) => {
-          console.error('Audio play error (fallback failed):', error, { fileUrl: track.file_url, derivedPath })
+          console.error('Audio play error (encoded fallback failed):', error, { fileUrl: track.file_url, derivedPath })
           setPlayingTrack(null)
           audioRef.current = null
         })
