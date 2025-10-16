@@ -125,19 +125,14 @@ const MusicLibrary = () => {
 
     console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
 
-    // Use a single shared <audio> element
-    const el = audioRef.current as HTMLAudioElement | null;
+    // Use a single shared <audio> element (create on demand if missing)
+    let el = audioRef.current as HTMLAudioElement | null;
     if (!el) {
-      console.error('Audio element not ready');
-      toast({
-        variant: 'destructive',
-        title: 'Playback Error',
-        description: 'Audio element not initialized.',
-      });
-      return;
+      el = new Audio();
+      (el as any).crossOrigin = 'anonymous';
+      el.volume = 0.7;
+      audioRef.current = el;
     }
-    el.crossOrigin = 'anonymous';
-    el.volume = 0.7;
 
     // Toggle pause if clicking the same playing track
     if (playingTrackId === trackId && !el.paused) {
@@ -160,7 +155,7 @@ const MusicLibrary = () => {
     // Set up error handler with fallbacks
     el.onerror = () => {
       console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
-      if (el.src !== encodedFallbackUrl) {
+      if (el && el.src !== encodedFallbackUrl) {
         el.src = encodedFallbackUrl;
         el.load();
         el.play().catch((error) => {
