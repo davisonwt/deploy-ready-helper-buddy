@@ -36,7 +36,6 @@ export default function DJMusicLibrary() {
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.src = ''
-        audioRef.current = null
       }
     }
   }, [])
@@ -154,36 +153,70 @@ export default function DJMusicLibrary() {
       }
     } catch {}
 
-    const audio = new Audio()
-    audio.crossOrigin = 'anonymous'
-    audio.volume = 0.7
-    audioRef.current = audio
-    setPlayingTrack(track)
+    let el = audioRef.current
+    if (!el) {
+      el = new Audio()
+      audioRef.current = el
+    }
+    el.crossOrigin = 'anonymous'
+    el.volume = 0.7
 
-    audio.onerror = () => {
-      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
-      if (audio.src !== encodedFallbackUrl) {
-        audio.src = encodedFallbackUrl
-        audio.load();
-        audio.play().catch((error) => {
-          console.error('Encoded fallback failed:', error)
-          setPlayingTrack(null)
-          audioRef.current = null
-        })
+    const encodedFallbackUrl = (() => {
+      try {
+        const u = new URL(playableUrl.startsWith('http') ? playableUrl : track.file_url)
+        u.pathname = u.pathname
+          .split('/')
+          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
+          .join('/')
+        return u.toString()
+      } catch {
+        return playableUrl.startsWith('http') ? playableUrl : track.file_url
       }
-    }
+    })()
 
-    audio.onended = () => {
+    try {
+      el.pause()
+      el.src = ''
+      el.load()
+    } catch {}
+
+    let fallbackStage = 0
+    el.onerror = () => {
+      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl, stage: fallbackStage })
+      try {
+        if (fallbackStage === 0 && el.src !== encodedFallbackUrl) {
+          fallbackStage = 1
+          el.src = encodedFallbackUrl
+          el.load()
+          el.play().catch((error) => {
+            console.error('Encoded fallback failed:', error)
+          })
+          return
+        }
+        if (fallbackStage === 1 && el.src !== track.file_url) {
+          fallbackStage = 2
+          el.src = track.file_url
+          el.load()
+          el.play().catch((error) => {
+            console.error('Original URL fallback failed:', error)
+          })
+          return
+        }
+      } catch (e) {
+        console.error('Fallback handling error:', e)
+      }
       setPlayingTrack(null)
-      audioRef.current = null
     }
 
-    audio.src = playableUrl
-    audio.load();
-    audio.play().catch((error) => {
+    el.onended = () => {
+      setPlayingTrack(null)
+    }
+
+    el.src = playableUrl
+    el.load()
+    el.play().catch((error) => {
       console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
       setPlayingTrack(null)
-      audioRef.current = null
     })
   }
 
