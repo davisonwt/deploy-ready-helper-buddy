@@ -567,11 +567,13 @@ export type Database = {
           category: string | null
           created_at: string
           created_by: string
+          current_listeners: number | null
           description: string | null
           id: string
           is_active: boolean
           is_premium: boolean | null
           is_system_room: boolean | null
+          max_capacity: number | null
           max_participants: number | null
           name: string | null
           orchard_id: string | null
@@ -591,11 +593,13 @@ export type Database = {
           category?: string | null
           created_at?: string
           created_by: string
+          current_listeners?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean | null
           is_system_room?: boolean | null
+          max_capacity?: number | null
           max_participants?: number | null
           name?: string | null
           orchard_id?: string | null
@@ -615,11 +619,13 @@ export type Database = {
           category?: string | null
           created_at?: string
           created_by?: string
+          current_listeners?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
           is_premium?: boolean | null
           is_system_room?: boolean | null
+          max_capacity?: number | null
           max_participants?: number | null
           name?: string | null
           orchard_id?: string | null
@@ -776,11 +782,15 @@ export type Database = {
           genre: string | null
           id: string
           is_explicit: boolean | null
+          is_original: boolean | null
+          preview_url: string | null
+          price: number | null
           tags: string[] | null
           track_title: string
           track_type: string
           updated_at: string
           upload_date: string
+          wallet_address: string | null
         }
         Insert: {
           artist_name?: string | null
@@ -793,11 +803,15 @@ export type Database = {
           genre?: string | null
           id?: string
           is_explicit?: boolean | null
+          is_original?: boolean | null
+          preview_url?: string | null
+          price?: number | null
           tags?: string[] | null
           track_title: string
           track_type?: string
           updated_at?: string
           upload_date?: string
+          wallet_address?: string | null
         }
         Update: {
           artist_name?: string | null
@@ -810,11 +824,15 @@ export type Database = {
           genre?: string | null
           id?: string
           is_explicit?: boolean | null
+          is_original?: boolean | null
+          preview_url?: string | null
+          price?: number | null
           tags?: string[] | null
           track_title?: string
           track_type?: string
           updated_at?: string
           upload_date?: string
+          wallet_address?: string | null
         }
         Relationships: [
           {
@@ -1216,13 +1234,16 @@ export type Database = {
       }
       music_purchases: {
         Row: {
+          admin_amount: number | null
           amount: number
+          artist_amount: number | null
           buyer_id: string
           created_at: string
           delivered_at: string | null
           id: string
           payment_reference: string | null
           payment_status: string
+          platform_amount: number | null
           platform_fee: number
           sow2grow_fee: number
           total_amount: number
@@ -1230,13 +1251,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_amount?: number | null
           amount?: number
+          artist_amount?: number | null
           buyer_id: string
           created_at?: string
           delivered_at?: string | null
           id?: string
           payment_reference?: string | null
           payment_status?: string
+          platform_amount?: number | null
           platform_fee?: number
           sow2grow_fee?: number
           total_amount: number
@@ -1244,13 +1268,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_amount?: number | null
           amount?: number
+          artist_amount?: number | null
           buyer_id?: string
           created_at?: string
           delivered_at?: string | null
           id?: string
           payment_reference?: string | null
           payment_status?: string
+          platform_amount?: number | null
           platform_fee?: number
           sow2grow_fee?: number
           total_amount?: number
@@ -2327,8 +2354,10 @@ export type Database = {
           end_time: string
           hour_slot: number
           id: string
+          is_free: boolean | null
           listener_count: number | null
           playlist_url: string | null
+          price: number | null
           requires_review: boolean | null
           show_id: string | null
           show_notes: string | null
@@ -2350,8 +2379,10 @@ export type Database = {
           end_time: string
           hour_slot: number
           id?: string
+          is_free?: boolean | null
           listener_count?: number | null
           playlist_url?: string | null
+          price?: number | null
           requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
@@ -2373,8 +2404,10 @@ export type Database = {
           end_time?: string
           hour_slot?: number
           id?: string
+          is_free?: boolean | null
           listener_count?: number | null
           playlist_url?: string | null
+          price?: number | null
           requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
@@ -3537,6 +3570,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          amount: number
+          id: string
+          payment_reference: string | null
+          purchased_at: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          payment_reference?: string | null
+          purchased_at?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          payment_reference?: string | null
+          purchased_at?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_verification_logs: {
         Row: {
