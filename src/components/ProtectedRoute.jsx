@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
-import { useRoles } from "../hooks/useRoles"
+import { supabase } from "@/integrations/supabase/client"
 
 const AuthProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -25,28 +25,38 @@ const AuthProtectedRoute = ({ children }) => {
 }
 
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, loading: authLoading } = useAuth()
-  const roles = useRoles()
-  const [initiated, setInitiated] = useState(false)
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
+  const [userRoles, setUserRoles] = useState([])
+  const [rolesLoading, setRolesLoading] = useState(true)
 
-  // Ensure roles are fetched when this guard mounts
+  // Local role fetch to avoid cross-hook issues
   useEffect(() => {
-    if (!initiated) {
-      roles?.fetchUserRoles?.()
-      setInitiated(true)
+    let active = true
+    const loadRoles = async () => {
+      if (!user?.id) { if (active) { setUserRoles([]); setRolesLoading(false) } ; return }
+      try {
+        setRolesLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        if (active) setUserRoles((data || []).map(r => r.role))
+      } catch (e) {
+        console.error('RoleProtectedRoute: roles fetch failed', e)
+        if (active) setUserRoles([])
+      } finally {
+        if (active) setRolesLoading(false)
+      }
     }
-  }, [initiated])
+    loadRoles()
+    return () => { active = false }
+  }, [user?.id])
 
-  console.log('🛡️ RoleProtectedRoute check:', {
-    allowedRoles,
-    userRoles: roles?.userRoles,
-    rolesLoading: roles?.loading,
-    authLoading,
-    isAuthenticated
-  })
+  const hasRole = (role) => userRoles.includes(role)
 
   // Wait until both auth and roles are resolved; avoid premature redirect
-  if (authLoading || roles?.loading || (Array.isArray(allowedRoles) && (roles?.userRoles?.length ?? 0) === 0)) {
+  if (authLoading || rolesLoading || (Array.isArray(allowedRoles) && userRoles.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -58,14 +68,8 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />
   }
 
-  const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => roles?.hasRole(role))
+  const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => hasRole(role))
   
-  console.log('🛡️ Role check result:', {
-    hasRequiredRole,
-    allowedRoles,
-    userRoles: roles?.userRoles
-  })
-
   if (!hasRequiredRole) {
     console.warn('🚫 Access denied - redirecting to dashboard')
     return <Navigate to="/dashboard" replace />
