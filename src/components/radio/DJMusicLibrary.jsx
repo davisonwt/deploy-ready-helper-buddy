@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,17 @@ export default function DJMusicLibrary() {
   const [selectedType, setSelectedType] = useState('')
   const [sortBy, setSortBy] = useState('upload_date')
   const [playingTrack, setPlayingTrack] = useState(null)
+  const audioRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+    }
+  }, [])
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -72,10 +83,31 @@ export default function DJMusicLibrary() {
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type))]
 
   const handlePlay = (track) => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+    }
+
     if (playingTrack?.id === track.id) {
       setPlayingTrack(null)
-    } else {
-      setPlayingTrack(track)
+      audioRef.current = null
+      return
+    }
+
+    const audio = new Audio(track.file_url)
+    audio.volume = 0.7
+    audioRef.current = audio
+    setPlayingTrack(track)
+
+    audio.play().catch((error) => {
+      console.error('Audio play error:', error)
+      setPlayingTrack(null)
+      audioRef.current = null
+    })
+
+    audio.onended = () => {
+      setPlayingTrack(null)
+      audioRef.current = null
     }
   }
 
@@ -310,34 +342,34 @@ export default function DJMusicLibrary() {
         </div>
       )}
 
-      {/* Audio Player (if playing) */}
+      {/* Now Playing Info */}
       {playingTrack && (
         <div className="fixed bottom-4 right-4 z-50">
           <Card className="w-80">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm truncate">{playingTrack.track_title}</h4>
                   {playingTrack.artist_name && (
                     <p className="text-xs text-muted-foreground truncate">{playingTrack.artist_name}</p>
                   )}
+                  <p className="text-xs text-primary">Now Playing</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setPlayingTrack(null)}
+                  onClick={() => {
+                    if (audioRef.current) {
+                      audioRef.current.pause()
+                      audioRef.current.src = ''
+                      audioRef.current = null
+                    }
+                    setPlayingTrack(null)
+                  }}
                 >
-                  <X className="h-4 w-4" />
+                  <Pause className="h-4 w-4" />
                 </Button>
               </div>
-              
-              <audio
-                controls
-                autoPlay
-                className="w-full"
-                src={playingTrack.file_url}
-                onEnded={() => setPlayingTrack(null)}
-              />
             </CardContent>
           </Card>
         </div>
