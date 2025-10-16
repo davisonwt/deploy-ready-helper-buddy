@@ -51,6 +51,8 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
     try {
       setLoading(true);
       
+      console.log('🔍 Fetching rooms for user:', user.id);
+      
       // Fetch rooms where user is a participant
       const { data: userRooms, error } = await supabase
         .from('chat_participants')
@@ -67,6 +69,8 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
         `)
         .eq('user_id', user.id)
         .eq('is_active', true);
+
+      console.log('🔍 Fetched user rooms:', userRooms, 'Error:', error);
 
       if (error) throw error;
 
@@ -88,6 +92,7 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
         })
       );
 
+      console.log('🔍 Rooms with counts:', roomsWithCounts);
       setRooms(roomsWithCounts);
     } catch (error) {
       console.error('Error fetching rooms:', error);
