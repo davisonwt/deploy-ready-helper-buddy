@@ -6,6 +6,8 @@ import { useRoles } from "../hooks/useRoles"
 const AuthProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
 
+  console.log('🔐 AuthProtectedRoute:', { isAuthenticated, authLoading })
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -15,6 +17,7 @@ const AuthProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
+    console.warn('🔐 Not authenticated → redirecting to /login')
     return <Navigate to="/login" replace />
   }
 
