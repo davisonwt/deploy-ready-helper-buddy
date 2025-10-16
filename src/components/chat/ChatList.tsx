@@ -39,60 +39,46 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      fetchRooms();
-      setupRealtimeSubscription();
-    }
-  }, [user]);
+    if (!user) return;
+    fetchRooms();
+    const cleanup = setupRealtimeSubscription();
+    const interval = setInterval(fetchRooms, 15000);
+    return () => { cleanup?.(); clearInterval(interval); };
+  }, [user?.id]);
 
   const fetchRooms = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
-      
       console.log('🔍 Fetching rooms for user:', user.id);
-      
-      // Fetch rooms where user is a participant
-      const { data: userRooms, error } = await supabase
-        .from('chat_participants')
-        .select(`
-          room_id,
-          chat_rooms!inner(
-            id,
-            name,
-            room_type,
-            is_premium,
-            updated_at,
-            created_by
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('is_active', true);
 
-      console.log('🔍 Fetched user rooms:', userRooms, 'Error:', error);
+      // Fetch active rooms where the user is an active participant
+      const { data: roomsData, error } = await supabase
+        .from('chat_rooms')
+        .select(`
+          id,
+          name,
+          room_type,
+          is_premium,
+          updated_at,
+          created_by,
+          chat_participants:chat_participants(count)
+        `)
+        .eq('is_active', true)
+        .eq('chat_participants.user_id', user.id)
+        .eq('chat_participants.is_active', true)
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
 
-      // Get participant counts for each room
-      const roomsWithCounts = await Promise.all(
-        (userRooms || []).map(async (ur: any) => {
-          const room = ur.chat_rooms;
-          
-          const { count } = await supabase
-            .from('chat_participants')
-            .select('*', { count: 'exact', head: true })
-            .eq('room_id', room.id)
-            .eq('is_active', true);
+      // Map participant counts
+      const roomsWithCounts = (roomsData || []).map((room: any) => ({
+        ...room,
+        participant_count: room.chat_participants?.[0]?.count ?? 0,
+      }));
 
-          return {
-            ...room,
-            participant_count: count || 0
-          };
-        })
-      );
-
-      console.log('🔍 Rooms with counts:', roomsWithCounts);
+      console.log('🔍 Rooms (active only) with counts:', roomsWithCounts);
       setRooms(roomsWithCounts);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -111,14 +97,13 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
       .channel('chat-rooms-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_rooms'
-        },
-        () => {
-          fetchRooms();
-        }
+        { event: '*', schema: 'public', table: 'chat_rooms' },
+        () => fetchRooms()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'chat_participants', filter: `user_id=eq.${user?.id}` },
+        () => fetchRooms()
       )
       .subscribe();
 
