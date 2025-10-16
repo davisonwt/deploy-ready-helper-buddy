@@ -3,50 +3,10 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
 export function useRoles() {
-  const dispatcher = React?.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED?.ReactCurrentDispatcher?.current
-  if (!dispatcher) {
-    console.warn('useRoles called outside React render; returning safe defaults')
-    return {
-      userRoles: [],
-      loading: false,
-      error: 'React dispatcher not initialized',
-      hasRole: () => false,
-      isAdmin: false,
-      isGosat: false,
-      isAdminOrGosat: false,
-      fetchUserRoles: () => Promise.resolve(),
-      fetchAllUsers: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' }),
-      grantRole: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' }),
-      revokeRole: () => Promise.resolve({ success: false, error: 'React dispatcher not initialized' })
-    }
-  }
-
+  const { user } = useAuth()
   const [userRoles, setUserRoles] = React.useState([])
-  const [loading, setLoading] = React.useState(true) // Start with true to wait for initial role fetch
+  const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
-  
-  // Check if React hooks are available (dispatcher check)
-  let user
-  try {
-    const authHook = useAuth()
-    user = authHook.user
-  } catch (err) {
-    console.error('🔥 useRoles dispatcher error:', err)
-    // Return safe defaults if React hooks fail
-    return {
-      userRoles: [],
-      loading: false,
-      error: 'React dispatcher error',
-      hasRole: () => false,
-      isAdmin: false,
-      isGosat: false,
-      isAdminOrGosat: false,
-      fetchUserRoles: () => Promise.resolve(),
-      fetchAllUsers: () => Promise.resolve({ success: false, error: 'React dispatcher error' }),
-      grantRole: () => Promise.resolve({ success: false, error: 'React dispatcher error' }),
-      revokeRole: () => Promise.resolve({ success: false, error: 'React dispatcher error' })
-    }
-  }
 
   const fetchUserRoles = async () => {
     if (!user) {
