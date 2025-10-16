@@ -14,7 +14,7 @@ import {
   Edit, Trash2
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
-import { useOrchards } from "../hooks/useOrchards"
+
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
@@ -23,7 +23,20 @@ import { processOrchardsUrls } from "../utils/urlUtils"
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
-  const { deleteOrchard } = useOrchards()
+  const deleteOrchard = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('orchards')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      return { success: true }
+    } catch (err) {
+      console.error('Error deleting orchard:', err)
+      return { success: false, error: err.message }
+    }
+  }
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
