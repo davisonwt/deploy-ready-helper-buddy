@@ -24,6 +24,14 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const roles = useRoles()
 
+  console.log('🛡️ RoleProtectedRoute check:', {
+    allowedRoles,
+    userRoles: roles?.userRoles,
+    rolesLoading: roles?.loading,
+    authLoading,
+    isAuthenticated
+  })
+
   if (authLoading || roles?.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,7 +45,15 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => roles?.hasRole(role))
+  
+  console.log('🛡️ Role check result:', {
+    hasRequiredRole,
+    allowedRoles,
+    userRoles: roles?.userRoles
+  })
+
   if (!hasRequiredRole) {
+    console.warn('🚫 Access denied - redirecting to dashboard')
     return <Navigate to="/dashboard" replace />
   }
 
