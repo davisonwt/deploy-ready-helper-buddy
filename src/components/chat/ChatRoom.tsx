@@ -316,6 +316,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       });
 
       if (error) throw error;
+
+      // Optimistically append so it shows even if realtime publication isn't enabled
+      if (inserted) setMessages(prev => [...prev, inserted]);
       setMessage('');
 
       // Typing clear best-effort
