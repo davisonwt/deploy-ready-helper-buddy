@@ -111,7 +111,7 @@ export default function PublicMusicLibrary() {
   const uniqueGenres = [...new Set(tracks.map(t => t.genre).filter(Boolean))]
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type))]
 
-  const handlePlay = (track) => {
+  const handlePlay = async (track) => {
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ''
@@ -123,7 +123,28 @@ export default function PublicMusicLibrary() {
       return
     }
 
-    const audio = new Audio(track.file_url)
+    let playableUrl = track.file_url
+    try {
+      const storageIdx = playableUrl?.indexOf('/storage/v1/object/') ?? -1
+      let path = ''
+      if (storageIdx !== -1) {
+        const after = playableUrl.substring(storageIdx + '/storage/v1/object/'.length)
+        const parts = after.split('/')
+        const bucketId = parts[1]
+        if (bucketId === 'music-tracks') {
+          path = parts.slice(2).join('/')
+        }
+      } else if (playableUrl?.includes('/music-tracks/')) {
+        path = playableUrl.split('/music-tracks/')[1]
+      }
+      if (path) {
+        const { data } = await supabase.storage.from('music-tracks').createSignedUrl(path, 3600)
+        if (data?.signedUrl) playableUrl = data.signedUrl
+      }
+    } catch {}
+
+    const audio = new Audio(playableUrl)
+    audio.crossOrigin = 'anonymous'
     audio.volume = 0.7
     audioRef.current = audio
     setPlayingTrack(track)
