@@ -7,7 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 
 export const createMusicColumns = (
   onPlayTrack: (trackId: string, fileUrl: string) => void | Promise<void>,
-  playingTrackId: string | null
+  currentTrackId: string | null,
+  isPlayingGlobal: boolean
 ): ColumnDef<any>[] => [
   {
     accessorKey: 'track_title',
@@ -63,7 +64,7 @@ export const createMusicColumns = (
     header: 'Actions',
     cell: ({ row }) => {
       const { toast } = useToast();
-      const isPlaying = playingTrackId === row.original.id;
+      const isPlaying = currentTrackId === row.original.id && isPlayingGlobal;
 
       const handleDelete = async () => {
         if (confirm('Are you sure you want to delete this track?')) {
@@ -92,7 +93,7 @@ export const createMusicColumns = (
           >
             {isPlaying ? (
               <>
-                <Pause className="h-4 w-4 mr-1" /> Stop
+                <Pause className="h-4 w-4 mr-1" /> Pause
               </>
             ) : (
               <>
