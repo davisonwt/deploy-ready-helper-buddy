@@ -47,45 +47,59 @@ const MusicLibrary = () => {
     let playableUrl = fileUrl;
     let derivedPath = '';
 
-    const tryInferPath = (input: string) => {
+    const lastSegment = (p: string) => {
+      const parts = p.split('/').filter(Boolean);
+      return decodeURIComponent(parts[parts.length - 1] || '');
+    };
+
+    const inferCandidates = (input: string): string[] => {
+      const candidates: string[] = [];
       try {
         const u = new URL(input);
         const marker = '/storage/v1/object/';
         const idx = u.pathname.indexOf(marker);
         if (idx !== -1) {
-          const after = u.pathname.substring(idx + marker.length); // e.g. public/music-tracks/music/filename
+          const after = u.pathname.substring(idx + marker.length); // e.g. public/music-tracks/<path>
           const parts = after.split('/');
-          if (parts[1] === 'music-tracks') return decodeURIComponent(parts.slice(2).join('/'));
+          if (parts[1] === 'music-tracks') candidates.push(decodeURIComponent(parts.slice(2).join('/')));
         }
-        // Heuristic: look for /music/<filename>
-        const segments = u.pathname.split('/').filter(Boolean);
-        const musicIdx = segments.lastIndexOf('music');
-        if (musicIdx !== -1 && segments[musicIdx + 1]) {
-          return `music/${decodeURIComponent(segments[musicIdx + 1])}`;
-        }
-        const last = decodeURIComponent(segments[segments.length - 1] || '');
-        if (last.includes('.')) return `music/${last}`;
+        // If it's already a full URL, still try filename heuristic
+        const fname = lastSegment(u.pathname);
+        if (fname) candidates.push(`music/${fname}`);
       } catch {
         // Not a full URL
         const stripped = input.replace(/^\/*/, '').replace(/^public\//, '');
-        if (stripped.startsWith('music/')) return stripped;
-        const last = decodeURIComponent(stripped.split('/').pop() || '');
-        if (last.includes('.')) return `music/${last}`;
+        if (stripped.startsWith('music/')) candidates.push(stripped);
+        const fname = lastSegment(stripped);
+        if (fname) {
+          candidates.push(`music/${fname}`);
+          // Some older uploads used userId as folder
+          candidates.push(`${user?.id ? `${user.id}/` : ''}${fname}`);
+        }
       }
-      return '';
+      // De-dup
+      return Array.from(new Set(candidates.filter(Boolean)));
     };
 
-    derivedPath = tryInferPath(fileUrl);
+    const candidates = inferCandidates(fileUrl);
 
     try {
-      if (derivedPath) {
+      for (const cand of candidates) {
         const { data, error } = await supabase.storage
           .from('music-tracks')
-          .createSignedUrl(derivedPath, 3600);
+          .createSignedUrl(cand, 3600);
         if (!error && data?.signedUrl) {
+          derivedPath = cand;
           playableUrl = data.signedUrl;
-        } else {
-          console.warn('Signed URL error', { error, derivedPath, fileUrl });
+          break;
+        }
+      }
+      if (!derivedPath && candidates[0]) {
+        // Fallback to public URL if bucket is public
+        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0]);
+        if (data?.publicUrl) {
+          derivedPath = candidates[0];
+          playableUrl = data.publicUrl;
         }
       }
     } catch (e) {
@@ -95,14 +109,14 @@ const MusicLibrary = () => {
     // Encode path as a robust fallback for filenames with spaces/parentheses
     const encodedFallbackUrl = (() => {
       try {
-        const u = new URL(fileUrl);
+        const u = new URL(playableUrl.startsWith('http') ? playableUrl : fileUrl);
         u.pathname = u.pathname
           .split('/')
           .map(seg => encodeURIComponent(decodeURIComponent(seg)))
           .join('/');
         return u.toString();
       } catch {
-        return fileUrl;
+        return playableUrl.startsWith('http') ? playableUrl : fileUrl;
       }
     })();
 

@@ -125,25 +125,54 @@ export default function PublicMusicLibrary() {
 
     let playableUrl = track.file_url
     let derivedPath = ''
-    try {
+
+    const lastSegment = (p) => {
+      const parts = (p || '').split('/').filter(Boolean)
+      return decodeURIComponent(parts[parts.length - 1] || '')
+    }
+
+    const inferCandidates = (input) => {
+      const candidates = []
       try {
-        const u = new URL(track.file_url)
+        const u = new URL(input)
         const marker = '/storage/v1/object/'
         const idx = u.pathname.indexOf(marker)
         if (idx !== -1) {
           const after = u.pathname.substring(idx + marker.length)
           const parts = after.split('/')
-          if (parts[1] === 'music-tracks') {
-            derivedPath = decodeURIComponent(parts.slice(2).join('/'))
-          }
+          if (parts[1] === 'music-tracks') candidates.push(decodeURIComponent(parts.slice(2).join('/')))
         }
-      } catch {}
-      if (!derivedPath && track.file_url?.includes('/music-tracks/')) {
-        derivedPath = decodeURIComponent(track.file_url.split('/music-tracks/')[1])
+        const fname = lastSegment(u.pathname)
+        if (fname) candidates.push(`music/${fname}`)
+      } catch {
+        const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '')
+        if (stripped.startsWith('music/')) candidates.push(stripped)
+        const fname = lastSegment(stripped)
+        if (fname) {
+          candidates.push(`music/${fname}`)
+          candidates.push(stripped)
+        }
       }
-      if (derivedPath) {
-        const { data } = await supabase.storage.from('music-tracks').createSignedUrl(derivedPath, 3600)
-        if (data?.signedUrl) playableUrl = data.signedUrl
+      return Array.from(new Set(candidates.filter(Boolean)))
+    }
+
+    const candidates = inferCandidates(track.file_url)
+
+    try {
+      for (const cand of candidates) {
+        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600)
+        if (!error && data?.signedUrl) {
+          derivedPath = cand
+          playableUrl = data.signedUrl
+          break
+        }
+      }
+      if (!derivedPath && candidates[0]) {
+        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0])
+        if (data?.publicUrl) {
+          derivedPath = candidates[0]
+          playableUrl = data.publicUrl
+        }
       }
     } catch {}
 
