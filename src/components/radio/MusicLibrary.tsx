@@ -12,7 +12,8 @@ import { createMusicColumns } from './music-library-columns';
 
 const MusicLibrary = () => {
   const [uploading, setUploading] = useState(false);
-  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -32,190 +33,203 @@ const MusicLibrary = () => {
     };
   }, []);
 
-  const handlePlayTrack = useCallback(async (trackId: string, fileUrl: string) => {
-    // Stop current audio completely
-    if (audioRef.current) {
-      try {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current.load();
-      } catch (e) {
-        console.warn('Error stopping audio:', e);
+  const handlePlayTrack = useCallback(
+    async (trackId: string, fileUrl: string) => {
+      const el = audioRef.current as HTMLAudioElement | null;
+      if (!el) {
+        toast({
+          variant: 'destructive',
+          title: 'Playback Error',
+          description: 'Audio element not initialized.',
+        });
+        return;
       }
-    }
 
-    // If clicking the same track, just stop it
-    if (playingTrackId === trackId) {
-      setPlayingTrackId(null);
-      return;
-    }
-
-    // Resolve a playable URL (prefer signed URL), with robust parsing + logging
-    let playableUrl = fileUrl;
-    let derivedPath = '';
-
-    const lastSegment = (p: string) => {
-      const parts = p.split('/').filter(Boolean);
-      return decodeURIComponent(parts[parts.length - 1] || '');
-    };
-
-    const inferCandidates = (input: string): string[] => {
-      const candidates: string[] = [];
-      try {
-        const u = new URL(input);
-        const marker = '/storage/v1/object/';
-        const idx = u.pathname.indexOf(marker);
-        if (idx !== -1) {
-          const after = u.pathname.substring(idx + marker.length); // e.g. public/music-tracks/<path>
-          const parts = after.split('/');
-          if (parts[1] === 'music-tracks') candidates.push(decodeURIComponent(parts.slice(2).join('/')));
-        }
-        // If it's already a full URL, still try filename heuristic
-        const fname = lastSegment(u.pathname);
-        if (fname) candidates.push(`music/${fname}`);
-      } catch {
-        // Not a full URL
-        const stripped = input.replace(/^\/*/, '').replace(/^public\//, '');
-        if (stripped.startsWith('music/')) candidates.push(stripped);
-        const fname = lastSegment(stripped);
-        if (fname) {
-          candidates.push(`music/${fname}`);
-          // Some older uploads used userId as folder
-          candidates.push(`${user?.id ? `${user.id}/` : ''}${fname}`);
-        }
-      }
-      // De-dup
-      return Array.from(new Set(candidates.filter(Boolean)));
-    };
-
-    const candidates = inferCandidates(fileUrl);
-    console.log('[Radio] URL candidates', { fileUrl, candidates });
- 
-    try {
-      for (const cand of candidates) {
-        const { data, error } = await supabase.storage
-          .from('music-tracks')
-          .createSignedUrl(cand, 3600);
-        if (!error && data?.signedUrl) {
-          derivedPath = cand;
-          playableUrl = data.signedUrl;
-          break;
-        }
-      }
-      if (!derivedPath && candidates[0]) {
-        // Fallback to public URL if bucket is public
-        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0]);
-        if (data?.publicUrl) {
-          derivedPath = candidates[0];
-          playableUrl = data.publicUrl;
-        }
-      }
-    } catch (e) {
-      console.warn('URL signing error', e, { fileUrl, derivedPath });
-    }
-
-    // Encode path as a robust fallback for filenames with spaces/parentheses
-    const encodedFallbackUrl = (() => {
-      try {
-        const u = new URL(playableUrl.startsWith('http') ? playableUrl : fileUrl);
-        u.pathname = u.pathname
-          .split('/')
-          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
-          .join('/');
-        return u.toString();
-      } catch {
-        return playableUrl.startsWith('http') ? playableUrl : fileUrl;
-      }
-    })();
-
-    console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
-
-    // Use the single shared <audio> element
-    const el = audioRef.current as HTMLAudioElement | null;
-    if (!el) {
-      toast({
-        variant: 'destructive',
-        title: 'Playback Error',
-        description: 'Audio element not initialized.',
-      });
-      return;
-    }
-    (el as any).crossOrigin = 'anonymous';
-    el.volume = 0.7;
-
-    // Toggle pause if clicking the same playing track
-    if (playingTrackId === trackId && !el.paused) {
-      try {
-        el.pause();
-      } catch {}
-      setPlayingTrackId(null);
-      return;
-    }
-
-    // Reset current source
-    try {
-      el.pause();
-      el.src = '';
-      el.load();
-    } catch (e) {
-      console.warn('Error stopping audio:', e);
-    }
-
-    // Fallback stages: 0 -> encoded URL, 1 -> original fileUrl, 2 -> give up
-    let fallbackStage = 0;
-    el.onerror = () => {
-      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl, stage: fallbackStage });
-      try {
-        if (fallbackStage === 0 && el.src !== encodedFallbackUrl) {
-          fallbackStage = 1;
-          el.src = encodedFallbackUrl;
+      // If switching to a new track: Stop current completely
+      if (currentTrackId !== trackId) {
+        console.log('[Radio] Switching to new track', { trackId });
+        try {
+          el.pause();
+          el.src = '';
           el.load();
-          el.play().catch((error) => {
-            console.error('Encoded fallback failed:', error);
-          });
-          return;
+          setIsPlaying(false);
+        } catch (e) {
+          console.warn('Error stopping audio:', e);
         }
-        if (fallbackStage === 1 && el.src !== fileUrl) {
-          fallbackStage = 2;
-          el.src = fileUrl;
+
+        // Resolve playable URL (improved candidates)
+        let playableUrl = fileUrl;
+        let derivedPath = '';
+
+        const lastSegment = (p: string) => {
+          const parts = p.split('/').filter(Boolean);
+          return decodeURIComponent(parts[parts.length - 1] || '');
+        };
+
+        const inferCandidates = (input: string): string[] => {
+          const candidates: string[] = [];
+          try {
+            const u = new URL(input);
+            // Extract key after /storage/v1/object/ removing optional public/
+            const marker = '/storage/v1/object/';
+            const idx = u.pathname.indexOf(marker);
+            if (idx !== -1) {
+              const after = u.pathname.substring(idx + marker.length);
+              const parts = after.split('/');
+              const bucketIndex = parts[0] === 'public' ? 1 : 0;
+              if (parts[bucketIndex] === 'music-tracks') {
+                const key = decodeURIComponent(parts.slice(bucketIndex + 1).join('/'));
+                if (key) candidates.push(key);
+              }
+            }
+            // Filename heuristic
+            const fname = lastSegment(u.pathname);
+            if (fname) {
+              candidates.push(`music/${fname}`);
+              if (user?.id) candidates.push(`${user.id}/${fname}`);
+            }
+          } catch {
+            // Not a full URL: treat as object key
+            const stripped = input.replace(/^\/+/, '').replace(/^public\//, '');
+            // 1) Raw key first for old relative paths
+            candidates.push(stripped);
+            // 2) Legacy
+            const fname = lastSegment(stripped);
+            if (fname) {
+              candidates.push(`music/${fname}`);
+              if (user?.id) candidates.push(`${user.id}/${fname}`);
+            }
+          }
+          return Array.from(new Set(candidates.filter(Boolean)));
+        };
+
+        const candidates = inferCandidates(fileUrl);
+        console.log('[Radio] URL candidates', { fileUrl, candidates });
+
+        try {
+          for (const cand of candidates) {
+            const { data, error } = await supabase.storage
+              .from('music-tracks')
+              .createSignedUrl(cand, 3600);
+            if (!error && data?.signedUrl) {
+              derivedPath = cand;
+              playableUrl = data.signedUrl;
+              break;
+            }
+          }
+          if (!derivedPath && candidates[0]) {
+            const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0]);
+            if (data?.publicUrl) {
+              derivedPath = candidates[0];
+              playableUrl = data.publicUrl;
+            }
+          }
+        } catch (e) {
+          console.warn('URL signing error', e, { fileUrl, derivedPath });
+        }
+
+        // Encoded fallback
+        const encodedFallbackUrl = (() => {
+          try {
+            const u = new URL(playableUrl.startsWith('http') ? playableUrl : fileUrl);
+            u.pathname = u.pathname
+              .split('/')
+              .map((seg) => encodeURIComponent(decodeURIComponent(seg)))
+              .join('/');
+            return u.toString();
+          } catch {
+            return playableUrl.startsWith('http') ? playableUrl : fileUrl;
+          }
+        })();
+
+        console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
+
+        // Setup fallbacks and ended
+        let fallbackStage = 0;
+        el.onerror = () => {
+          console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl, stage: fallbackStage });
+          try {
+            if (fallbackStage === 0 && el.src !== encodedFallbackUrl) {
+              fallbackStage = 1;
+              el.src = encodedFallbackUrl;
+              el.load();
+              el.play().catch((error) => {
+                console.error('Encoded fallback failed:', error);
+              });
+              return;
+            }
+            if (fallbackStage === 1 && el.src !== fileUrl) {
+              fallbackStage = 2;
+              el.src = fileUrl;
+              el.load();
+              el.play().catch((error) => {
+                console.error('Original URL fallback failed:', error);
+              });
+              return;
+            }
+          } catch (e) {
+            console.error('Fallback handling error:', e);
+          }
+          toast({
+            variant: 'destructive',
+            title: 'Playback Error',
+            description: 'Cannot play this track. File may be corrupted or inaccessible.',
+          });
+          setCurrentTrackId(null);
+          setIsPlaying(false);
+        };
+
+        el.onended = () => {
+          console.log('[Radio] Track ended');
+          setIsPlaying(false);
+        };
+
+        // Load and play new
+        try {
+          el.src = playableUrl;
           el.load();
-          el.play().catch((error) => {
-            console.error('Original URL fallback failed:', error);
+          await el.play();
+          setCurrentTrackId(trackId);
+          setIsPlaying(true);
+        } catch (error) {
+          console.error('Initial play failed:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Playback Error',
+            description: 'Failed to play track.',
           });
-          return;
+          setCurrentTrackId(null);
+          setIsPlaying(false);
         }
-      } catch (e) {
-        console.error('Fallback handling error:', e);
+        return;
       }
-      toast({
-        variant: 'destructive',
-        title: 'Playback Error',
-        description: 'Cannot play this track. File may be corrupted or inaccessible.'
-      });
-      setPlayingTrackId(null);
-    };
 
-    // Set up ended handler
-    el.onended = () => {
-      setPlayingTrackId(null);
-    };
-
-    // Load and play
-    try {
-      el.src = playableUrl;
-      el.load();
-      await el.play();
-      setPlayingTrackId(trackId);
-    } catch (error) {
-      console.error('Initial play failed:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Playback Error',
-        description: 'Failed to play track.'
-      });
-      setPlayingTrackId(null);
-    }
-  }, [playingTrackId, toast, user?.id]);
+      // Same track: Toggle play/pause (resume without restart)
+      console.log('[Radio] Toggling same track', { trackId, isPlaying });
+      if (isPlaying) {
+        try {
+          el.pause();
+          setIsPlaying(false);
+        } catch (e) {
+          console.warn('Pause error:', e);
+        }
+      } else {
+        try {
+          await el.play();
+          setIsPlaying(true);
+        } catch (e) {
+          console.error('Resume error:', e);
+          toast({
+            variant: 'destructive',
+            title: 'Playback Error',
+            description: 'Failed to resume track.',
+          });
+          setIsPlaying(false);
+        }
+      }
+    },
+    [currentTrackId, isPlaying, toast, user?.id]
+  );
 
   const { data: tracks } = useQuery({
     queryKey: ['dj-music-tracks', user?.id],
@@ -295,7 +309,7 @@ const MusicLibrary = () => {
     maxFiles: 1,
   });
 
-  const columnsWithHandlers = createMusicColumns(handlePlayTrack, playingTrackId);
+  const columnsWithHandlers = createMusicColumns(handlePlayTrack, currentTrackId, isPlaying);
 
   return (
     <div className="space-y-6">
