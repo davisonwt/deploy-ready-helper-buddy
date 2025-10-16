@@ -124,21 +124,25 @@ export default function PublicMusicLibrary() {
     }
 
     let playableUrl = track.file_url
+    let derivedPath = ''
     try {
-      const storageIdx = playableUrl?.indexOf('/storage/v1/object/') ?? -1
-      let path = ''
-      if (storageIdx !== -1) {
-        const after = playableUrl.substring(storageIdx + '/storage/v1/object/'.length)
-        const parts = after.split('/')
-        const bucketId = parts[1]
-        if (bucketId === 'music-tracks') {
-          path = parts.slice(2).join('/')
+      try {
+        const u = new URL(track.file_url)
+        const marker = '/storage/v1/object/'
+        const idx = u.pathname.indexOf(marker)
+        if (idx !== -1) {
+          const after = u.pathname.substring(idx + marker.length)
+          const parts = after.split('/')
+          if (parts[1] === 'music-tracks') {
+            derivedPath = decodeURIComponent(parts.slice(2).join('/'))
+          }
         }
-      } else if (playableUrl?.includes('/music-tracks/')) {
-        path = playableUrl.split('/music-tracks/')[1]
+      } catch {}
+      if (!derivedPath && track.file_url?.includes('/music-tracks/')) {
+        derivedPath = decodeURIComponent(track.file_url.split('/music-tracks/')[1])
       }
-      if (path) {
-        const { data } = await supabase.storage.from('music-tracks').createSignedUrl(path, 3600)
+      if (derivedPath) {
+        const { data } = await supabase.storage.from('music-tracks').createSignedUrl(derivedPath, 3600)
         if (data?.signedUrl) playableUrl = data.signedUrl
       }
     } catch {}
@@ -149,8 +153,19 @@ export default function PublicMusicLibrary() {
     audioRef.current = audio
     setPlayingTrack(track)
 
+    audio.onerror = () => {
+      if (playableUrl !== track.file_url) {
+        audio.src = track.file_url
+        audio.play().catch((error) => {
+          console.error('Audio play error (fallback failed):', error, { fileUrl: track.file_url, derivedPath })
+          setPlayingTrack(null)
+          audioRef.current = null
+        })
+      }
+    }
+
     audio.play().catch((error) => {
-      console.error('Audio play error:', error)
+      console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
       setPlayingTrack(null)
       audioRef.current = null
     })

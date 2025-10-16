@@ -43,43 +43,67 @@ const MusicLibrary = () => {
       return;
     }
 
-    // Resolve a playable URL (prefer signed URL in case of private buckets or stale links)
+    // Resolve a playable URL (prefer signed URL), with robust parsing + logging
     let playableUrl = fileUrl;
+    let derivedPath = '';
     try {
-      const marker = '/music-tracks/';
-      let path = '';
-      if (fileUrl) {
-        const storageIdx = fileUrl.indexOf('/storage/v1/object/');
-        if (storageIdx !== -1) {
-          const after = fileUrl.substring(storageIdx + '/storage/v1/object/'.length); // e.g. public/music-tracks/music/filename
+      try {
+        const u = new URL(fileUrl);
+        const marker = '/storage/v1/object/';
+        const idx = u.pathname.indexOf(marker);
+        if (idx !== -1) {
+          const after = u.pathname.substring(idx + marker.length); // e.g. public/music-tracks/music/filename
           const parts = after.split('/');
-          const bucketId = parts[1];
-          if (bucketId === 'music-tracks') {
-            path = parts.slice(2).join('/');
+          // parts[0] is scope (public|sign), parts[1] is bucket id
+          if (parts[1] === 'music-tracks') {
+            derivedPath = decodeURIComponent(parts.slice(2).join('/'));
           }
-        } else if (fileUrl.includes(marker)) {
-          path = fileUrl.split(marker)[1];
         }
+      } catch {}
+      if (!derivedPath && fileUrl.includes('/music-tracks/')) {
+        derivedPath = decodeURIComponent(fileUrl.split('/music-tracks/')[1]);
       }
-      if (path) {
-        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(path, 3600);
+
+      if (derivedPath) {
+        const { data, error } = await supabase.storage
+          .from('music-tracks')
+          .createSignedUrl(derivedPath, 3600);
         if (!error && data?.signedUrl) {
           playableUrl = data.signedUrl;
+        } else {
+          console.warn('Signed URL error', error);
         }
       }
     } catch (e) {
-      // best effort; fall back to given URL
+      console.warn('URL parse error', e);
     }
 
-    // Create and play new audio
+    // Create and play new audio with fallback on error
     const audio = new Audio(playableUrl);
     (audio as any).crossOrigin = 'anonymous';
     audio.volume = 0.7;
     audioRef.current = audio;
     setPlayingTrackId(trackId);
 
+    audio.onerror = () => {
+      // Fallback to original url if signed one fails
+      if (playableUrl !== fileUrl) {
+        audio.src = fileUrl;
+        audio.play().catch((error) => {
+          console.error('Audio play error (fallback failed):', error, { fileUrl, derivedPath });
+          toast({ 
+            variant: 'destructive', 
+            title: 'Playback Error',
+            description: 'Failed to play track. Check audio file.' 
+          });
+          setPlayingTrackId(null);
+          audioRef.current = null;
+        });
+      }
+    };
+
     audio.play().catch((error) => {
-      console.error('Audio play error:', error);
+      console.error('Audio play error:', error, { fileUrl, derivedPath, playableUrl });
       toast({ 
         variant: 'destructive', 
         title: 'Playback Error',
