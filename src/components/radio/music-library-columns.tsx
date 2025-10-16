@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const createMusicColumns = (
-  onPlayTrack: (trackId: string, fileUrl: string) => void,
+  onPlayTrack: (trackId: string, fileUrl: string) => void | Promise<void>,
   playingTrackId: string | null
 ): ColumnDef<any>[] => [
   {

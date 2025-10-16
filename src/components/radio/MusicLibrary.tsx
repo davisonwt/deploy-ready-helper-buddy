@@ -29,7 +29,7 @@ const MusicLibrary = () => {
     };
   }, []);
 
-  const handlePlayTrack = useCallback((trackId: string, fileUrl: string) => {
+  const handlePlayTrack = useCallback(async (trackId: string, fileUrl: string) => {
     // Stop current audio if playing
     if (audioRef.current) {
       audioRef.current.pause();
@@ -43,8 +43,37 @@ const MusicLibrary = () => {
       return;
     }
 
+    // Resolve a playable URL (prefer signed URL in case of private buckets or stale links)
+    let playableUrl = fileUrl;
+    try {
+      const marker = '/music-tracks/';
+      let path = '';
+      if (fileUrl) {
+        const storageIdx = fileUrl.indexOf('/storage/v1/object/');
+        if (storageIdx !== -1) {
+          const after = fileUrl.substring(storageIdx + '/storage/v1/object/'.length); // e.g. public/music-tracks/music/filename
+          const parts = after.split('/');
+          const bucketId = parts[1];
+          if (bucketId === 'music-tracks') {
+            path = parts.slice(2).join('/');
+          }
+        } else if (fileUrl.includes(marker)) {
+          path = fileUrl.split(marker)[1];
+        }
+      }
+      if (path) {
+        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(path, 3600);
+        if (!error && data?.signedUrl) {
+          playableUrl = data.signedUrl;
+        }
+      }
+    } catch (e) {
+      // best effort; fall back to given URL
+    }
+
     // Create and play new audio
-    const audio = new Audio(fileUrl);
+    const audio = new Audio(playableUrl);
+    (audio as any).crossOrigin = 'anonymous';
     audio.volume = 0.7;
     audioRef.current = audio;
     setPlayingTrackId(trackId);
