@@ -162,7 +162,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         .insert([{
           room_id: roomId,
           sender_id: user.id,
-          sender_profile_id: user.id,
+          sender_profile_id: null,
           content: message.trim(),
           message_type: 'text'
         }]);
@@ -207,7 +207,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       await supabase.from('chat_messages').insert([{
         room_id: roomId,
         sender_id: user.id,
-        sender_profile_id: user.id,
+        sender_profile_id: null,
         message_type: 'file',
         file_url: publicUrl,
         file_name: file.name,
