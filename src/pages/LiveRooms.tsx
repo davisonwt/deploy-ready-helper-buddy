@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 export default function LiveRooms() {
   const [searchQuery, setSearchQuery] = useState('');
   const { processing } = useCryptoPay();
+  const queryClient = useQueryClient();
 
   const { data: rooms, isLoading } = useQuery({
     queryKey: ['live-rooms', searchQuery],
@@ -30,6 +31,7 @@ export default function LiveRooms() {
       if (error) throw error;
       return data || [];
     },
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
 
   // Subscribe to realtime updates
@@ -42,11 +44,11 @@ export default function LiveRooms() {
           event: '*',
           schema: 'public',
           table: 'chat_rooms',
-          filter: 'status=in.(live,upcoming)',
+          filter: 'is_active=eq.true',
         },
         () => {
-          // Refetch on any change
-          window.location.reload(); // Simple refresh for demo
+          // Invalidate and refetch instead of full page reload
+          queryClient.invalidateQueries({ queryKey: ['live-rooms'] });
         }
       )
       .subscribe();
@@ -54,7 +56,7 @@ export default function LiveRooms() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   const handleJoinRoom = async (room: any) => {
     if (!room.is_free) {
