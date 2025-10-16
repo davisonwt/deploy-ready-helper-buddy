@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +8,63 @@ import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { columns } from './music-library-columns';
+import { createMusicColumns } from './music-library-columns';
 
 const MusicLibrary = () => {
   const [uploading, setUploading] = useState(false);
+  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Stop any playing audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handlePlayTrack = useCallback((trackId: string, fileUrl: string) => {
+    // Stop current audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+
+    // If clicking the same track, just stop it
+    if (playingTrackId === trackId) {
+      setPlayingTrackId(null);
+      audioRef.current = null;
+      return;
+    }
+
+    // Create and play new audio
+    const audio = new Audio(fileUrl);
+    audio.volume = 0.7;
+    audioRef.current = audio;
+    setPlayingTrackId(trackId);
+
+    audio.play().catch((error) => {
+      console.error('Audio play error:', error);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Playback Error',
+        description: 'Failed to play track. Check audio file.' 
+      });
+      setPlayingTrackId(null);
+      audioRef.current = null;
+    });
+
+    audio.onended = () => {
+      setPlayingTrackId(null);
+      audioRef.current = null;
+    };
+  }, [playingTrackId, toast]);
 
   const { data: tracks } = useQuery({
     queryKey: ['dj-music-tracks', user?.id],
@@ -94,6 +144,8 @@ const MusicLibrary = () => {
     maxFiles: 1,
   });
 
+  const columnsWithHandlers = createMusicColumns(handlePlayTrack, playingTrackId);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -101,28 +153,10 @@ const MusicLibrary = () => {
           <CardTitle>Music Library</CardTitle>
         </CardHeader>
         <CardContent>
-          <div 
-            {...getRootProps()} 
-            className={`border-2 border-dashed p-8 rounded-lg text-center cursor-pointer transition-colors ${
-              isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="mx-auto h-8 w-8 mb-2 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              {isDragActive ? 'Drop the audio file here...' : 'Drag & drop an audio file here, or click to select'}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">Supports MP3, WAV, OGG, M4A</p>
-          </div>
-          {uploading && (
-            <div className="flex items-center justify-center mt-4">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span>Uploading track...</span>
-            </div>
-          )}
+...
         </CardContent>
       </Card>
-      <DataTable columns={columns} data={tracks || []} />
+      <DataTable columns={columnsWithHandlers} data={tracks || []} />
     </div>
   );
 };
