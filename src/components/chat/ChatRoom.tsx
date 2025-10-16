@@ -87,9 +87,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'typing' as any,
+          table: 'typing',
           filter: `room_id=eq.${roomId}`
-        },
+        } as any,
         (payload: any) => {
           if (payload.new && payload.new.user_id !== user.id) {
             setUsersTyping(prev => {
