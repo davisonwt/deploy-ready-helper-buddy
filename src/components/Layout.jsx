@@ -130,11 +130,12 @@ export default function Layout({ children }) {
       color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
       className: 'chatapp-tour',
       items: [
-        { name: "chatapp", href: "/chatapp", icon: MessageSquare },
-        { name: "heretics radio station", href: "/grove-station", icon: Mic },
-        { name: "Radio Station", href: "/radio", icon: Radio },
+        { name: "Chats", href: "/chatapp", icon: MessageSquare },
+        { name: "Apply for Radio Slot", href: "/radio-slot-application", icon: Mic },
+        { name: "Premium Rooms", href: "/premium-rooms", icon: Radio },
+        { name: "Grove Station (Listen)", href: "/grove-station", icon: Radio },
         ...(isAdminOrGosat ? [
-          { name: "Heretic Management System", href: "/radio-management", icon: Settings }
+          { name: "Radio Management", href: "/radio-management", icon: Settings }
         ] : [])
       ]
     },

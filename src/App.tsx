@@ -45,6 +45,8 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { AdminRadioPage } from "./pages/AdminRadioPage";
 import { AdminSeedsPage } from "./pages/AdminSeedsPage";
 import ChatApp from "./pages/ChatApp";
+import RadioSlotApplicationPage from "./pages/RadioSlotApplicationPage";
+import PremiumRoomsPage from "./pages/PremiumRoomsPage";
 import CommunityVideosPage from "./pages/CommunityVideosPage";
 import MarketingVideosGallery from "./pages/MarketingVideosGallery.jsx";
 import AIAssistantPage from "./pages/AIAssistantPage";
@@ -52,7 +54,6 @@ import BasketPage from "./pages/BasketPage";
 import TestBasketPage from "./pages/TestBasketPage";
 import GroveStationPage from "./pages/GroveStationPage";
 import RadioManagementPage from "./pages/RadioManagementPage";
-import { RadioSlotApplicationPage } from "./pages/RadioSlotApplicationPage";
 import ClubhousePage from "./pages/ClubhousePage";
 import VideoPage from "./pages/VideoPage";
 import VideoUploadPage from "./pages/VideoUploadPage";
@@ -262,10 +263,30 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-               {/* ChatApp - Clean Organized Interface */}
+              {/* ChatApp - Clean Organized Interface */}
               <Route path="/chatapp" element={
                 <ProtectedRoute>
-                  <ChatApp />
+                  <Layout>
+                    <ChatApp />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Radio Slot Application */}
+              <Route path="/radio-slot-application" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <RadioSlotApplicationPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Premium Rooms */}
+              <Route path="/premium-rooms" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PremiumRoomsPage />
+                  </Layout>
                 </ProtectedRoute>
               } />
               
