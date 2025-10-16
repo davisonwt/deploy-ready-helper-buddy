@@ -29,7 +29,8 @@ export default function PublicMusicLibrary() {
   const [selectedGenre, setSelectedGenre] = useState('')
   const [selectedType, setSelectedType] = useState('')
   const [sortBy, setSortBy] = useState('upload_date')
-  const [playingTrack, setPlayingTrack] = useState(null)
+  const [currentTrackId, setCurrentTrackId] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -37,7 +38,6 @@ export default function PublicMusicLibrary() {
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.src = ''
-        audioRef.current = null
       }
     }
   }, [])
@@ -112,107 +112,160 @@ export default function PublicMusicLibrary() {
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type))]
 
   const handlePlay = async (track) => {
-    // Stop current audio completely
-    if (audioRef.current) {
+    let el = audioRef.current
+    if (!el) {
+      el = new Audio()
+      audioRef.current = el
+    }
+    el.crossOrigin = 'anonymous'
+    el.volume = 0.7
+
+    // If switching to a new track: Stop current completely
+    if (currentTrackId !== track.id) {
+      console.log('[Radio] Switching to new track', { trackId: track.id })
       try {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
+        el.pause()
+        el.src = ''
+        el.load()
+        setIsPlaying(false)
       } catch (e) {
-        console.warn('Error stopping audio:', e);
+        console.warn('Error stopping audio:', e)
       }
-    }
 
-    // If clicking the same track, just stop it
-    if (playingTrack?.id === track.id) {
-      setPlayingTrack(null);
-      return;
-    }
+      let playableUrl = track.file_url
+      let derivedPath = ''
 
-    let playableUrl = track.file_url
-    let derivedPath = ''
+      const lastSegment = (p) => {
+        const parts = (p || '').split('/').filter(Boolean)
+        return decodeURIComponent(parts[parts.length - 1] || '')
+      }
 
-    const lastSegment = (p) => {
-      const parts = (p || '').split('/').filter(Boolean)
-      return decodeURIComponent(parts[parts.length - 1] || '')
-    }
-
-    const inferCandidates = (input) => {
-      const candidates = []
-      try {
-        const u = new URL(input)
-        const marker = '/storage/v1/object/'
-        const idx = u.pathname.indexOf(marker)
-        if (idx !== -1) {
-          const after = u.pathname.substring(idx + marker.length)
-          const parts = after.split('/')
-          if (parts[1] === 'music-tracks') candidates.push(decodeURIComponent(parts.slice(2).join('/')))
-        }
-        const fname = lastSegment(u.pathname)
-        if (fname) candidates.push(`music/${fname}`)
-      } catch {
-        const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '')
-        if (stripped.startsWith('music/')) candidates.push(stripped)
-        const fname = lastSegment(stripped)
-        if (fname) {
-          candidates.push(`music/${fname}`)
+      const inferCandidates = (input) => {
+        const candidates = []
+        try {
+          const u = new URL(input)
+          const marker = '/storage/v1/object/'
+          const idx = u.pathname.indexOf(marker)
+          if (idx !== -1) {
+            const after = u.pathname.substring(idx + marker.length)
+            const parts = after.split('/')
+            const bucketIndex = parts[0] === 'public' ? 1 : 0
+            if (parts[bucketIndex] === 'music-tracks') {
+              const key = decodeURIComponent(parts.slice(bucketIndex + 1).join('/'))
+              if (key) candidates.push(key)
+            }
+          }
+          const fname = lastSegment(u.pathname)
+          if (fname) {
+            candidates.push(`music/${fname}`)
+          }
+        } catch {
+          const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '')
           candidates.push(stripped)
+          const fname = lastSegment(stripped)
+          if (fname) {
+            candidates.push(`music/${fname}`)
+            candidates.push(stripped)
+          }
         }
+        return Array.from(new Set(candidates.filter(Boolean)))
       }
-      return Array.from(new Set(candidates.filter(Boolean)))
+
+      const candidates = inferCandidates(track.file_url)
+      console.log('[Radio] URL candidates', { fileUrl: track.file_url, candidates })
+
+      try {
+        for (const cand of candidates) {
+          const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600)
+          if (!error && data?.signedUrl) {
+            derivedPath = cand
+            playableUrl = data.signedUrl
+            break
+          }
+        }
+        if (!derivedPath && candidates[0]) {
+          const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0])
+          if (data?.publicUrl) {
+            derivedPath = candidates[0]
+            playableUrl = data.publicUrl
+          }
+        }
+      } catch {}
+
+      const encodedFallbackUrl = (() => {
+        try {
+          const u = new URL(playableUrl.startsWith('http') ? playableUrl : track.file_url)
+          u.pathname = u.pathname.split('/').map(seg => encodeURIComponent(decodeURIComponent(seg))).join('/')
+          return u.toString()
+        } catch {
+          return playableUrl.startsWith('http') ? playableUrl : track.file_url
+        }
+      })()
+
+      try { el.pause(); el.src = ''; el.load(); } catch {}
+
+      let fallbackStage = 0
+      el.onerror = () => {
+        console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl, stage: fallbackStage })
+        try {
+          if (fallbackStage === 0 && el.src !== encodedFallbackUrl) {
+            fallbackStage = 1
+            el.src = encodedFallbackUrl
+            el.load()
+            el.play().catch((error) => { console.error('Encoded fallback failed:', error) })
+            return
+          }
+          if (fallbackStage === 1 && el.src !== track.file_url) {
+            fallbackStage = 2
+            el.src = track.file_url
+            el.load()
+            el.play().catch((error) => { console.error('Original URL fallback failed:', error) })
+            return
+          }
+        } catch (e) {
+          console.error('Fallback handling error:', e)
+        }
+        setCurrentTrackId(null)
+        setIsPlaying(false)
+      }
+
+      el.onended = () => {
+        console.log('[Radio] Track ended')
+        setIsPlaying(false)
+      }
+
+      try {
+        el.src = playableUrl
+        el.load()
+        await el.play()
+        setCurrentTrackId(track.id)
+        setIsPlaying(true)
+      } catch (error) {
+        console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
+        setCurrentTrackId(null)
+        setIsPlaying(false)
+      }
+      return
     }
 
-    const candidates = inferCandidates(track.file_url)
-
-    try {
-      for (const cand of candidates) {
-        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600)
-        if (!error && data?.signedUrl) {
-          derivedPath = cand
-          playableUrl = data.signedUrl
-          break
-        }
+    // Same track: Toggle play/pause (resume without restart)
+    console.log('[Radio] Toggling same track', { trackId: track.id, isPlaying })
+    if (isPlaying) {
+      try {
+        el.pause()
+        setIsPlaying(false)
+      } catch (e) {
+        console.warn('Pause error:', e)
       }
-      if (!derivedPath && candidates[0]) {
-        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0])
-        if (data?.publicUrl) {
-          derivedPath = candidates[0]
-          playableUrl = data.publicUrl
-        }
-      }
-    } catch {}
-
-    const audio = new Audio()
-    audio.crossOrigin = 'anonymous'
-    audio.volume = 0.7
-    audioRef.current = audio
-    setPlayingTrack(track)
-
-    audio.onerror = () => {
-      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
-      if (audio.src !== encodedFallbackUrl) {
-        audio.src = encodedFallbackUrl
-        audio.load();
-        audio.play().catch((error) => {
-          console.error('Encoded fallback failed:', error, { fileUrl: track.file_url, derivedPath })
-          setPlayingTrack(null)
-          audioRef.current = null
-        })
+    } else {
+      try {
+        await el.play()
+        setIsPlaying(true)
+      } catch (e) {
+        console.error('Resume error:', e)
+        setIsPlaying(false)
       }
     }
-
-    audio.onended = () => {
-      setPlayingTrack(null)
-      audioRef.current = null
-    }
-
-    audio.src = playableUrl
-    audio.load();
-    audio.play().catch((error) => {
-      console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
-      setPlayingTrack(null)
-      audioRef.current = null
-    })
   }
 
   const handlePurchase = async (track) => {
@@ -356,7 +409,7 @@ export default function PublicMusicLibrary() {
                         className="flex-shrink-0"
                         onClick={() => handlePlay(track)}
                       >
-                        {playingTrack?.id === track.id ? (
+                        {currentTrackId === track.id && isPlaying ? (
                           <Pause className="h-4 w-4" />
                         ) : (
                           <Play className="h-4 w-4" />
@@ -449,40 +502,44 @@ export default function PublicMusicLibrary() {
       )}
 
       {/* Now Playing Info */}
-      {playingTrack && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Card className="w-80">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm truncate">{playingTrack.track_title}</h4>
-                  {playingTrack.artist_name && (
-                    <p className="text-xs text-muted-foreground truncate">{playingTrack.artist_name}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    by {playingTrack.radio_djs?.dj_name}
-                  </p>
-                  <p className="text-xs text-primary">Now Playing</p>
+      {currentTrackId && isPlaying && (() => {
+        const nowPlayingTrack = tracks.find(t => t.id === currentTrackId);
+        if (!nowPlayingTrack) return null;
+        return (
+          <div className="fixed bottom-4 right-4 z-50">
+            <Card className="w-80">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm truncate">{nowPlayingTrack.track_title}</h4>
+                    {nowPlayingTrack.artist_name && (
+                      <p className="text-xs text-muted-foreground truncate">{nowPlayingTrack.artist_name}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      by {nowPlayingTrack.radio_djs?.dj_name}
+                    </p>
+                    <p className="text-xs text-primary">Now Playing</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (audioRef.current) {
+                        audioRef.current.pause()
+                        audioRef.current.src = ''
+                      }
+                      setCurrentTrackId(null)
+                      setIsPlaying(false)
+                    }}
+                  >
+                    <Pause className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (audioRef.current) {
-                      audioRef.current.pause()
-                      audioRef.current.src = ''
-                      audioRef.current = null
-                    }
-                    setPlayingTrack(null)
-                  }}
-                >
-                  <Pause className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
     </div>
   )
 }
