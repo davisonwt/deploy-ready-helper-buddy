@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
-import { useRoles } from '../hooks/useRoles'
+// import { useRoles } from '../hooks/useRoles'
 import { processOrchardsUrls } from '../utils/urlUtils'
 
 export default function YhvhOrchardsPage() {
@@ -32,7 +32,34 @@ export default function YhvhOrchardsPage() {
       return { success: false, error: err.message }
     }
   }
-  const { isAdminOrGosat, userRoles } = useRoles()
+  // Local roles state to avoid cross-hook issues
+  const [userRoles, setUserRoles] = useState([])
+  const [rolesLoading, setRolesLoading] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    const loadRoles = async () => {
+      if (!user?.id) { if (active) setUserRoles([]); return }
+      try {
+        setRolesLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        if (active) setUserRoles((data || []).map(r => r.role))
+      } catch (e) {
+        if (active) setUserRoles([])
+        console.error('YhvhOrchardsPage: roles fetch failed', e)
+      } finally {
+        if (active) setRolesLoading(false)
+      }
+    }
+    loadRoles()
+    return () => { active = false }
+  }, [user?.id])
+
+  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
