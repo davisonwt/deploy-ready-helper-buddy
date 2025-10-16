@@ -171,33 +171,25 @@ export const useChat = () => {
 
     try {
       console.log('sendMessage called with:', { roomId, content, messageType, fileData, user: user.id });
-      
-      const messageData = {
-        room_id: roomId,
-        sender_id: user.id,
-        content: content || null,
-        message_type: messageType,
-        ...(fileData && {
-          file_url: fileData.url,
-          file_name: fileData.name,
-          file_type: fileData.type,
-          file_size: fileData.size,
-        }),
+
+      const payload = {
+        p_room_id: roomId,
+        p_content: content || null,
+        p_message_type: messageType,
+        p_file_url: fileData?.url || null,
+        p_file_name: fileData?.name || null,
+        p_file_type: fileData?.type || null,
+        p_file_size: fileData?.size || null,
       };
 
-      console.log('Inserting message data:', messageData);
-
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert(messageData)
-        .select();
+      const { data, error } = await supabase.rpc('send_chat_message', payload);
 
       if (error) {
-        console.error('Database error inserting message:', error);
+        console.error('Database error inserting message via RPC:', error);
         throw error;
       }
 
-      console.log('Message inserted successfully:', data);
+      console.log('Message inserted successfully (RPC):', data);
 
       // Update room's updated_at timestamp
       await supabase
@@ -215,7 +207,6 @@ export const useChat = () => {
       throw error; // Re-throw so calling code can handle it
     }
   }, [user, toast]);
-
   // Delete a message
   const deleteMessage = useCallback(async (messageId) => {
     if (!user) return;
