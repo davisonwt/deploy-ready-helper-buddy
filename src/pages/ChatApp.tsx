@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,14 @@ import {
   Search,
   Plus,
   LogIn,
-  X
+  X,
+  Mic,
+  Image as ImageIcon,
+  Video,
+  Phone,
+  PhoneOff,
+  DollarSign,
+  Paperclip
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
@@ -27,6 +34,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import Peer from 'peerjs';
+import { DonateModal } from '@/components/chat/DonateModal';
 
 const ChatApp = () => {
   const { user } = useAuth();
@@ -42,6 +51,19 @@ const ChatApp = () => {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  
+  // Voice recording
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  
+  // WebRTC call
+  const [callActive, setCallActive] = useState(false);
+  const [videoOn, setVideoOn] = useState(false);
+  const peerRef = useRef(null);
+  const localStreamRef = useRef(null);
+  
+  // Donations
+  const [showDonate, setShowDonate] = useState(false);
 
   // Fetch users when search term changes
   useEffect(() => {
@@ -180,6 +202,131 @@ const ChatApp = () => {
     }
   };
 
+  // File upload handler
+  const handleFileUpload = async (file) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `chat-files/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-files')
+        .getPublicUrl(filePath);
+      
+      toast({
+        title: 'File uploaded',
+        description: 'File uploaded successfully',
+      });
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: error.message,
+      });
+      return null;
+    }
+  };
+
+  // Voice recording handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      const chunks = [];
+      
+      mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorderRef.current.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/wav' });
+        const file = new File([blob], 'voice-note.wav', { type: 'audio/wav' });
+        await handleFileUpload(file);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      
+      mediaRecorderRef.current.start();
+      setRecording(true);
+      
+      // Max 60 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop();
+          setRecording(false);
+        }
+      }, 60000);
+    } catch (error) {
+      console.error('Recording error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Recording failed',
+        description: 'Could not access microphone',
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  // WebRTC call handlers
+  const toggleCall = async () => {
+    if (!callActive) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: videoOn, 
+          audio: true 
+        });
+        
+        localStreamRef.current = stream;
+        peerRef.current = new Peer(user.id);
+        
+        setCallActive(true);
+        
+        toast({
+          title: 'Call started',
+          description: 'You are now in the call',
+        });
+      } catch (error) {
+        console.error('Call error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Call failed',
+          description: 'Could not start call',
+        });
+      }
+    } else {
+      // End call
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (peerRef.current) {
+        peerRef.current.destroy();
+      }
+      setCallActive(false);
+      setVideoOn(false);
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoOn;
+        setVideoOn(!videoOn);
+      }
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -217,6 +364,60 @@ const ChatApp = () => {
             <p className="text-sm text-muted-foreground">
               Connect and collaborate with others
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={recording ? 'destructive' : 'outline'}
+              size="sm"
+              onClick={recording ? stopRecording : startRecording}
+            >
+              <Mic className="h-4 w-4 mr-2" />
+              {recording ? 'Stop' : 'Voice'}
+            </Button>
+            <Button
+              variant={callActive ? 'destructive' : 'outline'}
+              size="sm"
+              onClick={toggleCall}
+            >
+              {callActive ? <PhoneOff className="h-4 w-4 mr-2" /> : <Phone className="h-4 w-4 mr-2" />}
+              {callActive ? 'End Call' : 'Call'}
+            </Button>
+            {callActive && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleVideo}
+              >
+                <Video className="h-4 w-4 mr-2" />
+                {videoOn ? 'Video Off' : 'Video On'}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDonate(true)}
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              Donate
+            </Button>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                className="hidden"
+                multiple
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  files.forEach(handleFileUpload);
+                }}
+              />
+              <Button variant="outline" size="sm" asChild>
+                <span>
+                  <Paperclip className="h-4 w-4 mr-2" />
+                  Upload
+                </span>
+              </Button>
+            </label>
           </div>
         </div>
 
@@ -374,6 +575,13 @@ const ChatApp = () => {
           <ChatList searchQuery={searchQuery} />
         </ScrollArea>
       </div>
+      
+      <DonateModal
+        isOpen={showDonate}
+        onClose={() => setShowDonate(false)}
+        hostWallet="host_wallet_address"
+        hostName="Room Host"
+      />
     </div>
   );
 };
