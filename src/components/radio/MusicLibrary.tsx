@@ -24,7 +24,6 @@ const MusicLibrary = () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
-        audioRef.current = null;
       }
     };
   }, []);
@@ -126,32 +125,56 @@ const MusicLibrary = () => {
 
     console.log('[Radio] Play request', { trackId, fileUrl, derivedPath, playableUrl, encodedFallbackUrl });
 
-    // Create fresh Audio instance
-    const audio = new Audio();
-    (audio as any).crossOrigin = 'anonymous';
-    audio.volume = 0.7;
-    audioRef.current = audio;
-    setPlayingTrackId(trackId);
+    // Use a single shared <audio> element
+    const el = audioRef.current as HTMLAudioElement | null;
+    if (!el) {
+      console.error('Audio element not ready');
+      toast({
+        variant: 'destructive',
+        title: 'Playback Error',
+        description: 'Audio element not initialized.',
+      });
+      return;
+    }
+    el.crossOrigin = 'anonymous';
+    el.volume = 0.7;
+
+    // Toggle pause if clicking the same playing track
+    if (playingTrackId === trackId && !el.paused) {
+      try {
+        el.pause();
+      } catch {}
+      setPlayingTrackId(null);
+      return;
+    }
+
+    // Reset current source
+    try {
+      el.pause();
+      el.src = '';
+      el.load();
+    } catch (e) {
+      console.warn('Error stopping audio:', e);
+    }
 
     // Set up error handler with fallbacks
-    audio.onerror = () => {
+    el.onerror = () => {
       console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
-      if (audio.src !== encodedFallbackUrl) {
-        audio.src = encodedFallbackUrl;
-        audio.load();
-        audio.play().catch((error) => {
+      if (el.src !== encodedFallbackUrl) {
+        el.src = encodedFallbackUrl;
+        el.load();
+        el.play().catch((error) => {
           console.error('Encoded fallback failed:', error);
           if (encodedFallbackUrl !== fileUrl) {
-            audio.src = fileUrl;
-            audio.load();
-            audio.play().catch(() => {
-              toast({ 
-                variant: 'destructive', 
+            el.src = fileUrl;
+            el.load();
+            el.play().catch(() => {
+              toast({
+                variant: 'destructive',
                 title: 'Playback Error',
-                description: 'Cannot play this track. File may be corrupted or inaccessible.' 
+                description: 'Cannot play this track. File may be corrupted or inaccessible.'
               });
               setPlayingTrackId(null);
-              audioRef.current = null;
             });
           }
         });
@@ -159,25 +182,26 @@ const MusicLibrary = () => {
     };
 
     // Set up ended handler
-    audio.onended = () => {
+    el.onended = () => {
       setPlayingTrackId(null);
-      audioRef.current = null;
     };
 
     // Load and play
-    audio.src = playableUrl;
-    audio.load();
-    audio.play().catch((error) => {
+    try {
+      el.src = playableUrl;
+      el.load();
+      await el.play();
+      setPlayingTrackId(trackId);
+    } catch (error) {
       console.error('Initial play failed:', error);
-      toast({ 
-        variant: 'destructive', 
+      toast({
+        variant: 'destructive',
         title: 'Playback Error',
-        description: 'Failed to play track.' 
+        description: 'Failed to play track.'
       });
       setPlayingTrackId(null);
-      audioRef.current = null;
-    });
-  }, [playingTrackId, toast]);
+    }
+  }, [playingTrackId, toast, user?.id]);
 
   const { data: tracks } = useQuery({
     queryKey: ['dj-music-tracks', user?.id],
@@ -266,10 +290,11 @@ const MusicLibrary = () => {
           <CardTitle>Music Library</CardTitle>
         </CardHeader>
         <CardContent>
-...
+        ...
         </CardContent>
       </Card>
       <DataTable columns={columnsWithHandlers} data={tracks || []} />
+      <audio ref={audioRef} preload="none" className="hidden" aria-hidden="true" />
     </div>
   );
 };
