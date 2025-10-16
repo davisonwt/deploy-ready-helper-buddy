@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useRoles } from "../hooks/useRoles"
@@ -23,6 +24,15 @@ const AuthProtectedRoute = ({ children }) => {
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const roles = useRoles()
+  const [initiated, setInitiated] = useState(false)
+
+  // Ensure roles are fetched when this guard mounts
+  useEffect(() => {
+    if (!initiated) {
+      roles?.fetchUserRoles?.()
+      setInitiated(true)
+    }
+  }, [initiated])
 
   console.log('🛡️ RoleProtectedRoute check:', {
     allowedRoles,
@@ -32,7 +42,8 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
     isAuthenticated
   })
 
-  if (authLoading || roles?.loading) {
+  // Wait until both auth and roles are resolved; avoid premature redirect
+  if (authLoading || roles?.loading || (Array.isArray(allowedRoles) && (roles?.userRoles?.length ?? 0) === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
