@@ -60,6 +60,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [participantIds, setParticipantIds] = useState<string[]>([]);
 
+  // Current user's profile id (for sender_profile_id)
+  const [profileId, setProfileId] = useState<string | null>(null);
+
   useEffect(() => {
     if (roomId && user) {
       fetchRoomInfo();
@@ -144,6 +147,20 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       fetchParticipants();
     }
   }, [roomId, user]);
+
+  // Load current user's profile id
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setProfileId(data?.id ?? null);
+    };
+    run();
+  }, [user?.id]);
 
   // Load available users when invite dialog is open or search changes
   useEffect(() => {
@@ -242,15 +259,17 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
     try {
       setSending(true);
+      const payload: any = {
+        room_id: roomId,
+        sender_id: user.id,
+        content: message.trim(),
+        message_type: 'text'
+      };
+      if (profileId) payload.sender_profile_id = profileId;
+
       const { data: inserted, error } = await supabase
         .from('chat_messages')
-        .insert([{
-          room_id: roomId,
-          sender_id: user.id,
-          sender_profile_id: null,
-          content: message.trim(),
-          message_type: 'text'
-        }])
+        .insert([payload])
         .select(`
           *,
           sender_profile:profiles!chat_messages_sender_profile_id_fkey(
@@ -262,11 +281,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       if (error) throw error;
       setMessage('');
       if (inserted) setMessages(prev => [...prev, inserted]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: error?.message || 'Failed to send message',
         variant: 'destructive'
       });
     } finally {
@@ -296,17 +315,19 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       else if (file.type.startsWith('video/')) fileType = 'video';
       else if (file.type.startsWith('audio/')) fileType = 'audio';
 
+      const payload: any = {
+        room_id: roomId,
+        sender_id: user.id,
+        message_type: 'file',
+        file_url: publicUrl,
+        file_name: file.name,
+        file_type: fileType,
+        file_size: file.size
+      };
+      if (profileId) payload.sender_profile_id = profileId;
+
       const { data: inserted, error } = await supabase.from('chat_messages')
-        .insert([{
-          room_id: roomId,
-          sender_id: user.id,
-          sender_profile_id: null,
-          message_type: 'file',
-          file_url: publicUrl,
-          file_name: file.name,
-          file_type: fileType,
-          file_size: file.size
-        }])
+        .insert([payload])
         .select(`
           *,
           sender_profile:profiles!chat_messages_sender_profile_id_fkey(
