@@ -112,15 +112,21 @@ export default function PublicMusicLibrary() {
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type))]
 
   const handlePlay = async (track) => {
+    // Stop current audio completely
     if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ''
+      try {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      } catch (e) {
+        console.warn('Error stopping audio:', e);
+      }
     }
 
+    // If clicking the same track, just stop it
     if (playingTrack?.id === track.id) {
-      setPlayingTrack(null)
-      audioRef.current = null
-      return
+      setPlayingTrack(null);
+      return;
     }
 
     let playableUrl = track.file_url
@@ -176,46 +182,37 @@ export default function PublicMusicLibrary() {
       }
     } catch {}
 
-    const audio = new Audio(playableUrl)
+    const audio = new Audio()
     audio.crossOrigin = 'anonymous'
     audio.volume = 0.7
     audioRef.current = audio
     setPlayingTrack(track)
 
-    const encodedFallbackUrl = (() => {
-      try {
-        const u = new URL(track.file_url)
-        u.pathname = u.pathname
-          .split('/')
-          .map(seg => encodeURIComponent(decodeURIComponent(seg)))
-          .join('/')
-        return u.toString()
-      } catch {
-        return track.file_url
-      }
-    })()
-
     audio.onerror = () => {
-      if (playableUrl !== encodedFallbackUrl) {
+      console.warn('Primary URL failed, trying fallback', { playableUrl, encodedFallbackUrl });
+      if (audio.src !== encodedFallbackUrl) {
         audio.src = encodedFallbackUrl
+        audio.load();
         audio.play().catch((error) => {
-          console.error('Audio play error (encoded fallback failed):', error, { fileUrl: track.file_url, derivedPath })
+          console.error('Encoded fallback failed:', error, { fileUrl: track.file_url, derivedPath })
           setPlayingTrack(null)
           audioRef.current = null
         })
       }
     }
 
+    audio.onended = () => {
+      setPlayingTrack(null)
+      audioRef.current = null
+    }
+
+    audio.src = playableUrl
+    audio.load();
     audio.play().catch((error) => {
       console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
       setPlayingTrack(null)
       audioRef.current = null
     })
-
-    audio.onended = () => {
-      setPlayingTrack(null)
-      audioRef.current = null
-    }
   }
 
   const handlePurchase = async (track) => {
