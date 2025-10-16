@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,8 @@ import {
   MessageSquare, 
   Search,
   Plus,
-  LogIn
+  LogIn,
+  X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
@@ -20,6 +21,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +36,58 @@ const ChatApp = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  
+  // User selection states
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Fetch users when search term changes
+  useEffect(() => {
+    if (!isCreateDialogOpen) return;
+    
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        
+        let query = supabase
+          .from('profiles')
+          .select('id, user_id, display_name, avatar_url, first_name, last_name')
+          .neq('user_id', user.id)
+          .limit(20);
+
+        if (userSearchTerm.trim()) {
+          query = query.or(`display_name.ilike.%${userSearchTerm}%,first_name.ilike.%${userSearchTerm}%,last_name.ilike.%${userSearchTerm}%`);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        setAvailableUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, [userSearchTerm, isCreateDialogOpen, user?.id]);
+
+  const handleUserToggle = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const getUserDisplayName = (userData) => {
+    return userData.display_name || 
+           `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 
+           'Unknown User';
+  };
 
   const handleCreateChat = async () => {
     if (!newChatName.trim()) {
@@ -61,23 +117,53 @@ const ChatApp = () => {
       if (roomError) throw roomError;
 
       // Add creator as participant
-      const { error: participantError } = await supabase
-        .from('chat_participants')
-        .insert({
+      const participants = [
+        {
           room_id: room.id,
           user_id: user.id,
           is_moderator: true,
           is_active: true,
-        });
+        },
+        // Add selected users
+        ...selectedUsers.map(userId => ({
+          room_id: room.id,
+          user_id: userId,
+          is_moderator: false,
+          is_active: true,
+        }))
+      ];
+
+      const { error: participantError } = await supabase
+        .from('chat_participants')
+        .insert(participants);
 
       if (participantError) throw participantError;
 
+      // Send notifications to invited users
+      if (selectedUsers.length > 0) {
+        const notifications = selectedUsers.map(userId => ({
+          user_id: userId,
+          type: 'chat_invite',
+          title: 'Chat Room Invitation',
+          message: `You've been invited to join "${newChatName}"`,
+          action_url: '/chatapp'
+        }));
+
+        await supabase
+          .from('user_notifications')
+          .insert(notifications);
+      }
+
       toast({
         title: 'Chat created!',
-        description: `${newChatName} has been created successfully.`,
+        description: selectedUsers.length > 0 
+          ? `${newChatName} created with ${selectedUsers.length} member(s).`
+          : `${newChatName} has been created successfully.`,
       });
 
       setNewChatName('');
+      setSelectedUsers([]);
+      setUserSearchTerm('');
       setIsCreateDialogOpen(false);
       
       // Refresh the chat list
@@ -159,16 +245,16 @@ const ChatApp = () => {
                 New Chat
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
               <DialogHeader>
                 <DialogTitle>Create New Chat</DialogTitle>
                 <DialogDescription>
-                  Create a new group chat or conversation. You can invite others later.
+                  Create a new group chat and invite others to join.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="chatName">Chat Name</Label>
+                  <Label htmlFor="chatName">Chat Name *</Label>
                   <Input
                     id="chatName"
                     placeholder="Enter chat name..."
@@ -181,11 +267,98 @@ const ChatApp = () => {
                     }}
                   />
                 </div>
+
+                {/* User Search */}
+                <div className="space-y-2">
+                  <Label>Invite Users (Optional)</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users by name..."
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Selected Users */}
+                {selectedUsers.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Selected ({selectedUsers.length}):</div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedUsers.map(userId => {
+                        const userData = availableUsers.find(u => u.user_id === userId);
+                        return (
+                          <Badge key={userId} variant="secondary" className="flex items-center gap-1">
+                            {userData ? getUserDisplayName(userData) : 'User'}
+                            <button
+                              onClick={() => handleUserToggle(userId)}
+                              className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Users List */}
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Available Users:</div>
+                  <ScrollArea className="h-48 border rounded-md p-2 bg-background">
+                    {loadingUsers ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                        <p className="text-sm text-muted-foreground mt-2">Searching users...</p>
+                      </div>
+                    ) : availableUsers.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">
+                          {userSearchTerm ? 'No users found' : 'Start typing to search for users'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {availableUsers.map((userData) => (
+                          <div 
+                            key={userData.user_id}
+                            className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
+                            onClick={() => handleUserToggle(userData.user_id)}
+                          >
+                            <Checkbox 
+                              checked={selectedUsers.includes(userData.user_id)}
+                              onCheckedChange={() => handleUserToggle(userData.user_id)}
+                            />
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={userData.avatar_url} />
+                              <AvatarFallback>
+                                {getUserDisplayName(userData).charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">
+                                {getUserDisplayName(userData)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
               </div>
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end border-t pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
+                  onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    setNewChatName('');
+                    setSelectedUsers([]);
+                    setUserSearchTerm('');
+                  }}
                   disabled={isCreating}
                 >
                   Cancel
