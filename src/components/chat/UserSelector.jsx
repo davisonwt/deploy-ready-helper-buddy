@@ -8,11 +8,14 @@ import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureProfiles } from '@/hooks/useSecureProfiles';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
   const { getPublicProfiles, loading: profilesLoading } = useSecureProfiles();
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +42,25 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     run();
   }, [searchTerm, user]);
 
-  // Users list is populated via secure server-side search
+  // Initial list for dropdown (top 200 alphabetically)
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .order('display_name', { ascending: true })
+          .limit(200);
+        if (error) throw error;
+        setAllUsers(data || []);
+      } catch (e) {
+        console.error('Error loading users list:', e);
+      }
+    })();
+  }, [user]);
+
+  const getName = (p) => (p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Unknown User');
 
   const filteredUsers = users.filter(profile => {
     const name = profile.display_name || `${profile.first_name} ${profile.last_name}`.trim();
@@ -58,6 +79,34 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Dropdown list (not transparent, high z-index) */}
+        <div className="space-y-2">
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger className="w-full z-50">
+              <SelectValue placeholder="Select a sower/bestower" />
+            </SelectTrigger>
+            <SelectContent className="z-50 bg-background">
+              {allUsers.map((p) => (
+                <SelectItem key={p.user_id} value={p.user_id}>
+                  {getName(p)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => selectedUserId && onStartDirectChat(selectedUserId)} disabled={!selectedUserId}>
+              <MessageSquare className="h-4 w-4 mr-1" /> Chat
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => selectedUserId && onStartCall(selectedUserId, 'audio')} disabled={!selectedUserId}>
+              <Phone className="h-4 w-4 mr-1" /> Call
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => selectedUserId && onStartCall(selectedUserId, 'video')} disabled={!selectedUserId}>
+              <Video className="h-4 w-4 mr-1" /> Video
+            </Button>
+          </div>
+        </div>
+
+        {/* Or search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
