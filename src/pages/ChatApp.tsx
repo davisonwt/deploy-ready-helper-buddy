@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
+import UserSelector from '@/components/chat/UserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import {
   Dialog,
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useCallManager } from '@/hooks/useCallManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -47,6 +49,39 @@ const ChatApp = () => {
   
   // Get current room from URL
   const currentRoomId = searchParams.get('room');
+
+  const { startCall } = useCallManager();
+
+  const handleStartDirectChat = async (otherUserId) => {
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: otherUserId,
+      });
+      if (error) throw error;
+      const roomId = data;
+      setSearchParams({ room: roomId });
+    } catch (error) {
+      console.error('Error starting direct chat:', error);
+      toast({ title: 'Error', description: 'Could not open direct chat', variant: 'destructive' });
+    }
+  };
+
+  const handleStartCall = async (otherUserId, callType) => {
+    try {
+      const { data: userProfile, error } = await supabase
+        .from('profiles')
+        .select('display_name, first_name, last_name, avatar_url')
+        .eq('user_id', otherUserId)
+        .single();
+      if (error) throw error;
+      const receiverName = userProfile.display_name || `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'Unknown User';
+      await startCall(otherUserId, receiverName, callType, null);
+    } catch (error) {
+      console.error('Error starting call:', error);
+      toast({ title: 'Error', description: 'Failed to start call', variant: 'destructive' });
+    }
+  };
 
   // Fetch users when search term changes
   useEffect(() => {
@@ -248,6 +283,12 @@ const ChatApp = () => {
               />
             </div>
           </div>
+
+          {/* One-on-Ones: s2g sowers and bestowers */}
+          <UserSelector
+            onStartDirectChat={handleStartDirectChat}
+            onStartCall={handleStartCall}
+          />
 
           {/* Main Content */}
           <div className="space-y-4">
