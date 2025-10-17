@@ -117,23 +117,10 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
     if (!confirm('Are you sure you want to delete this conversation?')) return;
 
     try {
-      // Delete messages
-      await supabase
-        .from('chat_messages')
-        .delete()
-        .eq('room_id', roomId);
-
-      // Delete participants
-      await supabase
-        .from('chat_participants')
-        .delete()
-        .eq('room_id', roomId);
-
-      // Delete room
-      const { error } = await supabase
-        .from('chat_rooms')
-        .delete()
-        .eq('id', roomId);
+      // Use the secure admin_delete_room RPC function
+      const { data, error } = await supabase.rpc('admin_delete_room', {
+        target_room_id: roomId
+      });
 
       if (error) throw error;
 
@@ -147,7 +134,7 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
       console.error('Error deleting room:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete conversation',
+        description: error.message || 'Failed to delete conversation',
         variant: 'destructive'
       });
     }

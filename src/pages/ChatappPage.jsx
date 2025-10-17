@@ -493,7 +493,8 @@ const ChatappPage = () => {
                   <div className="flex gap-2 mb-4 pb-4 border-b border-white/20 overflow-x-auto">
                     {[
                       { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
-                      { type: 'group', label: 'Groups', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
+                      { type: 'oneOnOne', label: 'One-on-Ones', icon: MessageSquare, activeColor: 'rgba(236, 72, 153, 0.3)', inactiveColor: 'rgba(236, 72, 153, 0.1)' },
+                      { type: 'group', label: 'Grove Circles', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
                       { type: 'discover', label: 'Discover', icon: Sparkles, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }
                     ].map(({ type, label, icon: Icon, activeColor, inactiveColor }) => (
                       <button
@@ -527,7 +528,14 @@ const ChatappPage = () => {
                   
                   {/* Room Content */}
                   <TabsContent value={activeTab} className="flex-1 overflow-hidden mt-0">
-                    {activeTab !== 'discover' && (
+                    {activeTab === 'oneOnOne' ? (
+                      <div className="h-full">
+                        <UserSelector
+                          onStartDirectChat={handleStartDirectChat}
+                          onStartCall={handleStartCall}
+                        />
+                      </div>
+                    ) : activeTab !== 'discover' ? (
                       <ScrollArea className="h-full">
                         <div className="space-y-3 pr-3">
                           {filteredRooms.map((room) => (
@@ -546,20 +554,22 @@ const ChatappPage = () => {
                           {filteredRooms.length === 0 && (
                             <div className="text-center py-8">
                               <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
-                              <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>No rooms found</p>
+                              <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                                {activeTab === 'group' ? 'No Grove Circles yet' : 'No rooms found'}
+                              </p>
                               <Button 
                                 onClick={() => setShowCreateModal(true)}
                                 style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
                                 className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                               >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Create your first room
+                                {activeTab === 'group' ? 'Create your first Grove Circle' : 'Create your first room'}
                               </Button>
                             </div>
                           )}
                         </div>
                       </ScrollArea>
-                    )}
+                    ) : null}
                   </TabsContent>
                 </Tabs>
               </CardContent>

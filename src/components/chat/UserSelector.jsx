@@ -51,8 +51,11 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          Select User to Chat
+          s2g sowers and bestowers
         </CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Choose how to connect: chat, call, or video call
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
