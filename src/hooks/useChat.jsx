@@ -405,48 +405,12 @@ export const useChat = () => {
     if (!user || !roomId) return;
 
     try {
-      // First check if user is the room creator or has permission
-      const { data: room, error: roomError } = await supabase
-        .from('chat_rooms')
-        .select('created_by, room_type')
-        .eq('id', roomId)
-        .single();
+      // Use the secure admin_delete_room RPC function
+      const { data, error } = await supabase.rpc('admin_delete_room', {
+        target_room_id: roomId
+      });
 
-      if (roomError) throw roomError;
-
-      // Only allow deletion if user is the creator or it's a direct message
-      if (room.created_by !== user.id && room.room_type !== 'direct') {
-        toast({
-          title: "Error",
-          description: "You can only delete conversations you created",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Delete all messages first
-      const { error: messagesError } = await supabase
-        .from('chat_messages')
-        .delete()
-        .eq('room_id', roomId);
-
-      if (messagesError) throw messagesError;
-
-      // Delete all participants
-      const { error: participantsError } = await supabase
-        .from('chat_participants')
-        .delete()
-        .eq('room_id', roomId);
-
-      if (participantsError) throw participantsError;
-
-      // Delete the room
-      const { error: deleteError } = await supabase
-        .from('chat_rooms')
-        .delete()
-        .eq('id', roomId);
-
-      if (deleteError) throw deleteError;
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -465,7 +429,7 @@ export const useChat = () => {
       console.error('Error deleting conversation:', error);
       toast({
         title: "Error",
-        description: "Failed to delete conversation",
+        description: error.message || "Failed to delete conversation",
         variant: "destructive",
       });
     }
