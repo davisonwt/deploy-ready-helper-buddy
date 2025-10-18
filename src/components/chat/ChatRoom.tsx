@@ -71,6 +71,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [selectedInvitees, setSelectedInvitees] = useState<string[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [participantIds, setParticipantIds] = useState<string[]>([]);
+  const [participants, setParticipants] = useState<any[]>([]);
 
   useEffect(() => {
     if (roomId && user) {
@@ -173,11 +174,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     try {
       const { data, error } = await supabase
         .from('chat_participants')
-        .select('user_id')
+        .select(`
+          user_id,
+          profiles!chat_participants_user_id_fkey(display_name, first_name, last_name, avatar_url)
+        `)
         .eq('room_id', roomId)
         .eq('is_active', true);
       if (error) throw error;
       setParticipantIds((data || []).map((r: any) => r.user_id));
+      setParticipants(data || []);
     } catch (e) {
       console.error('Error fetching participants:', e);
     }
@@ -221,7 +226,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         }
         const { data, error } = await query;
         if (error) throw error;
-        const filtered = (data || []).filter((u: any) => !participantIds.includes(u.user_id));
+        // Filter out blank names and current participants
+        const filtered = (data || []).filter((u: any) => {
+          const name = (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim());
+          return !participantIds.includes(u.user_id) && name.length > 1 && name !== ' ';
+        });
         setAvailableUsers(filtered);
       } catch (e: any) {
         console.error('Error loading users:', e);
@@ -574,9 +583,29 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             </Avatar>
             <div>
               <h2 className="font-semibold">{roomInfo?.name}</h2>
-              <p className="text-xs text-muted-foreground">
-                {roomInfo?.room_type === 'direct' ? 'Direct Message' : 'Group Chat'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {roomInfo?.room_type === 'direct' ? 'Direct Message' : 'Group Chat'}
+                </p>
+                {participants.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <div className="flex -space-x-2">
+                      {participants.slice(0, 3).map((p: any) => (
+                        <Avatar key={p.user_id} className="h-5 w-5 border-2 border-background">
+                          <AvatarImage src={p.profiles?.avatar_url} />
+                          <AvatarFallback className="text-xs">
+                            {(p.profiles?.display_name || p.profiles?.first_name || 'U')?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {participants.length} member{participants.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

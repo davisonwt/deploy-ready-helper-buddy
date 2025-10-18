@@ -67,7 +67,10 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     (allUsers || []).forEach((p) => {
       const id = p?.user_id;
       const name = getName(p).trim();
-      if (id && name && name !== 'Unknown User') dedup.set(id, { id, name });
+      // Filter out users with blank or missing names
+      if (id && name && name !== 'Unknown User' && name.length > 1 && name !== ' ') {
+        dedup.set(id, { id, name });
+      }
     });
     return Array.from(dedup.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [allUsers]);
