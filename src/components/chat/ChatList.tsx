@@ -56,7 +56,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       setLoading(true);
       console.log('🔍 Fetching rooms for user:', user.id);
 
-      // Fetch active rooms where the user is an active participant
+      // Fetch rooms where current user is an active participant using inner join
       const { data: roomsData, error } = await supabase
         .from('chat_rooms')
         .select(`
@@ -66,12 +66,14 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           is_premium,
           updated_at,
           created_by,
-          chat_participants:chat_participants(count)
+          cp:chat_participants!inner(user_id,is_active),
+          counts:chat_participants(count)
         `)
         .eq('is_active', true)
-        .eq('chat_participants.user_id', user.id)
-        .eq('chat_participants.is_active', true)
+        .eq('cp.user_id', user.id)
+        .eq('cp.is_active', true)
         .order('updated_at', { ascending: false });
+
 
       if (error) throw error;
 
