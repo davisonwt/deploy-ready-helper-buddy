@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,9 +62,19 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
 
   const getName = (p) => (p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Unknown User');
 
-  const filteredUsers = users.filter(profile => {
-    const name = profile.display_name || `${profile.first_name} ${profile.last_name}`.trim();
-    return name.toLowerCase().includes(searchTerm.toLowerCase());
+  const dropdownOptions = useMemo(() => {
+    const dedup = new Map();
+    (allUsers || []).forEach((p) => {
+      const id = p?.user_id;
+      const name = getName(p).trim();
+      if (id && name && name !== 'Unknown User') dedup.set(id, { id, name });
+    });
+    return Array.from(dedup.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allUsers]);
+
+  const filteredUsers = users.filter((profile) => {
+    const name = (profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim()).toLowerCase();
+    return searchTerm ? name.includes(searchTerm.toLowerCase()) : true;
   });
 
   return (
@@ -82,13 +92,13 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
         {/* Dropdown list (not transparent, high z-index) */}
         <div className="space-y-2">
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger className="w-full z-50">
+            <SelectTrigger className="w-full z-[60]">
               <SelectValue placeholder="Select a sower/bestower" />
             </SelectTrigger>
-            <SelectContent className="z-50 bg-background">
-              {allUsers.map((p) => (
-                <SelectItem key={p.user_id} value={p.user_id}>
-                  {getName(p)}
+            <SelectContent className="z-[60] bg-background text-foreground">
+              {dropdownOptions.map((opt) => (
+                <SelectItem key={opt.id} value={opt.id}>
+                  {opt.name}
                 </SelectItem>
               ))}
             </SelectContent>

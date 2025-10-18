@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -40,6 +41,7 @@ const ChatApp = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<'one' | 'circle'>('one');
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -284,154 +286,172 @@ const ChatApp = () => {
             </div>
           </div>
 
-          {/* One-on-Ones: s2g sowers and bestowers */}
-          <UserSelector
-            onStartDirectChat={handleStartDirectChat}
-            onStartCall={handleStartCall}
-          />
+          {/* Tabs for One-on-Ones vs Grove Circles */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'one' | 'circle')}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="one">One-on-Ones</TabsTrigger>
+              <TabsTrigger value="circle">Grove Circles</TabsTrigger>
+            </TabsList>
 
-          {/* Main Content */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">
-                Your Conversations
-              </h2>
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" data-lov-name="NewChatButton">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Chat
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
-              <DialogHeader>
-                <DialogTitle>Create New Chat</DialogTitle>
-                <DialogDescription>
-                  Create a new group chat and invite others to join.
-                </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="chatName">Chat Name *</Label>
-                    <Input
-                      id="chatName"
-                      placeholder="Enter chat name..."
-                      value={newChatName}
-                      onChange={(e) => setNewChatName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !isCreating) {
-                          handleCreateChat();
-                        }
-                      }}
-                    />
-                  </div>
+            <TabsContent value="one" className="space-y-4">
+              {/* One-on-Ones: s2g sowers and bestowers */}
+              <UserSelector
+                onStartDirectChat={handleStartDirectChat}
+                onStartCall={handleStartCall}
+              />
 
-                  {/* User Search */}
-                  <div className="space-y-2">
-                    <Label>Invite Users (Optional)</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Your One-on-Ones</h2>
+                </div>
+                <ScrollArea className="h-[calc(100vh-300px)]">
+                  <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
+                </ScrollArea>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="circle" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Grove Circles</h2>
+                {/* Create New Chat/Circle */}
+                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" data-lov-name="NewChatButton">
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Chat
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
+                <DialogHeader>
+                  <DialogTitle>Create New Chat</DialogTitle>
+                  <DialogDescription>
+                    Create a new group chat and invite others to join.
+                  </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="chatName">Chat Name *</Label>
                       <Input
-                        placeholder="Search users by name..."
-                        value={userSearchTerm}
-                        onChange={(e) => setUserSearchTerm(e.target.value)}
-                        className="pl-10"
+                        id="chatName"
+                        placeholder="Enter chat name..."
+                        value={newChatName}
+                        onChange={(e) => setNewChatName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !isCreating) {
+                            handleCreateChat();
+                          }
+                        }}
                       />
                     </div>
-                  </div>
 
-                  {/* Selected Users */}
-                  {selectedUsers.length > 0 && (
+                    {/* User Search */}
                     <div className="space-y-2">
-                      <div className="text-sm font-medium">Selected ({selectedUsers.length}):</div>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedUsers.map(userId => {
-                          const userData = availableUsers.find(u => u.user_id === userId);
-                          return (
-                            <Badge key={userId} variant="secondary" className="flex items-center gap-1">
-                              {userData ? getUserDisplayName(userData) : 'User'}
-                              <button
-                                onClick={() => handleUserToggle(userId)}
-                                className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          );
-                        })}
+                      <Label>Invite Users (Optional)</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search users by name..."
+                          value={userSearchTerm}
+                          onChange={(e) => setUserSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
                       </div>
                     </div>
-                  )}
 
-                  {/* Users List */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium">Available Users:</div>
-                    <ScrollArea className="h-48 border rounded-md p-2 bg-background">
-                      {loadingUsers ? (
-                        <div className="text-center py-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                          <p className="text-sm text-muted-foreground mt-2">Searching users...</p>
+                    {/* Selected Users */}
+                    {selectedUsers.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium">Selected ({selectedUsers.length}):</div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedUsers.map(userId => {
+                            const userData = availableUsers.find(u => u.user_id === userId);
+                            return (
+                              <Badge key={userId} variant="secondary" className="flex items-center gap-1">
+                                {userData ? getUserDisplayName(userData) : 'User'}
+                                <button
+                                  onClick={() => handleUserToggle(userId)}
+                                  className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            );
+                          })}
                         </div>
-                      ) : availableUsers.length === 0 ? (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">
-                            {userSearchTerm ? 'No users found' : 'Start typing to search for users'}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {availableUsers.map((userData) => (
-                            <div 
-                              key={userData.user_id}
-                              className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
-                              onClick={() => handleUserToggle(userData.user_id)}
-                            >
-                              <Checkbox 
-                                checked={selectedUsers.includes(userData.user_id)}
-                                onCheckedChange={() => handleUserToggle(userData.user_id)}
-                              />
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={userData.avatar_url} />
-                                <AvatarFallback>
-                                  {getUserDisplayName(userData).charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">
-                                  {getUserDisplayName(userData)}
+                      </div>
+                    )}
+
+                    {/* Users List */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Available Users:</div>
+                      <ScrollArea className="h-48 border rounded-md p-2 bg-background">
+                        {loadingUsers ? (
+                          <div className="text-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                            <p className="text-sm text-muted-foreground mt-2">Searching users...</p>
+                          </div>
+                        ) : availableUsers.length === 0 ? (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-muted-foreground">
+                              {userSearchTerm ? 'No users found' : 'Start typing to search for users'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {availableUsers.map((userData) => (
+                              <div 
+                                key={userData.user_id}
+                                className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer"
+                                onClick={() => handleUserToggle(userData.user_id)}
+                              >
+                                <Checkbox 
+                                  checked={selectedUsers.includes(userData.user_id)}
+                                  onCheckedChange={() => handleUserToggle(userData.user_id)}
+                                />
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={userData.avatar_url} />
+                                  <AvatarFallback>
+                                    {getUserDisplayName(userData).charAt(0).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium truncate">
+                                    {getUserDisplayName(userData)}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-2 justify-end border-t pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsCreateDialogOpen(false);
-                      setNewChatName('');
-                      setSelectedUsers([]);
-                      setUserSearchTerm('');
-                    }}
-                    disabled={isCreating}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateChat} disabled={isCreating}>
-                    {isCreating ? 'Creating...' : 'Create Chat'}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <ScrollArea className="h-[calc(100vh-300px)]">
-            <ChatList searchQuery={searchQuery} />
-          </ScrollArea>
-        </div>
+                  <div className="flex gap-2 justify-end border-t pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsCreateDialogOpen(false);
+                        setNewChatName('');
+                        setSelectedUsers([]);
+                        setUserSearchTerm('');
+                      }}
+                      disabled={isCreating}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateChat} disabled={isCreating}>
+                      {isCreating ? 'Creating...' : 'Create Chat'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-300px)]">
+                <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>
