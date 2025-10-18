@@ -29,9 +29,11 @@ interface ChatRoom {
 
 interface ChatListProps {
   searchQuery: string;
+  roomType?: 'direct' | 'group' | 'all';
+  hideFilterControls?: boolean;
 }
 
-export const ChatList = ({ searchQuery }: ChatListProps) => {
+export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = false }: ChatListProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
@@ -166,6 +168,10 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
     }
   };
   
+  const effectiveType = roomType !== 'all'
+    ? roomType
+    : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
+
   const filteredRooms = rooms
     .filter((room) => {
       // Filter by search query
@@ -174,8 +180,8 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
       }
 
       // Filter by type
-      if (filter === 'private' && room.room_type !== 'direct') return false;
-      if (filter === 'community' && room.room_type === 'direct') return false;
+      if (effectiveType === 'direct' && room.room_type !== 'direct') return false;
+      if (effectiveType === 'group' && room.room_type === 'direct') return false;
 
       return true;
     })
@@ -192,34 +198,36 @@ export const ChatList = ({ searchQuery }: ChatListProps) => {
   return (
     <div className="space-y-4">
       {/* Filter Buttons */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={filter === 'all' ? 'default' : 'outline'}
-          onClick={() => setFilter('all')}
-          className={filter === 'all' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-        >
-          All
-        </Button>
-        <Button
-          size="sm"
-          variant={filter === 'private' ? 'default' : 'outline'}
-          onClick={() => setFilter('private')}
-          className={filter === 'private' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-        >
-          <MessageSquare className="h-3 w-3 mr-1" />
-          Private
-        </Button>
-        <Button
-          size="sm"
-          variant={filter === 'community' ? 'default' : 'outline'}
-          onClick={() => setFilter('community')}
-          className={filter === 'community' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-        >
-          <Users className="h-3 w-3 mr-1" />
-          Community
-        </Button>
-      </div>
+      {!hideFilterControls && roomType === 'all' && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={filter === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilter('all')}
+            className={filter === 'all' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+          >
+            All
+          </Button>
+          <Button
+            size="sm"
+            variant={filter === 'private' ? 'default' : 'outline'}
+            onClick={() => setFilter('private')}
+            className={filter === 'private' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+          >
+            <MessageSquare className="h-3 w-3 mr-1" />
+            Private
+          </Button>
+          <Button
+            size="sm"
+            variant={filter === 'community' ? 'default' : 'outline'}
+            onClick={() => setFilter('community')}
+            className={filter === 'community' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+          >
+            <Users className="h-3 w-3 mr-1" />
+            Community
+          </Button>
+        </div>
+      )}
 
       {/* Room List */}
       {filteredRooms.length === 0 ? (
