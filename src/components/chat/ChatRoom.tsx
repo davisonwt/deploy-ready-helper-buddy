@@ -183,6 +183,22 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
+  // Ensure current user is a member of this room before sending
+  const ensureMembership = async () => {
+    try {
+      if (!participantIds.includes(user.id)) {
+        const { error } = await supabase
+          .from('chat_participants')
+          .insert({ room_id: roomId, user_id: user.id, is_moderator: false, is_active: true } as any);
+        // Ignore duplicate errors
+        if (error && (error as any)?.code !== '23505') throw error;
+        await fetchParticipants();
+      }
+    } catch (e) {
+      console.error('ensureMembership error:', e);
+    }
+  };
+
   useEffect(() => {
     if (roomId && user) {
       fetchParticipants();
@@ -290,7 +306,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     // Send typing status (ignore errors if table doesn't exist yet)
     supabase
       .from('typing' as any)
-      .upsert({ room_id: roomId, user_id: user.id, is_typing: true })
+      .upsert({ room_id: roomId, user_id: user.id, is_typing: true } as any, { onConflict: 'room_id,user_id' } as any)
       .then(() => {
         typingTimeoutRef.current = setTimeout(async () => {
           try {
@@ -311,6 +327,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
     try {
       setSending(true);
+      // Ensure membership so RPC passes membership check
+      await ensureMembership();
       // Use secure RPC that enforces membership and inserts as the current user
       const { data: inserted, error } = await supabase.rpc('send_chat_message', {
         p_room_id: roomId,
@@ -415,6 +433,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       else if (file.type.startsWith('video/')) fileType = 'video';
       else if (file.type.startsWith('audio/')) fileType = 'audio';
 
+      await ensureMembership();
       const { data: inserted, error } = await supabase.rpc('send_chat_message', {
         p_room_id: roomId,
         p_content: '[File]',
