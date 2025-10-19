@@ -577,12 +577,18 @@ export default function RadioManagementPage() {
                 <CoHostInvites />
               </div>
             )}
+
+            {selectedOption === 'musiclibrary' && (
+              <div className="h-full space-y-6">
+                <PublicMusicLibrary />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* DJ Profile Creation Dialog */}
-      <CreateDJProfileForm 
+      <CreateDJProfileForm
         open={showDJProfileForm} 
         onClose={() => setShowDJProfileForm(false)} 
       />

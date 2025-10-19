@@ -783,6 +783,7 @@ export type Database = {
           id: string
           is_explicit: boolean | null
           is_original: boolean | null
+          is_public: boolean | null
           preview_url: string | null
           price: number | null
           tags: string[] | null
@@ -804,6 +805,7 @@ export type Database = {
           id?: string
           is_explicit?: boolean | null
           is_original?: boolean | null
+          is_public?: boolean | null
           preview_url?: string | null
           price?: number | null
           tags?: string[] | null
@@ -825,6 +827,7 @@ export type Database = {
           id?: string
           is_explicit?: boolean | null
           is_original?: boolean | null
+          is_public?: boolean | null
           preview_url?: string | null
           price?: number | null
           tags?: string[] | null
