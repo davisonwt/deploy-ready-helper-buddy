@@ -37,7 +37,7 @@ export function PublicMusicLibrary() {
   const previewTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch all public music tracks with DJ info
-  const { data: tracks = [], isLoading } = useQuery({
+  const { data: tracks, isLoading } = useQuery<any[]>({
     queryKey: ['public-music-library'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,7 +56,8 @@ export function PublicMusicLibrary() {
 
       if (error) throw error
       return data || []
-    }
+    },
+    initialData: []
   })
 
   useEffect(() => {
