@@ -23,6 +23,22 @@ import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 
+interface MusicTrack {
+  id: string
+  track_title: string
+  artist_name: string
+  genre: string
+  duration_seconds: number
+  file_url: string
+  created_at: string
+  radio_djs: {
+    id: string
+    dj_name: string
+    avatar_url: string
+    user_id: string
+  }
+}
+
 export function PublicMusicLibrary() {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
@@ -37,7 +53,7 @@ export function PublicMusicLibrary() {
   const previewTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch all public music tracks with DJ info
-  const { data: tracks, isLoading } = useQuery<any[]>({
+  const { data: tracks = [], isLoading } = useQuery<MusicTrack[]>({
     queryKey: ['public-music-library'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,9 +71,8 @@ export function PublicMusicLibrary() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data || []
-    },
-    initialData: []
+      return (data || []) as MusicTrack[]
+    }
   })
 
   useEffect(() => {
