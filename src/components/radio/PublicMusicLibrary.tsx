@@ -26,15 +26,16 @@ import { toast } from 'sonner'
 interface MusicTrack {
   id: string
   track_title: string
-  artist_name: string
-  genre: string
-  duration_seconds: number
+  artist_name: string | null
+  genre: string | null
+  duration_seconds: number | null
   file_url: string
   created_at: string
+  is_public: boolean
   radio_djs: {
     id: string
     dj_name: string
-    avatar_url: string
+    avatar_url: string | null
     user_id: string
   }
 }
@@ -98,7 +99,7 @@ export function PublicMusicLibrary() {
     return (basePrice + fee).toFixed(2)
   }
 
-  const handlePlayPreview = async (track: any) => {
+  const handlePlayPreview = async (track: MusicTrack) => {
     let el = audioRef.current
     if (!el) {
       el = new Audio()
@@ -196,7 +197,7 @@ export function PublicMusicLibrary() {
     }, 1000)
   }
 
-  const handlePurchase = async (track: any) => {
+  const handlePurchase = async (track: MusicTrack) => {
     if (!user) {
       toast.error('Please log in to purchase music')
       return
