@@ -20,7 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 interface ChatRoom {
   id: string;
   name: string;
-  room_type: 'direct' | 'group';
+  room_type: string;
   is_premium: boolean;
   updated_at: string;
   created_by: string;
