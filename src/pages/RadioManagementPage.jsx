@@ -29,6 +29,7 @@ import RadioSetupWizard from '@/components/radio/RadioSetupWizard'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
+import PublicMusicLibrary from '@/components/radio/PublicMusicLibrary'
 
 const radioOptions = {
   setup: {
@@ -93,6 +94,13 @@ const radioOptions = {
     icon: UserPlus,
     color: { bg: '#A78BFA', text: '#FFFFFF', buttonBg: '#8B5CF6', buttonText: '#FFFFFF', opacity: 0.95 },
     features: ['View Invites', 'Accept/Decline', 'Upload Content', 'Acknowledge Availability']
+  },
+  musiclibrary: {
+    name: 'Music Library',
+    description: 'Browse and purchase music tracks from our DJs with 30-second previews',
+    icon: Music,
+    color: { bg: '#10B981', text: '#FFFFFF', buttonBg: '#059669', buttonText: '#FFFFFF', opacity: 0.95 },
+    features: ['Browse Tracks', '30s Previews', 'Purchase Music', 'DJ Attribution']
   }
 }
 
