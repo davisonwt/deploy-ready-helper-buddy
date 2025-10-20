@@ -109,7 +109,7 @@ export default function PublicMusicLibrary() {
     })
 
   const uniqueGenres = [...new Set(tracks.map(t => t.genre).filter(Boolean))]
-  const uniqueTypes = [...new Set(tracks.map(t => t.track_type))]
+  const uniqueTypes = [...new Set(tracks.map(t => t.track_type).filter(Boolean))]
 
   const handlePlay = async (track) => {
     let el = audioRef.current
@@ -334,12 +334,12 @@ export default function PublicMusicLibrary() {
             </div>
             
             {/* Genre Filter */}
-            <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+            <Select value={selectedGenre || undefined} onValueChange={(value) => setSelectedGenre(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="All Genres" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Genres</SelectItem>
+                <SelectItem value="all">All Genres</SelectItem>
                 {uniqueGenres.map(genre => (
                   <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                 ))}
@@ -347,12 +347,12 @@ export default function PublicMusicLibrary() {
             </Select>
             
             {/* Type Filter */}
-            <Select value={selectedType} onValueChange={setSelectedType}>
+            <Select value={selectedType || undefined} onValueChange={(value) => setSelectedType(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 {uniqueTypes.map(type => (
                   <SelectItem key={type} value={type}>{getTrackTypeLabel(type)}</SelectItem>
                 ))}
