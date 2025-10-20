@@ -66,12 +66,12 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           is_premium,
           updated_at,
           created_by,
-          cp:chat_participants!inner(user_id,is_active),
+          chat_participants!inner(user_id,is_active),
           counts:chat_participants(count)
         `)
         .eq('is_active', true)
-        .eq('cp.user_id', user.id)
-        .eq('cp.is_active', true)
+        .eq('chat_participants.user_id', user.id)
+        .eq('chat_participants.is_active', true)
         .order('updated_at', { ascending: false });
 
 
@@ -80,7 +80,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       // Map participant counts
       const roomsWithCounts = (roomsData || []).map((room: any) => ({
         ...room,
-        participant_count: room.chat_participants?.[0]?.count ?? 0,
+        participant_count: room.counts?.[0]?.count ?? 0,
       }));
 
       console.log('🔍 Rooms (active only) with counts:', roomsWithCounts);
