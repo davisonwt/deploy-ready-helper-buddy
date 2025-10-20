@@ -172,19 +172,42 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   // Participants
   const fetchParticipants = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch active participants without relying on a missing FK relationship
+      const { data: partRows, error: partErr } = await supabase
         .from('chat_participants')
-        .select(`
-          user_id,
-          profiles!chat_participants_user_id_fkey(display_name, first_name, last_name, avatar_url)
-        `)
+        .select('user_id')
         .eq('room_id', roomId)
         .eq('is_active', true);
-      if (error) throw error;
-      setParticipantIds((data || []).map((r: any) => r.user_id));
-      setParticipants(data || []);
+      if (partErr) throw partErr;
+
+      const ids = (partRows || []).map((r: any) => r.user_id);
+      setParticipantIds(ids);
+
+      if (ids.length === 0) {
+        setParticipants([]);
+        return;
+      }
+
+      // Fetch profiles separately and merge
+      const { data: profs, error: profErr } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, first_name, last_name, avatar_url')
+        .in('user_id', ids);
+      if (profErr) throw profErr;
+
+      const profileById: Record<string, any> = Object.fromEntries(
+        (profs || []).map((p: any) => [p.user_id, p])
+      );
+
+      const enriched = ids.map((uid: string) => ({
+        user_id: uid,
+        profiles: profileById[uid] || null,
+      }));
+
+      setParticipants(enriched);
     } catch (e) {
       console.error('Error fetching participants:', e);
+      setParticipants([]);
     }
   };
 
