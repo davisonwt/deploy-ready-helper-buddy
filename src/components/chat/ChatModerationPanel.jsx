@@ -61,18 +61,33 @@ const ChatModerationPanel = ({ currentRoom, currentUser }) => {
 
   const fetchParticipants = async () => {
     try {
-      const { data, error } = await supabase
+      // Load participant rows first (avoid broken FK join)
+      const { data: partRows, error: partErr } = await supabase
         .from('chat_participants')
-        .select(`
-          *,
-          profiles!chat_participants_user_id_fkey(display_name, avatar_url)
-        `)
+        .select('*')
         .eq('room_id', currentRoom.id)
         .eq('is_active', true)
         .order('joined_at', { ascending: true });
 
-      if (error) throw error;
-      setParticipants(data || []);
+      if (partErr) throw partErr;
+
+      const ids = (partRows || []).map((r) => r.user_id);
+      if (ids.length === 0) {
+        setParticipants([]);
+        return;
+      }
+
+      // Fetch profiles separately
+      const { data: profs, error: profErr } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', ids);
+      if (profErr) throw profErr;
+
+      const profileById = Object.fromEntries((profs || []).map((p) => [p.user_id, p]));
+      const enriched = (partRows || []).map((row) => ({ ...row, profiles: profileById[row.user_id] || null }));
+
+      setParticipants(enriched);
     } catch (error) {
       console.error('Error fetching participants:', error);
     } finally {
