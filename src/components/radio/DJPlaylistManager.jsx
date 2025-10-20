@@ -77,6 +77,7 @@ export default function DJPlaylistManager() {
   })
   const [editingTrack, setEditingTrack] = useState(null)
   const [editData, setEditData] = useState({})
+  const [hasDJProfile, setHasDJProfile] = useState(true)
 
   useEffect(() => {
     fetchPlaylists()
@@ -113,11 +114,7 @@ export default function DJPlaylistManager() {
 
       if (!djProfile) {
         console.log('❌ No DJ profile found for user:', user.id);
-        toast({
-          title: "DJ Profile Required",
-          description: "You need to create a DJ profile first to manage playlists. Go to 'DJ Profiles' section.",
-          variant: "destructive"
-        })
+        setHasDJProfile(false)
         setLoading(false)
         return
       }
@@ -659,6 +656,25 @@ export default function DJPlaylistManager() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Loading playlists...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!hasDJProfile) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <Mic className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">DJ Profile Required</h3>
+            <p className="text-muted-foreground mb-4">
+              You need to create a DJ profile first before you can manage playlists.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Click the "Create New DJ Profile" button above to get started.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     )
   }

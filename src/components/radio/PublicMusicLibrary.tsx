@@ -282,12 +282,11 @@ export function PublicMusicLibrary() {
             </div>
             
             {/* Genre Filter */}
-            <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+            <Select value={selectedGenre || undefined} onValueChange={(value) => setSelectedGenre(value || '')}>
               <SelectTrigger>
                 <SelectValue placeholder="All Genres" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Genres</SelectItem>
                 {uniqueGenres.map(genre => (
                   <SelectItem key={genre} value={genre as string}>{genre as string}</SelectItem>
                 ))}
@@ -295,12 +294,11 @@ export function PublicMusicLibrary() {
             </Select>
             
             {/* Artist/DJ Filter */}
-            <Select value={selectedArtist} onValueChange={setSelectedArtist}>
+            <Select value={selectedArtist || undefined} onValueChange={(value) => setSelectedArtist(value || '')}>
               <SelectTrigger>
                 <SelectValue placeholder="All DJs" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All DJs</SelectItem>
                 {uniqueArtists.map(artist => (
                   <SelectItem key={artist} value={artist as string}>{artist as string}</SelectItem>
                 ))}
