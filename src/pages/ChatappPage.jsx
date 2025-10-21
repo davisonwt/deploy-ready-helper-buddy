@@ -159,7 +159,9 @@ const ChatappPage = () => {
   const filteredRooms = rooms.filter(room => {
     if (activeTab === 'all') return true;
     if (activeTab === 'discover') return false; // Discover tab shows different content
-    return room.room_type === activeTab;
+    if (activeTab === 'oneOnOne') return room.room_type === 'direct';
+    if (activeTab === 'group') return room.room_type !== 'direct';
+    return true;
   });
 
   const handleStartDirectChat = async (otherUserId) => {
@@ -528,15 +530,15 @@ const ChatappPage = () => {
                   
                   {/* Room Content */}
                   <TabsContent value={activeTab} className="flex-1 overflow-hidden mt-0">
-                    {activeTab === 'oneOnOne' ? (
-                      <div className="h-full">
-                        <UserSelector
-                          onStartDirectChat={handleStartDirectChat}
-                          onStartCall={handleStartCall}
-                        />
-                      </div>
-                    ) : activeTab !== 'discover' ? (
+                    {activeTab !== 'discover' ? (
                       <ScrollArea className="h-full">
+                        {activeTab === 'oneOnOne' && (
+                          <div className="mb-3">
+                            <Button size="sm" onClick={() => setShowUserSelector(true)}>
+                              Start Direct Chat
+                            </Button>
+                          </div>
+                        )}
                         <div className="space-y-3 pr-3">
                           {filteredRooms.map((room) => (
                             <ChatRoomCard
@@ -555,7 +557,7 @@ const ChatappPage = () => {
                             <div className="text-center py-8">
                               <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
                               <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-                                {activeTab === 'group' ? 'No Grove Circles yet' : 'No rooms found'}
+                                {activeTab === 'group' ? 'No Grove Circles yet' : activeTab === 'oneOnOne' ? 'No one-on-one chats yet' : 'No rooms found'}
                               </p>
                               <Button 
                                 onClick={() => setShowCreateModal(true)}
