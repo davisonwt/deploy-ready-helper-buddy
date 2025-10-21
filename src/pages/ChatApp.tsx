@@ -258,7 +258,7 @@ const ChatApp = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)]">
+    <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
       {currentRoomId ? (
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
       ) : (
@@ -304,7 +304,7 @@ const ChatApp = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Your One-on-Ones</h2>
                 </div>
-                <ScrollArea className="h-[calc(100vh-300px)]">
+                <ScrollArea className="h-[calc(100vh-300px)] pb-32 pr-2">
                   <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
                 </ScrollArea>
               </div>
@@ -447,7 +447,7 @@ const ChatApp = () => {
               </Dialog>
               </div>
 
-              <ScrollArea className="h-[calc(100vh-300px)]">
+              <ScrollArea className="h-[calc(100vh-300px)] pb-32 pr-2">
                 <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
               </ScrollArea>
             </TabsContent>
