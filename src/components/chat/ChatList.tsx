@@ -69,7 +69,8 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           chat_participants!inner(user_id,is_active),
           counts:chat_participants(count)
         `)
-        .eq('is_active', true)
+        // Include rooms that are active OR have null is_active (legacy records)
+        .or('is_active.is.null,is_active.eq.true')
         .eq('chat_participants.user_id', user.id)
         .eq('chat_participants.is_active', true)
         .order('updated_at', { ascending: false });
@@ -174,6 +175,8 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     ? roomType
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
+  const isDirectRoom = (room: any) => room.room_type === 'direct' || ((room as any).participant_count ?? 0) <= 2;
+
   const filteredRooms = rooms
     .filter((room) => {
       // Filter by search query
@@ -181,9 +184,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         return false;
       }
 
-      // Filter by type
-      if (effectiveType === 'direct' && room.room_type !== 'direct') return false;
-      if (effectiveType === 'group' && room.room_type === 'direct') return false;
+      // Filter by type with safe fallback using participant count
+      if (effectiveType === 'direct' && !isDirectRoom(room)) return false;
+      if (effectiveType === 'group' && isDirectRoom(room)) return false;
 
       return true;
     })
