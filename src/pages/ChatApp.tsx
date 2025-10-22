@@ -304,8 +304,10 @@ const ChatApp = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold">Your One-on-Ones</h2>
                 </div>
-                <ScrollArea className="h-[calc(100vh-300px)] pb-32 pr-2">
-                  <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
+                <ScrollArea className="h-[calc(100vh-300px)] pr-2">
+                  <div className="pb-44">
+                    <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
+                  </div>
                 </ScrollArea>
               </div>
             </TabsContent>
@@ -447,8 +449,10 @@ const ChatApp = () => {
               </Dialog>
               </div>
 
-              <ScrollArea className="h-[calc(100vh-300px)] pb-32 pr-2">
-                <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+              <ScrollArea className="h-[calc(100vh-300px)] pr-2">
+                <div className="pb-44">
+                  <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+                </div>
               </ScrollArea>
             </TabsContent>
           </Tabs>
