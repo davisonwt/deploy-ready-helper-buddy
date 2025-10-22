@@ -70,9 +70,8 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           counts:chat_participants(count)
         `)
         // Include rooms that are active OR have null is_active (legacy records)
-        .or('is_active.is.null,is_active.eq.true')
         .eq('chat_participants.user_id', user.id)
-        .eq('chat_participants.is_active', true)
+        .or('is_active.is.null,is_active.eq.true', { foreignTable: 'chat_participants' })
         .order('updated_at', { ascending: false });
 
 
