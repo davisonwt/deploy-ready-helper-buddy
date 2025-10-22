@@ -178,8 +178,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
 
   const filteredRooms = rooms
     .filter((room) => {
-      // Filter by search query
-      if (searchQuery && !room.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      // Filter by search query (trim to avoid accidental spaces hiding results)
+      const q = (searchQuery || '').trim().toLowerCase();
+      if (q && !((room.name || '').toLowerCase().includes(q))) {
         return false;
       }
 
