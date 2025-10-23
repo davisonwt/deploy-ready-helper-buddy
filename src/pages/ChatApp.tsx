@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
-const UserSelectorLazy = React.lazy(() => import('@/components/chat/UserSelector'));
+import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import {
   Dialog,
@@ -295,12 +295,10 @@ const ChatApp = () => {
 
             <TabsContent value="one" className="space-y-4">
               {/* One-on-Ones: s2g sowers and bestowers */}
-              <React.Suspense fallback={null}>
-                <UserSelectorLazy
-                  onStartDirectChat={handleStartDirectChat}
-                  onStartCall={handleStartCall}
-                />
-              </React.Suspense>
+              <SafeUserSelector
+                onStartDirectChat={handleStartDirectChat}
+                onStartCall={handleStartCall}
+              />
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
