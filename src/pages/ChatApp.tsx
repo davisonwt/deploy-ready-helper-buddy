@@ -305,8 +305,9 @@ const ChatApp = () => {
                   <h2 className="text-xl font-semibold">Your One-on-Ones</h2>
                 </div>
                 <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                  <div className="pb-44">
+                  <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
                     <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
+                    <div aria-hidden className="h-24 sm:h-28 md:h-32" />
                   </div>
                 </ScrollArea>
               </div>
@@ -450,8 +451,9 @@ const ChatApp = () => {
               </div>
 
               <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                <div className="pb-44">
+                <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
                   <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+                  <div aria-hidden className="h-24 sm:h-28 md:h-32" />
                 </div>
               </ScrollArea>
             </TabsContent>
