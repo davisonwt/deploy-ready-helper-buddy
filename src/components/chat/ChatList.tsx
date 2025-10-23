@@ -56,26 +56,60 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       setLoading(true);
       console.log('🔍 Fetching rooms for user:', user.id);
 
-      // Fetch rooms where current user is an active participant using inner join
-      const { data: roomsData, error } = await supabase
-        .from('chat_rooms')
-        .select(`
-          id,
-          name,
-          room_type,
-          is_premium,
-          updated_at,
-          created_by,
-          chat_participants!inner(user_id,is_active),
-          counts:chat_participants(count)
-        `)
-        // Include rooms that are active OR have null is_active (legacy records)
-        .eq('chat_participants.user_id', user.id)
-        .or('is_active.is.null,is_active.eq.true', { foreignTable: 'chat_participants' })
-        .order('updated_at', { ascending: false });
+      // Primary: join chat_rooms with chat_participants for this user
+      let roomsData: any[] | null = null;
+      try {
+        const { data: joined, error: joinError } = await supabase
+          .from('chat_rooms')
+          .select(`
+            id,
+            name,
+            room_type,
+            is_premium,
+            updated_at,
+            created_by,
+            chat_participants!inner(user_id,is_active),
+            counts:chat_participants(count)
+          `)
+          .eq('chat_participants.user_id', user.id)
+          .or('chat_participants.is_active.is.null,chat_participants.is_active.eq.true')
+          .order('updated_at', { ascending: false });
 
+        if (joinError) {
+          console.warn('⚠️ Join query failed, will fallback:', joinError);
+        } else {
+          roomsData = joined;
+        }
+      } catch (e) {
+        console.warn('⚠️ Join query threw, will fallback:', e);
+      }
 
-      if (error) throw error;
+      // Robust fallback: fetch via participants -> rooms (avoids join/RLS quirks)
+      if (!roomsData || roomsData.length === 0) {
+        console.log('↪️ Fallback path: loading rooms via chat_participants list');
+        const { data: parts, error: partsError } = await supabase
+          .from('chat_participants')
+          .select('room_id')
+          .eq('user_id', user.id)
+          .or('is_active.is.null,is_active.eq.true');
+        if (partsError) throw partsError;
+        const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
+
+        if (roomIds.length === 0) {
+          console.log('No participant rooms found for user');
+          setRooms([]);
+          return;
+        }
+
+        const { data: roomsRes, error: roomsErr } = await supabase
+          .from('chat_rooms')
+          .select('id, name, room_type, is_premium, updated_at, created_by, counts:chat_participants(count)')
+          .in('id', roomIds)
+          .order('updated_at', { ascending: false });
+
+        if (roomsErr) throw roomsErr;
+        roomsData = roomsRes;
+      }
 
       // Map participant counts
       const roomsWithCounts = (roomsData || []).map((room: any) => ({
@@ -83,7 +117,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         participant_count: room.counts?.[0]?.count ?? 0,
       }));
 
-      console.log('🔍 Rooms (active only) with counts:', roomsWithCounts);
+      console.log('✅ Rooms loaded:', roomsWithCounts);
       setRooms(roomsWithCounts);
     } catch (error) {
       console.error('Error fetching rooms:', error);
