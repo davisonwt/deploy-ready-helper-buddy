@@ -72,7 +72,6 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             counts:chat_participants(count)
           `)
           .eq('chat_participants.user_id', user.id)
-          .or('chat_participants.is_active.is.null,chat_participants.is_active.eq.true')
           .order('updated_at', { ascending: false });
 
         if (joinError) {
