@@ -143,20 +143,32 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       setLoading(true);
       const { data, error } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          sender_profile:profiles!chat_messages_sender_profile_id_fkey(
-            id,
-            user_id,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Fetch profiles separately for all unique sender IDs
+      const senderIds = Array.from(new Set((data || []).map(m => m.sender_id)));
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .in('user_id', senderIds);
+        
+        const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+        
+        // Enrich messages with profile data
+        const enriched = (data || []).map(msg => ({
+          ...msg,
+          sender_profile: profileMap.get(msg.sender_id) || null
+        }));
+        
+        setMessages(enriched);
+      } else {
+        setMessages(data || []);
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -302,23 +314,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
-          // Fetch the full message with profile data
-          const { data } = await supabase
+          // Fetch the message and its sender profile separately
+          const { data: msg } = await supabase
             .from('chat_messages')
-            .select(`
-              *,
-              sender_profile:profiles!chat_messages_sender_profile_id_fkey(
-                id,
-                user_id,
-                display_name,
-                avatar_url
-              )
-            `)
+            .select('*')
             .eq('id', payload.new.id)
-            .single();
+            .maybeSingle();
 
-          if (data) {
-            setMessages(prev => [...prev, data]);
+          if (msg) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('user_id, display_name, first_name, last_name, avatar_url')
+              .eq('user_id', msg.sender_id)
+              .maybeSingle();
+            
+            setMessages(prev => [...prev, { ...msg, sender_profile: profile || null }]);
           }
         }
       )
