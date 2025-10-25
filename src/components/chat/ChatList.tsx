@@ -110,11 +110,17 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         roomsData = roomsRes;
       }
 
-      // Map participant counts
-      const roomsWithCounts = (roomsData || []).map((room: any) => ({
-        ...room,
-        participant_count: room.counts?.[0]?.count ?? 0,
-      }));
+      // Map participant counts with robust handling of different shapes
+      const roomsWithCounts = (roomsData || []).map((room: any) => {
+        const counts = (room as any).counts;
+        const participant_count =
+          typeof counts === 'number'
+            ? counts
+            : Array.isArray(counts)
+              ? (counts[0]?.count ?? 0)
+              : (counts?.count ?? 0);
+        return { ...room, participant_count };
+      });
 
       console.log('✅ Rooms loaded:', roomsWithCounts);
       setRooms(roomsWithCounts);
@@ -207,7 +213,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     ? roomType
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
-  const isDirectRoom = (room: any) => room.room_type === 'direct' || ((room as any).participant_count ?? 0) <= 2;
+  const isDirectRoom = (room: any) => (room.room_type ? room.room_type === 'direct' : ((room as any).participant_count ?? 0) <= 2);
 
   const filteredRooms = rooms
     .filter((room) => {
