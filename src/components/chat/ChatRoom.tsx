@@ -126,20 +126,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const fetchRoomInfo = async () => {
     try {
       const { data, error } = await supabase
-        .from('chat_rooms')
-        .select('*')
-        .eq('id', roomId)
+        .from('chat_participants')
+        .select('chat_rooms!inner(*)')
+        .eq('user_id', user.id)
+        .eq('room_id', roomId)
+        .eq('is_active', true)
         .maybeSingle();
 
       if (error) throw error;
 
-      if (!data || (data as any)?.is_active === false) {
+      const room = (data as any)?.chat_rooms || null;
+      if (!room || room.is_active === false) {
         toast({ title: 'Chat unavailable', description: 'This chat no longer exists or was archived.' });
         onBack?.();
         return;
       }
 
-      setRoomInfo(data);
+      setRoomInfo(room);
     } catch (error) {
       console.error('Error fetching room info:', error);
       toast({ title: 'Chat unavailable', description: 'Could not open this chat.' });
