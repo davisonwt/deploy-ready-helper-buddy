@@ -129,12 +129,21 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         .from('chat_rooms')
         .select('*')
         .eq('id', roomId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      if (!data || (data as any)?.is_active === false) {
+        toast({ title: 'Chat unavailable', description: 'This chat no longer exists or was archived.' });
+        onBack?.();
+        return;
+      }
+
       setRoomInfo(data);
     } catch (error) {
       console.error('Error fetching room info:', error);
+      toast({ title: 'Chat unavailable', description: 'Could not open this chat.' });
+      onBack?.();
     }
   };
 
@@ -329,6 +338,24 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
               .maybeSingle();
             
             setMessages(prev => [...prev, { ...msg, sender_profile: profile || null }]);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'chat_rooms', filter: `id=eq.${roomId}` },
+        () => {
+          toast({ title: 'Chat removed', description: 'This chat was deleted.' });
+          onBack?.();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'chat_rooms', filter: `id=eq.${roomId}` },
+        (payload) => {
+          if ((payload.new as any)?.is_active === false) {
+            toast({ title: 'Chat archived', description: 'This chat is no longer available.' });
+            onBack?.();
           }
         }
       )
