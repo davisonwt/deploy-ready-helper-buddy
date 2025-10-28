@@ -121,16 +121,6 @@ export default function SowerProfile() {
                     fileUrl={track.file_url} 
                     duration={Math.min(30, track.duration_seconds || 30)}
                   />
-                  
-                  {track.tags && track.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {track.tags.map((tag: string) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
 
                   <Button 
                     onClick={() => handleBuySong(track)}
