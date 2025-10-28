@@ -144,6 +144,9 @@ const ChatInput = ({ roomId, onSendMessage }: ChatInputProps) => {
     if ((!message.trim() && !selectedFile) || uploading || recording) return;
 
     try {
+      // Import sanitization utility
+      const { sanitizeInput } = await import('@/utils/inputSanitization');
+      
       let fileData = null;
       
       if (selectedFile) {
@@ -157,15 +160,20 @@ const ChatInput = ({ roomId, onSendMessage }: ChatInputProps) => {
 
           fileData = {
             file_url: fileUrl,
-            file_name: selectedFile.name,
+            file_name: sanitizeInput.filename(selectedFile.name),
             file_type: fileType,
             file_size: selectedFile.size
           };
         }
       }
 
+      // Sanitize message content (max 5000 chars)
+      const sanitizedContent = message.trim() 
+        ? sanitizeInput.text(message.trim(), 5000) 
+        : (fileData ? '[File]' : '');
+
       await onSendMessage({ 
-        content: message.trim() || (fileData ? '[File]' : ''),
+        content: sanitizedContent,
         message_type: fileData ? 'file' : 'text',
         ...fileData
       });

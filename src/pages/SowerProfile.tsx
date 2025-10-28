@@ -33,7 +33,7 @@ export default function SowerProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dj_music_tracks')
-        .select('*')
+        .select('id, dj_id, track_title, artist_name, album_name, duration_seconds, genre, description, cover_art_url, file_url, file_size, price_usdc, is_original, is_public, play_count, purchase_count, created_at')
         .eq('dj_id', id)
         .eq('is_original', true)
         .order('created_at', { ascending: false });

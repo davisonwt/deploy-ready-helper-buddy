@@ -78,7 +78,7 @@ export function useSecureProfiles() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, display_name, avatar_url, bio, location, website, social_links, created_at, updated_at, is_verified, username')
         .eq('user_id', session.user.id)
         .maybeSingle()
       
