@@ -131,10 +131,28 @@ export function ComprehensiveLiveSession({
     })
   }
 
-  const checkHostPermissions = () => {
-    const isSessionHost = sessionData.created_by === user?.id
-    const isAdmin = user?.app_metadata?.role === 'admin' || user?.app_metadata?.role === 'gosat'
-    setIsHost(isSessionHost || isAdmin)
+  const checkHostPermissions = async () => {
+    try {
+      const isSessionHost = sessionData.created_by === user?.id
+      
+      // Server-side role verification using RPC
+      const { data: hasAdminRole, error } = await supabase
+        .rpc('has_role', { role_name: 'admin' })
+      
+      if (error) {
+        console.error('Error checking admin role:', error)
+        setIsHost(isSessionHost) // Fallback to session host only
+        return
+      }
+      
+      const { data: hasGosatRole } = await supabase
+        .rpc('has_role', { role_name: 'gosat' })
+      
+      setIsHost(isSessionHost || hasAdminRole || hasGosatRole)
+    } catch (error) {
+      console.error('Error in checkHostPermissions:', error)
+      setIsHost(sessionData.created_by === user?.id)
+    }
   }
 
   const fetchInitialData = async () => {
