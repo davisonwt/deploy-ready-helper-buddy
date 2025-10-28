@@ -33,7 +33,7 @@ export default function SowerProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dj_music_tracks')
-        .select('id, dj_id, track_title, artist_name, duration_seconds, genre, file_url, file_size, price, wallet_address, is_original, is_public, created_at')
+        .select('id, dj_id, track_title, duration_seconds, file_url, file_size, price, is_original, is_public, created_at')
         .eq('dj_id', id)
         .eq('is_original', true)
         .order('created_at', { ascending: false });
@@ -46,11 +46,6 @@ export default function SowerProfile() {
   const handleBuySong = async (track: any) => {
     if (!connected) {
       await connectWallet();
-      return;
-    }
-
-    if (!track.wallet_address) {
-      toast.error('Artist wallet not configured');
       return;
     }
 
@@ -108,7 +103,7 @@ export default function SowerProfile() {
                     <div className="flex-1">
                       <CardTitle className="text-lg">{track.track_title}</CardTitle>
                       <CardDescription>
-                        {track.artist_name} • {track.genre || 'Original'}
+                        Original Track
                       </CardDescription>
                     </div>
                     <Badge variant="default" className="bg-green-600">
