@@ -33,7 +33,7 @@ export default function SowerProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dj_music_tracks')
-        .select('id, dj_id, track_title, artist_name, album_name, duration_seconds, genre, description, cover_art_url, file_url, file_size, price_usdc, is_original, is_public, play_count, purchase_count, created_at')
+        .select('id, dj_id, track_title, artist_name, duration_seconds, genre, description, cover_art_url, file_url, file_size, price_usdc, is_original, is_public, play_count, purchase_count, created_at, tags')
         .eq('dj_id', id)
         .eq('is_original', true)
         .order('created_at', { ascending: false });
@@ -112,7 +112,7 @@ export default function SowerProfile() {
                       </CardDescription>
                     </div>
                     <Badge variant="default" className="bg-green-600">
-                      {track.price} USDC
+                      {track.price_usdc} USDC
                     </Badge>
                   </div>
                 </CardHeader>
