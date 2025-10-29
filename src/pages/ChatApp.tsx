@@ -52,6 +52,57 @@ const ChatApp = () => {
   // Get current room from URL
   const currentRoomId = searchParams.get('room');
 
+  // Persist last opened room and auto-open it on login
+  useEffect(() => {
+    if (currentRoomId) {
+      try {
+        localStorage.setItem('lastChatRoomId', currentRoomId);
+      } catch {}
+    }
+  }, [currentRoomId]);
+
+  useEffect(() => {
+    const autoOpen = async () => {
+      try {
+        if (!user || currentRoomId) return;
+
+        // Try last opened from local storage first
+        const last = (() => {
+          try { return localStorage.getItem('lastChatRoomId'); } catch { return null; }
+        })();
+        if (last) {
+          console.info('💬 ChatApp: Auto-opening last room from storage', last);
+          setSearchParams({ room: last });
+          return;
+        }
+
+        console.info('💬 ChatApp: No room param, opening most recent active room');
+        const { data: parts, error: partsError } = await supabase
+          .from('chat_participants')
+          .select('room_id')
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+        if (partsError) throw partsError;
+        const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
+        if (roomIds.length === 0) return;
+        const { data: rooms, error: roomsError } = await supabase
+          .from('chat_rooms')
+          .select('id, updated_at')
+          .in('id', roomIds)
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        if (roomsError) throw roomsError;
+        if (rooms && rooms.length > 0) {
+          setSearchParams({ room: rooms[0].id });
+        }
+      } catch (err) {
+        console.error('💥 ChatApp auto-open failed:', err);
+      }
+    };
+
+    autoOpen();
+  }, [user?.id, currentRoomId, setSearchParams]);
+
   const { startCall } = useCallManager();
 
   const handleStartDirectChat = async (otherUserId) => {
