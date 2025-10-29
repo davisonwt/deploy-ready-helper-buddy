@@ -22,13 +22,19 @@ import {
   Sprout, 
   TrendingUp, 
   Activity,
-  MessageSquare
+  MessageSquare,
+  Eye,
+  MousePointerClick
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useRealAnalytics } from '@/hooks/useRealAnalytics';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', '#8884d8', '#82ca9d', '#ffc658'];
 
 export default function BasicAnalytics() {
+  // Fetch REAL visitor analytics from Lovable's system
+  const { data: realAnalytics, isLoading: realAnalyticsLoading } = useRealAnalytics(30);
+
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['basic-analytics'],
     queryFn: async () => {
@@ -100,11 +106,11 @@ export default function BasicAnalytics() {
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
-  if (isLoading) {
+  if (isLoading || realAnalyticsLoading) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
         </div>
@@ -118,37 +124,81 @@ export default function BasicAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* REAL Traffic Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Site Visitors</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{realAnalytics?.visitors.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              Last 30 days (Real traffic)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{realAnalytics?.pageviews.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              {realAnalytics?.pageviewsPerVisit.toFixed(1)} views per visit
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Session</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {Math.floor((realAnalytics?.avgSessionDuration || 0) / 60)}m {Math.floor((realAnalytics?.avgSessionDuration || 0) % 60)}s
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {realAnalytics?.bounceRate}% bounce rate
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* User Action Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Registered Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.users?.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Registered members
+              Total accounts created
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orchards</CardTitle>
+            <CardTitle className="text-sm font-medium">Orchards Created</CardTitle>
             <Sprout className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.orchards?.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Active projects
+              Total projects
             </p>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Revenue Generated</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -156,21 +206,55 @@ export default function BasicAnalytics() {
               ${((metrics?.revenue || 0) as number).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             <p className="text-xs text-muted-foreground">
-              From completed bestowals
+              From bestowals
             </p>
           </CardContent>
         </Card>
-        
+      </div>
+
+      {/* Top Pages & Countries */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chat Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Top Pages (Last 30 Days)
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.messages?.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Total messages sent
-            </p>
+            <div className="space-y-2">
+              {realAnalytics?.topPages.slice(0, 10).map((page, index) => (
+                <div key={page.page} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+                    <span className="text-sm font-mono">{page.page}</span>
+                  </div>
+                  <span className="text-sm font-bold">{page.views} views</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Visitors by Country
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {realAnalytics?.topCountries.map((country, index) => (
+                <div key={country.country} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground">#{index + 1}</span>
+                    <span className="text-sm font-medium">{country.country}</span>
+                  </div>
+                  <span className="text-sm font-bold">{country.visitors} visitors</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
