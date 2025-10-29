@@ -40,6 +40,7 @@ import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
 import { MyPremiumRooms } from '@/components/dashboard/MyPremiumRooms'
+import TrafficOverview from '@/components/analytics/TrafficOverview'
 
 
 export default function DashboardPage() {
@@ -400,6 +401,11 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Real Traffic Overview (Lovable Analytics) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <TrafficOverview />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
