@@ -90,7 +90,7 @@ const ChatApp = () => {
           .from('chat_participants')
           .select('room_id')
           .eq('user_id', user.id)
-          .eq('is_active', true);
+          .or('is_active.is.null,is_active.eq.true');
         if (partsError) throw partsError;
         const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
         if (roomIds.length === 0) { autoOpenRanRef.current = true; return; }
@@ -98,6 +98,7 @@ const ChatApp = () => {
           .from('chat_rooms')
           .select('id, updated_at')
           .in('id', roomIds)
+          .or('is_active.is.null,is_active.eq.true')
           .order('updated_at', { ascending: false })
           .limit(1);
         if (roomsError) throw roomsError;

@@ -56,8 +56,11 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       setLoading(true);
       console.log('🔍 Fetching rooms for user:', user.id);
 
-      // Primary: join chat_rooms with chat_participants for this user
-      let roomsData: any[] | null = null;
+      // Try both strategies and merge results for maximum reliability
+      let joinedData: any[] = [];
+      let fallbackData: any[] = [];
+
+      // Strategy A: Join chat_rooms with chat_participants
       try {
         const { data: joined, error: joinError } = await supabase
           .from('chat_rooms')
@@ -72,22 +75,18 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             counts:chat_participants(count)
           `)
           .eq('chat_participants.user_id', user.id)
-.or('is_active.is.null,is_active.eq.true')
+          .or('is_active.is.null,is_active.eq.true')
           .eq('chat_participants.is_active', true as any)
           .order('updated_at', { ascending: false });
 
-        if (joinError) {
-          console.warn('⚠️ Join query failed, will fallback:', joinError);
-        } else {
-          roomsData = joined;
-        }
+        if (!joinError && joined) joinedData = joined;
+        else console.warn('⚠️ Join query issue:', joinError);
       } catch (e) {
-        console.warn('⚠️ Join query threw, will fallback:', e);
+        console.warn('⚠️ Join query threw, continuing with fallback:', e);
       }
 
-      // Robust fallback: fetch via participants -> rooms (avoids join/RLS quirks)
-      if (!roomsData || roomsData.length === 0) {
-        console.log('↪️ Fallback path: loading rooms via chat_participants list');
+      // Strategy B: Participants -> room IDs -> rooms
+      try {
         const { data: parts, error: partsError } = await supabase
           .from('chat_participants')
           .select('room_id')
@@ -96,22 +95,27 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         if (partsError) throw partsError;
         const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
 
-        if (roomIds.length === 0) {
-          console.log('No participant rooms found for user');
-          setRooms([]);
-          return;
+        if (roomIds.length > 0) {
+          const { data: roomsRes, error: roomsErr } = await supabase
+            .from('chat_rooms')
+            .select('id, name, room_type, is_premium, updated_at, created_by, counts:chat_participants(count)')
+            .in('id', roomIds)
+            .or('is_active.is.null,is_active.eq.true')
+            .order('updated_at', { ascending: false });
+
+          if (roomsErr) throw roomsErr;
+          fallbackData = roomsRes || [];
         }
-
-        const { data: roomsRes, error: roomsErr } = await supabase
-          .from('chat_rooms')
-          .select('id, name, room_type, is_premium, updated_at, created_by, counts:chat_participants(count)')
-          .in('id', roomIds)
-          .or('is_active.is.null,is_active.eq.true')
-          .order('updated_at', { ascending: false });
-
-        if (roomsErr) throw roomsErr;
-        roomsData = roomsRes;
+      } catch (e) {
+        console.warn('⚠️ Fallback query issue:', e);
       }
+
+      // Merge and de-duplicate by id (prefer fallback data)
+      const mergedMap = new Map<string, any>();
+      [...joinedData, ...fallbackData].forEach((r: any) => {
+        mergedMap.set(r.id, { ...mergedMap.get(r.id), ...r });
+      });
+      const roomsData = Array.from(mergedMap.values());
 
       // Map participant counts with robust handling of different shapes
       const roomsWithCounts = (roomsData || []).map((room: any) => {
