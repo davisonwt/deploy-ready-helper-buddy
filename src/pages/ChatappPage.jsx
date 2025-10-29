@@ -156,11 +156,16 @@ const ChatappPage = () => {
     document.getElementById('file-input').value = '';
   };
 
+  const isDirect = (r) => {
+    const count = r?.chat_participants?.length ?? 0;
+    return r?.room_type === 'direct' || r?.room_type_detailed === 'direct' || (count > 0 && count <= 2);
+  };
+
   const filteredRooms = rooms.filter(room => {
     if (activeTab === 'all') return true;
     if (activeTab === 'discover') return false; // Discover tab shows different content
-    if (activeTab === 'oneOnOne') return room.room_type === 'direct';
-    if (activeTab === 'group') return room.room_type !== 'direct';
+    if (activeTab === 'oneOnOne') return isDirect(room);
+    if (activeTab === 'group') return !isDirect(room);
     return true;
   });
 
