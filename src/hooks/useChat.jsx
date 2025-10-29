@@ -35,11 +35,11 @@ export const useChat = () => {
           const room = userRoom.chat_rooms;
           
           // Get all participants for this room
-          const { data: allParticipants, error: participantsError } = await supabase
+      const { data: allParticipants, error: participantsError } = await supabase
             .from('chat_participants')
             .select('user_id, is_moderator, joined_at')
             .eq('room_id', room.id)
-            .eq('is_active', true);
+            .or('is_active.is.null,is_active.eq.true');
 
           return {
             ...room,
