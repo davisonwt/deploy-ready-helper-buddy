@@ -49,6 +49,10 @@ const ChatApp = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   
+  // Navigation control flags
+  const autoOpenRanRef = useRef(false);
+  const prevRoomRef = useRef<string | null>(null);
+
   // Get current room from URL
   const currentRoomId = searchParams.get('room');
 
@@ -62,9 +66,13 @@ const ChatApp = () => {
   }, [currentRoomId]);
 
   useEffect(() => {
+    // Only auto-open once per session and never if the user explicitly prefers list view
     const autoOpen = async () => {
       try {
         if (!user || currentRoomId) return;
+        if (autoOpenRanRef.current) return;
+        const listPref = (() => { try { return sessionStorage.getItem('chat:listPref'); } catch { return null; } })();
+        if (listPref === 'list') return;
 
         // Try last opened from local storage first
         const last = (() => {
@@ -72,6 +80,7 @@ const ChatApp = () => {
         })();
         if (last) {
           console.info('💬 ChatApp: Auto-opening last room from storage', last);
+          autoOpenRanRef.current = true;
           setSearchParams({ room: last });
           return;
         }
@@ -84,7 +93,7 @@ const ChatApp = () => {
           .eq('is_active', true);
         if (partsError) throw partsError;
         const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
-        if (roomIds.length === 0) return;
+        if (roomIds.length === 0) { autoOpenRanRef.current = true; return; }
         const { data: rooms, error: roomsError } = await supabase
           .from('chat_rooms')
           .select('id, updated_at')
@@ -93,7 +102,10 @@ const ChatApp = () => {
           .limit(1);
         if (roomsError) throw roomsError;
         if (rooms && rooms.length > 0) {
+          autoOpenRanRef.current = true;
           setSearchParams({ room: rooms[0].id });
+        } else {
+          autoOpenRanRef.current = true;
         }
       } catch (err) {
         console.error('💥 ChatApp auto-open failed:', err);
@@ -102,6 +114,17 @@ const ChatApp = () => {
 
     autoOpen();
   }, [user?.id, currentRoomId, setSearchParams]);
+
+  // Track transitions to list view (including browser back) to suppress re-open in this session
+  useEffect(() => {
+    const prev = prevRoomRef.current;
+    if (currentRoomId) {
+      try { sessionStorage.removeItem('chat:listPref'); } catch {}
+    } else if (!currentRoomId && prev) {
+      try { sessionStorage.setItem('chat:listPref', 'list'); } catch {}
+    }
+    prevRoomRef.current = currentRoomId;
+  }, [currentRoomId]);
 
   const { startCall } = useCallManager();
 
@@ -278,6 +301,7 @@ const ChatApp = () => {
   };
 
   const handleBackToList = () => {
+    try { sessionStorage.setItem('chat:listPref', 'list'); } catch {}
     setSearchParams({});
   };
 
