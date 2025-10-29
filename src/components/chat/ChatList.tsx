@@ -297,7 +297,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             <Card
               key={room.id}
               className="hover:shadow-md transition-shadow cursor-pointer border-emerald-100"
-              onClick={() => navigate(`/chatapp?room=${room.id}`)}
+              onClick={() => { try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {} ; navigate(`/chatapp?room=${room.id}`); }}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
