@@ -1,6 +1,9 @@
 // Service Worker for Push Notifications and PWA functionality
 
-const CACHE_NAME = 'sow2grow-v1'
+// Version cache name so each deploy gets a fresh cache
+const CACHE_VERSION = '1.0.0' // Will be replaced by build version
+const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,7 +11,7 @@ const urlsToCache = [
   '/placeholder.svg'
 ]
 
-// Install event - cache resources
+// Install event - cache resources and skip waiting for immediate activation
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -32,14 +35,51 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network-first for HTML, stale-while-revalidate for assets
 self.addEventListener('fetch', (event) => {
+  const { request } = event
+  const url = new URL(request.url)
+
+  // Bypass cache if ?no-sw=1 is present
+  if (url.searchParams.has('no-sw')) {
+    event.respondWith(fetch(request))
+    return
+  }
+
+  // Network-first strategy for navigation/HTML requests
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache the fresh response
+          const responseClone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone)
+          })
+          return response
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(request)
+        })
+    )
+    return
+  }
+
+  // Stale-while-revalidate for static assets
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request)
+    caches.match(request).then((cachedResponse) => {
+      const fetchPromise = fetch(request).then((networkResponse) => {
+        // Update cache in background
+        const responseClone = networkResponse.clone()
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseClone)
+        })
+        return networkResponse
       })
+      // Return cached version immediately, fetch in background
+      return cachedResponse || fetchPromise
+    })
   )
 })
 
@@ -92,6 +132,13 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.openWindow(url)
   )
+})
+
+// Message event - allow immediate activation via postMessage
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
 
 // Background sync for offline actions
