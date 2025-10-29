@@ -1,8 +1,7 @@
 // Service Worker for Push Notifications and PWA functionality
 
 // Version cache name so each deploy gets a fresh cache
-const SW_PARAM_VERSION = new URL(self.location.toString()).searchParams.get('v')
-const CACHE_VERSION = SW_PARAM_VERSION || '1.0.0' // Build/version identifier for cache busting
+const CACHE_VERSION = '1.0.0' // Will be replaced by build version
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
 const urlsToCache = [
