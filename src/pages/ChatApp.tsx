@@ -66,55 +66,10 @@ const ChatApp = () => {
   }, [currentRoomId]);
 
   useEffect(() => {
-    // Only auto-open once per session and never if the user explicitly prefers list view
-    const autoOpen = async () => {
-      try {
-        if (!user || currentRoomId) return;
-        if (autoOpenRanRef.current) return;
-        const listPref = (() => { try { return sessionStorage.getItem('chat:listPref'); } catch { return null; } })();
-        if (listPref === 'list') return;
-
-        // Try last opened from local storage first
-        const last = (() => {
-          try { return localStorage.getItem('lastChatRoomId'); } catch { return null; }
-        })();
-        if (last) {
-          console.info('💬 ChatApp: Auto-opening last room from storage', last);
-          autoOpenRanRef.current = true;
-          setSearchParams({ room: last }, { replace: true });
-          return;
-        }
-
-        console.info('💬 ChatApp: No room param, opening most recent active room');
-        const { data: parts, error: partsError } = await supabase
-          .from('chat_participants')
-          .select('room_id')
-          .eq('user_id', user.id)
-          .or('is_active.is.null,is_active.eq.true');
-        if (partsError) throw partsError;
-        const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
-        if (roomIds.length === 0) { autoOpenRanRef.current = true; return; }
-        const { data: rooms, error: roomsError } = await supabase
-          .from('chat_rooms')
-          .select('id, updated_at')
-          .in('id', roomIds)
-          .or('is_active.is.null,is_active.eq.true')
-          .order('updated_at', { ascending: false })
-          .limit(1);
-        if (roomsError) throw roomsError;
-        if (rooms && rooms.length > 0) {
-          autoOpenRanRef.current = true;
-          setSearchParams({ room: rooms[0].id }, { replace: true });
-        } else {
-          autoOpenRanRef.current = true;
-        }
-      } catch (err) {
-        console.error('💥 ChatApp auto-open failed:', err);
-      }
-    };
-
-    autoOpen();
-  }, [user?.id, currentRoomId, setSearchParams]);
+    // Intentionally disable auto-open: always land on the chat list unless URL already has ?room=
+    // This prevents unexpected navigation to a previous or most recent room.
+    autoOpenRanRef.current = true;
+  }, [user?.id]);
 
   // Track transitions to list view (including browser back) to suppress re-open in this session
   useEffect(() => {
