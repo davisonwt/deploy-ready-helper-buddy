@@ -63,16 +63,67 @@ logInfo('Application starting', {
   timestamp: new Date().toISOString(),
 });
 
-// Register service worker for PWA functionality
+// Register service worker for PWA functionality with update handling
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        logInfo('Service worker registered', { registration });
-      })
-      .catch((registrationError) => {
-        logError('Service worker registration failed', { registrationError });
+  window.addEventListener('load', async () => {
+    // Handle ?no-sw=1 - unregister all service workers and clear caches
+    if (window.location.search.includes('no-sw=1')) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        logInfo('Service workers unregistered and caches cleared');
+        // Remove the parameter and reload once
+        if (!sessionStorage.getItem('sw-cleared')) {
+          sessionStorage.setItem('sw-cleared', '1');
+          window.location.href = window.location.pathname;
+        } else {
+          sessionStorage.removeItem('sw-cleared');
+        }
+      } catch (error) {
+        logError('Failed to clear service workers', { error });
+      }
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      logInfo('Service worker registered', { registration });
+
+      // Check for updates on load
+      registration.update();
+
+      // Handle waiting service worker (new version available)
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      // Listen for new service worker taking control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          logInfo('New service worker activated, reloading...');
+          window.location.reload();
+        }
       });
+
+      // Listen for updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        }
+      });
+    } catch (registrationError) {
+      logError('Service worker registration failed', { registrationError });
+    }
   });
 }
 
