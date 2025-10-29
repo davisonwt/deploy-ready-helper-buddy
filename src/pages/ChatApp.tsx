@@ -103,6 +103,7 @@ const ChatApp = () => {
       });
       if (error) throw error;
       const roomId = data;
+      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
       setSearchParams({ room: roomId }, { replace: true });
     } catch (error) {
       console.error('Error starting direct chat:', error);
@@ -250,6 +251,7 @@ const ChatApp = () => {
       setIsCreateDialogOpen(false);
       
       // Navigate to the new chat room
+      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
       setSearchParams({ room: room.id }, { replace: true });
       setIsCreateDialogOpen(false);
       setNewChatName('');
