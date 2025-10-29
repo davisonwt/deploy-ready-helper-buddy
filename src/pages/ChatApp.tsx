@@ -81,7 +81,7 @@ const ChatApp = () => {
         if (last) {
           console.info('💬 ChatApp: Auto-opening last room from storage', last);
           autoOpenRanRef.current = true;
-          setSearchParams({ room: last });
+          setSearchParams({ room: last }, { replace: true });
           return;
         }
 
@@ -103,7 +103,7 @@ const ChatApp = () => {
         if (roomsError) throw roomsError;
         if (rooms && rooms.length > 0) {
           autoOpenRanRef.current = true;
-          setSearchParams({ room: rooms[0].id });
+          setSearchParams({ room: rooms[0].id }, { replace: true });
         } else {
           autoOpenRanRef.current = true;
         }
@@ -136,7 +136,7 @@ const ChatApp = () => {
       });
       if (error) throw error;
       const roomId = data;
-      setSearchParams({ room: roomId });
+      setSearchParams({ room: roomId }, { replace: true });
     } catch (error) {
       console.error('Error starting direct chat:', error);
       toast({ title: 'Error', description: 'Could not open direct chat', variant: 'destructive' });
@@ -283,7 +283,7 @@ const ChatApp = () => {
       setIsCreateDialogOpen(false);
       
       // Navigate to the new chat room
-      setSearchParams({ room: room.id });
+      setSearchParams({ room: room.id }, { replace: true });
       setIsCreateDialogOpen(false);
       setNewChatName('');
       setSelectedUsers([]);
@@ -302,7 +302,7 @@ const ChatApp = () => {
 
   const handleBackToList = () => {
     try { sessionStorage.setItem('chat:listPref', 'list'); } catch {}
-    setSearchParams({});
+    setSearchParams({}, { replace: true });
   };
 
   if (!user) {

@@ -1,12 +1,12 @@
-import React from 'react'
+import { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
 export function useRoles() {
   const { user } = useAuth()
-  const [userRoles, setUserRoles] = React.useState([])
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState(null)
+  const [userRoles, setUserRoles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const fetchUserRoles = async () => {
     if (!user) {
