@@ -25,7 +25,7 @@ export const useChat = () => {
           chat_rooms!inner(*)
         `)
         .eq('user_id', user.id)
-        .eq('is_active', true);
+        .or('is_active.is.null,is_active.eq.true');
 
       if (roomsError) throw roomsError;
 
@@ -128,7 +128,7 @@ export const useChat = () => {
         .from('chat_participants')
         .select('*')
         .eq('room_id', roomId)
-        .eq('is_active', true);
+        .or('is_active.is.null,is_active.eq.true');
 
       if (participantsError) throw participantsError;
 
