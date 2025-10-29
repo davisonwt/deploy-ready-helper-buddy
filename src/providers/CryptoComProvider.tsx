@@ -42,6 +42,19 @@ export function CryptoComProvider({ children }: { children: React.ReactNode }) {
         setConnected(true);
         const network = await provider.request({ method: 'eth_chainId' });
         setChainId(parseInt(network, 16));
+        // Attach listeners after explicit connect
+        provider.on?.('accountsChanged', (accounts: string[]) => {
+          if (accounts?.length > 0) {
+            setAddress(accounts[0]);
+            setConnected(true);
+          } else {
+            setAddress(null);
+            setConnected(false);
+          }
+        });
+        provider.on?.('chainChanged', (networkId: string) => {
+          setChainId(parseInt(networkId, 16));
+        });
       }
     } catch (error) {
       console.error('Wallet connect error:', error);
@@ -49,45 +62,10 @@ export function CryptoComProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Check if Crypto.com DeFi Wallet is available
-    const checkConnection = async () => {
-      try {
-        if (typeof window !== 'undefined' && window.ethereum) {
-          const provider = window.ethereum;
-          
-          // Check if it's Crypto.com DeFi Wallet OR any EVM provider
-          const accounts = await provider.request({ method: 'eth_accounts' });
-          if (accounts && accounts.length > 0) {
-            setAddress(accounts[0]);
-            setConnected(true);
-            const network = await provider.request({ method: 'eth_chainId' });
-            setChainId(parseInt(network, 16));
-          }
-        }
-      } catch (error) {
-        console.error('Error checking connection:', error);
-      }
-    };
-
-    checkConnection();
-
-    // Listen for account changes
-    if (typeof window !== 'undefined' && window.ethereum) {
-      window.ethereum.on?.('accountsChanged', (accounts: string[]) => {
-        if (accounts.length > 0) {
-          setAddress(accounts[0]);
-          setConnected(true);
-        } else {
-          setAddress(null);
-          setConnected(false);
-        }
-      });
-
-      window.ethereum.on?.('chainChanged', (networkId: string) => {
-        setChainId(parseInt(networkId, 16));
-      });
-    }
+    // Passive mode: avoid any wallet calls on load to prevent extensions (e.g., Phantom) from prompting.
+    // We attach listeners only after an explicit connect() call.
   }, []);
+
 
   return (
     <CryptoComContext.Provider value={{ connector, connected, address, chainId, connect }}>

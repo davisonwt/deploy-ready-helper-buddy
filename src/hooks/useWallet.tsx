@@ -26,10 +26,8 @@ export function useWallet() {
         await connect();
         toast.success('Wallet connected');
       } else {
-        // Fallback direct request
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (!accounts || accounts.length === 0) throw new Error('No accounts returned');
-        toast.success('Wallet connected');
+        toast.error('Wallet connection not available');
+        return;
       }
     } catch (error: any) {
       console.error('Error connecting wallet:', error);
