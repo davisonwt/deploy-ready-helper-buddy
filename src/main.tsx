@@ -88,8 +88,10 @@ if ('serviceWorker' in navigator) {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      logInfo('Service worker registered', { registration });
+      const swMeta = document.querySelector('meta[name="sw-version"]') as HTMLMetaElement | null;
+      const swVersion = swMeta?.content || String(Date.now());
+      const registration = await navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(swVersion)}`);
+      logInfo('Service worker registered', { registration, swVersion });
 
       // Check for updates on load
       registration.update();
