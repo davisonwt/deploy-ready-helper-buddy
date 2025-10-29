@@ -71,7 +71,18 @@ const ChatApp = () => {
     autoOpenRanRef.current = true;
   }, [user?.id]);
 
-  // Track transitions to list view (including browser back) to suppress re-open in this session
+  // Guard: only honor ?room= when explicitly initiated by our UI
+  useEffect(() => {
+    try {
+      const allow = sessionStorage.getItem('chat:allowOpen');
+      if (currentRoomId && allow !== '1') {
+        setSearchParams({}, { replace: true }); // strip unexpected ?room=
+      }
+    } catch {}
+    try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
+  }, [currentRoomId, setSearchParams]);
+
+   // Track transitions to list view (including browser back) to suppress re-open in this session
   useEffect(() => {
     const prev = prevRoomRef.current;
     if (currentRoomId) {

@@ -377,6 +377,7 @@ export function PremiumRoomCreationWizard({ onClose }) {
       });
 
       onClose();
+      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
       navigate(`/chatapp?room=${room.id}`);
     } catch (error) {
       console.error('Error creating room:', error);

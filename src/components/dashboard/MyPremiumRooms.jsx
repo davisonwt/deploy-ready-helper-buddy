@@ -94,6 +94,7 @@ export function MyPremiumRooms() {
   };
 
   const handleEnterRoom = (roomId) => {
+    try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
     navigate(`/chatapp?room=${roomId}`);
   };
 
