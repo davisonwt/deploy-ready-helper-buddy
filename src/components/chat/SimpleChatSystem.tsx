@@ -55,6 +55,9 @@ export const SimpleChatSystem = () => {
       const dedup = new Map<string, any>();
       [...(byIdsRes.data || []), ...(createdRes.data || [])].forEach((r: any) => dedup.set(r.id, r));
       const allRooms = Array.from(dedup.values());
+      const ordered = allRooms.sort((a: any, b: any) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime());
+      setChats(ordered);
+
     } catch (error) {
       console.error('Error loading chats:', error);
       toast({
@@ -90,7 +93,7 @@ export const SimpleChatSystem = () => {
     }
   }, [user]);
 
-  // Create new direct chat - simple approach
+  // Create new direct chat using secure RPC
   const createDirectChat = async () => {
     if (!user || !newChatUserId.trim()) {
       toast({
@@ -102,73 +105,25 @@ export const SimpleChatSystem = () => {
     }
 
     try {
-      console.log('🔄 Creating direct chat with user:', newChatUserId);
-
-      // Step 1: Create the room
-      const roomName = `Chat between users`;
-      const { data: room, error: roomError } = await supabase
-        .from('chat_rooms')
-        .insert({
-          name: roomName,
-          room_type: 'direct',
-          created_by: user.id,
-          is_active: true,
-          max_participants: 2
-        })
-        .select()
-        .single();
-
-      if (roomError) {
-        console.error('Room creation error:', roomError);
-        throw roomError;
-      }
-
-      console.log('✅ Room created:', room);
-
-      // Step 2: Add both users as participants
-      const participants = [
-        {
-          room_id: room.id,
-          user_id: user.id,
-          is_active: true,
-          is_moderator: false
-        },
-        {
-          room_id: room.id,
-          user_id: newChatUserId,
-          is_active: true,
-          is_moderator: false
-        }
-      ];
-
-      const { error: participantError } = await supabase
-        .from('chat_participants')
-        .insert(participants);
-
-      if (participantError) {
-        console.error('Participant error:', participantError);
-        throw participantError;
-      }
-
-      console.log('✅ Participants added');
-
-      toast({
-        title: 'Success',
-        description: 'Chat created successfully!'
+      console.log('🔄 Creating/fetching direct room via RPC for user:', newChatUserId);
+      const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: newChatUserId,
       });
+      if (error) throw error;
+
+      toast({ title: 'Success', description: 'Chat ready!' });
 
       setNewChatUserId('');
-      loadChats(); // Refresh the list
-      
-      // Navigate to the new chat
-      navigate(`/chatapp?room=${room.id}`);
-
-    } catch (error) {
-      console.error('Error creating chat:', error);
+      await loadChats();
+      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
+      navigate(`/chatapp?room=${roomId}`);
+    } catch (error: any) {
+      console.error('Error creating chat via RPC:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create chat: ' + error.message,
-        variant: 'destructive'
+        description: 'Failed to create or open chat: ' + (error.message || 'Unknown error'),
+        variant: 'destructive',
       });
     }
   };
