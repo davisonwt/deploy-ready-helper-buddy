@@ -14,8 +14,6 @@ export const useSimpleWebRTC = (callSession, user) => {
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
-  const remoteReadyRef = useRef(false);
-  const offerSentRef = useRef(false);
   const isCaller = user?.id === callSession?.caller_id;
 
   const rtcConfig = {
@@ -38,9 +36,7 @@ export const useSimpleWebRTC = (callSession, user) => {
         credential: 'openrelayproject'
       }
     ],
-    iceTransportPolicy: 'relay',
-    bundlePolicy: 'max-bundle',
-    rtcpMuxPolicy: 'require',
+    iceTransportPolicy: 'all',
     iceCandidatePoolSize: 10,
   };
   const sendMessage = async (message) => {
@@ -63,7 +59,9 @@ export const useSimpleWebRTC = (callSession, user) => {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000,
         }
       });
       console.log('🎙️ [WEBRTC] gotUserMedia', { tracks: stream.getAudioTracks().map(t => ({ id: t.id, enabled: t.enabled, muted: t.muted })) });
@@ -181,34 +179,6 @@ export const useSimpleWebRTC = (callSession, user) => {
           console.log('📨 [WEBRTC] Received signal', { type: payload.type, from: payload.from, isCaller });
           if (payload.from === user.id) return;
           try {
-            const ensureOfferFromCaller = async () => {
-              if (!isCaller || offerSentRef.current) return;
-              try {
-                makingOfferRef.current = true;
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                offerSentRef.current = true;
-                console.log('✅ [WEBRTC] Local description set (offer), sending...');
-                await sendMessage({ type: 'offer', offer });
-                console.log('📤 [WEBRTC] Offer sent (hello handshake)');
-              } finally {
-                makingOfferRef.current = false;
-              }
-            };
-
-            if (payload.type === 'hello') {
-              console.log('🤝 [WEBRTC] hello received');
-              remoteReadyRef.current = true;
-              await sendMessage({ type: 'hello_ack' });
-              await ensureOfferFromCaller();
-              return;
-            } else if (payload.type === 'hello_ack') {
-              console.log('🤝 [WEBRTC] hello_ack received');
-              remoteReadyRef.current = true;
-              await ensureOfferFromCaller();
-              return;
-            }
-
             if (payload.type === 'offer') {
               receivedOfferRef.current = true;
               console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState, makingOffer: makingOfferRef.current });
@@ -279,31 +249,38 @@ export const useSimpleWebRTC = (callSession, user) => {
         });
       });
 
-      // Handshake to prevent offer being sent before the other peer subscribes
-      await sendMessage({ type: 'hello', role: isCaller ? 'caller' : 'callee' });
-      console.log('🤝 [WEBRTC] Hello sent; waiting for peer handshake');
-
+      // 4) If we are the caller, create and send an offer after ensuring subscription
       if (isCaller) {
-        // Safety fallback: if no handshake within 3.5s, create offer anyway
+        console.log('📤 [WEBRTC] I am the caller, creating offer...');
+        try {
+          makingOfferRef.current = true;
+          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+          await pc.setLocalDescription(offer);
+          console.log('✅ [WEBRTC] Local description set (offer), sending...');
+          await sendMessage({ type: 'offer', offer });
+          console.log('📤 [WEBRTC] Offer sent');
+        } finally {
+          makingOfferRef.current = false;
+        }
+      } else {
+        console.log('⏳ [WEBRTC] I am the receiver, waiting for offer...');
+        // Fallback: if no offer arrives within 2s, proactively create one (perfect-negotiation-lite)
         setTimeout(async () => {
-          if (!offerSentRef.current) {
-            console.log('⏰ [WEBRTC] Handshake timeout, creating offer as fallback');
+          if (!receivedOfferRef.current && pc.signalingState === 'stable') {
             try {
+              console.log('⏰ [WEBRTC] No offer received, creating fallback offer as receiver');
               makingOfferRef.current = true;
-              const offer = await pc.createOffer();
+              const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
               await pc.setLocalDescription(offer);
-              offerSentRef.current = true;
               await sendMessage({ type: 'offer', offer });
-              console.log('📤 [WEBRTC] Offer sent (fallback)');
+              console.log('📤 [WEBRTC] Fallback offer sent by receiver');
             } catch (e) {
               console.warn('⚠️ [WEBRTC] Fallback offer failed', e);
             } finally {
               makingOfferRef.current = false;
             }
           }
-        }, 3500);
-      } else {
-        console.log('⏳ [WEBRTC] Receiver waiting for offer...');
+        }, 2000);
       }
 
     } catch (error) {
