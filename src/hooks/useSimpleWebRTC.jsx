@@ -12,6 +12,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const channelRef = useRef();
   const iceQueueRef = useRef([]); // Queue ICE candidates until remoteDescription is set
   const subscribedRef = useRef(false);
+  const isCaller = user?.id === callSession?.caller_id;
 
   const rtcConfig = {
     iceServers: [
@@ -178,7 +179,7 @@ export const useSimpleWebRTC = (callSession, user) => {
       });
 
       // 4) If we are the caller, create and send an offer after ensuring subscription
-      if (!callSession.isIncoming) {
+      if (isCaller) {
         const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
         await pc.setLocalDescription(offer);
         await sendMessage({ type: 'offer', offer });

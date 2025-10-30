@@ -2,22 +2,25 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCallManager } from '@/hooks/useCallManager';
 import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
+import { useLocation } from 'react-router-dom';
 
 // Mounts hidden audio elements whenever a call is active so audio works on any route
 const GlobalAudioCallBridge: React.FC = () => {
   const { user } = useAuth();
   const { currentCall } = useCallManager();
+  const location = useLocation();
 
-  // Only establish WebRTC for active, answered calls
+  // Only establish WebRTC for active, answered calls and when not on native call UIs
   const activeCall = currentCall;
+  const onCallUIPages = location.pathname.startsWith('/chatapp');
 
   useEffect(() => {
-    if (activeCall) {
-      console.log('🔈 [GlobalAudioCallBridge] Active call detected, mounting hidden audio');
+    if (activeCall && !onCallUIPages) {
+      console.log('🔈 [GlobalAudioCallBridge] Active call detected outside call UI, mounting hidden audio');
     }
-  }, [activeCall?.id]);
+  }, [activeCall?.id, onCallUIPages]);
 
-  if (!user || !activeCall) return null;
+  if (!user || !activeCall || onCallUIPages) return null;
 
   const { localAudioRef, remoteAudioRef } = useSimpleWebRTC(activeCall, user);
 
