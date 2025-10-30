@@ -82,7 +82,7 @@ import LiveActivityWidget from "./components/LiveActivityWidget";
 import { FloatingLiveWidget } from "./components/dashboard/FloatingLiveWidget";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
-
+import { CallManagerProvider } from '@/hooks/useCallManager';
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -100,6 +100,7 @@ const App = () => (
           <BasketProvider>
             <AppContextProvider>
               <TooltipProvider>
+                <CallManagerProvider>
                 <Toaster />
                 <Sonner />
                 <IncomingCallOverlay />
@@ -554,6 +555,7 @@ const App = () => (
                 <FloatingLiveWidget />
                 <OnboardingTour />
                 <HelpModal />
+              </CallManagerProvider>
               </TooltipProvider>
             </AppContextProvider>
           </BasketProvider>

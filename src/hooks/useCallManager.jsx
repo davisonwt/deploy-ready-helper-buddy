@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export const useCallManager = () => {
+const useCallManagerInternal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -624,4 +624,22 @@ export const useCallManager = () => {
     // Utility
     loadCallHistory
   };
+};
+
+// React Context to ensure a single shared CallManager instance across the app
+const CallManagerContext = createContext(null);
+
+export const CallManagerProvider = ({ children }) => {
+  const value = useCallManagerInternal();
+  return (
+    <CallManagerContext.Provider value={value}>
+      {children}
+    </CallManagerContext.Provider>
+  );
+};
+
+export const useCallManager = () => {
+  const ctx = useContext(CallManagerContext);
+  // Fallback to an internal instance for environments/tests without the Provider
+  return ctx ?? useCallManagerInternal();
 };
