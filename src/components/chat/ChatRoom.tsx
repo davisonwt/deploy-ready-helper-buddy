@@ -708,19 +708,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={async () => {
-                const otherParticipant = participants.find(p => p.user_id !== user?.id);
-                if (!otherParticipant) {
-                  toast({ title: 'No other participants', description: 'Unable to start call', variant: 'destructive' });
-                  return;
-                }
-                
-                const receiverName = otherParticipant.profiles?.display_name 
-                  || `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim()
-                  || 'Unknown User';
-                
-                await startCall(otherParticipant.user_id, receiverName, 'audio', roomId);
-              }}
+              onClick={handleCallClick}
             >
               <Phone className="h-4 w-4" />
             </Button>
