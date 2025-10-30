@@ -375,16 +375,16 @@ const VideoCallInterface = ({
                   size="lg"
                   variant="destructive"
                   onClick={onDecline}
-                  className="rounded-full h-14 w-14"
+                  className="rounded-full h-16 w-16 shadow-lg"
                 >
-                  <PhoneOff className="h-6 w-6" />
+                  <PhoneOff className="h-7 w-7" />
                 </Button>
                 <Button
                   size="lg"
                   onClick={() => { onAccept(); setTimeout(() => remoteAudioRef.current?.play().catch(() => {}), 200); }}
-                  className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
+                  className="rounded-full h-16 w-16 bg-green-600 hover:bg-green-700 shadow-lg"
                 >
-                  <Phone className="h-6 w-6" />
+                  <Phone className="h-7 w-7" />
                 </Button>
               </>
             ) : (
@@ -394,9 +394,9 @@ const VideoCallInterface = ({
                   variant={isAudioEnabled ? "outline" : "destructive"}
                   size="lg"
                   onClick={toggleAudio}
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-14 w-14 shadow-md"
                 >
-                  {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+                  {isAudioEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
                 </Button>
                 
                 {/* Video controls */}
@@ -405,9 +405,9 @@ const VideoCallInterface = ({
                     variant={isVideoEnabled ? "outline" : "secondary"}
                     size="lg"
                     onClick={toggleVideo}
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-14 w-14 shadow-md"
                   >
-                    {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+                    {isVideoEnabled ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
                   </Button>
                 )}
                 
@@ -417,9 +417,9 @@ const VideoCallInterface = ({
                     variant={isScreenSharing ? "default" : "outline"}
                     size="lg"
                     onClick={toggleScreenShare}
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-14 w-14 shadow-md"
                   >
-                    {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+                    {isScreenSharing ? <MonitorOff className="h-6 w-6" /> : <Monitor className="h-6 w-6" />}
                   </Button>
                 )}
                 
@@ -428,9 +428,9 @@ const VideoCallInterface = ({
                   variant="outline"
                   size="lg"
                   onClick={() => setShowSettings(!showSettings)}
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-14 w-14 shadow-md"
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-6 w-6" />
                 </Button>
                 
                 {/* End call */}
@@ -438,9 +438,9 @@ const VideoCallInterface = ({
                   variant="destructive"
                   size="lg"
                   onClick={onEnd}
-                  className="rounded-full h-14 w-14"
+                  className="rounded-full h-16 w-16 shadow-lg hover:scale-105 transition-transform"
                 >
-                  <PhoneOff className="h-6 w-6" />
+                  <PhoneOff className="h-7 w-7" />
                 </Button>
               </>
             )}
@@ -479,9 +479,9 @@ const VideoCallInterface = ({
             variant={isAudioEnabled ? "outline" : "destructive"}
             size="lg"
             onClick={toggleAudio}
-            className="rounded-full h-12 w-12 bg-black/20 border-white/20"
+            className="rounded-full h-14 w-14 bg-black/20 border-white/20"
           >
-            {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+            {isAudioEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
           </Button>
           
           {callType === 'video' && (
@@ -489,9 +489,9 @@ const VideoCallInterface = ({
               variant={isVideoEnabled ? "outline" : "secondary"}
               size="lg"
               onClick={toggleVideo}
-              className="rounded-full h-12 w-12 bg-black/20 border-white/20"
+              className="rounded-full h-14 w-14 bg-black/20 border-white/20"
             >
-              {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {isVideoEnabled ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
             </Button>
           )}
           
@@ -500,9 +500,9 @@ const VideoCallInterface = ({
               variant={isScreenSharing ? "default" : "outline"}
               size="lg"
               onClick={toggleScreenShare}
-              className="rounded-full h-12 w-12 bg-black/20 border-white/20"
+              className="rounded-full h-14 w-14 bg-black/20 border-white/20"
             >
-              {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+              {isScreenSharing ? <MonitorOff className="h-6 w-6" /> : <Monitor className="h-6 w-6" />}
             </Button>
           )}
           
@@ -510,18 +510,18 @@ const VideoCallInterface = ({
             variant="destructive"
             size="lg"
             onClick={onEnd}
-            className="rounded-full h-14 w-14"
+            className="rounded-full h-16 w-16 hover:scale-105 transition-transform"
           >
-            <PhoneOff className="h-6 w-6" />
+            <PhoneOff className="h-7 w-7" />
           </Button>
           
           <Button
             variant="outline"
             size="lg"
             onClick={toggleFullscreen}
-            className="rounded-full h-12 w-12 bg-black/20 border-white/20"
+            className="rounded-full h-14 w-14 bg-black/20 border-white/20"
           >
-            <Minimize2 className="h-5 w-5" />
+            <Minimize2 className="h-6 w-6" />
           </Button>
         </div>
       )}
