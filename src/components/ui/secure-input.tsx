@@ -29,8 +29,17 @@ interface SecureTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaE
 export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
   ({ sanitizeType = 'text', maxLength = 1000, rateLimitKey, onChange, onBlur, ...props }, ref) => {
     const { toast } = useToast();
+    const isComposing = React.useRef(false);
 
     const handleSecureChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      // Skip sanitization during mobile keyboard composition
+      if (isComposing.current) {
+        if (onChange) {
+          onChange(e);
+        }
+        return;
+      }
+
       const originalValue = e.target.value;
       const trailingSpaces = originalValue.match(/\s+$/)?.[0] ?? '';
       let sanitizedCore: string;
@@ -78,6 +87,20 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
       }
     }, [sanitizeType, maxLength, onChange, toast]);
 
+    const handleCompositionStart = useCallback(() => {
+      isComposing.current = true;
+    }, []);
+
+    const handleCompositionEnd = useCallback((e: React.CompositionEvent<HTMLInputElement>) => {
+      isComposing.current = false;
+      // Manually trigger onChange after composition ends to sanitize the value
+      const changeEvent = {
+        target: e.target,
+        currentTarget: e.currentTarget,
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleSecureChange(changeEvent);
+    }, [handleSecureChange]);
+
     const handleSecureBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
       // Rate limiting check on blur (for form submissions)
       if (rateLimitKey && !formSubmissionLimiter.isAllowed(rateLimitKey)) {
@@ -100,7 +123,14 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
         ref={ref}
         onChange={handleSecureChange}
         onBlur={handleSecureBlur}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
         maxLength={maxLength}
+        autoComplete={sanitizeType === 'email' ? 'email' : sanitizeType === 'phone' ? 'tel' : 'off'}
+        autoCorrect="off"
+        autoCapitalize={sanitizeType === 'email' ? 'off' : 'on'}
+        spellCheck="false"
+        inputMode={sanitizeType === 'email' ? 'email' : sanitizeType === 'phone' ? 'tel' : undefined}
       />
     );
   }
