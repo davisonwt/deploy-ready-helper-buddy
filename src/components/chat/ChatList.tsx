@@ -170,7 +170,10 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     ? roomType
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
-  const isDirectRoom = (room: any) => (room.room_type ? room.room_type === 'direct' : ((room as any).participant_count ?? 0) <= 2);
+  const isDirectRoom = (room: any) => {
+    // Direct rooms have room_type === 'direct' OR have exactly 2 participants
+    return room.room_type === 'direct' || ((room as any).participant_count ?? 0) <= 2;
+  };
 
   const filteredRooms = rooms
     .filter((room) => {
@@ -180,7 +183,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         return false;
       }
 
-      // Filter by type with safe fallback using participant count
+      // Filter by type - include direct rooms for 'direct', group rooms for 'group'
       if (effectiveType === 'direct' && !isDirectRoom(room)) return false;
       if (effectiveType === 'group' && isDirectRoom(room)) return false;
 
