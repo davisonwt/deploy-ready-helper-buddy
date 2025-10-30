@@ -125,10 +125,30 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
   const fetchRoomInfo = async () => {
     try {
+      // First try: if user is the creator, fetch room directly
+      const { count: creatorCount } = await supabase
+        .from('chat_rooms')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', roomId)
+        .eq('created_by', user.id);
+
+      if ((creatorCount || 0) > 0) {
+        const { data: room } = await supabase
+          .from('chat_rooms')
+          .select('*')
+          .eq('id', roomId)
+          .maybeSingle();
+        if (room) {
+          setRoomInfo(room);
+          return;
+        }
+      }
+
+      // Fallback: participant-based access (works for members)
       const { data, error } = await supabase
         .from('chat_participants')
         .select('chat_rooms!inner(*)')
-.eq('user_id', user.id)
+        .eq('user_id', user.id)
         .eq('room_id', roomId)
         .or('is_active.is.null,is_active.eq.true')
         .maybeSingle();

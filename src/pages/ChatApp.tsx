@@ -71,20 +71,30 @@ const ChatApp = () => {
     autoOpenRanRef.current = true;
   }, [user?.id]);
 
-  // Guard: honor ?room= if initiated by our UI OR if user is a member of that room
+  // Guard: honor ?room= if initiated by our UI OR if user is member/creator of that room
   useEffect(() => {
     const run = async () => {
-      if (!currentRoomId) return;
+      if (!currentRoomId || !user?.id) return;
       try {
         const allow = sessionStorage.getItem('chat:allowOpen');
         if (allow === '1') return; // trusted navigation from inside app
-        // Fallback: verify membership quickly; if user is a member, keep the param
-        const { count, error } = await supabase
-          .from('chat_participants')
-          .select('id', { count: 'exact', head: true })
-          .eq('room_id', currentRoomId)
-          .eq('user_id', user?.id || '');
-        if (!error && (count || 0) > 0) return; // user belongs; honor URL
+
+        // Check membership
+        const [{ count: partCount }, { count: creatorCount }] = await Promise.all([
+          supabase
+            .from('chat_participants')
+            .select('id', { count: 'exact', head: true })
+            .eq('room_id', currentRoomId)
+            .eq('user_id', user.id),
+          supabase
+            .from('chat_rooms')
+            .select('id', { count: 'exact', head: true })
+            .eq('id', currentRoomId)
+            .eq('created_by', user.id)
+        ]);
+
+        if ((partCount || 0) > 0 || (creatorCount || 0) > 0) return; // user belongs or created; honor URL
+
         // Otherwise strip unexpected param
         setSearchParams({}, { replace: true });
       } catch {}
