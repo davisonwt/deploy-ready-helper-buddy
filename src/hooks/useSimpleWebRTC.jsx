@@ -14,6 +14,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
+  const audioTransceiverRef = useRef(null);
   const isCaller = user?.id === callSession?.caller_id;
 
   const rtcConfig = {
@@ -59,9 +60,7 @@ export const useSimpleWebRTC = (callSession, user) => {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000,
+          autoGainControl: true
         }
       });
       console.log('🎙️ [WEBRTC] gotUserMedia', { tracks: stream.getAudioTracks().map(t => ({ id: t.id, enabled: t.enabled, muted: t.muted })) });
@@ -77,12 +76,19 @@ export const useSimpleWebRTC = (callSession, user) => {
       // pc.addTransceiver('audio', { direction: 'sendrecv' });
       // console.log('🔁 [WEBRTC] addTransceiver(audio, sendrecv) skipped to avoid dup m-lines')
 
-      // Add local audio
-      stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
-        console.log('➕ [WEBRTC] addTrack', { kind: track.kind, id: track.id, enabled: track.enabled });
-      });
+      // Ensure a single audio transceiver for broad browser compatibility (iOS Safari)
+      // Create a sendrecv audio transceiver then attach the mic track via replaceTrack to avoid duplicate m-lines
+      const audioTx = pc.addTransceiver('audio', { direction: 'sendrecv' });
+      audioTransceiverRef.current = audioTx;
 
+      const mic = stream.getAudioTracks()[0];
+      if (mic) {
+        await audioTx.sender.replaceTrack(mic);
+        console.log('🎤 [WEBRTC] attached mic via replaceTrack', { id: mic.id, enabled: mic.enabled });
+      } else {
+        console.warn('⚠️ [WEBRTC] No audio track present in local stream');
+      }
+      
       // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
       if (localAudioRef.current) {
         try {
