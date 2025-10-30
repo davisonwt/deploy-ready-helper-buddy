@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
+import { useCallManager } from '@/hooks/useCallManager';
 import Peer from 'peerjs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ interface ChatRoomProps {
 export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { startCall } = useCallManager();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -707,11 +709,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             </Button>
             
             <Button
-              variant={callActive ? 'destructive' : 'ghost'}
+              variant="ghost"
               size="sm"
-              onClick={toggleCall}
+              onClick={async () => {
+                const otherParticipant = participants.find(p => p.user_id !== user?.id);
+                if (!otherParticipant) {
+                  toast({ title: 'No other participants', description: 'Unable to start call', variant: 'destructive' });
+                  return;
+                }
+                
+                const receiverName = otherParticipant.profiles?.display_name 
+                  || `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim()
+                  || 'Unknown User';
+                
+                await startCall(otherParticipant.user_id, receiverName, 'audio', roomId);
+              }}
             >
-              {callActive ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+              <Phone className="h-4 w-4" />
             </Button>
             
             {callActive && (

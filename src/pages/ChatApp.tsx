@@ -30,6 +30,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useCallManager } from '@/hooks/useCallManager';
+import CallInterface from '@/components/chat/CallInterface';
+import VideoCallInterface from '@/components/chat/VideoCallInterface';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -90,7 +92,15 @@ const ChatApp = () => {
     prevRoomRef.current = currentRoomId;
   }, [currentRoomId]);
 
-  const { startCall } = useCallManager();
+  const { 
+    startCall, 
+    currentCall, 
+    incomingCall, 
+    outgoingCall,
+    answerCall,
+    declineCall,
+    endCall
+  } = useCallManager();
 
   const handleStartDirectChat = async (otherUserId) => {
     if (!user?.id || !otherUserId) return;
@@ -358,6 +368,29 @@ const ChatApp = () => {
     );
   }
 
+  // Render call interface if active
+  const activeCall = currentCall || incomingCall || outgoingCall;
+  if (activeCall) {
+    const CallComponent = activeCall?.type === 'video' ? VideoCallInterface : CallInterface;
+    
+    return (
+      <CallComponent
+        callSession={activeCall}
+        user={user}
+        callType={activeCall?.type || 'audio'}
+        isIncoming={!!incomingCall}
+        callerInfo={{
+          display_name: activeCall?.caller_name || activeCall?.receiver_name || 'Unknown',
+          avatar_url: null
+        }}
+        onAccept={() => incomingCall && answerCall(incomingCall.id)}
+        onDecline={() => incomingCall && declineCall(incomingCall.id, 'declined')}
+        onEnd={() => activeCall && endCall(activeCall.id, 'ended')}
+        isHost={activeCall?.caller_id === user?.id}
+      />
+    );
+  }
+
   return (
     <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
       {currentRoomId ? (
@@ -391,7 +424,7 @@ const ChatApp = () => {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'one' | 'circle')}>
             <TabsList className="mb-4">
               <TabsTrigger value="one">One-on-Ones</TabsTrigger>
-              <TabsTrigger value="circle">Grove Circles</TabsTrigger>
+              <TabsTrigger value="circle">Community</TabsTrigger>
             </TabsList>
 
             <TabsContent value="one" className="space-y-4">
@@ -416,7 +449,7 @@ const ChatApp = () => {
 
             <TabsContent value="circle" className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Grove Circles</h2>
+                <h2 className="text-xl font-semibold">Community</h2>
                 {/* Create New Chat/Circle */}
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
