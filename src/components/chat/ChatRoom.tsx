@@ -80,6 +80,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       console.debug('[ChatRoom] init', { roomId, userId: user.id });
       fetchRoomInfo();
       fetchMessages();
+      fetchParticipants();
       setupRealtimeSubscription();
       setupTypingSubscription();
     }
