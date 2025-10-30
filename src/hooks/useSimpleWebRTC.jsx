@@ -12,6 +12,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const channelRef = useRef();
   const iceQueueRef = useRef([]); // Queue ICE candidates until remoteDescription is set
   const subscribedRef = useRef(false);
+  const receivedOfferRef = useRef(false);
   const isCaller = user?.id === callSession?.caller_id;
 
   const rtcConfig = {
@@ -170,6 +171,7 @@ export const useSimpleWebRTC = (callSession, user) => {
           if (payload.from === user.id) return;
           try {
             if (payload.type === 'offer') {
+              receivedOfferRef.current = true;
               console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState });
               await pc.setRemoteDescription(payload.offer);
               console.log('✅ [WEBRTC] Remote description set (offer)');
@@ -223,6 +225,20 @@ export const useSimpleWebRTC = (callSession, user) => {
         console.log('📤 [WEBRTC] Offer sent');
       } else {
         console.log('⏳ [WEBRTC] I am the receiver, waiting for offer...');
+        // Fallback: if no offer arrives within 2s, proactively create one (perfect-negotiation-lite)
+        setTimeout(async () => {
+          if (!receivedOfferRef.current && pc.signalingState === 'stable') {
+            try {
+              console.log('⏰ [WEBRTC] No offer received, creating fallback offer as receiver');
+              const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+              await pc.setLocalDescription(offer);
+              await sendMessage({ type: 'offer', offer });
+              console.log('📤 [WEBRTC] Fallback offer sent by receiver');
+            } catch (e) {
+              console.warn('⚠️ [WEBRTC] Fallback offer failed', e);
+            }
+          }
+        }, 2000);
       }
 
     } catch (error) {
