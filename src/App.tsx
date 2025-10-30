@@ -11,6 +11,7 @@ import OnboardingTour from "./components/onboarding/OnboardingTour";
 import HelpModal from "./components/help/HelpModal";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import { Card, CardContent } from "@/components/ui/card";
+import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -100,6 +101,7 @@ const App = () => (
               <TooltipProvider>
               <Toaster />
               <Sonner />
+              <IncomingCallOverlay />
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AccessibilityChecker />
