@@ -18,7 +18,7 @@ export const useCallManager = () => {
   const currentCallRef = useRef(currentCall);
   const incomingCallRef = useRef(incomingCall);
   const outgoingCallRef = useRef(outgoingCall);
-  const lastIncomingRef = useRef({ id: null as string | null, ts: 0 });
+  const lastIncomingRef = useRef({ id: null, ts: 0 });
 
   // Set up call signaling channel
   const setupCallChannel = useCallback(() => {
