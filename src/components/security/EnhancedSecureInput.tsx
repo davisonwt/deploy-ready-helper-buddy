@@ -148,14 +148,36 @@ export const EnhancedSecureInput: React.FC<EnhancedSecureInputProps> = ({
       setIsSecure(true);
     }
 
-    // Sanitize the input
-    const sanitized = sanitizeInput[sanitizeType](rawValue, maxLength);
+    // Sanitize the input with email-friendly partial typing support
+    let sanitized: string;
+    switch (sanitizeType) {
+      case 'email': {
+        const lower = rawValue.toLowerCase();
+        const partial = lower.replace(/[^\w@.+-]/g, '');
+        sanitized = partial.slice(0, maxLength);
+        break;
+      }
+      case 'text':
+        sanitized = sanitizeInput.text(rawValue, maxLength);
+        break;
+      case 'url':
+        sanitized = sanitizeInput.url(rawValue);
+        break;
+      case 'phone':
+        sanitized = sanitizeInput.phone(rawValue);
+        break;
+      case 'filename':
+        sanitized = sanitizeInput.filename(rawValue);
+        break;
+      default:
+        sanitized = sanitizeInput.text(rawValue, maxLength);
+    }
     
     // Create synthetic event with sanitized value
     const syntheticEvent = {
       ...e,
       target: { ...e.target, value: sanitized }
-    };
+    } as React.ChangeEvent<HTMLInputElement>;
 
     lastValueRef.current = sanitized;
     onChange?.(syntheticEvent);
@@ -174,6 +196,25 @@ export const EnhancedSecureInput: React.FC<EnhancedSecureInputProps> = ({
       if (!isAllowed) {
         e.preventDefault();
         return;
+      }
+    }
+
+    // Strict email validation and normalization on blur only
+    if (sanitizeType === 'email') {
+      const original = e.currentTarget.value;
+      const validated = sanitizeInput.email(original);
+      if (!validated && original) {
+        toast({
+          variant: 'destructive',
+          title: 'Invalid Email',
+          description: 'Please enter a valid email address.',
+        });
+      } else if (validated && validated !== original) {
+        const syntheticEvent = {
+          ...e,
+          target: { ...e.target, value: validated }
+        } as unknown as React.ChangeEvent<HTMLInputElement>;
+        onChange?.(syntheticEvent);
       }
     }
 
