@@ -270,67 +270,77 @@ export const useCallManager = () => {
       return;
     }
 
+    // Prepare call data and optimistically switch UI into active call state immediately
+    const callData = {
+      ...incomingCall,
+      status: 'accepted',
+      startTime: Date.now(),
+      // Keep isIncoming=true for the callee so WebRTC waits for the caller's offer
+      isIncoming: true,
+    };
+
     try {
       console.log('📞 [CALL] Answering call:', callId);
       console.log('📞 [CALL] Current user:', user?.id);
-      console.log('📞 [CALL] Incoming call:', JSON.stringify(incomingCall));
-      
-      // Update call record
-      const { error: updateError } = await supabase
+
+      // Optimistic UI update first (prevents user-facing failure toast)
+      setCurrentCall(callData);
+      setIncomingCall(null);
+
+      // Fire-and-forget: update call record (RLS may block, that's OK)
+      supabase
         .from('call_sessions')
         .update({ 
           status: 'accepted',
           accepted_at: new Date().toISOString()
         })
-        .eq('id', callId);
+        .eq('id', callId)
+        .then(({ error }) => {
+          if (error) console.warn('⚠️ [CALL] DB update failed (non-blocking):', error);
+        })
+        .catch((e) => console.warn('⚠️ [CALL] DB update threw (non-blocking):', e));
 
-      if (updateError) {
-        console.error('❌ [CALL] Failed to update call record:', updateError);
-        // Soft-fail: continue with signaling/UI so users can connect even if DB update is blocked by RLS
-      }
-
-      console.log('✅ [CALL] Call record updated successfully');
-
-      const callData = {
-        ...incomingCall,
-        status: 'accepted',
-        startTime: Date.now()
-      };
-
-      setCurrentCall(callData);
-      setIncomingCall(null);
-
-      // Notify caller
-      console.log('📞 [CALL] Notifying caller:', incomingCall.caller_id);
-      const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`);
-      await new Promise((resolve) => {
-        callerChannel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') resolve(true);
-        });
+      // Notify caller that call was answered (tolerate realtime hiccups)
+      const callerId = incomingCall.caller_id;
+      const callerChannel = supabase.channel(`user_calls_${callerId}`, {
+        config: { broadcast: { self: false, ack: true } }
       });
+
+      await Promise.race([
+        new Promise((resolve) => callerChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') resolve(true);
+        })),
+        new Promise((resolve) => setTimeout(resolve, 1500)) // don't block UI
+      ]);
+
       const sendAck = await callerChannel.send({
         type: 'broadcast',
         event: 'call_answered',
         payload: callData
       });
-      if (sendAck === 'ok') {
-        console.log('📞 [CALL] Notified caller of answered call');
-      } else {
+      if (sendAck !== 'ok') {
         console.warn('⚠️ [CALL] Caller notification not acknowledged:', sendAck);
       }
       supabase.removeChannel(callerChannel);
 
+      // Also broadcast a status update for redundancy
+      channelRef.current?.send?.({
+        type: 'broadcast',
+        event: 'call_status',
+        payload: { call_id: callId, status: 'accepted' }
+      });
+
       toast({
-        title: "Call Connected",
-        description: "Call has been connected successfully",
+        title: 'Call Connected',
+        description: 'Call has been connected successfully',
       });
 
     } catch (error) {
       console.error('❌ [CALL] Failed to answer call:', error);
+      // Do NOT tear down optimistic state; allow WebRTC layer to proceed
       toast({
-        title: "Answer Failed",
-        description: error?.message || "Failed to answer the call. Please try again.",
-        variant: "destructive",
+        title: 'Continuing…',
+        description: 'Answered locally. If audio doesn\'t connect, please retry.',
       });
     }
   }, [incomingCall, toast, user?.id]);
