@@ -373,10 +373,6 @@ const ChatApp = () => {
                 <ScrollArea className="h-[calc(100vh-300px)] pr-2">
                   <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
                     <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
-                    {/* Emergency fallback list for production visibility */}
-                    <div className="mt-6">
-                      <SimpleChatSystem />
-                    </div>
                     <div aria-hidden className="h-24 sm:h-28 md:h-32" />
                   </div>
                 </ScrollArea>
