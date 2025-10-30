@@ -173,7 +173,27 @@ export const useSimpleWebRTC = (callSession, user) => {
             if (payload.type === 'offer') {
               receivedOfferRef.current = true;
               console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState });
-              await pc.setRemoteDescription(payload.offer);
+
+              // Perfect negotiation: handle offer collisions
+              const polite = !isCaller; // Callee is polite
+              const offerCollision = pc.signalingState !== 'stable';
+              if (offerCollision) {
+                if (!polite) {
+                  console.log('🙈 [WEBRTC] Ignoring offer in collision (impolite peer)');
+                  return;
+                }
+                try {
+                  await Promise.all([
+                    pc.setLocalDescription({ type: 'rollback' }),
+                    pc.setRemoteDescription(payload.offer)
+                  ]);
+                } catch (e) {
+                  console.warn('⚠️ [WEBRTC] Rollback/remote set failed during collision', e);
+                  return;
+                }
+              } else {
+                await pc.setRemoteDescription(payload.offer);
+              }
               console.log('✅ [WEBRTC] Remote description set (offer)');
               // Flush queued ICE candidates
               for (const c of iceQueueRef.current) {
