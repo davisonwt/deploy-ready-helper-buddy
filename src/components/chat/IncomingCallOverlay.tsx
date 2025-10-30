@@ -10,13 +10,37 @@ import { useAuth } from '@/hooks/useAuth';
 // Shows for any route and attempts to play a ringtone. Falls back to a tap-to-unlock if autoplay is blocked.
 const IncomingCallOverlay: React.FC = () => {
   const { user } = useAuth();
-  const { incomingCall, answerCall, declineCall } = useCallManager();
+  const { incomingCall, answerCall, declineCall, currentCall } = useCallManager();
   const [needsUnlock, setNeedsUnlock] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const gainRef = useRef<GainNode | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
   const ringTimerRef = useRef<number | null>(null);
+
+  const hardStopRingtone = () => {
+    try {
+      if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
+      if (gainRef.current) {
+        try { gainRef.current.gain.cancelScheduledValues?.(0); } catch {}
+        try { gainRef.current.gain.setTargetAtTime?.(0, audioCtxRef.current?.currentTime || 0, 0.01); } catch {}
+        try { (gainRef.current as any).disconnect?.(); } catch {}
+      }
+      if (oscRef.current) {
+        try { oscRef.current.stop(); } catch {}
+        try { (oscRef.current as any).disconnect?.(); } catch {}
+      }
+      if (audioCtxRef.current) {
+        try { audioCtxRef.current.suspend?.(); } catch {}
+        try { (audioCtxRef.current.state as any) !== 'closed' && audioCtxRef.current.close(); } catch {}
+      }
+    } finally {
+      oscRef.current = null;
+      gainRef.current = null;
+      audioCtxRef.current = null;
+      setNeedsUnlock(false);
+    }
+  };
 
   // Request Notification permission once when authenticated
   useEffect(() => {
@@ -81,18 +105,17 @@ const IncomingCallOverlay: React.FC = () => {
     ctx.resume().then(() => setNeedsUnlock(false)).catch(() => setNeedsUnlock(true));
 
     return () => {
-      if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
-      try { osc.stop(); } catch {}
-      try {
-        if (ctx && (ctx.state as any) !== 'closed') {
-          ctx.close();
-        }
-      } catch {}
-      oscRef.current = null;
-      gainRef.current = null;
-      audioCtxRef.current = null;
+      try { hardStopRingtone(); } catch {}
     };
   }, [incomingCall?.id, hasAnswered]);
+
+  // Stop ringtone if call transitions to active elsewhere or incomingCall clears
+  useEffect(() => {
+    if (!incomingCall || (currentCall && currentCall.id === incomingCall?.id)) {
+      try { hardStopRingtone(); } catch {}
+      if (currentCall) setHasAnswered(true);
+    }
+  }, [incomingCall?.id, currentCall?.id]);
 
   // Reset hasAnswered when a new call comes in
   useEffect(() => {
@@ -134,7 +157,7 @@ const IncomingCallOverlay: React.FC = () => {
                 size="lg"
                 variant="destructive"
                 className="rounded-full h-16 w-16 shadow-lg"
-                onClick={() => declineCall(incomingCall.id)}
+                onClick={() => { try { hardStopRingtone(); } catch {}; declineCall(incomingCall.id); }}
               >
                 <PhoneOff className="h-7 w-7" />
               </Button>
@@ -143,14 +166,7 @@ const IncomingCallOverlay: React.FC = () => {
                 className="rounded-full h-16 w-16 shadow-lg"
                 onClick={() => {
                   setHasAnswered(true);
-                  if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
-                  try { oscRef.current?.stop(); } catch {}
-                  try {
-                    if (audioCtxRef.current && (audioCtxRef.current.state as any) !== 'closed') {
-                      audioCtxRef.current.close();
-                    }
-                  } catch {}
-                  oscRef.current = null; gainRef.current = null; audioCtxRef.current = null;
+                  try { hardStopRingtone(); } catch {}
                   answerCall(incomingCall.id);
                 }}
               >
