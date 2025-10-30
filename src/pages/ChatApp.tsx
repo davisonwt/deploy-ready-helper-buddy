@@ -71,16 +71,27 @@ const ChatApp = () => {
     autoOpenRanRef.current = true;
   }, [user?.id]);
 
-  // Guard: only honor ?room= when explicitly initiated by our UI
+  // Guard: honor ?room= if initiated by our UI OR if user is a member of that room
   useEffect(() => {
-    try {
-      const allow = sessionStorage.getItem('chat:allowOpen');
-      if (currentRoomId && allow !== '1') {
-        setSearchParams({}, { replace: true }); // strip unexpected ?room=
-      }
-    } catch {}
-    try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
-  }, [currentRoomId, setSearchParams]);
+    const run = async () => {
+      if (!currentRoomId) return;
+      try {
+        const allow = sessionStorage.getItem('chat:allowOpen');
+        if (allow === '1') return; // trusted navigation from inside app
+        // Fallback: verify membership quickly; if user is a member, keep the param
+        const { count, error } = await supabase
+          .from('chat_participants')
+          .select('id', { count: 'exact', head: true })
+          .eq('room_id', currentRoomId)
+          .eq('user_id', user?.id || '');
+        if (!error && (count || 0) > 0) return; // user belongs; honor URL
+        // Otherwise strip unexpected param
+        setSearchParams({}, { replace: true });
+      } catch {}
+      try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
+    };
+    run();
+  }, [currentRoomId, setSearchParams, user?.id]);
 
    // Track transitions to list view (including browser back) to suppress re-open in this session
   useEffect(() => {
