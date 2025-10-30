@@ -123,7 +123,7 @@ if ('serviceWorker' in navigator) {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-02');
+      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-03');
       logInfo('Service worker registered', { registration });
 
       // Check for updates on load
