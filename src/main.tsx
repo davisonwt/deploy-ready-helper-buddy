@@ -66,7 +66,42 @@ logInfo('Application starting', {
 // Register service worker for PWA functionality with update handling
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
-    // Handle ?no-sw=1 - unregister all service workers and clear caches
+    // Allow permanent SW disable/enable via query flags
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('sw') === 'off') {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        localStorage.setItem('sw:disabled', '1');
+        logInfo('Service workers disabled and caches cleared');
+        window.location.href = window.location.pathname; // drop query
+        return;
+      }
+      if (params.get('sw') === 'on') {
+        localStorage.removeItem('sw:disabled');
+        logInfo('Service workers re-enabled');
+        window.location.href = window.location.pathname;
+        return;
+      }
+    } catch {}
+
+    // If disabled, ensure unregistered and skip registration entirely
+    if (localStorage.getItem('sw:disabled') === '1') {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        logInfo('SW disabled: skipping registration');
+      } catch (e) {
+        logError('Failed disabling SW', { e });
+      }
+      return;
+    }
+
+    // Handle ?no-sw=1 - one-time unregister and clear caches
     if (window.location.search.includes('no-sw=1')) {
       try {
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -88,7 +123,7 @@ if ('serviceWorker' in navigator) {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-01');
+      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-02');
       logInfo('Service worker registered', { registration });
 
       // Check for updates on load
