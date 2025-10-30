@@ -1,7 +1,7 @@
 // Service Worker for Push Notifications and PWA functionality
 
 // Version cache name so each deploy gets a fresh cache
-const CACHE_VERSION = '2025-10-30-01' // Bumped to invalidate old caches
+const CACHE_VERSION = '2025-10-30-02' // Bumped to invalidate old caches
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
 const urlsToCache = [
