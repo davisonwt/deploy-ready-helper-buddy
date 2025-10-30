@@ -240,9 +240,9 @@ const CallInterface = ({
               autoPlay 
               playsInline
               controls={false}
-              volume={1.0}
+              preload="auto"
               muted={false}
-              style={{ display: 'none' }}
+              style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
               onLoadedMetadata={() => console.log('📺 [AUDIO] Remote audio loaded')}
               onCanPlay={() => console.log('📺 [AUDIO] Remote audio can play')}
               onPlay={() => { console.log('📺 [AUDIO] Remote audio started'); setNeedsAudioUnlock(false); }}
