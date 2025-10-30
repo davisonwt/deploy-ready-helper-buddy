@@ -216,24 +216,36 @@ export const useCallManager = () => {
 
       setOutgoingCall(callData);
 
-      // Send call signal to receiver
-      const receiverChannel = supabase.channel(`user_calls_${receiverId}`);
-      await new Promise((resolve) => {
-        receiverChannel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') resolve(true);
+      // Send call signal to receiver with retries and ack
+      const receiverChannel = supabase.channel(`user_calls_${receiverId}`, {
+        config: { broadcast: { self: false, ack: true } }
+      });
+      await Promise.race([
+        new Promise((resolve) => {
+          receiverChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') resolve(true);
+          });
+        }),
+        new Promise((resolve) => setTimeout(resolve, 1500))
+      ]);
+
+      const sendOnce = async (label = 'initial') => {
+        const res = await receiverChannel.send({
+          type: 'broadcast',
+          event: 'incoming_call',
+          payload: callData
         });
-      });
-      const sendResult = await receiverChannel.send({
-        type: 'broadcast',
-        event: 'incoming_call',
-        payload: callData
-      });
-      if (sendResult === 'ok') {
-        console.log('📞 [CALL] Incoming call signal sent');
-      } else {
-        console.warn('⚠️ [CALL] Incoming call signal not acknowledged:', sendResult);
-      }
-      supabase.removeChannel(receiverChannel);
+        console.log(`📞 [CALL] Incoming call (${label}) send result:`, res);
+      };
+
+      await sendOnce('initial');
+      // Fire two quick retries to mitigate race conditions
+      setTimeout(() => sendOnce('retry1'), 1500);
+      setTimeout(() => {
+        sendOnce('retry2').finally(() => {
+          supabase.removeChannel(receiverChannel);
+        });
+      }, 4000);
 
       // Auto-cancel after 30 seconds
       setTimeout(() => {
@@ -372,16 +384,15 @@ export const useCallManager = () => {
 
       setIncomingCall(null);
 
-      // Notify caller
-      const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`);
-      await callerChannel.send({
+      // Notify caller (ack + cleanup)
+      const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`, { config: { broadcast: { self: false, ack: true }}});
+      const result = await callerChannel.send({
         type: 'broadcast',
         event: 'call_declined',
-        payload: {
-          id: callId,
-          reason: reason
-        }
+        payload: { id: callId, reason }
       });
+      console.log('📞 [CALL] Decline notify result:', result);
+      supabase.removeChannel(callerChannel);
 
     } catch (error) {
       console.error('❌ [CALL] Failed to decline call:', error);
@@ -414,18 +425,16 @@ export const useCallManager = () => {
         console.error('❌ [CALL] Failed to update call record:', updateError);
       }
 
-      // Notify other party
+      // Notify other party (ack + cleanup)
       const otherId = call.caller_id === user.id ? call.receiver_id : call.caller_id;
-      const otherChannel = supabase.channel(`user_calls_${otherId}`);
-      await otherChannel.send({
+      const otherChannel = supabase.channel(`user_calls_${otherId}`, { config: { broadcast: { self: false, ack: true }}});
+      const notifyRes = await otherChannel.send({
         type: 'broadcast',
         event: 'call_ended',
-        payload: {
-          id: callId,
-          reason: reason,
-          duration: duration
-        }
+        payload: { id: callId, reason, duration }
       });
+      console.log('📞 [CALL] End notify result:', notifyRes);
+      supabase.removeChannel(otherChannel);
 
       // Add to history if it was a completed call
       if (currentCall && duration > 0) {
