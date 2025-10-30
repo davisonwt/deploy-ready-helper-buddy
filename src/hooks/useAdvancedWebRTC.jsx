@@ -28,11 +28,23 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
   // Enhanced WebRTC configuration
   const rtcConfig = {
     iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun.stunprotocol.org:3478' },
-      { urls: 'stun:stun4.l.google.com:19302' }
+      { urls: [
+        'stun:stun.l.google.com:19302',
+        'stun:stun1.l.google.com:19302',
+        'stun:stun2.l.google.com:19302',
+        'stun:stun4.l.google.com:19302',
+        'stun:stun.stunprotocol.org:3478'
+      ]},
+      { urls: ['stun:openrelay.metered.ca:80'] },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
     ],
     iceCandidatePoolSize: 10,
     bundlePolicy: 'max-bundle',
@@ -96,6 +108,16 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
     const pc = new RTCPeerConnection(rtcConfig);
     peerConnectionRef.current = pc;
 
+    // Ensure bidirectional negotiation for audio (and video when applicable)
+    try {
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+      if (callType === 'video') {
+        pc.addTransceiver('video', { direction: 'sendrecv' });
+      }
+    } catch (e) {
+      console.warn('ℹ️ [WEBRTC] addTransceiver not supported or failed', e);
+    }
+
     // Connection state monitoring
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
@@ -127,8 +149,13 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
     // Handle remote streams
     pc.ontrack = (event) => {
       console.log('🎵 [WEBRTC] Received remote track:', event.track.kind, event.track.id);
-      const [remoteStream] = event.streams;
-      
+
+      // Build a MediaStream if event.streams is empty (Safari/Firefox cases)
+      let remoteStream = event.streams && event.streams[0] ? event.streams[0] : null;
+      if (!remoteStream && event.track) {
+        remoteStream = new MediaStream([event.track]);
+      }
+
       if (event.track.kind === 'video') {
         if (remoteVideoRef.current && remoteStream) {
           console.log('📺 [WEBRTC] Setting remote video stream');
@@ -138,10 +165,26 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
         if (remoteAudioRef.current && remoteStream) {
           console.log('🔊 [WEBRTC] Setting remote audio stream');
           remoteAudioRef.current.srcObject = remoteStream;
-          // Auto-play audio
-          remoteAudioRef.current.play().catch(error => {
-            console.error('❌ [WEBRTC] Failed to play remote audio:', error);
-          });
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1.0;
+          const tryPlay = async () => {
+            try {
+              await remoteAudioRef.current.play();
+              console.log('🔈 [WEBRTC] Remote audio playing');
+            } catch (error) {
+              console.warn('⚠️ [WEBRTC] Autoplay blocked, waiting for user gesture', error);
+              const once = () => {
+                remoteAudioRef.current?.play().catch(() => {});
+                document.removeEventListener('click', once);
+                document.removeEventListener('touchstart', once);
+                document.removeEventListener('keydown', once);
+              };
+              document.addEventListener('click', once, { once: true });
+              document.addEventListener('touchstart', once, { once: true });
+              document.addEventListener('keydown', once, { once: true });
+            }
+          };
+          tryPlay();
         }
       }
     };
@@ -150,9 +193,17 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('🧊 [WEBRTC] Sending ICE candidate');
+        const init = typeof event.candidate.toJSON === 'function'
+          ? event.candidate.toJSON()
+          : {
+              candidate: event.candidate.candidate,
+              sdpMid: event.candidate.sdpMid,
+              sdpMLineIndex: event.candidate.sdpMLineIndex,
+              usernameFragment: event.candidate.usernameFragment
+            };
         sendSignalingMessage({
           type: 'ice-candidate',
-          candidate: event.candidate,
+          candidate: init,
           callId: callSession.id,
           from: user.id
         });
@@ -339,6 +390,8 @@ export const useAdvancedWebRTC = (callSession, user, callType = 'audio') => {
     if (localAudioRef.current && stream.getAudioTracks().length > 0) {
       localAudioRef.current.srcObject = stream;
       localAudioRef.current.muted = true; // Prevent echo
+      localAudioRef.current.volume = 0;
+      try { await localAudioRef.current.play(); } catch (_) {}
     }
   }, []);
 
