@@ -98,7 +98,9 @@ export const useCallManager = () => {
     setCurrentCall({
       ...callData,
       status: 'accepted',
-      startTime: Date.now()
+      startTime: Date.now(),
+      // CRITICAL: caller must remain isIncoming=false to create the SDP offer
+      isIncoming: false
     });
   }, []);
 
