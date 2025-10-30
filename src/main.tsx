@@ -88,7 +88,7 @@ if ('serviceWorker' in navigator) {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-01');
       logInfo('Service worker registered', { registration });
 
       // Check for updates on load
