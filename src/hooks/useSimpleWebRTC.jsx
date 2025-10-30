@@ -14,7 +14,8 @@ export const useSimpleWebRTC = (callSession, user) => {
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
-  const audioTransceiverRef = useRef(null);
+  const remoteReadyRef = useRef(false);
+  const offerSentRef = useRef(false);
   const isCaller = user?.id === callSession?.caller_id;
 
   const rtcConfig = {
@@ -37,7 +38,9 @@ export const useSimpleWebRTC = (callSession, user) => {
         credential: 'openrelayproject'
       }
     ],
-    iceTransportPolicy: 'all',
+    iceTransportPolicy: 'relay',
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require',
     iceCandidatePoolSize: 10,
   };
   const sendMessage = async (message) => {
@@ -76,18 +79,11 @@ export const useSimpleWebRTC = (callSession, user) => {
       // pc.addTransceiver('audio', { direction: 'sendrecv' });
       // console.log('🔁 [WEBRTC] addTransceiver(audio, sendrecv) skipped to avoid dup m-lines')
 
-      // Ensure a single audio transceiver for broad browser compatibility (iOS Safari)
-      // Create a sendrecv audio transceiver then attach the mic track via replaceTrack to avoid duplicate m-lines
-      const audioTx = pc.addTransceiver('audio', { direction: 'sendrecv' });
-      audioTransceiverRef.current = audioTx;
-
-      const mic = stream.getAudioTracks()[0];
-      if (mic) {
-        await audioTx.sender.replaceTrack(mic);
-        console.log('🎤 [WEBRTC] attached mic via replaceTrack', { id: mic.id, enabled: mic.enabled });
-      } else {
-        console.warn('⚠️ [WEBRTC] No audio track present in local stream');
-      }
+      // Add local audio
+      stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+        console.log('➕ [WEBRTC] addTrack', { kind: track.kind, id: track.id, enabled: track.enabled });
+      });
       
       // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
       if (localAudioRef.current) {
@@ -185,6 +181,34 @@ export const useSimpleWebRTC = (callSession, user) => {
           console.log('📨 [WEBRTC] Received signal', { type: payload.type, from: payload.from, isCaller });
           if (payload.from === user.id) return;
           try {
+            const ensureOfferFromCaller = async () => {
+              if (!isCaller || offerSentRef.current) return;
+              try {
+                makingOfferRef.current = true;
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                offerSentRef.current = true;
+                console.log('✅ [WEBRTC] Local description set (offer), sending...');
+                await sendMessage({ type: 'offer', offer });
+                console.log('📤 [WEBRTC] Offer sent (hello handshake)');
+              } finally {
+                makingOfferRef.current = false;
+              }
+            };
+
+            if (payload.type === 'hello') {
+              console.log('🤝 [WEBRTC] hello received');
+              remoteReadyRef.current = true;
+              await sendMessage({ type: 'hello_ack' });
+              await ensureOfferFromCaller();
+              return;
+            } else if (payload.type === 'hello_ack') {
+              console.log('🤝 [WEBRTC] hello_ack received');
+              remoteReadyRef.current = true;
+              await ensureOfferFromCaller();
+              return;
+            }
+
             if (payload.type === 'offer') {
               receivedOfferRef.current = true;
               console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState, makingOffer: makingOfferRef.current });
@@ -255,38 +279,31 @@ export const useSimpleWebRTC = (callSession, user) => {
         });
       });
 
-      // 4) If we are the caller, create and send an offer after ensuring subscription
+      // Handshake to prevent offer being sent before the other peer subscribes
+      await sendMessage({ type: 'hello', role: isCaller ? 'caller' : 'callee' });
+      console.log('🤝 [WEBRTC] Hello sent; waiting for peer handshake');
+
       if (isCaller) {
-        console.log('📤 [WEBRTC] I am the caller, creating offer...');
-        try {
-          makingOfferRef.current = true;
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          console.log('✅ [WEBRTC] Local description set (offer), sending...');
-          await sendMessage({ type: 'offer', offer });
-          console.log('📤 [WEBRTC] Offer sent');
-        } finally {
-          makingOfferRef.current = false;
-        }
-      } else {
-        console.log('⏳ [WEBRTC] I am the receiver, waiting for offer...');
-        // Fallback: if no offer arrives within 2s, proactively create one (perfect-negotiation-lite)
+        // Safety fallback: if no handshake within 3.5s, create offer anyway
         setTimeout(async () => {
-          if (!receivedOfferRef.current && pc.signalingState === 'stable') {
+          if (!offerSentRef.current) {
+            console.log('⏰ [WEBRTC] Handshake timeout, creating offer as fallback');
             try {
-              console.log('⏰ [WEBRTC] No offer received, creating fallback offer as receiver');
               makingOfferRef.current = true;
               const offer = await pc.createOffer();
               await pc.setLocalDescription(offer);
+              offerSentRef.current = true;
               await sendMessage({ type: 'offer', offer });
-              console.log('📤 [WEBRTC] Fallback offer sent by receiver');
+              console.log('📤 [WEBRTC] Offer sent (fallback)');
             } catch (e) {
               console.warn('⚠️ [WEBRTC] Fallback offer failed', e);
             } finally {
               makingOfferRef.current = false;
             }
           }
-        }, 2000);
+        }, 3500);
+      } else {
+        console.log('⏳ [WEBRTC] Receiver waiting for offer...');
       }
 
     } catch (error) {
