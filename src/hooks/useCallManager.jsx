@@ -14,6 +14,12 @@ export const useCallManager = () => {
   const [callQueue, setCallQueue] = useState([]);
   const channelRef = useRef(null);
 
+  // Refs to avoid stale closures in realtime handlers
+  const currentCallRef = useRef(currentCall);
+  const incomingCallRef = useRef(incomingCall);
+  const outgoingCallRef = useRef(outgoingCall);
+  const lastIncomingRef = useRef({ id: null as string | null, ts: 0 });
+
   // Set up call signaling channel
   const setupCallChannel = useCallback(() => {
     if (!user) return;
@@ -27,8 +33,22 @@ export const useCallManager = () => {
         }
       })
       .on('broadcast', { event: 'incoming_call' }, (payload) => {
-        console.log('📞 [CALL] Incoming call:', payload.payload);
-        handleIncomingCall(payload.payload);
+        const call = payload.payload || {};
+        if (!call?.id) return;
+        if (call.receiver_id && call.receiver_id !== user.id) return;
+        const now = Date.now();
+        const ts = typeof call.timestamp === 'number' ? call.timestamp : now;
+        if (lastIncomingRef.current.id === call.id && (now - lastIncomingRef.current.ts) < 15000) {
+          console.log('⏱️ [CALL] Ignoring duplicate incoming_call', call.id);
+          return;
+        }
+        if ((now - ts) > 60000) {
+          console.log('🗑️ [CALL] Ignoring stale incoming_call', { id: call.id, ageMs: now - ts });
+          return;
+        }
+        lastIncomingRef.current = { id: call.id, ts: now };
+        console.log('📞 [CALL] Incoming call (accepted):', call);
+        handleIncomingCall(call);
       })
       .on('broadcast', { event: 'call_answered' }, (payload) => {
         console.log('📞 [CALL] Call answered:', payload.payload);
@@ -50,8 +70,19 @@ export const useCallManager = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${user.id}` }, (payload) => {
         try {
           const row = payload.new;
-          console.log('🛟 [CALL][DB] Fallback incoming call row:', row);
+          const now = Date.now();
+          const ts = row?.created_at ? new Date(row.created_at).getTime() : now;
+          if (!row?.id) return;
+          if ((now - ts) > 60000) {
+            console.log('🗑️ [CALL][DB] Ignoring stale INSERT for incoming call', { id: row.id, ageMs: now - ts });
+            return;
+          }
           if (row?.status === 'ringing') {
+            if (lastIncomingRef.current.id === row.id && (now - lastIncomingRef.current.ts) < 15000) {
+              console.log('⏱️ [CALL][DB] Ignoring duplicate incoming INSERT', row.id);
+              return;
+            }
+            lastIncomingRef.current = { id: row.id, ts: now };
             handleIncomingCall({
               id: row.id,
               caller_id: row.caller_id,
