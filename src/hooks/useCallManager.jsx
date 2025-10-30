@@ -46,6 +46,49 @@ export const useCallManager = () => {
         console.log('📞 [CALL] Call status update:', payload.payload);
         handleCallStatusUpdate(payload.payload);
       })
+      // DB realtime fallback: ring events for receiver
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${user.id}` }, (payload) => {
+        try {
+          const row = payload.new;
+          console.log('🛟 [CALL][DB] Fallback incoming call row:', row);
+          if (row?.status === 'ringing') {
+            handleIncomingCall({
+              id: row.id,
+              caller_id: row.caller_id,
+              receiver_id: row.receiver_id,
+              type: row.call_type || 'audio',
+              status: row.status,
+              isIncoming: true,
+            });
+          }
+        } catch (e) {
+          console.warn('⚠️ [CALL][DB] Fallback incoming handler error', e);
+        }
+      })
+      // DB realtime fallback: acceptance for caller
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `caller_id=eq.${user.id}` }, (payload) => {
+        try {
+          const row = payload.new;
+          if (row?.status === 'accepted') {
+            console.log('🛟 [CALL][DB] Fallback accepted update:', row.id);
+            handleCallAnswered({
+              id: row.id,
+              caller_id: row.caller_id,
+              receiver_id: row.receiver_id,
+              type: row.call_type || 'audio',
+              status: 'accepted',
+              isIncoming: false,
+              startTime: Date.now(),
+            });
+          } else if (row?.status === 'declined') {
+            handleCallDeclined({ id: row.id, reason: 'declined' });
+          } else if (row?.status === 'ended') {
+            handleCallEnded({ id: row.id, reason: 'ended' });
+          }
+        } catch (e) {
+          console.warn('⚠️ [CALL][DB] Fallback update handler error', e);
+        }
+      })
       .subscribe((status) => {
         console.log('📞 [CALL] Channel subscription status:', status);
       });
