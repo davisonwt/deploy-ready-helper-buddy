@@ -19,6 +19,7 @@ export const useChat = () => {
     try {
       console.log('🔍 Fetching active rooms for user:', user.id);
 
+      // Primary strategy: inner join on chat_participants -> chat_rooms
       const { data, error } = await supabase
         .from('chat_participants')
         .select(`
@@ -40,12 +41,57 @@ export const useChat = () => {
 
       if (error) throw error;
 
-      const uniqueRooms = Array.from(
-        new Map((data || []).map((d) => [d.chat_rooms.id, d.chat_rooms])).values()
-      );
+      let combined = [];
 
+      if (data && data.length > 0) {
+        // Happy path: inner join returned rows
+        const uniqueRooms = Array.from(
+          new Map((data || []).map((d) => [d.chat_rooms.id, d.chat_rooms])).values()
+        );
+        combined = uniqueRooms;
+      } else {
+        // Fallback path for environments where foreign table filtering can be flaky
+        console.warn('⚠️ Join returned 0 rows (hook). Falling back to two-step fetch.');
+
+        // 1) Get all active participations for the user
+        const { data: partIds, error: partErr } = await supabase
+          .from('chat_participants')
+          .select('room_id')
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+        if (partErr) throw partErr;
+
+        const roomIds = (partIds || []).map((p) => p.room_id);
+
+        // 2) Fetch rooms by ids + rooms created by the user
+        const [byIdsRes, createdRes] = await Promise.all([
+          roomIds.length
+            ? supabase
+                .from('chat_rooms')
+                .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+                .in('id', roomIds)
+                .eq('is_active', true)
+            : Promise.resolve({ data: [], error: null }),
+          supabase
+            .from('chat_rooms')
+            .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+            .eq('created_by', user.id)
+            .eq('is_active', true)
+        ]);
+
+        if (byIdsRes.error) throw byIdsRes.error;
+        if (createdRes.error) throw createdRes.error;
+
+        const dedupMap = new Map();
+        [...(byIdsRes.data || []), ...(createdRes.data || [])].forEach((r) => {
+          dedupMap.set(r.id, r);
+        });
+        combined = Array.from(dedupMap.values());
+      }
+
+      // Annotate with participant count
       const enriched = await Promise.all(
-        uniqueRooms.map(async (room) => {
+        combined.map(async (room) => {
           const { count } = await supabase
             .from('chat_participants')
             .select('*', { count: 'exact', head: true })
