@@ -261,6 +261,8 @@ export const useCallManager = () => {
 
     try {
       console.log('📞 [CALL] Answering call:', callId);
+      console.log('📞 [CALL] Current user:', user?.id);
+      console.log('📞 [CALL] Incoming call:', JSON.stringify(incomingCall));
       
       // Update call record
       const { error: updateError } = await supabase
@@ -276,9 +278,11 @@ export const useCallManager = () => {
         throw updateError;
       }
 
+      console.log('✅ [CALL] Call record updated successfully');
+
       const callData = {
         ...incomingCall,
-        status: 'connected',
+        status: 'accepted',
         startTime: Date.now()
       };
 
@@ -286,6 +290,7 @@ export const useCallManager = () => {
       setIncomingCall(null);
 
       // Notify caller
+      console.log('📞 [CALL] Notifying caller:', incomingCall.caller_id);
       const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`);
       await callerChannel.send({
         type: 'broadcast',
@@ -302,11 +307,11 @@ export const useCallManager = () => {
       console.error('❌ [CALL] Failed to answer call:', error);
       toast({
         title: "Answer Failed",
-        description: "Failed to answer the call. Please try again.",
+        description: error?.message || "Failed to answer the call. Please try again.",
         variant: "destructive",
       });
     }
-  }, [incomingCall, toast]);
+  }, [incomingCall, toast, user?.id]);
 
   // Decline incoming call
   const declineCall = useCallback(async (callId, reason = 'declined') => {
