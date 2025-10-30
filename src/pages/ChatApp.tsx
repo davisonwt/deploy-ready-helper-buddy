@@ -372,19 +372,25 @@ const ChatApp = () => {
   const activeCall = currentCall || incomingCall || outgoingCall;
   if (activeCall) {
     const CallComponent = activeCall?.type === 'video' ? VideoCallInterface : CallInterface;
+    const isIncomingForUser = Boolean(
+      activeCall?.status === 'ringing' &&
+      activeCall?.receiver_id === user?.id &&
+      activeCall?.caller_id !== user?.id
+    );
+    console.log('📞 [CALL][UI] Active call render', { id: activeCall?.id, status: activeCall?.status, isIncomingForUser });
     
     return (
       <CallComponent
         callSession={activeCall}
         user={user}
         callType={activeCall?.type || 'audio'}
-        isIncoming={!!incomingCall}
+        isIncoming={isIncomingForUser}
         callerInfo={{
           display_name: activeCall?.caller_name || activeCall?.receiver_name || 'Unknown',
           avatar_url: null
         }}
-        onAccept={() => incomingCall && answerCall(incomingCall.id)}
-        onDecline={() => incomingCall && declineCall(incomingCall.id, 'declined')}
+        onAccept={() => isIncomingForUser ? answerCall(activeCall.id) : undefined}
+        onDecline={() => isIncomingForUser ? declineCall(activeCall.id, 'declined') : undefined}
         onEnd={() => activeCall && endCall(activeCall.id, 'ended')}
         isHost={activeCall?.caller_id === user?.id}
       />
