@@ -82,9 +82,21 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
       );
 
+      // Fallback: also include rooms the user CREATED (they might not be a participant row)
+      const existingIds = new Set(unique.map((r: any) => r.id));
+      const { data: createdRooms, error: createdErr } = await supabase
+        .from('chat_rooms')
+        .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+        .eq('created_by', user.id)
+        .eq('is_active', true);
+      if (createdErr) console.warn('Fetch created rooms fallback failed:', createdErr);
+      const fallback = (createdRooms || []).filter((r: any) => !existingIds.has(r.id));
+
+      const combined = [...unique, ...fallback];
+
       // Annotate with participant count
       const enriched = await Promise.all(
-        unique.map(async (room: any) => {
+        combined.map(async (room: any) => {
           const { count } = await supabase
             .from('chat_participants')
             .select('*', { count: 'exact', head: true })
@@ -95,7 +107,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         })
       );
 
-      console.log('✅ Active rooms loaded:', enriched);
+      console.log('✅ Active rooms (with creator fallback) loaded:', enriched);
       setRooms(enriched);
     } catch (error: any) {
       console.error('Error fetching rooms:', error);
