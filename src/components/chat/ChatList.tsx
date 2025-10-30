@@ -207,9 +207,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         return false;
       }
 
-      // Filter by type - include direct rooms for 'direct', group rooms for 'group'
-      if (effectiveType === 'direct' && !isDirectRoom(room)) return false;
-      if (effectiveType === 'group' && isDirectRoom(room)) return false;
+      // Strict type filtering by declared room_type
+      if (effectiveType === 'direct' && room.room_type !== 'direct') return false;
+      if (effectiveType === 'group' && room.room_type !== 'group') return false;
 
       return true;
     })
