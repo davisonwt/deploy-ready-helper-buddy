@@ -17,48 +17,51 @@ export const useChat = () => {
     if (!user) return;
 
     try {
-      // First get rooms where user is a participant
-      const { data: userRooms, error: roomsError } = await supabase
+      console.log('🔍 Fetching active rooms for user:', user.id);
+
+      const { data, error } = await supabase
         .from('chat_participants')
         .select(`
           room_id,
-          chat_rooms!inner(*)
+          is_active,
+          chat_rooms!inner(
+            id,
+            name,
+            room_type,
+            is_premium,
+            updated_at,
+            created_by,
+            is_active
+          )
         `)
         .eq('user_id', user.id)
-        .or('is_active.is.null,is_active.eq.true');
+        .eq('is_active', true)
+        .eq('chat_rooms.is_active', true)
+        .order('updated_at', { ascending: false });
 
-      if (roomsError) throw roomsError;
+      if (error) throw error;
 
-      // Extract room data and get all participants for each room
-      const roomsWithParticipants = await Promise.all(
-        (userRooms || []).map(async (userRoom) => {
-          const room = userRoom.chat_rooms;
-          
-          // Get all participants for this room
-      const { data: allParticipants, error: participantsError } = await supabase
+      const uniqueRooms = Array.from(
+        new Map((data || []).map((d) => [d.chat_rooms.id, d.chat_rooms])).values()
+      );
+
+      const enriched = await Promise.all(
+        uniqueRooms.map(async (room) => {
+          const { count } = await supabase
             .from('chat_participants')
-            .select('user_id, is_moderator, joined_at')
+            .select('*', { count: 'exact', head: true })
             .eq('room_id', room.id)
-            .or('is_active.is.null,is_active.eq.true');
+            .eq('is_active', true);
 
-          return {
-            ...room,
-            chat_participants: allParticipants || []
-          };
+          return { ...room, participant_count: count || 0 };
         })
       );
 
-      // Sort by updated_at
-      roomsWithParticipants.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-      
-      setRooms(roomsWithParticipants);
+      console.log('✅ Active rooms loaded (hook):', enriched);
+      setRooms(enriched);
     } catch (error) {
       console.error('Error fetching rooms:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load chat rooms",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to load chats', variant: 'destructive' });
     }
   }, [user, toast]);
 
@@ -405,35 +408,23 @@ export const useChat = () => {
     if (!user || !roomId) return;
 
     try {
-      // Use the secure admin_delete_room RPC function
-      const { data, error } = await supabase.rpc('admin_delete_room', {
-        target_room_id: roomId
-      });
-
+      const { error } = await supabase.rpc('admin_delete_room', { target_room_id: roomId });
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Conversation deleted successfully",
-      });
+      toast({ title: 'Success', description: 'Conversation deleted successfully' });
 
-      // Clear current room if it was deleted
       if (currentRoom?.id === roomId) {
         setCurrentRoom(null);
         setMessages([]);
         setParticipants([]);
       }
 
-      fetchRooms();
+      setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error) {
       console.error('Error deleting conversation:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete conversation",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: error.message || 'Failed to delete conversation', variant: 'destructive' });
     }
-  }, [user, toast, fetchRooms, currentRoom]);
+  }, [user, toast, currentRoom]);
 
   // Set up real-time subscriptions
   useEffect(() => {

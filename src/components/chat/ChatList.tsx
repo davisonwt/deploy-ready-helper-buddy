@@ -54,90 +54,53 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
 
     try {
       setLoading(true);
-      console.log('🔍 Fetching rooms for user:', user.id);
+      console.log('🔍 Fetching active rooms for user:', user.id);
 
-      // Try both strategies and merge results for maximum reliability
-      let joinedData: any[] = [];
-      let fallbackData: any[] = [];
-
-      // Strategy A: Join chat_rooms with chat_participants
-      try {
-        const { data: joined, error: joinError } = await supabase
-          .from('chat_rooms')
-          .select(`
+      // Strategy: Only fetch active rooms and active participations
+      const { data, error } = await supabase
+        .from('chat_participants')
+        .select(`
+          room_id,
+          is_active,
+          chat_rooms!inner(
             id,
             name,
             room_type,
             is_premium,
             updated_at,
             created_by,
-            chat_participants!inner(user_id,is_active),
-            counts:chat_participants(count)
-          `)
-          .eq('chat_participants.user_id', user.id)
-          .or('is_active.is.null,is_active.eq.true')
-          .eq('chat_participants.is_active', true as any)
-          .order('updated_at', { ascending: false });
+            is_active
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .eq('chat_rooms.is_active', true)
+        .order('updated_at', { ascending: false });
 
-        if (!joinError && joined) joinedData = joined;
-        else console.warn('⚠️ Join query issue:', joinError);
-      } catch (e) {
-        console.warn('⚠️ Join query threw, continuing with fallback:', e);
-      }
+      if (error) throw error;
 
-      // Strategy B: Participants -> room IDs -> rooms
-      try {
-        const { data: parts, error: partsError } = await supabase
-          .from('chat_participants')
-          .select('room_id')
-          .eq('user_id', user.id)
-          .or('is_active.is.null,is_active.eq.true');
-        if (partsError) throw partsError;
-        const roomIds = Array.from(new Set((parts || []).map((p: any) => p.room_id)));
+      const unique = Array.from(
+        new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
+      );
 
-        if (roomIds.length > 0) {
-          const { data: roomsRes, error: roomsErr } = await supabase
-            .from('chat_rooms')
-            .select('id, name, room_type, is_premium, updated_at, created_by, counts:chat_participants(count)')
-            .in('id', roomIds)
-            .or('is_active.is.null,is_active.eq.true')
-            .order('updated_at', { ascending: false });
+      // Annotate with participant count
+      const enriched = await Promise.all(
+        unique.map(async (room: any) => {
+          const { count } = await supabase
+            .from('chat_participants')
+            .select('*', { count: 'exact', head: true })
+            .eq('room_id', room.id)
+            .eq('is_active', true);
 
-          if (roomsErr) throw roomsErr;
-          fallbackData = roomsRes || [];
-        }
-      } catch (e) {
-        console.warn('⚠️ Fallback query issue:', e);
-      }
+          return { ...room, participant_count: count || 0 };
+        })
+      );
 
-      // Merge and de-duplicate by id (prefer fallback data)
-      const mergedMap = new Map<string, any>();
-      [...joinedData, ...fallbackData].forEach((r: any) => {
-        mergedMap.set(r.id, { ...mergedMap.get(r.id), ...r });
-      });
-      const roomsData = Array.from(mergedMap.values());
-
-      // Map participant counts with robust handling of different shapes
-      const roomsWithCounts = (roomsData || []).map((room: any) => {
-        const counts = (room as any).counts;
-        const participant_count =
-          typeof counts === 'number'
-            ? counts
-            : Array.isArray(counts)
-              ? (counts[0]?.count ?? 0)
-              : (counts?.count ?? 0);
-        return { ...room, participant_count };
-      });
-
-      console.log('✅ Rooms loaded:', roomsWithCounts);
-      setRooms(roomsWithCounts);
-    } catch (error) {
+      console.log('✅ Active rooms loaded:', enriched);
+      setRooms(enriched);
+    } catch (error: any) {
       console.error('Error fetching rooms:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load chats',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to load chats', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -167,26 +130,14 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     if (!confirm('Are you sure you want to delete this conversation?')) return;
 
     try {
-      // Use the secure admin_delete_room RPC function
-      const { data, error } = await supabase.rpc('admin_delete_room', {
-        target_room_id: roomId
-      });
-
+      const { error } = await supabase.rpc('admin_delete_room', { target_room_id: roomId });
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Conversation deleted'
-      });
-
-      fetchRooms();
-    } catch (error) {
+      toast({ title: 'Success', description: 'Conversation deleted' });
+      setRooms(prev => prev.filter(r => r.id !== roomId)); // ✅ instant UI update
+    } catch (error: any) {
       console.error('Error deleting room:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete conversation',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message || 'Failed to delete conversation', variant: 'destructive' });
     }
   };
   
