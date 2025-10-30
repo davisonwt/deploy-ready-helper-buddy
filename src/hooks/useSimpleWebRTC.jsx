@@ -10,89 +10,136 @@ export const useSimpleWebRTC = (callSession, user) => {
   const peerConnectionRef = useRef();
   const localStreamRef = useRef();
   const channelRef = useRef();
+  const iceQueueRef = useRef([]); // Queue ICE candidates until remoteDescription is set
+  const subscribedRef = useRef(false);
 
   const rtcConfig = {
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun.stunprotocol.org:3478' }
+    ],
+    iceCandidatePoolSize: 10,
   };
 
-  const sendMessage = (message) => {
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'webrtc',
-        payload: { ...message, from: user.id, callId: callSession.id }
-      });
+  const sendMessage = async (message) => {
+    if (!channelRef.current) return;
+    const res = await channelRef.current.send({
+      type: 'broadcast',
+      event: 'webrtc',
+      payload: { ...message, from: user.id, callId: callSession.id }
+    });
+    if (res !== 'ok') {
+      console.warn('⚠️ [WEBRTC] send ack not ok:', res);
     }
   };
 
   const init = async () => {
     try {
-      // Get microphone
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // 1) Get microphone
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000,
+        }
+      });
       localStreamRef.current = stream;
-      
-      // Create peer connection
+
+      // 2) Peer connection
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
-      
+
       // Add local audio
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
-      
-      // Handle remote audio
+
+      // Robust remote audio handling
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteAudioRef.current && remoteStream) {
           remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.volume = 1;
           remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.play();
+          remoteAudioRef.current.volume = 1.0;
+          const tryPlay = async () => {
+            try { await remoteAudioRef.current.play(); }
+            catch (err) {
+              console.warn('⚠️ [WEBRTC] Autoplay blocked, waiting for user gesture');
+              const once = () => {
+                remoteAudioRef.current?.play().catch(() => {});
+                document.removeEventListener('click', once);
+                document.removeEventListener('touchstart', once);
+              };
+              document.addEventListener('click', once, { once: true });
+              document.addEventListener('touchstart', once, { once: true });
+            }
+          };
+          tryPlay();
         }
       };
-      
-      // Handle ICE candidates
+
+      // ICE handling
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           sendMessage({ type: 'ice', candidate: event.candidate });
         }
       };
-      
-      // Connection state
+
       pc.onconnectionstatechange = () => {
         setConnectionState(pc.connectionState);
+        console.log('📡 [WEBRTC] Connection state:', pc.connectionState);
       };
-      
-      // Set up signaling
+
+      // 3) Signaling channel
       channelRef.current = supabase
-        .channel(`call_${callSession.id}`)
+        .channel(`call_${callSession.id}`, { config: { broadcast: { self: true, ack: true } } })
         .on('broadcast', { event: 'webrtc' }, async ({ payload }) => {
           if (payload.from === user.id) return;
-          
           try {
             if (payload.type === 'offer') {
               await pc.setRemoteDescription(payload.offer);
+              // Flush queued ICE candidates
+              for (const c of iceQueueRef.current) {
+                try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
+              }
+              iceQueueRef.current = [];
+
               const answer = await pc.createAnswer();
               await pc.setLocalDescription(answer);
-              sendMessage({ type: 'answer', answer });
+              await sendMessage({ type: 'answer', answer });
             } else if (payload.type === 'answer') {
               await pc.setRemoteDescription(payload.answer);
+              for (const c of iceQueueRef.current) {
+                try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
+              }
+              iceQueueRef.current = [];
             } else if (payload.type === 'ice') {
-              await pc.addIceCandidate(payload.candidate);
+              if (pc.remoteDescription) {
+                await pc.addIceCandidate(payload.candidate);
+              } else {
+                iceQueueRef.current.push(payload.candidate);
+              }
             }
           } catch (error) {
             console.error('Signaling error:', error);
           }
-        })
-        .subscribe();
-      
-      // Start call if outgoing
+        });
+
+      await new Promise((resolve) => {
+        channelRef.current.subscribe((status) => {
+          if (status === 'SUBSCRIBED') { subscribedRef.current = true; resolve(true); }
+        });
+      });
+
+      // 4) If we are the caller, create and send an offer after ensuring subscription
       if (!callSession.isIncoming) {
-        setTimeout(async () => {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          sendMessage({ type: 'offer', offer });
-        }, 1000);
+        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+        await pc.setLocalDescription(offer);
+        await sendMessage({ type: 'offer', offer });
       }
-      
+
     } catch (error) {
       console.error('WebRTC init error:', error);
     }
@@ -118,6 +165,8 @@ export const useSimpleWebRTC = (callSession, user) => {
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
+    iceQueueRef.current = [];
+    subscribedRef.current = false;
   };
 
   useEffect(() => {
