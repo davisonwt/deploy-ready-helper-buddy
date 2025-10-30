@@ -82,17 +82,8 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
       );
 
-      // Fallback: also include rooms the user CREATED (they might not be a participant row)
-      const existingIds = new Set(unique.map((r: any) => r.id));
-      const { data: createdRooms, error: createdErr } = await supabase
-        .from('chat_rooms')
-        .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
-        .eq('created_by', user.id)
-        .eq('is_active', true);
-      if (createdErr) console.warn('Fetch created rooms fallback failed:', createdErr);
-      const fallback = (createdRooms || []).filter((r: any) => !existingIds.has(r.id));
-
-      const combined = [...unique, ...fallback];
+      // Only include rooms where the user is an active participant
+      const combined = unique;
 
       // Annotate with participant count
       const enriched = await Promise.all(
@@ -200,7 +191,13 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     ? roomType
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
-  const isDirectRoom = (room: any) => room.room_type === 'direct';
+  const isDirectRoom = (room: any) => {
+    // Prefer explicit room_type when present; fall back to participant count only if unknown
+    if (room.room_type === 'direct') return true;
+    if (room.room_type === 'group') return false;
+    const count = (room as any).participant_count;
+    return typeof count === 'number' ? count <= 2 : false;
+  };
 
   const filteredRooms = rooms
     .filter((room) => {
