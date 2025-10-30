@@ -12,6 +12,7 @@ import HelpModal from "./components/help/HelpModal";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import { Card, CardContent } from "@/components/ui/card";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
+import GlobalAudioCallBridge from "./components/chat/GlobalAudioCallBridge";
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -99,9 +100,10 @@ const App = () => (
           <BasketProvider>
             <AppContextProvider>
               <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <IncomingCallOverlay />
+                <Toaster />
+                <Sonner />
+                <IncomingCallOverlay />
+                <GlobalAudioCallBridge />
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AccessibilityChecker />
