@@ -28,7 +28,7 @@ import { useChat } from '@/hooks/useChat.jsx';
 import { useCallManager } from '@/hooks/useCallManager';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import ChatRoomCard from '@/components/chat/ChatRoomCard';
 import ChatMessage from '@/components/chat/ChatMessage';
 import FileUploadArea from '@/components/chat/FileUploadArea';

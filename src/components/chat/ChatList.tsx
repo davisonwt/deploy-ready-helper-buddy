@@ -15,7 +15,7 @@ import {
   Loader2 
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatRoom {
   id: string;
