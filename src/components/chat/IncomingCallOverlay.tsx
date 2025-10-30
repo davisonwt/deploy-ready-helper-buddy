@@ -27,6 +27,12 @@ const IncomingCallOverlay: React.FC = () => {
 
   // Show a browser notification on incoming call
   useEffect(() => {
+    console.log('🔔 [IncomingCallOverlay] Render state:', { 
+      hasIncomingCall: !!incomingCall, 
+      callId: incomingCall?.id, 
+      callerName: incomingCall?.caller_name,
+      callType: incomingCall?.type
+    });
     if (!incomingCall || !('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
 
@@ -46,6 +52,7 @@ const IncomingCallOverlay: React.FC = () => {
   // Attempt to play ringtone using Web Audio API
   useEffect(() => {
     if (!incomingCall) return;
+    console.log('🔔 [IncomingCallOverlay] Starting ringtone for call:', incomingCall.id);
 
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     const ctx: AudioContext = new Ctx();
