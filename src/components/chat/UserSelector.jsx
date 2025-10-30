@@ -6,13 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSecureProfiles } from '@/hooks/useSecureProfiles';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
-  const { getPublicProfiles, loading: profilesLoading } = useSecureProfiles();
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
