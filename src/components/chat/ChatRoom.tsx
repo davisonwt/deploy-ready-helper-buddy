@@ -150,7 +150,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         .select('chat_rooms!inner(*)')
         .eq('user_id', user.id)
         .eq('room_id', roomId)
-        .or('is_active.is.null,is_active.eq.true')
+        .eq('is_active', true)
         .maybeSingle();
 
       if (error) throw error;
@@ -221,7 +221,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 .from('chat_participants')
         .select('user_id')
         .eq('room_id', roomId)
-        .or('is_active.is.null,is_active.eq.true');
+        .eq('is_active', true);
       if (partErr) throw partErr;
 
       const ids = (partRows || []).map((r: any) => r.user_id);

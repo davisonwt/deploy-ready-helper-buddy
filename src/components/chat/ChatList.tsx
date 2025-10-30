@@ -73,7 +73,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         )
       `)
       .eq('user_id', user.id)
-      .or('is_active.is.null,is_active.eq.true')
+      .eq('is_active', true)
       .eq('chat_rooms.is_active', true);
 
       if (error) throw error;
@@ -95,7 +95,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           .from('chat_participants')
           .select('room_id')
           .eq('user_id', user.id)
-          .or('is_active.is.null,is_active.eq.true');
+          .eq('is_active', true);
         if (partErr) throw partErr;
 
         const roomIds = (partIds || []).map((p: any) => p.room_id);
@@ -133,7 +133,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             .from('chat_participants')
             .select('*', { count: 'exact', head: true })
             .eq('room_id', room.id)
-            .or('is_active.is.null,is_active.eq.true');
+            .eq('is_active', true);
 
           return { ...room, participant_count: count || 0 };
         })
