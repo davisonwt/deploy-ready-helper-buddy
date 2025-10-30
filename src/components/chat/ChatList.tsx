@@ -201,8 +201,11 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
   const isDirectRoom = (room: any) => {
-    // Direct rooms have room_type === 'direct' OR have exactly 2 participants
-    return room.room_type === 'direct' || ((room as any).participant_count ?? 0) <= 2;
+    // Prefer explicit room_type when present; fall back to participant count only if unknown
+    if (room.room_type === 'direct') return true;
+    if (room.room_type === 'group') return false;
+    const count = (room as any).participant_count;
+    return typeof count === 'number' ? count <= 2 : false;
   };
 
   const filteredRooms = rooms
