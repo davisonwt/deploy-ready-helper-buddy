@@ -189,7 +189,6 @@ export const useCallManager = () => {
           caller_id: user.id,
           receiver_id: receiverId,
           call_type: type,
-          room_id: roomId,
           status: 'calling'
         })
         .select()
@@ -268,7 +267,7 @@ export const useCallManager = () => {
         .from('call_sessions')
         .update({ 
           status: 'connected',
-          connected_at: new Date().toISOString()
+          accepted_at: new Date().toISOString()
         })
         .eq('id', callId);
 
@@ -368,8 +367,7 @@ export const useCallManager = () => {
         .from('call_sessions')
         .update({ 
           status: reason,
-          ended_at: new Date().toISOString(),
-          duration_seconds: duration
+          ended_at: new Date().toISOString()
         })
         .eq('id', callId);
 
@@ -438,16 +436,22 @@ export const useCallManager = () => {
         return;
       }
 
-      const formattedHistory = history?.map(call => ({
-        id: call.id,
-        type: call.call_type,
-        duration: call.duration_seconds || 0,
-        timestamp: new Date(call.created_at).getTime(),
-        caller_name: call.caller_id === user.id ? 'You' : 'Unknown', // Would need to join with profiles
-        caller_id: call.caller_id,
-        receiver_id: call.receiver_id,
-        status: call.status
-      })) || [];
+      const formattedHistory = history?.map(call => {
+        const accepted = call.accepted_at ? new Date(call.accepted_at).getTime() : null;
+        const ended = call.ended_at ? new Date(call.ended_at).getTime() : null;
+        const duration = accepted && ended ? Math.max(0, Math.floor((ended - accepted) / 1000)) : 0;
+
+        return ({
+          id: call.id,
+          type: call.call_type,
+          duration,
+          timestamp: new Date(call.created_at).getTime(),
+          caller_name: call.caller_id === user.id ? 'You' : 'Unknown', // Would need to join with profiles
+          caller_id: call.caller_id,
+          receiver_id: call.receiver_id,
+          status: call.status
+        });
+      }) || [];
 
       setCallHistory(formattedHistory);
       
