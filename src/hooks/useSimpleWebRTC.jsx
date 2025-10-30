@@ -260,7 +260,7 @@ export const useSimpleWebRTC = (callSession, user) => {
         console.log('📤 [WEBRTC] I am the caller, creating offer...');
         try {
           makingOfferRef.current = true;
-          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+          const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           console.log('✅ [WEBRTC] Local description set (offer), sending...');
           await sendMessage({ type: 'offer', offer });
@@ -276,7 +276,7 @@ export const useSimpleWebRTC = (callSession, user) => {
             try {
               console.log('⏰ [WEBRTC] No offer received, creating fallback offer as receiver');
               makingOfferRef.current = true;
-              const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+              const offer = await pc.createOffer();
               await pc.setLocalDescription(offer);
               await sendMessage({ type: 'offer', offer });
               console.log('📤 [WEBRTC] Fallback offer sent by receiver');
