@@ -46,9 +46,13 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
 
       // Apply appropriate sanitization based on type
       switch (sanitizeType) {
-        case 'email':
-          sanitizedCore = sanitizeInput.email(originalValue);
+        case 'email': {
+          const lower = originalValue.toLowerCase();
+          // Allow partial email while typing: letters, numbers, @ . + - _
+          const partial = lower.replace(/[^\w@.+-]/g, '');
+          sanitizedCore = partial.slice(0, maxLength);
           break;
+        }
         case 'url':
           sanitizedCore = sanitizeInput.url(originalValue);
           break;
@@ -112,10 +116,25 @@ export const SecureInput = forwardRef<HTMLInputElement, SecureInputProps>(
         return;
       }
 
+      // On blur, perform strict email validation and normalization
+      if (sanitizeType === 'email') {
+        const original = e.currentTarget.value;
+        const validated = sanitizeInput.email(original);
+        if (!validated && original) {
+          toast({
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+            variant: "destructive"
+          });
+        } else if (validated && validated !== original) {
+          e.currentTarget.value = validated;
+        }
+      }
+
       if (onBlur) {
         onBlur(e);
       }
-    }, [rateLimitKey, onBlur, toast]);
+    }, [rateLimitKey, onBlur, toast, sanitizeType]);
 
     return (
       <Input
