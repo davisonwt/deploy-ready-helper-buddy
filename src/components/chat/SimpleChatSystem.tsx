@@ -24,18 +24,37 @@ export const SimpleChatSystem = () => {
     try {
       setLoading(true);
       
-      // Get all chat rooms where user is creator OR participant
-      const { data: allRooms, error } = await supabase
-        .from('chat_rooms')
-        .select('*')
-        .or(`created_by.eq.${user.id},id.in.(select room_id from chat_participants where user_id = '${user.id}')`)
-        .eq('is_active', true)
-        .order('updated_at', { ascending: false });
+      // Two-step fetch: my created rooms + rooms I'm a participant in
+      const { data: partRows, error: partErr } = await supabase
+        .from('chat_participants')
+        .select('room_id')
+        .eq('user_id', user.id)
+        .or('is_active.is.null,is_active.eq.true');
+      if (partErr) throw partErr;
 
-      if (error) throw error;
-      
-      console.log('📋 Found chats:', allRooms);
-      setChats(allRooms || []);
+      const roomIds = Array.from(new Set((partRows || []).map((r: any) => r.room_id)));
+
+      const [byIdsRes, createdRes] = await Promise.all([
+        roomIds.length
+          ? supabase
+              .from('chat_rooms')
+              .select('*')
+              .in('id', roomIds)
+              .eq('is_active', true)
+          : Promise.resolve({ data: [], error: null } as any),
+        supabase
+          .from('chat_rooms')
+          .select('*')
+          .eq('created_by', user.id)
+          .eq('is_active', true)
+      ]);
+
+      if (byIdsRes.error) throw byIdsRes.error;
+      if (createdRes.error) throw createdRes.error;
+
+      const dedup = new Map<string, any>();
+      [...(byIdsRes.data || []), ...(createdRes.data || [])].forEach((r: any) => dedup.set(r.id, r));
+      const allRooms = Array.from(dedup.values());
     } catch (error) {
       console.error('Error loading chats:', error);
       toast({
