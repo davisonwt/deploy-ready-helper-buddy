@@ -12,6 +12,7 @@ const IncomingCallOverlay: React.FC = () => {
   const { user } = useAuth();
   const { incomingCall, answerCall, declineCall } = useCallManager();
   const [needsUnlock, setNeedsUnlock] = useState(false);
+  const [hasAnswered, setHasAnswered] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const gainRef = useRef<GainNode | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -51,7 +52,7 @@ const IncomingCallOverlay: React.FC = () => {
 
   // Attempt to play ringtone using Web Audio API
   useEffect(() => {
-    if (!incomingCall) return;
+    if (!incomingCall || hasAnswered) return;
     console.log('🔔 [IncomingCallOverlay] Starting ringtone for call:', incomingCall.id);
 
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -91,9 +92,16 @@ const IncomingCallOverlay: React.FC = () => {
       gainRef.current = null;
       audioCtxRef.current = null;
     };
+  }, [incomingCall?.id, hasAnswered]);
+
+  // Reset hasAnswered when a new call comes in
+  useEffect(() => {
+    if (incomingCall) {
+      setHasAnswered(false);
+    }
   }, [incomingCall?.id]);
 
-  if (!incomingCall) return null;
+  if (!incomingCall || hasAnswered) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/60 backdrop-blur-sm">
@@ -134,7 +142,7 @@ const IncomingCallOverlay: React.FC = () => {
                 size="lg"
                 className="rounded-full h-16 w-16 shadow-lg"
                 onClick={() => {
-                  answerCall(incomingCall.id);
+                  setHasAnswered(true);
                   if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
                   try { oscRef.current?.stop(); } catch {}
                   try {
@@ -143,6 +151,7 @@ const IncomingCallOverlay: React.FC = () => {
                     }
                   } catch {}
                   oscRef.current = null; gainRef.current = null; audioCtxRef.current = null;
+                  answerCall(incomingCall.id);
                 }}
               >
                 <Phone className="h-7 w-7" />
