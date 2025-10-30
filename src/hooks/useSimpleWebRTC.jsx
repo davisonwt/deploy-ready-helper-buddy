@@ -51,6 +51,7 @@ export const useSimpleWebRTC = (callSession, user) => {
 
   const init = async () => {
     try {
+      console.log('🎧 [WEBRTC] init start', { callId: callSession?.id, isCaller });
       // 1) Get microphone
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -61,21 +62,27 @@ export const useSimpleWebRTC = (callSession, user) => {
           sampleRate: 48000,
         }
       });
+      console.log('🎙️ [WEBRTC] gotUserMedia', { tracks: stream.getAudioTracks().map(t => ({ id: t.id, enabled: t.enabled, muted: t.muted })) });
       localStreamRef.current = stream;
 
       // 2) Peer connection
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+      console.log('🔗 [WEBRTC] RTCPeerConnection created', rtcConfig);
 
       // Ensure bidirectional audio negotiation
       try {
         pc.addTransceiver('audio', { direction: 'sendrecv' });
+        console.log('🔁 [WEBRTC] addTransceiver(audio, sendrecv)');
       } catch (e) {
         console.warn('ℹ️ [WEBRTC] addTransceiver not supported or failed', e);
       }
 
       // Add local audio
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+        console.log('➕ [WEBRTC] addTrack', { kind: track.kind, id: track.id, enabled: track.enabled });
+      });
 
       // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
       if (localAudioRef.current) {
@@ -91,11 +98,18 @@ export const useSimpleWebRTC = (callSession, user) => {
 
       // Robust remote audio handling
       pc.ontrack = (event) => {
+        console.log('📥 [WEBRTC] ontrack', { track: { kind: event.track.kind, id: event.track.id, muted: event.track.muted, enabled: event.track.enabled }, streams: event.streams?.length });
         // Some browsers may not include streams; build one from the track as a fallback
         let remoteStream = event.streams && event.streams[0] ? event.streams[0] : null;
         if (!remoteStream && event.track) {
           remoteStream = new MediaStream([event.track]);
         }
+
+        // Track mute/unmute debug
+        try {
+          event.track.onmute = () => console.log('🔇 [WEBRTC] remote track muted');
+          event.track.onunmute = () => console.log('🔊 [WEBRTC] remote track unmuted');
+        } catch {}
 
         if (remoteAudioRef.current && remoteStream) {
           remoteAudioRef.current.srcObject = remoteStream;
