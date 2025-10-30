@@ -275,7 +275,7 @@ export const useCallManager = () => {
 
       if (updateError) {
         console.error('❌ [CALL] Failed to update call record:', updateError);
-        throw updateError;
+        // Soft-fail: continue with signaling/UI so users can connect even if DB update is blocked by RLS
       }
 
       console.log('✅ [CALL] Call record updated successfully');
