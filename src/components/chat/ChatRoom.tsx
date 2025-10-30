@@ -262,6 +262,27 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
+  // Fallback: If RLS prevents seeing other participants, infer from messages
+  useEffect(() => {
+    const inferOther = async () => {
+      try {
+        if (!user?.id) return;
+        if ((participants || []).length >= 2) return;
+        const otherId = (messages || []).map((m:any) => m.sender_id).find((id:string) => id && id !== user.id);
+        if (!otherId) return;
+        if (participants.some((p:any) => p.user_id === otherId)) return;
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .eq('user_id', otherId)
+          .maybeSingle();
+        setParticipants(prev => [...prev, { user_id: otherId, profiles: prof || null }]);
+      } catch (e) {
+        console.warn('Participant inference failed:', e);
+      }
+    };
+    inferOther();
+  }, [participants, messages, user?.id]);
   // Ensure current user is a member of this room before sending
   const ensureMembership = async () => {
     try {
@@ -598,50 +619,25 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
-  const toggleCall = async () => {
-    if (!callActive) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: videoOn, 
-          audio: true 
-        });
-        
-        localStreamRef.current = stream;
-        peerRef.current = new Peer(user.id);
-        
-        setCallActive(true);
-        
-        toast({
-          title: 'Call started',
-          description: 'You are now in the call',
-        });
-      } catch (error) {
-        console.error('Call error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Call failed',
-          description: 'Could not start call',
-        });
-      }
-    } else {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (peerRef.current) {
-        peerRef.current.destroy();
-      }
-      setCallActive(false);
-      setVideoOn(false);
-    }
-  };
+  const handleCallClick = async () => {
+    try {
+      await ensureMembership();
+      await fetchParticipants();
 
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoOn;
-        setVideoOn(!videoOn);
+      const otherParticipant = participants.find(p => p.user_id !== user?.id);
+      if (!otherParticipant) {
+        toast({ title: 'No other participants', description: 'Add someone to this chat before calling.', variant: 'destructive' });
+        return;
       }
+
+      const receiverName = otherParticipant.profiles?.display_name
+        || `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim()
+        || 'Unknown User';
+
+      await startCall(otherParticipant.user_id, receiverName, 'audio', roomId);
+    } catch (err) {
+      console.error('Call start error:', err);
+      toast({ title: 'Call Failed', description: 'Unable to start the call', variant: 'destructive' });
     }
   };
 
@@ -729,15 +725,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
               <Phone className="h-4 w-4" />
             </Button>
             
-            {callActive && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleVideo}
-              >
-                <Video className="h-4 w-4" />
-              </Button>
-            )}
             
             <Button
               variant="ghost"
