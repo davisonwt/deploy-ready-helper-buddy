@@ -97,7 +97,7 @@ export const useCallManager = () => {
     setOutgoingCall(null);
     setCurrentCall({
       ...callData,
-      status: 'connected',
+      status: 'accepted',
       startTime: Date.now()
     });
   }, []);
@@ -189,7 +189,7 @@ export const useCallManager = () => {
           caller_id: user.id,
           receiver_id: receiverId,
           call_type: type,
-          status: 'calling'
+          status: 'ringing'
         })
         .select()
         .single();
@@ -207,9 +207,9 @@ export const useCallManager = () => {
         receiver_name: receiverName,
         type: type,
         room_id: roomId,
-        status: 'calling',
-        isIncoming: false,
-        timestamp: Date.now()
+         status: 'ringing',
+         isIncoming: false,
+         timestamp: Date.now()
       };
 
       setOutgoingCall(callData);
@@ -266,7 +266,7 @@ export const useCallManager = () => {
       const { error: updateError } = await supabase
         .from('call_sessions')
         .update({ 
-          status: 'connected',
+          status: 'accepted',
           accepted_at: new Date().toISOString()
         })
         .eq('id', callId);
