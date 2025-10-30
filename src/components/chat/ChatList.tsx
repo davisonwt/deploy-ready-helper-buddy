@@ -232,13 +232,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
     ? roomType
     : (filter === 'private' ? 'direct' : filter === 'community' ? 'group' : 'all');
 
-  const isDirectRoom = (room: any) => {
-    // Prefer explicit room_type when present; fall back to participant count only if unknown
-    if (room.room_type === 'direct') return true;
-    if (room.room_type === 'group') return false;
-    const count = (room as any).participant_count;
-    return typeof count === 'number' ? count <= 2 : false;
-  };
+  const isDirectRoom = (room: any) => room.room_type === 'direct';
 
   const filteredRooms = rooms
     .filter((room) => {
@@ -318,7 +312,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
             <Card
               key={room.id}
               className="hover:shadow-md transition-shadow cursor-pointer border-emerald-100"
-              onClick={() => { try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {} ; navigate(`/chatapp?room=${room.id}`); }}
+              onClick={() => { navigate(`/chatapp?room=${room.id}`); }}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

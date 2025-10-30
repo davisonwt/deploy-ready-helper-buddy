@@ -75,6 +75,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
   useEffect(() => {
     if (roomId && user) {
+      console.debug('[ChatRoom] init', { roomId, userId: user.id });
       fetchRoomInfo();
       fetchMessages();
       setupRealtimeSubscription();
@@ -124,6 +125,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   }, [messages]);
 
   const fetchRoomInfo = async () => {
+    console.debug('[ChatRoom] fetchRoomInfo start', { roomId, userId: user?.id });
     try {
       // First try: if user is the creator, fetch room directly
       const { count: creatorCount } = await supabase
@@ -173,6 +175,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
+      console.debug('[ChatRoom] fetchMessages start', { roomId });
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
@@ -180,6 +183,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      console.debug('[ChatRoom] fetchMessages loaded', { count: (data || []).length });
       
       // Fetch profiles separately for all unique sender IDs
       const senderIds = Array.from(new Set((data || []).map(m => m.sender_id)));
