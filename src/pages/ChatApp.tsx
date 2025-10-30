@@ -73,37 +73,11 @@ const ChatApp = () => {
     autoOpenRanRef.current = true;
   }, [user?.id]);
 
-  // Guard: honor ?room= if initiated by our UI OR if user is member/creator of that room
+  // URL param guard previously used sessionStorage gating. Simplified to avoid blocking opens.
+  // We now rely on server-side membership/creator checks inside ChatRoom and list visibility.
   useEffect(() => {
-    const run = async () => {
-      if (!currentRoomId || !user?.id) return;
-      try {
-        const allow = sessionStorage.getItem('chat:allowOpen');
-        if (allow === '1') return; // trusted navigation from inside app
-
-        // Check membership
-        const [{ count: partCount }, { count: creatorCount }] = await Promise.all([
-          supabase
-            .from('chat_participants')
-            .select('id', { count: 'exact', head: true })
-            .eq('room_id', currentRoomId)
-            .eq('user_id', user.id),
-          supabase
-            .from('chat_rooms')
-            .select('id', { count: 'exact', head: true })
-            .eq('id', currentRoomId)
-            .eq('created_by', user.id)
-        ]);
-
-        if ((partCount || 0) > 0 || (creatorCount || 0) > 0) return; // user belongs or created; honor URL
-
-        // Otherwise strip unexpected param
-        setSearchParams({}, { replace: true });
-      } catch {}
-      try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
-    };
-    run();
-  }, [currentRoomId, setSearchParams, user?.id]);
+    try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
+  }, [currentRoomId]);
 
    // Track transitions to list view (including browser back) to suppress re-open in this session
   useEffect(() => {
@@ -180,7 +154,6 @@ const ChatApp = () => {
           ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
       }
 
-      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
       setSearchParams({ room: roomId! }, { replace: true });
     } catch (error) {
       console.error('Error starting direct chat:', error);
@@ -265,83 +238,87 @@ const ChatApp = () => {
 
     try {
       setIsCreating(true);
-      
-      // Create new chat room
-      const { data: room, error: roomError } = await supabase
+      const name = newChatName.trim();
+
+      // Idempotent: reuse existing active circle by same name created by this user if present
+      const { data: existing, error: findErr } = await supabase
         .from('chat_rooms')
-        .insert({
-          name: newChatName.trim(),
-          room_type: 'group',
-          created_by: user.id,
-          is_active: true,
-        })
-        .select()
-        .single();
+        .select('id, created_at')
+        .eq('created_by', user.id)
+        .eq('room_type', 'group')
+        .eq('is_active', true)
+        .ilike('name', name)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (roomError) throw roomError;
+      if (findErr && (findErr as any)?.code !== 'PGRST116') throw findErr; // ignore "no rows"
 
-      // Add creator as participant
-      const participants = [
-        {
-          room_id: room.id,
-          user_id: user.id,
-          is_moderator: true,
-          is_active: true,
-        },
-        // Add selected users
-        ...selectedUsers.map(userId => ({
-          room_id: room.id,
-          user_id: userId,
-          is_moderator: false,
-          is_active: true,
-        }))
-      ];
+      let roomId: string;
+      if (existing?.id) {
+        roomId = existing.id as string;
+      } else {
+        // Create new chat room
+        const { data: room, error: roomError } = await supabase
+          .from('chat_rooms')
+          .insert({
+            name,
+            room_type: 'group',
+            created_by: user.id,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+        if (roomError) throw roomError;
+        roomId = room.id as string;
+      }
+
+      // Upsert creator + invitees as active participants (idempotent)
+      const uniqueIds = Array.from(new Set([user.id, ...selectedUsers]));
+      const participants = uniqueIds.map(uid => ({
+        room_id: roomId,
+        user_id: uid,
+        is_moderator: uid === user.id,
+        is_active: true,
+      }));
 
       const { error: participantError } = await supabase
         .from('chat_participants')
-        .insert(participants);
-
+        .upsert(participants, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
       if (participantError) throw participantError;
 
-      // Send notifications to invited users
+      // Send notifications to invited users (best-effort)
       if (selectedUsers.length > 0) {
         const notifications = selectedUsers.map(userId => ({
           user_id: userId,
           type: 'chat_invite',
           title: 'Chat Room Invitation',
-          message: `You\'ve been invited to join "${newChatName}"`,
+          message: `You\'ve been invited to join "${name}"`,
           action_url: '/chatapp'
         }));
-
-        await supabase
-          .from('user_notifications')
-          .insert(notifications);
+        try { await supabase.from('user_notifications').insert(notifications); } catch {}
       }
 
       toast({
-        title: 'Chat created!',
+        title: 'Chat ready!',
         description: selectedUsers.length > 0 
-          ? `${newChatName} created with ${selectedUsers.length} member(s).`
-          : `${newChatName} has been created successfully.`,
+          ? `${name} ready with ${selectedUsers.length} member(s).`
+          : `${name} has been created successfully.`,
       });
 
+      // Reset and close
       setNewChatName('');
       setSelectedUsers([]);
       setUserSearchTerm('');
       setIsCreateDialogOpen(false);
-      
-      // Navigate to the new chat room
-      try { sessionStorage.setItem('chat:allowOpen', '1'); } catch {}
-      setSearchParams({ room: room.id }, { replace: true });
-      setIsCreateDialogOpen(false);
-      setNewChatName('');
-      setSelectedUsers([]);
-      setUserSearchTerm('');
+
+      // Navigate to the room
+      setSearchParams({ room: roomId }, { replace: true });
     } catch (error) {
       console.error('Error creating chat:', error);
       toast({
         title: 'Failed to create chat',
-        description: error.message || 'Something went wrong. Please try again.',
+        description: (error as any).message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
