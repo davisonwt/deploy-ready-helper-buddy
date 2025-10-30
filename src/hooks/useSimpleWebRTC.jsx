@@ -142,7 +142,10 @@ export const useSimpleWebRTC = (callSession, user) => {
       // ICE handling
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log('🧊 [WEBRTC] ICE candidate', { type: event.candidate.type, protocol: event.candidate.protocol });
           sendMessage({ type: 'ice', candidate: event.candidate });
+        } else {
+          console.log('🧊 [WEBRTC] ICE gathering complete');
         }
       };
 
@@ -151,14 +154,25 @@ export const useSimpleWebRTC = (callSession, user) => {
         console.log('📡 [WEBRTC] Connection state:', pc.connectionState);
       };
 
+      pc.oniceconnectionstatechange = () => {
+        console.log('🧊 [WEBRTC] ICE connection state:', pc.iceConnectionState);
+      };
+
+      pc.onsignalingstatechange = () => {
+        console.log('📶 [WEBRTC] Signaling state:', pc.signalingState);
+      };
+
       // 3) Signaling channel
       channelRef.current = supabase
         .channel(`call_${callSession.id}`, { config: { broadcast: { self: true, ack: true } } })
         .on('broadcast', { event: 'webrtc' }, async ({ payload }) => {
+          console.log('📨 [WEBRTC] Received signal', { type: payload.type, from: payload.from, isCaller });
           if (payload.from === user.id) return;
           try {
             if (payload.type === 'offer') {
+              console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState });
               await pc.setRemoteDescription(payload.offer);
+              console.log('✅ [WEBRTC] Remote description set (offer)');
               // Flush queued ICE candidates
               for (const c of iceQueueRef.current) {
                 try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
@@ -166,10 +180,14 @@ export const useSimpleWebRTC = (callSession, user) => {
               iceQueueRef.current = [];
 
               const answer = await pc.createAnswer();
+              console.log('📤 [WEBRTC] Created answer');
               await pc.setLocalDescription(answer);
+              console.log('✅ [WEBRTC] Local description set (answer)');
               await sendMessage({ type: 'answer', answer });
             } else if (payload.type === 'answer') {
+              console.log('📥 [WEBRTC] Processing answer', { currentSignalingState: pc.signalingState });
               await pc.setRemoteDescription(payload.answer);
+              console.log('✅ [WEBRTC] Remote description set (answer)');
               for (const c of iceQueueRef.current) {
                 try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
               }
@@ -177,26 +195,34 @@ export const useSimpleWebRTC = (callSession, user) => {
             } else if (payload.type === 'ice') {
               if (pc.remoteDescription) {
                 await pc.addIceCandidate(payload.candidate);
+                console.log('🧊 [WEBRTC] Added ICE candidate');
               } else {
                 iceQueueRef.current.push(payload.candidate);
+                console.log('🧊 [WEBRTC] Queued ICE candidate (no remote desc yet)');
               }
             }
           } catch (error) {
-            console.error('Signaling error:', error);
+            console.error('❌ [WEBRTC] Signaling error:', error);
           }
         });
 
       await new Promise((resolve) => {
         channelRef.current.subscribe((status) => {
+          console.log('🔌 [WEBRTC] Channel subscription status:', status);
           if (status === 'SUBSCRIBED') { subscribedRef.current = true; resolve(true); }
         });
       });
 
       // 4) If we are the caller, create and send an offer after ensuring subscription
       if (isCaller) {
+        console.log('📤 [WEBRTC] I am the caller, creating offer...');
         const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
         await pc.setLocalDescription(offer);
+        console.log('✅ [WEBRTC] Local description set (offer), sending...');
         await sendMessage({ type: 'offer', offer });
+        console.log('📤 [WEBRTC] Offer sent');
+      } else {
+        console.log('⏳ [WEBRTC] I am the receiver, waiting for offer...');
       }
 
     } catch (error) {
