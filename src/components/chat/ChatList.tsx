@@ -126,14 +126,15 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
   };
 
   const handleDeleteRoom = async (roomId: string) => {
-    if (!confirm('Are you sure you want to delete this conversation?')) return;
+    if (!confirm('Are you sure you want to permanently delete this conversation? This cannot be undone.')) return;
 
     try {
+      // Hard delete: Remove all related data permanently
       const { error } = await supabase.rpc('admin_delete_room', { target_room_id: roomId });
       if (error) throw error;
 
-      toast({ title: 'Success', description: 'Conversation deleted' });
-      setRooms(prev => prev.filter(r => r.id !== roomId)); // ✅ instant UI update
+      toast({ title: 'Success', description: 'Conversation permanently deleted' });
+      setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error: any) {
       console.error('Error deleting room:', error);
       toast({ title: 'Error', description: error.message || 'Failed to delete conversation', variant: 'destructive' });
@@ -143,24 +144,41 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
   const handleLeaveRoom = async (roomId: string) => {
     if (!user) return;
     if (!confirm('Leave this conversation?')) return;
+    
     try {
+      // Hard delete participation record
       const { error } = await supabase
         .from('chat_participants')
         .delete()
         .eq('room_id', roomId)
         .eq('user_id', user.id);
+      
       if (error) throw error;
+
+      // Check if room has any remaining participants
+      const { data: remainingParticipants, error: countError } = await supabase
+        .from('chat_participants')
+        .select('id')
+        .eq('room_id', roomId);
+
+      if (countError) throw countError;
+
+      // If no participants left, permanently delete the entire room
+      if (!remainingParticipants || remainingParticipants.length === 0) {
+        console.log('No participants left, deleting room:', roomId);
+        await supabase.rpc('admin_delete_room', { target_room_id: roomId });
+      }
 
       toast({
         title: 'Left conversation',
         description: 'You will no longer receive messages from this chat.'
       });
-      fetchRooms();
-    } catch (error) {
+      setRooms(prev => prev.filter(r => r.id !== roomId));
+    } catch (error: any) {
       console.error('Error leaving room:', error);
       toast({
         title: 'Error',
-        description: 'Failed to leave conversation',
+        description: error.message || 'Failed to leave conversation',
         variant: 'destructive'
       });
     }
