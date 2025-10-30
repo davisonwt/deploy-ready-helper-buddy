@@ -561,67 +561,11 @@ export const useCallManager = () => {
     }
   }, [user?.id]);
 
-  // Initialize call manager + lightweight polling fallback
+  // Initialize call manager
   useEffect(() => {
-    let pollTimer = null;
-
     if (user) {
       setupCallChannel();
       loadCallHistory();
-
-      // Fallback poll: if nothing is showing, check for the latest ringing/accepted call
-      pollTimer = window.setInterval(async () => {
-        if (currentCall || incomingCall || outgoingCall) return;
-        try {
-          const { data, error } = await supabase
-            .from('call_sessions')
-            .select('*')
-            .or(`caller_id.eq.${user.id},receiver_id.eq.${user.id}`)
-            .in('status', ['ringing', 'accepted'])
-            .order('created_at', { ascending: false })
-            .limit(1);
-          if (error) return;
-          const row = data && data[0];
-          if (!row) return;
-
-          if (row.status === 'ringing') {
-            if (row.receiver_id === user.id) {
-              handleIncomingCall({
-                id: row.id,
-                caller_id: row.caller_id,
-                receiver_id: row.receiver_id,
-                caller_name: row.caller_name,
-                receiver_name: row.receiver_name,
-                type: row.call_type || 'audio',
-                status: 'ringing',
-                isIncoming: true,
-              });
-            } else if (row.caller_id === user.id) {
-              setOutgoingCall({
-                id: row.id,
-                caller_id: row.caller_id,
-                receiver_id: row.receiver_id,
-                caller_name: row.caller_name,
-                receiver_name: row.receiver_name,
-                type: row.call_type || 'audio',
-                status: 'ringing',
-                isIncoming: false,
-                timestamp: Date.now(),
-              });
-            }
-          } else if (row.status === 'accepted') {
-            setCurrentCall({
-              id: row.id,
-              caller_id: row.caller_id,
-              receiver_id: row.receiver_id,
-              type: row.call_type || 'audio',
-              status: 'accepted',
-              isIncoming: row.receiver_id === user.id,
-              startTime: Date.now(),
-            });
-          }
-        } catch {}
-      }, 2500);
     }
 
     return () => {
@@ -629,11 +573,8 @@ export const useCallManager = () => {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
-      if (pollTimer) {
-        clearInterval(pollTimer);
-      }
     };
-  }, [user?.id, setupCallChannel, loadCallHistory, currentCall, incomingCall, outgoingCall, handleIncomingCall]);
+  }, [user?.id, setupCallChannel, loadCallHistory]);
 
   return {
     // Call states
