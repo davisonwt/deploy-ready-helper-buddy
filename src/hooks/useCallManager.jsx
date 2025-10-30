@@ -69,8 +69,9 @@ export const useCallManager = () => {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `caller_id=eq.${user.id}` }, (payload) => {
         try {
           const row = payload.new;
+          console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
           if (row?.status === 'accepted') {
-            console.log('🛟 [CALL][DB] Fallback accepted update:', row.id);
+            console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
             handleCallAnswered({
               id: row.id,
               caller_id: row.caller_id,
@@ -135,7 +136,8 @@ export const useCallManager = () => {
 
   // Handle call answered
   const handleCallAnswered = useCallback((callData) => {
-    console.log('📞 [CALL] Call was answered:', callData);
+    console.log('📞 [CALL] Call was answered, updating caller state:', callData);
+    console.log('📞 [CALL] Previous outgoingCall:', outgoingCall?.id);
     
     setOutgoingCall(null);
     setCurrentCall({
@@ -145,7 +147,14 @@ export const useCallManager = () => {
       // CRITICAL: caller must remain isIncoming=false to create the SDP offer
       isIncoming: false
     });
-  }, []);
+    
+    console.log('📞 [CALL] State updated, currentCall should now be set');
+    
+    toast({
+      title: "Call Connected",
+      description: "Call has been answered",
+    });
+  }, [outgoingCall, toast]);
 
   // Handle call declined
   const handleCallDeclined = useCallback((callData) => {
@@ -375,6 +384,7 @@ export const useCallManager = () => {
         event: 'call_answered',
         payload: callData
       });
+      console.log('📞 [CALL] Answer notification sent to caller, ack:', sendAck, 'callData:', callData);
       if (sendAck !== 'ok') {
         console.warn('⚠️ [CALL] Caller notification not acknowledged:', sendAck);
       }
