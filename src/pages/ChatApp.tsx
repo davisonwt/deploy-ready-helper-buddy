@@ -375,14 +375,7 @@ const ChatApp = () => {
                     <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
                     {/* Emergency fallback list for production visibility */}
                     <div className="mt-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Fallback Chat List</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div id="simple-chat-mount" />
-                        </CardContent>
-                      </Card>
+                      <SimpleChatSystem />
                     </div>
                     <div aria-hidden className="h-24 sm:h-28 md:h-32" />
                   </div>
