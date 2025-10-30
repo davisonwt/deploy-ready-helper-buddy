@@ -239,7 +239,7 @@ export type Database = {
           accessed_by: string | null
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           success: boolean | null
           user_agent: string | null
           user_id: string | null
@@ -249,7 +249,7 @@ export type Database = {
           accessed_by?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
@@ -259,7 +259,7 @@ export type Database = {
           accessed_by?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
@@ -1682,7 +1682,7 @@ export type Database = {
           accessor_user_id: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           session_info: Json | null
           user_agent: string | null
         }
@@ -1694,7 +1694,7 @@ export type Database = {
           accessor_user_id: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_info?: Json | null
           user_agent?: string | null
         }
@@ -1706,7 +1706,7 @@ export type Database = {
           accessor_user_id?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           session_info?: Json | null
           user_agent?: string | null
         }
@@ -3885,7 +3885,7 @@ export type Database = {
           accessed_by: string | null
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           success: boolean | null
           user_id: string
           wallet_address: string
@@ -3895,7 +3895,7 @@ export type Database = {
           accessed_by?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_id: string
           wallet_address: string
@@ -3905,7 +3905,7 @@ export type Database = {
           accessed_by?: string | null
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           success?: boolean | null
           user_id?: string
           wallet_address?: string
@@ -3944,14 +3944,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_delete_room: {
-        Args: { target_room_id: string }
-        Returns: boolean
-      }
-      approve_join_request: {
-        Args: { request_id: string }
-        Returns: boolean
-      }
+      admin_delete_room: { Args: { target_room_id: string }; Returns: boolean }
+      approve_join_request: { Args: { request_id: string }; Returns: boolean }
       approve_radio_schedule_slot: {
         Args: { approver_id_param: string; schedule_id_param: string }
         Returns: boolean
@@ -3972,7 +3966,7 @@ export type Database = {
         Returns: undefined
       }
       browse_public_rooms: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           category: string
           id: string
@@ -4003,30 +3997,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_old_rate_limits: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      decrypt_pii_data: {
-        Args: { encrypted_data: string }
-        Returns: string
-      }
-      encrypt_pii_data: {
-        Args: { data_text: string }
-        Returns: string
-      }
-      encrypt_pii_data_secure: {
-        Args: { data_text: string }
-        Returns: string
-      }
-      end_stream: {
-        Args: { stream_id_param: string }
-        Returns: boolean
-      }
-      generate_invoice_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      decrypt_pii_data: { Args: { encrypted_data: string }; Returns: string }
+      encrypt_pii_data: { Args: { data_text: string }; Returns: string }
+      encrypt_pii_data_secure: { Args: { data_text: string }; Returns: string }
+      end_stream: { Args: { stream_id_param: string }; Returns: boolean }
+      generate_invoice_number: { Args: never; Returns: string }
       get_admin_profile_access_report: {
         Args: { days_back?: number }
         Returns: {
@@ -4038,14 +4014,10 @@ export type Database = {
           unique_profiles_accessed: number
         }[]
       }
-      get_ai_usage_today: {
-        Args: Record<PropertyKey, never> | { user_id_param?: string }
-        Returns: number
-      }
-      get_current_radio_show: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_ai_usage_today:
+        | { Args: { user_id_param?: string }; Returns: number }
+        | { Args: never; Returns: number }
+      get_current_radio_show: { Args: never; Returns: Json }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
@@ -4054,16 +4026,10 @@ export type Database = {
         Args: { schedule_id_param: string }
         Returns: string
       }
-      get_payment_config_for_eft: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      get_payment_config_secure: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_payment_config_for_eft: { Args: never; Returns: Json }
+      get_payment_config_secure: { Args: never; Returns: Json }
       get_payment_wallet_address: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           supported_tokens: string[]
           wallet_address: string
@@ -4207,10 +4173,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_safe_profile_fields: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
+      get_safe_profile_fields: { Args: never; Returns: string[] }
       get_session_token_secure: {
         Args: { session_id_param: string }
         Returns: string
@@ -4289,10 +4252,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_ai_usage: {
-        Args: Record<PropertyKey, never> | { user_id_param?: string }
-        Returns: number
-      }
+      increment_ai_usage:
+        | { Args: { user_id_param?: string }; Returns: number }
+        | { Args: never; Returns: undefined }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
         Returns: undefined
@@ -4305,18 +4267,12 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
-      is_admin_or_gosat: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_admin_or_gosat: { Args: { _user_id: string }; Returns: boolean }
       is_room_creator: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
-      is_user_verified: {
-        Args: { user_id_param?: string }
-        Returns: boolean
-      }
+      is_user_verified: { Args: { user_id_param?: string }; Returns: boolean }
       kick_user_from_room: {
         Args: {
           kick_reason_param?: string
@@ -4356,26 +4312,14 @@ export type Database = {
         }
         Returns: undefined
       }
-      mask_address: {
-        Args: { address: string }
-        Returns: string
-      }
-      mask_email: {
-        Args: { email_address: string }
-        Returns: string
-      }
-      mask_phone: {
-        Args: { phone_number: string }
-        Returns: string
-      }
+      mask_address: { Args: { address: string }; Returns: string }
+      mask_email: { Args: { email_address: string }; Returns: string }
+      mask_phone: { Args: { phone_number: string }; Returns: string }
       migrate_billing_data_for_user: {
         Args: { target_user_id: string }
         Returns: boolean
       }
-      reject_join_request: {
-        Args: { request_id: string }
-        Returns: boolean
-      }
+      reject_join_request: { Args: { request_id: string }; Returns: boolean }
       reject_radio_schedule_slot: {
         Args: { approver_id_param: string; schedule_id_param: string }
         Returns: boolean
@@ -4427,6 +4371,12 @@ export type Database = {
           sender_profile_id: string | null
           system_metadata: Json | null
           updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_messages"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       update_document_page: {
