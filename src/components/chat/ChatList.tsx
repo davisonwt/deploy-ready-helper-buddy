@@ -211,6 +211,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       if (effectiveType === 'direct' && room.room_type !== 'direct') return false;
       if (effectiveType === 'group' && room.room_type !== 'group') return false;
 
+      // Exclude live_* room types from direct/group tabs to avoid misclassification
+      if ((effectiveType === 'direct' || effectiveType === 'group') && room.room_type?.startsWith('live_')) return false;
+
       return true;
     })
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -298,6 +301,10 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                             Premium
                           </Badge>
                         )}
+                        {/* Temporary production proof badge - shows the declared type */}
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          type: {room.room_type}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-500">
