@@ -4268,6 +4268,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_gosat: { Args: { _user_id: string }; Returns: boolean }
+      is_member_of_chat: {
+        Args: { _room_id: string; _user_id?: string }
+        Returns: boolean
+      }
       is_room_creator: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
