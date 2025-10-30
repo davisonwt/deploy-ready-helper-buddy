@@ -78,12 +78,53 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
 
       if (error) throw error;
 
-      const unique = Array.from(
-        new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
-      );
+      let combined: any[] = [];
 
-      // Only include rooms where the user is an active participant
-      const combined = unique;
+      if (data && data.length > 0) {
+        // Happy path: inner join returned rows
+        const unique = Array.from(
+          new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
+        );
+        combined = unique;
+      } else {
+        // Fallback path for environments where foreign table filtering can be flaky
+        console.warn('⚠️ Join returned 0 rows. Falling back to two-step fetch.');
+
+        // 1) Get all active participations for the user
+        const { data: partIds, error: partErr } = await supabase
+          .from('chat_participants')
+          .select('room_id')
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+        if (partErr) throw partErr;
+
+        const roomIds = (partIds || []).map((p: any) => p.room_id);
+
+        // 2) Fetch rooms by ids + rooms created by the user
+        const [byIdsRes, createdRes] = await Promise.all([
+          roomIds.length
+            ? supabase
+                .from('chat_rooms')
+                .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+                .in('id', roomIds)
+                .eq('is_active', true)
+            : Promise.resolve({ data: [], error: null } as any),
+          supabase
+            .from('chat_rooms')
+            .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+            .eq('created_by', user.id)
+            .eq('is_active', true)
+        ]);
+
+        if (byIdsRes.error) throw byIdsRes.error;
+        if (createdRes.error) throw createdRes.error;
+
+        const dedupMap = new Map<string, any>();
+        [...(byIdsRes.data || []), ...(createdRes.data || [])].forEach((r: any) => {
+          dedupMap.set(r.id, r);
+        });
+        combined = Array.from(dedupMap.values());
+      }
 
       // Annotate with participant count
       const enriched = await Promise.all(
