@@ -196,6 +196,7 @@ const ChatApp = () => {
   };
 
   const handleCreateChat = async () => {
+    if (isCreating) return; // guard against double submission
     if (!newChatName.trim()) {
       toast({
         title: 'Chat name required',
@@ -251,7 +252,7 @@ const ChatApp = () => {
           user_id: userId,
           type: 'chat_invite',
           title: 'Chat Room Invitation',
-          message: `You've been invited to join "${newChatName}"`,
+          message: `You\'ve been invited to join "${newChatName}"`,
           action_url: '/chatapp'
         }));
 
