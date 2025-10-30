@@ -53,30 +53,61 @@ export const useSimpleWebRTC = (callSession, user) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
+      // Ensure bidirectional audio negotiation
+      try {
+        pc.addTransceiver('audio', { direction: 'sendrecv' });
+      } catch (e) {
+        console.warn('ℹ️ [WEBRTC] addTransceiver not supported or failed', e);
+      }
+
       // Add local audio
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
+      // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
+      if (localAudioRef.current) {
+        try {
+          localAudioRef.current.srcObject = stream;
+          localAudioRef.current.muted = true;
+          localAudioRef.current.volume = 0;
+          await localAudioRef.current.play().catch(() => {});
+        } catch (e) {
+          console.warn('⚠️ [WEBRTC] Failed to attach/play local audio element', e);
+        }
+      }
+
       // Robust remote audio handling
       pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
+        // Some browsers may not include streams; build one from the track as a fallback
+        let remoteStream = event.streams && event.streams[0] ? event.streams[0] : null;
+        if (!remoteStream && event.track) {
+          remoteStream = new MediaStream([event.track]);
+        }
+
         if (remoteAudioRef.current && remoteStream) {
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
+
           const tryPlay = async () => {
-            try { await remoteAudioRef.current.play(); }
-            catch (err) {
+            try {
+              await remoteAudioRef.current.play();
+              console.log('🔊 [WEBRTC] Remote audio playing');
+            } catch (err) {
               console.warn('⚠️ [WEBRTC] Autoplay blocked, waiting for user gesture');
               const once = () => {
                 remoteAudioRef.current?.play().catch(() => {});
                 document.removeEventListener('click', once);
                 document.removeEventListener('touchstart', once);
+                document.removeEventListener('keydown', once);
               };
               document.addEventListener('click', once, { once: true });
               document.addEventListener('touchstart', once, { once: true });
+              document.addEventListener('keydown', once, { once: true });
             }
           };
           tryPlay();
+        } else {
+          console.warn('⚠️ [WEBRTC] ontrack fired but no remote stream available');
         }
       };
 

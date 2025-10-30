@@ -32,6 +32,7 @@ const CallInterface = ({
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
+  const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const intervalRef = useRef(null);
@@ -60,6 +61,18 @@ const CallInterface = ({
       }
     };
   }, [isIncoming]);
+
+  // Prompt for user gesture to unlock audio if autoplay is blocked
+  useEffect(() => {
+    if (connectionState === 'connected') {
+      const t = setTimeout(() => {
+        setNeedsAudioUnlock(true);
+      }, 1500);
+      return () => clearTimeout(t);
+    } else {
+      setNeedsAudioUnlock(false);
+    }
+  }, [connectionState]);
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -232,9 +245,17 @@ const CallInterface = ({
               style={{ display: 'none' }}
               onLoadedMetadata={() => console.log('📺 [AUDIO] Remote audio loaded')}
               onCanPlay={() => console.log('📺 [AUDIO] Remote audio can play')}
-              onPlay={() => console.log('📺 [AUDIO] Remote audio started')}
+              onPlay={() => { console.log('📺 [AUDIO] Remote audio started'); setNeedsAudioUnlock(false); }}
               onError={(e) => console.error('📺 [AUDIO] Remote audio error:', e)}
             />
+          </div>
+        )}
+
+        {callType === 'audio' && needsAudioUnlock && connectionState === 'connected' && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Button onClick={() => remoteAudioRef.current?.play().catch(() => {})}>
+              Enable Audio
+            </Button>
           </div>
         )}
         </div>
@@ -255,7 +276,7 @@ const CallInterface = ({
                 <Button
                   size="lg"
                   variant="default"
-                  onClick={onAccept}
+                  onClick={() => { onAccept(); setTimeout(() => remoteAudioRef.current?.play().catch(() => {}), 200); }}
                   className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
                 >
                   <Phone className="h-6 w-6" />
