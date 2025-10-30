@@ -70,7 +70,8 @@ const IncomingCallOverlay: React.FC = () => {
 
     const toggle = () => {
       if (!gainRef.current) return;
-      gainRef.current.gain.value = gainRef.current.gain.value > 0 ? 0 : 0.15;
+      gainRef.current.gain.value = gainRef.current.gain.value > 0 ? 0 : 0.22;
+      try { (navigator as any)?.vibrate?.(100); } catch {}
     };
     toggle();
     const id = window.setInterval(toggle, 600);
