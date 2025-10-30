@@ -10,10 +10,11 @@ import {
   LogIn,
   X
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
 import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
+import { SimpleChatSystem } from '@/components/chat/SimpleChatSystem';
 import {
   Dialog,
   DialogContent,
@@ -372,6 +373,17 @@ const ChatApp = () => {
                 <ScrollArea className="h-[calc(100vh-300px)] pr-2">
                   <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
                     <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
+                    {/* Emergency fallback list for production visibility */}
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Fallback Chat List</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div id="simple-chat-mount" />
+                        </CardContent>
+                      </Card>
+                    </div>
                     <div aria-hidden className="h-24 sm:h-28 md:h-32" />
                   </div>
                 </ScrollArea>
