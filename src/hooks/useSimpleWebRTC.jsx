@@ -15,14 +15,27 @@ export const useSimpleWebRTC = (callSession, user) => {
 
   const rtcConfig = {
     iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun.stunprotocol.org:3478' }
+      { urls: [
+        'stun:stun.l.google.com:19302',
+        'stun:stun1.l.google.com:19302',
+        'stun:stun2.l.google.com:19302',
+        'stun:stun.stunprotocol.org:3478'
+      ]},
+      // Public TURN (OpenRelay by metered.ca) for NAT traversal during testing
+      { urls: ['stun:openrelay.metered.ca:80'] },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
     ],
+    iceTransportPolicy: 'all',
     iceCandidatePoolSize: 10,
   };
-
   const sendMessage = async (message) => {
     if (!channelRef.current) return;
     const res = await channelRef.current.send({
