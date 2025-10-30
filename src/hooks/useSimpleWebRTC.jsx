@@ -71,13 +71,10 @@ export const useSimpleWebRTC = (callSession, user) => {
       peerConnectionRef.current = pc;
       console.log('🔗 [WEBRTC] RTCPeerConnection created', rtcConfig);
 
-      // Ensure bidirectional audio negotiation
-      try {
-        pc.addTransceiver('audio', { direction: 'sendrecv' });
-        console.log('🔁 [WEBRTC] addTransceiver(audio, sendrecv)');
-      } catch (e) {
-        console.warn('ℹ️ [WEBRTC] addTransceiver not supported or failed', e);
-      }
+      // Ensure audio is negotiated; use addTrack only to avoid duplicate m-lines
+      // Note: Do not call addTransceiver here to prevent duplicate transceivers on some mobile browsers
+      // pc.addTransceiver('audio', { direction: 'sendrecv' });
+      // console.log('🔁 [WEBRTC] addTransceiver(audio, sendrecv) skipped to avoid dup m-lines')
 
       // Add local audio
       stream.getTracks().forEach(track => {

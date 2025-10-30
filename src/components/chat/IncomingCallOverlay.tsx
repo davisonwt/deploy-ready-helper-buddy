@@ -81,7 +81,11 @@ const IncomingCallOverlay: React.FC = () => {
     return () => {
       if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
       try { osc.stop(); } catch {}
-      try { ctx.close(); } catch {}
+      try {
+        if (ctx && (ctx.state as any) !== 'closed') {
+          ctx.close();
+        }
+      } catch {}
       oscRef.current = null;
       gainRef.current = null;
       audioCtxRef.current = null;
@@ -132,7 +136,11 @@ const IncomingCallOverlay: React.FC = () => {
                   answerCall(incomingCall.id);
                   if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
                   try { oscRef.current?.stop(); } catch {}
-                  try { audioCtxRef.current?.close(); } catch {}
+                  try {
+                    if (audioCtxRef.current && (audioCtxRef.current.state as any) !== 'closed') {
+                      audioCtxRef.current.close();
+                    }
+                  } catch {}
                   oscRef.current = null; gainRef.current = null; audioCtxRef.current = null;
                 }}
               >
