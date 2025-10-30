@@ -38,6 +38,7 @@ const VideoCallInterface = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [remoteVolume, setRemoteVolume] = useState(1);
+  const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
   const intervalRef = useRef(null);
 
   // Use advanced WebRTC hook
@@ -75,6 +76,16 @@ const VideoCallInterface = ({
       }
     };
   }, [isIncoming, callStatus]);
+
+  // Prompt for user gesture to unlock audio if autoplay is blocked
+  useEffect(() => {
+    if (connectionState === 'connected') {
+      const t = setTimeout(() => setNeedsAudioUnlock(true), 1500);
+      return () => clearTimeout(t);
+    } else {
+      setNeedsAudioUnlock(false);
+    }
+  }, [connectionState]);
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -341,6 +352,10 @@ const VideoCallInterface = ({
           autoPlay 
           playsInline
           style={{ display: 'none' }}
+          onLoadedMetadata={() => console.log('📺 [AUDIO] Remote audio loaded')}
+          onCanPlay={() => console.log('📺 [AUDIO] Remote audio can play')}
+          onPlay={() => { console.log('📺 [AUDIO] Remote audio started'); setNeedsAudioUnlock(false); }}
+          onError={(e) => console.error('📺 [AUDIO] Remote audio error:', e)}
         />
         <audio 
           ref={remoteAudioRef} 
@@ -366,7 +381,7 @@ const VideoCallInterface = ({
                 </Button>
                 <Button
                   size="lg"
-                  onClick={onAccept}
+                  onClick={() => { onAccept(); setTimeout(() => remoteAudioRef.current?.play().catch(() => {}), 200); }}
                   className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
                 >
                   <Phone className="h-6 w-6" />

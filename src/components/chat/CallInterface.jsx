@@ -233,7 +233,7 @@ const CallInterface = ({
               muted 
               autoPlay 
               playsInline
-              style={{ display: 'none' }}
+              style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
             />
             <audio 
               ref={remoteAudioRef} 
