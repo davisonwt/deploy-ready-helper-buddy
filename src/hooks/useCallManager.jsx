@@ -216,11 +216,22 @@ export const useCallManager = () => {
 
       // Send call signal to receiver
       const receiverChannel = supabase.channel(`user_calls_${receiverId}`);
-      await receiverChannel.send({
+      await new Promise((resolve) => {
+        receiverChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') resolve(true);
+        });
+      });
+      const sendResult = await receiverChannel.send({
         type: 'broadcast',
         event: 'incoming_call',
         payload: callData
       });
+      if (sendResult === 'ok') {
+        console.log('📞 [CALL] Incoming call signal sent');
+      } else {
+        console.warn('⚠️ [CALL] Incoming call signal not acknowledged:', sendResult);
+      }
+      supabase.removeChannel(receiverChannel);
 
       // Auto-cancel after 30 seconds
       setTimeout(() => {
@@ -292,11 +303,22 @@ export const useCallManager = () => {
       // Notify caller
       console.log('📞 [CALL] Notifying caller:', incomingCall.caller_id);
       const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`);
-      await callerChannel.send({
+      await new Promise((resolve) => {
+        callerChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') resolve(true);
+        });
+      });
+      const sendAck = await callerChannel.send({
         type: 'broadcast',
         event: 'call_answered',
         payload: callData
       });
+      if (sendAck === 'ok') {
+        console.log('📞 [CALL] Notified caller of answered call');
+      } else {
+        console.warn('⚠️ [CALL] Caller notification not acknowledged:', sendAck);
+      }
+      supabase.removeChannel(callerChannel);
 
       toast({
         title: "Call Connected",
