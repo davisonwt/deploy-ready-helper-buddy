@@ -269,17 +269,17 @@ const CallInterface = ({
                   size="lg"
                   variant="destructive"
                   onClick={onDecline}
-                  className="rounded-full h-14 w-14"
+                  className="rounded-full h-16 w-16 shadow-lg"
                 >
-                  <PhoneOff className="h-6 w-6" />
+                  <PhoneOff className="h-7 w-7" />
                 </Button>
                 <Button
                   size="lg"
                   variant="default"
                   onClick={() => { onAccept(); setTimeout(() => remoteAudioRef.current?.play().catch(() => {}), 200); }}
-                  className="rounded-full h-14 w-14 bg-green-600 hover:bg-green-700"
+                  className="rounded-full h-16 w-16 bg-green-600 hover:bg-green-700 shadow-lg"
                 >
-                  <Phone className="h-6 w-6" />
+                  <Phone className="h-7 w-7" />
                 </Button>
               </>
             ) : (
@@ -288,37 +288,37 @@ const CallInterface = ({
                   variant={isAudioEnabled ? "outline" : "destructive"}
                   size="lg"
                   onClick={toggleAudio}
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-14 w-14 shadow-md"
                 >
-                  {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+                  {isAudioEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
                 </Button>
                 
                 {callType === 'video' && (
                   <Button
                     variant="outline"
                     size="lg"
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-14 w-14 shadow-md"
                   >
-                    <VideoOff className="h-5 w-5" />
+                    <VideoOff className="h-6 w-6" />
                   </Button>
                 )}
                 
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-14 w-14 shadow-md"
                   onClick={() => console.log('Connection:', connectionState)}
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-6 w-6" />
                 </Button>
                 
                 <Button
                   variant="destructive"
                   size="lg"
                   onClick={onEnd}
-                  className="rounded-full h-14 w-14"
+                  className="rounded-full h-16 w-16 shadow-lg hover:scale-105 transition-transform"
                 >
-                  <PhoneOff className="h-6 w-6" />
+                  <PhoneOff className="h-7 w-7" />
                 </Button>
               </>
             )}
