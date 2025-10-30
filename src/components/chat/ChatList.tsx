@@ -248,9 +248,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         return false;
       }
 
-      // Strict type filtering by declared room_type
-      if (effectiveType === 'direct' && room.room_type !== 'direct') return false;
-      if (effectiveType === 'group' && room.room_type !== 'group') return false;
+      // Robust type filtering using helper with participant_count fallback
+      if (effectiveType === 'direct' && !isDirectRoom(room)) return false;
+      if (effectiveType === 'group' && isDirectRoom(room)) return false;
 
       // Exclude live_* room types from direct/group tabs to avoid misclassification
       if ((effectiveType === 'direct' || effectiveType === 'group') && room.room_type?.startsWith('live_')) return false;
