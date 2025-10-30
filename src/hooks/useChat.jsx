@@ -36,8 +36,7 @@ export const useChat = () => {
         `)
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .eq('chat_rooms.is_active', true)
-        .order('updated_at', { ascending: false });
+        .eq('chat_rooms.is_active', true);
 
       if (error) throw error;
 

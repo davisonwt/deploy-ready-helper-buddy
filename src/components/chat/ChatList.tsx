@@ -56,26 +56,25 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
       setLoading(true);
       console.log('🔍 Fetching active rooms for user:', user.id);
 
-      // Strategy: Only fetch active rooms and active participations
-      const { data, error } = await supabase
-        .from('chat_participants')
-        .select(`
-          room_id,
-          is_active,
-          chat_rooms!inner(
-            id,
-            name,
-            room_type,
-            is_premium,
-            updated_at,
-            created_by,
-            is_active
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .eq('chat_rooms.is_active', true)
-        .order('updated_at', { ascending: false });
+    // Strategy: Only fetch active rooms and active participations
+    const { data, error } = await supabase
+      .from('chat_participants')
+      .select(`
+        room_id,
+        is_active,
+        chat_rooms!inner(
+          id,
+          name,
+          room_type,
+          is_premium,
+          updated_at,
+          created_by,
+          is_active
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .eq('chat_rooms.is_active', true);
 
       if (error) throw error;
 
