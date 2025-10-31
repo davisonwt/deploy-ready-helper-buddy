@@ -10,9 +10,9 @@ const GlobalAudioCallBridge: React.FC = () => {
   const { currentCall } = useCallManager();
   const location = useLocation();
 
-  // Only establish WebRTC for active calls
-  const activeCall = currentCall;
-  // Removed route gating so audio works on all routes (including /chatapp)
+  // Only establish WebRTC for active calls OUTSIDE native call UI pages to avoid duplicate peers
+  const onCallUIPages = location.pathname.startsWith('/chatapp');
+  const activeCall = onCallUIPages ? null : currentCall;
 
   // CRITICAL: Hooks must be called unconditionally - call hook first, then check if we should render
   const { localAudioRef, remoteAudioRef } = useSimpleWebRTC(activeCall, user);
