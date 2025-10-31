@@ -1,83 +1,84 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Phone, PhoneOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useCallManager } from '@/hooks/useCallManager';
-import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Phone, PhoneOff } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Lightweight global incoming-call overlay rendered at the app root.
-// Shows for any route and attempts to play a ringtone. Falls back to a tap-to-unlock if autoplay is blocked.
-const IncomingCallOverlay: React.FC = () => {
-  const { user } = useAuth();
-  const { incomingCall, answerCall, declineCall, currentCall } = useCallManager();
-  const [needsUnlock, setNeedsUnlock] = useState(false);
+/* ----------  GLOBAL SINGLETON HELPERS  ---------- */
+type RingHandles = {
+  ctx: AudioContext | null;
+  osc: OscillatorNode | null;
+  gain: GainNode | null;
+  interval: number | null;
+};
+
+const getGlobalRingtone = (): RingHandles | undefined =>
+  (window as any).__ringtone;
+
+const setGlobalRingtone = (r: RingHandles | undefined): void => {
+  (window as any).__ringtone = r;
+};
+
+const stopGlobalRingtone = (): void => {
+  const r = getGlobalRingtone();
+  if (!r) return;
+
+  try { if (r.interval != null) clearInterval(r.interval); } catch {}
+  try { r.gain?.gain?.cancelScheduledValues?.(0); } catch {}
+  try { if (r.gain) r.gain.gain.value = 0; } catch {}
+  try { r.osc?.stop?.(); } catch {}
+  try { (r.osc as any)?.disconnect?.(); } catch {}
+  try { (r.gain as any)?.disconnect?.(); } catch {}
+  try {
+    if (r.ctx && (r.ctx as any).state !== 'closed') {
+      try { r.ctx.suspend?.(); } catch {}
+      try { r.ctx.close?.(); } catch {}
+    }
+  } catch {}
+  setGlobalRingtone(undefined);
+};
+/* ------------------------------------------------ */
+
+export default function IncomingCallOverlay() {
+  const { incomingCall, currentCall, answerCall, declineCall } = useCallManager();
   const [hasAnswered, setHasAnswered] = useState(false);
+  const [needsUnlock, setNeedsUnlock] = useState(false);
+
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainRef = useRef<GainNode | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
   const ringTimerRef = useRef<number | null>(null);
 
+  // Brutal, idempotent stop: local + global
   const hardStopRingtone = () => {
+    stopGlobalRingtone(); // kill any stray global loop
+
+    // Defensive local cleanup
+    try { if (ringTimerRef.current != null) clearInterval(ringTimerRef.current); } catch {}
+    ringTimerRef.current = null;
+    try { gainRef.current?.gain?.cancelScheduledValues?.(0); } catch {}
+    try { if (gainRef.current) gainRef.current.gain.value = 0; } catch {}
+    try { oscRef.current?.stop?.(); } catch {}
+    try { (oscRef.current as any)?.disconnect?.(); } catch {}
+    try { (gainRef.current as any)?.disconnect?.(); } catch {}
     try {
-      if (ringTimerRef.current) { clearInterval(ringTimerRef.current); ringTimerRef.current = null; }
-      if (gainRef.current) {
-        try { gainRef.current.gain.cancelScheduledValues?.(0); } catch {}
-        try { gainRef.current.gain.setTargetAtTime?.(0, audioCtxRef.current?.currentTime || 0, 0.01); } catch {}
-        try { (gainRef.current as any).disconnect?.(); } catch {}
-      }
-      if (oscRef.current) {
-        try { oscRef.current.stop(); } catch {}
-        try { (oscRef.current as any).disconnect?.(); } catch {}
-      }
-      if (audioCtxRef.current) {
+      if (audioCtxRef.current && (audioCtxRef.current as any).state !== 'closed') {
         try { audioCtxRef.current.suspend?.(); } catch {}
-        try { (audioCtxRef.current.state as any) !== 'closed' && audioCtxRef.current.close(); } catch {}
+        try { audioCtxRef.current.close?.(); } catch {}
       }
-    } finally {
-      oscRef.current = null;
-      gainRef.current = null;
-      audioCtxRef.current = null;
-      setNeedsUnlock(false);
-    }
+    } catch {}
+    oscRef.current = null;
+    gainRef.current = null;
+    audioCtxRef.current = null;
+    setNeedsUnlock(false);
   };
 
-  // Request Notification permission once when authenticated
-  useEffect(() => {
-    if (!user) return;
-    if ('Notification' in window && Notification.permission === 'default') {
-      try { Notification.requestPermission().catch(() => {}); } catch {}
-    }
-  }, [user?.id]);
-
-  // Show a browser notification on incoming call
-  useEffect(() => {
-    console.log('🔔 [IncomingCallOverlay] Render state:', { 
-      hasIncomingCall: !!incomingCall, 
-      callId: incomingCall?.id, 
-      callerName: incomingCall?.caller_name,
-      callType: incomingCall?.type
-    });
-    if (!incomingCall || !('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-
-    try {
-      const n = new Notification('Incoming Call', {
-        body: `${incomingCall.caller_name || 'Someone'} is calling…`,
-        tag: `call-${incomingCall.id}`,
-      });
-      n.onclick = () => {
-        // Focus window and navigate to chat if needed
-        window.focus();
-        // no hard navigation here to avoid interfering with current route
-      };
-    } catch {}
-  }, [incomingCall?.id]);
-
-  // Attempt to play ringtone using Web Audio API
+  // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
     if (!incomingCall || hasAnswered) return;
-    console.log('🔔 [IncomingCallOverlay] Starting ringtone for call:', incomingCall.id);
+
+    // Pre-kill any ghost/duplicate ring before creating a new one
+    hardStopRingtone();
 
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
     const ctx: AudioContext = new Ctx();
@@ -85,11 +86,12 @@ const IncomingCallOverlay: React.FC = () => {
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    gain.gain.value = 0; // start silent
+    gain.gain.value = 0; // start muted
     osc.type = 'sine';
     osc.frequency.value = 800; // ring tone frequency
     osc.connect(gain).connect(ctx.destination);
     osc.start();
+
     gainRef.current = gain;
     oscRef.current = osc;
 
@@ -100,84 +102,99 @@ const IncomingCallOverlay: React.FC = () => {
     };
     toggle();
     const id = window.setInterval(toggle, 600);
-    ringTimerRef.current = id as unknown as number;
+    ringTimerRef.current = id;
 
-    ctx.resume().then(() => setNeedsUnlock(false)).catch(() => setNeedsUnlock(true));
+    setGlobalRingtone({ ctx, osc, gain, interval: id });
 
-    return () => {
-      try { hardStopRingtone(); } catch {}
-    };
+    ctx.resume()
+      .then(() => setNeedsUnlock(false))
+      .catch(() => setNeedsUnlock(true));
+
+    return () => { hardStopRingtone(); };
   }, [incomingCall?.id, hasAnswered]);
 
-  // Stop ringtone if call transitions to active elsewhere or incomingCall clears
+  // Stop when call becomes active or incoming disappears
   useEffect(() => {
-    if (!incomingCall || (currentCall && currentCall.id === incomingCall?.id)) {
-      try { hardStopRingtone(); } catch {}
+    if (!incomingCall || (currentCall && currentCall.id === incomingCall.id)) {
+      hardStopRingtone();
       if (currentCall) setHasAnswered(true);
     }
   }, [incomingCall?.id, currentCall?.id]);
 
-  // Reset hasAnswered when a new call comes in
-  useEffect(() => {
-    if (incomingCall) {
-      setHasAnswered(false);
+  const handleAnswer = () => {
+    // Stop ring first, then transition
+    hardStopRingtone();
+    setHasAnswered(true);
+    if (incomingCall?.id) {
+      answerCall(incomingCall.id);
     }
-  }, [incomingCall?.id]);
+  };
+
+  const handleDecline = () => {
+    hardStopRingtone();
+    if (incomingCall?.id) {
+      declineCall(incomingCall.id, 'declined');
+    }
+  };
 
   if (!incomingCall || hasAnswered) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/60 backdrop-blur-sm">
-      <Card className="w-full max-w-sm border-primary/20 shadow-2xl">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <Avatar className="h-20 w-20 mx-auto mb-4">
-              <AvatarImage src={undefined} />
-              <AvatarFallback className="text-3xl">
-                {(incomingCall.caller_name || 'U')?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <h3 className="text-xl font-semibold mb-1">Incoming Call</h3>
-            <p className="text-muted-foreground mb-5">{incomingCall.caller_name || 'Unknown User'}</p>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60"
+      onClick={() => {
+        // Allow a single tap to unlock audio if autoplay blocked
+        if (needsUnlock && audioCtxRef.current?.resume) {
+          audioCtxRef.current.resume()
+            .then(() => setNeedsUnlock(false))
+            .catch(() => {});
+        }
+      }}
+    >
+      <div
+        className={cn(
+          'flex flex-col items-center gap-4 rounded-2xl bg-white/90 px-8 py-6 text-center shadow-lg',
+          'dark:bg-gray-900/90 dark:text-white'
+        )}
+      >
+        <div className="text-lg font-semibold">Incoming call</div>
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          {incomingCall.caller_name || 'Unknown'}
+        </div>
 
-            {needsUnlock && (
-              <div className="mb-4">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => audioCtxRef.current?.resume().then(() => setNeedsUnlock(false)).catch(() => {})}
-                >
-                  Enable Sound
-                </Button>
-              </div>
-            )}
+        {needsUnlock && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              audioCtxRef.current?.resume?.()
+                .then(() => setNeedsUnlock(false))
+                .catch(() => {});
+            }}
+          >
+            Enable Sound
+          </Button>
+        )}
 
-            <div className="flex items-center justify-center gap-6">
-              <Button
-                size="lg"
-                variant="destructive"
-                className="rounded-full h-16 w-16 shadow-lg"
-                onClick={() => { try { hardStopRingtone(); } catch {}; declineCall(incomingCall.id); }}
-              >
-                <PhoneOff className="h-7 w-7" />
-              </Button>
-              <Button
-                size="lg"
-                className="rounded-full h-16 w-16 shadow-lg"
-                onClick={() => {
-                  setHasAnswered(true);
-                  try { hardStopRingtone(); } catch {}
-                  answerCall(incomingCall.id);
-                }}
-              >
-                <Phone className="h-7 w-7" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex gap-4">
+          <Button
+            size="icon"
+            variant="destructive"
+            onClick={(e) => { e.stopPropagation(); handleDecline(); }}
+            aria-label="Decline"
+          >
+            <PhoneOff className="h-5 w-5" />
+          </Button>
+          <Button
+            size="icon"
+            onClick={(e) => { e.stopPropagation(); handleAnswer(); }}
+            aria-label="Answer"
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default IncomingCallOverlay;
+}
