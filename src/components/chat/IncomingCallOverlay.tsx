@@ -113,13 +113,12 @@ export default function IncomingCallOverlay() {
     return () => { hardStopRingtone(); };
   }, [incomingCall?.id, hasAnswered]);
 
-  // Stop when call becomes active or incoming disappears
+  // Stop when the incoming call disappears (declined/cancelled). Do NOT stop just because currentCall is set.
   useEffect(() => {
-    if (!incomingCall || (currentCall && currentCall.id === incomingCall.id)) {
+    if (!incomingCall) {
       hardStopRingtone();
-      if (currentCall) setHasAnswered(true);
     }
-  }, [incomingCall?.id, currentCall?.id]);
+  }, [incomingCall?.id]);
 
   const handleAnswer = () => {
     // Stop ring first, then transition
