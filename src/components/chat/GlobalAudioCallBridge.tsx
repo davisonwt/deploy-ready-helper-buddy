@@ -14,6 +14,9 @@ const GlobalAudioCallBridge: React.FC = () => {
   const activeCall = currentCall;
   const onCallUIPages = location.pathname.startsWith('/chatapp');
 
+  // CRITICAL: Hooks must be called unconditionally - call hook first, then check if we should render
+  const { localAudioRef, remoteAudioRef } = useSimpleWebRTC(activeCall, user);
+
   useEffect(() => {
     if (activeCall && !onCallUIPages) {
       console.log('🔈 [GlobalAudioCallBridge] Active call detected outside call UI, mounting hidden audio');
@@ -21,8 +24,6 @@ const GlobalAudioCallBridge: React.FC = () => {
   }, [activeCall?.id, onCallUIPages]);
 
   if (!user || !activeCall || onCallUIPages) return null;
-
-  const { localAudioRef, remoteAudioRef } = useSimpleWebRTC(activeCall, user);
 
   return (
     <div aria-hidden="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none' }}>

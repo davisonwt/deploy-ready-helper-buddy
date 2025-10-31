@@ -31,7 +31,7 @@ const stopGlobalRingtone = (): void => {
   try { (r.gain as any)?.disconnect?.(); } catch {}
   try {
     if (r.ctx && (r.ctx as any).state !== 'closed') {
-      try { r.ctx.suspend?.(); } catch {}
+      // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
       try { r.ctx.close?.(); } catch {}
     }
   } catch {}
@@ -63,7 +63,7 @@ export default function IncomingCallOverlay() {
     try { (gainRef.current as any)?.disconnect?.(); } catch {}
     try {
       if (audioCtxRef.current && (audioCtxRef.current as any).state !== 'closed') {
-        try { audioCtxRef.current.suspend?.(); } catch {}
+        // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
         try { audioCtxRef.current.close?.(); } catch {}
       }
     } catch {}
