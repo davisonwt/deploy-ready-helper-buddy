@@ -6,7 +6,6 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
 import App from "./App";
 import { supabase } from "@/integrations/supabase/client";
-import { Toaster } from "@/components/ui/toaster";
 import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBoundary";
 import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
@@ -177,7 +176,6 @@ createRoot(rootElement).render(
               <App />
             </CryptoComProvider>
           </BrowserRouter>
-          <Toaster />
         </QueryClientProvider>
       </SessionContextProvider>
     </ProductionErrorBoundary>
