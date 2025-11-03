@@ -4004,6 +4004,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      create_verification_room_for_user: {
+        Args: { target_user_id: string }
+        Returns: string
+      }
       decrypt_pii_data: { Args: { encrypted_data: string }; Returns: string }
       encrypt_pii_data: { Args: { data_text: string }; Returns: string }
       encrypt_pii_data_secure: { Args: { data_text: string }; Returns: string }
