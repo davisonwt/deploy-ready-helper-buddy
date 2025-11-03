@@ -71,9 +71,6 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
           password,
           roomId,
           userId
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
         }
       });
 
