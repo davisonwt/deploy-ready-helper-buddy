@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useSecurityLogging } from "../hooks/useSecurityLogging"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
 import { useToast } from "../hooks/use-toast"
 import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield } from "lucide-react"
+import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield, CheckCircle } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -21,6 +22,9 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState("")
   const [securityViolations, setSecurityViolations] = useState(0)
+  
+  const [searchParams] = useSearchParams();
+  const isFirstTimeLogin = searchParams.get('firstTime') === 'true';
   
   const { login, loginAnonymously, resetPassword } = useAuth()
   const { logSecurityEvent } = useSecurityLogging()
@@ -201,6 +205,18 @@ export default function LoginPage() {
           </CardHeader>
           
           <CardContent className="space-y-6">
+            {isFirstTimeLogin && (
+              <Alert className="bg-emerald-50 border-emerald-500 dark:bg-emerald-950">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <AlertTitle className="text-emerald-900 dark:text-emerald-100">
+                  Verification Complete
+                </AlertTitle>
+                <AlertDescription className="text-emerald-800 dark:text-emerald-200">
+                  Please log in for the first time to access all Sow2Grow features.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 animate-fade-in">

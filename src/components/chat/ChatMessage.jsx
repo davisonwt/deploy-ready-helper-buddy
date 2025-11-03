@@ -6,6 +6,7 @@ import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import FilePreview from './FilePreview';
 import { VerificationButton } from './VerificationButton';
+import { CredentialVerificationForm } from './CredentialVerificationForm';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -22,6 +23,7 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
   const FileIcon = getFileIcon(message.file_type);
   const isSystemMessage = !message.sender_id && message.system_metadata?.is_system;
   const isVerificationMessage = message.system_metadata?.type === 'verification';
+  const isCredentialVerification = message.system_metadata?.type === 'credential_verification';
   const isVerified = message.system_metadata?.verified;
   
   // Generate a consistent pastel color for each user based on their ID
@@ -173,6 +175,18 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
                 fileType={message.file_type}
                 fileSize={message.file_size}
                 className="bg-white/95 backdrop-blur-md border-white/50"
+              />
+            </div>
+          )}
+          
+          {isCredentialVerification && (
+            <div className="mt-3">
+              <CredentialVerificationForm
+                roomId={message.room_id}
+                prefillUsername={message.system_metadata?.prefill_username || ''}
+                prefillEmail={message.system_metadata?.prefill_email || ''}
+                userId={message.system_metadata?.user_id || ''}
+                isVerified={isVerified}
               />
             </div>
           )}

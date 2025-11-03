@@ -75,7 +75,8 @@ export default function RegisterPage() {
         phone: formData.phone,
         currency: formData.currency,
         timezone: formData.timezone,
-        country: formData.location
+        country: formData.location,
+        username: formData.email.split('@')[0] // Set username from email
       })
       
       if (result.success) {

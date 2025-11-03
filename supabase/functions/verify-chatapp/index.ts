@@ -18,27 +18,100 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get user from JWT
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    const { username, email, password, roomId, userId } = await req.json();
+
+    console.log('Verification attempt for user:', userId);
+
+    if (!username || !email || !password || !roomId || !userId) {
+      throw new Error('Missing required fields');
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // Get user profile to check username and email
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('username, user_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('Profile not found:', profileError);
+      throw new Error('Profile not found');
+    }
+
+    // Get user email from auth.users
+    const { data: { user: authUser }, error: authUserError } = await supabase.auth.admin.getUserById(userId);
     
-    if (authError || !user) {
-      throw new Error('Unauthorized');
+    if (authUserError || !authUser) {
+      console.error('Auth user not found:', authUserError);
+      throw new Error('User not found');
     }
 
-    const { roomId } = await req.json();
+    // Validate username (case-insensitive)
+    if (username.toLowerCase() !== profile.username?.toLowerCase()) {
+      console.log('Username mismatch');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          field: 'username',
+          error: 'Username does not match our records' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403 
+        }
+      );
+    }
+
+    // Validate email (case-insensitive)
+    if (email.toLowerCase() !== authUser.email?.toLowerCase()) {
+      console.log('Email mismatch');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          field: 'email',
+          error: 'Email does not match our records' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403 
+        }
+      );
+    }
+
+    // Validate password by attempting sign-in
+    const anonSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    
+    const { error: signInError } = await anonSupabase.auth.signInWithPassword({
+      email: authUser.email!,
+      password: password
+    });
+
+    if (signInError) {
+      console.log('Password validation failed:', signInError.message);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          field: 'password',
+          error: 'Password does not match our records' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403 
+        }
+      );
+    }
+
+    console.log('All credentials validated successfully');
 
     // Verify user is participant in this room
     const { data: participant, error: participantError } = await supabase
       .from('chat_participants')
       .select('room_id')
       .eq('room_id', roomId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (participantError || !participant) {
@@ -49,7 +122,7 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ is_chatapp_verified: true })
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     if (updateError) {
       console.error('Failed to update verification status:', updateError);
@@ -60,9 +133,9 @@ serve(async (req) => {
     const { error: messageError } = await supabase
       .from('chat_messages')
       .update({
-        content: '✅ Verified! You may now close this chat and explore Sow2Grow.',
+        content: '✅ Credentials confirmed. You may now close this chat and log in.',
         system_metadata: {
-          type: 'verification',
+          type: 'credential_verification',
           is_system: true,
           sender_name: 'Sow2Grow Bot',
           verified: true,
@@ -78,10 +151,9 @@ serve(async (req) => {
 
     // Generate new token with verification claim
     const { data: sessionData, error: sessionError } = await supabase.auth.admin.updateUserById(
-      user.id,
+      userId,
       {
         app_metadata: {
-          ...user.app_metadata,
           chatapp_verified: true
         }
       }
@@ -91,7 +163,7 @@ serve(async (req) => {
       console.error('Failed to update user metadata:', sessionError);
     }
 
-    console.log('User verified successfully:', user.id);
+    console.log('User verified successfully:', userId);
 
     return new Response(
       JSON.stringify({ 

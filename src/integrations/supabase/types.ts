@@ -1735,6 +1735,7 @@ export type Database = {
           twitter_url: string | null
           updated_at: string
           user_id: string
+          username: string | null
           verification_chat_id: string | null
           verification_expires_at: string | null
           verification_status:
@@ -1767,6 +1768,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
           verification_chat_id?: string | null
           verification_expires_at?: string | null
           verification_status?:
@@ -1799,6 +1801,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
           verification_chat_id?: string | null
           verification_expires_at?: string | null
           verification_status?:
