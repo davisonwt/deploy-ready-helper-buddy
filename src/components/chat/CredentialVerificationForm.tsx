@@ -115,9 +115,9 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
             headers: {
               'Content-Type': 'application/json',
               apikey: SUPABASE_ANON_KEY,
-              ...(access ? { Authorization: `Bearer ${access}` } : {}),
               'x-client-info': 'manual-fetch-fallback'
             },
+            credentials: 'omit',
             body: JSON.stringify({ username, email, password, roomId, userId })
           });
 
