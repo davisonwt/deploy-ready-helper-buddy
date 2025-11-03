@@ -75,6 +75,7 @@ const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
+import { RequireVerification } from "./components/auth/RequireVerification";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
@@ -128,76 +129,94 @@ const App = () => (
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <DashboardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <DashboardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               <Route path="/regrow-access" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <BrowseOrchardsPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <BrowseOrchardsPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               {/* Orchard Routes */}
               <Route path="/browse-orchards" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <BrowseOrchardsPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <BrowseOrchardsPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               <Route path="/orchards/:orchardId" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <OrchardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <OrchardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               {/* Legacy orchard route redirect */}
               <Route path="/orchard/:orchardId" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <OrchardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <OrchardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               <Route path="/animated-orchard/:id" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <AnimatedOrchardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <AnimatedOrchardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               <Route path="/orchard-error/:orchardId" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <OrchardErrorPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <OrchardErrorPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               {/* Orchard Management Routes */}
               <Route path="/create-orchard" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CreateOrchardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <CreateOrchardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               
               <Route path="/plant-new-seed" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <CreateOrchardPage />
-                  </Layout>
+                  <RequireVerification>
+                    <Layout>
+                      <CreateOrchardPage />
+                    </Layout>
+                  </RequireVerification>
                 </ProtectedRoute>
               } />
               

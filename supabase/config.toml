@@ -79,3 +79,6 @@ verify_jwt = true
 
 [functions.test-simple]
 verify_jwt = false
+
+[functions.verify-chatapp]
+verify_jwt = true
