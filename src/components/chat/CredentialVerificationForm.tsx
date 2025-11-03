@@ -55,7 +55,14 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
     setError('');
     
     try {
-      console.log('Calling verify-chatapp with:', { username, email, roomId, userId });
+      // Ensure we have a fresh auth token; the edge function requires a valid JWT
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      if (!session?.access_token) {
+        throw new Error('You are not signed in. Please sign in again and retry verification.');
+      }
+
+      console.log('Calling verify-chatapp with:', { username, email, roomId, userId, hasJwt: !!session.access_token });
       
       const { data, error: verifyError } = await supabase.functions.invoke('verify-chatapp', {
         body: { 
@@ -64,6 +71,9 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
           password,
           roomId,
           userId
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       });
 
