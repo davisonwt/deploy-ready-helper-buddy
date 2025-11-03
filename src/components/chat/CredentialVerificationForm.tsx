@@ -55,6 +55,8 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
     setError('');
     
     try {
+      console.log('Calling verify-chatapp with:', { username, email, roomId, userId });
+      
       const { data, error: verifyError } = await supabase.functions.invoke('verify-chatapp', {
         body: { 
           username,
@@ -65,7 +67,12 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
         }
       });
 
-      if (verifyError) throw verifyError;
+      console.log('Verification response:', { data, error: verifyError });
+
+      if (verifyError) {
+        console.error('Supabase function error:', verifyError);
+        throw verifyError;
+      }
 
       if (data?.success) {
         setVerified(true);
@@ -79,14 +86,17 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
           navigate('/login?firstTime=true');
         }, 2000);
       } else {
-        setError(data?.error || 'Credentials do not match our records.');
+        const errorMsg = data?.error || 'Credentials do not match our records.';
+        console.error('Verification failed with message:', errorMsg);
+        setError(errorMsg);
       }
     } catch (err: any) {
-      console.error('Verification failed:', err);
-      setError('Credentials do not match our records.');
+      console.error('Verification exception:', err);
+      console.error('Error details:', JSON.stringify(err, null, 2));
+      setError(err?.message || 'Verification failed. Please check your credentials and try again.');
       toast({
         title: "Verification Failed",
-        description: "Please check your credentials and try again.",
+        description: err?.message || "Please check your credentials and try again.",
         variant: "destructive"
       });
     } finally {
