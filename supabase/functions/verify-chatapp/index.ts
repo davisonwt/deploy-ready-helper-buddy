@@ -17,6 +17,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Creating Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -24,6 +25,7 @@ serve(async (req) => {
 
     console.log('Reading request body...');
     const body = await req.json();
+    console.log('Request body received:', { username: body.username, email: body.email, roomId: body.roomId, userId: body.userId, hasPassword: !!body.password });
     const { username, email, password, roomId, userId } = body;
 
     console.log('Verification attempt for user:', userId);
@@ -194,10 +196,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Verification error:', error);
+    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: error.message || 'Unknown error occurred'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
