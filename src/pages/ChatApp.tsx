@@ -15,6 +15,7 @@ import { ChatList } from '@/components/chat/ChatList';
 import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import { SimpleChatSystem } from '@/components/chat/SimpleChatSystem';
+import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ const ChatApp = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isStartingDirect, setIsStartingDirect] = useState(false);
   const [activeTab, setActiveTab] = useState<'one' | 'circle'>('one');
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -59,6 +61,23 @@ const ChatApp = () => {
 
   // Get current room from URL
   const currentRoomId = searchParams.get('room');
+  
+  // Check verification status
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!user?.id) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_chatapp_verified')
+        .eq('user_id', user.id)
+        .single();
+        
+      setIsVerified(data?.is_chatapp_verified ?? false);
+    };
+    
+    checkVerification();
+  }, [user?.id]);
 
   // Persist last opened room and auto-open it on login
   useEffect(() => {
@@ -403,6 +422,9 @@ const ChatApp = () => {
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
       ) : (
         <>
+          {/* Verification Banner */}
+          {isVerified === false && <ChatAppVerificationBanner />}
+          
           {/* Header */}
           <div className="mb-6 space-y-4">
             <div className="flex items-center justify-between">

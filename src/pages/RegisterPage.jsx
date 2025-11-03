@@ -136,10 +136,10 @@ export default function RegisterPage() {
 
         toast({
           title: "Welcome to sow2grow! 🌱",
-          description: "Please check your email inbox",
+          description: "Please verify your account in ChatApp to continue.",
         })
         
-        navigate("/")
+        navigate("/chatapp")
       } else {
         setError(result.error || "Registration failed")
       }

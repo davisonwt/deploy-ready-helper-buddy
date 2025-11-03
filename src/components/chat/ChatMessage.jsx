@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import FilePreview from './FilePreview';
+import { VerificationButton } from './VerificationButton';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -19,6 +20,9 @@ const getFileIcon = (fileType) => {
 const ChatMessage = ({ message, isOwn = false, onDelete }) => {
   const sender = message.sender_profile;
   const FileIcon = getFileIcon(message.file_type);
+  const isSystemMessage = !message.sender_id && message.system_metadata?.is_system;
+  const isVerificationMessage = message.system_metadata?.type === 'verification';
+  const isVerified = message.system_metadata?.verified;
   
   // Generate a consistent pastel color for each user based on their ID
   const getPastelColor = (userId) => {
@@ -62,9 +66,9 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
     <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
       <div className="flex-shrink-0">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={sender?.avatar_url} />
-          <AvatarFallback className="bg-primary/20 text-primary font-bold border">
-            {sender?.display_name?.charAt(0) || sender?.first_name?.charAt(0) || 'U'}
+          <AvatarImage src={isSystemMessage ? undefined : sender?.avatar_url} />
+          <AvatarFallback className="bg-emerald-600 text-white font-bold border">
+            {isSystemMessage ? '🤖' : (sender?.display_name?.charAt(0) || sender?.first_name?.charAt(0) || 'U')}
           </AvatarFallback>
         </Avatar>
       </div>
@@ -99,9 +103,9 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
                           userColor.bg.includes('cyan') ? '#06b6d4' : 
                           userColor.bg.includes('emerald') ? '#10b981' : 
                           userColor.bg.includes('violet') ? '#8b5cf6' : '#6b7280'
-            }}
+             }}
           >
-            {getSenderName()}
+            {isSystemMessage ? (message.system_metadata?.sender_name || 'System') : getSenderName()}
           </span>
           <span className="text-xs text-gray-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 shadow-md">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
@@ -170,6 +174,12 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
                 fileSize={message.file_size}
                 className="bg-white/95 backdrop-blur-md border-white/50"
               />
+            </div>
+          )}
+          
+          {isVerificationMessage && !isVerified && (
+            <div className="mt-3">
+              <VerificationButton roomId={message.room_id} isVerified={isVerified} />
             </div>
           )}
         </div>

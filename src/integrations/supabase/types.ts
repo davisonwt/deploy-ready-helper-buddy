@@ -403,7 +403,7 @@ export type Database = {
           message_type: string
           reply_to_id: string | null
           room_id: string
-          sender_id: string
+          sender_id: string | null
           sender_profile_id: string | null
           system_metadata: Json | null
           updated_at: string
@@ -420,7 +420,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           room_id: string
-          sender_id: string
+          sender_id?: string | null
           sender_profile_id?: string | null
           system_metadata?: Json | null
           updated_at?: string
@@ -437,7 +437,7 @@ export type Database = {
           message_type?: string
           reply_to_id?: string | null
           room_id?: string
-          sender_id?: string
+          sender_id?: string | null
           sender_profile_id?: string | null
           system_metadata?: Json | null
           updated_at?: string
@@ -1724,6 +1724,7 @@ export type Database = {
           has_complete_billing_info: boolean | null
           id: string
           instagram_url: string | null
+          is_chatapp_verified: boolean | null
           last_name: string | null
           location: string | null
           phone: string | null
@@ -1755,6 +1756,7 @@ export type Database = {
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
+          is_chatapp_verified?: boolean | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
@@ -1786,6 +1788,7 @@ export type Database = {
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
+          is_chatapp_verified?: boolean | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
@@ -4375,7 +4378,7 @@ export type Database = {
           message_type: string
           reply_to_id: string | null
           room_id: string
-          sender_id: string
+          sender_id: string | null
           sender_profile_id: string | null
           system_metadata: Json | null
           updated_at: string
