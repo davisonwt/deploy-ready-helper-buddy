@@ -100,6 +100,46 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
     } catch (err: any) {
       console.error('Verification exception:', err);
       console.error('Error details:', JSON.stringify(err, null, 2));
+
+      // Fallback: direct fetch to functions endpoint if supabase.functions.invoke failed (CORS/proxy issues)
+      if (err?.name === 'FunctionsFetchError' || err?.value?.name === 'FunctionsFetchError') {
+        try {
+          const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
+          const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU';
+
+          const { data: s } = await supabase.auth.getSession();
+          const access = s?.session?.access_token;
+
+          const resp = await fetch(`${SUPABASE_URL}/functions/v1/verify-chatapp`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+              ...(access ? { Authorization: `Bearer ${access}` } : {}),
+              'x-client-info': 'manual-fetch-fallback'
+            },
+            body: JSON.stringify({ username, email, password, roomId, userId })
+          });
+
+          const json = await resp.json().catch(() => ({}));
+          console.log('Fallback fetch response:', resp.status, json);
+
+          if (resp.ok && json?.success) {
+            setVerified(true);
+            toast({ title: 'Credentials Confirmed! ✅', description: 'You may now close this chat and log in.' });
+            setTimeout(() => navigate('/login?firstTime=true'), 2000);
+            return;
+          }
+
+          const msg = json?.error || `Verification failed (${resp.status}).`;
+          setError(msg);
+          toast({ title: 'Verification Failed', description: msg, variant: 'destructive' });
+          return;
+        } catch (fallbackErr: any) {
+          console.error('Fallback fetch failed:', fallbackErr);
+        }
+      }
+
       setError(err?.message || 'Verification failed. Please check your credentials and try again.');
       toast({
         title: "Verification Failed",
