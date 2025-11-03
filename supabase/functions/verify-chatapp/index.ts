@@ -7,6 +7,9 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('=== verify-chatapp function called ===');
+  console.log('Method:', req.method);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,9 +21,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { username, email, password, roomId, userId } = await req.json();
+    console.log('Reading request body...');
+    const body = await req.json();
+    const { username, email, password, roomId, userId } = body;
 
     console.log('Verification attempt for user:', userId);
+    console.log('Username provided:', username);
+    console.log('Email provided:', email);
+    console.log('Room ID:', roomId);
 
     if (!username || !email || !password || !roomId || !userId) {
       throw new Error('Missing required fields');
@@ -79,18 +87,20 @@ serve(async (req) => {
     }
 
     // Validate password by attempting sign-in
+    console.log('Validating password...');
     const anonSupabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
     
-    const { error: signInError } = await anonSupabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await anonSupabase.auth.signInWithPassword({
       email: authUser.email!,
       password: password
     });
 
     if (signInError) {
       console.log('Password validation failed:', signInError.message);
+      console.log('Sign in error code:', signInError.status);
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -103,6 +113,10 @@ serve(async (req) => {
         }
       );
     }
+
+    // Sign out the validation session immediately
+    console.log('Password valid, signing out validation session...');
+    await anonSupabase.auth.signOut();
 
     console.log('All credentials validated successfully');
 
