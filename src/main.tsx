@@ -168,16 +168,16 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ProductionErrorBoundary>
-      <SessionContextProvider supabaseClient={supabase}>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <SessionContextProvider supabaseClient={supabase}>
+          <ProductionErrorBoundary>
             <CryptoComProvider>
               <App />
             </CryptoComProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </SessionContextProvider>
-    </ProductionErrorBoundary>
+          </ProductionErrorBoundary>
+        </SessionContextProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   </StrictMode>
 );
