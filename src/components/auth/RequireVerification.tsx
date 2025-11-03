@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react';
+import * as React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
+const { useEffect, useState } = React;
+
 interface RequireVerificationProps {
   children: React.ReactNode;
 }
 
-export const RequireVerification: React.FC<RequireVerificationProps> = ({ children }) => {
+export function RequireVerification({ children }: RequireVerificationProps) {
+  const location = useLocation();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
 
   useEffect(() => {
     const checkVerification = async () => {
@@ -68,4 +70,4 @@ export const RequireVerification: React.FC<RequireVerificationProps> = ({ childr
 
   // User is verified, render children
   return <>{children}</>;
-};
+}
