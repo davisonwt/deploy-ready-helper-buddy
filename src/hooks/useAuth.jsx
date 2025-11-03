@@ -190,7 +190,8 @@ export const AuthProvider = ({ children }) => {
             location: userData.location,
             preferred_currency: userData.currency,
             timezone: userData.timezone,
-            country: userData.country
+            country: userData.country,
+            username: userData.username || userData.email.split('@')[0]
           }
         }
       })
