@@ -287,7 +287,31 @@ const CallInterface = ({
                 <Button
                   size="lg"
                   variant="default"
-                  onClick={() => { onAccept(); setTimeout(() => remoteAudioRef.current?.play().catch(() => {}), 200); }}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+
+                    /* 1. Signal backend */
+                    onAccept();
+
+                    /* 2. Unlock audio context inside gesture (iOS requirement) */
+                    const audio = remoteAudioRef.current;
+                    if (audio) {
+                      try {
+                        // Force resume if context exists
+                        if (audio.srcObject) {
+                          audio.muted = false;
+                          audio.volume = 1.0;
+                          await audio.play();   // <-- MUST be inside click
+                          console.log('✅ [CALL] Remote audio play() succeeded');
+                        }
+                      } catch (err) {
+                        console.warn('⚠️ [CALL] play() failed, will retry on gesture', err);
+                      }
+                    }
+
+                    /* 3. Immediate haptic feedback */
+                    if (navigator.vibrate) navigator.vibrate(100);
+                  }}
                   className="rounded-full h-16 w-16 bg-green-600 hover:bg-green-700 shadow-lg"
                 >
                   <Phone className="h-7 w-7" />
