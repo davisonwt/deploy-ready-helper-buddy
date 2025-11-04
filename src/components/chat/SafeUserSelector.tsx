@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense, Component, ReactNode } from 'react';
 
 // Lazy-load the heavy selector to avoid blocking and isolate potential hook issues
-const LazyUserSelector = React.lazy(() => import('./UserSelector'));
+const LazyUserSelector = lazy(() => import('./UserSelector'));
 
 // Lightweight local error boundary so a selector error doesn't crash the whole Chat page
-class LocalErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error?: any }> {
-  constructor(props: { children: React.ReactNode }) {
+class LocalErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error?: any }> {
+  constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
@@ -43,12 +43,12 @@ export default function SafeUserSelector({
 
   return (
     <LocalErrorBoundary>
-      <React.Suspense fallback={null}>
+      <Suspense fallback={null}>
         <LazyUserSelector
           onStartDirectChat={onStartDirectChat}
           onStartCall={onStartCall}
         />
-      </React.Suspense>
+      </Suspense>
     </LocalErrorBoundary>
   );
 }
