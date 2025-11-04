@@ -1,4 +1,4 @@
-import React, { StrictMode } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
@@ -10,11 +10,6 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import "./index.css";
-
-// Ensure React is available globally for any modules that reference it directly
-// This prevents "React is not defined" runtime errors from legacy or misconfigured modules
-// Safe no-op if already defined
-;(window as any).React = (window as any).React || React;
 
 // Global error handling
 window.addEventListener('error', (event) => {
