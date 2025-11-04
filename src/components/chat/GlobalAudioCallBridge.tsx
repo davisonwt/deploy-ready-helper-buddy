@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect, FC } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCallManager } from '@/hooks/useCallManager';
 import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
 import { useLocation } from 'react-router-dom';
 
 // Mounts hidden audio elements whenever a call is active so audio works on any route
-const GlobalAudioCallBridge: React.FC = () => {
+const GlobalAudioCallBridge: FC = () => {
   const { user } = useAuth();
   const { currentCall } = useCallManager();
   const location = useLocation();
