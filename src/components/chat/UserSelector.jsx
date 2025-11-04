@@ -47,7 +47,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .select('user_id, display_name, first_name, last_name, avatar_url, username')
           .order('display_name', { ascending: true })
           .limit(200);
         if (error) throw error;
@@ -65,12 +65,14 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     (allUsers || []).forEach((p) => {
       const id = p?.user_id;
       const name = getName(p).trim();
+      const username = p?.username;
       // Filter out users with blank or missing names
       if (id && name && name !== 'Unknown User' && name.length > 1 && name !== ' ') {
-        dedup.set(id, { id, name });
+        const displayText = username ? `${name} (${username})` : name;
+        dedup.set(id, { id, name: displayText, sortName: name });
       }
     });
-    return Array.from(dedup.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(dedup.values()).sort((a, b) => a.sortName.localeCompare(b.sortName));
   }, [allUsers]);
 
   const filteredUsers = users.filter((profile) => {
