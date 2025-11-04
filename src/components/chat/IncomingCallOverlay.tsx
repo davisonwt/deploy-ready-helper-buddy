@@ -132,6 +132,13 @@ export default function IncomingCallOverlay() {
     }
   }, [incomingCall?.id]);
 
+  // Safety: if current call transitions to accepted, ensure ringtone is stopped
+  useEffect(() => {
+    if (currentCall?.status === 'accepted') {
+      hardStopRingtone();
+    }
+  }, [currentCall?.id, currentCall?.status]);
+
   const handleAnswer = () => {
     // Stop ring first, then transition
     hardStopRingtone();
