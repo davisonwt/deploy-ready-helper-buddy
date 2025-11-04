@@ -325,8 +325,22 @@ export const useSimpleWebRTC = (callSession, user) => {
   };
 
   useEffect(() => {
+    console.log('🔵 [WEBRTC] useEffect triggered', { 
+      hasCallSession: !!callSession, 
+      callSessionId: callSession?.id,
+      hasUser: !!user, 
+      userId: user?.id,
+      isCaller
+    });
+    
     if (callSession && user) {
+      console.log('🟢 [WEBRTC] Conditions met, calling init()');
       init();
+    } else {
+      console.log('🔴 [WEBRTC] Missing required data', {
+        missingCallSession: !callSession,
+        missingUser: !user
+      });
     }
     return cleanup;
   }, [callSession?.id, user?.id]);
