@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 import { useCallManager } from '@/hooks/useCallManager';
-import Peer from 'peerjs';
+import { useDebounce } from '@uidotdev/usehooks';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -74,6 +74,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+
+  const debouncedSearchTerm = useDebounce(inviteSearch, 300);
 
   useEffect(() => {
     if (roomId && user) {
@@ -307,8 +309,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
   // Load available users when invite dialog is open or search changes
   useEffect(() => {
+    if (!inviteOpen) return;
+
+    const controller = new AbortController();
+
     const run = async () => {
-      if (!inviteOpen) return;
       try {
         setLoadingUsers(true);
         let query = supabase
@@ -316,25 +321,31 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .neq('user_id', user.id)
           .limit(20);
-        if (inviteSearch.trim()) {
-          query = query.or(`display_name.ilike.%${inviteSearch}%,first_name.ilike.%${inviteSearch}%,last_name.ilike.%${inviteSearch}%`);
+
+        if (debouncedSearchTerm.trim()) {
+          query = query.or(
+            `display_name.ilike.%${debouncedSearchTerm}%,first_name.ilike.%${debouncedSearchTerm}%,last_name.ilike.%${debouncedSearchTerm}%`
+          );
         }
-        const { data, error } = await query;
+
+        const { data, error } = await query.abortSignal(controller.signal);
         if (error) throw error;
-        // Filter out blank names and current participants
+
         const filtered = (data || []).filter((u: any) => {
           const name = (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim());
           return !participantIds.includes(u.user_id) && name.length > 1 && name !== ' ';
         });
         setAvailableUsers(filtered);
       } catch (e: any) {
-        console.error('Error loading users:', e);
+        if (e.name !== 'AbortError') console.error('Error loading users:', e);
       } finally {
         setLoadingUsers(false);
       }
     };
+
     run();
-  }, [inviteOpen, inviteSearch, participantIds, user?.id]);
+    return () => controller.abort();
+  }, [inviteOpen, debouncedSearchTerm, participantIds, user?.id]);
 
   const toggleInvitee = (uid: string) => {
     setSelectedInvitees(prev => prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]);
