@@ -28,10 +28,15 @@ const AudioUnlocker: React.FC = () => {
         osc.connect(gain).connect(ctx.destination);
         try { await ctx.resume(); } catch {}
         try { osc.start(); } catch {}
-        setTimeout(() => {
-          try { osc.stop(); } catch {}
-          try { (ctx.state as any) !== 'closed' && ctx.close(); } catch {}
-        }, 50);
+        ;(window as any).__unlockedAudioCtx = ctx;
+        ;(window as any).__unlockedOsc = osc;
+        ;(window as any).__unlockedGain = gain;
+        const onVisible = async () => {
+          if (document.visibilityState === 'visible') {
+            try { await ctx.resume(); } catch {}
+          }
+        };
+        document.addEventListener('visibilitychange', onVisible);
       } catch (e) {
         console.warn('[AudioUnlocker] Failed to unlock audio context', e);
       }

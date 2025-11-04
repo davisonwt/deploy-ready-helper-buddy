@@ -17,7 +17,8 @@ export const stopAllRingtones = (): void => {
     try { (r.gain as any)?.disconnect?.(); } catch {}
     try {
       const ctx: any = r.ctx;
-      if (ctx && ctx.state !== 'closed') {
+      const globalCtx: any = (window as any).__unlockedAudioCtx;
+      if (ctx && ctx !== globalCtx && ctx.state !== 'closed') {
         try { ctx.close?.(); } catch {}
       }
     } catch {}
