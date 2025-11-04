@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
 import { supabase } from "@/integrations/supabase/client"
-
+import { useEffect, useState } from 'react'
 import { 
   Sprout, 
   Home, 
@@ -46,10 +46,10 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
 
   // Local role state to avoid cross-React hook issues
-  const [userRoles, setUserRoles] = React.useState([])
-  const [rolesLoading, setRolesLoading] = React.useState(false)
+  const [userRoles, setUserRoles] = useState([])
+  const [rolesLoading, setRolesLoading] = useState(false)
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
     const loadRoles = async () => {
       if (!user?.id) { setUserRoles([]); return }
@@ -85,8 +85,8 @@ export default function Layout({ children }) {
 
   const shouldShowAdminButton = isAdminOrGosat && !rolesLoading
   console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { isAdminOrGosat, rolesLoading, userRoles })
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
-  const [showVoiceCommands, setShowVoiceCommands] = React.useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   
   const { 
     showOnboarding, 
