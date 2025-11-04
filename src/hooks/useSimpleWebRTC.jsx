@@ -123,24 +123,37 @@ export const useSimpleWebRTC = (callSession, user) => {
         } catch {}
 
         if (remoteAudioRef.current && remoteStream) {
+          console.log('🔊 [WEBRTC] Setting remote stream', { streamId: remoteStream.id, tracks: remoteStream.getTracks().length });
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
 
+          // iOS requires play() to be called AFTER srcObject is set AND needs user gesture
           const tryPlay = async () => {
             try {
+              // Small delay for iOS to register srcObject
+              await new Promise(resolve => setTimeout(resolve, 100));
               await remoteAudioRef.current.play();
-              console.log('🔊 [WEBRTC] Remote audio playing');
+              console.log('✅ [WEBRTC] Remote audio playing');
             } catch (err) {
-              console.warn('⚠️ [WEBRTC] Autoplay blocked, waiting for user gesture');
-              const once = () => {
-                remoteAudioRef.current?.play().catch(() => {});
+              console.warn('⚠️ [WEBRTC] Autoplay blocked (likely iOS), need user gesture:', err.message);
+              // Multiple event types for better iOS coverage
+              const once = async () => {
+                console.log('👆 [WEBRTC] User gesture detected, retrying play');
+                try {
+                  await remoteAudioRef.current?.play();
+                  console.log('✅ [WEBRTC] Remote audio playing after gesture');
+                } catch (e) {
+                  console.error('❌ [WEBRTC] Still failed after gesture:', e);
+                }
                 document.removeEventListener('click', once);
                 document.removeEventListener('touchstart', once);
+                document.removeEventListener('touchend', once);
                 document.removeEventListener('keydown', once);
               };
               document.addEventListener('click', once, { once: true });
               document.addEventListener('touchstart', once, { once: true });
+              document.addEventListener('touchend', once, { once: true });
               document.addEventListener('keydown', once, { once: true });
             }
           };
@@ -164,14 +177,36 @@ export const useSimpleWebRTC = (callSession, user) => {
         setConnectionState(pc.connectionState);
         console.log('📡 [WEBRTC] Connection state:', pc.connectionState);
         if (pc.connectionState === 'connected' || pc.connectionState === 'completed') {
+          console.log('✅ [WEBRTC] Connected! Ensuring audio plays...');
           const el = remoteAudioRef.current;
-          if (el) {
-            const tryPlay = () => el.play().catch(() => {});
+          if (el && el.srcObject) {
+            // Try immediate play
+            const tryPlay = async () => {
+              try {
+                await el.play();
+                console.log('✅ [WEBRTC] Audio playing on connect');
+              } catch (e) {
+                console.warn('⚠️ [WEBRTC] Play blocked on connect, awaiting gesture');
+              }
+            };
             tryPlay();
-            const once = () => { el.play().catch(() => {}); document.removeEventListener('touchstart', once); document.removeEventListener('click', once); document.removeEventListener('keydown', once); };
+            // Setup gesture listeners as backup
+            const once = async () => {
+              try {
+                await el.play();
+                console.log('✅ [WEBRTC] Audio playing after connect gesture');
+              } catch (e) {}
+              document.removeEventListener('touchstart', once);
+              document.removeEventListener('touchend', once);
+              document.removeEventListener('click', once);
+              document.removeEventListener('keydown', once);
+            };
             document.addEventListener('touchstart', once, { once: true });
+            document.addEventListener('touchend', once, { once: true });
             document.addEventListener('click', once, { once: true });
             document.addEventListener('keydown', once, { once: true });
+          } else {
+            console.warn('⚠️ [WEBRTC] Connected but no audio element or stream');
           }
         }
       };
