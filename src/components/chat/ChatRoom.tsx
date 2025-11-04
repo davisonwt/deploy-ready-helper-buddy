@@ -447,8 +447,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
 
     try {
       setSending(true);
-      // Ensure membership so RPC passes membership check
-      await ensureMembership();
       // Use secure RPC that enforces membership and inserts as the current user
       const { data: inserted, error } = await supabase.rpc('send_chat_message', {
         p_room_id: roomId,

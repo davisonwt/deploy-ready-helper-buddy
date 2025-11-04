@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
 import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
-import { SimpleChatSystem } from '@/components/chat/SimpleChatSystem';
+
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
 import {
   Dialog,
@@ -126,6 +126,7 @@ const ChatApp = () => {
     if (isStartingDirect) return;
     setIsStartingDirect(true);
     try {
+      if (isStartingDirect) return; // inner race-guard
       // 1) Find existing direct room containing both users
       const { data: rows, error: findErr } = await supabase
         .from('chat_participants')
@@ -211,11 +212,13 @@ const ChatApp = () => {
   // Fetch users when search term changes
   useEffect(() => {
     if (!isCreateDialogOpen) return;
-    
+
+    const controller = new AbortController();
+
     const fetchUsers = async () => {
       try {
         setLoadingUsers(true);
-        
+
         let query = supabase
           .from('profiles')
           .select('id, user_id, display_name, avatar_url, first_name, last_name')
@@ -223,21 +226,25 @@ const ChatApp = () => {
           .limit(20);
 
         if (userSearchTerm.trim()) {
-          query = query.or(`display_name.ilike.%${userSearchTerm}%,first_name.ilike.%${userSearchTerm}%,last_name.ilike.%${userSearchTerm}%`);
+          query = query.or(
+            `display_name.ilike.%${userSearchTerm}%,first_name.ilike.%${userSearchTerm}%,last_name.ilike.%${userSearchTerm}%`
+          );
         }
 
-        const { data, error } = await query;
-        
+        const { data, error } = await query.abortSignal(controller.signal);
+
         if (error) throw error;
         setAvailableUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error('Error fetching users:', e);
       } finally {
         setLoadingUsers(false);
       }
     };
 
     fetchUsers();
+
+    return () => controller.abort();
   }, [userSearchTerm, isCreateDialogOpen, user?.id]);
 
   const handleUserToggle = (userId) => {
