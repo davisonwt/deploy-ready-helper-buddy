@@ -30,7 +30,7 @@ const stopGlobalRingtone = (): void => {
   try { (r.osc as any)?.disconnect?.(); } catch {}
   try { (r.gain as any)?.disconnect?.(); } catch {}
   try {
-    if (r.ctx && (r.ctx as any).state !== 'closed') {
+    if (r.ctx && r.ctx !== (window as any).__unlockedAudioCtx && (r.ctx as any).state !== 'closed') {
       // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
       try { r.ctx.close?.(); } catch {}
     }
@@ -63,8 +63,11 @@ export default function IncomingCallOverlay() {
     try { (gainRef.current as any)?.disconnect?.(); } catch {}
     try {
       if (audioCtxRef.current && (audioCtxRef.current as any).state !== 'closed') {
-        // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
-        try { audioCtxRef.current.close?.(); } catch {}
+        const globalCtx: any = (window as any).__unlockedAudioCtx;
+        if (audioCtxRef.current !== globalCtx) {
+          // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
+          try { audioCtxRef.current.close?.(); } catch {}
+        }
       }
     } catch {}
     oscRef.current = null;
@@ -88,7 +91,8 @@ export default function IncomingCallOverlay() {
     hardStopRingtone();
 
     const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    const ctx: AudioContext = new Ctx();
+    const globalCtx: any = (window as any).__unlockedAudioCtx;
+    const ctx: AudioContext = globalCtx ?? new Ctx();
     audioCtxRef.current = ctx;
 
     const osc = ctx.createOscillator();

@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 import GlobalAudioCallBridge from "./components/chat/GlobalAudioCallBridge";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
+import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -106,6 +107,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <AudioUnlocker />
+                <SoundUnlockBanner />
                 <IncomingCallOverlay />
                 <GlobalAudioCallBridge />
                 <ErrorBoundary>
