@@ -42,10 +42,10 @@ class ErrorBoundary extends Component {
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
               <h2 className="text-xl font-bold text-destructive mb-2">
-                Payment Processing Error
+                Application Error
               </h2>
               <p className="text-destructive/80 mb-6">
-                There was an issue processing your bestowal. This might be due to a network issue or authentication problem. Please try refreshing the page or logging in again.
+                Something went wrong while loading this page. This might be due to a technical issue. Please try refreshing the page.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
