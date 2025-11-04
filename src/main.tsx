@@ -11,6 +11,11 @@ import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import "./index.css";
 
+// Legacy React global shim for older code paths using `React.*` without import
+import * as ReactModule from "react";
+// @ts-ignore
+;(window as any).React = ReactModule;
+
 // Global error handling
 window.addEventListener('error', (event) => {
   logError('Global error caught', {

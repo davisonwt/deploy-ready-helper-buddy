@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -210,7 +210,7 @@ export function useRoles() {
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('🔑 useRoles: useEffect triggered', { user: !!user, userId: user?.id, userEmail: user?.email })
     if (!user) {
       console.log('🔑 useRoles: No user found, skipping fetchUserRoles')
