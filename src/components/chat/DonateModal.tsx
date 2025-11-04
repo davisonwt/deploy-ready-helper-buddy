@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,13 +17,13 @@ interface DonateModalProps {
   hostName?: string;
 }
 
-export const DonateModal: React.FC<DonateModalProps> = ({
+export const DonateModal: FC<DonateModalProps> = ({
   isOpen,
   onClose,
   hostWallet,
   hostName = 'Host',
 }) => {
-  const [amount, setAmount] = React.useState('5');
+  const [amount, setAmount] = useState('5');
 
   const handleDonate = () => {
     // Mock webhook call: Split 90% to hostWallet, 10% to tithing

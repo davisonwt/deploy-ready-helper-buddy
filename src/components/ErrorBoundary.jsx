@@ -1,8 +1,8 @@
-import React from 'react';
+import { Component } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };

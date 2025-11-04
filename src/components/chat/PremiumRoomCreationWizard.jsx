@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { WizardContainer } from '@/components/wizard/WizardContainer';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';

@@ -1,5 +1,5 @@
-import React from "react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Settings, ChevronDown, Radio, Sprout } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -14,10 +14,10 @@ import {
 
 export function AdminButton() {
   const auth = useAuth();
-  const [userRoles, setUserRoles] = React.useState([])
-  const [loading, setLoading] = React.useState(false)
+  const [userRoles, setUserRoles] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isMounted = true
     const load = async () => {
       if (!auth?.user?.id) { setUserRoles([]); return }

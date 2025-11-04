@@ -1,4 +1,3 @@
-import React from 'react'
 import { Button } from './ui/button'
 import { Sparkles } from 'lucide-react'
 import { useCurrency } from '../hooks/useCurrency'
