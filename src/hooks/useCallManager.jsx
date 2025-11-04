@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, createContext, useContext } f
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { stopAllRingtones } from '@/lib/ringtone';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
@@ -197,6 +198,7 @@ const useCallManagerInternal = () => {
     
     console.log('📞 [CALL] State updated, currentCall should now be set');
     
+    stopAllRingtones?.();
     toast({
       title: "Call Connected",
       description: "Call has been answered",
@@ -220,6 +222,7 @@ const useCallManagerInternal = () => {
   // Handle call ended
   const handleCallEnded = useCallback((callData) => {
     console.log('📞 [CALL] Call ended:', callData);
+    stopAllRingtones?.();
     
     // Add to call history
     if (currentCall) {
@@ -399,6 +402,7 @@ const useCallManagerInternal = () => {
       // Optimistic UI update first (prevents user-facing failure toast)
       setCurrentCall(callData);
       setIncomingCall(null);
+      stopAllRingtones?.();
 
       // Fire-and-forget: update call record (RLS may block, that's OK)
       supabase
@@ -483,6 +487,7 @@ const useCallManagerInternal = () => {
       }
 
       setIncomingCall(null);
+      stopAllRingtones?.();
 
       // Notify caller (ack + cleanup)
       const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`, { config: { broadcast: { self: false, ack: true }}});
@@ -509,6 +514,7 @@ const useCallManagerInternal = () => {
 
     try {
       console.log('📞 [CALL] Ending call:', callId, reason);
+      stopAllRingtones?.();
       
       const duration = currentCall ? Math.floor((Date.now() - (currentCall.startTime || Date.now())) / 1000) : 0;
       
