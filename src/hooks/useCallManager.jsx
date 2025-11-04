@@ -7,6 +7,22 @@ const useCallManagerInternal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
+  // Early return if auth context isn't ready yet
+  if (user === undefined) {
+    return {
+      currentCall: null,
+      incomingCall: null,
+      outgoingCall: null,
+      callHistory: [],
+      callQueue: [],
+      startCall: () => {},
+      answerCall: () => {},
+      declineCall: () => {},
+      endCall: () => {},
+      loadCallHistory: () => {}
+    };
+  }
+  
   const [currentCall, setCurrentCall] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
   const [outgoingCall, setOutgoingCall] = useState(null);
