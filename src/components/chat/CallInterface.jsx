@@ -211,20 +211,15 @@ const CallInterface = ({
               {isIncoming ? (
                 <p className="text-muted-foreground">Incoming call...</p>
               ) : (
-                <>
-                  <p className="text-muted-foreground">
-                    Call duration: {formatDuration(callDuration)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Connection: {connectionState}
-                  </p>
-                  {/* Audio debug info */}
-                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                    <div>🎤 Mic: {isAudioEnabled ? 'ON' : 'OFF'}</div>
-                    <div>🔊 Audio elements: L:{!!localAudioRef?.current} R:{!!remoteAudioRef?.current}</div>
-                  </div>
-                </>
-              )}
+                 <>
+                   <p className="text-muted-foreground">
+                     Call duration: {formatDuration(callDuration)}
+                   </p>
+                   <p className="text-sm text-muted-foreground mt-1">
+                     Connection: {connectionState}
+                   </p>
+                 </>
+               )}
             </div>
             
             {/* Hidden audio elements for WebRTC */}
@@ -252,10 +247,26 @@ const CallInterface = ({
         )}
 
         {callType === 'audio' && needsAudioUnlock && connectionState === 'connected' && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Button onClick={() => remoteAudioRef.current?.play().catch(() => {})}>
-              Enable Audio
-            </Button>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center space-y-3">
+              <div className="text-lg font-semibold">Audio Blocked</div>
+              <div className="text-sm text-muted-foreground">Tap to enable audio playback</div>
+              <Button 
+                size="lg"
+                onClick={() => {
+                  remoteAudioRef.current?.play()
+                    .then(() => {
+                      setNeedsAudioUnlock(false);
+                      console.log('✅ [AUDIO] Enabled via button');
+                    })
+                    .catch((e) => {
+                      console.error('❌ [AUDIO] Failed to enable:', e);
+                    });
+                }}
+              >
+                🔊 Enable Audio
+              </Button>
+            </div>
           </div>
         )}
         </div>

@@ -73,6 +73,13 @@ export default function IncomingCallOverlay() {
     setNeedsUnlock(false);
   };
 
+  // Reset hasAnswered when a NEW incoming call arrives
+  useEffect(() => {
+    if (incomingCall?.id) {
+      setHasAnswered(false);
+    }
+  }, [incomingCall?.id]);
+
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
     if (!incomingCall || hasAnswered) return;
@@ -106,9 +113,14 @@ export default function IncomingCallOverlay() {
 
     setGlobalRingtone({ ctx, osc, gain, interval: id });
 
-    ctx.resume()
-      .then(() => setNeedsUnlock(false))
-      .catch(() => setNeedsUnlock(true));
+    // iOS blocks AudioContext until user gesture - show unlock button immediately
+    if (ctx.state === 'suspended') {
+      setNeedsUnlock(true);
+    } else {
+      ctx.resume()
+        .then(() => setNeedsUnlock(false))
+        .catch(() => setNeedsUnlock(true));
+    }
 
     return () => { hardStopRingtone(); };
   }, [incomingCall?.id, hasAnswered]);
@@ -162,18 +174,26 @@ export default function IncomingCallOverlay() {
         </div>
 
         {needsUnlock && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              audioCtxRef.current?.resume?.()
-                .then(() => setNeedsUnlock(false))
-                .catch(() => {});
-            }}
-          >
-            Enable Sound
-          </Button>
+          <div className="text-center space-y-2">
+            <div className="text-xs text-gray-500">Tap to enable ringtone</div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                audioCtxRef.current?.resume?.()
+                  .then(() => {
+                    setNeedsUnlock(false);
+                    console.log('🔊 [RING] Audio unlocked');
+                  })
+                  .catch((err) => {
+                    console.error('❌ [RING] Resume failed:', err);
+                  });
+              }}
+            >
+              🔊 Enable Sound
+            </Button>
+          </div>
         )}
 
         <div className="flex gap-4">
