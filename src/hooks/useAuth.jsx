@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from "@/integrations/supabase/client"
 
 const AuthContext = createContext()
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, created_at, updated_at')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, is_chatapp_verified, created_at, updated_at')
         .eq('user_id', authUser.id)
         .single()
 
