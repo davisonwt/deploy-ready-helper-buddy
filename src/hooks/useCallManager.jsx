@@ -634,6 +634,40 @@ const useCallManagerInternal = () => {
     };
   }, [user?.id, setupCallChannel, loadCallHistory]);
 
+  // Resilience: Poll as a last resort if realtime fails to deliver incoming_call
+  useEffect(() => {
+    if (!user || incomingCall || currentCall || outgoingCall) return;
+
+    const poll = setInterval(async () => {
+      try {
+        const sinceIso = new Date(Date.now() - 30000).toISOString();
+        const { data, error } = await supabase
+          .from('call_sessions')
+          .select('id, caller_id, receiver_id, call_type, status, created_at')
+          .eq('receiver_id', user.id)
+          .eq('status', 'ringing')
+          .gt('created_at', sinceIso)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length && !incomingCallRef.current) {
+          handleIncomingCall({
+            id: data[0].id,
+            caller_id: data[0].caller_id,
+            receiver_id: data[0].receiver_id,
+            type: data[0].call_type || 'audio',
+            status: data[0].status,
+            isIncoming: true,
+          });
+        }
+      } catch (e) {
+        console.warn('⚠️ [CALL][POLL] Poll error', e);
+      }
+    }, 2500);
+
+    return () => clearInterval(poll);
+  }, [user?.id, incomingCall, currentCall, outgoingCall]);
+
   return {
     // Call states
     currentCall,
