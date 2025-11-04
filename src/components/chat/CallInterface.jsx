@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
+import { stopAllRingtones } from '@/lib/ringtone';
 import LiveCallQueue from './LiveCallQueue';
 import { 
   Phone, 
@@ -292,6 +293,7 @@ const CallInterface = ({
 
                     /* 1. Signal backend */
                     onAccept();
+                    try { stopAllRingtones?.(); } catch {}
 
                     /* 2. Unlock audio context inside gesture (iOS requirement) */
                     const audio = remoteAudioRef.current;
