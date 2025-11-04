@@ -150,8 +150,11 @@ const useCallManagerInternal = () => {
   const handleIncomingCall = useCallback((callData) => {
     console.log('📞 [CALL] Processing incoming call:', callData);
     
-    // Don't accept call if already in a call
-    if (currentCall) {
+    // Check if this is a self-call (calling your own device)
+    const isSelfCall = callData.caller_id === user?.id;
+    
+    // Don't accept call if already in a call (unless it's a self-call test)
+    if (currentCall && !isSelfCall) {
       console.log('📞 [CALL] Busy, declining incoming call');
       declineCall(callData.id, 'busy');
       return;
@@ -180,7 +183,7 @@ const useCallManagerInternal = () => {
         return current;
       });
     }, 30000);
-  }, [currentCall, toast]);
+  }, [currentCall, user?.id, toast]);
 
   // Handle call answered
   const handleCallAnswered = useCallback((callData) => {
@@ -319,8 +322,10 @@ const useCallManagerInternal = () => {
       setOutgoingCall(callData);
 
       // Send call signal to receiver with retries and ack
+      // Allow self-broadcasts when calling yourself
+      const isSelfCall = receiverId === user.id;
       const receiverChannel = supabase.channel(`user_calls_${receiverId}`, {
-        config: { broadcast: { self: false, ack: true } }
+        config: { broadcast: { self: isSelfCall, ack: true } }
       });
       await Promise.race([
         new Promise((resolve) => {
