@@ -120,11 +120,6 @@ export default function IncomingCallOverlay() {
     }
   }, [incomingCall?.id]);
 
-  // Ensure ringtone works for subsequent calls: reset answered flag when a new incoming call arrives
-  useEffect(() => {
-    setHasAnswered(false);
-  }, [incomingCall?.id]);
-
   const handleAnswer = () => {
     // Stop ring first, then transition
     hardStopRingtone();
