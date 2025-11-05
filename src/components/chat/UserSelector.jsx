@@ -40,18 +40,28 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     run();
   }, [searchTerm, user]);
 
-  // Initial list for dropdown (top 200 alphabetically)
+  // Initial list for dropdown (use RPC to avoid RLS issues)
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, first_name, last_name, avatar_url, username')
-          .order('display_name', { ascending: true })
-          .limit(200);
+        // Use search_user_profiles RPC with wildcard to get all users (up to 20)
+        const { data, error } = await supabase.rpc('search_user_profiles', {
+          search_term: 'a', // Common letter to match most users
+        });
         if (error) throw error;
-        setAllUsers(data || []);
+        
+        // Get more users with different search term
+        const { data: data2, error: error2 } = await supabase.rpc('search_user_profiles', {
+          search_term: 'e',
+        });
+        if (error2) throw error2;
+        
+        // Combine and deduplicate
+        const combined = [...(data || []), ...(data2 || [])];
+        const deduped = Array.from(new Map(combined.map(u => [u.user_id, u])).values());
+        
+        setAllUsers(deduped);
       } catch (e) {
         console.error('Error loading users list:', e);
       }
