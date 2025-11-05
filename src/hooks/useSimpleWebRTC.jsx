@@ -437,12 +437,15 @@ export const useSimpleWebRTC = (callSession, user) => {
   const cleanup = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
     }
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
+      try { peerConnectionRef.current.close(); } catch {}
+      peerConnectionRef.current = null;
     }
     if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
+      try { supabase.removeChannel(channelRef.current); } catch {}
+      channelRef.current = null;
     }
     iceQueueRef.current = [];
     subscribedRef.current = false;
@@ -450,20 +453,22 @@ export const useSimpleWebRTC = (callSession, user) => {
 
   // Explicit starter to avoid missed effects on some routes
   const start = () => {
-    console.log('🟢 [WEBRTC] start() called', { initStarted: initStartedRef.current, hasCallSession: !!callSession, hasUser: !!user });
+    const pc = peerConnectionRef.current;
+    console.log('🟢 [WEBRTC] start() called', { initStarted: initStartedRef.current, hasCallSession: !!callSession, hasUser: !!user, pcState: pc?.connectionState });
     if (!callSession || !user) return;
-    if (initStartedRef.current && peerConnectionRef.current) {
-      console.log('⚠️ [WEBRTC] Init already started, skipping start()');
+    if (initStartedRef.current && pc && pc.connectionState !== 'closed') {
+      console.log('⚠️ [WEBRTC] Init already started with active PC, skipping start()');
       return;
     }
-    initStartedRef.current = true;
+    initStartedRef.current = false; // reset guard if previous PC was closed or missing
     initBeganRef.current = false;
+    initStartedRef.current = true;
     init();
     // Watchdog: if init() didn't even log, retry once
     setTimeout(() => {
       if (!initBeganRef.current) {
         console.warn('⏱️ [WEBRTC] init() did not begin, retrying once');
-        initStartedRef.current = false;
+        initStartedRef.current = true;
         init();
       }
     }, 400);
