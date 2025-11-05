@@ -2,6 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useSimpleWebRTC = (callSession, user) => {
+  console.log('🚀 [WEBRTC] Hook called', { 
+    hasCallSession: !!callSession, 
+    callId: callSession?.id,
+    hasUser: !!user,
+    userId: user?.id 
+  });
+
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [connectionState, setConnectionState] = useState('new');
   
@@ -15,6 +22,8 @@ export const useSimpleWebRTC = (callSession, user) => {
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
   const isCaller = user?.id === callSession?.caller_id;
+  
+  console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
 
   const rtcConfig = {
     iceServers: [
