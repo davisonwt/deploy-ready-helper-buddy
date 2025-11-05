@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
+import { DeviceCheckModal } from './DeviceCheckModal';
 import { useCallManager } from '@/hooks/useCallManager';
 import Peer from 'peerjs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -54,6 +55,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
+
+  // Device check modal
+  const [showDeviceCheck, setShowDeviceCheck] = useState(false);
+  const pendingCallRef = useRef<{ receiverId: string; receiverName: string; callType: 'audio' | 'video' } | null>(null);
 
   // Typing indicators
   const [usersTyping, setUsersTyping] = useState<string[]>([]);
@@ -632,9 +637,29 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         || `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim()
         || 'Unknown User';
 
-      await startCall(otherParticipant.user_id, receiverName, 'audio', roomId);
+      // Store call details and show device check modal
+      pendingCallRef.current = {
+        receiverId: otherParticipant.user_id,
+        receiverName,
+        callType: 'audio'
+      };
+      setShowDeviceCheck(true);
     } catch (err) {
       console.error('Call start error:', err);
+      toast({ title: 'Call Failed', description: 'Unable to start the call', variant: 'destructive' });
+    }
+  };
+
+  const handleDeviceCheckComplete = async () => {
+    if (!pendingCallRef.current) return;
+
+    const { receiverId, receiverName, callType } = pendingCallRef.current;
+    
+    try {
+      await startCall(receiverId, receiverName, callType, roomId);
+      pendingCallRef.current = null;
+    } catch (err) {
+      console.error('Call start error after device check:', err);
       toast({ title: 'Call Failed', description: 'Unable to start the call', variant: 'destructive' });
     }
   };
@@ -971,6 +996,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         onClose={() => setShowDonate(false)}
         hostWallet={roomInfo?.created_by}
         hostName={roomInfo?.name}
+      />
+
+      {/* Device Check Modal */}
+      <DeviceCheckModal
+        open={showDeviceCheck}
+        onOpenChange={setShowDeviceCheck}
+        onComplete={handleDeviceCheckComplete}
       />
     </div>
   );
