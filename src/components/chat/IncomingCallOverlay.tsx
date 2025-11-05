@@ -3,7 +3,7 @@ import { useCallManager } from '@/hooks/useCallManager';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
+import { stopAllRingtones } from '@/lib/ringtone';
 /* ----------  GLOBAL SINGLETON HELPERS  ---------- */
 type RingHandles = {
   ctx: AudioContext | null;
@@ -158,6 +158,7 @@ export default function IncomingCallOverlay() {
   const handleAnswer = () => {
     // Stop ring first, then transition
     hardStopRingtone();
+    try { stopAllRingtones?.(); } catch {}
     setHasAnswered(true);
     if (incomingCall?.id) {
       answerCall(incomingCall.id);
@@ -166,6 +167,7 @@ export default function IncomingCallOverlay() {
 
   const handleDecline = () => {
     hardStopRingtone();
+    try { stopAllRingtones?.(); } catch {}
     if (incomingCall?.id) {
       declineCall(incomingCall.id, 'declined');
     }
