@@ -99,10 +99,8 @@ export const useSimpleWebRTC = (callSession, user) => {
       peerConnectionRef.current = pc;
       LOG('RTCPeerConnection created');
 
-      // 3) Setup universal sendrecv transceiver (BOTH sides)
-      LOG('Adding universal sendrecv audio transceiver');
-      pc.addTransceiver('audio', { direction: 'sendrecv' });
-      LOG('Transceiver added');
+      // 3) Use implicit transceiver via addTrack only (avoid duplicate m-lines)
+      LOG('Using addTrack without explicit transceiver');
 
       // 4) Add local tracks
       stream.getTracks().forEach(track => {
