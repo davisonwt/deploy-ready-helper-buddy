@@ -31,6 +31,9 @@ const useCallManagerInternal = () => {
   const [callQueue, setCallQueue] = useState([]);
   const channelRef = useRef(null);
 
+  // Track locally-ended calls to avoid reacting to remote DB updates
+  const endedByLocalRef = useRef(new Set());
+
   // Refs to avoid stale closures in realtime handlers
   const currentCallRef = useRef(currentCall);
   const incomingCallRef = useRef(incomingCall);
@@ -118,6 +121,7 @@ const useCallManagerInternal = () => {
         try {
           const row = payload.new;
           console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
+
           if (row?.status === 'accepted') {
             console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
             handleCallAnswered({
@@ -129,10 +133,27 @@ const useCallManagerInternal = () => {
               isIncoming: false,
               startTime: Date.now(),
             });
-          } else if (row?.status === 'declined') {
-            handleCallDeclined({ id: row.id, reason: 'declined' });
-          } else if (row?.status === 'ended') {
+            return;
+          }
+
+          if (row?.status === 'ended') {
+            const now = Date.now();
+            const acceptedAtMs = row?.accepted_at ? new Date(row.accepted_at).getTime() : 0;
+            const ageSinceAccept = acceptedAtMs ? (now - acceptedAtMs) : Infinity;
+
+            // Guard: ignore premature 'ended' updates unless we initiated them locally
+            if (!endedByLocalRef.current.has(row.id) && ageSinceAccept < 60000) {
+              console.warn('⏳ [CALL][DB] Ignoring premature ended within grace window', { id: row.id, ageSinceAccept });
+              return;
+            }
+
             handleCallEnded({ id: row.id, reason: 'ended' });
+            return;
+          }
+
+          if (row?.status === 'declined') {
+            handleCallDeclined({ id: row.id, reason: 'declined' });
+            return;
           }
         } catch (e) {
           console.warn('⚠️ [CALL][DB] Fallback update handler error', e);
@@ -226,6 +247,9 @@ const useCallManagerInternal = () => {
   const handleCallEnded = useCallback((callData) => {
     console.log('📞 [CALL] Call ended:', callData);
     stopAllRingtones?.();
+
+    // Clear local end flag if present
+    try { endedByLocalRef.current.delete(callData.id); } catch {}
     
     // Add to call history
     if (currentCall) {
@@ -522,6 +546,9 @@ const useCallManagerInternal = () => {
       stopAllRingtones?.();
       
       const duration = currentCall ? Math.floor((Date.now() - (currentCall.startTime || Date.now())) / 1000) : 0;
+
+      // Mark as locally ended to ignore premature DB echoes
+      try { endedByLocalRef.current.add(callId); } catch {}
       
       // Update call record
       const { error: updateError } = await supabase
