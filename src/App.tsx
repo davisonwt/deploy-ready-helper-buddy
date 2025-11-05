@@ -99,11 +99,11 @@ const LoadingFallback = () => (
 
 const App = () => (
   <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+    <TooltipProvider>
       <AuthProvider>
-          <BasketProvider>
-            <AppContextProvider>
-                <>
-                <CallManagerProvider>
+        <BasketProvider>
+          <AppContextProvider>
+            <CallManagerProvider>
                 <Toaster />
                 <Sonner />
                 <AudioUnlocker />
@@ -578,12 +578,12 @@ const App = () => (
                 <FloatingLiveWidget />
                 <OnboardingTour />
                 <HelpModal />
-              </CallManagerProvider>
-              </>
-            </AppContextProvider>
-          </BasketProvider>
-        </AuthProvider>
-      </ThemeProvider>
+            </CallManagerProvider>
+          </AppContextProvider>
+        </BasketProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </ThemeProvider>
     
 );
 
