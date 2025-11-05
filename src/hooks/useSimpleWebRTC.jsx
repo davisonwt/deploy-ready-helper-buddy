@@ -79,6 +79,25 @@ export const useSimpleWebRTC = (callSession, user) => {
       // 2) Peer connection
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+
+      // -------------------------------------------------
+      // Callee MUST add recv-only audio transceiver
+      // otherwise ontrack never fires → no remote audio
+      // -------------------------------------------------
+      if (!isCaller) {
+        try {
+          const hasAudioRecv = pc.getTransceivers().some(
+            tr => tr.receiver && tr.receiver.track && tr.receiver.track.kind === 'audio'
+          );
+          if (!hasAudioRecv) {
+            pc.addTransceiver('audio', { direction: 'recvonly' });
+            console.log('🔁 [WEBRTC] Added recv-only audio transceiver (callee)');
+          }
+        } catch (e) {
+          console.warn('⚠️ [WEBRTC] addTransceiver failed', e);
+        }
+      }
+
       console.log('🔗 [WEBRTC] RTCPeerConnection created', rtcConfig);
 
       // -------------------------------------------------
