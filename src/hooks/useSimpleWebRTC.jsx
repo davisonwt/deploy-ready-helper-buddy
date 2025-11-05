@@ -23,6 +23,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const makingOfferRef = useRef(false);
   const initStartedRef = useRef(false); // Prevent duplicate init
   const initBeganRef = useRef(false); // Marks when init() actually begins
+  const clientIdRef = useRef(typeof self !== 'undefined' && self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Math.random().toString(36).slice(2));
   const isCaller = user?.id === callSession?.caller_id;
   
   console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
@@ -55,7 +56,7 @@ export const useSimpleWebRTC = (callSession, user) => {
     const res = await channelRef.current.send({
       type: 'broadcast',
       event: 'webrtc',
-      payload: { ...message, from: user.id, callId: callSession.id }
+      payload: { ...message, fromClient: clientIdRef.current, userId: user.id, callId: callSession.id }
     });
     if (res !== 'ok') {
       console.warn('⚠️ [WEBRTC] send ack not ok:', res);
@@ -285,8 +286,8 @@ export const useSimpleWebRTC = (callSession, user) => {
       channelRef.current = supabase
         .channel(`call_${callSession.id}`, { config: { broadcast: { self: true, ack: true } } })
         .on('broadcast', { event: 'webrtc' }, async ({ payload }) => {
-          console.log('📨 [WEBRTC] Received signal', { type: payload.type, from: payload.from, isCaller });
-          if (payload.from === user.id) return;
+          console.log('📨 [WEBRTC] Received signal', { type: payload.type, fromClient: payload.fromClient, userId: payload.userId, isCaller });
+          if (payload.fromClient === clientIdRef.current) return;
           try {
             if (payload.type === 'offer') {
               receivedOfferRef.current = true;
