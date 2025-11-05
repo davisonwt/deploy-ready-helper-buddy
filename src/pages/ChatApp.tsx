@@ -31,7 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useCallManager } from '@/hooks/useCallManager';
-import CallInterface from '@/components/chat/CallInterface';
+import { DailyAudioCall } from '@/components/chat/DailyAudioCall';
 import VideoCallInterface from '@/components/chat/VideoCallInterface';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -397,7 +397,7 @@ const ChatApp = () => {
   // Render call interface if active
   const activeCall = currentCall || incomingCall || outgoingCall;
   if (activeCall) {
-    const CallComponent = activeCall?.type === 'video' ? VideoCallInterface : CallInterface;
+    const CallComponent = activeCall?.type === 'video' ? VideoCallInterface : DailyAudioCall;
     const isIncomingForUser = Boolean(
       activeCall?.status === 'ringing' &&
       activeCall?.receiver_id === user?.id &&
