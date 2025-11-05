@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSimpleWebRTC } from '@/hooks/useSimpleWebRTC';
 import { stopAllRingtones } from '@/lib/ringtone';
 import LiveCallQueue from './LiveCallQueue';
+import WebRTCDebugOverlay from './WebRTCDebugOverlay';
 import { 
   Phone, 
   PhoneOff, 
@@ -15,7 +16,8 @@ import {
   MicOff, 
   Settings,
   Minimize2,
-  Users
+  Users,
+  Bug
 } from 'lucide-react';
 
 const CallInterface = ({ 
@@ -42,6 +44,7 @@ const CallInterface = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
   const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const intervalRef = useRef(null);
@@ -52,9 +55,15 @@ const CallInterface = ({
     remoteAudioRef,
     isAudioEnabled,
     connectionState,
+    iceConnectionState,
+    signalingState,
+    hasLocalDescription,
+    hasRemoteDescription,
+    hasRemoteTrack,
     toggleAudio,
     cleanup,
-    start
+    start,
+    restartICE
   } = useSimpleWebRTC(callSession, user);
 
   useEffect(() => {
@@ -357,12 +366,12 @@ const CallInterface = ({
                 )}
                 
                 <Button
-                  variant="outline"
+                  variant={showDebug ? "default" : "outline"}
                   size="lg"
                   className="rounded-full h-14 w-14 shadow-md"
-                  onClick={() => console.log('Connection:', connectionState)}
+                  onClick={() => setShowDebug(!showDebug)}
                 >
-                  <Settings className="h-6 w-6" />
+                  <Bug className="h-6 w-6" />
                 </Button>
                 
                 <Button
@@ -390,6 +399,20 @@ const CallInterface = ({
             />
           </div>
         </div>
+      )}
+
+      {/* Debug Overlay */}
+      {showDebug && (
+        <WebRTCDebugOverlay
+          connectionState={connectionState}
+          iceConnectionState={iceConnectionState}
+          signalingState={signalingState}
+          hasLocalDescription={hasLocalDescription}
+          hasRemoteDescription={hasRemoteDescription}
+          hasRemoteTrack={hasRemoteTrack}
+          onRestartICE={restartICE}
+          onClose={() => setShowDebug(false)}
+        />
       )}
     </div>
   );

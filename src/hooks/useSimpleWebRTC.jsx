@@ -11,6 +11,9 @@ export const useSimpleWebRTC = (callSession, user) => {
 
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [connectionState, setConnectionState] = useState('new');
+  const [iceConnectionState, setIceConnectionState] = useState('new');
+  const [signalingState, setSignalingState] = useState('stable');
+  const [hasRemoteTrack, setHasRemoteTrack] = useState(false);
   
   const localAudioRef = useRef();
   const remoteAudioRef = useRef();
@@ -189,6 +192,7 @@ export const useSimpleWebRTC = (callSession, user) => {
       // Robust remote audio handling
       pc.ontrack = (event) => {
         console.log('📥 [WEBRTC] ontrack', { track: { kind: event.track.kind, id: event.track.id, muted: event.track.muted, enabled: event.track.enabled }, streams: event.streams?.length });
+        setHasRemoteTrack(true);
         // Some browsers may not include streams; build one from the track as a fallback
         let remoteStream = event.streams && event.streams[0] ? event.streams[0] : null;
         if (!remoteStream && event.track) {
@@ -291,10 +295,12 @@ export const useSimpleWebRTC = (callSession, user) => {
       };
 
       pc.oniceconnectionstatechange = () => {
+        setIceConnectionState(pc.iceConnectionState);
         console.log('🧊 [WEBRTC] ICE connection state:', pc.iceConnectionState);
       };
 
       pc.onsignalingstatechange = () => {
+        setSignalingState(pc.signalingState);
         console.log('📶 [WEBRTC] Signaling state:', pc.signalingState);
       };
 
@@ -465,6 +471,31 @@ export const useSimpleWebRTC = (callSession, user) => {
     }
     iceQueueRef.current = [];
     subscribedRef.current = false;
+    setHasRemoteTrack(false);
+  };
+
+  const restartICE = async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !subscribedRef.current) {
+      console.warn('⚠️ [WEBRTC] Cannot restart ICE: no active connection');
+      return;
+    }
+
+    try {
+      console.log('♻️ [WEBRTC] Restarting ICE...');
+      pc.restartIce();
+      
+      // Create new offer with iceRestart
+      makingOfferRef.current = true;
+      const offer = await pc.createOffer({ iceRestart: true });
+      await pc.setLocalDescription(offer);
+      await sendMessage({ type: 'offer', offer });
+      console.log('✅ [WEBRTC] ICE restart offer sent');
+    } catch (error) {
+      console.error('❌ [WEBRTC] ICE restart failed:', error);
+    } finally {
+      makingOfferRef.current = false;
+    }
   };
 
   // Explicit starter to avoid missed effects on some routes
@@ -536,8 +567,14 @@ export const useSimpleWebRTC = (callSession, user) => {
     remoteAudioRef,
     isAudioEnabled,
     connectionState,
+    iceConnectionState,
+    signalingState,
+    hasLocalDescription: !!peerConnectionRef.current?.localDescription,
+    hasRemoteDescription: !!peerConnectionRef.current?.remoteDescription,
+    hasRemoteTrack,
     toggleAudio,
     cleanup,
-    start
+    start,
+    restartICE
   };
 };
