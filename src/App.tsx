@@ -102,7 +102,7 @@ const App = () => (
       <AuthProvider>
           <BasketProvider>
             <AppContextProvider>
-              <TooltipProvider>
+                <>
                 <CallManagerProvider>
                 <Toaster />
                 <Sonner />
@@ -579,7 +579,7 @@ const App = () => (
                 <OnboardingTour />
                 <HelpModal />
               </CallManagerProvider>
-              </TooltipProvider>
+              </>
             </AppContextProvider>
           </BasketProvider>
         </AuthProvider>
