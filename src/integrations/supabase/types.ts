@@ -1082,6 +1082,105 @@ export type Database = {
         }
         Relationships: []
       }
+      live_room_moderators: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      live_room_participants: {
+        Row: {
+          display_name: string
+          hand_raised: boolean | null
+          id: string
+          is_audio_enabled: boolean | null
+          is_video_enabled: boolean | null
+          joined_at: string | null
+          role: string | null
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          hand_raised?: boolean | null
+          id?: string
+          is_audio_enabled?: boolean | null
+          is_video_enabled?: boolean | null
+          joined_at?: string | null
+          role?: string | null
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          hand_raised?: boolean | null
+          id?: string
+          is_audio_enabled?: boolean | null
+          is_video_enabled?: boolean | null
+          joined_at?: string | null
+          role?: string | null
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      live_rooms: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          current_participants: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          current_participants?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          current_participants?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       live_session_messages: {
         Row: {
           content: string
