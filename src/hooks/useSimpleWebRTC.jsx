@@ -76,24 +76,54 @@ export const useSimpleWebRTC = (callSession, user) => {
       // Callee MUST add recv-only audio transceiver
       // otherwise ontrack never fires → no remote audio
       // -------------------------------------------------
+      console.log('🔧 [WEBRTC] Before transceiver setup', { 
+        isCaller, 
+        transceivers: pc.getTransceivers().length 
+      });
+      
       if (!isCaller) {
         try {
           const hasAudioRecv = pc.getTransceivers().some(
             tr => tr.receiver && tr.receiver.track && tr.receiver.track.kind === 'audio'
           );
           if (!hasAudioRecv) {
-            pc.addTransceiver('audio', { direction: 'recvonly' });
-            console.log('🔁 [WEBRTC] Added recv-only audio transceiver (callee)');
+            const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
+            console.log('🔁 [WEBRTC] Added recv-only audio transceiver (callee)', {
+              direction: transceiver.direction,
+              mid: transceiver.mid
+            });
+          } else {
+            console.log('⚠️ [WEBRTC] Audio recv transceiver already exists');
           }
         } catch (e) {
           console.warn('⚠️ [WEBRTC] addTransceiver failed', e);
         }
       }
 
+      console.log('🔧 [WEBRTC] After recv-only, before addTrack', { 
+        transceivers: pc.getTransceivers().map(t => ({ 
+          direction: t.direction, 
+          kind: t.receiver?.track?.kind || t.mid 
+        }))
+      });
+
       // Add local audio
       stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
-        console.log('➕ [WEBRTC] addTrack', { kind: track.kind, id: track.id, enabled: track.enabled });
+        const sender = pc.addTrack(track, stream);
+        console.log('➕ [WEBRTC] addTrack', { 
+          kind: track.kind, 
+          id: track.id, 
+          enabled: track.enabled,
+          senderTrack: sender.track?.id
+        });
+      });
+
+      console.log('🔧 [WEBRTC] After addTrack', { 
+        transceivers: pc.getTransceivers().map(t => ({ 
+          direction: t.direction, 
+          kind: t.receiver?.track?.kind || 'pending',
+          mid: t.mid
+        }))
       });
       
       // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
@@ -249,9 +279,16 @@ export const useSimpleWebRTC = (callSession, user) => {
                   return;
                 }
               } else {
-                await pc.setRemoteDescription(payload.offer);
+              await pc.setRemoteDescription(payload.offer);
               }
-              console.log('✅ [WEBRTC] Remote description set (offer)');
+              console.log('✅ [WEBRTC] Remote description set (offer)', {
+                transceivers: pc.getTransceivers().map(t => ({
+                  direction: t.direction,
+                  kind: t.receiver?.track?.kind || 'pending',
+                  mid: t.mid,
+                  hasTrack: !!t.receiver?.track
+                }))
+              });
               // Flush queued ICE candidates
               for (const c of iceQueueRef.current) {
                 try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
@@ -259,7 +296,13 @@ export const useSimpleWebRTC = (callSession, user) => {
               iceQueueRef.current = [];
 
               const answer = await pc.createAnswer();
-              console.log('📤 [WEBRTC] Created answer');
+              console.log('📤 [WEBRTC] Created answer', {
+                hasAudio: answer.sdp.includes('m=audio'),
+                transceivers: pc.getTransceivers().map(t => ({
+                  direction: t.direction,
+                  mid: t.mid
+                }))
+              });
               await pc.setLocalDescription(answer);
               console.log('✅ [WEBRTC] Local description set (answer)');
               await sendMessage({ type: 'answer', answer });
@@ -271,7 +314,14 @@ export const useSimpleWebRTC = (callSession, user) => {
               }
               await pc.setRemoteDescription(payload.answer);
               makingOfferRef.current = false;
-              console.log('✅ [WEBRTC] Remote description set (answer)');
+              console.log('✅ [WEBRTC] Remote description set (answer)', {
+                transceivers: pc.getTransceivers().map(t => ({
+                  direction: t.direction,
+                  kind: t.receiver?.track?.kind || 'pending',
+                  mid: t.mid,
+                  hasTrack: !!t.receiver?.track
+                }))
+              });
               for (const c of iceQueueRef.current) {
                 try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
               }
@@ -304,7 +354,13 @@ export const useSimpleWebRTC = (callSession, user) => {
           makingOfferRef.current = true;
           const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
           await pc.setLocalDescription(offer);
-          console.log('✅ [WEBRTC] Local description set (offer), sending...');
+          console.log('✅ [WEBRTC] Local description set (offer), sending...', {
+            hasAudio: offer.sdp.includes('m=audio'),
+            transceivers: pc.getTransceivers().map(t => ({
+              direction: t.direction,
+              mid: t.mid
+            }))
+          });
           await sendMessage({ type: 'offer', offer });
           console.log('📤 [WEBRTC] Offer sent');
         } finally {
