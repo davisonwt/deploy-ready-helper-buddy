@@ -30,9 +30,15 @@ const stopGlobalRingtone = (): void => {
   try { (r.osc as any)?.disconnect?.(); } catch {}
   try { (r.gain as any)?.disconnect?.(); } catch {}
   try {
-    if (r.ctx && r.ctx !== (window as any).__unlockedAudioCtx && (r.ctx as any).state !== 'closed') {
-      // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
-      try { r.ctx.close?.(); } catch {}
+    const unlocked = (window as any).__unlockedAudioCtx;
+    if (r.ctx && r.ctx !== unlocked && (r.ctx as any).state !== 'closed' && !(r.ctx as any).__closing) {
+      try {
+        (r.ctx as any).__closing = true;
+        const p = r.ctx.close?.();
+        if (p && typeof (p as any).catch === 'function') {
+          (p as Promise<void>).catch(() => {});
+        }
+      } catch {}
     }
   } catch {}
   setGlobalRingtone(undefined);
@@ -51,6 +57,8 @@ export default function IncomingCallOverlay() {
 
   // Brutal, idempotent stop: local + global
   const hardStopRingtone = () => {
+    // Capture current global ringtone context to avoid double-closing the same ctx
+    const prev = getGlobalRingtone();
     stopGlobalRingtone(); // kill any stray global loop
 
     // Defensive local cleanup
@@ -62,12 +70,16 @@ export default function IncomingCallOverlay() {
     try { (oscRef.current as any)?.disconnect?.(); } catch {}
     try { (gainRef.current as any)?.disconnect?.(); } catch {}
     try {
-      if (audioCtxRef.current && (audioCtxRef.current as any).state !== 'closed') {
-        const globalCtx: any = (window as any).__unlockedAudioCtx;
-        if (audioCtxRef.current !== globalCtx) {
-          // Only close, don't suspend to avoid "Can't suspend if control thread is closed"
-          try { audioCtxRef.current.close?.(); } catch {}
-        }
+      const ctx = audioCtxRef.current as any;
+      const globalCtx: any = (window as any).__unlockedAudioCtx;
+      if (ctx && ctx.state !== 'closed' && ctx !== globalCtx && ctx !== prev?.ctx && !ctx.__closing) {
+        try {
+          ctx.__closing = true;
+          const p = ctx.close?.();
+          if (p && typeof p.catch === 'function') {
+            (p as Promise<void>).catch(() => {});
+          }
+        } catch {}
       }
     } catch {}
     oscRef.current = null;
