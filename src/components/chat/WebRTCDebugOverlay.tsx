@@ -11,6 +11,8 @@ interface WebRTCDebugOverlayProps {
   hasLocalDescription: boolean;
   hasRemoteDescription: boolean;
   hasRemoteTrack: boolean;
+  isReconnecting: boolean;
+  reconnectAttempts: number;
   onRestartICE: () => void;
   onClose: () => void;
 }
@@ -22,6 +24,8 @@ const WebRTCDebugOverlay = ({
   hasLocalDescription,
   hasRemoteDescription,
   hasRemoteTrack,
+  isReconnecting,
+  reconnectAttempts,
   onRestartICE,
   onClose
 }: WebRTCDebugOverlayProps) => {
@@ -105,6 +109,18 @@ const WebRTCDebugOverlay = ({
           </div>
         </div>
 
+        {/* Reconnection Status */}
+        {isReconnecting && (
+          <div className="border-t pt-2">
+            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+              <span className="text-xs font-medium">
+                Reconnecting... ({reconnectAttempts}/5)
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="border-t pt-2">
           <Button
@@ -112,9 +128,10 @@ const WebRTCDebugOverlay = ({
             size="sm"
             variant="outline"
             className="w-full text-xs"
+            disabled={isReconnecting}
           >
-            <RefreshCw className="h-3 w-3 mr-2" />
-            Restart ICE
+            <RefreshCw className={`h-3 w-3 mr-2 ${isReconnecting ? 'animate-spin' : ''}`} />
+            {isReconnecting ? 'Reconnecting...' : 'Restart ICE'}
           </Button>
         </div>
 

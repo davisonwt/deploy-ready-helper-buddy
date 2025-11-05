@@ -60,6 +60,8 @@ const CallInterface = ({
     hasLocalDescription,
     hasRemoteDescription,
     hasRemoteTrack,
+    isReconnecting,
+    reconnectAttempts,
     toggleAudio,
     cleanup,
     start,
@@ -244,6 +246,14 @@ const CallInterface = ({
                    <p className="text-sm text-muted-foreground mt-1">
                      Connection: {connectionState}
                    </p>
+                   {isReconnecting && (
+                     <div className="mt-2 flex items-center justify-center gap-2">
+                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                       <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                         Reconnecting... (Attempt {reconnectAttempts}/5)
+                       </p>
+                     </div>
+                   )}
                  </>
                )}
             </div>
@@ -410,6 +420,8 @@ const CallInterface = ({
           hasLocalDescription={hasLocalDescription}
           hasRemoteDescription={hasRemoteDescription}
           hasRemoteTrack={hasRemoteTrack}
+          isReconnecting={isReconnecting}
+          reconnectAttempts={reconnectAttempts}
           onRestartICE={restartICE}
           onClose={() => setShowDebug(false)}
         />
