@@ -14,6 +14,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const [iceConnectionState, setIceConnectionState] = useState('new');
   const [signalingState, setSignalingState] = useState('stable');
   const [hasRemoteTrack, setHasRemoteTrack] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   
   const localAudioRef = useRef();
   const remoteAudioRef = useRef();
@@ -27,6 +28,9 @@ export const useSimpleWebRTC = (callSession, user) => {
   const initStartedRef = useRef(false); // Prevent duplicate init
   const initBeganRef = useRef(false); // Marks when init() actually begins
   const clientIdRef = useRef(typeof self !== 'undefined' && self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Math.random().toString(36).slice(2));
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimeoutRef = useRef(null);
+  const maxReconnectAttempts = 5;
   const isCaller = user?.id === callSession?.caller_id;
   
   console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
@@ -259,8 +263,12 @@ export const useSimpleWebRTC = (callSession, user) => {
       pc.onconnectionstatechange = () => {
         setConnectionState(pc.connectionState);
         console.log('📡 [WEBRTC] Connection state:', pc.connectionState);
+        
         if (pc.connectionState === 'connected' || pc.connectionState === 'completed') {
-          console.log('✅ [WEBRTC] Connected! Ensuring audio plays...');
+          console.log('✅ [WEBRTC] Connected! Resetting reconnect counter');
+          reconnectAttemptsRef.current = 0;
+          setIsReconnecting(false);
+          
           const el = remoteAudioRef.current;
           if (el && el.srcObject) {
             // Try immediate play
@@ -291,12 +299,20 @@ export const useSimpleWebRTC = (callSession, user) => {
           } else {
             console.warn('⚠️ [WEBRTC] Connected but no audio element or stream');
           }
+        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          console.warn(`⚠️ [WEBRTC] Connection ${pc.connectionState}, attempting reconnection`);
+          attemptReconnect();
         }
       };
 
       pc.oniceconnectionstatechange = () => {
         setIceConnectionState(pc.iceConnectionState);
         console.log('🧊 [WEBRTC] ICE connection state:', pc.iceConnectionState);
+        
+        if (pc.iceConnectionState === 'failed') {
+          console.warn('⚠️ [WEBRTC] ICE failed, attempting reconnection');
+          attemptReconnect();
+        }
       };
 
       pc.onsignalingstatechange = () => {
@@ -457,6 +473,12 @@ export const useSimpleWebRTC = (callSession, user) => {
   };
 
   const cleanup = () => {
+    // Clear reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
@@ -471,7 +493,47 @@ export const useSimpleWebRTC = (callSession, user) => {
     }
     iceQueueRef.current = [];
     subscribedRef.current = false;
+    reconnectAttemptsRef.current = 0;
     setHasRemoteTrack(false);
+    setIsReconnecting(false);
+  };
+
+  const attemptReconnect = async () => {
+    if (isReconnecting) {
+      console.log('⏳ [WEBRTC] Already reconnecting, skipping');
+      return;
+    }
+    
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      console.error('❌ [WEBRTC] Max reconnection attempts reached');
+      setIsReconnecting(false);
+      return;
+    }
+
+    reconnectAttemptsRef.current += 1;
+    setIsReconnecting(true);
+
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 16000);
+    console.log(`🔄 [WEBRTC] Reconnection attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts} in ${delay}ms`);
+
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      const pc = peerConnectionRef.current;
+      if (!pc || pc.connectionState === 'closed') {
+        console.warn('⚠️ [WEBRTC] Connection closed, cannot reconnect');
+        setIsReconnecting(false);
+        return;
+      }
+
+      try {
+        console.log('♻️ [WEBRTC] Attempting ICE restart...');
+        await restartICE();
+      } catch (error) {
+        console.error('❌ [WEBRTC] Reconnection failed:', error);
+        // Try again
+        attemptReconnect();
+      }
+    }, delay);
   };
 
   const restartICE = async () => {
@@ -493,6 +555,7 @@ export const useSimpleWebRTC = (callSession, user) => {
       console.log('✅ [WEBRTC] ICE restart offer sent');
     } catch (error) {
       console.error('❌ [WEBRTC] ICE restart failed:', error);
+      throw error;
     } finally {
       makingOfferRef.current = false;
     }
@@ -572,6 +635,8 @@ export const useSimpleWebRTC = (callSession, user) => {
     hasLocalDescription: !!peerConnectionRef.current?.localDescription,
     hasRemoteDescription: !!peerConnectionRef.current?.remoteDescription,
     hasRemoteTrack,
+    isReconnecting,
+    reconnectAttempts: reconnectAttemptsRef.current,
     toggleAudio,
     cleanup,
     start,
