@@ -5,7 +5,7 @@ export const stopAllRingtones = (): void => {
   try {
     const w = window as any;
     const r = w.__ringtone as
-      | { ctx?: AudioContext; osc?: OscillatorNode; gain?: GainNode; interval?: number | null }
+      | { ctx?: AudioContext & { __closing?: boolean }; osc?: OscillatorNode; gain?: GainNode; interval?: number | null }
       | undefined;
     if (!r) return;
 
@@ -18,8 +18,14 @@ export const stopAllRingtones = (): void => {
     try {
       const ctx: any = r.ctx;
       const globalCtx: any = (window as any).__unlockedAudioCtx;
-      if (ctx && ctx !== globalCtx && ctx.state !== 'closed') {
-        try { ctx.close?.(); } catch {}
+      if (ctx && ctx !== globalCtx && ctx.state !== 'closed' && !ctx.__closing) {
+        try {
+          ctx.__closing = true;
+          const p = ctx.close?.();
+          if (p && typeof p.catch === 'function') {
+            (p as Promise<void>).catch(() => {});
+          }
+        } catch {}
       }
     } catch {}
 
