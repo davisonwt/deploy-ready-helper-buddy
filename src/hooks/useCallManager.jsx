@@ -281,6 +281,11 @@ const useCallManagerInternal = () => {
   // Handle call status updates
   const handleCallStatusUpdate = useCallback((statusUpdate) => {
     console.log('📞 [CALL] Status update:', statusUpdate);
+
+    // Safety: if any party reports 'accepted', force-stop any ringtones
+    if (statusUpdate?.status === 'accepted') {
+      try { stopAllRingtones?.(); } catch {}
+    }
     
     if (currentCall && currentCall.id === statusUpdate.call_id) {
       setCurrentCall(prev => ({

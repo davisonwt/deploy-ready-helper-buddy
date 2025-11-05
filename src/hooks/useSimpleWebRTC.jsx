@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { stopAllRingtones } from '@/lib/ringtone';
 
 /* ----------  ZERO-GUESS INSTRUMENTATION ---------- */
 const LOG = (...args) => console.log('[WEBRTC]', ...args);
@@ -79,19 +80,24 @@ export const useSimpleWebRTC = (callSession, user) => {
       LOG('init() entry', { callId: callSession?.id, isCaller });
       initBeganRef.current = true;
       
-      // 1) Get microphone
-      LOG('Getting user media');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000,
-        }
-      });
-      LOG('gotUserMedia', stream.getAudioTracks().map(t => ({ id: t.id, kind: t.kind, enabled: t.enabled, muted: t.muted })));
-      localStreamRef.current = stream;
+      // 1) Get microphone (optional)
+      LOG('Getting user media (optional)');
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: 1,
+            sampleRate: 48000,
+          }
+        });
+        LOG('gotUserMedia', stream.getAudioTracks().map(t => ({ id: t.id, kind: t.kind, enabled: t.enabled, muted: t.muted })));
+        localStreamRef.current = stream;
+      } catch (e) {
+        WARN('getUserMedia failed, continuing in recvonly mode', e);
+      }
 
       // 2) Peer connection
       LOG('Creating peer connection');
@@ -104,15 +110,19 @@ export const useSimpleWebRTC = (callSession, user) => {
       pc.addTransceiver('audio', { direction: 'sendrecv' });
       LOG('Transceiver added');
 
-      // 4) Add local tracks
-      stream.getTracks().forEach(track => {
-        LOG('Adding local track', track.kind, track.id);
-        pc.addTrack(track, stream);
-      });
-      LOG('Local tracks added');
+      // 4) Add local tracks (if available)
+      if (stream) {
+        stream.getTracks().forEach(track => {
+          LOG('Adding local track', track.kind, track.id);
+          pc.addTrack(track, stream);
+        });
+        LOG('Local tracks added');
+      } else {
+        LOG('No local stream - operating in recvonly mode');
+      }
       
       // 5) Attach local stream (muted)
-      if (localAudioRef.current) {
+      if (localAudioRef.current && stream) {
         try {
           localAudioRef.current.srcObject = stream;
           localAudioRef.current.muted = true;
@@ -127,7 +137,7 @@ export const useSimpleWebRTC = (callSession, user) => {
       // 5b) Also attach to global hidden audio element if present
       try {
         const globalLocal = typeof document !== 'undefined' ? document.getElementById('global-local-audio') : null;
-        if (globalLocal) {
+        if (globalLocal && stream) {
           globalLocal.srcObject = stream;
           globalLocal.muted = true;
           // @ts-ignore
@@ -231,6 +241,9 @@ export const useSimpleWebRTC = (callSession, user) => {
           LOG('✅ CONNECTED');
           reconnectAttemptsRef.current = 0;
           setIsReconnecting(false);
+          
+          // Force stop all ringtones when connected
+          try { stopAllRingtones?.(); } catch {}
           
           if (remoteAudioRef.current?.srcObject) {
             remoteAudioRef.current.play()
