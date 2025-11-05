@@ -84,6 +84,22 @@ export const useSimpleWebRTC = (callSession, user) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
+      // Ensure an offer is created whenever negotiation is needed
+      pc.onnegotiationneeded = async () => {
+        try {
+          console.log('📣 [WEBRTC] onnegotiationneeded');
+          makingOfferRef.current = true;
+          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+          await pc.setLocalDescription(offer);
+          await sendMessage({ type: 'offer', offer });
+          console.log('📤 [WEBRTC] Offer sent from onnegotiationneeded');
+        } catch (e) {
+          console.warn('⚠️ [WEBRTC] onnegotiationneeded failed', e);
+        } finally {
+          makingOfferRef.current = false;
+        }
+      };
+
       // -------------------------------------------------
       // Callee MUST add recv-only audio transceiver
       // otherwise ontrack never fires → no remote audio
@@ -456,14 +472,27 @@ export const useSimpleWebRTC = (callSession, user) => {
     const pc = peerConnectionRef.current;
     console.log('🟢 [WEBRTC] start() called', { initStarted: initStartedRef.current, hasCallSession: !!callSession, hasUser: !!user, pcState: pc?.connectionState });
     if (!callSession || !user) return;
-    if (initStartedRef.current && pc && pc.connectionState !== 'closed') {
+
+    // If we have a lingering, idle PC with no descriptions, force a clean restart
+    if (pc && pc.connectionState !== 'closed') {
+      const hasNoSDP = !pc.localDescription && !pc.remoteDescription;
+      const idleState = pc.connectionState === 'new' || pc.connectionState === 'connecting';
+      if (hasNoSDP && idleState) {
+        console.warn('♻️ [WEBRTC] Forcing restart: idle PC without SDP');
+        cleanup();
+      }
+    }
+
+    if (initStartedRef.current && peerConnectionRef.current && peerConnectionRef.current.connectionState !== 'closed') {
       console.log('⚠️ [WEBRTC] Init already started with active PC, skipping start()');
       return;
     }
+
     initStartedRef.current = false; // reset guard if previous PC was closed or missing
     initBeganRef.current = false;
     initStartedRef.current = true;
     init();
+
     // Watchdog: if init() didn't even log, retry once
     setTimeout(() => {
       if (!initBeganRef.current) {
