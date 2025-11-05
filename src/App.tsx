@@ -68,6 +68,8 @@ import SowerProfile from "./pages/SowerProfile";
 import RadioSessions from "./pages/RadioSessions";
 import LiveRooms from "./pages/LiveRooms";
 import RadioGenerator from "./pages/RadioGenerator";
+import LiveRoomsPage from "./pages/LiveRoomsPage";
+import CreateLiveRoomPage from "./pages/CreateLiveRoomPage";
 
 // Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
@@ -565,6 +567,20 @@ const App = () => (
                     <AdvancedSearchPage />
                   </Suspense>
                 </Layout>
+              } />
+              
+              {/* Live Rooms Routes */}
+              <Route path="/live-rooms" element={
+                <Layout>
+                  <LiveRoomsPage />
+                </Layout>
+              } />
+              <Route path="/create-live-room" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CreateLiveRoomPage />
+                  </Layout>
+                </ProtectedRoute>
               } />
               
               {/* Catch-all route - MUST BE LAST */}
