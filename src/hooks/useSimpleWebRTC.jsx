@@ -445,6 +445,18 @@ export const useSimpleWebRTC = (callSession, user) => {
     subscribedRef.current = false;
   };
 
+  // Explicit starter to avoid missed effects on some routes
+  const start = () => {
+    console.log('🟢 [WEBRTC] start() called', { initStarted: initStartedRef.current, hasCallSession: !!callSession, hasUser: !!user });
+    if (!callSession || !user) return;
+    if (initStartedRef.current) {
+      console.log('⚠️ [WEBRTC] Init already started, skipping start()');
+      return;
+    }
+    initStartedRef.current = true;
+    init();
+  };
+
   useEffect(() => {
     console.log('🔵 [WEBRTC] useEffect triggered', { 
       hasCallSession: !!callSession, 
@@ -486,6 +498,7 @@ export const useSimpleWebRTC = (callSession, user) => {
     isAudioEnabled,
     connectionState,
     toggleAudio,
-    cleanup
+    cleanup,
+    start
   };
 };
