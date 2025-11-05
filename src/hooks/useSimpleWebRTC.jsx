@@ -158,6 +158,21 @@ export const useSimpleWebRTC = (callSession, user) => {
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
+
+          // Try to route audio to the default output device when supported
+          try {
+            const anyAudio = remoteAudioRef.current;
+            // @ts-ignore - setSinkId is not in standard TS defs for HTMLMediaElement
+            if (anyAudio && typeof anyAudio.setSinkId === 'function') {
+              // @ts-ignore
+              anyAudio.setSinkId('default')
+                .then(() => LOG('setSinkId(default) applied'))
+                .catch((e) => WARN('setSinkId failed', e));
+            }
+          } catch (e) {
+            WARN('Error while trying setSinkId', e);
+          }
+
           LOG('Remote audio element configured');
 
           remoteAudioRef.current.play()
