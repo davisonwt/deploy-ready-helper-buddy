@@ -5,7 +5,19 @@ import { FC, useEffect } from 'react';
 // attach MediaStreams to these elements by ID and call play() when available.
 const GlobalAudioCallBridge: FC = () => {
   useEffect(() => {
-    const onGesture = () => {
+    const unlockAndPlay = () => {
+      try {
+        // Create/resume a single global AudioContext to satisfy iOS autoplay policy
+        const w = window as any;
+        if (!w.__unlockedAudioCtx) {
+          w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        const ctx: AudioContext = w.__unlockedAudioCtx;
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      } catch {}
+
       const remote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
       if (remote) {
         remote.muted = false;
@@ -14,12 +26,22 @@ const GlobalAudioCallBridge: FC = () => {
       }
     };
 
-    // Help unlock autoplay on first user interaction
-    window.addEventListener('click', onGesture, { once: true });
-    window.addEventListener('touchstart', onGesture, { once: true });
+    // Help unlock autoplay on first user interaction and common gestures
+    window.addEventListener('click', unlockAndPlay, { once: true });
+    window.addEventListener('touchstart', unlockAndPlay, { once: true });
+    window.addEventListener('keydown', unlockAndPlay, { once: true });
+
+    const onVisibility = () => {
+      // If user returns to tab and audio paused, try again
+      if (document.visibilityState === 'visible') unlockAndPlay();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
-      window.removeEventListener('click', onGesture);
-      window.removeEventListener('touchstart', onGesture);
+      window.removeEventListener('click', unlockAndPlay);
+      window.removeEventListener('touchstart', unlockAndPlay);
+      window.removeEventListener('keydown', unlockAndPlay);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 

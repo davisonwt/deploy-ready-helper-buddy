@@ -289,7 +289,26 @@ const CallInterface = ({
               <div className="text-sm text-muted-foreground">Tap to enable audio playback</div>
               <Button 
                 size="lg"
-                onClick={() => {
+                onClick={async () => {
+                  try {
+                    const w: any = window as any;
+                    if (!w.__unlockedAudioCtx) {
+                      w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    }
+                    if (w.__unlockedAudioCtx?.state === 'suspended') {
+                      await w.__unlockedAudioCtx.resume().catch(() => {});
+                    }
+                  } catch {}
+
+                  try {
+                    const globalRemote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
+                    if (globalRemote) {
+                      globalRemote.muted = false;
+                      globalRemote.volume = 1.0;
+                      await globalRemote.play().catch(() => {});
+                    }
+                  } catch {}
+
                   remoteAudioRef.current?.play()
                     .then(() => {
                       setNeedsAudioUnlock(false);
@@ -330,21 +349,40 @@ const CallInterface = ({
                     onAccept();
                     try { stopAllRingtones?.(); } catch {}
 
-                    /* 2. Unlock audio context inside gesture (iOS requirement) */
-                    const audio = remoteAudioRef.current;
+                    /* 2. Unlock audio context and force play inside gesture (iOS requirement) */
+                    try {
+                      const w: any = window as any;
+                      if (!w.__unlockedAudioCtx) {
+                        w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                      }
+                      if (w.__unlockedAudioCtx?.state === 'suspended') {
+                        await w.__unlockedAudioCtx.resume().catch(() => {});
+                      }
+                    } catch {}
+
+                    const audio = remoteAudioRef.current as HTMLAudioElement | null;
                     if (audio) {
                       try {
-                        // Force resume if context exists
                         if (audio.srcObject) {
                           audio.muted = false;
                           audio.volume = 1.0;
-                          await audio.play();   // <-- MUST be inside click
+                          await audio.play();   // MUST be inside click
                           console.log('✅ [CALL] Remote audio play() succeeded');
                         }
                       } catch (err) {
                         console.warn('⚠️ [CALL] play() failed, will retry on gesture', err);
                       }
                     }
+
+                    // Also attempt to play the global hidden remote audio element
+                    try {
+                      const globalRemote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
+                      if (globalRemote) {
+                        globalRemote.muted = false;
+                        globalRemote.volume = 1.0;
+                        await globalRemote.play().catch(() => {});
+                      }
+                    } catch {}
 
                     /* 3. Immediate haptic feedback */
                     if (navigator.vibrate) navigator.vibrate(100);

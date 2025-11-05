@@ -91,6 +91,7 @@ export const useSimpleWebRTC = (callSession, user) => {
             autoGainControl: true,
             channelCount: 1,
             sampleRate: 48000,
+            latency: 0,
           }
         });
         LOG('gotUserMedia', stream.getAudioTracks().map(t => ({ id: t.id, kind: t.kind, enabled: t.enabled, muted: t.muted })));
