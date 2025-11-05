@@ -73,12 +73,12 @@ export const useSimpleWebRTC = (callSession, user) => {
       console.log('🔗 [WEBRTC] RTCPeerConnection created', rtcConfig);
 
       // -------------------------------------------------
-      // 2-a) Callee MUST add recv-only audio transceiver
-      //      otherwise ontrack never fires → no remote audio
+      // Callee MUST add recv-only audio transceiver
+      // otherwise ontrack never fires → no remote audio
       // -------------------------------------------------
       if (!isCaller) {
         try {
-          const hasAudioRecv = typeof pc.getTransceivers === 'function' && pc.getTransceivers().some(
+          const hasAudioRecv = pc.getTransceivers().some(
             tr => tr.receiver && tr.receiver.track && tr.receiver.track.kind === 'audio'
           );
           if (!hasAudioRecv) {
