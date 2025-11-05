@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+/* ----------  ZERO-GUESS INSTRUMENTATION ---------- */
+const LOG = (...args) => console.log('[WEBRTC]', ...args);
+const WARN = (...args) => console.warn('[WEBRTC]', ...args);
+
 export const useSimpleWebRTC = (callSession, user) => {
-  console.log('🚀 [WEBRTC] Hook called', { 
-    hasCallSession: !!callSession, 
-    callId: callSession?.id,
-    hasUser: !!user,
-    userId: user?.id 
-  });
+  LOG('Hook entry', { callSession, user });
 
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [connectionState, setConnectionState] = useState('new');
@@ -21,19 +20,17 @@ export const useSimpleWebRTC = (callSession, user) => {
   const peerConnectionRef = useRef();
   const localStreamRef = useRef();
   const channelRef = useRef();
-  const iceQueueRef = useRef([]); // Queue ICE candidates until remoteDescription is set
+  const iceQueueRef = useRef([]);
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
-  const initStartedRef = useRef(false); // Prevent duplicate init
-  const initBeganRef = useRef(false); // Marks when init() actually begins
   const clientIdRef = useRef(typeof self !== 'undefined' && self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Math.random().toString(36).slice(2));
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef(null);
   const maxReconnectAttempts = 5;
   const isCaller = user?.id === callSession?.caller_id;
   
-  console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
+  LOG('Refs created', { isCaller });
 
   const rtcConfig = {
     iceServers: [
@@ -59,22 +56,28 @@ export const useSimpleWebRTC = (callSession, user) => {
     iceCandidatePoolSize: 10,
   };
   const sendMessage = async (message) => {
-    if (!channelRef.current) return;
+    if (!channelRef.current) { 
+      LOG('sendMessage: no channel'); 
+      return; 
+    }
+    LOG('sendMessage', message.type);
     const res = await channelRef.current.send({
       type: 'broadcast',
       event: 'webrtc',
       payload: { ...message, fromClient: clientIdRef.current, userId: user.id, callId: callSession.id }
     });
+    LOG('sendMessage result', res);
     if (res !== 'ok') {
-      console.warn('⚠️ [WEBRTC] send ack not ok:', res);
+      WARN('send ack not ok:', res);
     }
   };
 
   const init = async () => {
     try {
-      console.log('🎧 [WEBRTC] init start', { callId: callSession?.id, isCaller });
-      initBeganRef.current = true;
+      LOG('init() entry', { callId: callSession?.id, isCaller });
+      
       // 1) Get microphone
+      LOG('Getting user media');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -84,334 +87,194 @@ export const useSimpleWebRTC = (callSession, user) => {
           sampleRate: 48000,
         }
       });
-      console.log('🎙️ [WEBRTC] gotUserMedia', { tracks: stream.getAudioTracks().map(t => ({ id: t.id, enabled: t.enabled, muted: t.muted })) });
+      LOG('gotUserMedia', stream.getAudioTracks().map(t => ({ id: t.id, kind: t.kind, enabled: t.enabled, muted: t.muted })));
       localStreamRef.current = stream;
 
       // 2) Peer connection
+      LOG('Creating peer connection');
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+      LOG('RTCPeerConnection created');
 
-      // Handle renegotiation after initial setup
-      pc.onnegotiationneeded = async () => {
-        // Only handle renegotiation, not initial offer
-        if (!subscribedRef.current) {
-          console.log('📣 [WEBRTC] onnegotiationneeded before subscription, will create offer after subscribe');
-          return;
-        }
-        try {
-          console.log('📣 [WEBRTC] onnegotiationneeded (renegotiation)');
-          makingOfferRef.current = true;
-          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
-          await pc.setLocalDescription(offer);
-          await sendMessage({ type: 'offer', offer });
-          console.log('📤 [WEBRTC] Offer sent from renegotiation');
-        } catch (e) {
-          console.warn('⚠️ [WEBRTC] onnegotiationneeded failed', e);
-        } finally {
-          makingOfferRef.current = false;
-        }
-      };
+      // 3) Setup universal sendrecv transceiver (BOTH sides)
+      LOG('Adding universal sendrecv audio transceiver');
+      pc.addTransceiver('audio', { direction: 'sendrecv' });
+      LOG('Transceiver added');
 
-      // -------------------------------------------------
-      // Callee MUST add recv-only audio transceiver
-      // otherwise ontrack never fires → no remote audio
-      // -------------------------------------------------
-      if (!isCaller) {
-        try {
-          const hasAudioRecv = pc.getTransceivers().some(
-            tr => tr.receiver && tr.receiver.track && tr.receiver.track.kind === 'audio'
-          );
-          if (!hasAudioRecv) {
-            pc.addTransceiver('audio', { direction: 'recvonly' });
-            console.log('🔁 [WEBRTC] Added recv-only audio transceiver (callee)');
-          }
-        } catch (e) {
-          console.warn('⚠️ [WEBRTC] addTransceiver failed', e);
-        }
-      }
-
-      console.log('🔗 [WEBRTC] RTCPeerConnection created', rtcConfig);
-
-      // -------------------------------------------------
-      // Callee MUST add recv-only audio transceiver
-      // otherwise ontrack never fires → no remote audio
-      // -------------------------------------------------
-      console.log('🔧 [WEBRTC] Before transceiver setup', { 
-        isCaller, 
-        transceivers: pc.getTransceivers().length 
-      });
-      
-      if (!isCaller) {
-        try {
-          const hasAudioRecv = pc.getTransceivers().some(
-            tr => tr.receiver && tr.receiver.track && tr.receiver.track.kind === 'audio'
-          );
-          if (!hasAudioRecv) {
-            const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
-            console.log('🔁 [WEBRTC] Added recv-only audio transceiver (callee)', {
-              direction: transceiver.direction,
-              mid: transceiver.mid
-            });
-          } else {
-            console.log('⚠️ [WEBRTC] Audio recv transceiver already exists');
-          }
-        } catch (e) {
-          console.warn('⚠️ [WEBRTC] addTransceiver failed', e);
-        }
-      }
-
-      console.log('🔧 [WEBRTC] After recv-only, before addTrack', { 
-        transceivers: pc.getTransceivers().map(t => ({ 
-          direction: t.direction, 
-          kind: t.receiver?.track?.kind || t.mid 
-        }))
-      });
-
-      // Add local audio
+      // 4) Add local tracks
       stream.getTracks().forEach(track => {
-        const sender = pc.addTrack(track, stream);
-        console.log('➕ [WEBRTC] addTrack', { 
-          kind: track.kind, 
-          id: track.id, 
-          enabled: track.enabled,
-          senderTrack: sender.track?.id
-        });
+        LOG('Adding local track', track.kind, track.id);
+        pc.addTrack(track, stream);
       });
-
-      console.log('🔧 [WEBRTC] After addTrack', { 
-        transceivers: pc.getTransceivers().map(t => ({ 
-          direction: t.direction, 
-          kind: t.receiver?.track?.kind || 'pending',
-          mid: t.mid
-        }))
-      });
+      LOG('Local tracks added');
       
-      // Attach local stream to local audio element (muted) for debugging and to keep audio context warm
+      // 5) Attach local stream (muted)
       if (localAudioRef.current) {
         try {
           localAudioRef.current.srcObject = stream;
           localAudioRef.current.muted = true;
           localAudioRef.current.volume = 0;
           await localAudioRef.current.play().catch(() => {});
+          LOG('Local audio element attached');
         } catch (e) {
-          console.warn('⚠️ [WEBRTC] Failed to attach/play local audio element', e);
+          WARN('Failed to attach local audio element', e);
         }
       }
 
-      // Robust remote audio handling
+      // 6) ontrack handler
       pc.ontrack = (event) => {
-        console.log('📥 [WEBRTC] ontrack', { track: { kind: event.track.kind, id: event.track.id, muted: event.track.muted, enabled: event.track.enabled }, streams: event.streams?.length });
+        LOG('ontrack fired', { 
+          kind: event.track.kind, 
+          trackId: event.track.id, 
+          muted: event.track.muted, 
+          enabled: event.track.enabled,
+          streams: event.streams?.length 
+        });
         setHasRemoteTrack(true);
-        // Some browsers may not include streams; build one from the track as a fallback
-        let remoteStream = event.streams && event.streams[0] ? event.streams[0] : null;
-        if (!remoteStream && event.track) {
-          remoteStream = new MediaStream([event.track]);
-        }
+        
+        const remoteStream = event.streams?.[0] || new MediaStream([event.track]);
+        LOG('Remote stream created', { streamId: remoteStream.id, trackCount: remoteStream.getTracks().length });
 
-        // Track mute/unmute debug
-        try {
-          event.track.onmute = () => console.log('🔇 [WEBRTC] remote track muted');
-          event.track.onunmute = () => console.log('🔊 [WEBRTC] remote track unmuted');
-        } catch {}
-
-        if (remoteAudioRef.current && remoteStream) {
-          console.log('🔊 [WEBRTC] Setting remote stream', { streamId: remoteStream.id, tracks: remoteStream.getTracks().length });
+        if (remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
+          LOG('Remote audio element configured');
 
-          // iOS requires play() to be called AFTER srcObject is set AND needs user gesture
-          const tryPlay = async () => {
-            try {
-              // Small delay for iOS to register srcObject
-              await new Promise(resolve => setTimeout(resolve, 100));
-              await remoteAudioRef.current.play();
-              console.log('✅ [WEBRTC] Remote audio playing');
-            } catch (err) {
-              console.warn('⚠️ [WEBRTC] Autoplay blocked (likely iOS), need user gesture:', err.message);
-              // Multiple event types for better iOS coverage
-              const once = async () => {
-                console.log('👆 [WEBRTC] User gesture detected, retrying play');
-                try {
-                  await remoteAudioRef.current?.play();
-                  console.log('✅ [WEBRTC] Remote audio playing after gesture');
-                } catch (e) {
-                  console.error('❌ [WEBRTC] Still failed after gesture:', e);
-                }
+          remoteAudioRef.current.play()
+            .then(() => LOG('✅ Remote audio playing'))
+            .catch(e => {
+              WARN('Autoplay blocked, awaiting user gesture:', e.message);
+              const once = () => {
+                LOG('User gesture detected, playing audio');
+                remoteAudioRef.current?.play()
+                  .then(() => LOG('✅ Audio playing after gesture'))
+                  .catch(err => WARN('Still failed after gesture:', err));
                 document.removeEventListener('click', once);
                 document.removeEventListener('touchstart', once);
-                document.removeEventListener('touchend', once);
-                document.removeEventListener('keydown', once);
               };
               document.addEventListener('click', once, { once: true });
               document.addEventListener('touchstart', once, { once: true });
-              document.addEventListener('touchend', once, { once: true });
-              document.addEventListener('keydown', once, { once: true });
-            }
-          };
-          tryPlay();
+            });
         } else {
-          console.warn('⚠️ [WEBRTC] ontrack fired but no remote stream available');
+          WARN('ontrack fired but remoteAudioRef not available');
         }
       };
 
-      // ICE handling
+      // 7) ICE candidate handler
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('🧊 [WEBRTC] ICE candidate', { type: event.candidate.type, protocol: event.candidate.protocol });
+          LOG('ICE candidate', event.candidate.type);
           sendMessage({ type: 'ice', candidate: event.candidate });
         } else {
-          console.log('🧊 [WEBRTC] ICE gathering complete');
+          LOG('ICE gathering complete');
         }
       };
 
+      // 8) Connection state handler
       pc.onconnectionstatechange = () => {
         setConnectionState(pc.connectionState);
-        console.log('📡 [WEBRTC] Connection state:', pc.connectionState);
+        LOG('Connection state:', pc.connectionState);
         
-        if (pc.connectionState === 'connected' || pc.connectionState === 'completed') {
-          console.log('✅ [WEBRTC] Connected! Resetting reconnect counter');
+        if (pc.connectionState === 'connected') {
+          LOG('✅ CONNECTED');
           reconnectAttemptsRef.current = 0;
           setIsReconnecting(false);
           
-          const el = remoteAudioRef.current;
-          if (el && el.srcObject) {
-            // Try immediate play
-            const tryPlay = async () => {
-              try {
-                await el.play();
-                console.log('✅ [WEBRTC] Audio playing on connect');
-              } catch (e) {
-                console.warn('⚠️ [WEBRTC] Play blocked on connect, awaiting gesture');
-              }
-            };
-            tryPlay();
-            // Setup gesture listeners as backup
-            const once = async () => {
-              try {
-                await el.play();
-                console.log('✅ [WEBRTC] Audio playing after connect gesture');
-              } catch (e) {}
-              document.removeEventListener('touchstart', once);
-              document.removeEventListener('touchend', once);
-              document.removeEventListener('click', once);
-              document.removeEventListener('keydown', once);
-            };
-            document.addEventListener('touchstart', once, { once: true });
-            document.addEventListener('touchend', once, { once: true });
-            document.addEventListener('click', once, { once: true });
-            document.addEventListener('keydown', once, { once: true });
-          } else {
-            console.warn('⚠️ [WEBRTC] Connected but no audio element or stream');
+          if (remoteAudioRef.current?.srcObject) {
+            remoteAudioRef.current.play()
+              .then(() => LOG('Audio playing on connected'))
+              .catch(e => LOG('Play blocked on connected, awaiting gesture'));
           }
         } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-          console.warn(`⚠️ [WEBRTC] Connection ${pc.connectionState}, attempting reconnection`);
+          WARN(`Connection ${pc.connectionState}, attempting reconnection`);
           attemptReconnect();
         }
       };
 
+      // 9) ICE connection state handler
       pc.oniceconnectionstatechange = () => {
         setIceConnectionState(pc.iceConnectionState);
-        console.log('🧊 [WEBRTC] ICE connection state:', pc.iceConnectionState);
+        LOG('ICE connection state:', pc.iceConnectionState);
         
         if (pc.iceConnectionState === 'failed') {
-          console.warn('⚠️ [WEBRTC] ICE failed, attempting reconnection');
+          WARN('ICE failed, attempting reconnection');
           attemptReconnect();
         }
       };
 
+      // 10) Signaling state handler
       pc.onsignalingstatechange = () => {
         setSignalingState(pc.signalingState);
-        console.log('📶 [WEBRTC] Signaling state:', pc.signalingState);
+        LOG('Signaling state:', pc.signalingState);
       };
 
-      // 3) Signaling channel
+      // 11) Setup signaling channel
+      LOG('Setting up signaling channel', callSession.id);
       channelRef.current = supabase
         .channel(`call_${callSession.id}`, { config: { broadcast: { self: true, ack: true } } })
         .on('broadcast', { event: 'webrtc' }, async ({ payload }) => {
-          console.log('📨 [WEBRTC] Received signal', { type: payload.type, fromClient: payload.fromClient, userId: payload.userId, isCaller });
-          if (payload.fromClient === clientIdRef.current) return;
+          LOG('Received signal', payload.type, 'from', payload.userId);
+          if (payload.fromClient === clientIdRef.current) {
+            LOG('Ignoring own message');
+            return;
+          }
           try {
             if (payload.type === 'offer') {
+              LOG('Processing offer', { signalingState: pc.signalingState });
               receivedOfferRef.current = true;
-              console.log('📥 [WEBRTC] Processing offer', { currentSignalingState: pc.signalingState, makingOffer: makingOfferRef.current });
 
-              // Perfect negotiation: handle offer collisions
-              const polite = !isCaller; // Callee is polite
-              const offerCollision = makingOfferRef.current || pc.signalingState !== 'stable';
-              if (offerCollision) {
-                if (!polite) {
-                  console.log('🙈 [WEBRTC] Ignoring offer in collision (impolite peer)');
-                  return;
-                }
-                try {
-                  await Promise.all([
-                    pc.setLocalDescription({ type: 'rollback' }),
-                    pc.setRemoteDescription(payload.offer)
-                  ]);
-                } catch (e) {
-                  console.warn('⚠️ [WEBRTC] Rollback/remote set failed during collision', e);
-                  return;
-                }
-              } else {
               await pc.setRemoteDescription(payload.offer);
-              }
-              console.log('✅ [WEBRTC] Remote description set (offer)', {
-                transceivers: pc.getTransceivers().map(t => ({
-                  direction: t.direction,
-                  kind: t.receiver?.track?.kind || 'pending',
-                  mid: t.mid,
-                  hasTrack: !!t.receiver?.track
-                }))
-              });
-              // Flush queued ICE candidates
+              LOG('✅ Remote description set (offer)');
+              LOG('Flushing', iceQueueRef.current.length, 'queued ICE candidates');
               for (const c of iceQueueRef.current) {
-                try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
+                try { 
+                  await pc.addIceCandidate(c); 
+                  LOG('Added queued ICE candidate');
+                } catch (e) { 
+                  WARN('Failed to add queued ICE', e); 
+                }
               }
               iceQueueRef.current = [];
 
+              LOG('Creating answer');
               const answer = await pc.createAnswer();
-              console.log('📤 [WEBRTC] Created answer', {
-                hasAudio: answer.sdp.includes('m=audio'),
-                transceivers: pc.getTransceivers().map(t => ({
-                  direction: t.direction,
-                  mid: t.mid
-                }))
-              });
+              LOG('Answer created');
               await pc.setLocalDescription(answer);
-              console.log('✅ [WEBRTC] Local description set (answer)');
+              LOG('✅ Local description set (answer)');
               await sendMessage({ type: 'answer', answer });
+              LOG('Answer sent');
             } else if (payload.type === 'answer') {
-              console.log('📥 [WEBRTC] Processing answer', { currentSignalingState: pc.signalingState });
+              LOG('Processing answer', { signalingState: pc.signalingState });
               if (pc.signalingState !== 'have-local-offer') {
-                console.warn('⚠️ [WEBRTC] Ignoring unexpected answer in state', pc.signalingState);
+                WARN('Ignoring unexpected answer in state', pc.signalingState);
                 return;
               }
               await pc.setRemoteDescription(payload.answer);
+              LOG('✅ Remote description set (answer)');
               makingOfferRef.current = false;
-              console.log('✅ [WEBRTC] Remote description set (answer)', {
-                transceivers: pc.getTransceivers().map(t => ({
-                  direction: t.direction,
-                  kind: t.receiver?.track?.kind || 'pending',
-                  mid: t.mid,
-                  hasTrack: !!t.receiver?.track
-                }))
-              });
+              
+              LOG('Flushing', iceQueueRef.current.length, 'queued ICE candidates');
               for (const c of iceQueueRef.current) {
-                try { await pc.addIceCandidate(c); } catch (e) { console.warn('ICE add (queued) failed', e); }
+                try { 
+                  await pc.addIceCandidate(c); 
+                  LOG('Added queued ICE candidate');
+                } catch (e) { 
+                  WARN('Failed to add queued ICE', e); 
+                }
               }
               iceQueueRef.current = [];
             } else if (payload.type === 'ice') {
               if (pc.remoteDescription) {
                 await pc.addIceCandidate(payload.candidate);
-                console.log('🧊 [WEBRTC] Added ICE candidate');
+                LOG('Added ICE candidate');
               } else {
                 iceQueueRef.current.push(payload.candidate);
-                console.log('🧊 [WEBRTC] Queued ICE candidate (no remote desc yet)');
+                LOG('Queued ICE candidate (no remote desc yet)');
               }
             }
           } catch (error) {
-            console.error('❌ [WEBRTC] Signaling error:', error);
+            WARN('Signaling error:', error);
           }
         });
 
