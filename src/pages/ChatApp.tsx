@@ -31,8 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useCallManager } from '@/hooks/useCallManager';
-import { DailyAudioCall } from '@/components/chat/DailyAudioCall';
-import VideoCallInterface from '@/components/chat/VideoCallInterface';
+import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
+import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -394,31 +394,25 @@ const ChatApp = () => {
     );
   }
 
-  // Render call interface if active
+  // Render call interface if active (Jitsi-powered)
   const activeCall = currentCall || incomingCall || outgoingCall;
   if (activeCall) {
-    const CallComponent = activeCall?.type === 'video' ? VideoCallInterface : DailyAudioCall;
-    const isIncomingForUser = Boolean(
-      activeCall?.status === 'ringing' &&
-      activeCall?.receiver_id === user?.id &&
-      activeCall?.caller_id !== user?.id
-    );
-    console.log('📞 [CALL][UI] Active call render', { id: activeCall?.id, status: activeCall?.status, isIncomingForUser });
+    const CallComponent = activeCall?.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
+    console.log('📞 [JITSI][UI] Active call render', { 
+      id: activeCall?.id, 
+      status: activeCall?.status, 
+      type: activeCall?.type 
+    });
     
     return (
       <CallComponent
         callSession={activeCall}
-        user={user}
-        callType={activeCall?.type || 'audio'}
-        isIncoming={isIncomingForUser}
+        currentUserId={user?.id || ''}
         callerInfo={{
           display_name: activeCall?.caller_name || activeCall?.receiver_name || 'Unknown',
           avatar_url: null
         }}
-        onAccept={() => isIncomingForUser ? answerCall(activeCall.id) : undefined}
-        onDecline={() => isIncomingForUser ? declineCall(activeCall.id, 'declined') : undefined}
-        onEnd={() => activeCall && endCall(activeCall.id, 'ended')}
-        isHost={activeCall?.caller_id === user?.id}
+        onEndCall={() => activeCall && endCall(activeCall.id, 'ended')}
       />
     );
   }

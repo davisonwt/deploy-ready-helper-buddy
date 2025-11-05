@@ -39,7 +39,8 @@ import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSessio
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 
-import VideoCallInterface from '@/components/chat/VideoCallInterface';
+import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
+import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
@@ -312,25 +313,21 @@ const ChatappPage = () => {
     return configs[type] || configs.all;
   };
 
-  // Render WebRTC call interfaces
+  // Render Jitsi-powered call interfaces
   const activeCallData = currentCall || outgoingCall || incomingCall;
   if (activeCallData) {
+    const CallComponent = activeCallData.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
     const callerInfo = {
       display_name: activeCallData.caller_name || activeCallData.receiver_name || 'Unknown User',
       avatar_url: null
     };
 
     return (
-      <VideoCallInterface
+      <CallComponent
         callSession={activeCallData}
-        user={user}
-        callType={activeCallData.type || 'audio'}
-        isIncoming={!!incomingCall}
+        currentUserId={user?.id || ''}
         callerInfo={callerInfo}
-        onAccept={() => incomingCall && answerCall(incomingCall.id)}
-        onDecline={() => incomingCall && declineCall(incomingCall.id)}
-        onEnd={() => handleEndCall(activeCallData.id)}
-        isHost={activeCallData.caller_id === user?.id}
+        onEndCall={() => handleEndCall(activeCallData.id)}
       />
     );
   }
