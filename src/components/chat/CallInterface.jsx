@@ -30,6 +30,14 @@ const CallInterface = ({
   isHost = false,
   isModerator = false
 }) => {
+  console.log('📱 [CallInterface] Rendered with:', { 
+    callSessionId: callSession?.id, 
+    callSessionStatus: callSession?.status,
+    userId: user?.id, 
+    isIncoming,
+    callType 
+  });
+
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
