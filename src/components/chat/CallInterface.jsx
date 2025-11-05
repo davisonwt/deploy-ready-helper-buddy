@@ -53,8 +53,16 @@ const CallInterface = ({
     isAudioEnabled,
     connectionState,
     toggleAudio,
-    cleanup
+    cleanup,
+    start
   } = useSimpleWebRTC(callSession, user);
+
+  useEffect(() => {
+    // Ensure WebRTC actually starts even if a React effect was missed
+    if (callSession?.id && user?.id) {
+      start?.();
+    }
+  }, [callSession?.id, user?.id, start]);
 
   useEffect(() => {
     if (!isIncoming) {
