@@ -21,6 +21,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
+  const initStartedRef = useRef(false); // Prevent duplicate init
   const isCaller = user?.id === callSession?.caller_id;
   
   console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
@@ -450,19 +451,33 @@ export const useSimpleWebRTC = (callSession, user) => {
       callSessionId: callSession?.id,
       hasUser: !!user, 
       userId: user?.id,
-      isCaller
+      isCaller,
+      initStarted: initStartedRef.current
     });
     
-    if (callSession && user) {
-      console.log('🟢 [WEBRTC] Conditions met, calling init()');
-      init();
-    } else {
+    if (!callSession || !user) {
       console.log('🔴 [WEBRTC] Missing required data', {
         missingCallSession: !callSession,
         missingUser: !user
       });
+      return;
     }
-    return cleanup;
+
+    // Prevent duplicate initialization
+    if (initStartedRef.current) {
+      console.log('⚠️ [WEBRTC] Init already started, skipping');
+      return;
+    }
+
+    console.log('🟢 [WEBRTC] Conditions met, calling init()');
+    initStartedRef.current = true;
+    init();
+
+    return () => {
+      console.log('🧹 [WEBRTC] Cleanup on unmount');
+      initStartedRef.current = false;
+      cleanup();
+    };
   }, [callSession?.id, user?.id]);
 
   return {
