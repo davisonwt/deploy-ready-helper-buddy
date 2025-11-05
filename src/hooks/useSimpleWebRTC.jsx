@@ -24,6 +24,8 @@ export const useSimpleWebRTC = (callSession, user) => {
   const subscribedRef = useRef(false);
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
+  const initStartedRef = useRef(false);
+  const initBeganRef = useRef(false);
   const clientIdRef = useRef(typeof self !== 'undefined' && self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Math.random().toString(36).slice(2));
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef(null);
@@ -75,6 +77,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const init = async () => {
     try {
       LOG('init() entry', { callId: callSession?.id, isCaller });
+      initBeganRef.current = true;
       
       // 1) Get microphone
       LOG('Getting user media');
