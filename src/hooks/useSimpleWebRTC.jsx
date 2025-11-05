@@ -124,6 +124,22 @@ export const useSimpleWebRTC = (callSession, user) => {
         }
       }
 
+      // 5b) Also attach to global hidden audio element if present
+      try {
+        const globalLocal = typeof document !== 'undefined' ? document.getElementById('global-local-audio') : null;
+        if (globalLocal) {
+          globalLocal.srcObject = stream;
+          globalLocal.muted = true;
+          // @ts-ignore
+          globalLocal.volume = 0;
+          // @ts-ignore
+          globalLocal.play?.().catch(() => {});
+          LOG('Local stream attached to global-local-audio');
+        }
+      } catch (e) {
+        WARN('Failed attaching local to global audio', e);
+      }
+
       // 6) ontrack handler
       pc.ontrack = (event) => {
         LOG('ontrack fired', { 
@@ -161,6 +177,23 @@ export const useSimpleWebRTC = (callSession, user) => {
             });
         } else {
           WARN('ontrack fired but remoteAudioRef not available');
+        }
+
+        // 6b) Also mirror to global hidden remote audio element if present
+        try {
+          const globalRemote = typeof document !== 'undefined' ? document.getElementById('global-remote-audio') : null;
+          if (globalRemote) {
+            globalRemote.srcObject = remoteStream;
+            // @ts-ignore
+            globalRemote.muted = false;
+            // @ts-ignore
+            globalRemote.volume = 1.0;
+            // @ts-ignore
+            globalRemote.play?.().catch((e) => WARN('Global remote play blocked:', e?.message || e));
+            LOG('Remote stream attached to global-remote-audio');
+          }
+        } catch (e) {
+          WARN('Failed attaching remote to global audio', e);
         }
       };
 
