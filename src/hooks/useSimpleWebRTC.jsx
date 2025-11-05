@@ -91,15 +91,20 @@ export const useSimpleWebRTC = (callSession, user) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      // Ensure an offer is created whenever negotiation is needed
+      // Handle renegotiation after initial setup
       pc.onnegotiationneeded = async () => {
+        // Only handle renegotiation, not initial offer
+        if (!subscribedRef.current) {
+          console.log('📣 [WEBRTC] onnegotiationneeded before subscription, will create offer after subscribe');
+          return;
+        }
         try {
-          console.log('📣 [WEBRTC] onnegotiationneeded');
+          console.log('📣 [WEBRTC] onnegotiationneeded (renegotiation)');
           makingOfferRef.current = true;
           const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
           await pc.setLocalDescription(offer);
           await sendMessage({ type: 'offer', offer });
-          console.log('📤 [WEBRTC] Offer sent from onnegotiationneeded');
+          console.log('📤 [WEBRTC] Offer sent from renegotiation');
         } catch (e) {
           console.warn('⚠️ [WEBRTC] onnegotiationneeded failed', e);
         } finally {
