@@ -22,6 +22,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const receivedOfferRef = useRef(false);
   const makingOfferRef = useRef(false);
   const initStartedRef = useRef(false); // Prevent duplicate init
+  const initBeganRef = useRef(false); // Marks when init() actually begins
   const isCaller = user?.id === callSession?.caller_id;
   
   console.log('🚀 [WEBRTC] Role determined', { isCaller, userId: user?.id, callerId: callSession?.caller_id });
@@ -64,6 +65,7 @@ export const useSimpleWebRTC = (callSession, user) => {
   const init = async () => {
     try {
       console.log('🎧 [WEBRTC] init start', { callId: callSession?.id, isCaller });
+      initBeganRef.current = true;
       // 1) Get microphone
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -449,12 +451,21 @@ export const useSimpleWebRTC = (callSession, user) => {
   const start = () => {
     console.log('🟢 [WEBRTC] start() called', { initStarted: initStartedRef.current, hasCallSession: !!callSession, hasUser: !!user });
     if (!callSession || !user) return;
-    if (initStartedRef.current) {
+    if (initStartedRef.current && peerConnectionRef.current) {
       console.log('⚠️ [WEBRTC] Init already started, skipping start()');
       return;
     }
     initStartedRef.current = true;
+    initBeganRef.current = false;
     init();
+    // Watchdog: if init() didn't even log, retry once
+    setTimeout(() => {
+      if (!initBeganRef.current) {
+        console.warn('⏱️ [WEBRTC] init() did not begin, retrying once');
+        initStartedRef.current = false;
+        init();
+      }
+    }, 400);
   };
 
   useEffect(() => {
@@ -475,15 +486,8 @@ export const useSimpleWebRTC = (callSession, user) => {
       return;
     }
 
-    // Prevent duplicate initialization
-    if (initStartedRef.current) {
-      console.log('⚠️ [WEBRTC] Init already started, skipping');
-      return;
-    }
-
-    console.log('🟢 [WEBRTC] Conditions met, calling init()');
-    initStartedRef.current = true;
-    init();
+    console.log('🟢 [WEBRTC] Conditions met, calling start()');
+    start();
 
     return () => {
       console.log('🧹 [WEBRTC] Cleanup on unmount');
