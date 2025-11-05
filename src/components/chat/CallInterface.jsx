@@ -291,9 +291,9 @@ const CallInterface = ({
                 size="lg"
                 onClick={async () => {
                   try {
-                    const w: any = window as any;
+                    const w = window;
                     if (!w.__unlockedAudioCtx) {
-                      w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                      w.__unlockedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     }
                     if (w.__unlockedAudioCtx?.state === 'suspended') {
                       await w.__unlockedAudioCtx.resume().catch(() => {});
@@ -301,7 +301,7 @@ const CallInterface = ({
                   } catch {}
 
                   try {
-                    const globalRemote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
+                    const globalRemote = document.getElementById('global-remote-audio');
                     if (globalRemote) {
                       globalRemote.muted = false;
                       globalRemote.volume = 1.0;
@@ -351,16 +351,16 @@ const CallInterface = ({
 
                     /* 2. Unlock audio context and force play inside gesture (iOS requirement) */
                     try {
-                      const w: any = window as any;
+                      const w = window;
                       if (!w.__unlockedAudioCtx) {
-                        w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                        w.__unlockedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                       }
                       if (w.__unlockedAudioCtx?.state === 'suspended') {
                         await w.__unlockedAudioCtx.resume().catch(() => {});
                       }
                     } catch {}
 
-                    const audio = remoteAudioRef.current as HTMLAudioElement | null;
+                    const audio = remoteAudioRef.current;
                     if (audio) {
                       try {
                         if (audio.srcObject) {
@@ -376,7 +376,7 @@ const CallInterface = ({
 
                     // Also attempt to play the global hidden remote audio element
                     try {
-                      const globalRemote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
+                      const globalRemote = document.getElementById('global-remote-audio');
                       if (globalRemote) {
                         globalRemote.muted = false;
                         globalRemote.volume = 1.0;
