@@ -42,7 +42,7 @@ import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
-  const { isAdmin, isAdminOrGosat, fetchAllUsers, grantRole, revokeRole } = useRoles()
+  const { isAdmin, isAdminOrGosat, loading: rolesLoading, fetchAllUsers, grantRole, revokeRole } = useRoles()
   const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [seeds, setSeeds] = useState([])
@@ -296,6 +296,20 @@ export default function AdminDashboardPage() {
     user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Wait for roles to load before checking access
+  if (rolesLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading admin privileges...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (!isAdminOrGosat) {
     return (
