@@ -2,9 +2,12 @@ import React, { useState, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mic, Video, FileText, Image, Music2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Mic, Video, FileText, Image, Music2, DollarSign, ShoppingCart, Download } from 'lucide-react';
 import { MediaUploadZone } from './MediaUploadZone';
 import { MediaThumbnailStrip } from './MediaThumbnailStrip';
+import { SetPriceModal } from './SetPriceModal';
+import { PurchaseModal } from './PurchaseModal';
 import { useMediaUpload } from './useMediaUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +21,9 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'voice' | 'video' | 'docs' | 'art' | 'music'>('voice');
   const [mediaItems, setMediaItems] = useState<any[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const { uploadMedia, uploading, progress } = useMediaUpload();
 
   // Fetch media items for this session
@@ -134,8 +140,14 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
             />
             <div className="mt-4 grid grid-cols-2 gap-3">
               {getMediaByType('doc').map((item) => (
-                <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2">
+                <Card key={item.id} className="p-3 hover:shadow-md transition-shadow relative group">
+                  {item.price_cents > 0 && (
+                    <Badge className="absolute top-2 right-2 bg-emerald-600 gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      ${(item.price_cents / 100).toFixed(2)}
+                    </Badge>
+                  )}
+                  <div className="flex items-center gap-2 mb-2">
                     <FileText className="h-8 w-8 text-amber-500" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.file_name}</p>
@@ -143,6 +155,39 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                         {(item.file_size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    {item.uploader_id === user?.id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full gap-1"
+                        onClick={() => {
+                          setSelectedMedia(item);
+                          setShowPriceModal(true);
+                        }}
+                      >
+                        <DollarSign className="h-3 w-3" />
+                        {item.price_cents === 0 ? 'Set Price' : 'Edit Price'}
+                      </Button>
+                    ) : item.price_cents > 0 ? (
+                      <Button
+                        size="sm"
+                        className="w-full gap-1 bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => {
+                          setSelectedMedia(item);
+                          setShowPurchaseModal(true);
+                        }}
+                      >
+                        <ShoppingCart className="h-3 w-3" />
+                        Buy Now
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="w-full gap-1">
+                        <Download className="h-3 w-3" />
+                        Download Free
+                      </Button>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -158,15 +203,50 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
             />
             <div className="mt-4 grid grid-cols-3 gap-3">
               {getMediaByType('art').map((item) => (
-                <Card key={item.id} className="p-2 group hover:shadow-lg transition-all">
-                  <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                <Card key={item.id} className="p-2 group hover:shadow-lg transition-all relative">
+                  {item.price_cents > 0 && (
+                    <Badge className="absolute top-3 right-3 bg-pink-600 gap-1 z-10">
+                      <DollarSign className="h-3 w-3" />
+                      ${(item.price_cents / 100).toFixed(2)}
+                    </Badge>
+                  )}
+                  <div className="aspect-square rounded-lg overflow-hidden bg-muted relative">
                     <img
                       src={`https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/live-session-art/${item.file_path}`}
                       alt={item.file_name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
+                    {item.price_cents > 0 && item.uploader_id !== user?.id && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          className="gap-1 bg-pink-600 hover:bg-pink-700"
+                          onClick={() => {
+                            setSelectedMedia(item);
+                            setShowPurchaseModal(true);
+                          }}
+                        >
+                          <ShoppingCart className="h-3 w-3" />
+                          Buy Art
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <p className="text-xs truncate mt-2">{item.file_name}</p>
+                  {item.uploader_id === user?.id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-1 mt-1"
+                      onClick={() => {
+                        setSelectedMedia(item);
+                        setShowPriceModal(true);
+                      }}
+                    >
+                      <DollarSign className="h-3 w-3" />
+                      {item.price_cents === 0 ? 'Set Price' : 'Edit'}
+                    </Button>
+                  )}
                 </Card>
               ))}
             </div>
@@ -183,17 +263,55 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
               {getMediaByType('music').map((item) => (
                 <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                       <Music2 className="h-5 w-5 text-purple-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.file_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate flex-1">{item.file_name}</p>
+                        {item.price_cents > 0 && (
+                          <Badge className="bg-purple-600 gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            ${(item.price_cents / 100).toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{(item.file_size / 1024 / 1024).toFixed(2)} MB</span>
                         {item.duration_seconds && (
                           <span>• {Math.floor(item.duration_seconds / 60)}:{(item.duration_seconds % 60).toString().padStart(2, '0')}</span>
                         )}
                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {item.uploader_id === user?.id ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedMedia(item);
+                            setShowPriceModal(true);
+                          }}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                        </Button>
+                      ) : item.price_cents > 0 ? (
+                        <Button
+                          size="sm"
+                          className="gap-1 bg-purple-600 hover:bg-purple-700"
+                          onClick={() => {
+                            setSelectedMedia(item);
+                            setShowPurchaseModal(true);
+                          }}
+                        >
+                          <ShoppingCart className="h-3 w-3" />
+                          Buy
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -218,6 +336,30 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
           }}
         />
       </Tabs>
+
+      {/* Modals */}
+      {selectedMedia && (
+        <>
+          <SetPriceModal
+            open={showPriceModal}
+            onOpenChange={setShowPriceModal}
+            mediaItem={selectedMedia}
+            onPriceSet={() => {
+              fetchMedia();
+              setSelectedMedia(null);
+            }}
+          />
+          <PurchaseModal
+            open={showPurchaseModal}
+            onOpenChange={setShowPurchaseModal}
+            mediaItem={selectedMedia}
+            onPurchaseComplete={() => {
+              fetchMedia();
+              setSelectedMedia(null);
+            }}
+          />
+        </>
+      )}
     </Card>
   );
 }

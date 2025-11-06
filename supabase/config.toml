@@ -82,3 +82,9 @@ verify_jwt = false
 
 [functions.verify-chatapp]
 verify_jwt = false
+
+[functions.purchase-media]
+verify_jwt = true
+
+[functions.purchase-music-track]
+verify_jwt = true
