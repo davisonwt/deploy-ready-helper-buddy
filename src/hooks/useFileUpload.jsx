@@ -3,10 +3,12 @@ import React, { useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { compressVideoAdvanced } from '@/utils/videoProcessor'
+import { toast } from 'sonner'
 
 export function useFileUpload() {
   console.log('useFileUpload hook initializing - React:', React, 'useState:', useState)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState(null)
   const { user } = useAuth()
 
@@ -29,6 +31,10 @@ export function useFileUpload() {
 
       setUploading(true)
       setError(null)
+      setUploadProgress(0)
+
+      // Show initial toast
+      toast.loading('Preparing upload...', { id: 'file-upload' })
 
       // Compress video files if they're too large
       let fileToUpload = file;
@@ -38,18 +44,23 @@ export function useFileUpload() {
         
         if (fileSizeMB > 50) { // 50MB threshold
           console.log('📹 Video is large, compressing...');
+          toast.loading('Compressing video...', { id: 'file-upload' })
           try {
             fileToUpload = await compressVideoAdvanced(file, {
               maxSizeMB: 50,
               quality: 'medium',
               onProgress: (progress, message) => {
+                setUploadProgress(Math.round(progress * 0.5)) // Compression is 50% of total
+                toast.loading(`Compressing: ${Math.round(progress)}%`, { id: 'file-upload' })
                 console.log(`📹 Compression: ${progress}% - ${message}`);
               }
             });
             const newSizeMB = fileToUpload.size / (1024 * 1024);
             console.log(`✅ Video compressed from ${fileSizeMB.toFixed(2)}MB to ${newSizeMB.toFixed(2)}MB`);
+            toast.loading('Uploading...', { id: 'file-upload' })
           } catch (compressionError) {
             console.warn('⚠️ Video compression failed, uploading original:', compressionError);
+            toast.loading('Uploading...', { id: 'file-upload' })
             // Continue with original file if compression fails
           }
         }
@@ -61,6 +72,18 @@ export function useFileUpload() {
       
       console.log('Generated file path:', fileName);
 
+      // Simulate upload progress for better UX
+      const uploadInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const next = prev + 10
+          if (next <= 90) {
+            toast.loading(`Uploading: ${next}%`, { id: 'file-upload' })
+            return next
+          }
+          return prev
+        })
+      }, 500)
+
       const { data, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, fileToUpload, {
@@ -68,12 +91,18 @@ export function useFileUpload() {
           upsert: false
         })
 
+      clearInterval(uploadInterval)
+      setUploadProgress(100)
+
       console.log('Storage upload response:', { data, error: uploadError });
 
       if (uploadError) {
         console.error('Storage upload error details:', uploadError);
+        toast.error('Upload failed: ' + uploadError.message, { id: 'file-upload' })
         throw uploadError;
       }
+
+      toast.success('Upload complete!', { id: 'file-upload' })
 
       // For public buckets, get public URL. For private buckets, get signed URL
       let fileUrl;
@@ -113,9 +142,11 @@ export function useFileUpload() {
     } catch (err) {
       console.error('Error uploading file:', err)
       setError(err.message)
+      toast.error('Upload failed: ' + err.message, { id: 'file-upload' })
       return { success: false, error: err.message }
     } finally {
       setUploading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -165,6 +196,7 @@ export function useFileUpload() {
 
   return {
     uploading,
+    uploadProgress,
     error,
     uploadFile,
     uploadMultipleFiles,

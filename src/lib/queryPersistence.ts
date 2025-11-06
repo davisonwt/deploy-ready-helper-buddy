@@ -15,28 +15,25 @@ export const queryClient = new QueryClient({
       // Don't refetch on window focus by default (opt-in per query)
       refetchOnWindowFocus: false,
       
-      // Don't refetch on reconnect by default
+      // Don't refetch on reconnect by default (better performance)
       refetchOnReconnect: false,
       
-      // Retry failed requests up to 3 times (except auth errors)
+      // Reduce retries for faster failures
       retry: (failureCount, error: any) => {
-        // Don't retry auth errors
-        if (error?.status === 401 || error?.status === 403) {
+        // Don't retry auth errors or 404s
+        if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
           return false;
         }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+        // Only retry once for better performance
+        return failureCount < 1;
       },
       
-      // Exponential backoff for retries
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Faster initial retry
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 5000),
     },
     mutations: {
-      // Retry failed mutations once
-      retry: 1,
-      
-      // Exponential backoff for mutations
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      // Don't retry mutations by default (faster feedback)
+      retry: 0,
     },
   },
 });
