@@ -351,13 +351,13 @@ export default function AdminDashboardPage() {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
-            <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
-            <TabsTrigger value="moderation" className="text-xs sm:text-sm">Moderation</TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs sm:text-sm">Wallet</TabsTrigger>
-            <TabsTrigger value="legacy" className="text-xs sm:text-sm">Legacy</TabsTrigger>
+          <TabsList className="inline-flex h-auto w-full justify-start overflow-x-auto p-1">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="moderation">Moderation</TabsTrigger>
+            <TabsTrigger value="wallet">Wallet</TabsTrigger>
+            <TabsTrigger value="legacy">Legacy</TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics">
