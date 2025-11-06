@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { PurchaseDeliveryMessage } from './PurchaseDeliveryMessage';
 
 interface MessageRendererProps {
   message: any;
@@ -166,40 +167,14 @@ const MessageRenderer = ({
   if (message.message_type === 'voice' && message.file_url) {
     return (
       <Card className={`max-w-xs ${align} ${className}`}>
-        <CardContent className="p-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleAudioPlay(message.file_url)}
-              className="h-10 w-10 p-0 rounded-full bg-primary/10 hover:bg-primary/20"
-            >
-              {audioPlaying ? (
-                <Pause className="h-5 w-5 text-primary" />
-              ) : (
-                <Play className="h-5 w-5 text-primary" />
-              )}
-            </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <div className="flex-1 h-1 bg-muted rounded-full">
-                  <div className="h-full w-1/3 bg-primary rounded-full" />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Voice message</p>
-            </div>
-          </div>
-          
-          {/* Hidden audio element for better control */}
-          <audio 
-            src={message.file_url} 
-            className="hidden"
-            preload="metadata"
-          />
-        </CardContent>
+...
       </Card>
     );
+  }
+
+  // Purchase delivery message
+  if (message.message_type === 'purchase_delivery' && message.system_metadata) {
+    return <PurchaseDeliveryMessage metadata={message.system_metadata} />;
   }
 
   // Regular text message
