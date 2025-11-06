@@ -321,10 +321,42 @@ export function EnhancedAnalyticsDashboard() {
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="justify-center">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/30">Overview</TabsTrigger>
-          <TabsTrigger value="growth" className="data-[state=active]:bg-secondary/10 data-[state=active]:text-secondary data-[state=active]:border-secondary/30">Growth Trends</TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:bg-accent/20 data-[state=active]:text-accent-foreground data-[state=active]:border-accent/30">Categories</TabsTrigger>
-          <TabsTrigger value="revenue" className="data-[state=active]:bg-[hsl(var(--s2g-purple))]/10 data-[state=active]:text-[hsl(var(--s2g-purple))] data-[state=active]:border-[hsl(var(--s2g-purple))]/30">Revenue</TabsTrigger>
+          <TabsTrigger 
+            value="overview"
+            style={{
+              '--active-color': 'hsl(var(--primary))',
+              '--active-bg': 'hsl(var(--primary) / 0.1)',
+            } as React.CSSProperties}
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="growth"
+            style={{
+              '--active-color': 'hsl(var(--secondary))',
+              '--active-bg': 'hsl(var(--secondary) / 0.1)',
+            } as React.CSSProperties}
+          >
+            Growth Trends
+          </TabsTrigger>
+          <TabsTrigger 
+            value="categories"
+            style={{
+              '--active-color': 'hsl(var(--accent))',
+              '--active-bg': 'hsl(var(--accent) / 0.2)',
+            } as React.CSSProperties}
+          >
+            Categories
+          </TabsTrigger>
+          <TabsTrigger 
+            value="revenue"
+            style={{
+              '--active-color': 'hsl(var(--s2g-purple))',
+              '--active-bg': 'hsl(var(--s2g-purple) / 0.1)',
+            } as React.CSSProperties}
+          >
+            Revenue
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
