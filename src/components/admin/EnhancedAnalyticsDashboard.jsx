@@ -326,7 +326,7 @@ export function EnhancedAnalyticsDashboard() {
             style={{
               '--active-color': 'hsl(var(--primary))',
               '--active-bg': 'hsl(var(--primary) / 0.1)',
-            } as React.CSSProperties}
+            }}
           >
             Overview
           </TabsTrigger>
@@ -335,7 +335,7 @@ export function EnhancedAnalyticsDashboard() {
             style={{
               '--active-color': 'hsl(var(--secondary))',
               '--active-bg': 'hsl(var(--secondary) / 0.1)',
-            } as React.CSSProperties}
+            }}
           >
             Growth Trends
           </TabsTrigger>
@@ -344,7 +344,7 @@ export function EnhancedAnalyticsDashboard() {
             style={{
               '--active-color': 'hsl(var(--accent))',
               '--active-bg': 'hsl(var(--accent) / 0.2)',
-            } as React.CSSProperties}
+            }}
           >
             Categories
           </TabsTrigger>
@@ -353,7 +353,7 @@ export function EnhancedAnalyticsDashboard() {
             style={{
               '--active-color': 'hsl(var(--s2g-purple))',
               '--active-bg': 'hsl(var(--s2g-purple) / 0.1)',
-            } as React.CSSProperties}
+            }}
           >
             Revenue
           </TabsTrigger>
