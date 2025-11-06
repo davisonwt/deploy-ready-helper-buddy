@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AudioSnippetPlayer } from '@/components/radio/AudioSnippetPlayer';
 
 export default function RadioGenerator() {
+  const queryClient = useQueryClient();
   const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { data: sowers } = useQuery({
     queryKey: ['sowers-with-tracks'],
@@ -35,10 +38,7 @@ export default function RadioGenerator() {
     },
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File too large. Maximum 10MB.');
       return;
@@ -49,18 +49,12 @@ export default function RadioGenerator() {
       return;
     }
 
-    if (!confirmed) {
-      setShowDisclaimer(true);
-      return;
-    }
-
     try {
       setUploading(true);
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload to storage
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from('music-tracks')
@@ -68,12 +62,10 @@ export default function RadioGenerator() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('music-tracks')
         .getPublicUrl(filePath);
 
-      // Get user's DJ profile
       const { data: djProfile } = await supabase
         .from('radio_djs')
         .select('id')
@@ -82,7 +74,6 @@ export default function RadioGenerator() {
 
       if (!djProfile) throw new Error('DJ profile not found');
 
-      // Save track
       const { error: insertError } = await supabase
         .from('dj_music_tracks')
         .insert({
@@ -96,8 +87,9 @@ export default function RadioGenerator() {
       if (insertError) throw insertError;
 
       toast.success('Track uploaded successfully!');
-      e.target.value = '';
+      setPendingFile(null);
       setConfirmed(false);
+      await queryClient.invalidateQueries({ queryKey: ['sowers-with-tracks'] });
     } catch (error: any) {
       console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload track');
@@ -105,6 +97,47 @@ export default function RadioGenerator() {
       setUploading(false);
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirmed) {
+      setPendingFile(file);
+      setShowDisclaimer(true);
+      return;
+    }
+
+    await processFile(file);
+    e.target.value = '';
+  };
+
+  const onDrop = async (e: any) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+
+    if (!confirmed) {
+      setPendingFile(file);
+      setShowDisclaimer(true);
+      return;
+    }
+
+    await processFile(file);
+  };
+
+  const onDragOver = (e: any) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragEnter = (e: any) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => setIsDragging(false);
 
   const handleGenerateSlot = async () => {
     if (selectedTracks.length < 3) {
@@ -225,7 +258,13 @@ export default function RadioGenerator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 text-center hover:border-primary/40 transition-colors">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging ? 'border-primary' : 'border-primary/20 hover:border-primary/40'}`}
+                onDragOver={onDragOver}
+                onDragEnter={onDragEnter}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+              >
                 <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <Label htmlFor="file-upload" className="cursor-pointer">
                   <p className="text-lg font-medium mb-2">Click to upload or drag and drop</p>
@@ -290,9 +329,14 @@ export default function RadioGenerator() {
                   Cancel
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     setShowDisclaimer(false);
-                    document.getElementById('file-upload')?.click();
+                    if (pendingFile) {
+                      await processFile(pendingFile);
+                      setPendingFile(null);
+                    } else {
+                      document.getElementById('file-upload')?.click();
+                    }
                   }}
                   disabled={!confirmed}
                   className="flex-1"
