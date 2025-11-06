@@ -26,9 +26,11 @@ import {
   Users,
   Radio,
   BookOpen,
-  MessageCircle
+  MessageCircle,
+  Folder
 } from 'lucide-react'
 import { LiveVideoCallInterface } from '@/components/radio/LiveVideoCallInterface'
+import { MediaDock } from '@/components/live/media/MediaDock'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -436,10 +438,14 @@ export function UniversalLiveSessionInterface({
         {/* Right Sidebar - Interactive Feed with Darker Theme */}
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-slate-800 border-slate-700">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700">
               <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <MessageSquare className="h-4 w-4 mr-1" />
-                Message Hosts
+                Messages
+              </TabsTrigger>
+              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
+                <Folder className="h-4 w-4 mr-1" />
+                Media
               </TabsTrigger>
               <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Clock className="h-4 w-4 mr-1" />
@@ -447,7 +453,7 @@ export function UniversalLiveSessionInterface({
               </TabsTrigger>
               <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <Hand className="h-4 w-4 mr-1" />
-                Call In to Show ({guestRequests.filter(r => r.status === 'pending').length})
+                Requests ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
 
@@ -537,6 +543,14 @@ export function UniversalLiveSessionInterface({
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Media Dock Tab */}
+            <TabsContent value="media" className="space-y-4">
+              <MediaDock 
+                sessionId={sessionData?.id} 
+                isHost={isHost}
+              />
             </TabsContent>
 
             {/* Call Queue Tab - Integrated Call In */}
