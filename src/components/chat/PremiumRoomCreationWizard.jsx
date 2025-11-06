@@ -33,7 +33,6 @@ import {
   X,
   Upload
 } from 'lucide-react';
-import DJMusicUpload from '@/components/radio/DJMusicUpload';
 
 const ROOM_PURPOSES = [
   { value: 'classroom', label: 'Classroom / Educational', icon: GraduationCap, description: 'Interactive learning sessions' },
@@ -576,10 +575,7 @@ export function PremiumRoomCreationWizard({ onClose }) {
                 </SelectContent>
               </Select>
 
-              <div className="mt-3 flex gap-2 flex-wrap">
-                <DJMusicUpload
-                  trigger={<Button type="button" variant="secondary" size="sm">Upload Track</Button>}
-                />
+              <div className="mt-3">
                 <Button type="button" variant="outline" size="sm" onClick={handleCreatePlaylist}>
                   Create New Playlist
                 </Button>
