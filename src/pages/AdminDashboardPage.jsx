@@ -351,47 +351,45 @@ export default function AdminDashboardPage() {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex gap-3 p-2 bg-muted/50 rounded-lg">
-              <TabsList className="bg-transparent p-0 h-auto gap-3">
-                <TabsTrigger 
-                  value="analytics" 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-background hover:bg-primary/10"
-                >
-                  Analytics
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="users" 
-                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white bg-background hover:bg-blue-500/10"
-                >
-                  Users
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="payments" 
-                  className="data-[state=active]:bg-green-500 data-[state=active]:text-white bg-background hover:bg-green-500/10"
-                >
-                  Payments
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="moderation" 
-                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-background hover:bg-orange-500/10"
-                >
-                  Moderation
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="wallet" 
-                  className="data-[state=active]:bg-purple-500 data-[state=active]:text-white bg-background hover:bg-purple-500/10"
-                >
-                  Wallet
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="legacy" 
-                  className="data-[state=active]:bg-slate-500 data-[state=active]:text-white bg-background hover:bg-slate-500/10"
-                >
-                  Legacy
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <div className="flex justify-center mb-8">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <TabsTrigger 
+                value="analytics" 
+                className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger 
+                value="users" 
+                className="border-2 border-blue-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-blue-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Users
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments" 
+                className="border-2 border-green-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-green-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:border-green-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Payments
+              </TabsTrigger>
+              <TabsTrigger 
+                value="moderation" 
+                className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Moderation
+              </TabsTrigger>
+              <TabsTrigger 
+                value="wallet" 
+                className="border-2 border-purple-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-purple-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Wallet
+              </TabsTrigger>
+              <TabsTrigger 
+                value="legacy" 
+                className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                Legacy
+              </TabsTrigger>
+            </TabsList>
           </div>
 
           <TabsContent value="analytics">
