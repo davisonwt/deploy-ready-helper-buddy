@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,19 +91,26 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid user token' }), {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check rate limiting
+    // Check rate limiting - 10 requests per hour per user
+    const rateLimitAllowed = await checkRateLimit(supabase, user.id, 'ai_generation', 10, 60);
+    if (!rateLimitAllowed) {
+      console.log(`Rate limit exceeded for user ${user.id}`);
+      return createRateLimitResponse(3600);
+    }
+
+    // Check daily usage limit
     const { data: usageData } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
-    const dailyLimit = 10; // Free tier limit
+    const dailyLimit = 10;
     
     if (usageData >= dailyLimit) {
       return new Response(JSON.stringify({ 
-        error: 'Daily generation limit reached. Upgrade to premium for unlimited access.' 
+        error: 'Daily generation limit reached. Please try again tomorrow.' 
       }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -156,8 +164,8 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
 
     if (!openAIResponse.ok) {
       const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to generate script. Please try again.' }), {
+      console.error('OpenAI API error:', openAIResponse.status, error);
+      return new Response(JSON.stringify({ error: 'Unable to generate content. Please try again later.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -193,8 +201,8 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
-      return new Response(JSON.stringify({ error: 'Failed to save script' }), {
+      console.error('Database error:', dbError.message, dbError.code);
+      return new Response(JSON.stringify({ error: 'Unable to save content. Please try again.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -214,16 +222,11 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
     });
 
   } catch (error) {
-    // Log detailed error server-side only
-    console.error('❌ CRITICAL ERROR in generate-script function:', error);
-    console.error('Error details:', { name: error.name, message: error.message });
-    if (error.stack) console.error('Stack trace:', error.stack);
-    
-    // Return generic error to client (no internal details exposed)
+    console.error('Error in generate-script:', error.message, error.stack);
     return new Response(
       JSON.stringify({ 
-        error: 'An error occurred while generating the script. Please try again or contact support.',
-        requestId: crypto.randomUUID() // For support correlation
+        error: 'An error occurred. Please try again later.',
+        requestId: crypto.randomUUID()
       }),
       {
         status: 500,
