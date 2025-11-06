@@ -351,13 +351,13 @@ export default function AdminDashboardPage() {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="moderation">Content Moderation</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="legacy">Legacy Admin</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm">Payments</TabsTrigger>
+            <TabsTrigger value="moderation" className="text-xs sm:text-sm">Moderation</TabsTrigger>
+            <TabsTrigger value="wallet" className="text-xs sm:text-sm">Wallet</TabsTrigger>
+            <TabsTrigger value="legacy" className="text-xs sm:text-sm">Legacy</TabsTrigger>
           </TabsList>
 
           <TabsContent value="analytics">
@@ -378,8 +378,15 @@ export default function AdminDashboardPage() {
             <ContentModerationDashboard />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <OrganizationWalletSetup />
+          <TabsContent value="wallet" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Organization Wallet Setup</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <OrganizationWalletSetup />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="legacy" className="space-y-6">
