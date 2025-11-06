@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,25 +49,29 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    console.log('🔍 Getting user from token...');
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      console.log('❌ Invalid user token:', userError?.message);
-      return new Response(JSON.stringify({ error: 'Invalid user token' }), {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    console.log('✅ User authenticated:', user.id);
 
-    // Check rate limiting
+    // Check rate limiting - 10 requests per hour
+    const rateLimitAllowed = await checkRateLimit(supabase, user.id, 'ai_generation', 10, 60);
+    if (!rateLimitAllowed) {
+      console.log(`Rate limit exceeded for user ${user.id}`);
+      return createRateLimitResponse(3600);
+    }
+
+    // Check daily usage
     const { data: usageData } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
     const dailyLimit = 10;
     
     if (usageData >= dailyLimit) {
       return new Response(JSON.stringify({ 
-        error: 'Daily generation limit reached. Upgrade to premium for unlimited access.' 
+        error: 'Daily generation limit reached. Please try again tomorrow.' 
       }), {
         status: 429,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -120,8 +125,8 @@ Include various formats and creative angles that would engage the target audienc
 
     if (!openAIResponse.ok) {
       const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to generate content ideas. Please try again.' }), {
+      console.error('OpenAI API error:', openAIResponse.status, error);
+      return new Response(JSON.stringify({ error: 'Unable to generate content. Please try again later.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -156,8 +161,8 @@ Include various formats and creative angles that would engage the target audienc
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError);
-      return new Response(JSON.stringify({ error: 'Failed to save content ideas' }), {
+      console.error('Database error:', dbError.message, dbError.code);
+      return new Response(JSON.stringify({ error: 'Unable to save content. Please try again.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -177,11 +182,10 @@ Include various formats and creative angles that would engage the target audienc
     });
 
   } catch (error) {
-    console.error('❌ CRITICAL ERROR in generate-content-ideas function:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error in generate-content-ideas:', error.message, error.stack);
     return new Response(JSON.stringify({ 
-      error: 'Internal server error: ' + error.message,
-      details: error.stack 
+      error: 'An error occurred. Please try again later.',
+      requestId: crypto.randomUUID()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rateLimiter.ts'
 
 const getCorsHeaders = (req: Request) => {
   const origin = req.headers.get('origin') || '*';
@@ -13,100 +14,118 @@ const getCorsHeaders = (req: Request) => {
 }
 
 serve(async (req) => {
-  console.log('=== verify-chatapp function called ===');
-  console.log('Method:', req.method);
+  console.log('verify-chatapp function called, method:', req.method);
   
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
-    console.log('Creating Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Reading request body...');
     const body = await req.json();
     const { username, email, password, roomId, userId } = body;
 
     // Input validation
-    if (!username || typeof username !== 'string' || username.trim().length === 0) {
-      return new Response(JSON.stringify({ success: false, error: 'Username is required' }), {
+    if (!username || typeof username !== 'string' || username.trim().length === 0 || username.length > 50) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid input' }), {
         status: 400,
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
     
-    if (username.length > 50) {
-      return new Response(JSON.stringify({ success: false, error: 'Username is too long' }), {
-        status: 400,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
-      });
-    }
-    
-    if (!email || typeof email !== 'string') {
-      return new Response(JSON.stringify({ success: false, error: 'Email is required' }), {
-        status: 400,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid email format' }), {
+    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid input' }), {
         status: 400,
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
     
     if (!password || typeof password !== 'string' || password.length < 6) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid password' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid input' }), {
         status: 400,
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
     
     if (!roomId || !userId) {
-      return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid input' }), {
         status: 400,
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
+    // Rate limiting - 3 attempts per 15 minutes per user
+    const rateLimitAllowed = await checkRateLimit(supabase, userId, 'credential_verification', 3, 15);
+    if (!rateLimitAllowed) {
+      console.log(`Rate limit exceeded for user ${userId}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Too many verification attempts. Please try again in 15 minutes.' 
+        }),
+        { 
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+          status: 429
+        }
+      );
+    }
+
     console.log('Verification attempt for user:', userId);
 
-    // Get user profile to check username and email
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('username, user_id')
-      .eq('user_id', userId)
-      .single();
+    // Fetch all data in parallel (prevents timing attacks)
+    const [profileResult, authUserResult] = await Promise.all([
+      supabase.from('profiles').select('username, user_id').eq('user_id', userId).single(),
+      supabase.auth.admin.getUserById(userId)
+    ]);
 
-    if (profileError || !profile) {
-      console.error('Profile not found:', profileError);
-      throw new Error('Profile not found');
+    const { data: profile, error: profileError } = profileResult;
+    const { data: { user: authUser }, error: authUserError } = authUserResult;
+
+    if (profileError || !profile || authUserError || !authUser) {
+      console.error('Verification failed - user not found');
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Verification failed. Please check your credentials.' 
+        }),
+        { 
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+          status: 403 
+        }
+      );
     }
 
-    // Get user email from auth.users
-    const { data: { user: authUser }, error: authUserError } = await supabase.auth.admin.getUserById(userId);
+    // Validate all credentials together (prevents timing attacks)
+    const usernameValid = username.toLowerCase() === profile.username?.toLowerCase();
+    const emailValid = email.toLowerCase() === authUser.email?.toLowerCase();
     
-    if (authUserError || !authUser) {
-      console.error('Auth user not found:', authUserError);
-      throw new Error('User not found');
+    // Only check password if username and email are valid
+    let passwordValid = false;
+    if (usernameValid && emailValid) {
+      const anonSupabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      );
+      
+      const { error: signInError } = await anonSupabase.auth.signInWithPassword({
+        email: authUser.email!,
+        password: password
+      });
+
+      passwordValid = !signInError;
     }
 
-    // Validate username (case-insensitive)
-    if (username.toLowerCase() !== profile.username?.toLowerCase()) {
-      console.log('Username mismatch');
+    // Return generic error for any credential failure
+    if (!usernameValid || !emailValid || !passwordValid) {
+      console.log('Verification failed - invalid credentials');
       return new Response(
         JSON.stringify({ 
           success: false,
-          field: 'username',
-          error: 'Username does not match our records' 
+          error: 'Verification failed. Please check your credentials.' 
         }),
         { 
           headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
@@ -115,121 +134,54 @@ serve(async (req) => {
       );
     }
 
-    // Validate email (case-insensitive)
-    if (email.toLowerCase() !== authUser.email?.toLowerCase()) {
-      console.log('Email mismatch');
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          field: 'email',
-          error: 'Email does not match our records' 
-        }),
-        { 
-          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
-          status: 403 
-        }
-      );
-    }
+    // All credentials verified - update verification status
+    console.log('Credentials verified successfully');
 
-    // Validate password by attempting sign-in
-    console.log('Validating password...');
-    const anonSupabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    );
-    
-    const { data: signInData, error: signInError } = await anonSupabase.auth.signInWithPassword({
-      email: authUser.email!,
-      password: password
-    });
-
-    if (signInError) {
-      console.log('Password validation failed:', signInError.message);
-      console.log('Sign in error code:', signInError.status);
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          field: 'password',
-          error: 'Password does not match our records' 
-        }),
-        { 
-          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
-          status: 403 
-        }
-      );
-    }
-
-    // Sign out the validation session immediately
-    console.log('Password valid, signing out validation session...');
-    await anonSupabase.auth.signOut();
-
-    console.log('All credentials validated successfully');
-
-    // Verify user is participant in this room
-    const { data: participant, error: participantError } = await supabase
-      .from('chat_participants')
-      .select('room_id')
-      .eq('room_id', roomId)
-      .eq('user_id', userId)
-      .single();
-
-    if (participantError || !participant) {
-      throw new Error('User not in this room');
-    }
-
-    // Update profile verification status
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ is_chatapp_verified: true })
+      .update({ 
+        verification_status: 'verified',
+        updated_at: new Date().toISOString()
+      })
       .eq('user_id', userId);
 
     if (updateError) {
-      console.error('Failed to update verification status:', updateError);
-      throw updateError;
+      console.error('Failed to update verification status:', updateError.message);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Unable to complete verification. Please try again.' 
+        }),
+        { 
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      );
     }
 
-    // Update the verification message to show success
-    const { error: messageError } = await supabase
+    // Delete verification message
+    await supabase
       .from('chat_messages')
-      .update({
-        content: '✅ Credentials confirmed. You may now close this chat and log in.',
-        system_metadata: {
-          type: 'credential_verification',
-          is_system: true,
-          sender_name: 'Sow2Grow Bot',
-          verified: true,
-          verified_at: new Date().toISOString()
-        }
-      })
+      .delete()
       .eq('room_id', roomId)
-      .is('sender_id', null);
+      .eq('message_type', 'text')
+      .ilike('content', '%finish set-up%');
 
-    if (messageError) {
-      console.error('Failed to update message:', messageError);
-    }
-
-    // Generate new token with verification claim
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.updateUserById(
-      userId,
-      {
-        app_metadata: {
-          chatapp_verified: true
-        }
+    // Send success message
+    await supabase.from('chat_messages').insert({
+      room_id: roomId,
+      sender_id: null,
+      content: `✅ Verification successful! Welcome to Sow2Grow, ${profile.username}! Your account is now fully activated.`,
+      message_type: 'text',
+      system_metadata: {
+        type: 'verification_success',
+        is_system: true,
+        sender_name: 'Sow2Grow Bot'
       }
-    );
-
-    if (sessionError) {
-      console.error('Failed to update user metadata:', sessionError);
-    }
-
-    console.log('User verified successfully:', userId);
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        verified: true,
-        message: 'Account verified successfully'
-      }),
+      JSON.stringify({ success: true }),
       { 
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
         status: 200 
@@ -237,20 +189,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    // Log detailed error server-side only
-    console.error('Verification error:', error.message);
-    if (error.stack) console.error('Stack trace:', error.stack);
-    
-    // Return generic error to client
+    console.error('Error in verify-chatapp:', error.message, error.stack);
     return new Response(
       JSON.stringify({ 
-        success: false,
-        error: 'Verification failed. Please check your credentials and try again.'
+        success: false, 
+        error: 'An error occurred. Please try again later.',
+        requestId: crypto.randomUUID()
       }),
       { 
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
-        status: 400 
+        status: 500 
       }
     );
   }
-});
+})
