@@ -19,8 +19,47 @@ serve(async (req) => {
 
   try {
     console.log('📥 Parsing request body...');
-    const { productDescription, targetAudience, videoLength, style, customPrompt } = await req.json();
-    console.log('✅ Request body parsed successfully:', { productDescription: productDescription?.substring(0, 50) + '...', targetAudience, videoLength, style });
+    const requestBody = await req.json();
+    const { productDescription, targetAudience, videoLength, style, customPrompt } = requestBody;
+    
+    // Input validation
+    if (!productDescription || typeof productDescription !== 'string' || productDescription.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Product description is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (productDescription.length > 5000) {
+      return new Response(JSON.stringify({ error: 'Product description is too long (max 5000 characters)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (customPrompt && typeof customPrompt === 'string' && customPrompt.length > 2000) {
+      return new Response(JSON.stringify({ error: 'Custom prompt is too long (max 2000 characters)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (videoLength && (typeof videoLength !== 'number' || videoLength < 15 || videoLength > 300)) {
+      return new Response(JSON.stringify({ error: 'Invalid video length (must be between 15-300 seconds)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const allowedStyles = ['professional', 'casual', 'enthusiastic', 'educational', 'storytelling'];
+    if (style && !allowedStyles.includes(style)) {
+      return new Response(JSON.stringify({ error: 'Invalid style' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('✅ Input validated successfully');
 
     // Initialize Supabase client
     console.log('🔧 Initializing Supabase client...');
@@ -175,17 +214,21 @@ Include voice-over lines, shot suggestions, and engagement tips.`;
     });
 
   } catch (error) {
+    // Log detailed error server-side only
     console.error('❌ CRITICAL ERROR in generate-script function:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error: ' + error.message,
-      details: error.stack,
-      errorName: error.name 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error details:', { name: error.name, message: error.message });
+    if (error.stack) console.error('Stack trace:', error.stack);
+    
+    // Return generic error to client (no internal details exposed)
+    return new Response(
+      JSON.stringify({ 
+        error: 'An error occurred while generating the script. Please try again or contact support.',
+        requestId: crypto.randomUUID() // For support correlation
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });

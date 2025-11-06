@@ -59,8 +59,20 @@ export default function RegisterPage() {
       return
     }
     
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters")
+    // Stronger password policy (12+ characters)
+    if (formData.password.length < 12) {
+      setError("Password must be at least 12 characters for security")
+      setLoading(false)
+      return
+    }
+    
+    // Check for password complexity
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      setError("Password must contain uppercase, lowercase, and numbers")
       setLoading(false)
       return
     }
@@ -80,6 +92,19 @@ export default function RegisterPage() {
       })
       
       if (result.success) {
+        // HTML escape function for email safety
+        const escapeHtml = (text) => {
+          if (!text) return '';
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          };
+          return String(text).replace(/[&<>"']/g, (m) => map[m]);
+        };
+        
         // Send welcome email to user
         try {
           console.log('Attempting to send welcome email...')
@@ -91,7 +116,7 @@ export default function RegisterPage() {
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fffe;">
                   <h1 style="color: #059669; text-align: center; margin-bottom: 30px;">Welcome to sow2grow! 🌱</h1>
                   <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <h2 style="color: #065f46;">Hello ${formData.firstName}!</h2>
+                    <h2 style="color: #065f46;">Hello ${escapeHtml(formData.firstName)}!</h2>
                     <p style="color: #374151; font-size: 16px; line-height: 1.6;">
                       Thank you for joining our community farm! We're excited to have you as part of the sow2grow family.
                     </p>

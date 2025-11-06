@@ -36,8 +36,47 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { amount, currency, orchardId, pocketsCount, pocketNumbers } = await req.json();
-    logStep("Request data received", { amount, currency, orchardId, pocketsCount });
+    const requestBody = await req.json();
+    const { amount, currency, orchardId, pocketsCount, pocketNumbers } = requestBody;
+    
+    // Input validation
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid amount' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (amount < 1 || amount > 1000000) {
+      return new Response(JSON.stringify({ error: 'Amount must be between $1 and $1,000,000' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const allowedCurrencies = ['usd', 'eur', 'gbp', 'zar'];
+    if (!currency || !allowedCurrencies.includes(currency.toLowerCase())) {
+      return new Response(JSON.stringify({ error: 'Invalid currency' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!orchardId || typeof orchardId !== 'string') {
+      return new Response(JSON.stringify({ error: 'Orchard ID is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (pocketsCount && (typeof pocketsCount !== 'number' || pocketsCount < 1 || pocketsCount > 1000)) {
+      return new Response(JSON.stringify({ error: 'Invalid pockets count' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    logStep("Request data validated", { amount, currency, orchardId, pocketsCount });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
@@ -134,8 +173,17 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    // Log detailed error server-side
     logStep("ERROR in Stripe payment creation", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    if (error instanceof Error && error.stack) {
+      console.error("Error stack:", error.stack);
+    }
+    
+    // Return generic error to client
+    return new Response(JSON.stringify({ 
+      error: 'Payment processing failed. Please try again or contact support.',
+      requestId: crypto.randomUUID()
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
