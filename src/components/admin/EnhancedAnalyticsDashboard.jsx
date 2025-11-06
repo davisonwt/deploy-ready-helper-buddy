@@ -320,7 +320,7 @@ export function EnhancedAnalyticsDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="growth">Growth Trends</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
