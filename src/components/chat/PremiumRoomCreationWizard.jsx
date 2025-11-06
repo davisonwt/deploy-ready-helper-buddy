@@ -558,28 +558,54 @@ export function PremiumRoomCreationWizard({ onClose }) {
                 Choose music to play during your session
               </p>
 
-              <Select 
-                value={formData.playlist_id ?? 'none'} 
-                onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a playlist..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No playlist</SelectItem>
-                  {playlists.map((playlist) => (
-                    <SelectItem key={playlist.id} value={playlist.id}>
-                      {playlist.playlist_name} ({playlist.track_count} tracks)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {!userDJProfile ? (
+                <div className="p-4 border border-dashed rounded-lg bg-muted/50 space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    To use playlists and upload music, you need to create a DJ profile first.
+                  </p>
+                  <Button 
+                    type="button" 
+                    variant="default" 
+                    size="sm"
+                    onClick={() => navigate('/radio-generator')}
+                  >
+                    Create DJ Profile
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Select 
+                    value={formData.playlist_id ?? 'none'} 
+                    onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a playlist..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No playlist</SelectItem>
+                      {playlists.map((playlist) => (
+                        <SelectItem key={playlist.id} value={playlist.id}>
+                          {playlist.playlist_name} ({playlist.track_count || 0} tracks)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <div className="mt-3">
-                <Button type="button" variant="outline" size="sm" onClick={handleCreatePlaylist}>
-                  Create New Playlist
-                </Button>
-              </div>
+                  <div className="mt-3 flex gap-2 flex-wrap">
+                    <Button type="button" variant="outline" size="sm" onClick={handleCreatePlaylist}>
+                      Create New Playlist
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/grove-station')}
+                    >
+                      Upload Music Tracks
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
