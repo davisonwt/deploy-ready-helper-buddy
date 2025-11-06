@@ -1,6 +1,5 @@
 import { Component } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -25,13 +24,8 @@ class ErrorBoundary extends Component {
   };
 
   handleGoHome = () => {
-    // Use React Router navigation instead of window.location to prevent full page reload
-    if (this.props.navigate) {
-      this.props.navigate('/dashboard');
-    } else {
-      // Fallback to full page navigation if navigate prop not available
-      window.location.href = '/dashboard';
-    }
+    // Use direct navigation to avoid hook dependencies
+    window.location.href = '/dashboard';
   };
 
   render() {
@@ -95,15 +89,4 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Wrapper component to inject navigate function
-const ErrorBoundaryWithRouter = ({ children }) => {
-  const navigate = useNavigate();
-  
-  return (
-    <ErrorBoundary navigate={navigate}>
-      {children}
-    </ErrorBoundary>
-  );
-};
-
-export default ErrorBoundaryWithRouter;
+export default ErrorBoundary;
