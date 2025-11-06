@@ -351,14 +351,48 @@ export default function AdminDashboardPage() {
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="inline-flex h-auto w-full justify-start overflow-x-auto p-1">
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="moderation">Moderation</TabsTrigger>
-            <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            <TabsTrigger value="legacy">Legacy</TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex gap-3 p-2 bg-muted/50 rounded-lg">
+              <TabsList className="bg-transparent p-0 h-auto gap-3">
+                <TabsTrigger 
+                  value="analytics" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground bg-background hover:bg-primary/10"
+                >
+                  Analytics
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="users" 
+                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white bg-background hover:bg-blue-500/10"
+                >
+                  Users
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="payments" 
+                  className="data-[state=active]:bg-green-500 data-[state=active]:text-white bg-background hover:bg-green-500/10"
+                >
+                  Payments
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="moderation" 
+                  className="data-[state=active]:bg-orange-500 data-[state=active]:text-white bg-background hover:bg-orange-500/10"
+                >
+                  Moderation
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="wallet" 
+                  className="data-[state=active]:bg-purple-500 data-[state=active]:text-white bg-background hover:bg-purple-500/10"
+                >
+                  Wallet
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="legacy" 
+                  className="data-[state=active]:bg-slate-500 data-[state=active]:text-white bg-background hover:bg-slate-500/10"
+                >
+                  Legacy
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
           <TabsContent value="analytics">
             <EnhancedAnalyticsDashboard />
