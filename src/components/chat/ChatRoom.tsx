@@ -277,7 +277,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           .select('user_id, display_name, first_name, last_name, avatar_url')
           .eq('user_id', otherId)
           .maybeSingle();
-        setParticipants(prev => [...prev, { user_id: otherId, profiles: prof || null }]);
+        setParticipants(prev => {
+          // Prevent duplicates
+          if (prev.some((p:any) => p.user_id === otherId)) return prev;
+          return [...prev, { user_id: otherId, profiles: prof || null }];
+        });
       } catch (e) {
         console.warn('Participant inference failed:', e);
       }
