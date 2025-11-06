@@ -320,11 +320,11 @@ export function EnhancedAnalyticsDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="growth">Growth Trends</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+        <TabsList className="justify-center">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/30">Overview</TabsTrigger>
+          <TabsTrigger value="growth" className="data-[state=active]:bg-secondary/10 data-[state=active]:text-secondary data-[state=active]:border-secondary/30">Growth Trends</TabsTrigger>
+          <TabsTrigger value="categories" className="data-[state=active]:bg-accent/20 data-[state=active]:text-accent-foreground data-[state=active]:border-accent/30">Categories</TabsTrigger>
+          <TabsTrigger value="revenue" className="data-[state=active]:bg-[hsl(var(--s2g-purple))]/10 data-[state=active]:text-[hsl(var(--s2g-purple))] data-[state=active]:border-[hsl(var(--s2g-purple))]/30">Revenue</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
