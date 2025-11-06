@@ -320,44 +320,14 @@ export function EnhancedAnalyticsDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="justify-center">
-          <TabsTrigger 
-            value="overview"
-            style={{
-              '--active-color': 'hsl(var(--primary))',
-              '--active-bg': 'hsl(var(--primary) / 0.1)',
-            }}
-          >
-            Overview
-          </TabsTrigger>
-          <TabsTrigger 
-            value="growth"
-            style={{
-              '--active-color': 'hsl(var(--secondary))',
-              '--active-bg': 'hsl(var(--secondary) / 0.1)',
-            }}
-          >
-            Growth Trends
-          </TabsTrigger>
-          <TabsTrigger 
-            value="categories"
-            style={{
-              '--active-color': 'hsl(var(--accent))',
-              '--active-bg': 'hsl(var(--accent) / 0.2)',
-            }}
-          >
-            Categories
-          </TabsTrigger>
-          <TabsTrigger 
-            value="revenue"
-            style={{
-              '--active-color': 'hsl(var(--s2g-purple))',
-              '--active-bg': 'hsl(var(--s2g-purple) / 0.1)',
-            }}
-          >
-            Revenue
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="gap-2">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Overview</TabsTrigger>
+            <TabsTrigger value="growth" className="data-[state=active]:bg-secondary/10 data-[state=active]:text-secondary">Growth Trends</TabsTrigger>
+            <TabsTrigger value="categories" className="data-[state=active]:bg-accent/20 data-[state=active]:text-[hsl(var(--accent))]">Categories</TabsTrigger>
+            <TabsTrigger value="revenue" className="data-[state=active]:bg-[hsl(var(--s2g-purple))]/10 data-[state=active]:text-[hsl(var(--s2g-purple))]">Revenue</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
