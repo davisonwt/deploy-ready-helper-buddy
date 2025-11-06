@@ -1181,6 +1181,104 @@ export type Database = {
         }
         Relationships: []
       }
+      live_session_media: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          media_type: string
+          metadata: Json | null
+          mime_type: string
+          price_cents: number | null
+          session_id: string
+          updated_at: string
+          uploader_id: string
+          watermarked: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          media_type: string
+          metadata?: Json | null
+          mime_type: string
+          price_cents?: number | null
+          session_id: string
+          updated_at?: string
+          uploader_id: string
+          watermarked?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          media_type?: string
+          metadata?: Json | null
+          mime_type?: string
+          price_cents?: number | null
+          session_id?: string
+          updated_at?: string
+          uploader_id?: string
+          watermarked?: boolean | null
+        }
+        Relationships: []
+      }
+      live_session_media_purchases: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          delivered_at: string | null
+          expires_at: string
+          id: string
+          media_id: string
+          payment_method: string
+          payment_reference: string | null
+          price_paid_cents: number
+          seller_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          delivered_at?: string | null
+          expires_at?: string
+          id?: string
+          media_id: string
+          payment_method: string
+          payment_reference?: string | null
+          price_paid_cents: number
+          seller_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          expires_at?: string
+          id?: string
+          media_id?: string
+          payment_method?: string
+          payment_reference?: string | null
+          price_paid_cents?: number
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_session_media_purchases_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "live_session_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_session_messages: {
         Row: {
           content: string
