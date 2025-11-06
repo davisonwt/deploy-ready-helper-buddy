@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroveStation } from '@/hooks/useGroveStation';
+import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload';
 import { 
   MessageSquare, 
   Target, 
@@ -69,10 +70,12 @@ export function PremiumRoomCreationWizard({ onClose }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { userDJProfile } = useGroveStation();
+  const { directUpload, uploading: uploadingMusic } = useDirectMusicUpload();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadedTracks, setUploadedTracks] = useState([]);
 
   const [formData, setFormData] = useState({
     // Step 1: Purpose
@@ -269,6 +272,35 @@ export function PremiumRoomCreationWizard({ onClose }) {
     setPlaylists((prev) => [data, ...prev]);
     setFormData((prev) => ({ ...prev, playlist_id: data.id }));
     toast({ title: 'Playlist created', description: 'Now upload or add tracks to it.' });
+  };
+
+  const handleMusicUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !userDJProfile) return;
+
+    for (const file of files) {
+      const trackData = {
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        artist: userDJProfile.dj_name || 'Unknown Artist',
+        type: 'music'
+      };
+
+      const result = await directUpload(file, trackData, userDJProfile);
+      if (result) {
+        setUploadedTracks(prev => [...prev, result]);
+        toast({
+          title: 'Track uploaded',
+          description: `${trackData.title} uploaded successfully`
+        });
+      }
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const removeTrack = (trackId) => {
+    setUploadedTracks(prev => prev.filter(track => track.id !== trackId));
   };
 
   const handleSubmit = async () => {
@@ -574,6 +606,46 @@ export function PremiumRoomCreationWizard({ onClose }) {
                 </div>
               ) : (
                 <>
+                  {/* Music Upload Section */}
+                  <div className="mb-4 p-4 border border-dashed rounded-lg bg-muted/50">
+                    <Label className="flex items-center gap-2 mb-2">
+                      <Upload className="h-4 w-4" />
+                      Upload Music Tracks
+                    </Label>
+                    <Input
+                      type="file"
+                      multiple
+                      onChange={handleMusicUpload}
+                      disabled={uploadingMusic}
+                      accept="audio/*"
+                      className="mb-2"
+                    />
+                    {uploadingMusic && (
+                      <p className="text-sm text-muted-foreground">Uploading...</p>
+                    )}
+                    {uploadedTracks.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {uploadedTracks.map((track) => (
+                          <div key={track.id} className="flex items-center justify-between p-2 bg-background rounded">
+                            <div className="flex items-center gap-2">
+                              <Music className="h-4 w-4" />
+                              <span className="text-sm">{track.track_title}</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeTrack(track.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Playlist Selection */}
                   <Select 
                     value={formData.playlist_id ?? 'none'} 
                     onValueChange={(value) => handleFieldChange('playlist_id', value === 'none' ? null : value)}
@@ -591,17 +663,9 @@ export function PremiumRoomCreationWizard({ onClose }) {
                     </SelectContent>
                   </Select>
 
-                  <div className="mt-3 flex gap-2 flex-wrap">
+                  <div className="mt-3">
                     <Button type="button" variant="outline" size="sm" onClick={handleCreatePlaylist}>
                       Create New Playlist
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate('/grove-station')}
-                    >
-                      Upload Music Tracks
                     </Button>
                   </div>
                 </>
