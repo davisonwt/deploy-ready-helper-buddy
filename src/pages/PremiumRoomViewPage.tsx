@@ -45,6 +45,48 @@ const PremiumRoomViewPage: React.FC = () => {
   const [showAccessModal, setShowAccessModal] = React.useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
+  // Resolve a playable URL for stored files or direct URLs
+  const inferCandidates = (input: string) => {
+    const candidates: string[] = [];
+    try {
+      const u = new URL(input);
+      const marker = '/storage/v1/object/';
+      const idx = u.pathname.indexOf(marker);
+      if (idx !== -1) {
+        const after = u.pathname.substring(idx + marker.length);
+        const parts = after.split('/');
+        const bucketIndex = parts[0] === 'public' ? 1 : 0;
+        if (parts[bucketIndex]) {
+          const key = decodeURIComponent(parts.slice(bucketIndex + 1).join('/'));
+          if (key) candidates.push(key);
+        }
+      }
+      const fname = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '');
+      if (fname) candidates.push(`music/${fname}`);
+    } catch {
+      const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '');
+      candidates.push(stripped);
+    }
+    return Array.from(new Set(candidates.filter(Boolean)));
+  };
+
+  const getPlayableUrl = async (track: any): Promise<string> => {
+    const src: string = track?.url || track?.file_url || '';
+    if (src && /^https?:/i.test(src)) return src;
+    try {
+      const candidates = inferCandidates(src);
+      for (const cand of candidates) {
+        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600);
+        if (!error && data?.signedUrl) return data.signedUrl;
+      }
+      if (candidates[0]) {
+        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0]);
+        if (data?.publicUrl) return data.publicUrl;
+      }
+    } catch {}
+    return src;
+  };
+
   React.useEffect(() => {
     const fetchRoom = async () => {
       if (!id) return;
@@ -105,7 +147,7 @@ const PremiumRoomViewPage: React.FC = () => {
     fetchRoom();
   }, [id, user]);
 
-  const handlePlayTrack = (track: any) => {
+  const handlePlayTrack = async (track: any) => {
     if (!hasAccess && track.price > 0) {
       setPurchaseItem({ item: track, type: 'music' });
       return;
@@ -115,17 +157,26 @@ const PremiumRoomViewPage: React.FC = () => {
       audioRef.current?.pause();
       setPlayingTrack(null);
     } else {
-      if (audioRef.current) {
-        audioRef.current.src = track.url;
-        audioRef.current.play();
+      try {
+        const url = await getPlayableUrl(track);
+        if (audioRef.current) {
+          audioRef.current.src = url;
+          await audioRef.current.play();
+        }
+        setPlayingTrack(track.id);
+      } catch (e) {
+        console.error('Audio play failed', e);
+        toast.error('Unable to play this track');
+        setPlayingTrack(null);
       }
-      setPlayingTrack(track.id);
     }
   };
 
   const handleJoinRoom = () => {
     if (!hasAccess) {
       setShowAccessModal(true);
+    } else {
+      toast.success('You already have access to this room');
     }
   };
 
@@ -239,7 +290,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {track.price > 0 && !hasAccess && (
+                          {track.price > 0 && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -289,7 +340,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {doc.price > 0 && !hasAccess && (
+                          {doc.price > 0 && (
                             <Button
                               size="sm"
                               variant="default"
@@ -338,7 +389,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {art.price > 0 && !hasAccess && (
+                          {art.price > 0 && (
                             <Button
                               size="sm"
                               variant="default"
@@ -365,32 +416,28 @@ const PremiumRoomViewPage: React.FC = () => {
         )}
 
         {/* Join Room Section */}
-        {!isCreator && (
-          <Card className="lg:col-span-2">
-            <CardContent className="py-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">
-                    {hasAccess ? 'You have access to this room' : 'Ready to join?'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {hasAccess 
-                      ? 'You can access all room content'
-                      : room.price > 0 
-                        ? `Access all content for ${formatAmount(room.price)}` 
-                        : 'This room is free to access'
-                    }
-                  </p>
-                </div>
-                {!hasAccess && (
-                  <Button size="lg" onClick={handleJoinRoom}>
-                    {room.price > 0 ? 'Purchase Access' : 'Join Room'}
-                  </Button>
-                )}
+        <Card className="lg:col-span-2">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold mb-1">
+                  {hasAccess ? 'You have access to this room' : 'Ready to join?'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {hasAccess 
+                    ? 'You can access all room content'
+                    : room.price > 0 
+                      ? `Access all content for ${formatAmount(room.price)}` 
+                      : 'This room is free to access'
+                  }
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <Button size="lg" onClick={handleJoinRoom}>
+                {room.price > 0 && !hasAccess ? 'Purchase Access' : 'Join Room'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Purchase Modals */}
