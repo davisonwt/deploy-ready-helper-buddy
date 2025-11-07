@@ -14,7 +14,7 @@ interface PremiumItemPurchaseModalProps {
   item: any;
   itemType: 'music' | 'document' | 'artwork';
   roomId: string;
-  onPurchaseComplete?: () => void;
+  onPurchaseComplete?: (paymentReference?: string) => void;
 }
 
 export function PremiumItemPurchaseModal({
@@ -50,22 +50,11 @@ export function PremiumItemPurchaseModal({
     setProcessing(true);
 
     try {
-      // Record the purchase
-      const { error: purchaseError } = await supabase
-        .from('premium_item_purchases')
-        .insert({
-          buyer_id: user.id,
-          room_id: roomId,
-          item_type: itemType,
-          item_id: item.id,
-          amount: item.price,
-          payment_status: 'completed'
-        });
-
-      if (purchaseError) throw purchaseError;
+      // Generate a payment reference (in production this would come from blockchain tx)
+      const paymentRef = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       toast.success(`${itemType} purchased successfully!`);
-      onPurchaseComplete?.();
+      onPurchaseComplete?.(paymentRef);
       onOpenChange(false);
     } catch (error: any) {
       console.error('Purchase failed:', error);
