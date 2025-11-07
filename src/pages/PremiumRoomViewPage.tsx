@@ -230,8 +230,10 @@ const PremiumRoomViewPage: React.FC = () => {
     } else {
       try {
         const url = await getPlayableUrl(track);
+        console.log('Resolved playable URL for track', { trackId: track.id, url });
         if (audioRef.current) {
           audioRef.current.src = url;
+          audioRef.current.load();
           await audioRef.current.play();
         }
         setPlayingTrack(track.id);
@@ -284,7 +286,7 @@ const PremiumRoomViewPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <audio ref={audioRef} onEnded={() => setPlayingTrack(null)} />
+      <audio ref={audioRef} controls onEnded={() => setPlayingTrack(null)} onError={(e) => { const el = e.currentTarget; console.error('Audio element error:', el.error); toast.error('Audio failed to load'); setPlayingTrack(null); }} crossOrigin="anonymous" />
       
       {/* Header */}
       <div className="mb-6">
