@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,10 @@ import { GraduationCap, Search, Plus, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const PremiumRoomsLanding: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   // Basic SEO tags for this page
-  useEffect(() => {
+  React.useEffect(() => {
     document.title = 'Premium Rooms & Courses | sow2grow';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
