@@ -160,6 +160,33 @@ export const PremiumRoomForm = () => {
               />
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Room Access Price (USDC)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-muted-foreground">Set to 0 for free access</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="maxParticipants">Max Participants</Label>
+                <Input
+                  id="maxParticipants"
+                  type="number"
+                  min="1"
+                  value={formData.maxParticipants}
+                  onChange={(e) => setFormData({...formData, maxParticipants: parseInt(e.target.value) || 50})}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FileUploadSection
                 title="Documents"
