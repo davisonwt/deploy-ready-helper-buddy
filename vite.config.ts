@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
   resolve: {
-    dedupe: ['react', 'react-dom', '@tanstack/react-query'],
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime', '@tanstack/react-query'],
     alias: {
       "@": path.resolve(__dirname, "./src"),
       // Add Node.js polyfills for browser

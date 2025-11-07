@@ -1,4 +1,19 @@
 import React from 'react';
+// Runtime duplicate React detection for debugging
+// eslint-disable-next-line no-console
+console.log('PremiumRoomsLanding - React version:', React.version);
+// @ts-ignore - window.React may exist if another copy exposed itself
+if (typeof window !== 'undefined' && (window as any).React) {
+  // eslint-disable-next-line no-console
+  console.log('🚨 MULTIPLE REACT INSTANCES DETECTED! Window React:', (window as any).React.version);
+}
+// Check DevTools renderers count (multiple renderers can hint at multiple React copies)
+// @ts-ignore
+const __REACT_HOOK__ = typeof window !== 'undefined' ? (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ : undefined;
+if (__REACT_HOOK__?.renderers) {
+  // eslint-disable-next-line no-console
+  console.log('React renderers count:', __REACT_HOOK__.renderers.size);
+}
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
