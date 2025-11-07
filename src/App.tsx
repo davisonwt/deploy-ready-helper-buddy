@@ -53,7 +53,7 @@ const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage").then(m => ({ 
 const ChatApp = lazy(() => import("./pages/ChatApp"));
 const RadioSlotApplicationPage = lazy(() => import("./pages/RadioSlotApplicationPage"));
 const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
-const PremiumRoomsLanding = lazy(() => import("./pages/PremiumRoomsLanding"));
+import PremiumRoomsLanding from "./pages/PremiumRoomsLanding";
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
 const MarketingVideosGallery = lazy(() => import("./pages/MarketingVideosGallery.jsx"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
