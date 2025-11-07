@@ -526,9 +526,13 @@ const PremiumRoomViewPage: React.FC = () => {
                   }
                 </p>
               </div>
-              <Button size="lg" onClick={handleJoinRoom}>
-                {room.price > 0 && !hasAccess ? 'Purchase Access' : 'Join Room'}
-              </Button>
+              {hasAccess ? (
+                <Badge variant="outline" className="px-4 py-2">Access Granted</Badge>
+              ) : (
+                <Button size="lg" onClick={handleJoinRoom}>
+                  {room.price > 0 ? 'Purchase Access' : 'Join Room'}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
