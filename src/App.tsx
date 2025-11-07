@@ -50,7 +50,7 @@ const EditOrchardPage = lazy(() => import("./pages/EditOrchardPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage").then(m => ({ default: m.AdminRadioPage })));
 const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage").then(m => ({ default: m.AdminSeedsPage })));
-const ChatApp = lazy(() => import("./pages/ChatApp"));
+import ChatApp from "./pages/ChatApp";
 const RadioSlotApplicationPage = lazy(() => import("./pages/RadioSlotApplicationPage"));
 const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
 import PremiumRoomsLanding from "./pages/PremiumRoomsLanding";
