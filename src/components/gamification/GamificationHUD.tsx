@@ -13,7 +13,23 @@ interface GamificationHUDProps {
 }
 
 export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
-  const { achievements, userPoints, notifications, markNotificationAsRead } = useGamification()
+  // Defensive: catch any hook errors
+  let achievements: any[] = []
+  let userPoints = null
+  let notifications: any[] = []
+  let markNotificationAsRead = async (id: string) => {}
+  
+  try {
+    const gamification = useGamification()
+    achievements = gamification.achievements
+    userPoints = gamification.userPoints
+    notifications = gamification.notifications
+    markNotificationAsRead = gamification.markNotificationAsRead
+  } catch (error) {
+    console.warn('GamificationHUD: hook error', error)
+    return null // Don't render if hooks fail
+  }
+  
   const [activeTab, setActiveTab] = useState<"achievements" | "leaderboard" | "notifications">("achievements")
 
   const unreadNotifications = notifications.filter(n => !n.is_read)

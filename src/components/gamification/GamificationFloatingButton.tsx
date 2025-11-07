@@ -11,7 +11,18 @@ interface GamificationFloatingButtonProps {
 
 export function GamificationFloatingButton({ onToggleHUD }: GamificationFloatingButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const { userPoints, notifications } = useGamification()
+  
+  // Defensive: catch any hook errors
+  let userPoints = null
+  let notifications: any[] = []
+  try {
+    const gamification = useGamification()
+    userPoints = gamification.userPoints
+    notifications = gamification.notifications
+  } catch (error) {
+    console.warn('GamificationFloatingButton: hook error', error)
+    return null // Don't render if hooks fail
+  }
 
   const unreadNotifications = notifications.filter(n => !n.is_read).length
 
