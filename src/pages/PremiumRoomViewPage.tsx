@@ -43,6 +43,7 @@ const PremiumRoomViewPage: React.FC = () => {
   const [playingTrack, setPlayingTrack] = React.useState<string | null>(null);
   const [purchaseItem, setPurchaseItem] = React.useState<{ item: any; type: 'music' | 'document' | 'artwork' } | null>(null);
   const [showAccessModal, setShowAccessModal] = React.useState(false);
+  const [purchasedItems, setPurchasedItems] = React.useState<Set<string>>(new Set());
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   // Resolve a playable URL for stored files or direct URLs
@@ -192,6 +193,17 @@ const PremiumRoomViewPage: React.FC = () => {
             
             setHasAccess(!!accessData);
           }
+
+          // Fetch purchased items
+          const { data: purchases } = await supabase
+            .from('premium_item_purchases')
+            .select('item_id')
+            .eq('room_id', id)
+            .eq('buyer_id', user.id);
+          
+          if (purchases) {
+            setPurchasedItems(new Set(purchases.map(p => p.item_id)));
+          }
         }
       } catch (error: any) {
         console.error('Error fetching room:', error);
@@ -205,7 +217,9 @@ const PremiumRoomViewPage: React.FC = () => {
   }, [id, user]);
 
   const handlePlayTrack = async (track: any) => {
-    if (!hasAccess && track.price > 0) {
+    // Check if user has access or has purchased this specific item
+    const hasPurchased = purchasedItems.has(track.id);
+    if (!hasAccess && !hasPurchased && track.price > 0) {
       setPurchaseItem({ item: track, type: 'music' });
       return;
     }
@@ -353,7 +367,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {track.price > 0 && (
+                          {track.price > 0 && !hasAccess && !purchasedItems.has(track.id) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -362,11 +376,16 @@ const PremiumRoomViewPage: React.FC = () => {
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
+                          {(hasAccess || purchasedItems.has(track.id) || track.price === 0) && (
+                            <Badge variant="outline" className="text-xs">
+                              {purchasedItems.has(track.id) ? 'Owned' : 'Included'}
+                            </Badge>
+                          )}
                           <Button
                             size="sm"
                             variant={playingTrack === track.id ? "default" : "outline"}
                             onClick={() => handlePlayTrack(track)}
-                            disabled={!hasAccess && track.price > 0}
+                            disabled={!hasAccess && !purchasedItems.has(track.id) && track.price > 0}
                           >
                             {playingTrack === track.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </Button>
@@ -403,7 +422,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {doc.price > 0 && (
+                          {doc.price > 0 && !hasAccess && !purchasedItems.has(doc.id) && (
                             <Button
                               size="sm"
                               variant="default"
@@ -412,12 +431,17 @@ const PremiumRoomViewPage: React.FC = () => {
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
-                          {(hasAccess || doc.price === 0) && (
-                            <Button size="sm" variant="outline" asChild>
-                              <a href={doc.url} download={doc.name}>
-                                <Download className="h-4 w-4" />
-                              </a>
-                            </Button>
+                          {(hasAccess || purchasedItems.has(doc.id) || doc.price === 0) && (
+                            <>
+                              {purchasedItems.has(doc.id) && (
+                                <Badge variant="outline" className="text-xs">Owned</Badge>
+                              )}
+                              <Button size="sm" variant="outline" asChild>
+                                <a href={doc.url} download={doc.name}>
+                                  <Download className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -452,7 +476,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          {art.price > 0 && (
+                          {art.price > 0 && !hasAccess && !purchasedItems.has(art.id) && (
                             <Button
                               size="sm"
                               variant="default"
@@ -461,12 +485,17 @@ const PremiumRoomViewPage: React.FC = () => {
                               <ShoppingCart className="h-4 w-4" />
                             </Button>
                           )}
-                          {(hasAccess || art.price === 0) && (
-                            <Button size="sm" variant="outline" asChild>
-                              <a href={art.url} download={art.name}>
-                                <Download className="h-4 w-4" />
-                              </a>
-                            </Button>
+                          {(hasAccess || purchasedItems.has(art.id) || art.price === 0) && (
+                            <>
+                              {purchasedItems.has(art.id) && (
+                                <Badge variant="outline" className="text-xs">Owned</Badge>
+                              )}
+                              <Button size="sm" variant="outline" asChild>
+                                <a href={art.url} download={art.name}>
+                                  <Download className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -511,9 +540,31 @@ const PremiumRoomViewPage: React.FC = () => {
           item={purchaseItem.item}
           itemType={purchaseItem.type}
           roomId={room.id}
-          onPurchaseComplete={() => {
-            toast.success('Item purchased successfully!');
-            setPurchaseItem(null);
+          onPurchaseComplete={async (paymentRef) => {
+            try {
+              // Record the purchase
+              const { error } = await supabase
+                .from('premium_item_purchases')
+                .insert({
+                  room_id: room.id,
+                  item_id: purchaseItem.item.id,
+                  item_type: purchaseItem.type,
+                  buyer_id: user!.id,
+                  amount: purchaseItem.item.price,
+                  payment_status: 'completed'
+                });
+
+              if (error) throw error;
+
+              // Update local purchased items set
+              setPurchasedItems(prev => new Set([...prev, purchaseItem.item.id]));
+              
+              toast.success('Item purchased successfully! You can now access it.');
+              setPurchaseItem(null);
+            } catch (error: any) {
+              console.error('Failed to record purchase:', error);
+              toast.error('Purchase completed but failed to record. Please contact support.');
+            }
           }}
         />
       )}
