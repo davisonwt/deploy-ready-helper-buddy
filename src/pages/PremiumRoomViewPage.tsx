@@ -46,44 +46,101 @@ const PremiumRoomViewPage: React.FC = () => {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   // Resolve a playable URL for stored files or direct URLs
-  const inferCandidates = (input: string) => {
-    const candidates: string[] = [];
+  type StorageCandidate = { bucket: string; key: string };
+
+  const parseStorageFromUrl = (input: string): StorageCandidate[] => {
+    const out: StorageCandidate[] = [];
     try {
       const u = new URL(input);
       const marker = '/storage/v1/object/';
       const idx = u.pathname.indexOf(marker);
       if (idx !== -1) {
         const after = u.pathname.substring(idx + marker.length);
-        const parts = after.split('/');
-        const bucketIndex = parts[0] === 'public' ? 1 : 0;
-        if (parts[bucketIndex]) {
-          const key = decodeURIComponent(parts.slice(bucketIndex + 1).join('/'));
-          if (key) candidates.push(key);
-        }
+        const parts = after.split('/').filter(Boolean);
+        // URL patterns:
+        // - /storage/v1/object/public/<bucket>/<key>
+        // - /storage/v1/object/sign/<bucket>/<key>
+        const mode = parts[0];
+        const bucket = mode === 'public' || mode === 'sign' ? parts[1] : parts[0];
+        const keyStart = mode === 'public' || mode === 'sign' ? 2 : 1;
+        const key = decodeURIComponent(parts.slice(keyStart).join('/'));
+        if (bucket && key) out.push({ bucket, key });
       }
-      const fname = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '');
-      if (fname) candidates.push(`music/${fname}`);
     } catch {
-      const stripped = (input || '').replace(/^\/*/, '').replace(/^public\//, '');
-      candidates.push(stripped);
+      // Not a full URL
     }
-    return Array.from(new Set(candidates.filter(Boolean)));
+    return out;
+  };
+
+  const inferCandidates = (input: string, filenameHint?: string): StorageCandidate[] => {
+    const candidates: StorageCandidate[] = [];
+    if (!input && !filenameHint) return candidates;
+
+    // From full Supabase URL
+    candidates.push(...parseStorageFromUrl(input || ''));
+
+    // If plain storage-like path provided
+    const raw = (input || '').replace(/^\/*/, '');
+    if (raw.startsWith('premium-room/')) {
+      candidates.push({ bucket: 'premium-room', key: raw.replace(/^premium-room\//, '') });
+    } else if (raw.startsWith('music-tracks/')) {
+      candidates.push({ bucket: 'music-tracks', key: raw.replace(/^music-tracks\//, '') });
+    } else if (raw) {
+      // Try common folder layouts
+      candidates.push({ bucket: 'premium-room', key: raw });
+      candidates.push({ bucket: 'music-tracks', key: raw });
+    }
+
+    // Try filename-based guesses (room-scoped and flat music folder)
+    const fname = filenameHint || decodeURIComponent(raw.split('/').filter(Boolean).pop() || '');
+    if (fname) {
+      // Room-scoped path (most likely for premium rooms)
+      if (room?.id) {
+        candidates.push({ bucket: 'premium-room', key: `rooms/${room.id}/music/${fname}` });
+      }
+      // Legacy/simple paths
+      candidates.push({ bucket: 'premium-room', key: `music/${fname}` });
+      candidates.push({ bucket: 'music-tracks', key: `music/${fname}` });
+      candidates.push({ bucket: 'music-tracks', key: fname });
+    }
+
+    // De-duplicate
+    const seen = new Set<string>();
+    return candidates.filter(c => {
+      const k = `${c.bucket}:${c.key}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   };
 
   const getPlayableUrl = async (track: any): Promise<string> => {
-    const src: string = track?.url || track?.file_url || '';
-    if (src && /^https?:/i.test(src)) return src;
+    const src: string = track?.url || track?.file_url || track?.public_url || '';
+    // If it's an external or already-public HTTP URL, use it directly
+    if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) return src;
+
     try {
-      const candidates = inferCandidates(src);
+      const filename = track?.name || track?.filename || '';
+      const candidates = inferCandidates(src, filename);
+
+      // Try signed URLs first (works for private buckets)
       for (const cand of candidates) {
-        const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600);
+        const { data, error } = await supabase.storage.from(cand.bucket).createSignedUrl(cand.key, 3600);
         if (!error && data?.signedUrl) return data.signedUrl;
       }
-      if (candidates[0]) {
-        const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0]);
+
+      // Fallback to public URLs if bucket/object is public
+      for (const cand of candidates) {
+        const { data } = supabase.storage.from(cand.bucket).getPublicUrl(cand.key);
         if (data?.publicUrl) return data.publicUrl;
       }
-    } catch {}
+    } catch (e) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Playable URL resolution failed', e);
+      }
+    }
+
+    // Last resort, return whatever we had
     return src;
   };
 
