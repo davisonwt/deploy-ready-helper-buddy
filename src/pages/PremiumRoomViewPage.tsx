@@ -45,6 +45,38 @@ const PremiumRoomViewPage: React.FC = () => {
   const [showAccessModal, setShowAccessModal] = React.useState(false);
   const [purchasedItems, setPurchasedItems] = React.useState<Set<string>>(new Set());
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [audioUnlocked, setAudioUnlocked] = React.useState(false);
+
+  const resumeGlobalAudio = async () => {
+    try {
+      const w = window as any;
+      let ctx: AudioContext | undefined = w.__unlockedAudioCtx;
+      const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!ctx && Ctx) {
+        ctx = new Ctx();
+        w.__unlockedAudioCtx = ctx;
+      }
+      if (ctx && ctx.state === 'suspended') {
+        await ctx.resume().catch(() => {});
+      }
+      try { sessionStorage.setItem('audioUnlocked', '1'); } catch {}
+      setAudioUnlocked(true);
+    } catch {}
+  };
+
+  React.useEffect(() => {
+    const check = () => {
+      try {
+        const w = window as any;
+        const ctx: AudioContext | undefined = w.__unlockedAudioCtx;
+        const unlockedFlag = sessionStorage.getItem('audioUnlocked') === '1';
+        setAudioUnlocked(Boolean(unlockedFlag || (ctx && ctx.state === 'running')));
+      } catch { setAudioUnlocked(false); }
+    };
+    check();
+    document.addEventListener('visibilitychange', check);
+    return () => document.removeEventListener('visibilitychange', check);
+  }, []);
 
   // Resolve a playable URL for stored files or direct URLs
   type StorageCandidate = { bucket: string; key: string };
@@ -232,9 +264,19 @@ const PremiumRoomViewPage: React.FC = () => {
         const url = await getPlayableUrl(track);
         console.log('Resolved playable URL for track', { trackId: track.id, url });
         if (audioRef.current) {
-          audioRef.current.src = url;
-          audioRef.current.load();
-          await audioRef.current.play();
+          await resumeGlobalAudio();
+          const el = audioRef.current;
+          el.muted = false;
+          el.volume = 1.0;
+          el.src = url;
+          el.load();
+          try {
+            await el.play();
+          } catch (err) {
+            // Retry once after ensuring context is resumed
+            await resumeGlobalAudio();
+            await el.play();
+          }
         }
         setPlayingTrack(track.id);
       } catch (e) {
@@ -286,7 +328,12 @@ const PremiumRoomViewPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <audio ref={audioRef} controls onEnded={() => setPlayingTrack(null)} onError={(e) => { const el = e.currentTarget; console.error('Audio element error:', el.error); toast.error('Audio failed to load'); setPlayingTrack(null); }} crossOrigin="anonymous" />
+      <audio ref={audioRef} controls preload="metadata" playsInline onEnded={() => setPlayingTrack(null)} onError={(e) => { const el = e.currentTarget; console.error('Audio element error:', el.error); toast.error('Audio failed to load'); setPlayingTrack(null); }} crossOrigin="anonymous" />
+      {!audioUnlocked && (
+        <div className="mt-2 mb-4">
+          <Button variant="outline" onClick={resumeGlobalAudio}>Enable Sound</Button>
+        </div>
+      )}
       
       {/* Header */}
       <div className="mb-6">
