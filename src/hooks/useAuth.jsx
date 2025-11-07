@@ -19,7 +19,7 @@ export class AuthProvider extends React.Component {
   }
 
   _mounted = false
-  _unsubscribe = undefined as undefined | (() => void)
+  _unsubscribe = null
 
   async componentDidMount() {
     this._mounted = true
@@ -57,7 +57,7 @@ export class AuthProvider extends React.Component {
     try { this._unsubscribe?.() } catch {}
   }
 
-  safeFetchProfile = async (authUser: any) => {
+  safeFetchProfile = async (authUser) => {
     try {
       const full = await this.fetchUserProfile(authUser)
       if (this._mounted) this.setState({ user: full || authUser })
@@ -67,7 +67,7 @@ export class AuthProvider extends React.Component {
     }
   }
 
-  fetchUserProfile = async (authUser: any) => {
+  fetchUserProfile = async (authUser) => {
     if (!authUser) return null
     const { data: profile } = await supabase
       .from('profiles')
@@ -85,17 +85,17 @@ export class AuthProvider extends React.Component {
     }
   }
 
-  login = async (email: string, password: string) => {
+  login = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
-    } catch (e: any) {
+    } catch (e) {
       return { success: false, error: e.message }
     }
   }
 
-  register = async (userData: any) => {
+  register = async (userData) => {
     try {
       const currentDomain = window.location.origin
       const { data, error } = await supabase.auth.signUp({
@@ -117,7 +117,7 @@ export class AuthProvider extends React.Component {
       })
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
-    } catch (e: any) {
+    } catch (e) {
       return { success: false, error: e.message }
     }
   }
@@ -127,7 +127,7 @@ export class AuthProvider extends React.Component {
       const { data, error } = await supabase.auth.signInAnonymously()
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
-    } catch (e: any) {
+    } catch (e) {
       return { success: false, error: e.message }
     }
   }
@@ -141,7 +141,7 @@ export class AuthProvider extends React.Component {
     }
   }
 
-  resetPassword = async (email: string) => {
+  resetPassword = async (email) => {
     try {
       const redirectTo = `${window.location.origin}/login?reset=true`
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
@@ -154,7 +154,7 @@ export class AuthProvider extends React.Component {
     }
   }
 
-  updateProfile = async (profileData: any) => {
+  updateProfile = async (profileData) => {
     try {
       const user = this.state.user
       if (!user?.id) return { success: false, error: 'User not authenticated' }
@@ -194,7 +194,7 @@ export class AuthProvider extends React.Component {
         window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { user: updatedUser, timestamp: Date.now() } }))
       }, 300)
       return { success: true, user: updatedUser }
-    } catch (e: any) {
+    } catch (e) {
       return { success: false, error: e.message }
     }
   }
