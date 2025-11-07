@@ -103,19 +103,19 @@ const LoadingFallback = () => (
 );
 
 const App = () => (
-  <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
-    <TooltipProvider>
-      <AuthProvider>
+  <AuthProvider>
+    <AppContextProvider>
+      <CallManagerProvider>
         <BasketProvider>
-          <AppContextProvider>
-            <CallManagerProvider>
-                <Toaster />
-                <Sonner />
-                <AudioUnlocker />
-                <SoundUnlockBanner />
-                <IncomingCallOverlay />
-                <GlobalAudioCallBridge />
-                <ErrorBoundary>
+          <TooltipProvider>
+            <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+              <Toaster />
+              <Sonner />
+              <AudioUnlocker />
+              <SoundUnlockBanner />
+              <IncomingCallOverlay />
+              <GlobalAudioCallBridge />
+              <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AccessibilityChecker />
                     <ResponsiveLayout>
@@ -592,17 +592,17 @@ const App = () => (
                   </ResponsiveLayout>
                   </Suspense>
                 </ErrorBoundary>
-                <PerformanceMonitor />
-                <LiveActivityWidget />
-                <FloatingLiveWidget />
-                <OnboardingTour />
-                <HelpModal />
-            </CallManagerProvider>
-          </AppContextProvider>
+              <PerformanceMonitor />
+              <LiveActivityWidget />
+              <FloatingLiveWidget />
+              <OnboardingTour />
+              <HelpModal />
+            </ThemeProvider>
+          </TooltipProvider>
         </BasketProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </ThemeProvider>
+      </CallManagerProvider>
+    </AppContextProvider>
+  </AuthProvider>
     
 );
 
