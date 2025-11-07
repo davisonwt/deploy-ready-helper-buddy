@@ -1870,6 +1870,85 @@ export type Database = {
           },
         ]
       }
+      premium_item_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          payment_status: string
+          room_id: string
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          payment_status?: string
+          room_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          payment_status?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_item_purchases_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "premium_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      premium_room_access: {
+        Row: {
+          access_granted_at: string
+          created_at: string
+          id: string
+          payment_amount: number
+          payment_status: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          access_granted_at?: string
+          created_at?: string
+          id?: string
+          payment_amount?: number
+          payment_status?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          access_granted_at?: string
+          created_at?: string
+          id?: string
+          payment_amount?: number
+          payment_status?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_room_access_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "premium_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       premium_rooms: {
         Row: {
           artwork: Json | null
