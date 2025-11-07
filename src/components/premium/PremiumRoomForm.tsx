@@ -214,22 +214,26 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
     }
   };
 
-  const handleFileUpload = (type: keyof Pick<FormData, 'documents' | 'artwork' | 'music'>, files: FileList | null) => {
-    if (!files) return;
-
-    const uploadedFiles = Array.from(files).map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      url: URL.createObjectURL(file),
-      price: 0
-    }));
-
-    setFormData(prev => ({
-      ...prev,
-      [type]: [...prev[type], ...uploadedFiles]
-    }));
+  const handleFileUpload = async (
+    type: keyof Pick<FormData, 'documents' | 'artwork' | 'music'>,
+    files: FileList | null
+  ) => {
+    if (!files || files.length === 0) return;
+    setLoading(true);
+    try {
+      // Upload to Supabase Storage and store real, shareable URLs
+      const uploaded = await uploadFiles(type, files);
+      setFormData((prev) => ({
+        ...prev,
+        [type]: [...prev[type], ...uploaded],
+      }));
+      toast({ title: 'Uploaded', description: `${uploaded.length} ${type} uploaded` });
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast({ title: 'Upload failed', description: 'Please try again', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
