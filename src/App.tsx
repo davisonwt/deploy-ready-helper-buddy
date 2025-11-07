@@ -24,40 +24,36 @@ const CommissionDashboard = lazy(() => import('./components/marketing/Commission
 const GamificationDashboard = lazy(() => import('./components/gamification/GamificationDashboard'));
 const AdvancedSearchPage = lazy(() => import('./pages/AdvancedSearchPage'));
 
-// Import critical components (needed immediately)
+// Import critical pages (needed immediately to prevent React dispatcher errors from lazy loading)
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ChatApp from "./pages/ChatApp";
+import PremiumRoomsLanding from "./pages/PremiumRoomsLanding";
+import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
+import BrowseOrchardsPage from "./pages/BrowseOrchardsPage";
+import OrchardPage from "./pages/OrchardPage";
+import CreateOrchardPage from "./pages/CreateOrchardPage";
+import MyOrchardsPage from "./pages/MyOrchardsPage";
+import BasketPage from "./pages/BasketPage";
+import EditOrchardPage from "./pages/EditOrchardPage";
 
-// Lazy load all other page components for better performance
-const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
+// Lazy load secondary pages for better performance
 const AnimatedOrchardPage = lazy(() => import("./pages/AnimatedOrchardPage"));
-const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
 const OrchardCreatedPage = lazy(() => import("./pages/OrchardCreatedPage"));
-const OrchardPage = lazy(() => import("./pages/OrchardPage"));
 const OrchardErrorPage = lazy(() => import("./pages/OrchardErrorPage"));
 const TithingPage = lazy(() => import("./pages/TithingPage"));
-const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const PaymentCancelledPage = lazy(() => import("./pages/PaymentCancelledPage"));
-const DashboardPage = lazy(() => import("./pages/DashboardPage"));
-const MyOrchardsPage = lazy(() => import("./pages/MyOrchardsPage"));
 const FreeWillGiftingPage = lazy(() => import("./pages/FreeWillGiftingPage"));
 const SeedSubmissionPage = lazy(() => import("./pages/SeedSubmissionPage"));
 const YhvhOrchardsPage = lazy(() => import("./pages/YhvhOrchardsPage"));
-const EditOrchardPage = lazy(() => import("./pages/EditOrchardPage"));
-const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
-const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage").then(m => ({ default: m.AdminRadioPage })));
-const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage").then(m => ({ default: m.AdminSeedsPage })));
-import ChatApp from "./pages/ChatApp";
 const RadioSlotApplicationPage = lazy(() => import("./pages/RadioSlotApplicationPage"));
 const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
-import PremiumRoomsLanding from "./pages/PremiumRoomsLanding";
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
 const MarketingVideosGallery = lazy(() => import("./pages/MarketingVideosGallery.jsx"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
-const BasketPage = lazy(() => import("./pages/BasketPage"));
 const TestBasketPage = lazy(() => import("./pages/TestBasketPage"));
 const GroveStationPage = lazy(() => import("./pages/GroveStationPage"));
 const RadioManagementPage = lazy(() => import("./pages/RadioManagementPage"));
@@ -73,9 +69,13 @@ const LiveRooms = lazy(() => import("./pages/LiveRooms"));
 const RadioGenerator = lazy(() => import("./pages/RadioGenerator"));
 const LiveRoomsPage = lazy(() => import("./pages/LiveRoomsPage"));
 const CreateLiveRoomPage = lazy(() => import("./pages/CreateLiveRoomPage"));
-
-// Lazy-loaded pages for performance
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
+
+// Lazy load admin pages (only accessed by admins)
+const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
+const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage").then(m => ({ default: m.AdminRadioPage })));
+const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage").then(m => ({ default: m.AdminSeedsPage })));
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
 const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
