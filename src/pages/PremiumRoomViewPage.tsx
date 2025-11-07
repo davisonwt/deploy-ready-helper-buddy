@@ -150,7 +150,7 @@ const PremiumRoomViewPage: React.FC = () => {
   const getPlayableUrl = async (track: any): Promise<string> => {
     const src: string = track?.url || track?.file_url || track?.public_url || '';
     // If it's a local blob/data URL or a non-signed external HTTP URL, use it directly
-    if (src && (/^blob:/.test(src) || /^data:/.test(src))) return src;
+    // if (src && (/^blob:/.test(src) || /^data:/.test(src))) return src;
     if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) return src;
 
     try {
@@ -281,7 +281,24 @@ const PremiumRoomViewPage: React.FC = () => {
         setPlayingTrack(track.id);
       } catch (e) {
         console.error('Audio play failed', e);
-        toast.error('Unable to play this track');
+        try {
+          const safeTrack = { ...track, url: '', file_url: '', public_url: '' };
+          const alt = await getPlayableUrl(safeTrack);
+          if (alt) {
+            const el = audioRef.current;
+            if (el) {
+              await resumeGlobalAudio();
+              el.muted = false;
+              el.volume = 1.0;
+              el.src = alt;
+              el.load();
+              await el.play();
+              setPlayingTrack(track.id);
+              return;
+            }
+          }
+        } catch {}
+        toast.error('Audio failed to load');
         setPlayingTrack(null);
       }
     }
