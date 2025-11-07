@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +32,11 @@ interface FormData {
   price: number;
 }
 
-export const PremiumRoomForm = () => {
+interface PremiumRoomFormProps {
+  roomId?: string;
+}
+
+export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,6 +54,45 @@ export const PremiumRoomForm = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(!!roomId);
+
+  // Load existing room data if editing
+  useEffect(() => {
+    if (!roomId) return;
+    
+    const loadRoom = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('premium_rooms')
+          .select('*')
+          .eq('id', roomId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setFormData({
+            title: data.title || '',
+            description: data.description || '',
+            roomType: data.room_type || 'classroom',
+            maxParticipants: data.max_participants || 50,
+            documents: (data.documents as unknown as FileItem[]) || [],
+            artwork: (data.artwork as unknown as FileItem[]) || [],
+            music: (data.music as unknown as FileItem[]) || [],
+            isPublic: data.is_public ?? true,
+            price: data.price || 0
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load room:', error);
+        toast({ title: 'Error', description: 'Failed to load room data', variant: 'destructive' });
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    
+    loadRoom();
+  }, [roomId, toast]);
 
   // Upload helpers - store files in Supabase Storage so they work for everyone
   const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -126,17 +169,44 @@ export const PremiumRoomForm = () => {
     setLoading(true);
     
     try {
-      const room = await createPremiumRoom(formData);
-      toast({
-        title: "Success!",
-        description: "Premium room created successfully",
-      });
-      navigate(`/premium-rooms`);
+      if (roomId) {
+        // Update existing room
+        const { error } = await supabase
+          .from('premium_rooms')
+          .update({
+            title: formData.title,
+            description: formData.description,
+            room_type: formData.roomType,
+            max_participants: formData.maxParticipants,
+            is_public: formData.isPublic,
+            price: formData.price,
+            documents: formData.documents as any,
+            artwork: formData.artwork as any,
+            music: formData.music as any,
+          })
+          .eq('id', roomId);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Success!",
+          description: "Premium room updated successfully",
+        });
+        navigate(`/premium-room/${roomId}`);
+      } else {
+        // Create new room
+        const room = await createPremiumRoom(formData);
+        toast({
+          title: "Success!",
+          description: "Premium room created successfully",
+        });
+        navigate(`/premium-rooms`);
+      }
     } catch (error) {
-      console.error('Room creation failed:', error);
+      console.error('Room operation failed:', error);
       toast({
         title: "Error",
-        description: "Failed to create room. Please try again.",
+        description: `Failed to ${roomId ? 'update' : 'create'} room. Please try again.`,
         variant: "destructive"
       });
     } finally {
