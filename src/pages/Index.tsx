@@ -21,6 +21,7 @@ import { GamificationHUD } from "../components/gamification/GamificationHUD";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
+import DeferredVideo from "@/components/performance/DeferredVideo";
 
 function IndexContent() {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
@@ -107,24 +108,19 @@ function IndexContent() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full bg-black">
-          <video 
-            key={Math.random().toString(36)}
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            webkit-playsinline="true"
-            preload="metadata"
-            controls={false}
+          <DeferredVideo
             className="w-full h-full object-cover"
             src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
             onError={(e) => {
               console.log('Video error:', e);
-              e.currentTarget.style.display = 'none';
+              (e.currentTarget as HTMLVideoElement).style.display = 'none';
             }}
-          >
-            Your browser does not support the video tag.
-          </video>
+          />
         </div>
         {/* Video Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 to-green-900/50 z-10"></div>
@@ -293,23 +289,19 @@ function IndexContent() {
                       </p>
                     </div>
                  </div>
-                 <video
-                  className="w-full h-64 object-cover rounded-lg 
-                           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
-                           transition-shadow duration-500 border-0 outline-0"
-                  style={{ aspectRatio: '1920/350' }}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds%20strip%202aa%20mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
+<DeferredVideo
+  className="w-full h-64 object-cover rounded-lg 
+           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+           transition-shadow duration-500 border-0 outline-0"
+  style={{ aspectRatio: '1920/350' }}
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="none"
+  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds%20strip%202aa%20mp4.mp4"
+/>
                 {/* 3D depth effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
               </div>
@@ -324,20 +316,16 @@ function IndexContent() {
                             transition-all duration-700 ease-out
                             hover:translate-y-0 hover:scale-105
                             shadow-xl hover:shadow-2xl">
-                <video
+                <DeferredVideo
                   className="w-full h-screen object-cover rounded-lg 
                            shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
                   autoPlay
                   muted
                   loop
                   playsInline
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
+                  preload="none"
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 1 mp4.mp4"
+                />
               </div>
             </div>
             
@@ -405,20 +393,16 @@ function IndexContent() {
                   </div>
                 </div>
                 
-                <video
+                <DeferredVideo
                   className="w-full h-screen object-cover rounded-lg
                            shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
                   autoPlay
                   muted
                   loop
                   playsInline
-                >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4" 
-                    type="video/mp4" 
-                  />
-                  Your browser does not support the video tag.
-                </video>
+                  preload="none"
+                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/seeds 2 mp4.mp4"
+                />
               </div>
             </div>
           </div>
@@ -456,11 +440,18 @@ function IndexContent() {
                   loop
                   playsInline
                 >
-                  <source 
-                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards strip1 mp4.mp4" 
-                    type="video/mp4" 
+                  <DeferredVideo
+                    className="w-full h-64 object-cover rounded-lg 
+                             shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                             hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                             transition-shadow duration-500 border-0 outline-0"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards strip1 mp4.mp4"
                   />
-                  Your browser does not support the video tag.
                 </video>
                 {/* 3D depth effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 rounded-lg"></div>
