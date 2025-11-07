@@ -18,19 +18,23 @@ export function AuthProvider({ children }) {
 
   const fetchUserProfile = async (authUser) => {
     if (!authUser) return null
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, is_chatapp_verified, created_at, updated_at')
-      .eq('user_id', authUser.id)
-      .single()
-      .catch(() => ({ data: null }))
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, is_chatapp_verified, created_at, updated_at')
+        .eq('user_id', authUser.id)
+        .maybeSingle()
 
-    return {
-      ...authUser,
-      ...profile,
-      id: authUser.id,
-      user_id: authUser.id,
-      email: authUser.email,
+      return {
+        ...authUser,
+        ...(profile || {}),
+        id: authUser.id,
+        user_id: authUser.id,
+        email: authUser.email,
+      }
+    } catch (e) {
+      console.error('Profile fetch error:', e)
+      return authUser
     }
   }
 
