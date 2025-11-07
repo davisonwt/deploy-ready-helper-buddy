@@ -300,9 +300,9 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         <Card>
           <CardContent className="py-12 text-center">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-600">No conversations found</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Start a new chat to get started
+            <p className="text-gray-600 font-semibold mb-2">No conversations yet</p>
+            <p className="text-sm text-gray-500">
+              Start a direct chat or create a community room above
             </p>
           </CardContent>
         </Card>
@@ -311,8 +311,11 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           {filteredRooms.map((room) => (
             <Card
               key={room.id}
-              className="hover:shadow-md transition-shadow cursor-pointer border-emerald-100"
-              onClick={() => { navigate(`/chatapp?room=${room.id}`); }}
+              className="hover:shadow-lg hover:border-primary/40 transition-all cursor-pointer border-2"
+              onClick={() => { 
+                console.log('📨 Opening room:', room.id);
+                navigate(`/chatapp?room=${room.id}`); 
+              }}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

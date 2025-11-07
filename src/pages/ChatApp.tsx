@@ -447,9 +447,16 @@ const ChatApp = () => {
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Chats</h1>
                 <p className="text-sm text-muted-foreground">
-                  Connect and collaborate with others
+                  Click on a chat below to send messages, voice notes, make calls & more
                 </p>
               </div>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                New Chat
+              </Button>
             </div>
 
             {/* Search Bar */}
