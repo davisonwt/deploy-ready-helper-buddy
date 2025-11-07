@@ -17,6 +17,7 @@ interface FileItem {
   size: number;
   url: string;
   price: number;
+  storagePath?: string;
 }
 
 interface FormData {
