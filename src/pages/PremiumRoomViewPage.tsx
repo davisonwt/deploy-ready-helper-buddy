@@ -117,12 +117,13 @@ const PremiumRoomViewPage: React.FC = () => {
 
   const getPlayableUrl = async (track: any): Promise<string> => {
     const src: string = track?.url || track?.file_url || track?.public_url || '';
-    // If it's an external or already-public HTTP URL, use it directly
+    // If it's a local blob/data URL or a non-signed external HTTP URL, use it directly
+    if (src && (/^blob:/.test(src) || /^data:/.test(src))) return src;
     if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) return src;
 
     try {
       const filename = track?.name || track?.filename || '';
-      const candidates = inferCandidates(src, filename);
+      const candidates = inferCandidates(src, filename).filter(c => !/^blob:/i.test(c.key));
 
       // Try signed URLs first (works for private buckets)
       for (const cand of candidates) {
@@ -144,7 +145,6 @@ const PremiumRoomViewPage: React.FC = () => {
     // Last resort, return whatever we had
     return src;
   };
-
   React.useEffect(() => {
     const fetchRoom = async () => {
       if (!id) return;
