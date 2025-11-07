@@ -1870,6 +1870,54 @@ export type Database = {
           },
         ]
       }
+      premium_rooms: {
+        Row: {
+          artwork: Json | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          documents: Json | null
+          id: string
+          is_public: boolean
+          max_participants: number
+          music: Json | null
+          price: number
+          room_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artwork?: Json | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          is_public?: boolean
+          max_participants?: number
+          music?: Json | null
+          price?: number
+          room_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artwork?: Json | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          documents?: Json | null
+          id?: string
+          is_public?: boolean
+          max_participants?: number
+          music?: Json | null
+          price?: number
+          room_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profile_access_logs: {
         Row: {
           access_reason: string | null
