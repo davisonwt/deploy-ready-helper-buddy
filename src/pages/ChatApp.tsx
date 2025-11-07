@@ -497,7 +497,7 @@ const ChatApp = () => {
                 {/* Create New Chat/Circle */}
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" data-lov-name="NewChatButton">
+                    <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       New Chat
                     </Button>

@@ -44,6 +44,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query'],
     alias: {
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       "@": path.resolve(__dirname, "./src"),
       // Add Node.js polyfills for browser
       buffer: 'buffer',
@@ -66,6 +68,9 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
       'buffer',
       'crypto-browserify',
       'stream-browserify',
