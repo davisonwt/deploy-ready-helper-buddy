@@ -42,10 +42,8 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
   resolve: {
-    dedupe: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query'],
+    dedupe: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react-router-dom', '@tanstack/react-query'],
     alias: {
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       "@": path.resolve(__dirname, "./src"),
       // Add Node.js polyfills for browser
       buffer: 'buffer',
