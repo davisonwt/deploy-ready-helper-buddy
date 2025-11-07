@@ -10,6 +10,8 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import "./index.css";
+import React from "react";
+import * as ReactDOMPkg from "react-dom";
 
 // Global error handling
 window.addEventListener('error', (event) => {
@@ -55,6 +57,17 @@ logInfo('Application starting', {
   userAgent: navigator.userAgent,
   timestamp: new Date().toISOString(),
 });
+
+// Version sanity check (detect multiple React copies)
+try {
+  console.groupCollapsed('Version Check');
+  // @ts-ignore - React.version exists at runtime
+  console.log('React version:', (React as any).version);
+  console.log('React DOM version:', (ReactDOMPkg as any).version);
+  console.groupEnd();
+} catch (e) {
+  console.warn('Version check failed', e);
+}
 
 // Register service worker for PWA functionality with update handling
 if ('serviceWorker' in navigator) {
