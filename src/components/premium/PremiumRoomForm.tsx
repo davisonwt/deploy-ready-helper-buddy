@@ -51,6 +51,38 @@ export const PremiumRoomForm = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // Upload helpers - store files in Supabase Storage so they work for everyone
+  const sanitizeName = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+  const uploadFiles = async (type: 'documents' | 'artwork' | 'music', files: FileList) => {
+    const folder = type === 'music' ? 'music' : type === 'documents' ? 'docs' : 'art';
+    const userId = user?.id || 'anonymous';
+
+    const results: FileItem[] = [];
+    for (const file of Array.from(files)) {
+      const filename = `${userId}/${folder}/${Date.now()}-${sanitizeName(file.name)}`;
+      const { error: uploadError } = await supabase.storage
+        .from('premium-room')
+        .upload(filename, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+      if (uploadError) {
+        console.error('Upload failed:', uploadError);
+        toast({ variant: 'destructive', title: 'Upload failed', description: uploadError.message });
+        continue;
+      }
+      const { data: pub } = supabase.storage.from('premium-room').getPublicUrl(filename);
+      results.push({
+        id: Math.random().toString(36).substr(2, 9),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: pub.publicUrl,
+        price: 0,
+        storagePath: filename,
+      });
+    }
+    return results;
+  };
+
   const createPremiumRoom = async (roomData: FormData) => {
     const { data, error } = await supabase
       .from('premium_rooms')
