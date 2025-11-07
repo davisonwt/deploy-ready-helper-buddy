@@ -1,4 +1,24 @@
 import React from 'react';
+// Module-level diagnostics — runs before any hooks
+// eslint-disable-next-line no-console
+console.log('🎯 PREMIUM_ROOMS_MODULE_LOADED');
+// eslint-disable-next-line no-console
+console.log('React version from import:', React.version);
+// @ts-ignore - window.React may exist if another copy exposed itself
+if (typeof window !== 'undefined') {
+  const w: any = window as any;
+  if (w.React) {
+    // eslint-disable-next-line no-console
+    console.log('🚨 MULTIPLE REACT INSTANCES DETECTED!');
+    // eslint-disable-next-line no-console
+    console.log('Window React version:', w.React.version);
+  }
+  const devtools = w.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+  if (devtools?.renderers) {
+    // eslint-disable-next-line no-console
+    console.log('React renderers count:', devtools.renderers.size);
+  }
+}
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
