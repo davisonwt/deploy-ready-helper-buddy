@@ -259,7 +259,13 @@ const PremiumRoomViewPage: React.FC = () => {
             {hasAccess && (
               <Badge variant="outline" className="mt-2">Access Granted</Badge>
             )}
-          </div>
+           </div>
+          
+          {isCreator && (
+            <Button asChild variant="outline" className="ml-4">
+              <Link to={`/premium-room/${room.id}/edit`}>Edit Room</Link>
+            </Button>
+          )}
         </div>
       </div>
 

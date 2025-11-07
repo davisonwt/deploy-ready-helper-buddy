@@ -40,6 +40,7 @@ import MyOrchardsPage from "./pages/MyOrchardsPage";
 import BasketPage from "./pages/BasketPage";
 import EditOrchardPage from "./pages/EditOrchardPage";
 import PremiumRoomViewPage from "./pages/PremiumRoomViewPage";
+import EditPremiumRoomPage from "./pages/EditPremiumRoomPage";
 
 // Lazy load secondary pages for better performance
 const AnimatedOrchardPage = lazy(() => import("./pages/AnimatedOrchardPage"));
@@ -328,6 +329,14 @@ const App = () => (
                  <ProtectedRoute>
                    <Layout>
                      <PremiumRoomViewPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
+               
+               <Route path="/premium-room/:id/edit" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <EditPremiumRoomPage />
                    </Layout>
                  </ProtectedRoute>
                } />
