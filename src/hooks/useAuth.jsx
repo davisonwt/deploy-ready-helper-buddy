@@ -11,12 +11,56 @@ export const useAuth = () => {
   return context
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = React.useState(null)
-  const [session, setSession] = React.useState(null)
-  const [loading, setLoading] = React.useState(true)
+export class AuthProviderClass extends React.Component {
+  state = {
+    user: null,
+    session: null,
+    loading: true,
+  }
+  _isMounted = false
+  _authSub = null
 
-  const fetchUserProfile = async (authUser) => {
+  async componentDidMount() {
+    this._isMounted = true
+
+    const safeSetState = (patch) => {
+      if (this._isMounted) this.setState(patch)
+    }
+
+    // Auth state changes (sync updates + async profile fetch)
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+        safeSetState({ session: sess, loading: false })
+        if (sess?.user) {
+          safeSetState({ user: sess.user })
+          // Defer profile enrichment to next tick
+          setTimeout(() => this.safeFetchProfile(sess.user), 0)
+        } else {
+          safeSetState({ user: null })
+        }
+      })
+      this._authSub = subscription
+    } catch (e) {
+      console.error('Auth onAuthStateChange failed:', e)
+    }
+
+    // Initial session
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      safeSetState({ session, loading: false })
+      if (session?.user) await this.safeFetchProfile(session.user)
+    } catch (e) {
+      console.error('Auth init failed:', e)
+      safeSetState({ loading: false, user: null })
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false
+    try { this._authSub?.unsubscribe() } catch {}
+  }
+
+  fetchUserProfile = async (authUser) => {
     if (!authUser) return null
     try {
       const { data: profile } = await supabase
@@ -38,56 +82,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const safeFetchProfile = async (authUser) => {
+  safeFetchProfile = async (authUser) => {
     try {
-      const full = await fetchUserProfile(authUser)
-      setUser(full || authUser)
+      const full = await this.fetchUserProfile(authUser)
+      if (this._isMounted) this.setState({ user: full || authUser })
     } catch (e) {
       console.error('Profile fetch error:', e)
-      setUser(authUser)
+      if (this._isMounted) this.setState({ user: authUser })
     }
   }
 
-  React.useEffect(() => {
-    let isMounted = true
-
-    // 1) Auth state listener (SYNC only; defer async work)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
-      if (!isMounted) return
-      setSession(sess)
-      setLoading(false)
-
-      if (sess?.user) {
-        setUser(sess.user)
-        setTimeout(() => safeFetchProfile(sess.user), 0)
-      } else {
-        setUser(null)
-      }
-    })
-
-    // 2) Initial session
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        if (!isMounted) return
-        setSession(session)
-        setLoading(false)
-        if (session?.user) safeFetchProfile(session.user)
-      })
-      .catch((e) => {
-        console.error('Auth init failed:', e)
-        if (isMounted) {
-          setLoading(false)
-          setUser(null)
-        }
-      })
-
-    return () => {
-      isMounted = false
-      try { subscription.unsubscribe() } catch {}
-    }
-  }, [])
-
-  const login = async (email, password) => {
+  login = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return { success: false, error: error.message }
@@ -97,7 +102,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const register = async (userData) => {
+  register = async (userData) => {
     try {
       const currentDomain = window.location.origin
       const { data, error } = await supabase.auth.signUp({
@@ -124,7 +129,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const loginAnonymously = async () => {
+  loginAnonymously = async () => {
     try {
       const { data, error } = await supabase.auth.signInAnonymously()
       if (error) return { success: false, error: error.message }
@@ -134,7 +139,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const logout = async () => {
+  logout = async () => {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) console.error('Logout error:', error)
@@ -143,7 +148,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const resetPassword = async (email) => {
+  resetPassword = async (email) => {
     try {
       const redirectTo = `${window.location.origin}/login?reset=true`
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
@@ -156,9 +161,9 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const updateProfile = async (profileData) => {
+  updateProfile = async (profileData) => {
     try {
-      const currentUser = user
+      const currentUser = this.state.user
       if (!currentUser?.id) return { success: false, error: 'User not authenticated' }
 
       const validFields = {
@@ -191,7 +196,7 @@ export function AuthProvider({ children }) {
       if (error) return { success: false, error: error.message }
 
       const updatedUser = { ...currentUser, ...data }
-      setUser(updatedUser)
+      if (this._isMounted) this.setState({ user: updatedUser })
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { user: updatedUser, timestamp: Date.now() } }))
       }, 300)
@@ -201,22 +206,28 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const value = {
-    user,
-    session,
-    loading,
-    login,
-    register,
-    loginAnonymously,
-    logout,
-    resetPassword,
-    updateProfile,
-    isAuthenticated: !!session && !!user,
-  }
+  render() {
+    const value = {
+      user: this.state.user,
+      session: this.state.session,
+      loading: this.state.loading,
+      login: this.login,
+      register: this.register,
+      loginAnonymously: this.loginAnonymously,
+      logout: this.logout,
+      resetPassword: this.resetPassword,
+      updateProfile: this.updateProfile,
+      isAuthenticated: !!this.state.session && !!this.state.user,
+    }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+    return (
+      <AuthContext.Provider value={value}>
+        {this.props.children}
+      </AuthContext.Provider>
+    )
+  }
+}
+
+export function AuthProvider({ children }) {
+  return <AuthProviderClass>{children}</AuthProviderClass>
 }
