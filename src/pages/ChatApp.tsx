@@ -1,4 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+// Module-level diagnostics for React instance detection
+// eslint-disable-next-line no-console
+console.log('🎯 CHATAPP_MODULE_LOADED');
+// eslint-disable-next-line no-console
+console.log('ChatApp - React version:', React.version);
+// @ts-ignore
+if (typeof window !== 'undefined') {
+  const w: any = window as any;
+  if (w.React) {
+    // eslint-disable-next-line no-console
+    console.log('🚨 MULTIPLE REACT INSTANCES IN CHATAPP!');
+    // eslint-disable-next-line no-console
+    console.log('Window React version:', w.React.version);
+  }
+}
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
