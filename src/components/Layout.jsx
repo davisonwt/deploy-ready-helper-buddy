@@ -1,7 +1,7 @@
+import React, { useState, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
-import { useState, useMemo, memo } from 'react'
 import { useUserRoles } from "../hooks/useUserRoles"
 import { 
   Sprout, 
