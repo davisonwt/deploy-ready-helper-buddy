@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, memo } from "react"
+import { useMemo, memo } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
-import { supabase } from "@/integrations/supabase/client"
+import { useUserRoles } from "../hooks/useUserRoles"
 
 const AuthProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -27,52 +27,11 @@ const AuthProtectedRoute = memo(({ children }) => {
 })
 
 const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
-  const { isAuthenticated, loading: authLoading, user } = useAuth()
-  
-  // Stabilize userId to prevent cascading re-renders
-  const userId = useMemo(() => user?.id, [user?.id])
-  
-  const [userRoles, setUserRoles] = useState([])
-  const [rolesLoading, setRolesLoading] = useState(true)
+  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { hasRole, loading: rolesLoading } = useUserRoles()
 
-  // Local role fetch to avoid cross-hook issues
-  useEffect(() => {
-    let active = true
-    const loadRoles = async () => {
-      if (!userId) { 
-        if (active) { 
-          setUserRoles([])
-          setRolesLoading(false)
-        }
-        return 
-      }
-      try {
-        setRolesLoading(true)
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-        if (error) throw error
-        if (active) setUserRoles((data || []).map(r => r.role))
-      } catch (e) {
-        console.error('RoleProtectedRoute: roles fetch failed', e)
-        if (active) setUserRoles([])
-      } finally {
-        if (active) setRolesLoading(false)
-      }
-    }
-    loadRoles()
-    return () => { active = false }
-  }, [userId])
-
-  // Memoize role check function
-  const hasRole = useMemo(
-    () => (role) => userRoles.includes(role),
-    [userRoles]
-  )
-
-  // Only show loading if we're still fetching and there's a user
-  if (authLoading || (userId && rolesLoading)) {
+  // Only show loading if still fetching
+  if (authLoading || rolesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
