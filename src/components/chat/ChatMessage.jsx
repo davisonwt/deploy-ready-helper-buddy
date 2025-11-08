@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import FilePreview from './FilePreview';
 import { VerificationButton } from './VerificationButton';
 import { CredentialVerificationForm } from './CredentialVerificationForm';
+import { PurchaseDeliveryMessage } from './PurchaseDeliveryMessage';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -24,6 +25,18 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
   const isVerificationMessage = message.system_metadata?.type === 'verification';
   const isCredentialVerification = message.system_metadata?.type === 'credential_verification';
   const isVerified = message.system_metadata?.verified;
+  
+  // Purchase delivery or free download system message
+  if (message.message_type === 'purchase_delivery' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <PurchaseDeliveryMessage metadata={message.system_metadata} />
+        </div>
+      </div>
+    );
+  }
+  
   
   // Generate a consistent pastel color for each user based on their ID
   const getPastelColor = (userId) => {
@@ -159,7 +172,6 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
                         userColor.bg.includes('violet') ? '#8b5cf6' : '#6b7280'
           }}
         >
-          {console.log('Rendering message with color:', userColor, 'for user:', message.sender_id)}
           {message.content && (
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}

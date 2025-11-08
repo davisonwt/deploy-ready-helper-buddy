@@ -7,18 +7,27 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface PurchaseDeliveryMessageProps {
   metadata: {
+    type?: 'purchase_delivery' | 'free_download';
     file_url: string;
     file_name: string;
-    file_size: number;
-    price_paid: number;
-    media_type: 'doc' | 'art' | 'music';
-    purchase_id: string;
-    expires_at: string;
+    file_size?: number;
+    price_paid?: number;
+    media_type?: 'doc' | 'art' | 'music';
+    purchase_id?: string;
+    expires_at?: string;
   };
 }
 
 export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessageProps) {
-  const { file_url, file_name, file_size, price_paid, media_type, expires_at } = metadata;
+  const {
+    type,
+    file_url,
+    file_name,
+    file_size,
+    price_paid,
+    media_type,
+    expires_at,
+  } = metadata || ({} as any);
 
   const getMediaIcon = () => {
     switch (media_type) {
@@ -33,8 +42,11 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
     }
   };
 
-  const isExpired = new Date(expires_at) < new Date();
-  const expiresIn = formatDistanceToNow(new Date(expires_at), { addSuffix: true });
+  const hasExpiry = !!expires_at;
+  const isExpired = hasExpiry ? new Date(expires_at!) < new Date() : false;
+  const expiresIn = hasExpiry ? formatDistanceToNow(new Date(expires_at!), { addSuffix: true }) : '';
+
+  const isFree = type === 'free_download' || typeof price_paid !== 'number';
 
   return (
     <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
@@ -51,19 +63,25 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant="secondary" className="bg-emerald-600 text-white">
-                  Purchase Complete
+                  {isFree ? 'Free Download' : 'Purchase Complete'}
                 </Badge>
-                <span className="text-xs text-muted-foreground">${price_paid.toFixed(2)}</span>
+                {!isFree && typeof price_paid === 'number' && (
+                  <span className="text-xs text-muted-foreground">${price_paid.toFixed(2)}</span>
+                )}
               </div>
               <p className="font-semibold text-sm">{file_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {(file_size / 1024 / 1024).toFixed(2)} MB • {media_type.toUpperCase()}
-              </p>
+              {(file_size || media_type) && (
+                <p className="text-xs text-muted-foreground">
+                  {file_size ? `${(file_size / 1024 / 1024).toFixed(2)} MB` : ''}
+                  {file_size && media_type ? ' • ' : ''}
+                  {media_type ? media_type.toUpperCase() : ''}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Expiry Warning */}
-          {!isExpired && (
+          {hasExpiry && !isExpired && (
             <div className="flex items-center gap-2 text-xs">
               <Clock className="h-3 w-3 text-amber-500" />
               <span className="text-muted-foreground">
@@ -98,7 +116,9 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
           {/* Info */}
           <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <p className="text-xs text-blue-600 dark:text-blue-400">
-              💡 This file is private and only accessible by you. Download it before it expires!
+              {isFree
+                ? '💡 This free file was delivered to you privately. Download it before it expires.'
+                : '💡 This file is private and only accessible by you. Download it before it expires!'}
             </p>
           </div>
         </div>
