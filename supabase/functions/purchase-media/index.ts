@@ -84,10 +84,22 @@ serve(async (req) => {
 
     if (purchaseError) throw purchaseError;
 
-    // Get or create direct chat room between buyer and seller
+    // Get s2g admin user
+    const { data: adminUser } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .or('role.eq.gosat,role.eq.admin')
+      .limit(1)
+      .single();
+
+    if (!adminUser) {
+      throw new Error('Admin not found for delivery');
+    }
+
+    // Get or create direct chat room between buyer and admin
     const { data: roomId, error: roomError } = await supabase.rpc('get_or_create_direct_room', {
       user1_id: user.id,
-      user2_id: media.uploader_id,
+      user2_id: adminUser.user_id,
     });
 
     if (roomError || !roomId) {
