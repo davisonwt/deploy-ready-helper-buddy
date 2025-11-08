@@ -137,22 +137,39 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
     }
 
     try {
-      // Get s2g admin user
-      const { data: adminUser } = await supabase
+      // Prefer a dedicated s2g admin: pick a 'gosat' role, excluding current user and uploader
+      let adminUserId: string | null = null;
+      const { data: gosatAdmins } = await supabase
         .from('user_roles')
         .select('user_id')
-        .or('role.eq.gosat,role.eq.admin')
-        .limit(1)
-        .single();
+        .eq('role', 'gosat')
+        .neq('user_id', user.id)
+        .neq('user_id', item.uploader_id)
+        .limit(1);
 
-      if (!adminUser) {
+      if (gosatAdmins && gosatAdmins.length > 0) {
+        adminUserId = gosatAdmins[0].user_id;
+      } else {
+        const { data: admins } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin')
+          .neq('user_id', user.id)
+          .neq('user_id', item.uploader_id)
+          .limit(1);
+        if (admins && admins.length > 0) {
+          adminUserId = admins[0].user_id;
+        }
+      }
+
+      if (!adminUserId) {
         throw new Error('Admin not found');
       }
 
       // Get or create direct chat room with admin
       const { data: roomData, error: roomError } = await supabase.rpc('get_or_create_direct_room', {
         user1_id: user.id,
-        user2_id: adminUser.user_id,
+        user2_id: adminUserId,
       });
 
       if (roomError || !roomData) {

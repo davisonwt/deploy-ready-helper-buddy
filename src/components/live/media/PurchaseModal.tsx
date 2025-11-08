@@ -104,7 +104,7 @@ export function PurchaseModal({ open, onOpenChange, mediaItem, onPurchaseComplet
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
                 <MessageSquare className="h-4 w-4 mt-0.5 text-blue-500" />
-                <span>File delivered to your 1-on-1 chat with the seller</span>
+                <span>File delivered to your 1-on-1 chat with the s2g admin</span>
               </div>
               <div className="flex items-start gap-2">
                 <Download className="h-4 w-4 mt-0.5 text-emerald-500" />
