@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Trash2, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,8 +20,13 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  const isOwner = user?.id === product.sowers?.user_id;
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -62,6 +69,34 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
   const handleBestow = () => {
     addToBasket(product);
     toast.success('Added to basket!');
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', product.id);
+
+      if (error) throw error;
+
+      toast.success('Product deleted successfully');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/products/edit/${product.id}`);
   };
 
   return (
@@ -153,24 +188,57 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              {product.license_type === 'bestowal' ? (
-                <Button
-                  onClick={handleBestow}
-                  className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Bestow ${product.price}
-                </Button>
+              {isOwner ? (
+                <>
+                  <Button
+                    onClick={handleEdit}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    variant="destructive"
+                    className="flex-1"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </>
+                    )}
+                  </Button>
+                </>
               ) : (
-                <Button
-                  onClick={handleDownload}
-                  disabled={downloading}
-                  variant="secondary"
-                  className="flex-1"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {downloading ? 'Downloading...' : 'Free Download'}
-                </Button>
+                <>
+                  {product.license_type === 'bestowal' ? (
+                    <Button
+                      onClick={handleBestow}
+                      className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Bestow ${product.price}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleDownload}
+                      disabled={downloading}
+                      variant="secondary"
+                      className="flex-1"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {downloading ? 'Downloading...' : 'Free Download'}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </div>
