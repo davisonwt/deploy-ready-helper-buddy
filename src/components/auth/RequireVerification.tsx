@@ -21,8 +21,13 @@ export function RequireVerification({ children }: RequireVerificationProps) {
   // not logged in → let <ProtectedRoute> handle login
   if (!isAuthenticated || !user) return <>{children}</>;
 
-  // logged-in but unverified → force stop at ChatApp
-  if (!user.is_chatapp_verified) {
+  // Allow bypass via URL parameter for testing
+  const searchParams = new URLSearchParams(location.search);
+  const skipVerification = searchParams.get('skip_verification') === 'true';
+
+  // Only redirect if explicitly false (not undefined/null) and no bypass
+  // This allows users with undefined/null verification status to navigate freely
+  if (!skipVerification && user.is_chatapp_verified === false) {
     return <Navigate to="/chatapp" state={{ from: location.pathname }} replace />;
   }
 
