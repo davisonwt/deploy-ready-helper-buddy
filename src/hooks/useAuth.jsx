@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react'
 import { supabase } from "@/integrations/supabase/client"
+import { logError, logInfo, logWarn } from "@/lib/logging"
 
 // Minimal, resilient Auth context that avoids React hooks inside providers
 // to prevent "dispatcher is null" when multiple React copies are bundled.
@@ -19,13 +20,26 @@ export class AuthProviderClass extends React.Component {
   }
   _isMounted = false
   _authSub = null
+  _loadingTimeout = null
+  _initStart = 0
 
   async componentDidMount() {
     this._isMounted = true
+    this._initStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
 
     const safeSetState = (patch) => {
       if (this._isMounted) this.setState(patch)
     }
+
+    // Set a hard timeout for auth loading
+    try {
+      this._loadingTimeout = setTimeout(() => {
+        if (this.state.loading) {
+          logWarn('Auth loading exceeded timeout, attempting recovery')
+          this.reinitializeAuth()
+        }
+      }, 10000)
+    } catch {}
 
     // Auth state changes (sync updates + async profile fetch)
     try {
@@ -41,16 +55,18 @@ export class AuthProviderClass extends React.Component {
       })
       this._authSub = subscription
     } catch (e) {
-      console.error('Auth onAuthStateChange failed:', e)
+      logError('Auth onAuthStateChange failed', { message: e.message, stack: e.stack })
     }
 
-    // Initial session
+    // Initial session with retry
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
       safeSetState({ session, loading: false })
       if (session?.user) await this.safeFetchProfile(session.user)
+      const end = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+      logInfo('Auth initialization complete', { durationMs: end - this._initStart })
     } catch (e) {
-      console.error('Auth init failed:', e)
+      logError('Auth init failed', { message: e.message, stack: e.stack })
       safeSetState({ loading: false, user: null })
     }
   }
@@ -58,8 +74,8 @@ export class AuthProviderClass extends React.Component {
   componentWillUnmount() {
     this._isMounted = false
     try { this._authSub?.unsubscribe() } catch {}
+    try { clearTimeout(this._loadingTimeout) } catch {}
   }
-
   fetchUserProfile = async (authUser) => {
     if (!authUser) return null
     try {
@@ -94,7 +110,7 @@ export class AuthProviderClass extends React.Component {
 
   login = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await this.withRetry(() => supabase.auth.signInWithPassword({ email, password }))
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
     } catch (e) {
@@ -105,7 +121,7 @@ export class AuthProviderClass extends React.Component {
   register = async (userData) => {
     try {
       const currentDomain = window.location.origin
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await this.withRetry(() => supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
@@ -121,7 +137,7 @@ export class AuthProviderClass extends React.Component {
             username: userData.username || userData.email?.split('@')[0]
           }
         }
-      })
+      }))
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
     } catch (e) {
@@ -131,7 +147,7 @@ export class AuthProviderClass extends React.Component {
 
   loginAnonymously = async () => {
     try {
-      const { data, error } = await supabase.auth.signInAnonymously()
+      const { data, error } = await this.withRetry(() => supabase.auth.signInAnonymously())
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
     } catch (e) {
@@ -145,17 +161,17 @@ export class AuthProviderClass extends React.Component {
       if (typeof window !== 'undefined' && window.clearRoleCache) {
         window.clearRoleCache()
       }
-      const { error } = await supabase.auth.signOut()
-      if (error) console.error('Logout error:', error)
+      const { error } = await this.withRetry(() => supabase.auth.signOut())
+      if (error) logError('Logout error', { message: error.message })
     } catch (e) {
-      console.error('Logout error:', e)
+      logError('Logout error', { message: e.message, stack: e.stack })
     }
   }
 
   resetPassword = async (email) => {
     try {
       const redirectTo = `${window.location.origin}/login?reset=true`
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      const { error } = await this.withRetry(() => supabase.auth.resetPasswordForEmail(email, { redirectTo }))
       if (error) {
         return { success: true, message: "If an account exists with that email, you will receive a reset link." }
       }
@@ -210,6 +226,43 @@ export class AuthProviderClass extends React.Component {
     }
   }
 
+  // Generic retry helper with exponential backoff
+  withRetry = async (fn, opts = {}) => {
+    const { retries = 2, delay = 300, factor = 2 } = opts
+    let attempt = 0
+    let lastErr
+    while (attempt <= retries) {
+      try {
+        return await fn()
+      } catch (err) {
+        lastErr = err
+        if (attempt === retries) break
+        await new Promise(res => setTimeout(res, delay * Math.pow(factor, attempt)))
+        attempt++
+      }
+    }
+    throw lastErr
+  }
+
+  // Reinitialize auth state and listeners safely
+  reinitializeAuth = async () => {
+    try { this._authSub?.unsubscribe() } catch {}
+    this.setState({ loading: true })
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+        if (this._isMounted) this.setState({ session: sess, user: sess?.user || null, loading: false })
+        if (sess?.user) setTimeout(() => this.safeFetchProfile(sess.user), 0)
+      })
+      this._authSub = subscription
+
+      const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
+      if (this._isMounted) this.setState({ session, user: session?.user || null, loading: false })
+    } catch (e) {
+      logError('Auth reinitialization failed', { message: e.message, stack: e.stack })
+      if (this._isMounted) this.setState({ loading: false })
+    }
+  }
+
   render() {
     const value = {
       user: this.state.user,
@@ -222,6 +275,8 @@ export class AuthProviderClass extends React.Component {
       resetPassword: this.resetPassword,
       updateProfile: this.updateProfile,
       isAuthenticated: !!this.state.session && !!this.state.user,
+      // expose recovery for debug tooling
+      reinitializeAuth: this.reinitializeAuth,
     }
 
     return (

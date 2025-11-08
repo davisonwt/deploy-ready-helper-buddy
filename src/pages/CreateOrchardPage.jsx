@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import CurrencyCalculator from "../components/CurrencyCalculator"
 import CourierCostCalculator from "../components/CourierCostCalculator"
+import { useNavigationProtection } from "../hooks/useNavigationProtection"
 
 export default function CreateOrchardPage({ isEdit = false }) {
   const { id } = useParams()
