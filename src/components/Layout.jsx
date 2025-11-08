@@ -81,12 +81,24 @@ const Layout = ({ children }) => {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
-    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' }, className: 'chatapp-tour' }
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' }
   ]
 
   // Grouped navigation (dropdowns)
   const groupedNavigation = [
+    {
+      name: "ChatApp",
+      icon: MessageSquare,
+      color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
+      className: 'chatapp-tour',
+      items: [
+        { name: "Grove Feed", href: "/grove-feed", icon: Sprout, badge: "NEW" },
+        { name: "Chats", href: "/communications-hub", icon: MessageSquare },
+        { name: "Premium Rooms", href: "/premium-rooms", icon: Crown },
+        { name: "Heretics Radio", href: "/grove-station", icon: Radio },
+        { name: "Live Sessions", href: "/live-rooms", icon: Users }
+      ]
+    },
     {
       name: "My Content",
       icon: User,
@@ -98,19 +110,6 @@ const Layout = ({ children }) => {
         { name: "My Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
-      ]
-    },
-    {
-      name: "Grove",
-      icon: Sprout,
-      color: { bg: '#a8e6cf', border: '#22c55e', text: '#1e293b' },
-      className: 'grove-tour',
-      items: [
-        { name: "Grove Feed", href: "/grove-feed", icon: Sprout, badge: "NEW" },
-        { name: "Chats", href: "/communications-hub", icon: MessageSquare },
-        { name: "Premium Rooms", href: "/premium-rooms", icon: Crown },
-        { name: "Heretics Radio", href: "/grove-station", icon: Radio },
-        { name: "Live Sessions", href: "/live-rooms", icon: Users }
       ]
     },
     {
