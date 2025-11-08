@@ -302,17 +302,21 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
             {/* Messages Area */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {messages.map((msg) => (
-                  <ChatMessage
-                    key={msg.id}
-                    message={msg}
-                    currentUserId={user?.id}
-                    onDelete={async (id) => {
-                      await supabase.from('chat_messages').delete().eq('id', id);
-                      setMessages(prev => prev.filter(m => m.id !== id));
-                    }}
-                  />
-                ))}
+                {messages.map((msg) => {
+                  const isOwn = msg.sender_id === user?.id;
+                  return (
+                    <ChatMessage
+                      key={msg.id}
+                      message={msg}
+                      isOwn={isOwn}
+                      onDelete={isOwn ? async (id) => {
+                        await supabase.from('chat_messages').delete().eq('id', id);
+                        setMessages(prev => prev.filter(m => m.id !== id));
+                        toast.success('Message deleted');
+                      } : undefined}
+                    />
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
