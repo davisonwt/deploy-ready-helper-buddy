@@ -492,7 +492,7 @@ const PremiumRoomViewPage: React.FC = () => {
                           <Button
                             size="sm"
                             variant={playingTrack === track.id ? "default" : "outline"}
-                            onClick={() => handlePlayTrack(track)}
+                            onClick={() => { console.log('🖱️ [AUDIO_CLICK]', { trackId: track.id, name: track.name }); handlePlayTrack(track); }}
                             disabled={!hasAccess && !purchasedItems.has(track.id) && track.price > 0}
                           >
                             {playingTrack === track.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

@@ -200,6 +200,9 @@ const Layout = memo(({ children }) => {
                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
                     }}
+                    onClick={() => {
+                      console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname });
+                    }}
                   >
                     <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
                     <span className="truncate text-center leading-tight">{item.name}</span>
@@ -249,20 +252,22 @@ const Layout = memo(({ children }) => {
                       {group.items.map((item) => {
                         const ItemIcon = item.icon
                         return (
-                          <DropdownMenuItem key={item.name} asChild>
-                            <Link
-                              to={item.href}
-                              className={`flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer
+                          <DropdownMenuItem 
+                            key={item.name}
+                            className={`flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer
                                 ${isActive(item.href) 
                                   ? 'bg-accent text-accent-foreground font-medium' 
                                   : 'hover:bg-accent hover:text-accent-foreground'
                                 }
                               `}
-                              // Standard React Router navigation
-                            >
-                              <ItemIcon className="h-4 w-4" />
-                              <span>{item.name}</span>
-                            </Link>
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              console.log('🧭 [NAV_SELECT]', { to: item.href, from: location.pathname });
+                              navigate(item.href);
+                            }}
+                          >
+                            <ItemIcon className="h-4 w-4" />
+                            <span>{item.name}</span>
                           </DropdownMenuItem>
                         )
                       })}
@@ -356,7 +361,10 @@ const Layout = memo(({ children }) => {
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:text-primary hover:bg-accent"
                     }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => { 
+                      console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname, mobile: true });
+                      setIsMobileMenuOpen(false);
+                    }}
                   >
                     <Icon className="h-5 w-5" />
                     <span>{item.name}</span>
