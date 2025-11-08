@@ -239,39 +239,30 @@ export default function MyOrchardsPage() {
       
       {/* Content */}
       <div className="relative z-10">
-      {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-        <div className="flex items-center justify-between space-x-6">
-          <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-my shadow-lg">
-              {user?.profile_picture ? (
-                <img 
-                  src={user.profile_picture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-my to-nav-my/80 flex items-center justify-center">
-                  <User className="h-10 w-10 text-orange-700" />
-                </div>
-              )}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-                color: 'hsl(30, 100%, 50%)', 
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-              }}>
-                My Orchards
-              </h1>
-              <p className="text-lg" style={{ color: 'hsl(30, 100%, 50%)' }}>
-                Manage and track your growing orchards
-              </p>
-              <p className="text-sm mt-1" style={{ color: 'hsl(30, 100%, 50%)' }}>
-                Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
-              </p>
-            </div>
-          </div>
+      {/* Hero Section */}
+      <div className="max-w-4xl mx-auto text-center py-12 px-4 mb-8">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <TreePine className="h-12 w-12 text-green-600" />
+          <h1 className="text-4xl md:text-5xl font-bold">
+            <span className="text-green-600">My</span>{" "}
+            <span className="text-lime-500">Orchards</span>
+          </h1>
         </div>
+        <p className="text-lg text-muted-foreground mb-6">
+          Manage and track your growing orchards
+        </p>
+        <p className="text-sm text-muted-foreground mb-8">
+          Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
+        </p>
+        <Link to="/create-orchard">
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-green-500 to-lime-400 hover:from-green-600 hover:to-lime-500 text-white font-semibold shadow-lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Sow New Seed
+          </Button>
+        </Link>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -316,15 +307,6 @@ export default function MyOrchardsPage() {
           </Card>
         </div>
 
-        {/* Call to Action */}
-        <div className="mb-8 text-center">
-          <Link to="/create-orchard">
-            <Button className="px-8 py-3 text-lg font-semibold text-green-800 border-2 border-green-700 hover:bg-lime-400 shadow-lg" style={{ backgroundColor: '#84CC16' }}>
-              <Plus className="h-5 w-5 mr-2" />
-              Sow a New Seed
-            </Button>
-          </Link>
-        </div>
 
         {/* Filters */}
         <div className="mb-8">
