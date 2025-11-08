@@ -54,7 +54,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
           .from('chat_messages')
           .select(`
             *,
-            sender_profile:profiles!chat_messages_sender_id_fkey(
+            sender_profile:profiles!sender_id(
               user_id, display_name, avatar_url
             )
           `)
