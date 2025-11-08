@@ -98,6 +98,7 @@ import { CallManagerProvider } from '@/hooks/useCallManager';
 import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
 import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
+import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -120,6 +121,7 @@ const App = () => (
             <TooltipProvider>
               <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
                 <NavigationMonitor />
+                <DeadLinkDetector />
                 <Toaster />
                 <Sonner />
                 <AudioUnlocker />
