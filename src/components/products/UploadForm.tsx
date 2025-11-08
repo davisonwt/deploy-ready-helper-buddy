@@ -116,7 +116,7 @@ export default function UploadForm() {
       if (productError) throw productError;
 
       toast.success('Product uploaded successfully!');
-      navigate('/products');
+      navigate('/my-products');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Upload failed');
