@@ -98,11 +98,11 @@ export function PurchaseDeliveryMessage({ metadata, messageId, onDelete }: Purch
   const isFree = type === 'free_download' || typeof price_paid !== 'number';
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
+    <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 animate-fade-in">
       {/* S2G Gosat System Badge */}
       <div className="flex items-center justify-center gap-2 mb-3 pb-3 border-b border-emerald-500/20">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white shadow-sm">
-          <ShieldCheck className="h-4 w-4" />
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white shadow-lg animate-pulse">
+          <ShieldCheck className="h-4 w-4 animate-[pulse_2s_ease-in-out_infinite]" />
           <span className="text-xs font-semibold">s2g gosat System Delivery</span>
         </div>
       </div>
