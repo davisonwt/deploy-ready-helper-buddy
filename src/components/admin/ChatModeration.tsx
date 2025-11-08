@@ -48,14 +48,14 @@ const ChatModeration = ({ roomId }: ChatModerationProps) => {
         .from('chat_messages')
         .select(`
           *,
-          sender_profile:profiles!chat_messages_sender_id_fkey(
+          sender_profile:profiles!sender_id(
             user_id,
             display_name,
             avatar_url,
             first_name,
             last_name
           ),
-          chat_rooms!chat_messages_room_id_fkey(
+          chat_rooms!room_id(
             name,
             room_type
           )
