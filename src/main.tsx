@@ -44,22 +44,18 @@ window.addEventListener('unhandledrejection', (event) => {
   });
 });
 
-// Performance monitoring
-if ('performance' in window && 'observe' in window.PerformanceObserver) {
-  const observer = new PerformanceObserver((list) => {
-    const entries = list.getEntries();
-    entries.forEach((entry) => {
-      if (entry.entryType === 'navigation') {
-        logInfo('Page load performance', {
-          loadTime: (entry as any).loadEventEnd - (entry as any).loadEventStart,
-          domContentLoaded: (entry as any).domContentLoadedEventEnd - (entry as any).domContentLoadedEventStart,
-          ttfb: (entry as any).responseStart - (entry as any).requestStart,
-        });
-      }
-    });
-  });
-  
-  observer.observe({ entryTypes: ['navigation'] });
+// Defer performance monitoring to avoid blocking
+if ('performance' in window && import.meta.env.DEV) {
+  setTimeout(() => {
+    const navTiming = performance.getEntriesByType('navigation')[0] as any;
+    if (navTiming) {
+      logInfo('⚡ Load Performance', {
+        'Total Load': `${Math.round(navTiming.loadEventEnd - navTiming.loadEventStart)}ms`,
+        'DOM Ready': `${Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart)}ms`,
+        'TTFB': `${Math.round(navTiming.responseStart - navTiming.requestStart)}ms`,
+      });
+    }
+  }, 1000);
 }
 
 // Query client is now imported from lib/queryPersistence.ts for better caching
@@ -82,103 +78,36 @@ try {
   console.warn('Version check failed', e);
 }
 
-// Register service worker for PWA functionality with update handling
+// Defer service worker registration to after critical path
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    // Allow permanent SW disable/enable via query flags
-    try {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('sw') === 'off') {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-        localStorage.setItem('sw:disabled', '1');
-        logInfo('Service workers disabled and caches cleared');
-        window.location.href = window.location.pathname; // drop query
-        return;
-      }
-      if (params.get('sw') === 'on') {
-        localStorage.removeItem('sw:disabled');
-        logInfo('Service workers re-enabled');
-        window.location.href = window.location.pathname;
-        return;
-      }
-    } catch {}
-
-    // If disabled, ensure unregistered and skip registration entirely
-    if (localStorage.getItem('sw:disabled') === '1') {
-      try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister()));
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-        logInfo('SW disabled: skipping registration');
-      } catch (e) {
-        logError('Failed disabling SW', { e });
-      }
-      return;
-    }
-
-    // Handle ?no-sw=1 - one-time unregister and clear caches
-    if (window.location.search.includes('no-sw=1')) {
-      try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(reg => reg.unregister()));
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-        logInfo('Service workers unregistered and caches cleared');
-        // Remove the parameter and reload once
-        if (!sessionStorage.getItem('sw-cleared')) {
-          sessionStorage.setItem('sw-cleared', '1');
-          window.location.href = window.location.pathname;
-        } else {
-          sessionStorage.removeItem('sw-cleared');
-        }
-      } catch (error) {
-        logError('Failed to clear service workers', { error });
-      }
-      return;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js?v=2025-10-30-03');
-      logInfo('Service worker registered', { registration });
-
-      // Check for updates on load
-      registration.update();
-
-      // Handle waiting service worker (new version available)
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-
-      // Listen for new service worker taking control
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          logInfo('New service worker activated, reloading...');
-          window.location.reload();
-        }
-      });
-
-      // Listen for updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        }
-      });
-    } catch (registrationError) {
-      logError('Service worker registration failed', { registrationError });
+  // Wait for page to fully load and become idle
+  window.addEventListener('load', () => {
+    // Use requestIdleCallback to defer SW registration
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => registerServiceWorker(), { timeout: 2000 });
+    } else {
+      setTimeout(registerServiceWorker, 2000);
     }
   });
+}
+
+async function registerServiceWorker() {
+  try {
+    // Check if SW is disabled
+    if (localStorage.getItem('sw:disabled') === '1') {
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08');
+    
+    // Only update if page is visible (don't interrupt user)
+    if (document.visibilityState === 'visible') {
+      registration.update();
+    }
+  } catch (error) {
+    // Silently fail - don't block app functionality
+    console.warn('Service worker registration skipped:', error.message);
+  }
 }
 
 const rootElement = document.getElementById("root");
