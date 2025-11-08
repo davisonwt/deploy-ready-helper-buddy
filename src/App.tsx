@@ -32,6 +32,7 @@ import RegisterPage from "./pages/RegisterPage";
 
 // DEFERRED LOADING: All other pages lazy loaded
 const ChatApp = lazy(() => import("./pages/ChatApp"));
+const CommunicationsHub = lazy(() => import("./pages/CommunicationsHub"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -317,32 +318,29 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              {/* ChatApp - Clean Organized Interface */}
+              {/* Communications Hub - Unified Interface */}
+              <Route path="/communications-hub" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CommunicationsHub />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* ChatApp - Redirect to Communications Hub */}
               <Route path="/chatapp" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <ChatApp />
-                  </Layout>
-                </ProtectedRoute>
+                <Navigate to="/communications-hub#chats" replace />
               } />
               
-              {/* Radio Slot Application */}
+              {/* Radio Slot Application - Redirect to Communications Hub */}
               <Route path="/radio-slot-application" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <RadioSlotApplicationPage />
-                  </Layout>
-                </ProtectedRoute>
+                <Navigate to="/communications-hub#radio" replace />
               } />
               
-              {/* Premium Rooms */}
+              {/* Premium Rooms - Redirect to Communications Hub */}
                <Route path="/premium-rooms" element={
-                 <ProtectedRoute>
-                   <Layout>
-                     <PremiumRoomsLanding />
-                   </Layout>
-                 </ProtectedRoute>
-               } />
+                <Navigate to="/communications-hub#premium" replace />
+              } />
                
                <Route path="/premium-room/:id" element={
                  <ProtectedRoute>
