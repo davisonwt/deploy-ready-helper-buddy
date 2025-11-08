@@ -10,7 +10,7 @@ export default function ProductBasketPage() {
         <Link to="/products">
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Products
+            Back to S2G Community Products
           </Button>
         </Link>
         <h1 className="text-4xl font-bold">Bestowal Basket</h1>

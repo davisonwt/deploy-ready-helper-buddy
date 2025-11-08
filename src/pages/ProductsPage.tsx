@@ -63,7 +63,7 @@ export default function ProductsPage() {
             className="text-center max-w-3xl mx-auto"
           >
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              Sow2Grow Marketplace
+              S2G Community Products
             </h1>
             <p className="text-muted-foreground text-lg">
               Discover amazing music, art, and digital content from our community of creators
