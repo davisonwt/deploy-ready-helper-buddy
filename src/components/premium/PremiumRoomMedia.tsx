@@ -137,7 +137,32 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
     }
 
     try {
-      // Get s2g gosat user (not admin or uploader)
+      // Check if current user is a gosat
+      const { data: currentUserRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      const isGosat = currentUserRoles?.some(r => r.role === 'gosat');
+
+      // If user is gosat, just download directly without delivery message
+      if (isGosat) {
+        const bucket = item.media_type === 'doc' ? 'live-session-docs' :
+                       item.media_type === 'art' ? 'live-session-art' :
+                       'live-session-music';
+
+        const { data: signedUrl } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(item.file_path, 2592000); // 30 days
+
+        if (signedUrl?.signedUrl) {
+          window.open(signedUrl.signedUrl, '_blank');
+          toast.success('File download started!');
+        }
+        return;
+      }
+
+      // For non-gosat users, find a gosat to deliver through
       let gosatUserId: string | null = null;
       const { data: gosatUsers } = await supabase
         .from('user_roles')
