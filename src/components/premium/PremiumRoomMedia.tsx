@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Music, FileText, Image as ImageIcon, Upload, Download,
-  DollarSign, Lock, Crown
+  DollarSign, Lock, Crown, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AudioSnippetPlayer } from '@/components/radio/AudioSnippetPlayer';
@@ -127,6 +127,39 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
     } catch (error: any) {
       console.error('Purchase error:', error);
       toast.error(error.message || 'Purchase failed');
+    }
+  };
+
+  const handleDelete = async (item: any) => {
+    if (!confirm('Are you sure you want to permanently delete this file? This cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // Delete from storage
+      const bucket = item.media_type === 'doc' ? 'live-session-docs' :
+                     item.media_type === 'art' ? 'live-session-art' :
+                     'live-session-music';
+
+      const { error: storageError } = await supabase.storage
+        .from(bucket)
+        .remove([item.file_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('live_session_media')
+        .delete()
+        .eq('id', item.id);
+
+      if (dbError) throw dbError;
+
+      toast.success('File deleted successfully');
+      fetchMedia();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(error.message || 'Failed to delete file');
     }
   };
 
@@ -340,20 +373,32 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
               </Button>
             )}
 
-            {isCreator && isOwner && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setSelectedMedia(item);
-                  setShowPriceModal(true);
-                }}
-              >
-                Set Price
-              </Button>
+            {isOwner && (
+              <>
+                {isCreator && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setSelectedMedia(item);
+                      setShowPriceModal(true);
+                    }}
+                  >
+                    Set Price
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDelete(item)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  title="Delete file"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Crown className="h-4 w-4 text-primary ml-auto" />
+              </>
             )}
-
-            {isOwner && <Crown className="h-4 w-4 text-primary ml-auto" />}
           </div>
         </div>
       </Card>
