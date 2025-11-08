@@ -1,91 +1,70 @@
-import React from "react"
-import { Navigate } from "react-router-dom"
-import { useAuth } from "../hooks/useAuth"
-import { useUserRoles } from "../hooks/useUserRoles"
-import { logInfo } from "@/lib/logging"
-import { LoadingSpinner } from "@/components/LoadingSpinner"
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { useUserRoles } from "../hooks/useUserRoles";
+import { logInfo } from "@/lib/logging";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
+// Auth-only guard
 const AuthProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading: authLoading } = useAuth()
-
-  console.log('🔐 AuthProtectedRoute:', { isAuthenticated, authLoading })
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   if (authLoading) {
-    return <LoadingSpinner full text="Authenticating..." />
+    return <LoadingSpinner full text="Authenticating..." />;
   }
 
   if (!isAuthenticated) {
-    logInfo('ProtectedRoute redirect', { reason: 'unauthenticated', to: '/login' })
-    return <Navigate to="/login" replace />
+    logInfo("ProtectedRoute redirect", { reason: "unauthenticated", to: "/login" });
+    return <Navigate to="/login" replace />;
   }
 
-  return children
-}
+  return children;
+};
 
+// Role-based guard
 const RoleProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user, loading: authLoading } = useAuth()
-  const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
+  const { userRoles = [], hasRole, loading: rolesLoading } = useUserRoles();
 
-  console.log('🔒 [ProtectedRoute] Component render:', {
-    isAuthenticated,
-    userId: user?.id,
-    userRoles,
-    allowedRoles,
-    authLoading,
-    rolesLoading,
-    currentPath: window.location.pathname
-  })
-
-  // Only show loading if still fetching
+  // Wait for auth/roles to load
   if (authLoading || rolesLoading) {
-    console.log('⏳ [ProtectedRoute] Loading state:', { authLoading, rolesLoading })
-    return <LoadingSpinner full text="Loading permissions..." />
+    return <LoadingSpinner full text="Loading permissions..." />;
   }
 
   if (!isAuthenticated) {
-    logInfo('RoleProtectedRoute redirect', { reason: 'unauthenticated', to: '/login' })
-    return <Navigate to="/login" replace />
+    logInfo("RoleProtectedRoute redirect", { reason: "unauthenticated", to: "/login" });
+    return <Navigate to="/login" replace />;
   }
 
-  // Wait for roles to be loaded before checking access
-  if (!userRoles.length && !authLoading && !rolesLoading) {
-    console.warn("⏳ [ProtectedRoute] Waiting for roles to load...", {
+  // Ensure roles are present before checking
+  if (!userRoles.length) {
+    return <LoadingSpinner full text="Loading roles..." />;
+  }
+
+  const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some((role) => hasRole(role));
+
+  if (!hasRequiredRole) {
+    logInfo("RoleProtectedRoute redirect", {
+      reason: "missing_role",
       userId: user?.id,
       userRoles,
-      authLoading,
-      rolesLoading
-    })
-    return <LoadingSpinner full text="Loading roles..." />
+      allowedRoles,
+      to: "/dashboard",
+    });
+    return <Navigate to="/dashboard" replace />;
   }
 
-  const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => hasRole(role))
-  
-  if (!hasRequiredRole) {
-    console.error('🚫 [ROUTE_BLOCKED] Missing required role', { 
-      userId: user?.id,
-      userRoles, 
-      allowedRoles, 
-      currentPath: window.location.pathname,
-      roleCheckResults: allowedRoles.map(role => ({ role, hasRole: hasRole(role) }))
-    })
-    return <Navigate to="/dashboard" replace />
-  }
+  return children;
+};
 
-  console.log('✅ [ROUTE_ALLOWED] Role check passed', { 
-    userId: user?.id,
-    userRoles,
-    allowedRoles, 
-    currentPath: window.location.pathname 
-  })
-
-  return children
-}
-
+// Combined guard
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
-  const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
-  return shouldCheckRoles 
-    ? <RoleProtectedRoute allowedRoles={allowedRoles}>{children}</RoleProtectedRoute>
-    : <AuthProtectedRoute>{children}</AuthProtectedRoute>
-}
+  const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0;
+  return shouldCheckRoles ? (
+    <RoleProtectedRoute allowedRoles={allowedRoles}>{children}</RoleProtectedRoute>
+  ) : (
+    <AuthProtectedRoute>{children}</AuthProtectedRoute>
+  );
+};
 
-export default ProtectedRoute
+export default ProtectedRoute;
