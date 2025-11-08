@@ -49,20 +49,32 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
     
     const fetchMessages = async () => {
       try {
-        // Fetch from chat_messages where room_id matches premium_room_id
-        const { data, error } = await supabase
+        // Fetch messages without the join first
+        const { data: msgData, error: msgError } = await supabase
           .from('chat_messages')
-          .select(`
-            *,
-            sender_profile:profiles!sender_id(
-              user_id, display_name, avatar_url
-            )
-          `)
+          .select('*')
           .eq('room_id', room.id)
           .order('created_at', { ascending: true });
 
-        if (error) throw error;
-        setMessages(data || []);
+        if (msgError) throw msgError;
+
+        // Fetch sender profiles separately
+        if (msgData && msgData.length > 0) {
+          const senderIds = [...new Set(msgData.map(m => m.sender_id).filter(Boolean))];
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', senderIds);
+
+          const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+          const messagesWithProfiles = msgData.map(msg => ({
+            ...msg,
+            sender_profile: msg.sender_id ? profileMap.get(msg.sender_id) : null
+          }));
+          setMessages(messagesWithProfiles);
+        } else {
+          setMessages([]);
+        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       }
