@@ -80,8 +80,7 @@ const Layout = ({ children }) => {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
-    { name: "sow new seed", href: "/create-orchard", icon: Plus, color: { bg: '#fdffb6', border: '#fdffb6', text: '#a16207' }, className: 'create-orchard-tour' }
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' }
   ]
 
   // Grouped navigation (dropdowns)
