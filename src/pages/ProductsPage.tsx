@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
-import { Loader2, TrendingUp, Sparkles } from 'lucide-react';
+import { Loader2, TrendingUp, Sparkles, Upload } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -65,9 +67,15 @@ export default function ProductsPage() {
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               S2G Community Products
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-lg mb-6">
               Discover amazing music, art, and digital content from our community of creators
             </p>
+            <Link to="/products/upload">
+              <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Your Creation
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </div>
