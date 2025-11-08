@@ -26,9 +26,10 @@ export default function BestowalCheckout() {
       // Process each item in basket
       for (const item of basketItems) {
         const amount = Number(item.price);
-        const s2gFee = amount * 0.10; // 10% platform fee
+        const tithingAmount = amount * 0.10; // 10% tithing
+        const adminFee = amount * 0.05; // 5% admin fee
         const sowerAmount = amount * 0.70; // 70% to sower
-        const growerAmount = amount * 0.20; // 20% to grower
+        const growerAmount = amount * 0.15; // 15% to grower
 
         // Create bestowal record
         const { error: bestowError } = await supabase
@@ -38,7 +39,7 @@ export default function BestowalCheckout() {
             product_id: item.id,
             sower_id: item.sower_id,
             amount,
-            s2g_fee: s2gFee,
+            s2g_fee: adminFee,
             sower_amount: sowerAmount,
             grower_amount: growerAmount,
             status: 'completed'
@@ -136,16 +137,20 @@ export default function BestowalCheckout() {
             <span>${totalAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
+            <span>Tithing (10%)</span>
+            <span className="text-purple-400">${(totalAmount * 0.10).toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Admin Fee (5%)</span>
+            <span>${(totalAmount * 0.05).toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
             <span>To Creators (70%)</span>
             <span className="text-primary">${(totalAmount * 0.70).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>To Growers (20%)</span>
-            <span className="text-accent">${(totalAmount * 0.20).toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Platform Fee (10%)</span>
-            <span>${(totalAmount * 0.10).toFixed(2)}</span>
+            <span>To Growers (15%)</span>
+            <span className="text-accent">${(totalAmount * 0.15).toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between text-lg font-bold">
