@@ -1,11 +1,11 @@
-import { useMemo, memo } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { useUserRoles } from "@/hooks/useUserRoles"
 import { logInfo } from "@/lib/logging"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 
-const AuthProtectedRoute = memo(({ children }) => {
+// Removed memo wrapper to fix React dispatcher issue
+const AuthProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
 
   console.log('🔐 AuthProtectedRoute:', { isAuthenticated, authLoading })
@@ -20,12 +20,10 @@ const AuthProtectedRoute = memo(({ children }) => {
   }
 
   return children
-}, (prev, next) => {
-  // Only re-render if children actually change
-  return prev.children === next.children
-})
+}
 
-const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
+// Removed memo wrapper to prevent dispatcher issues
+const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, user, loading: authLoading } = useAuth()
   const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
 
@@ -82,11 +80,7 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   })
 
   return children
-}, (prev, next) => {
-  // Only re-render if children or allowedRoles change
-  return prev.children === next.children && 
-         JSON.stringify(prev.allowedRoles) === JSON.stringify(next.allowedRoles)
-})
+}
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
