@@ -332,14 +332,22 @@ const App = () => (
                 <Navigate to="/communications-hub#chats" replace />
               } />
               
-              {/* Radio Slot Application - Redirect to Communications Hub */}
+              {/* Radio Slot Application - Keep functional */}
               <Route path="/radio-slot-application" element={
-                <Navigate to="/communications-hub#radio" replace />
+                <ProtectedRoute>
+                  <Layout>
+                    <RadioSlotApplicationPage />
+                  </Layout>
+                </ProtectedRoute>
               } />
               
-              {/* Premium Rooms - Redirect to Communications Hub */}
+              {/* Premium Rooms Landing - Keep functional */}
                <Route path="/premium-rooms" element={
-                <Navigate to="/communications-hub#premium" replace />
+                <ProtectedRoute>
+                  <Layout>
+                    <PremiumRoomsLanding />
+                  </Layout>
+                </ProtectedRoute>
               } />
                
                <Route path="/premium-room/:id" element={
