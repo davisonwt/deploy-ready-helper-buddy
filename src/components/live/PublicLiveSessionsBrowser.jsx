@@ -79,23 +79,34 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
 
       if (radioError) throw radioError
 
-      // Fetch generic live sessions (chat rooms, etc.)
+      // Fetch generic live sessions (chat rooms, etc.) - simplified without profiles join
       const { data: genericSessions, error: genericError } = await supabase
         .from('live_session_participants')
-        .select(`
-          session_id,
-          created_at,
-          user_id,
-          profiles!live_session_participants_user_id_fkey (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('session_id, created_at, user_id')
         .eq('participant_type', 'host')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
 
-      if (genericError) throw genericError
+      if (genericError) {
+        console.error('Error fetching generic sessions:', genericError)
+      }
+      
+      // Fetch profile data separately if we have generic sessions
+      let profilesMap = {}
+      if (genericSessions && genericSessions.length > 0) {
+        const userIds = [...new Set(genericSessions.map(s => s.user_id))]
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds)
+        
+        if (profilesData) {
+          profilesMap = profilesData.reduce((acc, profile) => {
+            acc[profile.user_id] = profile
+            return acc
+          }, {})
+        }
+      }
 
       // Combine and format sessions
       const allSessions = []
@@ -128,7 +139,7 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
       }
 
       // Add generic live sessions (group by session_id for hosts)
-      if (genericSessions) {
+      if (genericSessions && genericSessions.length > 0) {
         const sessionGroups = genericSessions.reduce((acc, participant) => {
           if (!acc[participant.session_id]) {
             acc[participant.session_id] = {
@@ -137,7 +148,11 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
               createdAt: participant.created_at
             }
           }
-          acc[participant.session_id].hosts.push(participant.profiles)
+          // Get profile data from the map
+          const profile = profilesMap[participant.user_id]
+          if (profile) {
+            acc[participant.session_id].hosts.push(profile)
+          }
           return acc
         }, {})
 
@@ -253,14 +268,36 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
         </div>
       ) : sessions.length === 0 ? (
         <Card className="bg-gradient-to-br from-muted/20 to-muted/40 border-dashed">
-          <CardContent className="p-12 text-center">
-            <Radio className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-semibold text-muted-foreground mb-2">
-              No Live Sessions
-            </h3>
-            <p className="text-muted-foreground">
-              Be the first to start a live session in our community!
-            </p>
+          <CardContent className="p-12 text-center space-y-4">
+            <div className="h-20 w-20 mx-auto rounded-full bg-muted/30 flex items-center justify-center">
+              <Radio className="h-10 w-10 text-muted-foreground/50" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                No Live Sessions Right Now
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Be the first to start a live session or radio show in our community!
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                variant="outline"
+                onClick={() => window.location.href = '/radio-slot-application'}
+                className="gap-2"
+              >
+                <Mic className="h-4 w-4" />
+                Apply for Radio Slot
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => window.location.href = '/create-live-room'}
+                className="gap-2"
+              >
+                <Video className="h-4 w-4" />
+                Start Live Session
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
