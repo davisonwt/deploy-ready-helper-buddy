@@ -32,6 +32,7 @@ import RegisterPage from "./pages/RegisterPage";
 
 // DEFERRED LOADING: All other pages lazy loaded
 const ChatApp = lazy(() => import("./pages/ChatApp"));
+const GroveFeedPage = lazy(() => import("./pages/GroveFeedPage"));
 const CommunicationsHub = lazy(() => import("./pages/CommunicationsHub"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -314,6 +315,15 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <YhvhOrchardsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Grove Feed - Unified Discovery Feed */}
+              <Route path="/grove-feed" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <GroveFeedPage />
                   </Layout>
                 </ProtectedRoute>
               } />
