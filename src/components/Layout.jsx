@@ -39,27 +39,14 @@ import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
 
-// Memoize Layout to prevent unnecessary re-renders
-const Layout = memo(({ children }) => {
-  const { user, logout } = useAuth()
-  const { getTotalItems } = useBasket()
+// Layout component without memo to fix dispatcher issue
+const Layout = ({ children }) => {
+  // All hooks must be at the top level
   const location = useLocation()
   const navigate = useNavigate()
-
-  // Use centralized role management
+  const { user, logout } = useAuth()
+  const { getTotalItems } = useBasket()
   const { isAdminOrGosat, loading: rolesLoading } = useUserRoles()
-  
-  const shouldShowAdminButton = useMemo(
-    () => isAdminOrGosat && !rolesLoading,
-    [isAdminOrGosat, rolesLoading]
-  )
-  
-  // Memoize basket total to prevent recalculations
-  const basketTotal = useMemo(() => getTotalItems(), [getTotalItems])
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
-  
   const { 
     showOnboarding, 
     setShowOnboarding, 
@@ -68,6 +55,16 @@ const Layout = memo(({ children }) => {
     voiceCommandsEnabled,
     setVoiceCommandsEnabled
   } = useAppContext()
+  
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  
+  const shouldShowAdminButton = useMemo(
+    () => isAdminOrGosat && !rolesLoading,
+    [isAdminOrGosat, rolesLoading]
+  )
+  
+  const basketTotal = useMemo(() => getTotalItems(), [getTotalItems])
   
   const handleLogout = () => {
     logout()
@@ -506,6 +503,6 @@ const Layout = memo(({ children }) => {
       />
     </div>
   )
-})
+}
 
 export default Layout
