@@ -194,8 +194,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
           sender_id: user.id,
           content: publicUrl,
           message_type: file.type.startsWith('image/') ? 'image' : 
-                        file.type.startsWith('audio/') ? 'audio' : 'file',
-          metadata: { filename: file.name, size: file.size }
+                        file.type.startsWith('audio/') ? 'audio' : 'file'
         });
 
       if (messageError) throw messageError;
@@ -212,12 +211,17 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
       setPlayingTrack(null);
     } else {
       try {
-        const { data } = supabase.storage
-          .from('premium-room')
-          .getPublicUrl(track.url);
+        // Use the URL directly if it's already a full URL, otherwise get public URL
+        let musicUrl = track.url;
+        if (!musicUrl?.startsWith('http')) {
+          const { data } = supabase.storage
+            .from('premium-room')
+            .getPublicUrl(track.url);
+          musicUrl = data?.publicUrl;
+        }
 
-        if (audioRef.current && data?.publicUrl) {
-          audioRef.current.src = data.publicUrl;
+        if (audioRef.current && musicUrl) {
+          audioRef.current.src = musicUrl;
           await audioRef.current.play();
           setPlayingTrack(track.id);
         }
