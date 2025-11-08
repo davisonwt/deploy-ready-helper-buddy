@@ -44,22 +44,10 @@ const ChatModeration = ({ roomId }: ChatModerationProps) => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ['moderation-messages', roomId, searchTerm, filterStatus],
     queryFn: async () => {
+      // Build base query without joins
       let query = supabase
         .from('chat_messages')
-        .select(`
-          *,
-          sender_profile:profiles!sender_id(
-            user_id,
-            display_name,
-            avatar_url,
-            first_name,
-            last_name
-          ),
-          chat_rooms!room_id(
-            name,
-            room_type
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -71,9 +59,33 @@ const ChatModeration = ({ roomId }: ChatModerationProps) => {
         query = query.ilike('content', `%${searchTerm}%`);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const { data: msgData, error: msgError } = await query;
+      if (msgError) throw msgError;
+
+      if (!msgData || msgData.length === 0) return [];
+
+      // Fetch profiles separately
+      const senderIds = [...new Set(msgData.map(m => m.sender_id).filter(Boolean))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url, first_name, last_name')
+        .in('user_id', senderIds);
+
+      // Fetch room info separately
+      const roomIds = [...new Set(msgData.map(m => m.room_id).filter(Boolean))];
+      const { data: rooms } = await supabase
+        .from('chat_rooms')
+        .select('id, name, room_type')
+        .in('id', roomIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const roomMap = new Map(rooms?.map(r => [r.id, r]) || []);
+
+      return msgData.map(msg => ({
+        ...msg,
+        sender_profile: msg.sender_id ? profileMap.get(msg.sender_id) : null,
+        chat_rooms: msg.room_id ? roomMap.get(msg.room_id) : null
+      }));
     },
     enabled: !!user
   });
