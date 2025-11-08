@@ -323,7 +323,7 @@ const CommunicationsHub = () => {
   }
 
   // If viewing a specific chat room
-  if (currentRoomId && activeTab === 'chats') {
+  if (currentRoomId) {
     return (
       <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />

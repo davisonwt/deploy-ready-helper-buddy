@@ -85,7 +85,8 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
         .select(`
           session_id,
           created_at,
-          profiles:user_id (
+          user_id,
+          profiles!live_session_participants_user_id_fkey (
             display_name,
             avatar_url
           )

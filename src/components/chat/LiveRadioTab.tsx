@@ -1,50 +1,61 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Radio, Calendar } from 'lucide-react';
+import { Radio, Mic, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface LiveRadioTabProps {
   searchQuery: string;
 }
 
 export const LiveRadioTab = ({ searchQuery }: LiveRadioTabProps) => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="space-y-4">
-      <Card className="border-emerald-200">
-        <CardContent className="py-12 text-center space-y-4">
-          <div className="h-20 w-20 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
-            <Radio className="h-10 w-10 text-emerald-600" />
+    <div className="space-y-6">
+      {/* Apply for Radio Slot */}
+      <Card className="border-orange-200 dark:border-orange-800">
+        <CardContent className="py-8 text-center space-y-4">
+          <div className="h-16 w-16 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+            <Mic className="h-8 w-8 text-orange-600 dark:text-orange-400" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900">
-            Live Radio Shows
+          <h3 className="text-xl font-semibold text-foreground">
+            Become a Radio Host
           </h3>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Discover and join live radio broadcasts from community members. 
-            Apply for your own 2-hour slot to share music, podcasts, or discussions.
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Apply for a 2-hour live radio slot. Share your voice, music, and message with the community on The Set-Apart Heretics AOD Frequencies.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <Button 
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => window.location.href = '/radio-slot-application'}
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={() => navigate('/radio-slot-application')}
             >
-              <Calendar className="h-4 w-4 mr-2" />
+              <Mic className="h-4 w-4 mr-2" />
               Apply for Radio Slot
             </Button>
             <Button 
               variant="outline"
-              onClick={() => window.location.href = '/grove-station'}
-              className="border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+              className="border-orange-600 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              onClick={() => navigate('/radio-management')}
             >
-              <Radio className="h-4 w-4 mr-2" />
-              Listen to Grove Station
+              <Calendar className="h-4 w-4 mr-2" />
+              View Schedule
             </Button>
           </div>
-          
-          {/* Placeholder for future live shows list */}
-          <div className="mt-8 pt-8 border-t border-emerald-200">
-            <p className="text-sm text-gray-500 italic">
-              Live radio shows will appear here once available
-            </p>
-          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Shows Placeholder */}
+      <Card className="border-orange-200 dark:border-orange-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+            <Calendar className="h-5 w-5" />
+            Upcoming Live Shows
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Live show schedule will appear here
+          </p>
         </CardContent>
       </Card>
     </div>
