@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Send, Mic, Video, Phone, PhoneOff, Paperclip, 
   Users, Music, FileText, Image as ImageIcon,
-  Play, Pause, Download, Settings, Crown,
-  Smile, MoreVertical
+  Settings, Crown, Smile, MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ChatMessage from '@/components/chat/ChatMessage';
 import { useCallManager } from '@/hooks/useCallManager';
+import { PremiumRoomMedia } from './PremiumRoomMedia';
 
 interface DiscordStyleRoomViewProps {
   room: any;
@@ -35,13 +35,10 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [participants, setParticipants] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'files'>('chat');
-  const [playingTrack, setPlayingTrack] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'chat' | 'media'>('chat');
   const [callActive, setCallActive] = useState(false);
   const [videoOn, setVideoOn] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch messages for this room
   useEffect(() => {
@@ -168,69 +165,6 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `rooms/${room.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('premium-room')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('premium-room')
-        .getPublicUrl(filePath);
-
-      const { error: messageError } = await supabase
-        .from('chat_messages')
-        .insert({
-          room_id: room.id,
-          sender_id: user.id,
-          content: publicUrl,
-          message_type: file.type.startsWith('image/') ? 'image' : 
-                        file.type.startsWith('audio/') ? 'audio' : 'file'
-        });
-
-      if (messageError) throw messageError;
-      toast.success('File uploaded successfully');
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error('Failed to upload file');
-    }
-  };
-
-  const handlePlayMusic = async (track: any) => {
-    if (playingTrack === track.id) {
-      audioRef.current?.pause();
-      setPlayingTrack(null);
-    } else {
-      try {
-        // Use the URL directly if it's already a full URL, otherwise get public URL
-        let musicUrl = track.url;
-        if (!musicUrl?.startsWith('http')) {
-          const { data } = supabase.storage
-            .from('premium-room')
-            .getPublicUrl(track.url);
-          musicUrl = data?.publicUrl;
-        }
-
-        if (audioRef.current && musicUrl) {
-          audioRef.current.src = musicUrl;
-          await audioRef.current.play();
-          setPlayingTrack(track.id);
-        }
-      } catch (error) {
-        console.error('Error playing music:', error);
-        toast.error('Failed to play track');
-      }
-    }
-  };
 
   const toggleCall = () => {
     setCallActive(!callActive);
@@ -303,216 +237,147 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
 
       {/* Main Content - Chat */}
       <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="h-14 border-b border-border px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="font-semibold">general-chat</h1>
-            <Separator orientation="vertical" className="h-6" />
-            <p className="text-sm text-muted-foreground truncate max-w-md">
-              {room.description}
-            </p>
+        {/* Top Bar with Tabs */}
+        <div className="border-b border-border">
+          <div className="h-14 px-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="font-semibold">general-chat</h1>
+              <Separator orientation="vertical" className="h-6" />
+              <p className="text-sm text-muted-foreground truncate max-w-md">
+                {room.description}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant={callActive ? "destructive" : "ghost"}
+                size="sm"
+                onClick={toggleCall}
+              >
+                {callActive ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant={videoOn ? "default" : "ghost"}
+                size="sm"
+                onClick={toggleVideo}
+                disabled={!callActive}
+              >
+                <Video className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={callActive ? "destructive" : "ghost"}
-              size="sm"
-              onClick={toggleCall}
+
+          {/* Tab Switcher */}
+          <div className="flex border-t border-border">
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'chat'
+                  ? 'bg-muted text-foreground border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
             >
-              {callActive ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant={videoOn ? "default" : "ghost"}
-              size="sm"
-              onClick={toggleVideo}
-              disabled={!callActive}
+              Chat
+            </button>
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                activeTab === 'media'
+                  ? 'bg-muted text-foreground border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
             >
-              <Video className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Users className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
+              <Music className="h-4 w-4" />
+              Media
+            </button>
           </div>
         </div>
 
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                message={msg}
-                currentUserId={user?.id}
-                onDelete={async (id) => {
-                  await supabase.from('chat_messages').delete().eq('id', id);
-                  setMessages(prev => prev.filter(m => m.id !== id));
-                }}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
+        {/* Content Area */}
+        {activeTab === 'chat' ? (
+          <>
+            {/* Messages Area */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    message={msg}
+                    currentUserId={user?.id}
+                    onDelete={async (id) => {
+                      await supabase.from('chat_messages').delete().eq('id', id);
+                      setMessages(prev => prev.filter(m => m.id !== id));
+                    }}
+                  />
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
 
-        {/* Message Input */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Paperclip className="h-5 w-5" />
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileUpload}
+            {/* Message Input */}
+            <div className="p-4 border-t border-border">
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="Type a message..."
+                  disabled={sending}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Smile className="h-5 w-5" />
+                </Button>
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={sending || !newMessage.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1">
+            <PremiumRoomMedia 
+              roomId={room.id} 
+              isCreator={isCreator}
+              userId={user?.id}
             />
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder={`Message #${room.title.toLowerCase().replace(/\s+/g, '-')}`}
-              className="flex-1"
-              disabled={!hasAccess}
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-            >
-              <Smile className="h-5 w-5" />
-            </Button>
-            <Button
-              onClick={handleSendMessage}
-              disabled={sending || !newMessage.trim()}
-              size="icon"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Right Sidebar - Media & Files */}
+      {/* Right Sidebar - Participants Info */}
       <div className="w-80 border-l border-border flex flex-col">
         <div className="p-4 border-b border-border">
-          <div className="flex gap-2">
-            <Button
-              variant={activeTab === 'chat' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('chat')}
-              className="flex-1"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Info
-            </Button>
-            <Button
-              variant={activeTab === 'music' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('music')}
-              className="flex-1"
-            >
-              <Music className="h-4 w-4 mr-2" />
-              Music
-            </Button>
-            <Button
-              variant={activeTab === 'files' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('files')}
-              className="flex-1"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Files
-            </Button>
+          <h3 className="font-semibold text-sm mb-3">About</h3>
+          <p className="text-sm text-muted-foreground">{room.description}</p>
+        </div>
+        <Separator />
+        <div className="p-4">
+          <h3 className="font-semibold text-sm mb-3">Room Details</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Created</span>
+              <span>{new Date(room.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Max Participants</span>
+              <span>{room.max_participants}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Type</span>
+              <span>{room.room_type}</span>
+            </div>
           </div>
         </div>
-
-        <ScrollArea className="flex-1 p-4">
-          {activeTab === 'music' && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm mb-3">Music Tracks</h3>
-              {(room.music || []).map((track: any) => (
-                <Card key={track.id} className="p-3 hover:bg-muted/50 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{track.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {track.artist || 'Unknown Artist'}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handlePlayMusic(track)}
-                    >
-                      {playingTrack === track.id ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'files' && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-sm mb-3">Documents</h3>
-              {(room.documents || []).map((doc: any) => (
-                <Card key={doc.id} className="p-3 hover:bg-muted/50 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm truncate">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.size}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'chat' && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-sm mb-3">About</h3>
-                <p className="text-sm text-muted-foreground">{room.description}</p>
-              </div>
-              <Separator />
-              <div>
-                <h3 className="font-semibold text-sm mb-3">Room Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Created</span>
-                    <span>{new Date(room.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Max Participants</span>
-                    <span>{room.max_participants}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type</span>
-                    <span>{room.room_type}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </ScrollArea>
       </div>
-
-      <audio ref={audioRef} className="hidden" />
     </div>
   );
 };
