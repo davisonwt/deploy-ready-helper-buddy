@@ -77,7 +77,7 @@ try {
   console.groupEnd();
   
   // Detect duplicate React instances
-  logReactDiagnostics();
+  logReactDiagnostics(React, ReactDOMPkg);
 } catch (e) {
   console.warn('Version check failed', e);
 }
@@ -102,7 +102,7 @@ async function registerServiceWorker() {
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v2');
+    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v3');
     
     // Only update if page is visible (don't interrupt user)
     if (document.visibilityState === 'visible') {
