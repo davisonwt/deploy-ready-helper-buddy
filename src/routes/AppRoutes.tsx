@@ -36,7 +36,7 @@ export default function AppRoutes() {
     <Suspense fallback={<Fallback /> }>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<Layout><Index /></Layout>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
