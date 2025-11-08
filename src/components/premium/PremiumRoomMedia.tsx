@@ -276,14 +276,8 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
                 <Download className="h-4 w-4 mr-1" />
                 Download (Free)
               </Button>
-            ) : hasPurchased || isOwner || isCreator ? (
-              // Already purchased or owned - show that they have access
-              <Badge variant="secondary" className="gap-1">
-                <Download className="h-3 w-3" />
-                Owned
-              </Badge>
             ) : (
-              // Priced media - show bestowal button
+              // Priced media - always show bestowal button
               <Button
                 size="sm"
                 onClick={() => handlePurchase(item)}
