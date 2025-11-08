@@ -80,7 +80,8 @@ const Layout = ({ children }) => {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' }
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
+    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' }, className: 'chatapp-tour' }
   ]
 
   // Grouped navigation (dropdowns)
@@ -95,21 +96,6 @@ const Layout = ({ children }) => {
         { name: "My Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
-      ]
-    },
-    {
-      name: "chatapp",
-      icon: MessageSquare,
-      color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
-      className: 'chatapp-tour',
-      items: [
-        { name: "Chats", href: "/chatapp", icon: MessageSquare },
-        { name: "Apply for Radio Slot", href: "/radio-slot-application", icon: Mic },
-        { name: "Premium Rooms", href: "/premium-rooms", icon: Radio },
-        { name: "Grove Station (Listen)", href: "/grove-station", icon: Radio },
-        ...(isAdminOrGosat ? [
-          { name: "Radio Management", href: "/radio-management", icon: Settings }
-        ] : [])
       ]
     },
     {
