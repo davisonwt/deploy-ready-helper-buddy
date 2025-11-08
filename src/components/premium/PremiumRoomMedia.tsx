@@ -118,9 +118,9 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
       if (error) throw error;
 
       const result = data as { success: boolean; chatRoomId: string; message: string };
-      toast.success('Purchase successful! Opening chat...');
+      toast.success('Purchase successful! Opening chat with s2g gosat...');
       
-      // Navigate to the 1-1 chat room with admin
+      // Navigate to the 1-1 chat room with gosat
       navigate(`/chatapp?room=${result.chatRoomId}`);
       
       fetchPurchases();
@@ -137,9 +137,9 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
     }
 
     try {
-      // Prefer a dedicated s2g admin: pick a 'gosat' role, excluding current user and uploader
-      let adminUserId: string | null = null;
-      const { data: gosatAdmins } = await supabase
+      // Get s2g gosat user (not admin or uploader)
+      let gosatUserId: string | null = null;
+      const { data: gosatUsers } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'gosat')
@@ -147,29 +147,18 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
         .neq('user_id', item.uploader_id)
         .limit(1);
 
-      if (gosatAdmins && gosatAdmins.length > 0) {
-        adminUserId = gosatAdmins[0].user_id;
-      } else {
-        const { data: admins } = await supabase
-          .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin')
-          .neq('user_id', user.id)
-          .neq('user_id', item.uploader_id)
-          .limit(1);
-        if (admins && admins.length > 0) {
-          adminUserId = admins[0].user_id;
-        }
+      if (gosatUsers && gosatUsers.length > 0) {
+        gosatUserId = gosatUsers[0].user_id;
       }
 
-      if (!adminUserId) {
-        throw new Error('Admin not found');
+      if (!gosatUserId) {
+        throw new Error('S2G Gosat not found');
       }
 
-      // Get or create direct chat room with admin
+      // Get or create direct chat room with gosat
       const { data: roomData, error: roomError } = await supabase.rpc('get_or_create_direct_room', {
         user1_id: user.id,
-        user2_id: adminUserId,
+        user2_id: gosatUserId,
       });
 
       if (roomError || !roomData) {
@@ -203,9 +192,9 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
         },
       });
 
-      toast.success('Opening your chat with s2g admin...');
+      toast.success('Opening your chat with s2g gosat...');
       
-      // Navigate to the 1-1 chat room with admin
+      // Navigate to the 1-1 chat room with gosat
       navigate(`/chatapp?room=${roomId}`);
     } catch (error: any) {
       console.error('Download error:', error);
