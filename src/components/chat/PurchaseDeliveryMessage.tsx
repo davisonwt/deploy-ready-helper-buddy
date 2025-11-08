@@ -42,17 +42,18 @@ export function PurchaseDeliveryMessage({ metadata, messageId, onDelete }: Purch
   useEffect(() => {
     const checkGosatRole = async () => {
       if (!user) return;
-      
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'gosat')
-        .single();
-      
-      setIsGosat(!!data);
+      try {
+        const { data } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'gosat')
+          .maybeSingle();
+        setIsGosat(!!data);
+      } catch (e) {
+        setIsGosat(false);
+      }
     };
-    
     checkGosatRole();
   }, [user]);
 
