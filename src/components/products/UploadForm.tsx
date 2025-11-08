@@ -130,7 +130,7 @@ export default function UploadForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Upload Your Creation</CardTitle>
-          <CardDescription>Share your music, art, or files with the community</CardDescription>
+          <CardDescription>Share your music, art, or files with the S2G community</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

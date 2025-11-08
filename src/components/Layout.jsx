@@ -97,6 +97,7 @@ const Layout = memo(({ children }) => {
       items: [
         { name: "My Orchards", href: "/my-orchards", icon: User },
         { name: "Browse Community Orchards", href: "/browse-orchards", icon: Users },
+        { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video },
         { name: "364yhvh Orchards", href: "/364yhvh-orchards", icon: Heart }
       ]
