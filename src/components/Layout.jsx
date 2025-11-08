@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useBasket } from "../hooks/useBasket"
 import { supabase } from "@/integrations/supabase/client"
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, memo } from 'react'
 import { 
   Sprout, 
   Home, 
@@ -39,12 +39,15 @@ import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
 
-export default function Layout({ children }) {
+const Layout = ({ children }) => {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Stabilize userId to prevent cascading re-renders
+  const userId = useMemo(() => user?.id, [user?.id])
+  
   // Local role state to avoid cross-React hook issues
   const [userRoles, setUserRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(false)
@@ -52,13 +55,17 @@ export default function Layout({ children }) {
   useEffect(() => {
     let isMounted = true
     const loadRoles = async () => {
-      if (!user?.id) { setUserRoles([]); return }
+      if (!userId) { 
+        setUserRoles([])
+        setRolesLoading(false)
+        return 
+      }
       try {
         setRolesLoading(true)
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
         if (error) throw error
         if (!isMounted) return
         setUserRoles((data || []).map(r => r.role))
@@ -71,20 +78,18 @@ export default function Layout({ children }) {
     }
     loadRoles()
     return () => { isMounted = false }
-  }, [user?.id])
+  }, [userId])
 
-  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
+  // Memoize computed values to prevent unnecessary re-renders
+  const isAdminOrGosat = useMemo(
+    () => userRoles.includes('admin') || userRoles.includes('gosat'),
+    [userRoles]
+  )
   
-  console.log('🏗️ Layout render:', { 
-    user: !!user, 
-    userId: user?.id, 
-    isAdminOrGosat, 
-    rolesLoading, 
-    userRoles 
-  })
-
-  const shouldShowAdminButton = isAdminOrGosat && !rolesLoading
-  console.log('🔑 shouldShowAdminButton:', shouldShowAdminButton, { isAdminOrGosat, rolesLoading, userRoles })
+  const shouldShowAdminButton = useMemo(
+    () => isAdminOrGosat && !rolesLoading,
+    [isAdminOrGosat, rolesLoading]
+  )
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   
@@ -519,3 +524,5 @@ export default function Layout({ children }) {
     </div>
   )
 }
+
+export default memo(Layout)

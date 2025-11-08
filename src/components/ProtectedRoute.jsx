@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, memo } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { supabase } from "@/integrations/supabase/client"
 
-const AuthProtectedRoute = ({ children }) => {
+const AuthProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
 
   console.log('🔐 AuthProtectedRoute:', { isAuthenticated, authLoading })
@@ -17,15 +17,21 @@ const AuthProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.warn('🔐 Not authenticated → redirecting to /login')
     return <Navigate to="/login" replace />
   }
 
   return children
-}
+}, (prev, next) => {
+  // Only re-render if children actually change
+  return prev.children === next.children
+})
 
-const RoleProtectedRoute = ({ children, allowedRoles }) => {
+const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   const { isAuthenticated, loading: authLoading, user } = useAuth()
+  
+  // Stabilize userId to prevent cascading re-renders
+  const userId = useMemo(() => user?.id, [user?.id])
+  
   const [userRoles, setUserRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(true)
 
@@ -33,13 +39,19 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
   useEffect(() => {
     let active = true
     const loadRoles = async () => {
-      if (!user?.id) { if (active) { setUserRoles([]); setRolesLoading(false) } ; return }
+      if (!userId) { 
+        if (active) { 
+          setUserRoles([])
+          setRolesLoading(false)
+        }
+        return 
+      }
       try {
         setRolesLoading(true)
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
         if (error) throw error
         if (active) setUserRoles((data || []).map(r => r.role))
       } catch (e) {
@@ -51,12 +63,16 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
     }
     loadRoles()
     return () => { active = false }
-  }, [user?.id])
+  }, [userId])
 
-  const hasRole = (role) => userRoles.includes(role)
+  // Memoize role check function
+  const hasRole = useMemo(
+    () => (role) => userRoles.includes(role),
+    [userRoles]
+  )
 
-  // Wait until both auth and roles are resolved; avoid premature redirect
-  if (authLoading || rolesLoading || (Array.isArray(allowedRoles) && userRoles.length === 0)) {
+  // Only show loading if we're still fetching and there's a user
+  if (authLoading || (userId && rolesLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -71,12 +87,15 @@ const RoleProtectedRoute = ({ children, allowedRoles }) => {
   const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => hasRole(role))
   
   if (!hasRequiredRole) {
-    console.warn('🚫 Access denied - redirecting to dashboard')
     return <Navigate to="/dashboard" replace />
   }
 
   return children
-}
+}, (prev, next) => {
+  // Only re-render if children or allowedRoles change
+  return prev.children === next.children && 
+         JSON.stringify(prev.allowedRoles) === JSON.stringify(next.allowedRoles)
+})
 
 const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
