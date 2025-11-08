@@ -93,6 +93,9 @@ import { FloatingLiveWidget } from "./components/dashboard/FloatingLiveWidget";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
 import { CallManagerProvider } from '@/hooks/useCallManager';
+import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
+import { logError } from "@/lib/logging";
+import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -105,22 +108,26 @@ const LoadingFallback = () => (
 );
 
 const App = () => (
-  <AuthProvider>
-    <AppContextProvider>
-      <CallManagerProvider>
-        <BasketProvider>
-          <TooltipProvider>
-            <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
-              <Toaster />
-              <Sonner />
-              <AudioUnlocker />
-              <SoundUnlockBanner />
-              <IncomingCallOverlay />
-              <GlobalAudioCallBridge />
-              <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <AccessibilityChecker />
-                    <ResponsiveLayout>
+  <EnhancedErrorBoundary onError={(error) => {
+    logError('AuthProvider subtree error', { message: error.message, stack: error.stack });
+  }}>
+    <AuthProvider>
+      <AppContextProvider>
+        <CallManagerProvider>
+          <BasketProvider>
+            <TooltipProvider>
+              <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+                <NavigationMonitor />
+                <Toaster />
+                <Sonner />
+                <AudioUnlocker />
+                <SoundUnlockBanner />
+                <IncomingCallOverlay />
+                <GlobalAudioCallBridge />
+                <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <AccessibilityChecker />
+                      <ResponsiveLayout>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
@@ -621,6 +628,7 @@ const App = () => (
       </CallManagerProvider>
     </AppContextProvider>
   </AuthProvider>
+</EnhancedErrorBoundary>
     
 );
 

@@ -2,6 +2,7 @@ import { useMemo, memo } from "react"
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useUserRoles } from "../hooks/useUserRoles"
+import { logInfo } from "@/lib/logging"
 
 const AuthProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -17,6 +18,7 @@ const AuthProtectedRoute = memo(({ children }) => {
   }
 
   if (!isAuthenticated) {
+    logInfo('ProtectedRoute redirect', { reason: 'unauthenticated', to: '/login' })
     return <Navigate to="/login" replace />
   }
 
@@ -40,6 +42,7 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   }
 
   if (!isAuthenticated) {
+    logInfo('RoleProtectedRoute redirect', { reason: 'unauthenticated', to: '/login' })
     return <Navigate to="/login" replace />
   }
 
