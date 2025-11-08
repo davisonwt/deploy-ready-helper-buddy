@@ -14,7 +14,8 @@ import {
   Eye,
   Loader2,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -133,7 +134,8 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
             viewerCount: session.viewer_count || 0,
             startedAt: session.started_at,
             createdAt: session.created_at,
-            sessionData: session
+            sessionData: session,
+            createdByCurrentUser: session.created_by === user?.id
           })
         })
       }
@@ -157,6 +159,8 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
         }, {})
 
         Object.values(sessionGroups).forEach(group => {
+          const isCreatedByUser = group.hosts.some(host => host.user_id === user?.id)
+          
           allSessions.push({
             id: group.sessionId,
             type: 'live_session',
@@ -171,7 +175,8 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
             status: 'live',
             viewerCount: 0,
             createdAt: group.createdAt,
-            sessionData: { id: group.sessionId, type: 'live_session' }
+            sessionData: { id: group.sessionId, type: 'live_session' },
+            createdByCurrentUser: isCreatedByUser
           })
         })
       }
@@ -193,6 +198,48 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
   const handleJoinSession = (session) => {
     if (onJoinSession) {
       onJoinSession(session.sessionData, session.type)
+    }
+  }
+
+  const handleDeleteSession = async (e, session) => {
+    e.stopPropagation() // Prevent triggering join
+    
+    if (!confirm('Are you sure you want to permanently delete this live session? This cannot be undone.')) {
+      return
+    }
+
+    try {
+      if (session.type === 'radio') {
+        // Delete radio live session
+        const { error } = await supabase
+          .from('radio_live_sessions')
+          .delete()
+          .eq('id', session.id)
+
+        if (error) throw error
+      } else {
+        // Delete generic live session participants
+        const { error } = await supabase
+          .from('live_session_participants')
+          .delete()
+          .eq('session_id', session.id)
+
+        if (error) throw error
+      }
+
+      toast({
+        title: "Success",
+        description: "Live session deleted successfully"
+      })
+      
+      fetchLiveSessions()
+    } catch (error) {
+      console.error('Error deleting session:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete session",
+        variant: "destructive"
+      })
     }
   }
 
@@ -311,7 +358,7 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 flex-1">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={session.host.avatar} />
                         <AvatarFallback>
@@ -335,7 +382,20 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
                         )}
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="flex items-center gap-2">
+                      {session.createdByCurrentUser && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => handleDeleteSession(e, session)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Delete session"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
                   </div>
                 </CardHeader>
 
