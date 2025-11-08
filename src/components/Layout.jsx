@@ -100,6 +100,19 @@ const Layout = ({ children }) => {
       ]
     },
     {
+      name: "Grove",
+      icon: Sprout,
+      color: { bg: '#a8e6cf', border: '#22c55e', text: '#1e293b' },
+      className: 'grove-tour',
+      items: [
+        { name: "Grove Feed", href: "/grove-feed", icon: Sprout, badge: "NEW" },
+        { name: "Chats", href: "/communications-hub", icon: MessageSquare },
+        { name: "Premium Rooms", href: "/premium-rooms", icon: Crown },
+        { name: "Heretics Radio", href: "/grove-station", icon: Radio },
+        { name: "Live Sessions", href: "/live-rooms", icon: Users }
+      ]
+    },
+    {
       name: "Let It Rain",
       icon: "🌧️", // Using emoji instead of Lucide icon
       color: { bg: '#ffffff', border: '#3B82F6', text: '#1e293b' },
