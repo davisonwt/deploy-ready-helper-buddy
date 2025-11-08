@@ -123,35 +123,54 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
     }
   };
 
-  const handleDownload = async (item: any) => {
-    const hasPurchased = purchasedItems.has(item.id);
-    const isFree = item.price_cents === 0;
-    const isOwner = item.uploader_id === userId;
-
-    if (!isFree && !hasPurchased && !isOwner && !isCreator) {
-      toast.error('Purchase required to download');
+  const handleFreeDownload = async (item: any) => {
+    if (!user) {
+      toast.error('Please log in to download');
       return;
     }
 
     try {
+      // Get or create direct chat room with uploader
+      const { data: roomData, error: roomError } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: item.uploader_id,
+      });
+
+      if (roomError || !roomData) {
+        throw new Error('Failed to create chat room');
+      }
+
+      const roomId = roomData;
+
+      // Get signed URL for the file
       const bucket = item.media_type === 'doc' ? 'live-session-docs' :
                      item.media_type === 'art' ? 'live-session-art' :
                      'live-session-music';
 
-      const { data, error } = await supabase.storage
+      const { data: signedUrl } = await supabase.storage
         .from(bucket)
-        .createSignedUrl(item.file_path, 3600);
+        .createSignedUrl(item.file_path, 2592000); // 30 days
 
-      if (error) throw error;
+      // Send file to chat room
+      await supabase.from('chat_messages').insert({
+        room_id: roomId,
+        sender_id: null, // System message
+        content: `📥 Free Download: ${item.file_name}`,
+        message_type: 'purchase_delivery',
+        system_metadata: {
+          type: 'free_download',
+          file_url: signedUrl?.signedUrl,
+          file_name: item.file_name,
+          file_size: item.file_size,
+          media_type: item.media_type,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      });
 
-      const link = document.createElement('a');
-      link.href = data.signedUrl;
-      link.download = item.file_name;
-      link.click();
-      toast.success('Download started');
+      toast.success('File sent to your 1-on-1 chat!');
     } catch (error: any) {
       console.error('Download error:', error);
-      toast.error('Download failed');
+      toast.error(error.message || 'Download failed');
     }
   };
 
@@ -247,22 +266,30 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {canAccess ? (
+            {isFree ? (
+              // Free media - show download button for all
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleDownload(item)}
+                onClick={() => handleFreeDownload(item)}
               >
                 <Download className="h-4 w-4 mr-1" />
-                Download
+                Download (Free)
               </Button>
+            ) : hasPurchased || isOwner || isCreator ? (
+              // Already purchased or owned - show that they have access
+              <Badge variant="secondary" className="gap-1">
+                <Download className="h-3 w-3" />
+                Owned
+              </Badge>
             ) : (
+              // Priced media - show bestowal button
               <Button
                 size="sm"
                 onClick={() => handlePurchase(item)}
               >
                 <DollarSign className="h-4 w-4 mr-1" />
-                Purchase ${price.toFixed(2)}
+                Bestowal {formatAmount(price)}
               </Button>
             )}
 
