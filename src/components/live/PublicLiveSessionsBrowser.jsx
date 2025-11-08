@@ -63,11 +63,12 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
           radio_schedule:schedule_id (
             show_id,
             dj_id,
-            radio_djs:dj_id (
-              dj_name,
-              avatar_url,
-              bio
-            ),
+             radio_djs:dj_id (
+               dj_name,
+               avatar_url,
+               bio,
+               user_id
+             ),
             radio_shows:show_id (
               show_name,
               description,
@@ -125,17 +126,17 @@ export function PublicLiveSessionsBrowser({ onJoinSession }) {
             title: show?.show_name || 'Live Radio Show',
             description: show?.description || 'Live radio broadcast',
             category: show?.category || 'General',
-            host: {
-              name: dj?.dj_name || 'Anonymous DJ',
-              avatar: dj?.avatar_url,
-              bio: dj?.bio
-            },
-            status: session.status,
-            viewerCount: session.viewer_count || 0,
-            startedAt: session.started_at,
-            createdAt: session.created_at,
-            sessionData: session,
-            createdByCurrentUser: session.created_by === user?.id
+             host: {
+               name: dj?.dj_name || 'Anonymous DJ',
+               avatar: dj?.avatar_url,
+               bio: dj?.bio
+             },
+             status: session.status,
+             viewerCount: session.viewer_count || 0,
+             startedAt: session.started_at,
+             createdAt: session.created_at,
+             sessionData: session,
+             createdByCurrentUser: dj?.user_id === user?.id
           })
         })
       }
