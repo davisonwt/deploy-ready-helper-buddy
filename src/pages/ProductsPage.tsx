@@ -20,6 +20,7 @@ export default function ProductsPage() {
         .select(`
           *,
           sowers (
+            user_id,
             display_name,
             logo_url,
             is_verified
