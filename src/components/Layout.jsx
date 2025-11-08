@@ -39,7 +39,8 @@ import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
 
-const Layout = ({ children }) => {
+// Memoize Layout to prevent unnecessary re-renders
+const Layout = memo(({ children }) => {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
   const location = useLocation()
@@ -52,6 +53,9 @@ const Layout = ({ children }) => {
     () => isAdminOrGosat && !rolesLoading,
     [isAdminOrGosat, rolesLoading]
   )
+  
+  // Memoize basket total to prevent recalculations
+  const basketTotal = useMemo(() => getTotalItems(), [getTotalItems])
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
@@ -67,6 +71,12 @@ const Layout = ({ children }) => {
   
   const handleLogout = () => {
     logout()
+    // Clear network caches on logout
+    if (typeof window !== 'undefined') {
+      window.clearRoleCache?.()
+      // Clear any other app-level caches
+      localStorage.removeItem('lastFetchTime')
+    }
     navigate("/")
   }
   
@@ -281,9 +291,9 @@ const Layout = ({ children }) => {
                   className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  {getTotalItems() > 0 && (
+                  {basketTotal > 0 && (
                     <Badge className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
-                      {getTotalItems()}
+                      {basketTotal}
                     </Badge>
                   )}
                 </Link>

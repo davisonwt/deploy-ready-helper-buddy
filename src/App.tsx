@@ -24,23 +24,25 @@ const CommissionDashboard = lazy(() => import('./components/marketing/Commission
 const GamificationDashboard = lazy(() => import('./components/gamification/GamificationDashboard'));
 const AdvancedSearchPage = lazy(() => import('./pages/AdvancedSearchPage'));
 
-// Import critical pages (needed immediately to prevent React dispatcher errors from lazy loading)
+// CRITICAL PATH: Only load auth pages immediately
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import ChatApp from "./pages/ChatApp";
-import PremiumRoomsLanding from "./pages/PremiumRoomsLanding";
-import DashboardPage from "./pages/DashboardPage";
-import ProfilePage from "./pages/ProfilePage";
-import BrowseOrchardsPage from "./pages/BrowseOrchardsPage";
-import OrchardPage from "./pages/OrchardPage";
-import CreateOrchardPage from "./pages/CreateOrchardPage";
-import MyOrchardsPage from "./pages/MyOrchardsPage";
-import BasketPage from "./pages/BasketPage";
-import EditOrchardPage from "./pages/EditOrchardPage";
-import PremiumRoomViewPage from "./pages/PremiumRoomViewPage";
-import EditPremiumRoomPage from "./pages/EditPremiumRoomPage";
+
+// DEFERRED LOADING: All other pages lazy loaded
+const ChatApp = lazy(() => import("./pages/ChatApp"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
+const OrchardPage = lazy(() => import("./pages/OrchardPage"));
+const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
+const MyOrchardsPage = lazy(() => import("./pages/MyOrchardsPage"));
+const BasketPage = lazy(() => import("./pages/BasketPage"));
+const EditOrchardPage = lazy(() => import("./pages/EditOrchardPage"));
+const PremiumRoomsLanding = lazy(() => import("./pages/PremiumRoomsLanding"));
+const PremiumRoomViewPage = lazy(() => import("./pages/PremiumRoomViewPage"));
+const EditPremiumRoomPage = lazy(() => import("./pages/EditPremiumRoomPage"));
 
 // Lazy load secondary pages for better performance
 const AnimatedOrchardPage = lazy(() => import("./pages/AnimatedOrchardPage"));
