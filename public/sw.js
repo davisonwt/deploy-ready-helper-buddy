@@ -1,12 +1,9 @@
-// Service Worker for Push Notifications and PWA functionality
-
-// Version cache name so each deploy gets a fresh cache
-const CACHE_VERSION = '2025-10-30-03' // Bumped to invalidate old caches
+// Lightweight Service Worker - Network-first strategy
+const CACHE_VERSION = '2025-11-08'
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
+// Only cache critical static assets
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/placeholder.svg'
 ]
@@ -35,51 +32,36 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// Fetch event - network-first for HTML, stale-while-revalidate for assets
+// Network-first for everything - minimal caching overhead
 self.addEventListener('fetch', (event) => {
   const { request } = event
-  const url = new URL(request.url)
-
-  // Bypass cache if ?no-sw=1 is present
-  if (url.searchParams.has('no-sw')) {
-    event.respondWith(fetch(request))
+  
+  // Skip caching for API calls
+  if (request.url.includes('/api/') || request.url.includes('supabase')) {
     return
   }
 
-  // Network-first strategy for navigation/HTML requests
-  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Cache the fresh response
+  // Only cache GET requests
+  if (request.method !== 'GET') {
+    return
+  }
+
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        // Only cache successful responses for static assets
+        if (response.status === 200 && request.url.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
           const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseClone)
           })
-          return response
-        })
-        .catch(() => {
-          // Fallback to cache if offline
-          return caches.match(request)
-        })
-    )
-    return
-  }
-
-  // Stale-while-revalidate for static assets
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request).then((networkResponse) => {
-        // Update cache in background
-        const responseClone = networkResponse.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseClone)
-        })
-        return networkResponse
+        }
+        return response
       })
-      // Return cached version immediately, fetch in background
-      return cachedResponse || fetchPromise
-    })
+      .catch(() => {
+        // Fallback to cache only for static assets
+        return caches.match(request)
+      })
   )
 })
 
