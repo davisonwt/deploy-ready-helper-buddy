@@ -13,6 +13,7 @@ import { ArrowLeft, Users, Music, FileText, Image as ImageIcon, Download, Play, 
 import { toast } from 'sonner';
 import { PremiumItemPurchaseModal } from '@/components/premium/PremiumItemPurchaseModal';
 import { RoomAccessModal } from '@/components/premium/RoomAccessModal';
+import { DiscordStyleRoomView } from '@/components/premium/DiscordStyleRoomView';
 
 interface PremiumRoom {
   id: string;
@@ -425,6 +426,20 @@ const PremiumRoomViewPage: React.FC = () => {
   }
 
   const isCreator = user?.id === room.creator_id;
+
+  // Use Discord-style view if user has access
+  if (hasAccess) {
+    return (
+      <>
+        <audio ref={audioRef} controls preload="metadata" playsInline onEnded={() => setPlayingTrack(null)} onError={(e) => { const el = e.currentTarget; console.error('Audio element error:', el.error); toast.error('Audio failed to load'); setPlayingTrack(null); }} crossOrigin="anonymous" className="hidden" />
+        <DiscordStyleRoomView 
+          room={room} 
+          hasAccess={hasAccess} 
+          isCreator={isCreator} 
+        />
+      </>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
