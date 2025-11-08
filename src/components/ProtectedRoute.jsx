@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useUserRoles } from "../hooks/useUserRoles"
 import { logInfo } from "@/lib/logging"
+import { LoadingSpinner } from "@/components/LoadingSpinner"
 
 const AuthProtectedRoute = memo(({ children }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -10,11 +11,7 @@ const AuthProtectedRoute = memo(({ children }) => {
   console.log('🔐 AuthProtectedRoute:', { isAuthenticated, authLoading })
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
+    return <LoadingSpinner full text="Authenticating..." />
   }
 
   if (!isAuthenticated) {
@@ -45,16 +42,23 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   // Only show loading if still fetching
   if (authLoading || rolesLoading) {
     console.log('⏳ [ProtectedRoute] Loading state:', { authLoading, rolesLoading })
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
+    return <LoadingSpinner full text="Loading permissions..." />
   }
 
   if (!isAuthenticated) {
     logInfo('RoleProtectedRoute redirect', { reason: 'unauthenticated', to: '/login' })
     return <Navigate to="/login" replace />
+  }
+
+  // Wait for roles to be loaded before checking access
+  if (!userRoles.length && !authLoading && !rolesLoading) {
+    console.warn("⏳ [ProtectedRoute] Waiting for roles to load...", {
+      userId: user?.id,
+      userRoles,
+      authLoading,
+      rolesLoading
+    })
+    return <LoadingSpinner full text="Loading roles..." />
   }
 
   const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => hasRole(role))
