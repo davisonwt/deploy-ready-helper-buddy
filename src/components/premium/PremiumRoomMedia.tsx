@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,7 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
   userId
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { formatAmount } = useCurrency();
   const [mediaItems, setMediaItems] = useState<any[]>([]);
   const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
@@ -115,7 +117,12 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
 
       if (error) throw error;
 
-      toast.success('Purchase successful! File sent to your 1-on-1 chat.');
+      const result = data as { success: boolean; chatRoomId: string; message: string };
+      toast.success('Purchase successful! Opening chat...');
+      
+      // Navigate to the 1-1 chat room with admin
+      navigate(`/chatapp?room=${result.chatRoomId}`);
+      
       fetchPurchases();
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -179,7 +186,10 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
         },
       });
 
-      toast.success('File sent to your 1-on-1 chat!');
+      toast.success('Opening your chat with s2g admin...');
+      
+      // Navigate to the 1-1 chat room with admin
+      navigate(`/chatapp?room=${roomId}`);
     } catch (error: any) {
       console.error('Download error:', error);
       toast.error(error.message || 'Download failed');
