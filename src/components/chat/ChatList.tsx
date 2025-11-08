@@ -314,7 +314,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
               className="hover:shadow-lg hover:border-primary/40 transition-all cursor-pointer border-2"
               onClick={() => { 
                 console.log('📨 Opening room:', room.id);
-                navigate(`/chatapp?room=${room.id}`); 
+                navigate(`/communications-hub?room=${room.id}`); 
               }}
             >
               <CardHeader className="pb-3">
