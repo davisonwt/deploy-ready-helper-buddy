@@ -10,6 +10,7 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
+import { logReactDiagnostics } from '@/utils/reactDuplicateDetector';
 import "./index.css";
 import React from "react";
 import * as ReactDOMPkg from "react-dom";
@@ -74,12 +75,15 @@ try {
   console.log('React version:', (React as any).version);
   console.log('React DOM version:', (ReactDOMPkg as any).version);
   console.groupEnd();
+  
+  // Detect duplicate React instances
+  logReactDiagnostics();
 } catch (e) {
   console.warn('Version check failed', e);
 }
 
-// Defer service worker registration to after critical path
-if ('serviceWorker' in navigator) {
+// Defer service worker registration - ONLY IN PRODUCTION
+if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   // Wait for page to fully load and become idle
   window.addEventListener('load', () => {
     // Use requestIdleCallback to defer SW registration
@@ -98,7 +102,7 @@ async function registerServiceWorker() {
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08');
+    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v2');
     
     // Only update if page is visible (don't interrupt user)
     if (document.visibilityState === 'visible') {
