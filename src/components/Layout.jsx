@@ -27,7 +27,8 @@ import {
   Cloud,
   Sparkles,
   Mic,
-  Radio
+  Radio,
+  Crown
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
