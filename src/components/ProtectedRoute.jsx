@@ -1,7 +1,7 @@
 import { useMemo, memo } from "react"
 import { Navigate } from "react-router-dom"
-import { useAuth } from "../hooks/useAuth"
-import { useUserRoles } from "../hooks/useUserRoles"
+import { useAuth } from "@/hooks/useAuth"
+import { useUserRoles } from "@/hooks/useUserRoles"
 import { logInfo } from "@/lib/logging"
 import { LoadingSpinner } from "@/components/LoadingSpinner"
 
