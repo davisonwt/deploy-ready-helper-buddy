@@ -11,15 +11,28 @@ export function RequireVerification({ children }: RequireVerificationProps) {
   const location = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
 
-  if (loading)
+  // Wait for auth to finish loading
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
+  }
 
-  // not logged in → let <ProtectedRoute> handle login
-  if (!isAuthenticated || !user) return <>{children}</>;
+  // Not authenticated → allow children (ProtectedRoute will handle redirect)
+  if (!isAuthenticated) {
+    return <>{children}</>;
+  }
+
+  // Authenticated but user data not loaded yet → wait
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   // Allow bypass via URL parameter for testing
   const searchParams = new URLSearchParams(location.search);
@@ -31,6 +44,6 @@ export function RequireVerification({ children }: RequireVerificationProps) {
     return <Navigate to="/chatapp" state={{ from: location.pathname }} replace />;
   }
 
-  // all checks passed → render protected route
+  // All checks passed → render protected route
   return <>{children}</>;
 }
