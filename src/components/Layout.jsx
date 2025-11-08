@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { useBasket } from "@/hooks/useBasket"
 import { useState, useMemo } from 'react'
-import { useUserRoles } from "@/hooks/useUserRoles"
+// import { useUserRoles } from "@/hooks/useUserRoles"
 import { 
   Sprout, 
   Home, 
@@ -47,7 +47,9 @@ function Layout({ children }) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat, loading: rolesLoading } = useUserRoles()
+  // Temporarily disable role-gated admin button to resolve hook error
+  const isAdminOrGosat = false
+  const rolesLoading = false
   const { 
     showOnboarding, 
     setShowOnboarding, 
