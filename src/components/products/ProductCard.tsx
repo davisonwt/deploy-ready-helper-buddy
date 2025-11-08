@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface ProductCardProps {
   product: any;
   featured?: boolean;
+  showActions?: boolean; // Control whether to show edit/delete actions
 }
 
-export default function ProductCard({ product, featured }: ProductCardProps) {
+export default function ProductCard({ product, featured, showActions = false }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -188,7 +189,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              {isOwner ? (
+              {showActions && isOwner ? (
                 <>
                   <Button
                     onClick={handleEdit}
@@ -217,7 +218,7 @@ export default function ProductCard({ product, featured }: ProductCardProps) {
                     )}
                   </Button>
                 </>
-              ) : (
+              ) : showActions ? null : (
                 <>
                   {product.license_type === 'bestowal' ? (
                     <Button

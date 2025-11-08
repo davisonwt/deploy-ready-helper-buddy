@@ -75,7 +75,9 @@ const LiveRoomsPage = lazy(() => import("./pages/LiveRoomsPage"));
 const CreateLiveRoomPage = lazy(() => import("./pages/CreateLiveRoomPage"));
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
+const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
+const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
 
 // Lazy load admin pages (only accessed by admins)
@@ -629,11 +631,29 @@ const App = () => (
                   </Suspense>
                 </Layout>
               } />
+              <Route path="/my-products" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyProductsPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
               <Route path="/products/upload" element={
                 <ProtectedRoute>
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <UploadForm />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/products/edit/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <EditForm />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>

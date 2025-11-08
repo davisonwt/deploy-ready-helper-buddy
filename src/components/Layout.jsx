@@ -93,6 +93,7 @@ const Layout = ({ children }) => {
       className: 'browse-orchards-tour',
       items: [
         { name: "My Orchards", href: "/my-orchards", icon: User },
+        { name: "My Products", href: "/my-products", icon: ShoppingCart },
         { name: "Browse Community Orchards", href: "/browse-orchards", icon: Users },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "Upload Product/Music/Art", href: "/products/upload", icon: Plus },
