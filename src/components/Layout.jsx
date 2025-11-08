@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { useBasket } from "@/hooks/useBasket"
-import { useState, useMemo, memo } from 'react'
+import { useState, useMemo } from 'react'
 import { useUserRoles } from "@/hooks/useUserRoles"
 import { 
   Sprout, 
@@ -40,8 +40,8 @@ import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
 
-// Layout component without memo to fix dispatcher issue
-const Layout = ({ children }) => {
+// Layout component as a standard function declaration to avoid any HOC/memo pitfalls
+function Layout({ children }) {
   // All hooks must be at the top level
   const location = useLocation()
   const navigate = useNavigate()
