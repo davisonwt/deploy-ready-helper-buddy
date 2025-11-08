@@ -22,16 +22,13 @@ import {
   Share2,
   MapPin,
   Heart,
-  Trash2,
-  Package,
-  Music
+  Trash2
 } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import { formatCurrency } from '../utils/formatters';
 import { processOrchardsUrls } from '../utils/urlUtils';
-import ProductCard from '@/components/products/ProductCard';
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
@@ -44,7 +41,6 @@ export default function MyOrchardsPage() {
   
   // Data state and loaders
   const [orchards, setOrchards] = useState([])
-  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
 
   const fetchOrchards = async () => {
@@ -64,44 +60,6 @@ export default function MyOrchardsPage() {
     }
   }
 
-  const fetchProducts = async () => {
-    if (!user?.id) return;
-    
-    try {
-      // First get user's sower profile
-      const { data: sowerData } = await supabase
-        .from('sowers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!sowerData) {
-        setProducts([]);
-        return;
-      }
-
-      // Then get products for that sower
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          sowers (
-            user_id,
-            display_name,
-            logo_url,
-            is_verified
-          )
-        `)
-        .eq('sower_id', sowerData.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setProducts([]);
-    }
-  }
 
   const deleteOrchard = async (id) => {
     try {
@@ -151,7 +109,6 @@ export default function MyOrchardsPage() {
   useEffect(() => {
     if (user) {
       fetchOrchards()
-      fetchProducts()
     }
   }, [user])
 
@@ -431,12 +388,8 @@ export default function MyOrchardsPage() {
           </div>
         </div>
 
-        {/* Orchards Section */}
-        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6 md:p-8 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <TreePine className="h-6 w-6 text-orange-600" />
-            <h2 className="text-2xl font-bold text-orange-700">My Orchards</h2>
-          </div>
+        {/* Orchards Grid */}
+        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6 md:p-8">
           {userOrchards.length === 0 ? (
             <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
               <CardContent className="p-12 text-center">
@@ -625,24 +578,6 @@ export default function MyOrchardsPage() {
           )}
         </div>
 
-        {/* Products Section */}
-        {products.length > 0 && (
-          <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Package className="h-6 w-6 text-orange-600" />
-              <h2 className="text-2xl font-bold text-orange-700">My Products</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                  showActions={true} 
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
       </div>
     </div>
