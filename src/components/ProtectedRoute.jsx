@@ -29,11 +29,22 @@ const AuthProtectedRoute = memo(({ children }) => {
 })
 
 const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
-  const { isAuthenticated, loading: authLoading } = useAuth()
+  const { isAuthenticated, user, loading: authLoading } = useAuth()
   const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
+
+  console.log('🔒 [ProtectedRoute] Component render:', {
+    isAuthenticated,
+    userId: user?.id,
+    userRoles,
+    allowedRoles,
+    authLoading,
+    rolesLoading,
+    currentPath: window.location.pathname
+  })
 
   // Only show loading if still fetching
   if (authLoading || rolesLoading) {
+    console.log('⏳ [ProtectedRoute] Loading state:', { authLoading, rolesLoading })
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -50,6 +61,7 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   
   if (!hasRequiredRole) {
     console.error('🚫 [ROUTE_BLOCKED] Missing required role', { 
+      userId: user?.id,
       userRoles, 
       allowedRoles, 
       currentPath: window.location.pathname,
@@ -59,6 +71,7 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   }
 
   console.log('✅ [ROUTE_ALLOWED] Role check passed', { 
+    userId: user?.id,
     userRoles,
     allowedRoles, 
     currentPath: window.location.pathname 
