@@ -49,8 +49,18 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.some(role => hasRole(role))
   
   if (!hasRequiredRole) {
+    console.error('🚫 [ROUTE_BLOCKED] Missing required role', { 
+      allowedRoles, 
+      currentPath: window.location.pathname,
+      userId: isAuthenticated ? 'authenticated' : 'not-authenticated'
+    })
     return <Navigate to="/dashboard" replace />
   }
+
+  console.log('✅ [ROUTE_ALLOWED] Role check passed', { 
+    allowedRoles, 
+    currentPath: window.location.pathname 
+  })
 
   return children
 }, (prev, next) => {

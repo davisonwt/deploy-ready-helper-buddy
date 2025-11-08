@@ -148,33 +148,53 @@ const PremiumRoomViewPage: React.FC = () => {
   };
 
   const getPlayableUrl = async (track: any): Promise<string> => {
+    console.log('🎵 [AUDIO] Resolving playable URL for track:', { 
+      track, 
+      name: track?.name, 
+      url: track?.url,
+      file_url: track?.file_url,
+      public_url: track?.public_url
+    });
+
     const src: string = track?.url || track?.file_url || track?.public_url || '';
-    // If it's a local blob/data URL or a non-signed external HTTP URL, use it directly
-    // if (src && (/^blob:/.test(src) || /^data:/.test(src))) return src;
-    if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) return src;
+    
+    // If it's a direct HTTP URL (not a storage signed URL), use it
+    if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) {
+      console.log('✅ [AUDIO] Using direct HTTP URL:', src);
+      return src;
+    }
 
     try {
       const filename = track?.name || track?.filename || '';
       const candidates = inferCandidates(src, filename).filter(c => !/^blob:/i.test(c.key));
+      
+      console.log('🔍 [AUDIO] Trying storage candidates:', candidates);
 
       // Try signed URLs first (works for private buckets)
       for (const cand of candidates) {
+        console.log('🔐 [AUDIO] Attempting signed URL for:', cand);
         const { data, error } = await supabase.storage.from(cand.bucket).createSignedUrl(cand.key, 3600);
-        if (!error && data?.signedUrl) return data.signedUrl;
+        if (!error && data?.signedUrl) {
+          console.log('✅ [AUDIO] Signed URL created:', data.signedUrl);
+          return data.signedUrl;
+        }
+        if (error) console.warn('❌ [AUDIO] Signed URL failed:', error);
       }
 
       // Fallback to public URLs if bucket/object is public
       for (const cand of candidates) {
+        console.log('🌐 [AUDIO] Attempting public URL for:', cand);
         const { data } = supabase.storage.from(cand.bucket).getPublicUrl(cand.key);
-        if (data?.publicUrl) return data.publicUrl;
+        if (data?.publicUrl) {
+          console.log('✅ [AUDIO] Public URL retrieved:', data.publicUrl);
+          return data.publicUrl;
+        }
       }
     } catch (e) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Playable URL resolution failed', e);
-      }
+      console.error('❌ [AUDIO] Playable URL resolution failed:', e);
     }
 
-    // Last resort, return whatever we had
+    console.warn('⚠️ [AUDIO] Falling back to original source:', src);
     return src;
   };
   React.useEffect(() => {
@@ -249,42 +269,61 @@ const PremiumRoomViewPage: React.FC = () => {
   }, [id, user]);
 
   const handlePlayTrack = async (track: any) => {
+    console.log('▶️ [AUDIO] Play track requested:', { 
+      trackId: track?.id, 
+      trackName: track?.name,
+      hasAccess,
+      hasPurchased: purchasedItems.has(track?.id)
+    });
+
     // Check if user has access or has purchased this specific item
     const hasPurchased = purchasedItems.has(track.id);
     if (!hasAccess && !hasPurchased && track.price > 0) {
+      console.log('💰 [AUDIO] Track requires purchase');
       setPurchaseItem({ item: track, type: 'music' });
       return;
     }
 
     if (playingTrack === track.id) {
+      console.log('⏸️ [AUDIO] Pausing currently playing track');
       audioRef.current?.pause();
       setPlayingTrack(null);
     } else {
       try {
+        console.log('🎵 [AUDIO] Getting playable URL...');
         const url = await getPlayableUrl(track);
-        console.log('Resolved playable URL for track', { trackId: track.id, url });
+        console.log('✅ [AUDIO] Resolved playable URL:', url);
+        
         if (audioRef.current) {
+          console.log('🔓 [AUDIO] Unlocking audio and configuring player...');
           await resumeGlobalAudio();
           const el = audioRef.current;
           el.muted = false;
           el.volume = 1.0;
           el.src = url;
           el.load();
+          
+          console.log('▶️ [AUDIO] Attempting to play...');
           try {
             await el.play();
+            console.log('✅ [AUDIO] Playback started successfully');
           } catch (err) {
+            console.warn('⚠️ [AUDIO] First play attempt failed, retrying...', err);
             // Retry once after ensuring context is resumed
             await resumeGlobalAudio();
             await el.play();
+            console.log('✅ [AUDIO] Playback started on retry');
           }
         }
         setPlayingTrack(track.id);
       } catch (e) {
-        console.error('Audio play failed', e);
+        console.error('❌ [AUDIO] Audio play failed:', e);
         try {
+          console.log('🔄 [AUDIO] Attempting fallback playback...');
           const safeTrack = { ...track, url: '', file_url: '', public_url: '' };
           const alt = await getPlayableUrl(safeTrack);
           if (alt) {
+            console.log('✅ [AUDIO] Fallback URL found:', alt);
             const el = audioRef.current;
             if (el) {
               await resumeGlobalAudio();
@@ -294,11 +333,14 @@ const PremiumRoomViewPage: React.FC = () => {
               el.load();
               await el.play();
               setPlayingTrack(track.id);
+              console.log('✅ [AUDIO] Fallback playback successful');
               return;
             }
           }
-        } catch {}
-        toast.error('Audio failed to load');
+        } catch (fallbackErr) {
+          console.error('❌ [AUDIO] Fallback also failed:', fallbackErr);
+        }
+        toast.error('Audio failed to load - check console for details');
         setPlayingTrack(null);
       }
     }
