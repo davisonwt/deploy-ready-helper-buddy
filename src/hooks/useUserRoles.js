@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { useAuth } from './useAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 // Centralized role management with caching
 const roleCache = new Map()

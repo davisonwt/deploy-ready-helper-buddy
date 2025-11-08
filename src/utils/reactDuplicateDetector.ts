@@ -21,14 +21,14 @@ export function detectDuplicateReact(): { hasDuplicate: boolean; count: number }
   return { hasDuplicate: false, count: 0 };
 }
 
-export function logReactDiagnostics() {
-  const React = require('react');
-  const ReactDOM = require('react-dom');
+export function logReactDiagnostics(ReactLib?: any, ReactDOMLib?: any) {
+  const React = ReactLib ?? (typeof window !== 'undefined' ? (window as any).React : undefined);
+  const ReactDOM = ReactDOMLib ?? (typeof window !== 'undefined' ? (window as any).ReactDOM : undefined);
   
   console.log('🔍 React Diagnostics:', {
-    reactVersion: React.version,
-    reactDomVersion: ReactDOM.version,
-    versionMatch: React.version === ReactDOM.version,
+    reactVersion: React?.version,
+    reactDomVersion: ReactDOM?.version,
+    versionMatch: React?.version === ReactDOM?.version,
     isDevelopment: import.meta.env.DEV
   });
 
