@@ -496,6 +496,6 @@ const Layout = memo(({ children }) => {
       />
     </div>
   )
-}
+})
 
-export default memo(Layout)
+export default Layout
