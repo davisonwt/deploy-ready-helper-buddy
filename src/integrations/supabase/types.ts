@@ -161,6 +161,66 @@ export type Database = {
         }
         Relationships: []
       }
+      basket_items: {
+        Row: {
+          added_at: string | null
+          basket_id: string | null
+          id: string
+          product_id: string | null
+          quantity: number | null
+        }
+        Insert: {
+          added_at?: string | null
+          basket_id?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+        }
+        Update: {
+          added_at?: string | null
+          basket_id?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basket_items_basket_id_fkey"
+            columns: ["basket_id"]
+            isOneToOne: false
+            referencedRelation: "baskets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "basket_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      baskets: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bestowals: {
         Row: {
           amount: number
@@ -1997,6 +2057,137 @@ export type Database = {
         }
         Relationships: []
       }
+      product_bestowals: {
+        Row: {
+          amount: number
+          bestower_id: string | null
+          created_at: string | null
+          grower_amount: number
+          id: string
+          payment_reference: string | null
+          product_id: string | null
+          s2g_fee: number
+          sower_amount: number
+          sower_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          bestower_id?: string | null
+          created_at?: string | null
+          grower_amount: number
+          id?: string
+          payment_reference?: string | null
+          product_id?: string | null
+          s2g_fee: number
+          sower_amount: number
+          sower_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          bestower_id?: string | null
+          created_at?: string | null
+          grower_amount?: number
+          id?: string
+          payment_reference?: string | null
+          product_id?: string | null
+          s2g_fee?: number
+          sower_amount?: number
+          sower_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_bestowals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_bestowals_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "sowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          bestowal_count: number | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          download_count: number | null
+          duration: number | null
+          file_url: string
+          id: string
+          is_featured: boolean | null
+          license_type: string | null
+          metadata: Json | null
+          play_count: number | null
+          price: number | null
+          sower_id: string | null
+          tags: string[] | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bestowal_count?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          duration?: number | null
+          file_url: string
+          id?: string
+          is_featured?: boolean | null
+          license_type?: string | null
+          metadata?: Json | null
+          play_count?: number | null
+          price?: number | null
+          sower_id?: string | null
+          tags?: string[] | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bestowal_count?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          duration?: number | null
+          file_url?: string
+          id?: string
+          is_featured?: boolean | null
+          license_type?: string | null
+          metadata?: Json | null
+          play_count?: number | null
+          price?: number | null
+          sower_id?: string | null
+          tags?: string[] | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "sowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_access_logs: {
         Row: {
           access_reason: string | null
@@ -3507,6 +3698,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sowers: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          is_verified: boolean | null
+          logo_url: string | null
+          updated_at: string | null
+          user_id: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_verified?: boolean | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       stream_analytics: {
         Row: {
           event_data: Json | null
@@ -4595,6 +4822,14 @@ export type Database = {
         | { Args: never; Returns: undefined }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
+        Returns: undefined
+      }
+      increment_product_download_count: {
+        Args: { product_uuid: string }
+        Returns: undefined
+      }
+      increment_product_play_count: {
+        Args: { product_uuid: string }
         Returns: undefined
       }
       increment_video_views: {

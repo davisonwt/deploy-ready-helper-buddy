@@ -74,6 +74,9 @@ const RadioGenerator = lazy(() => import("./pages/RadioGenerator"));
 const LiveRoomsPage = lazy(() => import("./pages/LiveRoomsPage"));
 const CreateLiveRoomPage = lazy(() => import("./pages/CreateLiveRoomPage"));
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
+const ProductsPage = lazy(() => import("./pages/ProductsPage"));
+const UploadForm = lazy(() => import("./components/products/UploadForm"));
+const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -89,9 +92,11 @@ import { RequireVerification } from "./components/auth/RequireVerification";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
+import { ProductBasketProvider } from "./contexts/ProductBasketContext";
 import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
 import { FloatingLiveWidget } from "./components/dashboard/FloatingLiveWidget";
+import FloatingBasketButton from "./components/products/FloatingBasketButton";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
 import { CallManagerProvider } from '@/hooks/useCallManager';
@@ -118,7 +123,8 @@ const App = () => (
       <AppContextProvider>
         <CallManagerProvider>
           <BasketProvider>
-            <TooltipProvider>
+            <ProductBasketProvider>
+              <TooltipProvider>
               <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
                 <NavigationMonitor />
                 <DeadLinkDetector />
@@ -615,6 +621,33 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Products/Marketplace Routes */}
+              <Route path="/products" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProductsPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/products/upload" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <UploadForm />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/products/basket" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProductBasketPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
                   </Routes>
@@ -624,11 +657,13 @@ const App = () => (
               <PerformanceMonitor />
               <LiveActivityWidget />
               <FloatingLiveWidget />
+              <FloatingBasketButton />
               <OnboardingTour />
               <HelpModal />
             </ThemeProvider>
           </TooltipProvider>
-        </BasketProvider>
+        </ProductBasketProvider>
+      </BasketProvider>
       </CallManagerProvider>
     </AppContextProvider>
   </AuthProvider>
