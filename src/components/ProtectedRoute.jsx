@@ -30,7 +30,7 @@ const AuthProtectedRoute = memo(({ children }) => {
 
 const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   const { isAuthenticated, loading: authLoading } = useAuth()
-  const { hasRole, loading: rolesLoading } = useUserRoles()
+  const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
 
   // Only show loading if still fetching
   if (authLoading || rolesLoading) {
@@ -50,14 +50,16 @@ const RoleProtectedRoute = memo(({ children, allowedRoles }) => {
   
   if (!hasRequiredRole) {
     console.error('🚫 [ROUTE_BLOCKED] Missing required role', { 
+      userRoles, 
       allowedRoles, 
       currentPath: window.location.pathname,
-      userId: isAuthenticated ? 'authenticated' : 'not-authenticated'
+      roleCheckResults: allowedRoles.map(role => ({ role, hasRole: hasRole(role) }))
     })
     return <Navigate to="/dashboard" replace />
   }
 
   console.log('✅ [ROUTE_ALLOWED] Role check passed', { 
+    userRoles,
     allowedRoles, 
     currentPath: window.location.pathname 
   })
