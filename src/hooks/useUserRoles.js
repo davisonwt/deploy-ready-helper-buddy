@@ -18,7 +18,10 @@ export function useUserRoles() {
     let isMounted = true
     
     const fetchRoles = async () => {
+      console.log('🔍 [useUserRoles] Starting fetch for userId:', userId)
+      
       if (!userId) {
+        console.log('⚠️ [useUserRoles] No userId, clearing roles')
         setUserRoles([])
         setLoading(false)
         return
@@ -27,6 +30,7 @@ export function useUserRoles() {
       // Check cache first
       const cached = roleCache.get(userId)
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log('✅ [useUserRoles] Using cached roles:', cached.roles)
         setUserRoles(cached.roles)
         setLoading(false)
         return
@@ -34,14 +38,20 @@ export function useUserRoles() {
 
       try {
         setLoading(true)
+        console.log('🔄 [useUserRoles] Fetching from database for userId:', userId)
+        
         const { data, error: fetchError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', userId)
 
+        console.log('📊 [useUserRoles] Database response:', { data, error: fetchError })
+
         if (fetchError) throw fetchError
 
         const roles = (data || []).map(r => r.role)
+        
+        console.log('✅ [useUserRoles] Extracted roles:', roles)
         
         // Cache the result
         roleCache.set(userId, {
@@ -50,11 +60,12 @@ export function useUserRoles() {
         })
 
         if (isMounted) {
+          console.log('✅ [useUserRoles] Setting state with roles:', roles)
           setUserRoles(roles)
           setError(null)
         }
       } catch (err) {
-        console.error('Failed to fetch user roles:', err)
+        console.error('❌ [useUserRoles] Failed to fetch user roles:', err)
         if (isMounted) {
           setUserRoles([])
           setError(err.message)
