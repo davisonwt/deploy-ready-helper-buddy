@@ -56,4 +56,3 @@ export function RequireVerification({ children }: RequireVerificationProps) {
   return <>{children}</>;
 }
 
-
