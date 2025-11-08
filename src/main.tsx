@@ -9,9 +9,22 @@ import { ProductionErrorBoundary } from "@/components/error/ProductionErrorBound
 import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
+import { clearRoleCache } from '@/hooks/useUserRoles';
 import "./index.css";
 import React from "react";
 import * as ReactDOMPkg from "react-dom";
+
+// Extend Window interface for cache clearing
+declare global {
+  interface Window {
+    clearRoleCache: typeof clearRoleCache;
+  }
+}
+
+// Expose cache clearing for logout
+if (typeof window !== 'undefined') {
+  window.clearRoleCache = clearRoleCache;
+}
 
 // Global error handling
 window.addEventListener('error', (event) => {

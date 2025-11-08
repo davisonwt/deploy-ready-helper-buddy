@@ -141,6 +141,10 @@ export class AuthProviderClass extends React.Component {
 
   logout = async () => {
     try {
+      // Clear role cache on logout
+      if (typeof window !== 'undefined' && window.clearRoleCache) {
+        window.clearRoleCache()
+      }
       const { error } = await supabase.auth.signOut()
       if (error) console.error('Logout error:', error)
     } catch (e) {
