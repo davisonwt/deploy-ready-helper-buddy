@@ -4579,6 +4579,10 @@ export type Database = {
         Args: { target_role: string; target_user_id: string }
         Returns: Json
       }
+      has_premium_room_access: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
