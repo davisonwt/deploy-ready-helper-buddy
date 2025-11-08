@@ -25,6 +25,12 @@ interface ChatRoom {
   updated_at: string;
   created_by: string;
   chat_participants?: any[];
+  profiles?: {
+    display_name?: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
 }
 
 interface ChatListProps {
@@ -69,7 +75,13 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           is_premium,
           updated_at,
           created_by,
-          is_active
+          is_active,
+          profiles!chat_rooms_created_by_fkey(
+            display_name,
+            first_name,
+            last_name,
+            avatar_url
+          )
         )
       `)
       .eq('user_id', user.id)
@@ -105,13 +117,41 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           roomIds.length
             ? supabase
                 .from('chat_rooms')
-                .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+                .select(`
+                  id,
+                  name,
+                  room_type,
+                  is_premium,
+                  updated_at,
+                  created_by,
+                  is_active,
+                  profiles!chat_rooms_created_by_fkey(
+                    display_name,
+                    first_name,
+                    last_name,
+                    avatar_url
+                  )
+                `)
                 .in('id', roomIds)
                 .eq('is_active', true)
             : Promise.resolve({ data: [], error: null } as any),
           supabase
             .from('chat_rooms')
-            .select('id,name,room_type,is_premium,updated_at,created_by,is_active')
+            .select(`
+              id,
+              name,
+              room_type,
+              is_premium,
+              updated_at,
+              created_by,
+              is_active,
+              profiles!chat_rooms_created_by_fkey(
+                display_name,
+                first_name,
+                last_name,
+                avatar_url
+              )
+            `)
             .eq('created_by', user.id)
             .eq('is_active', true)
         ]);
@@ -331,7 +371,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900 truncate">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                           {room.name}
                         </h3>
                         {room.is_premium && (
@@ -345,6 +385,15 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
+                        {/* Show creator info */}
+                        {room.profiles && (
+                          <>
+                            <span className="text-xs text-muted-foreground">
+                              Created by {room.profiles.display_name || room.profiles.first_name || 'Unknown'}
+                            </span>
+                            <span className="text-xs text-gray-400">•</span>
+                          </>
+                        )}
                         <span className="text-xs text-gray-500">
                           {(room as any).participant_count} member{(room as any).participant_count !== 1 ? 's' : ''}
                         </span>
