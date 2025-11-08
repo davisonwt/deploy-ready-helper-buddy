@@ -161,6 +161,16 @@ export class AuthProviderClass extends React.Component {
       if (typeof window !== 'undefined' && window.clearRoleCache) {
         window.clearRoleCache()
       }
+      
+      // Clear network caches
+      try {
+        const { clearAllCaches } = await import('@/lib/networkOptimization')
+        clearAllCaches()
+        logInfo('Network caches cleared on logout')
+      } catch (e) {
+        // If module not loaded yet, that's fine
+      }
+      
       const { error } = await this.withRetry(() => supabase.auth.signOut())
       if (error) logError('Logout error', { message: error.message })
     } catch (e) {
