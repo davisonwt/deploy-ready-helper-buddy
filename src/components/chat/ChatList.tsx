@@ -75,13 +75,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
           is_premium,
           updated_at,
           created_by,
-          is_active,
-          profiles!chat_rooms_created_by_fkey(
-            display_name,
-            first_name,
-            last_name,
-            avatar_url
-          )
+          is_active
         )
       `)
       .eq('user_id', user.id)
@@ -97,7 +91,23 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         const unique = Array.from(
           new Map((data || []).map((d: any) => [d.chat_rooms.id, d.chat_rooms])).values()
         );
-        combined = unique;
+        
+        // Fetch creator profiles separately
+        const creatorIds = unique.map((room: any) => room.created_by).filter(Boolean);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, first_name, last_name, avatar_url')
+          .in('id', creatorIds);
+        
+        const profilesMap = new Map(
+          (profilesData || []).map((p: any) => [p.id, p])
+        );
+        
+        // Attach profiles to rooms
+        combined = unique.map((room: any) => ({
+          ...room,
+          profiles: profilesMap.get(room.created_by) || null
+        }));
       } else {
         // Fallback path for environments where foreign table filtering can be flaky
         console.warn('⚠️ Join returned 0 rows. Falling back to two-step fetch.');
@@ -124,13 +134,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
                   is_premium,
                   updated_at,
                   created_by,
-                  is_active,
-                  profiles!chat_rooms_created_by_fkey(
-                    display_name,
-                    first_name,
-                    last_name,
-                    avatar_url
-                  )
+                  is_active
                 `)
                 .in('id', roomIds)
                 .eq('is_active', true)
@@ -144,13 +148,7 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
               is_premium,
               updated_at,
               created_by,
-              is_active,
-              profiles!chat_rooms_created_by_fkey(
-                display_name,
-                first_name,
-                last_name,
-                avatar_url
-              )
+              is_active
             `)
             .eq('created_by', user.id)
             .eq('is_active', true)
@@ -163,7 +161,24 @@ export const ChatList = ({ searchQuery, roomType = 'all', hideFilterControls = f
         [...(byIdsRes.data || []), ...(createdRes.data || [])].forEach((r: any) => {
           dedupMap.set(r.id, r);
         });
-        combined = Array.from(dedupMap.values());
+        const rooms = Array.from(dedupMap.values());
+        
+        // Fetch creator profiles separately
+        const creatorIds = rooms.map((room: any) => room.created_by).filter(Boolean);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, first_name, last_name, avatar_url')
+          .in('id', creatorIds);
+        
+        const profilesMap = new Map(
+          (profilesData || []).map((p: any) => [p.id, p])
+        );
+        
+        // Attach profiles to rooms
+        combined = rooms.map((room: any) => ({
+          ...room,
+          profiles: profilesMap.get(room.created_by) || null
+        }));
       }
 
       // Annotate with participant count
