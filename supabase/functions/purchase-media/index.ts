@@ -84,22 +84,22 @@ serve(async (req) => {
 
     if (purchaseError) throw purchaseError;
 
-    // Get s2g admin user
-    const { data: adminUser } = await supabase
+    // Get s2g gosat user
+    const { data: gosatUser } = await supabase
       .from('user_roles')
       .select('user_id')
-      .or('role.eq.gosat,role.eq.admin')
+      .eq('role', 'gosat')
       .limit(1)
       .single();
 
-    if (!adminUser) {
-      throw new Error('Admin not found for delivery');
+    if (!gosatUser) {
+      throw new Error('S2G Gosat not found for delivery');
     }
 
-    // Get or create direct chat room between buyer and admin
+    // Get or create direct chat room between buyer and gosat
     const { data: roomId, error: roomError } = await supabase.rpc('get_or_create_direct_room', {
       user1_id: user.id,
-      user2_id: adminUser.user_id,
+      user2_id: gosatUser.user_id,
     });
 
     if (roomError || !roomId) {
