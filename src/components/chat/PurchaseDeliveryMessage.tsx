@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText, Image, Music2, Lock, Clock } from 'lucide-react';
+import { Download, FileText, Image, Music2, Lock, Clock, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface PurchaseDeliveryMessageProps {
   metadata: {
@@ -16,9 +19,15 @@ interface PurchaseDeliveryMessageProps {
     purchase_id?: string;
     expires_at?: string;
   };
+  messageId?: string;
+  onDelete?: () => void;
 }
 
-export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessageProps) {
+export function PurchaseDeliveryMessage({ metadata, messageId, onDelete }: PurchaseDeliveryMessageProps) {
+  const { user } = useAuth();
+  const [isGosat, setIsGosat] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const {
     type,
     file_url,
@@ -28,6 +37,46 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
     media_type,
     expires_at,
   } = metadata || ({} as any);
+
+  // Check if current user is gosat
+  useEffect(() => {
+    const checkGosatRole = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'gosat')
+        .single();
+      
+      setIsGosat(!!data);
+    };
+    
+    checkGosatRole();
+  }, [user]);
+
+  const handleDelete = async () => {
+    if (!messageId || !isGosat) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId);
+      
+      if (error) throw error;
+      
+      toast.success('Delivery message deleted');
+      if (onDelete) onDelete();
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete message');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const getMediaIcon = () => {
     switch (media_type) {
@@ -60,7 +109,7 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant="secondary" className="bg-emerald-600 text-white">
                   {isFree ? 'Free Download' : 'Purchase Complete'}
@@ -78,6 +127,19 @@ export function PurchaseDeliveryMessage({ metadata }: PurchaseDeliveryMessagePro
                 </p>
               )}
             </div>
+            
+            {/* Gosat Delete Button */}
+            {isGosat && messageId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Expiry Warning */}

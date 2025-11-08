@@ -31,7 +31,14 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
     return (
       <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
         <div className="flex-1 max-w-[80%]">
-          <PurchaseDeliveryMessage metadata={message.system_metadata} />
+          <PurchaseDeliveryMessage 
+            metadata={message.system_metadata} 
+            messageId={message.id}
+            onDelete={() => {
+              // Refresh messages after delete
+              if (onDelete) onDelete(message.id);
+            }}
+          />
         </div>
       </div>
     );
