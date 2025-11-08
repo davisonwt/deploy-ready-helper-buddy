@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText, Image, Music2, Lock, Clock, Trash2 } from 'lucide-react';
+import { Download, FileText, Image, Music2, Lock, Clock, Trash2, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -99,6 +99,14 @@ export function PurchaseDeliveryMessage({ metadata, messageId, onDelete }: Purch
 
   return (
     <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20">
+      {/* S2G Gosat System Badge */}
+      <div className="flex items-center justify-center gap-2 mb-3 pb-3 border-b border-emerald-500/20">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-600 text-white shadow-sm">
+          <ShieldCheck className="h-4 w-4" />
+          <span className="text-xs font-semibold">s2g gosat System Delivery</span>
+        </div>
+      </div>
+
       <div className="flex items-start gap-3">
         {/* Media Icon */}
         <div className="w-12 h-12 rounded-lg bg-background/80 flex items-center justify-center flex-shrink-0">
