@@ -147,6 +147,15 @@ const PremiumRoomViewPage: React.FC = () => {
     });
   };
 
+  const checkFileExists = async (url: string): Promise<boolean> => {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  };
+
   const getPlayableUrl = async (track: any): Promise<string> => {
     console.log('🎵 [AUDIO] Resolving playable URL for track:', { 
       track, 
@@ -158,8 +167,14 @@ const PremiumRoomViewPage: React.FC = () => {
 
     const src: string = track?.url || track?.file_url || track?.public_url || '';
     
-    // If it's a direct HTTP URL (not a storage signed URL), use it
+    // If it's a direct HTTP URL (not a storage signed URL), check existence first
     if (src && /^https?:\/\//i.test(src) && !src.includes('/storage/v1/object/sign/')) {
+      console.log('🔍 [AUDIO] Checking if direct URL exists:', src);
+      const exists = await checkFileExists(src);
+      if (!exists) {
+        console.warn('🚨 [AUDIO] File does not exist at direct URL:', src);
+        throw new Error('Track file is missing from storage');
+      }
       console.log('✅ [AUDIO] Using direct HTTP URL:', src);
       return src;
     }
@@ -175,7 +190,13 @@ const PremiumRoomViewPage: React.FC = () => {
         console.log('🔐 [AUDIO] Attempting signed URL for:', cand);
         const { data, error } = await supabase.storage.from(cand.bucket).createSignedUrl(cand.key, 3600);
         if (!error && data?.signedUrl) {
-          console.log('✅ [AUDIO] Signed URL created:', data.signedUrl);
+          console.log('🔍 [AUDIO] Checking if signed URL file exists...');
+          const exists = await checkFileExists(data.signedUrl);
+          if (!exists) {
+            console.warn('🚨 [AUDIO] File does not exist at signed URL:', data.signedUrl);
+            continue; // Try next candidate
+          }
+          console.log('✅ [AUDIO] Signed URL created and verified:', data.signedUrl);
           return data.signedUrl;
         }
         if (error) console.warn('❌ [AUDIO] Signed URL failed:', error);
@@ -186,16 +207,23 @@ const PremiumRoomViewPage: React.FC = () => {
         console.log('🌐 [AUDIO] Attempting public URL for:', cand);
         const { data } = supabase.storage.from(cand.bucket).getPublicUrl(cand.key);
         if (data?.publicUrl) {
-          console.log('✅ [AUDIO] Public URL retrieved:', data.publicUrl);
+          console.log('🔍 [AUDIO] Checking if public URL file exists...');
+          const exists = await checkFileExists(data.publicUrl);
+          if (!exists) {
+            console.warn('🚨 [AUDIO] File does not exist at public URL:', data.publicUrl);
+            continue; // Try next candidate
+          }
+          console.log('✅ [AUDIO] Public URL retrieved and verified:', data.publicUrl);
           return data.publicUrl;
         }
       }
     } catch (e) {
       console.error('❌ [AUDIO] Playable URL resolution failed:', e);
+      throw e;
     }
 
-    console.warn('⚠️ [AUDIO] Falling back to original source:', src);
-    return src;
+    console.error('🚨 [AUDIO] No valid file found in any storage location');
+    throw new Error('Track file is missing from storage');
   };
   React.useEffect(() => {
     const fetchRoom = async () => {
@@ -316,8 +344,17 @@ const PremiumRoomViewPage: React.FC = () => {
           }
         }
         setPlayingTrack(track.id);
-      } catch (e) {
+      } catch (e: any) {
         console.error('❌ [AUDIO] Audio play failed:', e);
+        
+        // Check if it's a missing file error
+        if (e?.message?.includes('missing from storage')) {
+          toast.error('This track is unavailable. The file is missing from storage.');
+          setPlayingTrack(null);
+          return;
+        }
+        
+        // Try fallback for other errors
         try {
           console.log('🔄 [AUDIO] Attempting fallback playback...');
           const safeTrack = { ...track, url: '', file_url: '', public_url: '' };
@@ -337,10 +374,14 @@ const PremiumRoomViewPage: React.FC = () => {
               return;
             }
           }
-        } catch (fallbackErr) {
+        } catch (fallbackErr: any) {
           console.error('❌ [AUDIO] Fallback also failed:', fallbackErr);
+          if (fallbackErr?.message?.includes('missing from storage')) {
+            toast.error('This track is unavailable. The file is missing from storage.');
+          } else {
+            toast.error('Audio failed to load - check console for details');
+          }
         }
-        toast.error('Audio failed to load - check console for details');
         setPlayingTrack(null);
       }
     }

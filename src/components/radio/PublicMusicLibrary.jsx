@@ -111,6 +111,15 @@ export default function PublicMusicLibrary() {
   const uniqueGenres = [...new Set(tracks.map(t => t.genre).filter(Boolean))]
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type).filter(Boolean))]
 
+  const checkFileExists = async (url) => {
+    try {
+      const res = await fetch(url, { method: 'HEAD' })
+      return res.ok
+    } catch {
+      return false
+    }
+  }
+
   const handlePlay = async (track) => {
     let el = audioRef.current
     if (!el) {
@@ -178,6 +187,12 @@ export default function PublicMusicLibrary() {
         for (const cand of candidates) {
           const { data, error } = await supabase.storage.from('music-tracks').createSignedUrl(cand, 3600)
           if (!error && data?.signedUrl) {
+            console.log('[Radio] Checking if signed URL file exists...')
+            const exists = await checkFileExists(data.signedUrl)
+            if (!exists) {
+              console.warn('[Radio] File does not exist at signed URL:', data.signedUrl)
+              continue
+            }
             derivedPath = cand
             playableUrl = data.signedUrl
             break
@@ -186,8 +201,14 @@ export default function PublicMusicLibrary() {
         if (!derivedPath && candidates[0]) {
           const { data } = supabase.storage.from('music-tracks').getPublicUrl(candidates[0])
           if (data?.publicUrl) {
-            derivedPath = candidates[0]
-            playableUrl = data.publicUrl
+            console.log('[Radio] Checking if public URL file exists...')
+            const exists = await checkFileExists(data.publicUrl)
+            if (!exists) {
+              console.warn('[Radio] File does not exist at public URL:', data.publicUrl)
+            } else {
+              derivedPath = candidates[0]
+              playableUrl = data.publicUrl
+            }
           }
         }
       } catch {}
@@ -234,6 +255,17 @@ export default function PublicMusicLibrary() {
         setIsPlaying(false)
       }
 
+      // Final check: Verify the playable URL actually exists before playing
+      console.log('[Radio] Final check: Verifying file exists at playable URL...')
+      const fileExists = await checkFileExists(playableUrl)
+      if (!fileExists) {
+        console.error('[Radio] File does not exist at any URL - track unavailable')
+        toast.error('This track is unavailable. The file is missing from storage.')
+        setCurrentTrackId(null)
+        setIsPlaying(false)
+        return
+      }
+
       try {
         el.src = playableUrl
         el.load()
@@ -242,6 +274,7 @@ export default function PublicMusicLibrary() {
         setIsPlaying(true)
       } catch (error) {
         console.error('Audio play error:', error, { fileUrl: track.file_url, derivedPath, playableUrl })
+        toast.error('Failed to play track. The file may be missing or corrupted.')
         setCurrentTrackId(null)
         setIsPlaying(false)
       }
