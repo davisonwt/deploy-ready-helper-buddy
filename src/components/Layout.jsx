@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { useBasket } from "@/hooks/useBasket"
-import { useState, useMemo } from 'react'
-import { useUserRoles } from "@/hooks/useUserRoles"
+import { useState, useMemo, useEffect } from 'react'
+import { supabase } from "@/integrations/supabase/client"
 import {
   Sprout, 
   Home, 
@@ -47,7 +47,31 @@ function Layout({ children }) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
-  const { isAdminOrGosat, loading: rolesLoading } = useUserRoles()
+  const [isAdminOrGosat, setIsAdminOrGosat] = useState(false)
+  const [rolesLoading, setRolesLoading] = useState(false)
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      if (!user?.id) { if (active) setIsAdminOrGosat(false); return }
+      try {
+        setRolesLoading(true)
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (error) throw error
+        const roles = (data || []).map(r => r.role)
+        if (active) setIsAdminOrGosat(roles.includes('admin') || roles.includes('gosat'))
+      } catch (e) {
+        if (active) setIsAdminOrGosat(false)
+        console.error('[Layout] roles fetch failed', e)
+      } finally {
+        if (active) setRolesLoading(false)
+      }
+    }
+    load()
+    return () => { active = false }
+  }, [user?.id])
   const {
     showOnboarding, 
     setShowOnboarding, 
