@@ -49,17 +49,9 @@ export function AdminButton() {
     'roles.loading': loading
   });
 
-  // Show debug info  
   return (
-    <div className="border border-red-500 p-2 max-w-md">
-      <div className="text-xs text-red-500 mb-1">
-        Auth: {auth?.isAuthenticated ? 'YES' : 'NO'} | User ID: {auth?.user?.id || 'NONE'}
-      </div>
-      <div className="text-xs text-red-500 mb-1">
-        Roles: {JSON.stringify(userRoles || [])} | Loading: {loading ? 'YES' : 'NO'}
-      </div>
-      <div className="flex gap-2 items-center">
-        {auth?.isAuthenticated && (userRoles?.length > 0) && (
+    <>
+      {auth?.isAuthenticated && (userRoles?.length > 0) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -93,17 +85,6 @@ export function AdminButton() {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        {auth?.isAuthenticated && (
-          <Button 
-            onClick={auth.logout}
-            variant="outline"
-            size="sm"
-            className="text-xs border-red-500 text-red-500 hover:bg-red-50"
-          >
-            Reset Session
-          </Button>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
