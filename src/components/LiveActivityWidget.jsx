@@ -384,7 +384,7 @@ export default function LiveActivityWidget() {
           // Navigate to radio station
           window.location.href = '/grove-station'
           break
-        case 'chat':
+        case 'chat': {
           // Join chat room
           const { error } = await supabase
             .from('chat_participants')
@@ -397,6 +397,7 @@ export default function LiveActivityWidget() {
           if (error && error.code !== '23505') throw error // Ignore unique constraint violations
           toast.success('Joined chat room!')
           break
+        }
         case 'course':
           toast.info('Course registration feature coming soon!')
           break
