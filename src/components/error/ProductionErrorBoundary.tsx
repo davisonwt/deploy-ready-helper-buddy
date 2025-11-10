@@ -189,7 +189,7 @@ export class ProductionErrorBoundary extends Component<Props, State> {
 
 // Hook for functional components
 export const useErrorHandler = () => {
-  const handleError = React.useCallback((error: Error, context?: Record<string, any>) => {
+  const handleError = React.useCallback((error: Error, context?: Record<string, unknown>) => {
     logError(error, context);
     throw error; // Re-throw to be caught by error boundary
   }, []);
