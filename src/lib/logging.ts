@@ -4,7 +4,7 @@
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-type LogContext = Record<string, any>;
+type LogContext = Record<string, unknown>;
 
 interface LogEntry {
   level: LogLevel;
@@ -45,13 +45,16 @@ class Logger {
       // Store critical errors in Supabase for monitoring
       if (entry.level === 'error') {
         const { supabase } = await import('@/integrations/supabase/client');
+        const stackValue = entry.context?.stack;
+        const componentStackValue = entry.context?.componentStack;
+        
         await supabase.from('error_logs').insert({
           error_message: entry.message,
-          error_stack: entry.context?.stack || null,
-          url: entry.url,
-          user_agent: entry.userAgent,
+          error_stack: typeof stackValue === 'string' ? stackValue : null,
+          url: entry.url || '',
+          user_agent: entry.userAgent || '',
           timestamp: entry.timestamp,
-          component_stack: entry.context?.componentStack || null,
+          component_stack: typeof componentStackValue === 'string' ? componentStackValue : null,
         });
       }
     } catch (error) {
@@ -125,8 +128,8 @@ export const logError = (error: Error | string, context?: LogContext) => logger.
 export const logDebug = (message: string, context?: LogContext) => logger.debug(message, context);
 
 // Performance monitoring
-export const measurePerformance = (name: string, fn: () => Promise<any>) => {
-  return async (...args: any[]) => {
+export const measurePerformance = <T>(name: string, fn: () => Promise<T>) => {
+  return async (...args: unknown[]): Promise<T> => {
     const start = performance.now();
     try {
       const result = await fn();
