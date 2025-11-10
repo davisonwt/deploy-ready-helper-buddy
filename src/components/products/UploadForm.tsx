@@ -41,16 +41,16 @@ export default function UploadForm() {
       return;
     }
 
-    // Check file size limits (100MB for albums, 50MB for singles)
-    const maxSize = releaseType === 'album' ? 100 * 1024 * 1024 : 50 * 1024 * 1024; // 100MB for albums, 50MB for singles
-    
+    // Check file size limits (Supabase object limit ~50MB per file)
+    const perFileLimit = 50 * 1024 * 1024; // 50MB
+
     if (releaseType === 'album') {
-      const totalSize = albumFiles.reduce((sum, file) => sum + file.size, 0);
-      if (totalSize > maxSize) {
-        toast.error(`Album files total size (${(totalSize / 1024 / 1024).toFixed(2)}MB) exceeds the 100MB limit. Please reduce file sizes or upload fewer tracks.`);
+      const tooLarge = albumFiles.find((f) => f.size > perFileLimit);
+      if (tooLarge) {
+        toast.error(`Track "${tooLarge.name}" is ${(tooLarge.size / 1024 / 1024).toFixed(2)}MB and exceeds the 50MB per-file limit.`);
         return;
       }
-    } else if (mainFile && mainFile.size > maxSize) {
+    } else if (mainFile && mainFile.size > perFileLimit) {
       toast.error(`File size (${(mainFile.size / 1024 / 1024).toFixed(2)}MB) exceeds the 50MB limit.`);
       return;
     }
@@ -105,31 +105,61 @@ export default function UploadForm() {
         .from('premium-room')
         .getPublicUrl(coverPath);
 
-      // Prepare main upload (single file or zipped album)
-      let uploadBlob: Blob | File;
-      let uploadExt = 'bin';
+      // Prepare main upload (single file or album manifest)
+      let fileUrlPublic = '';
 
       if (releaseType === 'album') {
-        const zip = new JSZip();
-        albumFiles.forEach((f) => zip.file(f.name, f));
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        uploadBlob = zipBlob;
-        uploadExt = 'zip';
+        // Upload each track separately to avoid per-object 50MB limit
+        const timestamp = Date.now();
+        const baseDir = `products/${user.id}/${timestamp}`;
+        const trackResults: { name: string; size: number; path: string; url: string }[] = [];
+
+        for (const f of albumFiles) {
+          const safeName = f.name.replace(/\s+/g, '_');
+          const trackPath = `${baseDir}/${safeName}`;
+          const { error: trackErr } = await supabase.storage
+            .from('premium-room')
+            .upload(trackPath, f);
+          if (trackErr) throw trackErr;
+          const { data: trackUrl } = supabase.storage
+            .from('premium-room')
+            .getPublicUrl(trackPath);
+          trackResults.push({ name: f.name, size: f.size, path: trackPath, url: trackUrl.publicUrl });
+        }
+
+        // Create and upload manifest
+        const manifestBlob = new Blob([
+          JSON.stringify({
+            type: 'album',
+            createdAt: new Date().toISOString(),
+            cover: coverUrl.publicUrl,
+            tracks: trackResults
+          }, null, 2)
+        ], { type: 'application/json' });
+        const manifestPath = `${baseDir}/manifest.json`;
+        const { error: manifestErr } = await supabase.storage
+          .from('premium-room')
+          .upload(manifestPath, manifestBlob, { contentType: 'application/json' });
+        if (manifestErr) throw manifestErr;
+        const { data: manifestUrl } = supabase.storage
+          .from('premium-room')
+          .getPublicUrl(manifestPath);
+        fileUrlPublic = manifestUrl.publicUrl;
       } else {
-        uploadBlob = mainFile as File;
-        uploadExt = (mainFile as File).name.split('.').pop() || 'bin';
+        // Single file upload
+        const uploadBlob = mainFile as File;
+        const uploadExt = (mainFile as File).name.split('.').pop() || 'bin';
+        const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
+        const { error: fileUploadError } = await supabase.storage
+          .from('premium-room')
+          .upload(filePath, uploadBlob);
+        if (fileUploadError) throw fileUploadError;
+        const { data: fileUrl } = supabase.storage
+          .from('premium-room')
+          .getPublicUrl(filePath);
+        fileUrlPublic = fileUrl.publicUrl;
       }
 
-      const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
-      const { error: fileUploadError } = await supabase.storage
-        .from('premium-room')
-        .upload(filePath, uploadBlob);
-
-      if (fileUploadError) throw fileUploadError;
-
-      const { data: fileUrl } = supabase.storage
-        .from('premium-room')
-        .getPublicUrl(filePath);
 
       // Calculate total price with fees (10% tithing + 5% admin)
       const basePrice = parseFloat(String(formData.price)) || 0;
@@ -147,7 +177,7 @@ export default function UploadForm() {
           license_type: formData.license_type,
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
-          file_url: fileUrl.publicUrl,
+          file_url: fileUrlPublic,
           tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
         });
 
@@ -319,7 +349,7 @@ export default function UploadForm() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Total Size</span>
                             <span className="text-sm font-bold">
-                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB / 100 MB
+                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB total (per-file limit 50MB)
                             </span>
                           </div>
                           <div className="w-full h-2 bg-background rounded-full overflow-hidden">
