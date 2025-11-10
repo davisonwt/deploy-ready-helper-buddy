@@ -113,9 +113,18 @@ export default function UploadForm() {
         const timestamp = Date.now();
         const baseDir = `products/${user.id}/${timestamp}`;
         const trackResults: { name: string; size: number; path: string; url: string }[] = [];
+        const sanitizeFileName = (name: string) =>
+          name
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '') // strip diacritics
+            .replace(/\s+/g, '_')
+            .replace(/[^A-Za-z0-9._-]/g, '_')
+            .slice(0, 200);
 
         for (const f of albumFiles) {
-          const safeName = f.name.replace(/\s+/g, '_');
+          const ext = f.name.includes('.') ? f.name.split('.').pop() : undefined;
+          const baseName = f.name.replace(/\.[^.]+$/, '');
+          const safeName = `${sanitizeFileName(baseName)}${ext ? '.' + sanitizeFileName(ext) : ''}`;
           const trackPath = `${baseDir}/${safeName}`;
           const { error: trackErr } = await supabase.storage
             .from('premium-room')
