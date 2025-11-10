@@ -201,10 +201,10 @@ export default function MarketingVideosGallery() {
                 <span className="text-sm font-medium">Filter by category:</span>
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-64">
+                <SelectTrigger className="w-full sm:w-64 bg-white">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border border-border shadow-lg z-50">
+                <SelectContent className="bg-white border border-border shadow-lg z-50">
                   {categories.map(category => (
                     <SelectItem key={category.value} value={category.value}>
                       {category.label}
@@ -212,28 +212,15 @@ export default function MarketingVideosGallery() {
                   ))}
                 </SelectContent>
               </Select>
-              <Badge variant="outline" className="ml-auto">
+              <Badge variant="outline" className="ml-auto bg-white">
                 {filteredVideos.length} videos
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Videos Grid with Arrows */}
+        {/* Videos Grid */}
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Scroll Down Arrow */}
-          <div className="flex justify-center mb-6 animate-bounce">
-            <div className="flickering-arrow">
-              <svg 
-                className="w-12 h-12 text-primary drop-shadow-lg" 
-                fill="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
-              </svg>
-            </div>
-          </div>
-          
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
