@@ -15,7 +15,14 @@ import { useAuth } from '../hooks/useAuth'
 import { SocialActionButtons } from '@/components/social/SocialActionButtons'
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
+ 
 // import { useRoles } from '../hooks/useRoles'
 import { processOrchardsUrls } from '../utils/urlUtils'
 
@@ -229,134 +236,135 @@ export default function YhvhOrchardsPage() {
 
         {/* Community Orchards Section */}
         {orchards.length > 0 ? (
-          <div className="mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {orchards.map((orchard, index) => (
-                <Card 
-                  key={orchard.id} 
-                  className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                          {orchard.title}
-                        </CardTitle>
-                        <div className="flex items-center space-x-2 mt-2">
-                          <Badge className={`text-xs ${getCategoryColor(orchard.category)}`}>
-                            {orchard.category}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="ml-2 p-2 bg-success/10 rounded-full">
-                        <TreePine className="h-4 w-4 text-success" />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    {/* Image Preview */}
-                    {orchard.images && orchard.images.length > 0 && (
-                      <div className="mb-3 relative overflow-hidden rounded-lg">
-                        <img
-                          src={orchard.images[0]}
-                          alt={orchard.title}
-                          className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    )}
-                    
-                    {/* Progress */}
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>Progress</span>
-                         <span>{orchard.filled_pockets}/{(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets} pockets</span>
-                       </div>
-                       <div className="w-full bg-secondary rounded-full h-2">
-                         <div 
-                           className="bg-success h-2 rounded-full transition-all duration-300" 
-                           style={{ width: `${(orchard.filled_pockets / ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Description */}
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                      {orchard.description}
-                    </p>
-                    
-                    {/* Bestow Button */}
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      className="w-full mb-2 text-white shadow-lg"
-                      style={{ 
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
-                        border: '2px solid #1e40af'
-                      }}
-                      onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
-                    >
-                      <Heart className="h-3 w-3 mr-2" />
-                      Bestow into this Orchard
-                    </Button>
-
-                    {/* Social Actions */}
-                    <div className="mb-2">
-                      <SocialActionButtons
-                        type="orchard"
-                        itemId={orchard.id}
-                        ownerId={orchard.user_id}
-                        ownerName={orchard.profiles?.display_name || `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim()}
-                        ownerWallet={orchard.profiles?.wallet_address}
-                        title={orchard.title}
-                        likeCount={orchard.like_count || 0}
-                        isOwner={user?.id === orchard.user_id}
-                        variant="compact"
-                      />
-                    </div>
-                    
-                    {/* Owner Actions and Gosat Management */}
-                    {user && (orchard.user_id === user.id || isAdminOrGosat) && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex gap-2 pt-2 border-t border-border mt-2">
-                              <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="w-full border-success/30 text-success hover:bg-success/10"
-                                >
-                                  <Settings className="h-3 w-3 mr-1" />
-                                  {orchard.user_id === user.id ? 'Edit' : 'Manage Orchard'}
-                                </Button>
-                              </Link>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleDeleteOrchard(orchard.id)}
-                                className="border-destructive/30 text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+          <section className="mb-12">
+            <div className="relative px-12">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {orchards.map((orchard, index) => (
+                    <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                      <Card 
+                        className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in h-full"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                                {orchard.title}
+                              </CardTitle>
+                              <div className="flex items-center space-x-2 mt-2">
+                                <Badge className={`text-xs ${getCategoryColor(orchard.category)}`}>
+                                  {orchard.category}
+                                </Badge>
+                              </div>
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="p-0">
-                            <SowerAnalyticsTooltip
-                              userId={orchard.user_id}
+                            <div className="ml-2 p-2 bg-success/10 rounded-full">
+                              <TreePine className="h-4 w-4 text-success" />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 flex-1 flex flex-col">
+                          {orchard.images && orchard.images.length > 0 && (
+                            <div className="mb-3 relative overflow-hidden rounded-lg">
+                              <img
+                                src={orchard.images[0]}
+                                alt={orchard.title}
+                                className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          )}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                              <span>Progress</span>
+                              <span>{orchard.filled_pockets}/{(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets}</span>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-2">
+                              <div 
+                                className="bg-success h-2 rounded-full transition-all duration-300" 
+                                style={{ width: `${(orchard.filled_pockets / ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1)) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                            {orchard.description}
+                          </p>
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            className="w-full mb-2 text-white shadow-lg"
+                            style={{ 
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
+                              border: '2px solid #1e40af'
+                            }}
+                            onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
+                          >
+                            <Heart className="h-3 w-3 mr-2" />
+                            Bestow into this Orchard
+                          </Button>
+                          <div className="mb-2">
+                            <SocialActionButtons
+                              type="orchard"
                               itemId={orchard.id}
-                              itemType="orchard"
+                              ownerId={orchard.user_id}
+                              ownerName={orchard.profiles?.display_name || `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim()}
+                              ownerWallet={orchard.profiles?.wallet_address}
+                              title={orchard.title}
+                              likeCount={orchard.like_count || 0}
+                              isOwner={user?.id === orchard.user_id}
+                              variant="compact"
                             />
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                          </div>
+                          {user && (orchard.user_id === user.id || isAdminOrGosat) && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex gap-2 pt-2 border-t border-border mt-2">
+                                    <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="w-full border-success/30 text-success hover:bg-success/10"
+                                      >
+                                        <Settings className="h-3 w-3 mr-1" />
+                                        {orchard.user_id === user.id ? 'Edit' : 'Manage Orchard'}
+                                      </Button>
+                                    </Link>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleDeleteOrchard(orchard.id)}
+                                      className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="p-0">
+                                  <SowerAnalyticsTooltip
+                                    userId={orchard.user_id}
+                                    itemId={orchard.id}
+                                    itemType="orchard"
+                                  />
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 hover:bg-background border border-primary shadow-md" />
+                <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 hover:bg-background border border-primary shadow-md" />
+              </Carousel>
             </div>
-          </div>
+          </section>
         ) : (
           <div className="text-center py-16">
             <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
