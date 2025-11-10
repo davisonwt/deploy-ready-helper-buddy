@@ -1,4 +1,5 @@
 import { Heart } from 'lucide-react'
+import { SocialActionButtons } from '@/components/social/SocialActionButtons'
 
 const CrowdfundingCard = ({ cardData, onSupport }) => {
   // Determine text color based on header background color
@@ -83,6 +84,21 @@ const CrowdfundingCard = ({ cardData, onSupport }) => {
             <Heart className="h-4 w-4" />
             bestow support
           </button>
+
+          {/* Social Actions */}
+          <div className="pt-2">
+            <SocialActionButtons
+              type="orchard"
+              itemId={cardData.id}
+              ownerId={cardData.userId}
+              ownerName={cardData.user}
+              ownerWallet={cardData.walletAddress}
+              title={cardData.title}
+              likeCount={cardData.likeCount || 0}
+              isOwner={cardData.isOwner}
+              variant="compact"
+            />
+          </div>
         </div>
       </div>
     </div>

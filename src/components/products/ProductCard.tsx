@@ -10,6 +10,9 @@ import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Tras
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SocialActionButtons } from '@/components/social/SocialActionButtons';
+import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProductCardProps {
   product: any;
@@ -190,34 +193,47 @@ export default function ProductCard({ product, featured, showActions = false }: 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
               {showActions && isOwner ? (
-                <>
-                  <Button
-                    onClick={handleEdit}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    {deleting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </>
-                    )}
-                  </Button>
-                </>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex gap-2 flex-1">
+                        <Button
+                          onClick={handleEdit}
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={handleDelete}
+                          disabled={deleting}
+                          variant="destructive"
+                          className="flex-1"
+                        >
+                          {deleting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0">
+                      <SowerAnalyticsTooltip
+                        userId={product.sowers?.user_id}
+                        itemId={product.id}
+                        itemType="product"
+                      />
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ) : showActions ? null : (
                 <>
                   {product.license_type === 'bestowal' ? (
@@ -241,6 +257,21 @@ export default function ProductCard({ product, featured, showActions = false }: 
                   )}
                 </>
               )}
+            </div>
+
+            {/* Social Actions */}
+            <div className="pt-2">
+              <SocialActionButtons
+                type="product"
+                itemId={product.id}
+                ownerId={product.sowers?.user_id}
+                ownerName={product.sowers?.display_name || `${product.sowers?.first_name || ''} ${product.sowers?.last_name || ''}`.trim()}
+                ownerWallet={product.sowers?.wallet_address}
+                title={product.title}
+                likeCount={product.like_count || 0}
+                isOwner={isOwner}
+                variant="compact"
+              />
             </div>
           </div>
 

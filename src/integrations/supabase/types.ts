@@ -1091,6 +1091,63 @@ export type Database = {
         }
         Relationships: []
       }
+      follower_notifications: {
+        Row: {
+          created_at: string
+          follower_id: string
+          id: string
+          read: boolean | null
+          source_id: string | null
+          source_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          id?: string
+          read?: boolean | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          id?: string
+          read?: boolean | null
+          source_id?: string | null
+          source_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: []
+      }
       live_call_participants: {
         Row: {
           call_session_id: string
@@ -1546,6 +1603,35 @@ export type Database = {
         }
         Relationships: []
       }
+      orchard_likes: {
+        Row: {
+          created_at: string
+          id: string
+          orchard_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orchard_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orchard_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orchard_likes_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orchards: {
         Row: {
           allow_commission_marketing: boolean | null
@@ -1560,10 +1646,12 @@ export type Database = {
           expected_completion: string | null
           features: string[] | null
           filled_pockets: number
+          follower_count: number | null
           how_it_helps: string | null
           id: string
           images: string[] | null
           intended_pockets: number | null
+          like_count: number | null
           location: string | null
           orchard_type: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
@@ -1597,10 +1685,12 @@ export type Database = {
           expected_completion?: string | null
           features?: string[] | null
           filled_pockets?: number
+          follower_count?: number | null
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
           intended_pockets?: number | null
+          like_count?: number | null
           location?: string | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
@@ -1634,10 +1724,12 @@ export type Database = {
           expected_completion?: string | null
           features?: string[] | null
           filled_pockets?: number
+          follower_count?: number | null
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
           intended_pockets?: number | null
+          like_count?: number | null
           location?: string | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value?: number
@@ -2114,6 +2206,35 @@ export type Database = {
           },
         ]
       }
+      product_likes: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_likes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           bestowal_count: number | null
@@ -2124,9 +2245,11 @@ export type Database = {
           download_count: number | null
           duration: number | null
           file_url: string
+          follower_count: number | null
           id: string
           is_featured: boolean | null
           license_type: string | null
+          like_count: number | null
           metadata: Json | null
           play_count: number | null
           price: number | null
@@ -2145,9 +2268,11 @@ export type Database = {
           download_count?: number | null
           duration?: number | null
           file_url: string
+          follower_count?: number | null
           id?: string
           is_featured?: boolean | null
           license_type?: string | null
+          like_count?: number | null
           metadata?: Json | null
           play_count?: number | null
           price?: number | null
@@ -2166,9 +2291,11 @@ export type Database = {
           download_count?: number | null
           duration?: number | null
           file_url?: string
+          follower_count?: number | null
           id?: string
           is_featured?: boolean | null
           license_type?: string | null
+          like_count?: number | null
           metadata?: Json | null
           play_count?: number | null
           price?: number | null
