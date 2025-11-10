@@ -10,6 +10,19 @@ import { AudioSnippetPlayer } from '@/components/radio/AudioSnippetPlayer';
 import { useCryptoPay } from '@/hooks/useCryptoPay';
 import { toast } from 'sonner';
 
+interface MusicTrack {
+  id: string;
+  dj_id: string;
+  track_title: string;
+  duration_seconds: number | null;
+  file_url: string | null;
+  file_size: number | null;
+  price: number | null;
+  is_original: boolean;
+  is_public: boolean;
+  created_at: string;
+}
+
 export default function SowerProfile() {
   const { id } = useParams<{ id: string }>();
   const { buySong, processing, connected, connectWallet } = useCryptoPay();
@@ -43,7 +56,7 @@ export default function SowerProfile() {
     },
   });
 
-  const handleBuySong = async (track: any) => {
+  const handleBuySong = async (track: MusicTrack) => {
     if (!connected) {
       await connectWallet();
       return;
