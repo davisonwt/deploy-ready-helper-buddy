@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Upload, Music, X, Plus } from 'lucide-react'
+import { Upload, Music, X, Plus, Disc } from 'lucide-react'
 import { useDJPlaylist } from '@/hooks/useDJPlaylist'
 import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload'
 
@@ -259,27 +259,36 @@ export default function DJMusicUpload({ trigger }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Music className="h-5 w-5" />
-            Upload Music Track
+            Upload Music
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Release Type Selection */}
-          <div className="space-y-2">
-            <Label>Release Type</Label>
-            <Select value={releaseType} onValueChange={(value) => {
-              setReleaseType(value)
-              setFiles([])
-            }}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single">Single Track</SelectItem>
-                <SelectItem value="album">Album (Multiple Tracks)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Release Type Selection - PROMINENT */}
+          <Card className="bg-primary/5">
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">What are you uploading?</Label>
+                <Select value={releaseType} onValueChange={(value) => {
+                  setReleaseType(value)
+                  setFiles([])
+                }}>
+                  <SelectTrigger className="h-12 text-base font-medium">
+                    <SelectValue placeholder="Choose release type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">🎵 Single Track - Upload one song</SelectItem>
+                    <SelectItem value="album">💿 Album - Upload multiple songs</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {releaseType === 'single' 
+                    ? '📀 Upload a single music track with full metadata' 
+                    : '💿 Upload multiple tracks that belong to the same album'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* File Upload Area */}
           <Card>
