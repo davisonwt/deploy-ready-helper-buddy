@@ -101,7 +101,7 @@ import LiveActivityWidget from "./components/LiveActivityWidget";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
-import { CallManagerProvider } from '@/hooks/useCallManager';
+import { CallManagerProvider } from '@/providers/CallManagerProvider';
 import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
 import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
