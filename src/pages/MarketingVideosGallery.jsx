@@ -197,8 +197,8 @@ export default function MarketingVideosGallery() {
             {/* Filter Section */}
             <div className="mt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Filter by category:</span>
+                <Filter className="h-4 w-4 text-white" />
+                <span className="text-sm font-medium text-white">Filter by category:</span>
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-full sm:w-64 bg-white">
@@ -216,6 +216,19 @@ export default function MarketingVideosGallery() {
                 {filteredVideos.length} videos
               </Badge>
             </div>
+          </div>
+        </div>
+
+        {/* Scroll Down Arrow */}
+        <div className="flex justify-center py-8 animate-bounce">
+          <div className="flickering-arrow">
+            <svg 
+              className="w-12 h-12 text-primary drop-shadow-lg" 
+              fill="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
+            </svg>
           </div>
         </div>
 
