@@ -9,12 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ethers } from 'ethers';
 import { USDC_ADDRESS, USDC_ABI, parseUSDC, formatUSDC } from '@/lib/cronos';
 import { useParams } from 'react-router-dom';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+import '@/types/ethereum'; // Import for global Window.ethereum type
 
 interface UsdcPaymentProps {
   amount: number;
@@ -108,9 +103,10 @@ export default function UsdcPayment({ amount, orchardId, onSuccess }: UsdcPaymen
       if (onSuccess) {
         onSuccess(receipt.hash);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Payment error:', err);
-      const errorMessage = err?.message || 'Payment failed';
+      const error = err as Error;
+      const errorMessage = error?.message || 'Payment failed';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
