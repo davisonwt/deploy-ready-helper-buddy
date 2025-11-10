@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
+
 // Module-level diagnostics for React instance detection
-// eslint-disable-next-line no-console
+interface WindowWithReact extends Window {
+  React?: typeof React;
+}
+
 console.log('🎯 CHATAPP_MODULE_LOADED');
-// eslint-disable-next-line no-console
 console.log('ChatApp - React version:', React.version);
-// @ts-ignore
 if (typeof window !== 'undefined') {
-  const w: any = window as any;
+  const w = window as WindowWithReact;
   if (w.React) {
-    // eslint-disable-next-line no-console
     console.log('🚨 MULTIPLE REACT INSTANCES IN CHATAPP!');
-    // eslint-disable-next-line no-console
     console.log('Window React version:', w.React.version);
   }
 }
@@ -99,7 +99,9 @@ const ChatApp = () => {
     if (currentRoomId) {
       try {
         localStorage.setItem('lastChatRoomId', currentRoomId);
-      } catch {}
+      } catch {
+        // Ignore localStorage errors in private browsing
+      }
     }
   }, [currentRoomId]);
 
@@ -112,16 +114,28 @@ const ChatApp = () => {
   // URL param guard previously used sessionStorage gating. Simplified to avoid blocking opens.
   // We now rely on server-side membership/creator checks inside ChatRoom and list visibility.
   useEffect(() => {
-    try { sessionStorage.removeItem('chat:allowOpen'); } catch {}
+    try { 
+      sessionStorage.removeItem('chat:allowOpen'); 
+    } catch {
+      // Ignore sessionStorage errors in private browsing
+    }
   }, [currentRoomId]);
 
    // Track transitions to list view (including browser back) to suppress re-open in this session
   useEffect(() => {
     const prev = prevRoomRef.current;
     if (currentRoomId) {
-      try { sessionStorage.removeItem('chat:listPref'); } catch {}
+      try { 
+        sessionStorage.removeItem('chat:listPref'); 
+      } catch {
+        // Ignore sessionStorage errors
+      }
     } else if (!currentRoomId && prev) {
-      try { sessionStorage.setItem('chat:listPref', 'list'); } catch {}
+      try { 
+        sessionStorage.setItem('chat:listPref', 'list'); 
+      } catch {
+        // Ignore sessionStorage errors
+      }
     }
     prevRoomRef.current = currentRoomId;
   }, [currentRoomId]);
@@ -151,10 +165,15 @@ const ChatApp = () => {
         .in('user_id', [user.id, otherUserId]);
       if (findErr) throw findErr;
 
+      interface ParticipantRow {
+        room_id: string;
+        user_id: string;
+      }
+
       let existingRoomId: string | null = null;
       if (rows && rows.length) {
         const counts: Record<string, number> = {};
-        for (const r of rows as any[]) {
+        for (const r of rows as ParticipantRow[]) {
           if (!r || !r.room_id) continue;
           counts[r.room_id] = (counts[r.room_id] || 0) + 1;
         }
@@ -303,7 +322,7 @@ const ChatApp = () => {
         .limit(1)
         .maybeSingle();
 
-      if (findErr && (findErr as any)?.code !== 'PGRST116') throw findErr; // ignore "no rows"
+      if (findErr && (findErr as Error & { code?: string })?.code !== 'PGRST116') throw findErr; // ignore "no rows"
 
       let roomId: string;
       if (existing?.id) {
@@ -344,10 +363,14 @@ const ChatApp = () => {
           user_id: userId,
           type: 'chat_invite',
           title: 'Chat Room Invitation',
-          message: `You\'ve been invited to join "${name}"`,
+          message: `You've been invited to join "${name}"`,
           action_url: '/chatapp'
         }));
-        try { await supabase.from('user_notifications').insert(notifications); } catch {}
+        try { 
+          await supabase.from('user_notifications').insert(notifications); 
+        } catch {
+          // Best-effort notification, ignore errors
+        }
       }
 
       toast({
@@ -369,7 +392,7 @@ const ChatApp = () => {
       console.error('Error creating chat:', error);
       toast({
         title: 'Failed to create chat',
-        description: (error as any).message || 'Something went wrong. Please try again.',
+        description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -378,7 +401,11 @@ const ChatApp = () => {
   };
 
   const handleBackToList = () => {
-    try { sessionStorage.setItem('chat:listPref', 'list'); } catch {}
+    try { 
+      sessionStorage.setItem('chat:listPref', 'list'); 
+    } catch {
+      // Ignore sessionStorage errors
+    }
     setSearchParams({}, { replace: true });
   };
 
