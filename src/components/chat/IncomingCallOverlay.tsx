@@ -4,7 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { stopAllRingtones } from '@/lib/ringtone';
+
 /* ----------  GLOBAL SINGLETON HELPERS  ---------- */
+interface WindowWithAudioRingtone extends Window {
+  webkitAudioContext?: typeof AudioContext;
+  __unlockedAudioCtx?: AudioContext;
+  __ringtone?: RingHandles;
+}
+
+interface AudioContextWithClosing extends AudioContext {
+  __closing?: boolean;
+}
+
 type RingHandles = {
   ctx: AudioContext | null;
   osc: OscillatorNode | null;
@@ -13,34 +24,36 @@ type RingHandles = {
 };
 
 const getGlobalRingtone = (): RingHandles | undefined =>
-  (window as any).__ringtone;
+  (window as WindowWithAudioRingtone).__ringtone;
 
 const setGlobalRingtone = (r: RingHandles | undefined): void => {
-  (window as any).__ringtone = r;
+  (window as WindowWithAudioRingtone).__ringtone = r;
 };
 
 const stopGlobalRingtone = (): void => {
   const r = getGlobalRingtone();
   if (!r) return;
 
-  try { if (r.interval != null) clearInterval(r.interval); } catch {}
-  try { r.gain?.gain?.cancelScheduledValues?.(0); } catch {}
-  try { if (r.gain) r.gain.gain.value = 0; } catch {}
-  try { r.osc?.stop?.(); } catch {}
-  try { (r.osc as any)?.disconnect?.(); } catch {}
-  try { (r.gain as any)?.disconnect?.(); } catch {}
+  try { if (r.interval != null) clearInterval(r.interval); } catch { /* interval may already be cleared */ }
+  try { r.gain?.gain?.cancelScheduledValues?.(0); } catch { /* gain may be disconnected */ }
+  try { if (r.gain) r.gain.gain.value = 0; } catch { /* gain may be null */ }
+  try { r.osc?.stop?.(); } catch { /* oscillator may already be stopped */ }
+  try { r.osc?.disconnect?.(); } catch { /* oscillator may already be disconnected */ }
+  try { r.gain?.disconnect?.(); } catch { /* gain may already be disconnected */ }
   try {
-    const unlocked = (window as any).__unlockedAudioCtx;
-    if (r.ctx && r.ctx !== unlocked && (r.ctx as any).state !== 'closed' && !(r.ctx as any).__closing) {
+    const w = window as WindowWithAudioRingtone;
+    const unlocked = w.__unlockedAudioCtx;
+    const ctx = r.ctx as AudioContextWithClosing | null;
+    if (ctx && ctx !== unlocked && ctx.state !== 'closed' && !ctx.__closing) {
       try {
-        (r.ctx as any).__closing = true;
-        const p = r.ctx.close?.();
-        if (p && typeof (p as any).catch === 'function') {
-          (p as Promise<void>).catch(() => {});
+        ctx.__closing = true;
+        const p = ctx.close?.();
+        if (p && typeof p.catch === 'function') {
+          (p as Promise<void>).catch(() => { /* ignore close errors */ });
         }
-      } catch {}
+      } catch { /* context close may fail */ }
     }
-  } catch {}
+  } catch { /* context check may fail */ }
   setGlobalRingtone(undefined);
 };
 /* ------------------------------------------------ */
@@ -62,26 +75,27 @@ export default function IncomingCallOverlay() {
     stopGlobalRingtone(); // kill any stray global loop
 
     // Defensive local cleanup
-    try { if (ringTimerRef.current != null) clearInterval(ringTimerRef.current); } catch {}
+    try { if (ringTimerRef.current != null) clearInterval(ringTimerRef.current); } catch { /* interval may already be cleared */ }
     ringTimerRef.current = null;
-    try { gainRef.current?.gain?.cancelScheduledValues?.(0); } catch {}
-    try { if (gainRef.current) gainRef.current.gain.value = 0; } catch {}
-    try { oscRef.current?.stop?.(); } catch {}
-    try { (oscRef.current as any)?.disconnect?.(); } catch {}
-    try { (gainRef.current as any)?.disconnect?.(); } catch {}
+    try { gainRef.current?.gain?.cancelScheduledValues?.(0); } catch { /* gain may be disconnected */ }
+    try { if (gainRef.current) gainRef.current.gain.value = 0; } catch { /* gain may be null */ }
+    try { oscRef.current?.stop?.(); } catch { /* oscillator may already be stopped */ }
+    try { oscRef.current?.disconnect?.(); } catch { /* oscillator may already be disconnected */ }
+    try { gainRef.current?.disconnect?.(); } catch { /* gain may already be disconnected */ }
     try {
-      const ctx = audioCtxRef.current as any;
-      const globalCtx: any = (window as any).__unlockedAudioCtx;
+      const ctx = audioCtxRef.current as AudioContextWithClosing | null;
+      const w = window as WindowWithAudioRingtone;
+      const globalCtx = w.__unlockedAudioCtx;
       if (ctx && ctx.state !== 'closed' && ctx !== globalCtx && ctx !== prev?.ctx && !ctx.__closing) {
         try {
           ctx.__closing = true;
           const p = ctx.close?.();
           if (p && typeof p.catch === 'function') {
-            (p as Promise<void>).catch(() => {});
+            (p as Promise<void>).catch(() => { /* ignore close errors */ });
           }
-        } catch {}
+        } catch { /* context close may fail */ }
       }
-    } catch {}
+    } catch { /* context check may fail */ }
     oscRef.current = null;
     gainRef.current = null;
     audioCtxRef.current = null;
@@ -102,9 +116,10 @@ export default function IncomingCallOverlay() {
     // Pre-kill any ghost/duplicate ring before creating a new one
     hardStopRingtone();
 
-    const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    const globalCtx: any = (window as any).__unlockedAudioCtx;
-    const ctx: AudioContext = globalCtx ?? new Ctx();
+    const w = window as WindowWithAudioRingtone;
+    const AudioContextConstructor = window.AudioContext || w.webkitAudioContext;
+    const globalCtx = w.__unlockedAudioCtx;
+    const ctx: AudioContext = globalCtx ?? (AudioContextConstructor ? new AudioContextConstructor() : new AudioContext());
     audioCtxRef.current = ctx;
 
     const osc = ctx.createOscillator();
@@ -121,7 +136,11 @@ export default function IncomingCallOverlay() {
     const toggle = () => {
       if (!gainRef.current) return;
       gainRef.current.gain.value = gainRef.current.gain.value > 0 ? 0 : 0.22;
-      try { (navigator as any)?.vibrate?.(100); } catch {}
+      try { 
+        if ('vibrate' in navigator && typeof navigator.vibrate === 'function') {
+          navigator.vibrate(100);
+        }
+      } catch { /* vibrate may not be supported */ }
     };
     toggle();
     const id = window.setInterval(toggle, 600);
@@ -139,6 +158,7 @@ export default function IncomingCallOverlay() {
     }
 
     return () => { hardStopRingtone(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall?.id, hasAnswered]);
 
   // Stop when the incoming call disappears (declined/cancelled). Do NOT stop just because currentCall is set.
@@ -146,6 +166,7 @@ export default function IncomingCallOverlay() {
     if (!incomingCall) {
       hardStopRingtone();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall?.id]);
 
   // Safety: if current call transitions to accepted, ensure ringtone is stopped
@@ -158,7 +179,7 @@ export default function IncomingCallOverlay() {
   const handleAnswer = () => {
     // Stop ring first, then transition
     hardStopRingtone();
-    try { stopAllRingtones?.(); } catch {}
+    try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
     setHasAnswered(true);
     if (incomingCall?.id) {
       answerCall(incomingCall.id);
@@ -167,7 +188,7 @@ export default function IncomingCallOverlay() {
 
   const handleDecline = () => {
     hardStopRingtone();
-    try { stopAllRingtones?.(); } catch {}
+    try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
     if (incomingCall?.id) {
       declineCall(incomingCall.id, 'declined');
     }
