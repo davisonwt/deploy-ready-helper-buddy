@@ -4,6 +4,14 @@ import { cn } from '@/lib/utils';
 
 // A persistent, minimal banner prompting users to enable sound once per session
 // This helps iOS users receive ringtones without tapping at call time.
+
+interface WindowWithAudioUnlock extends Window {
+  webkitAudioContext?: typeof AudioContext;
+  __unlockedAudioCtx?: AudioContext;
+  __unlockedOsc?: OscillatorNode;
+  __unlockedGain?: GainNode;
+}
+
 const SoundUnlockBanner: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
@@ -19,31 +27,33 @@ const SoundUnlockBanner: React.FC = () => {
   const enableSound = useCallback(async () => {
     setUnlocking(true);
     try {
-      const Ctx: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!Ctx) return;
-      let ctx: AudioContext | null = (window as any).__unlockedAudioCtx || null;
+      const w = window as WindowWithAudioUnlock;
+      const AudioContextConstructor: typeof AudioContext | undefined = window.AudioContext || w.webkitAudioContext;
+      if (!AudioContextConstructor) return;
+
+      let ctx: AudioContext | null = w.__unlockedAudioCtx || null;
       if (!ctx) {
-        ctx = new Ctx();
+        ctx = new AudioContextConstructor();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         gain.gain.value = 0.0001; // effectively silent
         osc.connect(gain).connect(ctx.destination);
-        try { await ctx.resume(); } catch {}
-        try { osc.start(); } catch {}
-        ;(window as any).__unlockedAudioCtx = ctx;
-        ;(window as any).__unlockedOsc = osc;
-        ;(window as any).__unlockedGain = gain;
+        try { await ctx.resume(); } catch (e) { /* resume may fail silently on some browsers */ }
+        try { osc.start(); } catch (e) { /* oscillator may already be started or blocked */ }
+        w.__unlockedAudioCtx = ctx;
+        w.__unlockedOsc = osc;
+        w.__unlockedGain = gain;
         const onVisible = async () => {
           if (document.visibilityState === 'visible') {
-            try { await ctx!.resume(); } catch {}
+            try { await ctx!.resume(); } catch (e) { /* ignore resume errors */ }
           }
         };
         document.addEventListener('visibilitychange', onVisible);
       } else {
-        try { await ctx.resume(); } catch {}
+        try { await ctx.resume(); } catch (e) { /* ignore resume errors */ }
       }
 
-      try { sessionStorage.setItem('audioUnlocked', '1'); } catch {}
+      try { sessionStorage.setItem('audioUnlocked', '1'); } catch { /* storage might be disabled */ }
       setVisible(false);
     } finally {
       setUnlocking(false);
