@@ -105,11 +105,11 @@ function IndexContent() {
       </nav>
 
       {/* Hero Section with Video Background */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen w-screen flex items-center justify-center overflow-hidden">
         {/* Video Background */}
-        <div className="absolute inset-0 w-full h-full bg-black">
+        <div className="absolute inset-0 w-full h-full bg-black -z-10">
           <DeferredVideo
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
             src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
             autoPlay
             muted
