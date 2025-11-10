@@ -62,8 +62,8 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Transparent Dark Blue Background */}
-      <div className="fixed inset-0 bg-blue-900/40 pointer-events-none" style={{ zIndex: 0 }} />
+      {/* Custom Hex Color Background #040440 */}
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(4, 4, 64, 0.4)', zIndex: 0 }} />
       <div className="relative" style={{ zIndex: 1 }}>
       
       {/* Hero Header */}
