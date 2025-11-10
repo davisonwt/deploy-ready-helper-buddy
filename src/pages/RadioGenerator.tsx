@@ -14,6 +14,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AudioSnippetPlayer } from '@/components/radio/AudioSnippetPlayer';
 
+interface MusicTrack {
+  id: string;
+  track_title: string;
+  artist_name?: string;
+  duration_seconds?: number;
+  file_url?: string;
+  is_original: boolean;
+}
+
+interface Sower {
+  id: string;
+  dj_name: string;
+  dj_music_tracks?: MusicTrack[];
+}
+
 export default function RadioGenerator() {
   const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -90,9 +105,10 @@ export default function RadioGenerator() {
       setPendingFile(null);
       setConfirmed(false);
       await queryClient.invalidateQueries({ queryKey: ['sowers-with-tracks'] });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      toast.error(error.message || 'Failed to upload track');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload track';
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -112,7 +128,7 @@ export default function RadioGenerator() {
     e.target.value = '';
   };
 
-  const onDrop = async (e: any) => {
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer?.files?.[0];
@@ -127,12 +143,12 @@ export default function RadioGenerator() {
     await processFile(file);
   };
 
-  const onDragOver = (e: any) => {
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
 
-  const onDragEnter = (e: any) => {
+  const onDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
@@ -166,9 +182,10 @@ export default function RadioGenerator() {
       // TODO: Create radio schedule entry with selected tracks
       toast.success('Radio slot generated! Check your schedule.');
       setSelectedTracks([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Generation error:', error);
-      toast.error(error.message || 'Failed to generate slot');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate slot';
+      toast.error(errorMessage);
     }
   };
 
@@ -197,7 +214,7 @@ export default function RadioGenerator() {
             </CardHeader>
             <CardContent>
               <Accordion type="multiple" className="w-full">
-                {sowers?.map((sower: any) => (
+                {sowers?.map((sower: Sower) => (
                   <AccordionItem key={sower.id} value={sower.id}>
                     <AccordionTrigger className="hover:no-underline">
                       <div className="flex items-center gap-2">
@@ -207,7 +224,7 @@ export default function RadioGenerator() {
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="space-y-3 pt-2">
-                        {sower.dj_music_tracks?.map((track: any) => (
+                        {sower.dj_music_tracks?.map((track: MusicTrack) => (
                           <div key={track.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <div className="flex items-center gap-3 flex-1">
                               <Checkbox
