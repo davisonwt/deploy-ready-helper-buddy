@@ -33,6 +33,51 @@ export async function requestNotificationPermission() {
   return permission
 }
 
+// Initialize push notifications
+export async function initializePushNotifications(userId: string) {
+  try {
+    await requestNotificationPermission()
+    const registration = await registerServiceWorker()
+    const subscription = await subscribeToPush(userId)
+    
+    return {
+      registration,
+      subscription
+    }
+  } catch (error) {
+    console.error('Failed to initialize push notifications:', error)
+    return null
+  }
+}
+
+// Send local browser notification
+export function sendLocalNotification(title: string, options: NotificationOptions = {}) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, {
+      badge: '/placeholder.svg',
+      icon: '/placeholder.svg',
+      ...options
+    })
+  }
+}
+
+// Notification types
+export type NotificationType = 
+  | 'incoming_call'
+  | 'new_message'
+  | 'new_orchard'
+  | 'new_product'
+  | 'orchard_update'
+  | 'product_purchased';
+
+export interface NotificationPayload {
+  type: NotificationType;
+  title: string;
+  body: string;
+  url?: string;
+  data?: Record<string, unknown>;
+}
+
 // Subscribe to push notifications
 export async function subscribeToPush(userId: string) {
   try {

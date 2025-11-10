@@ -79,20 +79,43 @@ self.addEventListener('push', (event) => {
   }
 
   const title = data.title || 'Sow2Grow'
-  const options = {
+  const notificationType = data.type || 'default'
+  
+  // Customize notification based on type
+  let options = {
     body: data.body || 'You have a new notification',
     icon: '/placeholder.svg',
     badge: '/placeholder.svg',
-    data: data.url || '/',
-    actions: [
-      {
-        action: 'open',
-        title: 'Open'
-      },
-      {
-        action: 'close',
-        title: 'Close'
-      }
+    data: {
+      url: data.url || '/',
+      type: notificationType
+    },
+    tag: notificationType === 'incoming_call' ? 'call' : undefined,
+    requireInteraction: notificationType === 'incoming_call',
+    actions: []
+  }
+
+  // Add type-specific actions
+  if (notificationType === 'incoming_call') {
+    options.actions = [
+      { action: 'answer', title: 'Answer' },
+      { action: 'decline', title: 'Decline' }
+    ]
+    options.vibrate = [200, 100, 200, 100, 200]
+  } else if (notificationType === 'new_message') {
+    options.actions = [
+      { action: 'open', title: 'Read Message' },
+      { action: 'close', title: 'Dismiss' }
+    ]
+  } else if (notificationType === 'new_orchard' || notificationType === 'new_product') {
+    options.actions = [
+      { action: 'open', title: 'View Now' },
+      { action: 'close', title: 'Later' }
+    ]
+  } else {
+    options.actions = [
+      { action: 'open', title: 'Open' },
+      { action: 'close', title: 'Close' }
     ]
   }
 
@@ -105,15 +128,38 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
 
-  if (event.action === 'close') {
+  // Handle special actions
+  if (event.action === 'close' || event.action === 'decline') {
     return
   }
 
-  const url = event.notification.data || '/'
+  const data = event.notification.data || {}
+  const url = data.url || '/'
+  const type = data.type
   
-  event.waitUntil(
-    clients.openWindow(url)
-  )
+  // Special handling for calls
+  if (type === 'incoming_call' && event.action === 'answer') {
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          // Focus existing window if available
+          for (let client of clientList) {
+            if (client.url.includes(url) && 'focus' in client) {
+              return client.focus()
+            }
+          }
+          // Open new window if no existing window found
+          if (clients.openWindow) {
+            return clients.openWindow(url)
+          }
+        })
+    )
+  } else if (event.action === 'open' || !event.action) {
+    // Default action: open URL
+    event.waitUntil(
+      clients.openWindow(url)
+    )
+  }
 })
 
 // Message event - allow immediate activation via postMessage

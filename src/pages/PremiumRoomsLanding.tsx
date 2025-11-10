@@ -1,21 +1,24 @@
 import React from 'react';
-// Module-level diagnostics — runs before any hooks
-// eslint-disable-next-line no-console
+
+interface WindowWithReact extends Window {
+  React?: typeof React;
+  __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
+    renderers?: Map<unknown, unknown>;
+  };
+}
+
+// Module-level diagnostics
 console.log('🎯 PREMIUM_ROOMS_MODULE_LOADED');
-// eslint-disable-next-line no-console
 console.log('React version from import:', React.version);
-// @ts-ignore - window.React may exist if another copy exposed itself
+
 if (typeof window !== 'undefined') {
-  const w: any = window as any;
+  const w = window as WindowWithReact;
   if (w.React) {
-    // eslint-disable-next-line no-console
     console.log('🚨 MULTIPLE REACT INSTANCES DETECTED!');
-    // eslint-disable-next-line no-console
     console.log('Window React version:', w.React.version);
   }
   const devtools = w.__REACT_DEVTOOLS_GLOBAL_HOOK__;
   if (devtools?.renderers) {
-    // eslint-disable-next-line no-console
     console.log('React renderers count:', devtools.renderers.size);
   }
 }
@@ -30,6 +33,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
+interface MediaItem {
+  id: string;
+  file_url?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
 interface PremiumRoom {
   id: string;
   title: string;
@@ -40,9 +50,9 @@ interface PremiumRoom {
   is_public: boolean;
   creator_id: string;
   created_at: string;
-  documents: any[];
-  artwork: any[];
-  music: any[];
+  documents: MediaItem[];
+  artwork: MediaItem[];
+  music: MediaItem[];
 }
 
 const PremiumRoomsLanding: React.FC = () => {
@@ -62,8 +72,17 @@ const PremiumRoomsLanding: React.FC = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setRooms((data || []) as PremiumRoom[]);
-      } catch (error: any) {
+        
+        // Parse Json arrays to proper types
+        const parsedRooms = (data || []).map(room => ({
+          ...room,
+          documents: Array.isArray(room.documents) ? room.documents as MediaItem[] : [],
+          artwork: Array.isArray(room.artwork) ? room.artwork as MediaItem[] : [],
+          music: Array.isArray(room.music) ? room.music as MediaItem[] : [],
+        })) as PremiumRoom[];
+        
+        setRooms(parsedRooms);
+      } catch (error: unknown) {
         console.error('Error fetching premium rooms:', error);
         toast.error('Failed to load premium rooms');
       } finally {
