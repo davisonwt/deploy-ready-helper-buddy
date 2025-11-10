@@ -11,7 +11,7 @@ interface CacheEntry<T> {
 }
 
 class RequestCache {
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
 
   set<T>(key: string, data: T, ttl: number = 5 * 60 * 1000) {
     this.cache.set(key, {
@@ -48,6 +48,7 @@ export const requestCache = new RequestCache();
 /**
  * Debounce function calls
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -68,6 +69,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle function calls
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
   limit: number
@@ -87,12 +89,12 @@ export function throttle<T extends (...args: any[]) => any>(
  * Batch multiple API requests
  */
 export class RequestBatcher {
-  private pending = new Map<string, Promise<any>>();
+  private pending = new Map<string, Promise<unknown>>();
 
   async batch<T>(key: string, executor: () => Promise<T>): Promise<T> {
     // If same request is already pending, return that promise
     if (this.pending.has(key)) {
-      return this.pending.get(key);
+      return this.pending.get(key) as Promise<T>;
     }
 
     const promise = executor().finally(() => {
