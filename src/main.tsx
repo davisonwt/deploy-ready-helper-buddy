@@ -77,7 +77,14 @@ try {
   console.groupEnd();
   
   // Detect duplicate React instances
-  logReactDiagnostics(React, ReactDOMPkg);
+  const duplication = logReactDiagnostics(React, ReactDOMPkg);
+  if (duplication?.hasDuplicate) {
+    // Prevent SW from re-registering; user can call window.disableServiceWorkerAndReload()
+    try {
+      localStorage.setItem('sw:disabled', '1');
+      console.warn('⚠️ Duplicate React detected. Service worker disabled for this session. Run window.disableServiceWorkerAndReload() to purge caches and reload.');
+    } catch {}
+  }
 } catch (e) {
   console.warn('Version check failed', e);
 }

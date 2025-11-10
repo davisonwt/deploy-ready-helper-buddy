@@ -72,8 +72,34 @@ export function clearCacheAndReload() {
   window.location.reload();
 }
 
+/**
+ * Disable Service Worker, purge caches, and reload.
+ * Prevents SW from re-registering on next load.
+ */
+export function disableServiceWorkerAndReload() {
+  try {
+    // Persist flag to skip registration in main.tsx
+    localStorage.setItem('sw:disabled', '1');
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      });
+    }
+
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+  } finally {
+    window.location.reload();
+  }
+}
+
 // Expose globally for debugging
 if (typeof window !== 'undefined') {
   (window as any).clearCacheAndReload = clearCacheAndReload;
+  (window as any).disableServiceWorkerAndReload = disableServiceWorkerAndReload;
   (window as any).checkReactDuplicates = detectDuplicateReact;
 }
