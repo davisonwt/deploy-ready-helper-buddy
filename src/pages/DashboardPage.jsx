@@ -41,6 +41,7 @@ import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
 import { MyPremiumRooms } from '@/components/dashboard/MyPremiumRooms'
 import TrafficOverview from '@/components/analytics/TrafficOverview'
+import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
 
 
 export default function DashboardPage() {
@@ -706,6 +707,11 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+          {/* Leaderboard Widget */}
+          <div className="mt-8">
+            <LeaderboardWidget />
+          </div>
 
           {/* Quick Actions */}
           <Card className="mt-8 bg-white/80 border-white/40 shadow-xl quick-actions-tour">

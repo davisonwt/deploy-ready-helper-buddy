@@ -297,29 +297,57 @@ export default function YhvhOrchardsPage() {
                       <Heart className="h-3 w-3 mr-2" />
                       Bestow into this Orchard
                     </Button>
+
+                    {/* Social Actions */}
+                    <div className="mb-2">
+                      <SocialActionButtons
+                        type="orchard"
+                        itemId={orchard.id}
+                        ownerId={orchard.user_id}
+                        ownerName={orchard.profiles?.display_name || `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim()}
+                        ownerWallet={orchard.profiles?.wallet_address}
+                        title={orchard.title}
+                        likeCount={orchard.like_count || 0}
+                        isOwner={user?.id === orchard.user_id}
+                        variant="compact"
+                      />
+                    </div>
                     
                     {/* Owner Actions and Gosat Management */}
                     {user && (orchard.user_id === user.id || isAdminOrGosat) && (
-                      <div className="flex gap-2 pt-2 border-t border-border mt-2">
-                         <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
-                           <Button 
-                             variant="outline" 
-                             size="sm" 
-                             className="w-full border-success/30 text-success hover:bg-success/10"
-                           >
-                             <Settings className="h-3 w-3 mr-1" />
-                             {orchard.user_id === user.id ? 'Edit' : 'Manage Orchard'}
-                           </Button>
-                         </Link>
-                         <Button 
-                           variant="outline" 
-                           size="sm"
-                           onClick={() => handleDeleteOrchard(orchard.id)}
-                           className="border-destructive/30 text-destructive hover:bg-destructive/10"
-                         >
-                           <Trash2 className="h-3 w-3" />
-                         </Button>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex gap-2 pt-2 border-t border-border mt-2">
+                              <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="w-full border-success/30 text-success hover:bg-success/10"
+                                >
+                                  <Settings className="h-3 w-3 mr-1" />
+                                  {orchard.user_id === user.id ? 'Edit' : 'Manage Orchard'}
+                                </Button>
+                              </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteOrchard(orchard.id)}
+                                className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="p-0">
+                            <SowerAnalyticsTooltip
+                              userId={orchard.user_id}
+                              itemId={orchard.id}
+                              itemType="orchard"
+                            />
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </CardContent>
                 </Card>
