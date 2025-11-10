@@ -12,6 +12,9 @@ import {
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { SocialActionButtons } from '@/components/social/SocialActionButtons'
+import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 // import { useRoles } from '../hooks/useRoles'
 import { processOrchardsUrls } from '../utils/urlUtils'
