@@ -29,6 +29,13 @@ import { supabase } from '@/integrations/supabase/client'
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import { formatCurrency } from '../utils/formatters';
 import { processOrchardsUrls } from '../utils/urlUtils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
@@ -396,8 +403,17 @@ export default function MyOrchardsPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {userOrchards.map((orchard) => (
+            <div className="relative px-12">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {userOrchards.map((orchard) => (
+                    <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">{" "}
                 <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl hover:shadow-2xl transition-all flex flex-col">
                   <div className="relative">
                     {orchard.images?.[0] ? (
@@ -549,13 +565,18 @@ export default function MyOrchardsPage() {
                           onClick={() => handleDeleteOrchard(orchard.id)}
                           className="border-red-300/50 text-red-700 hover:bg-red-500/20"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                </CardContent>
+              </Card>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+                <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+              </Carousel>
             </div>
           )}
         </div>
