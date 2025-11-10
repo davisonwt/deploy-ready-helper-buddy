@@ -176,25 +176,11 @@ export default function MarketingVideosGallery() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 relative">
-      {/* Background */}
-      <div className="fixed inset-0 w-full h-full z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover opacity-15"
-        >
-          <source src="/orchards-strip2.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-green-50/85 to-blue-50/85" />
-      </div>
-
+    <div className="min-h-screen bg-background">
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background/50 border-b backdrop-blur-sm">
+        <div className="bg-background border-b">
           <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-2">
