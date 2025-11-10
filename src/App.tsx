@@ -106,6 +106,7 @@ import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
 import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
+import { NotificationBanner } from "@/components/NotificationBanner";
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
@@ -134,6 +135,7 @@ const App = () => (
                 <Sonner />
                 <AudioUnlocker />
                 <SoundUnlockBanner />
+                <NotificationBanner />
                 <IncomingCallOverlay />
                 <GlobalAudioCallBridge />
                 <ErrorBoundary>
