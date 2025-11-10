@@ -36,6 +36,19 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import RadioListenerInterface from '@/components/radio/RadioListenerInterface';
 
+type ProfileSummary = {
+  id?: string;
+  user_id: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+};
+
+type ParticipantRow = {
+  room_id: string;
+};
+
 const CommunicationsHub = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -62,7 +75,7 @@ const CommunicationsHub = () => {
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
-  const [availableUsers, setAvailableUsers] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState<ProfileSummary[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
@@ -118,8 +131,10 @@ const CommunicationsHub = () => {
 
         if (error) throw error;
         setAvailableUsers(data || []);
-      } catch (e: any) {
-        if (e.name !== 'AbortError') console.error('Error fetching users:', e);
+      } catch (e: unknown) {
+        if (!(e instanceof DOMException && e.name === 'AbortError')) {
+          console.error('Error fetching users:', e);
+        }
       } finally {
         setLoadingUsers(false);
       }
@@ -147,7 +162,7 @@ const CommunicationsHub = () => {
       let existingRoomId: string | null = null;
       if (rows && rows.length) {
         const counts: Record<string, number> = {};
-        for (const r of rows as any[]) {
+        for (const r of rows as ParticipantRow[]) {
           if (!r || !r.room_id) continue;
           counts[r.room_id] = (counts[r.room_id] || 0) + 1;
         }
@@ -204,7 +219,7 @@ const CommunicationsHub = () => {
     );
   };
 
-  const getUserDisplayName = (userData: any) => {
+  const getUserDisplayName = (userData: ProfileSummary) => {
     return userData.display_name || 
            `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 
            'Unknown User';
@@ -521,7 +536,7 @@ const CommunicationsHub = () => {
                   <div className="text-center py-8 text-muted-foreground">No users found</div>
                 ) : (
                   <div className="space-y-2">
-                    {availableUsers.map((userData: any) => (
+                    {availableUsers.map((userData: ProfileSummary) => (
                       <div key={userData.user_id} className="flex items-center space-x-2 p-2 hover:bg-muted rounded-lg">
                         <Checkbox
                           id={userData.user_id}
