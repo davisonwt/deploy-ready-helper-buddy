@@ -1,10 +1,30 @@
 // Comprehensive Error Detection and Monitoring System
 import { supabase } from '@/integrations/supabase/client';
 
+interface WindowWithErrorDetector extends Window {
+  errorDetector?: ErrorDetector;
+}
+
+interface SessionCheckInfo {
+  hasSession: boolean;
+  userId?: string;
+  timestamp: string;
+  checkNumber: number;
+  [key: string]: unknown;
+}
+
+interface ErrorReport {
+  type: string;
+  details: Record<string, unknown>;
+  timestamp: string;
+  url: string;
+  userAgent: string;
+}
+
 class ErrorDetector {
-  private errors: any[] = [];
+  private errors: ErrorReport[] = [];
   private sessionChecks: number = 0;
-  private lastSessionCheck: any = null;
+  private lastSessionCheck: SessionCheckInfo | null = null;
 
   constructor() {
     this.init();
@@ -44,7 +64,7 @@ class ErrorDetector {
 
     // Make accessible for debugging
     if (typeof window !== 'undefined') {
-      (window as any).errorDetector = this;
+      (window as WindowWithErrorDetector).errorDetector = this;
     }
   }
 
@@ -91,7 +111,7 @@ class ErrorDetector {
           }
         } catch (dbTestError) {
           this.reportError('DATABASE_TEST_EXCEPTION', {
-            error: (dbTestError as any).message,
+            error: dbTestError instanceof Error ? dbTestError.message : String(dbTestError),
             userId: session.user.id,
             timestamp: new Date().toISOString()
           });
@@ -99,14 +119,14 @@ class ErrorDetector {
       }
     } catch (error) {
       this.reportError('HEALTH_CHECK_EXCEPTION', {
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       });
     }
   }
 
-  reportError(type: string, details: any) {
-    const errorReport = {
+  reportError(type: string, details: Record<string, unknown>): ErrorReport {
+    const errorReport: ErrorReport = {
       type,
       details,
       timestamp: new Date().toISOString(),
@@ -128,7 +148,7 @@ class ErrorDetector {
     return errorReport;
   }
 
-  log(type: string, details: any) {
+  log(type: string, details: Record<string, unknown>) {
     console.log(`📋 LOG: ${type}`, details);
   }
 
