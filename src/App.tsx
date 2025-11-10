@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
-import PerformanceMonitor from "./components/performance/PerformanceMonitor";
 import ResponsiveLayout from "./components/layout/ResponsiveLayout";
 import OnboardingTour from "./components/onboarding/OnboardingTour";
 import HelpModal from "./components/help/HelpModal";
@@ -690,7 +689,6 @@ const App = () => (
                   </ResponsiveLayout>
                   </Suspense>
                 </ErrorBoundary>
-              <PerformanceMonitor />
               <LiveActivityWidget />
               <FloatingLiveWidget />
               <FloatingBasketButton />
