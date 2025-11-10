@@ -97,6 +97,10 @@ export default function UploadForm() {
         .from('premium-room')
         .getPublicUrl(filePath);
 
+      // Calculate total price with fees (10% tithing + 5% admin)
+      const basePrice = parseFloat(String(formData.price)) || 0;
+      const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
+
       // Create product
       const { error: productError } = await supabase
         .from('products')
@@ -107,7 +111,7 @@ export default function UploadForm() {
           type: formData.type,
           category: formData.category,
           license_type: formData.license_type,
-          price: formData.price,
+          price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrl.publicUrl,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
@@ -186,7 +190,7 @@ export default function UploadForm() {
 
                 {formData.license_type === 'bestowal' && (
                   <div>
-                    <Label htmlFor="price">Price (USDC) *</Label>
+                    <Label htmlFor="price">Base Price (USDC) *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -195,6 +199,9 @@ export default function UploadForm() {
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% tithing + 5% admin fee)
+                    </p>
                   </div>
                 )}
               </div>

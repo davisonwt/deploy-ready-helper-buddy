@@ -243,8 +243,8 @@ const EnhancedOrchardForm = ({ editing = false }) => {
       const originalSeedValue = parseFloat(formData.seed_value);
       const pocketPrice = parseFloat(formData.pocket_price);
       const tithing = originalSeedValue * 0.1; // 10%
-      const processingFee = originalSeedValue * 0.005; // 0.5%
-      const finalSeedValue = originalSeedValue + tithing + processingFee;
+      const adminFee = originalSeedValue * 0.05; // 5% admin fee
+      const finalSeedValue = originalSeedValue + tithing + adminFee;
 
       const orchardData = {
         title: formData.title.trim(),
@@ -255,7 +255,7 @@ const EnhancedOrchardForm = ({ editing = false }) => {
         original_seed_value: originalSeedValue,
         pocket_price: pocketPrice,
         tithing_amount: tithing,
-        payment_processing_fee: processingFee,
+        payment_processing_fee: adminFee,
         location: formData.location?.trim() || '',
         currency: 'USDC',
         status: 'active'
@@ -472,9 +472,9 @@ const EnhancedOrchardForm = ({ editing = false }) => {
                     <div className="font-medium">Financial Breakdown:</div>
                     <div>Original Seed Value: {parseFloat(formData.seed_value).toFixed(2)} USDC</div>
                     <div>Tithing (10%): {(parseFloat(formData.seed_value) * 0.1).toFixed(2)} USDC</div>
-                    <div>Processing Fee (0.5%): {(parseFloat(formData.seed_value) * 0.005).toFixed(2)} USDC</div>
+                    <div>Admin Fee (5%): {(parseFloat(formData.seed_value) * 0.05).toFixed(2)} USDC</div>
                     <div className="font-medium border-t pt-1">
-                      Total Required: {(parseFloat(formData.seed_value) * 1.105).toFixed(2)} USDC
+                      Total Required: {(parseFloat(formData.seed_value) * 1.15).toFixed(2)} USDC
                     </div>
                   </div>
                 </AlertDescription>

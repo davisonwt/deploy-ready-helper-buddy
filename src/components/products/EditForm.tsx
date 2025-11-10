@@ -83,6 +83,10 @@ export default function EditForm() {
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
+      // Calculate total price with fees (10% tithing + 5% admin)
+      const basePrice = parseFloat(String(formData.price)) || 0;
+      const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
+
       const { error } = await supabase
         .from('products')
         .update({
@@ -91,7 +95,7 @@ export default function EditForm() {
           type: formData.type,
           category: formData.category,
           license_type: formData.license_type,
-          price: parseFloat(formData.price.toString()),
+          price: totalPrice, // Store total price
           tags: tagsArray,
           updated_at: new Date().toISOString()
         })
@@ -200,7 +204,7 @@ export default function EditForm() {
 
                 {formData.license_type === 'bestowal' && (
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price (USD) *</Label>
+                    <Label htmlFor="price">Base Price (USDC) *</Label>
                     <Input
                       id="price"
                       type="number"
@@ -210,6 +214,9 @@ export default function EditForm() {
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                       required={formData.license_type === 'bestowal'}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% tithing + 5% admin fee)
+                    </p>
                   </div>
                 )}
               </div>
