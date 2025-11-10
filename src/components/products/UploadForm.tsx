@@ -41,13 +41,13 @@ export default function UploadForm() {
       return;
     }
 
-    // Check file size limits (50MB for Supabase storage)
-    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    // Check file size limits (100MB for albums, 50MB for singles)
+    const maxSize = releaseType === 'album' ? 100 * 1024 * 1024 : 50 * 1024 * 1024; // 100MB for albums, 50MB for singles
     
     if (releaseType === 'album') {
       const totalSize = albumFiles.reduce((sum, file) => sum + file.size, 0);
       if (totalSize > maxSize) {
-        toast.error(`Album files total size (${(totalSize / 1024 / 1024).toFixed(2)}MB) exceeds the 50MB limit. Please reduce file sizes or upload fewer tracks.`);
+        toast.error(`Album files total size (${(totalSize / 1024 / 1024).toFixed(2)}MB) exceeds the 100MB limit. Please reduce file sizes or upload fewer tracks.`);
         return;
       }
     } else if (mainFile && mainFile.size > maxSize) {
@@ -319,20 +319,20 @@ export default function UploadForm() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Total Size</span>
                             <span className="text-sm font-bold">
-                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB / 50 MB
+                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB / 100 MB
                             </span>
                           </div>
                           <div className="w-full h-2 bg-background rounded-full overflow-hidden">
                             <div 
                               className={`h-full transition-all ${
-                                (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 50 
+                                (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 100 
                                   ? 'bg-destructive' 
-                                  : (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 40
+                                  : (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 80
                                   ? 'bg-warning'
                                   : 'bg-primary'
                               }`}
                               style={{ 
-                                width: `${Math.min((albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024 / 50) * 100, 100)}%` 
+                                width: `${Math.min((albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024 / 100) * 100, 100)}%` 
                               }}
                             />
                           </div>
