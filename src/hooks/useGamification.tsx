@@ -3,16 +3,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/hooks/useAuth"
 import { toast } from "@/hooks/use-toast"
 
-// Safe hook wrapper to prevent dispatcher null errors
-function useSafeAuth() {
-  try {
-    return useAuth()
-  } catch (error) {
-    console.warn('useAuth failed (dispatcher null):', error)
-    return { user: null }
-  }
-}
-
 interface Achievement {
   id: string
   achievement_type: string
@@ -40,7 +30,7 @@ interface Notification {
 }
 
 export function useGamification() {
-  const { user } = useSafeAuth()
+  const { user } = useAuth()
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [userPoints, setUserPoints] = useState<UserPoints | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])

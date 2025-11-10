@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import type { Database } from '@/integrations/supabase/types'
+
+type AppRole = Database['public']['Enums']['app_role']
+type UserRoleInsert = Database['public']['Tables']['user_roles']['Insert']
 
 // Stable return shape for consumers
 export interface UseRolesResult {
@@ -114,9 +118,15 @@ export function useRoles(): UseRolesResult {
         return { success: false, error: 'Authentication required. Please log in again.' }
       }
 
+      const insertData: UserRoleInsert = {
+        user_id: userId,
+        role: role as AppRole,
+        granted_by: sessionData.session.user.id,
+      }
+
       const { data, error: insertError } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role, granted_by: sessionData.session.user.id })
+        .insert(insertData)
         .select()
 
       if (insertError) {
@@ -149,7 +159,7 @@ export function useRoles(): UseRolesResult {
         .from('user_roles')
         .delete()
         .eq('user_id', userId)
-        .eq('role', role)
+        .eq('role', role as AppRole)
 
       if (revokeError) {
         return { success: false, error: revokeError.message }
