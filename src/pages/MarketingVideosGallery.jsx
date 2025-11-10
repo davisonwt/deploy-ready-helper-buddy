@@ -176,7 +176,7 @@ export default function MarketingVideosGallery() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 relative">
       {/* Background */}
       <div className="fixed inset-0 w-full h-full z-0">
         <video
@@ -188,7 +188,7 @@ export default function MarketingVideosGallery() {
         >
           <source src="/orchards-strip2.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-background/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-green-50/85 to-blue-50/85" />
       </div>
 
       {/* Content */}
@@ -233,8 +233,21 @@ export default function MarketingVideosGallery() {
           </div>
         </div>
 
-        {/* Videos Grid */}
+        {/* Videos Grid with Arrows */}
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Scroll Down Arrow */}
+          <div className="flex justify-center mb-6 animate-bounce">
+            <div className="flickering-arrow">
+              <svg 
+                className="w-12 h-12 text-primary drop-shadow-lg" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
+              </svg>
+            </div>
+          </div>
+          
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
