@@ -265,7 +265,7 @@ function Layout({ children }) {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
-                      className="w-56 bg-background border border-border shadow-lg z-50"
+                      className="w-56 bg-white border border-border shadow-lg z-[100]"
                       align="start"
                       sideOffset={4}
                     >
