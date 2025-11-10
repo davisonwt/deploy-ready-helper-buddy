@@ -247,14 +247,40 @@ export default function DJMusicUpload({ trigger }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Upload Music
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      ) : (
+        <div className="flex items-center gap-2">
+          <DialogTrigger asChild>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => {
+                setReleaseType('single')
+                setFiles([])
+              }}
+            >
+              <Music className="h-4 w-4" />
+              Upload Track
+            </Button>
+          </DialogTrigger>
+          <DialogTrigger asChild>
+            <Button
+              variant="secondary"
+              className="flex items-center gap-2"
+              onClick={() => {
+                setReleaseType('album')
+                setFiles([])
+              }}
+            >
+              <Disc className="h-4 w-4" />
+              Upload Album
+            </Button>
+          </DialogTrigger>
+        </div>
+      )}
+
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
