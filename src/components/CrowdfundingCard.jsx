@@ -43,20 +43,20 @@ const CrowdfundingCard = ({ cardData, onSupport }) => {
           </div>
           
           {/* Subtitle */}
-          <p className="text-sm text-muted-foreground pr-12">
+          <p className="text-sm text-white pr-12">
             {cardData.subtitle}
           </p>
           
           {/* User info */}
-          <p className="text-sm text-muted-foreground/80">
+          <p className="text-sm text-white/90">
             @ {cardData.user} - {cardData.location}
           </p>
           
           {/* Progress section */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">progress</span>
-              <span className="font-medium text-foreground">
+              <span className="text-white/90">progress</span>
+              <span className="font-medium text-white">
                 r {cardData.raised.toLocaleString()} / r {cardData.needed.toLocaleString()}
               </span>
             </div>
@@ -70,7 +70,7 @@ const CrowdfundingCard = ({ cardData, onSupport }) => {
             </div>
             
             {/* Pocket info */}
-            <div className="flex justify-between text-xs text-muted-foreground/80">
+            <div className="flex justify-between text-xs text-white/80">
               <span>{cardData.filledPockets} / {cardData.totalPockets} pockets</span>
               <span>{remaining} remaining</span>
             </div>
