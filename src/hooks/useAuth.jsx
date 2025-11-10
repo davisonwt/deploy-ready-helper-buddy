@@ -39,7 +39,9 @@ export class AuthProviderClass extends React.Component {
           this.reinitializeAuth()
         }
       }, 10000)
-    } catch {}
+    } catch (timeoutError) {
+      // Silently ignore timeout setup errors - non-critical
+    }
 
     // Auth state changes (sync updates + async profile fetch)
     try {
@@ -73,8 +75,16 @@ export class AuthProviderClass extends React.Component {
 
   componentWillUnmount() {
     this._isMounted = false
-    try { this._authSub?.unsubscribe() } catch {}
-    try { clearTimeout(this._loadingTimeout) } catch {}
+    try { 
+      this._authSub?.unsubscribe() 
+    } catch (unsubError) {
+      // Ignore unsubscribe errors during cleanup
+    }
+    try { 
+      clearTimeout(this._loadingTimeout) 
+    } catch (timeoutError) {
+      // Ignore timeout clear errors during cleanup
+    }
   }
   fetchUserProfile = async (authUser) => {
     if (!authUser) return null
@@ -256,7 +266,11 @@ export class AuthProviderClass extends React.Component {
 
   // Reinitialize auth state and listeners safely
   reinitializeAuth = async () => {
-    try { this._authSub?.unsubscribe() } catch {}
+    try { 
+      this._authSub?.unsubscribe() 
+    } catch (unsubError) {
+      // Ignore unsubscribe errors during reinitialization
+    }
     this.setState({ loading: true })
     try {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
