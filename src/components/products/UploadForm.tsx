@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Upload, Loader2, CheckCircle2, Disc, Music } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
@@ -337,11 +337,18 @@ export default function UploadForm() {
                             />
                           </div>
                         </div>
-                        <ul className="mt-2 max-h-28 overflow-y-auto text-sm text-muted-foreground space-y-1">
+                        <ul className="mt-2 max-h-28 overflow-y-auto text-sm space-y-1">
                           {albumFiles.map((f, i) => (
-                            <li key={i} className="flex justify-between">
-                              <span className="truncate mr-2">{f.name}</span>
-                              <span className="text-xs whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <li key={i} className="flex items-center justify-between gap-2 p-2 bg-background rounded hover:bg-muted/50 transition-colors">
+                              <span className="truncate text-muted-foreground flex-1">{f.name}</span>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
+                              <button
+                                type="button"
+                                onClick={() => setAlbumFiles(albumFiles.filter((_, index) => index !== i))}
+                                className="text-muted-foreground hover:text-destructive transition-colors p-1 hover:bg-destructive/10 rounded"
+                              >
+                                <X size={16} />
+                              </button>
                             </li>
                           ))}
                         </ul>
