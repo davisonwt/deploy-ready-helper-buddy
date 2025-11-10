@@ -12,7 +12,7 @@ import { VideoPlayer } from '@/components/ui/VideoPlayer'
 import VideoGifting from '@/components/community/VideoGifting'
 import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 import VideoSocialShare from '@/components/community/VideoSocialShare'
-
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 
 export default function MarketingVideosGallery() {
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -219,18 +219,6 @@ export default function MarketingVideosGallery() {
           </div>
         </div>
 
-        {/* Scroll Down Arrow */}
-        <div className="flex justify-center py-8 animate-bounce">
-          <div className="flickering-arrow">
-            <svg 
-              className="w-12 h-12 text-primary drop-shadow-lg" 
-              fill="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 22l-8-8h5V2h6v12h5l-8 8z"/>
-            </svg>
-          </div>
-        </div>
 
         {/* Videos Grid */}
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -262,156 +250,157 @@ export default function MarketingVideosGallery() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-              {filteredVideos.map((video) => (
-                <Card key={video.id} className="overflow-hidden flex flex-col">
-                  {/* Video Player Section */}
-                  <div className="aspect-video relative bg-black">
-                     <VideoPlayer
-                      src={video.video_url}
-                      className="w-full h-full"
-                      autoPlay={true}
-                      muted={true}
-                      loop={true}
-                      playsInline={true}
-                      fallbackImage={getVideoThumbnail(video)}
-                      onError={(error) => {
-                        console.error('Video playbook error:', error)
-                      }}
-                      onPlay={() => {
-                        // Increment view count when video starts playing
-                        incrementViews(video.id)
-                      }}
-                    />
-                    
-                    {/* Category Badge */}
-                    {video.tags && video.tags.length > 0 && (
-                      <Badge 
-                        variant="default"
-                        className="absolute top-2 left-2 bg-primary/90 text-white"
-                      >
-                        {video.tags[0]}
-                      </Badge>
-                    )}
-
-                    {/* Duration Badge */}
-                    {video.duration_seconds && (
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute bottom-2 right-2 bg-black/70 text-white border-none"
-                      >
-                        {formatDuration(video.duration_seconds)}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Video Info Section */}
-                  <CardContent className="p-6 pb-8 space-y-4 flex-1 flex flex-col">
-                    {/* Title and Description */}
-                    <div>
-                      <h3 className="font-semibold text-xl mb-2 line-clamp-2">
-                        {video.title}
-                      </h3>
-                      {video.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {video.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Creator Info */}
-                    <div className="flex items-center gap-3">
-                      {video.profiles?.avatar_url ? (
-                        <img 
-                          src={video.profiles.avatar_url} 
-                          alt="Creator"
-                          className="w-8 h-8 rounded-full"
+            <Carousel opts={{ align: 'start' }}>
+              <CarouselContent className="pb-2">
+                {filteredVideos.map((video) => (
+                  <CarouselItem key={video.id} className="md:basis-1/2">
+                    <Card className="overflow-hidden flex flex-col">
+                      {/* Video Player Section */}
+                      <div className="aspect-video relative bg-black">
+                         <VideoPlayer
+                          src={video.video_url}
+                          className="w-full h-full"
+                          autoPlay={true}
+                          muted={true}
+                          loop={true}
+                          playsInline={true}
+                          fallbackImage={getVideoThumbnail(video)}
+                          onError={(error) => {
+                            console.error('Video playbook error:', error)
+                          }}
+                          onPlay={() => {
+                            // Increment view count when video starts playing
+                            incrementViews(video.id)
+                          }}
                         />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
-                            {(video.profiles?.display_name || video.profiles?.first_name || 'U')[0]}
+                        
+                        {/* Category Badge */}
+                        {video.tags && video.tags.length > 0 && (
+                          <Badge 
+                            variant="default"
+                            className="absolute top-2 left-2 bg-primary/90 text-white"
+                          >
+                            {video.tags[0]}
+                          </Badge>
+                        )}
+                        {/* Duration Badge */}
+                        {video.duration_seconds && (
+                          <Badge 
+                            variant="secondary" 
+                            className="absolute bottom-2 right-2 bg-black/70 text-white border-none"
+                          >
+                            {formatDuration(video.duration_seconds)}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Video Info Section */}
+                      <CardContent className="p-6 pb-8 space-y-4 flex-1 flex flex-col">
+                        {/* Title and Description */}
+                        <div>
+                          <h3 className="font-semibold text-xl mb-2 line-clamp-2">
+                            {video.title}
+                          </h3>
+                          {video.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-3">
+                              {video.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Creator Info */}
+                        <div className="flex items-center gap-3">
+                          {video.profiles?.avatar_url ? (
+                            <img 
+                              src={video.profiles.avatar_url} 
+                              alt="Creator"
+                              className="w-8 h-8 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-medium text-primary">
+                                {(video.profiles?.display_name || video.profiles?.first_name || 'U')[0]}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
+                              {video.profiles?.display_name || 
+                               `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
+                               'Anonymous Sower'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Creator</p>
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" />
+                            {video.view_count || 0} views
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="h-4 w-4" />
+                            {video.like_count || 0} likes
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="h-4 w-4" />
+                            {video.comment_count || 0} comments
                           </span>
                         </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">
-                          {video.profiles?.display_name || 
-                           `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
-                           'Anonymous Sower'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Creator</p>
-                      </div>
-                    </div>
 
-                    {/* Stats */}
-                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-4 w-4" />
-                        {video.view_count || 0} views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ThumbsUp className="h-4 w-4" />
-                        {video.like_count || 0} likes
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="h-4 w-4" />
-                        {video.comment_count || 0} comments
-                      </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 mt-auto border-t">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* Like Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleLike(video.id, e)
-                          }}
-                        >
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          Like
-                        </Button>
-                        
-                        {/* Comments Button */}
-                        <VideoCommentsSection video={video} />
-                        
-                        {/* Share Button */}
-                        <VideoSocialShare video={video} />
-                        
-                        {/* Visit Orchard Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={(e) => handleOrchardVisit(video, e)}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
-                        </Button>
-                      </div>
-
-                      {/* Free-Will Gift Button - Prominent */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">send free-will gift:</span>
-                        <VideoGifting
-                          video={video}
-                          onGiftSent={() => {
-                            // Refresh video data to show updated stats
-                            fetchVideos()
-                            toast.success('Gift sent to creator! 💝')
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 mt-auto border-t">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Like Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleLike(video.id, e)
+                              }}
+                            >
+                              <ThumbsUp className="h-4 w-4 mr-1" />
+                              Like
+                            </Button>
+                            {/* Comments Button */}
+                            <VideoCommentsSection video={video} />
+                            {/* Share Button */}
+                            <VideoSocialShare video={video} />
+                            {/* Visit Orchard Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={(e) => handleOrchardVisit(video, e)}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
+                            </Button>
+                          </div>
+                          {/* Free-Will Gift Button - Prominent */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">send free-will gift:</span>
+                            <VideoGifting
+                              video={video}
+                              onGiftSent={() => {
+                                // Refresh video data to show updated stats
+                                fetchVideos()
+                                toast.success('Gift sent to creator! 💝')
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+              <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+            </Carousel>
           )}
 
           {/* Call to Action */}
