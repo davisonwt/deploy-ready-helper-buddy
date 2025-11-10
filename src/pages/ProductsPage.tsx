@@ -63,7 +63,8 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen relative">
       {/* Transparent Dark Green Background */}
-      <div className="fixed inset-0 bg-green-900/20 -z-10" />
+      <div className="fixed inset-0 bg-green-900/40 pointer-events-none" style={{ zIndex: 0 }} />
+      <div className="relative" style={{ zIndex: 1 }}>
       
       {/* Hero Header */}
       <div className="relative overflow-hidden border-b border-border/50">
@@ -196,6 +197,7 @@ export default function ProductsPage() {
             </div>
           </section>
         )}
+      </div>
       </div>
     </div>
   );
