@@ -29,6 +29,59 @@ export default function UploadForm() {
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [extractingZip, setExtractingZip] = useState(false);
+
+  const handleZipUpload = async (file: File) => {
+    if (!file.name.endsWith('.zip')) {
+      toast.error('Please select a ZIP file');
+      return;
+    }
+
+    setExtractingZip(true);
+    setZipFile(file);
+
+    try {
+      const zip = new JSZip();
+      const contents = await zip.loadAsync(file);
+      const audioFiles: File[] = [];
+
+      // Extract only audio files
+      for (const [filename, zipEntry] of Object.entries(contents.files)) {
+        if (zipEntry.dir) continue;
+        
+        const isAudio = /\.(mp3|wav|m4a|flac|aac|ogg|wma)$/i.test(filename);
+        if (!isAudio) continue;
+
+        const blob = await zipEntry.async('blob');
+        const audioFile = new File([blob], filename.split('/').pop() || filename, {
+          type: blob.type || 'audio/mpeg'
+        });
+        
+        audioFiles.push(audioFile);
+      }
+
+      if (audioFiles.length === 0) {
+        toast.error('No audio files found in ZIP');
+        setZipFile(null);
+        return;
+      }
+
+      if (audioFiles.length < 8) {
+        toast.warning(`Only ${audioFiles.length} tracks found. Albums typically have 8+ songs.`);
+      }
+
+      setAlbumFiles(audioFiles);
+      toast.success(`Extracted ${audioFiles.length} audio files from ZIP`);
+    } catch (error) {
+      console.error('ZIP extraction error:', error);
+      toast.error('Failed to extract ZIP file');
+      setZipFile(null);
+    } finally {
+      setExtractingZip(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -38,6 +91,11 @@ export default function UploadForm() {
 
     if (!coverImage || (releaseType === 'single' ? !mainFile : albumFiles.length === 0)) {
       toast.error(releaseType === 'single' ? 'Please select both cover image and main file' : 'Please select a cover and at least one audio file for the album');
+      return;
+    }
+
+    if (releaseType === 'album' && albumFiles.length < 8) {
+      toast.error('Albums must have at least 8 tracks. Use single track upload for shorter releases.');
       return;
     }
 
@@ -244,15 +302,21 @@ export default function UploadForm() {
                     setReleaseType(value as 'single' | 'album');
                     setMainFile(null);
                     setAlbumFiles([]);
+                    setZipFile(null);
                   }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Single or Album" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="single">Single Track</SelectItem>
-                      <SelectItem value="album">Album (Multiple Tracks)</SelectItem>
+                      <SelectItem value="album">Album (8+ Tracks)</SelectItem>
                     </SelectContent>
                   </Select>
+                  {releaseType === 'album' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Albums must have 8+ songs. Upload as ZIP or select multiple files.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -320,19 +384,62 @@ export default function UploadForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="file">{releaseType === 'album' ? 'Main Files *' : 'Main File *'}</Label>
-                  <div className="mt-2">
-                    <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                  <Label htmlFor="file">{releaseType === 'album' ? 'Album Tracks *' : 'Main File *'}</Label>
+                  <div className="mt-2 space-y-2">
+                    {releaseType === 'album' && (
+                      <>
+                        <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                          <div className="text-center">
+                            <Disc className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground font-medium">
+                              {zipFile ? zipFile.name : 'Upload ZIP Archive'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Recommended for 50MB+ albums
+                            </p>
+                          </div>
+                          <input
+                            id="zip-file"
+                            type="file"
+                            accept=".zip"
+                            className="hidden"
+                            disabled={extractingZip || albumFiles.length > 0}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleZipUpload(file);
+                            }}
+                          />
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-card px-2 text-muted-foreground">or</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                       <div className="text-center">
-                        <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                        {releaseType === 'album' ? (
-                          <p className="text-sm text-muted-foreground">
-                            {albumFiles.length > 0 ? `${albumFiles.length} files selected` : 'Click to upload multiple files'}
-                          </p>
+                        {extractingZip ? (
+                          <>
+                            <Loader2 className="w-6 h-6 mx-auto mb-2 text-primary animate-spin" />
+                            <p className="text-sm text-muted-foreground">Extracting ZIP...</p>
+                          </>
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {mainFile ? mainFile.name : 'Click to upload file'}
-                          </p>
+                          <>
+                            <Music className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                            {releaseType === 'album' ? (
+                              <p className="text-sm text-muted-foreground">
+                                {albumFiles.length > 0 ? `${albumFiles.length} files selected` : 'Select Multiple Audio Files'}
+                              </p>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                {mainFile ? mainFile.name : 'Click to upload file'}
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                       <input
@@ -341,10 +448,12 @@ export default function UploadForm() {
                         className="hidden"
                         accept={formData.type === 'music' ? 'audio/*' : undefined}
                         multiple={releaseType === 'album'}
+                        disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
                           if (releaseType === 'album') {
                             setAlbumFiles(Array.from(e.target.files || []));
                             setMainFile(null);
+                            setZipFile(null);
                           } else {
                             setMainFile(e.target.files?.[0] || null);
                             setAlbumFiles([]);
@@ -356,34 +465,39 @@ export default function UploadForm() {
                       <>
                         <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium">Total Size</span>
+                            <span className="text-sm font-medium flex items-center gap-2">
+                              {zipFile && <Disc className="w-4 h-4" />}
+                              {albumFiles.length} Tracks
+                            </span>
                             <span className="text-sm font-bold">
-                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB total (per-file limit 50MB)
+                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB total
                             </span>
                           </div>
+                          {albumFiles.length < 8 && (
+                            <p className="text-xs text-warning mb-2">⚠️ Albums require 8+ tracks</p>
+                          )}
                           <div className="w-full h-2 bg-background rounded-full overflow-hidden">
                             <div 
                               className={`h-full transition-all ${
-                                (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 100 
-                                  ? 'bg-destructive' 
-                                  : (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 80
-                                  ? 'bg-warning'
-                                  : 'bg-primary'
+                                albumFiles.length < 8 ? 'bg-warning' : 'bg-primary'
                               }`}
                               style={{ 
-                                width: `${Math.min((albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024 / 100) * 100, 100)}%` 
+                                width: `${Math.min((albumFiles.length / 8) * 100, 100)}%` 
                               }}
                             />
                           </div>
                         </div>
-                        <ul className="mt-2 max-h-28 overflow-y-auto text-sm space-y-1">
+                        <ul className="mt-2 max-h-32 overflow-y-auto text-sm space-y-1">
                           {albumFiles.map((f, i) => (
                             <li key={i} className="flex items-center justify-between gap-2 p-2 bg-background rounded hover:bg-muted/50 transition-colors">
                               <span className="truncate text-muted-foreground flex-1">{f.name}</span>
                               <span className="text-xs text-muted-foreground whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
                               <button
                                 type="button"
-                                onClick={() => setAlbumFiles(albumFiles.filter((_, index) => index !== i))}
+                                onClick={() => {
+                                  setAlbumFiles(albumFiles.filter((_, index) => index !== i));
+                                  if (albumFiles.length === 1) setZipFile(null);
+                                }}
                                 className="text-muted-foreground hover:text-destructive transition-colors p-1 hover:bg-destructive/10 rounded"
                               >
                                 <X size={16} />
@@ -391,6 +505,20 @@ export default function UploadForm() {
                             </li>
                           ))}
                         </ul>
+                        {zipFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2"
+                            onClick={() => {
+                              setZipFile(null);
+                              setAlbumFiles([]);
+                            }}
+                          >
+                            Clear All & Start Over
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>
