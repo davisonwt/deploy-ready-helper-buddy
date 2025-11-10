@@ -9,6 +9,23 @@ import { useState, useEffect } from 'react';
 import { useCryptoPay } from '@/hooks/useCryptoPay';
 import { toast } from 'sonner';
 
+interface LiveRoom {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  is_premium: boolean;
+  orchard_id?: string | null;
+  required_bestowal_amount?: number | null;
+  max_capacity?: number | null;
+  current_listeners: number;
+  category: string;
+  access_description: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function LiveRooms() {
   const [searchQuery, setSearchQuery] = useState('');
   const { processing } = useCryptoPay();
@@ -58,15 +75,15 @@ export default function LiveRooms() {
     };
   }, [queryClient]);
 
-  const handleJoinRoom = async (room: any) => {
-    if (!room.is_free) {
+  const handleJoinRoom = async (room: LiveRoom) => {
+    if (room.is_premium) {
       // Check if already paid
       const { data: purchased } = await supabase
         .from('bestowals')
         .select('id')
         .eq('orchard_id', room.orchard_id)
         .eq('bestower_id', (await supabase.auth.getUser()).data.user?.id)
-        .gte('amount', room.required_bestowal_amount)
+        .gte('amount', room.required_bestowal_amount || 0)
         .single();
 
       if (!purchased) {
@@ -120,21 +137,18 @@ export default function LiveRooms() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {rooms?.map((room: any) => (
+          {rooms?.map((room: LiveRoom) => (
             <Card key={room.id} className="border-primary/10 hover:border-primary/30 transition-colors">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <CardTitle className="text-xl">{room.name}</CardTitle>
-                      {room.status === 'live' && (
+                      {room.is_active && (
                         <Badge variant="default" className="bg-green-600 animate-pulse">
                           <Radio className="h-3 w-3 mr-1" />
                           Live Now
                         </Badge>
-                      )}
-                      {room.status === 'upcoming' && (
-                        <Badge variant="secondary">Starts Soon</Badge>
                       )}
                     </div>
                     <CardDescription className="line-clamp-2">
@@ -152,13 +166,13 @@ export default function LiveRooms() {
                   </div>
                   
                   <div className="flex flex-col gap-2 items-end">
-                    {room.is_free ? (
+                    {!room.is_premium ? (
                       <Badge variant="default" className="bg-green-600">
                         Free
                       </Badge>
                     ) : (
                       <Badge variant="destructive">
-                        {room.required_bestowal_amount} USDC
+                        {room.required_bestowal_amount || 0} USDC
                       </Badge>
                     )}
                     
@@ -166,17 +180,17 @@ export default function LiveRooms() {
                       onClick={() => handleJoinRoom(room)}
                       disabled={processing || (room.max_capacity && room.current_listeners >= room.max_capacity)}
                       size="sm"
-                      variant={room.is_free ? 'default' : 'destructive'}
+                      variant={!room.is_premium ? 'default' : 'destructive'}
                       className="gap-2"
                     >
                       {processing ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : room.is_free ? (
+                      ) : !room.is_premium ? (
                         <Radio className="h-4 w-4" />
                       ) : (
                         <Lock className="h-4 w-4" />
                       )}
-                      {room.is_free ? 'Join Free' : `Join for ${room.required_bestowal_amount} USDC`}
+                      {!room.is_premium ? 'Join Free' : `Join for ${room.required_bestowal_amount || 0} USDC`}
                     </Button>
                   </div>
                 </div>
