@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
-import { CallManagerContext, CallManagerProvider as Provider } from '@/contexts/CallManagerContext';
+import { CallManagerContext } from '@/contexts/CallManagerContext';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
@@ -877,12 +877,6 @@ const useCallManagerInternal = () => {
     // Utility
     loadCallHistory
   };
-};
-
-// Export provider wrapper that uses the internal hook
-export const CallManagerProvider = ({ children }) => {
-  const value = useCallManagerInternal();
-  return <Provider value={value}>{children}</Provider>;
 };
 
 export const useCallManager = () => {
