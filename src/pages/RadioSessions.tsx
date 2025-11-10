@@ -10,6 +10,21 @@ import { useCryptoPay } from '@/hooks/useCryptoPay';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface RadioSession {
+  id: string;
+  is_free: boolean;
+  price?: number;
+  radio_shows?: {
+    show_name: string;
+    category: string;
+    description: string;
+  };
+  radio_djs?: {
+    dj_name: string;
+    avatar_url?: string;
+  };
+}
+
 const ITEMS_PER_PAGE = 12;
 
 export default function RadioSessions() {
@@ -50,7 +65,7 @@ export default function RadioSessions() {
     },
   });
 
-  const handlePlaySession = async (session: any) => {
+  const handlePlaySession = async (session: RadioSession) => {
     if (!session.is_free) {
       // Check if already purchased
       const { data: purchased } = await supabase
@@ -120,7 +135,7 @@ export default function RadioSessions() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sessions.map((session: any) => (
+            {sessions.map((session: RadioSession) => (
               <Card key={session.id} className="border-primary/10 hover:border-primary/30 transition-colors">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
