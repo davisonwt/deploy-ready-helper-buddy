@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   TreePine,
   Heart,
@@ -72,7 +73,37 @@ export default function YhvhOrchardsPage() {
   const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const navigate = useNavigate()
+
+  const categories = [
+    "The Gift of Accessories", 
+    "The Gift of Adventure Packages",
+    "The Gift of Appliances",
+    "The Gift of Art",
+    "The Gift of Bees",
+    "The Gift of Courses",
+    "The Gift of Custom Made",
+    "The Gift of DIY",
+    "The Gift of Electronics",
+    "The Gift of Energy",
+    "The Gift of Everything Bee's",
+    "The Gift of Food",
+    "The Gift of Free-will Gifting",
+    "The Gift of Innovation",
+    "The Gift of Kitchenware",
+    "The Gift of Music",
+    "The Gift of Nourishment",
+    "The Gift of Pay as You Go",
+    "The Gift of Property",
+    "The Gift of Services",
+    "The Gift of Technology",
+    "The Gift of Technology & Hardware (Consumer Electronics)",
+    "The Gift of Tithing",
+    "The Gift of Tools",
+    "The Gift of Vehicles",
+    "The Gift of Wellness"
+  ]
 
   console.log('🌳 YhvhOrchardsPage: Component loaded', {
     user: !!user,
@@ -133,6 +164,11 @@ export default function YhvhOrchardsPage() {
       toast.error('Failed to delete orchard')
     }
   }
+
+  // Filter orchards by category
+  const filteredOrchards = selectedCategory === 'all' 
+    ? orchards 
+    : orchards.filter(orchard => orchard.category === selectedCategory)
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -204,9 +240,9 @@ export default function YhvhOrchardsPage() {
               </p>
             </div>
           </div>
-          <div className="mt-6 flex space-x-4">
+          <div className="mt-6 flex flex-wrap gap-4 items-center">
             <Badge variant="outline" className="px-4 py-2 text-sm">
-              {orchards.length} Active Orchards
+              {filteredOrchards.length} Active Orchards
             </Badge>
             <Badge variant="outline" className="px-4 py-2 text-sm">
               Community Funded
@@ -214,6 +250,21 @@ export default function YhvhOrchardsPage() {
             <Badge variant="outline" className="px-4 py-2 text-sm">
               Growing Together
             </Badge>
+            <div className="min-w-[200px] ml-auto">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="border-purple-400/30 focus:border-purple-500 bg-white">
+                  <SelectValue placeholder="Filter by Category" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-purple-400/30 z-50">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -235,7 +286,7 @@ export default function YhvhOrchardsPage() {
         )}
 
         {/* Community Orchards Section */}
-        {orchards.length > 0 ? (
+        {filteredOrchards.length > 0 ? (
           <section className="mb-12">
             <div className="relative px-12">
               <Carousel
@@ -246,7 +297,7 @@ export default function YhvhOrchardsPage() {
                 className="w-full"
               >
                 <CarouselContent className="-ml-2 md:-ml-4">
-                  {orchards.map((orchard, index) => (
+                  {filteredOrchards.map((orchard, index) => (
                     <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                       <Card 
                         className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in h-full"
