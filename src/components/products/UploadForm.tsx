@@ -41,6 +41,25 @@ export default function UploadForm() {
       return;
     }
 
+    // Check file size limits (50MB for Supabase storage)
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    
+    if (releaseType === 'album') {
+      const totalSize = albumFiles.reduce((sum, file) => sum + file.size, 0);
+      if (totalSize > maxSize) {
+        toast.error(`Album files total size (${(totalSize / 1024 / 1024).toFixed(2)}MB) exceeds the 50MB limit. Please reduce file sizes or upload fewer tracks.`);
+        return;
+      }
+    } else if (mainFile && mainFile.size > maxSize) {
+      toast.error(`File size (${(mainFile.size / 1024 / 1024).toFixed(2)}MB) exceeds the 50MB limit.`);
+      return;
+    }
+
+    if (coverImage.size > 10 * 1024 * 1024) {
+      toast.error('Cover image must be under 10MB');
+      return;
+    }
+
     setUploading(true);
 
     try {
