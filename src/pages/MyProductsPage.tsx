@@ -9,6 +9,13 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 export default function MyProductsPage() {
   const { user } = useAuth();
@@ -110,18 +117,32 @@ export default function MyProductsPage() {
               <h2 className="text-3xl font-bold mb-6 text-foreground">
                 {selectedCategory === 'all' ? 'All Your Products' : `Your ${selectedCategory} Products`}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    showActions={true} 
-                  />
-                ))}
-              </div>
-              {filteredProducts.length === 0 && (
+              {filteredProducts.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground text-lg">No products found in this category</p>
+                </div>
+              ) : (
+                <div className="relative px-12">
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-2 md:-ml-4">
+                      {filteredProducts.map((product) => (
+                        <CarouselItem key={product.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                          <ProductCard 
+                            product={product} 
+                            showActions={true} 
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+                    <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+                  </Carousel>
                 </div>
               )}
             </section>
