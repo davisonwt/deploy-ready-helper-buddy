@@ -191,22 +191,7 @@ export default function BrowseOrchardsPage() {
   ]
 
   return (
-    <div className="min-h-screen relative pb-24">
-      {/* Background Video */}
-      <video 
-        autoPlay 
-        loop 
-        muted 
-        playsInline
-        className="fixed top-0 left-0 w-full h-full object-cover z-0"
-        onError={(e) => console.error('Video failed to load:', e)}
-        onLoadStart={() => console.log('Browse orchards video loading started')}
-        onCanPlay={() => console.log('Browse orchards video can play')}
-      >
-        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/orchards%201a%201280x720.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-      
+    <div className="min-h-screen relative pb-24" style={{ backgroundColor: '#001f3f' }}>
       {/* Overlay for better text readability */}
       <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
       

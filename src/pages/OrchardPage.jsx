@@ -148,19 +148,7 @@ const OrchardPage = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Video */}
-      <VideoPlayer
-        src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20my%20orchard%20(1).mp4"
-        className="absolute inset-0 w-full h-full object-cover"
-        autoPlay={true}
-        loop={true}
-        muted={true}
-        playsInline={true}
-      />
-      
-      {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
       
       {/* Content */}
       <div className="relative z-10 min-h-screen">

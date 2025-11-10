@@ -204,24 +204,7 @@ export default function FreeWillGiftingPage() {
   const suggestedAmounts = [25, 50, 100, 250, 500]
 
   return (
-    <div className="min-h-screen relative">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        onError={(e) => {
-          console.error('Video failed to load:', e);
-          e.target.style.display = 'none';
-        }}
-      >
-        <source
-          src="/let-it-rain-1280x720.mp4"
-          type="video/mp4"
-        />
-      </video>
+    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
       
       {/* Solid dark overlay for better readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>

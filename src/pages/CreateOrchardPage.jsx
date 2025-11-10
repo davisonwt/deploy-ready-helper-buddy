@@ -646,26 +646,7 @@ const fetchOrchardById = async (oid) => {
   }
   
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Video */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        onError={(e) => {
-          console.error('Video error:', e);
-          // Hide video and show background color if video fails
-          e.target.style.display = 'none';
-        }}
-        onLoadStart={() => console.log('Video loading started')}
-        onCanPlay={() => console.log('Video can play')}
-      >
-        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g upload sower 1280x720.mp4" type="video/mp4" />
-        <source src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/s2g%20upload%20sower%201280x720.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#001f3f' }}>
       
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 backdrop-blur-[2px]" style={{ backgroundColor: '#fdffb630' }}></div>
