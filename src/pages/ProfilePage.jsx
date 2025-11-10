@@ -293,20 +293,7 @@ export default function ProfilePage() {
   }
   
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Enhanced Background Video */}
-      <div className="fixed inset-0 w-full h-full z-0">
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          className="w-full h-full object-cover"
-        >
-          <source src="/bestowers main mp4.mp4" type="video/mp4" />
-          <div className="w-full h-full bg-gradient-to-br from-green-100 to-amber-100"></div>
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-black/10 to-black/20"></div>
-      </div>
+    <div className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#001f3f' }}>
 
       {/* Enhanced floating elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">

@@ -129,20 +129,7 @@ export default function OrchardErrorPage() {
   const ErrorIcon = getErrorIcon();
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Enhanced Background Video */}
-      <div className="fixed inset-0 w-full h-full z-0">
-        <video 
-          autoPlay 
-          muted 
-          loop 
-          className="w-full h-full object-cover opacity-30"
-        >
-          <source src="/orchards main mp4.mp4" type="video/mp4" />
-          <div className="w-full h-full bg-gradient-to-br from-red-50 via-orange-50 to-amber-50"></div>
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-br from-red-100/80 via-orange-50/60 to-amber-100/80"></div>
-      </div>
+    <div className="relative min-h-screen overflow-hidden" style={{ backgroundColor: '#001f3f' }}>
 
       {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">

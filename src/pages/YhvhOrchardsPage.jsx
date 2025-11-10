@@ -211,10 +211,10 @@ export default function YhvhOrchardsPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background Image */}
+      {/* Navy Blue Background */}
       <div 
-        className="fixed top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat z-0"
-        style={{ backgroundImage: 'url(/364yhvh-orchards-1.jpg)' }}
+        className="fixed top-0 left-0 w-full h-full z-0"
+        style={{ backgroundColor: '#001f3f' }}
       />
       
       {/* Overlay for better text readability */}

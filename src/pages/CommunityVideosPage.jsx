@@ -12,20 +12,7 @@ export default function CommunityVideosPage() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background Video */}
-      <div className="fixed inset-0 w-full h-full z-0">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover opacity-20"
-        >
-          <source src="/orchards-strip2.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-background/80" />
-      </div>
+    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
       
       {/* Content */}
       <div className="relative z-10">
