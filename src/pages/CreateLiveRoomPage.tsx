@@ -87,11 +87,12 @@ export default function CreateLiveRoomPage() {
       });
 
       navigate(`/live-rooms?join=${slug}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating room:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create room';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create room',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
