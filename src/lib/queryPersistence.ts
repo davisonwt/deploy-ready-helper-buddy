@@ -19,9 +19,10 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       
       // Reduce retries for faster failures
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry auth errors or 404s
-        if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
+        const errorWithStatus = error as { status?: number };
+        if (errorWithStatus?.status === 401 || errorWithStatus?.status === 403 || errorWithStatus?.status === 404) {
           return false;
         }
         // Only retry once for better performance
@@ -139,7 +140,7 @@ export const queryConfigs = {
     staleTime: 5 * 60 * 1000,
     gcTime: 1000 * 60 * 60, // 1 hour
     refetchOnWindowFocus: false,
-    getNextPageParam: (lastPage: any) => lastPage.nextCursor,
-    getPreviousPageParam: (firstPage: any) => firstPage.previousCursor,
+    getNextPageParam: (lastPage: unknown) => (lastPage as { nextCursor?: string })?.nextCursor,
+    getPreviousPageParam: (firstPage: unknown) => (firstPage as { previousCursor?: string })?.previousCursor,
   },
 };
