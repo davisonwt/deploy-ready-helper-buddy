@@ -48,7 +48,7 @@ window.addEventListener('unhandledrejection', (event) => {
 // Defer performance monitoring to avoid blocking
 if ('performance' in window && import.meta.env.DEV) {
   setTimeout(() => {
-    const navTiming = performance.getEntriesByType('navigation')[0] as any;
+    const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
     if (navTiming) {
       logInfo('⚡ Load Performance', {
         'Total Load': `${Math.round(navTiming.loadEventEnd - navTiming.loadEventStart)}ms`,
@@ -71,9 +71,8 @@ logInfo('Application starting', {
 // Version sanity check (detect multiple React copies)
 try {
   console.groupCollapsed('Version Check');
-  // @ts-ignore - React.version exists at runtime
-  console.log('React version:', (React as any).version);
-  console.log('React DOM version:', (ReactDOMPkg as any).version);
+  console.log('React version:', (React as { version?: string }).version);
+  console.log('React DOM version:', (ReactDOMPkg as { version?: string }).version);
   console.groupEnd();
   
   // Detect duplicate React instances
@@ -83,7 +82,10 @@ try {
     try {
       localStorage.setItem('sw:disabled', '1');
       console.warn('⚠️ Duplicate React detected. Service worker disabled for this session. Run window.disableServiceWorkerAndReload() to purge caches and reload.');
-    } catch {}
+    } catch (swError) {
+      // Silently fail if localStorage is unavailable
+      console.warn('Failed to set sw:disabled flag:', swError);
+    }
   }
 } catch (e) {
   console.warn('Version check failed', e);
