@@ -499,8 +499,8 @@ export default function BrowseOrchardsPage() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
-            <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 hover:bg-background border border-primary shadow-md" />
+            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 hover:bg-background border border-primary shadow-md" />
           </Carousel>
         ) : (
           <div className="grid gap-6 md:gap-8 pb-16 grid-cols-1 max-w-4xl mx-auto">
