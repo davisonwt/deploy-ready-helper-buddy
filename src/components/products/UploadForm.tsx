@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Disc, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import JSZip from 'jszip';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -26,7 +27,8 @@ export default function UploadForm() {
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
-
+  const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
+  const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -34,8 +36,8 @@ export default function UploadForm() {
       return;
     }
 
-    if (!coverImage || !mainFile) {
-      toast.error('Please select both cover image and main file');
+    if (!coverImage || (releaseType === 'single' ? !mainFile : albumFiles.length === 0)) {
+      toast.error(releaseType === 'single' ? 'Please select both cover image and main file' : 'Please select a cover and at least one audio file for the album');
       return;
     }
 
@@ -84,12 +86,25 @@ export default function UploadForm() {
         .from('premium-room')
         .getPublicUrl(coverPath);
 
-      // Upload main file
-      const fileExt = mainFile.name.split('.').pop();
-      const filePath = `products/${user.id}/${Date.now()}.${fileExt}`;
+      // Prepare main upload (single file or zipped album)
+      let uploadBlob: Blob | File;
+      let uploadExt = 'bin';
+
+      if (releaseType === 'album') {
+        const zip = new JSZip();
+        albumFiles.forEach((f) => zip.file(f.name, f));
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        uploadBlob = zipBlob;
+        uploadExt = 'zip';
+      } else {
+        uploadBlob = mainFile as File;
+        uploadExt = (mainFile as File).name.split('.').pop() || 'bin';
+      }
+
+      const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
       const { error: fileUploadError } = await supabase.storage
         .from('premium-room')
-        .upload(filePath, mainFile);
+        .upload(filePath, uploadBlob);
 
       if (fileUploadError) throw fileUploadError;
 
@@ -114,7 +129,7 @@ export default function UploadForm() {
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrl.publicUrl,
-          tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
+          tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
         });
 
       if (productError) throw productError;
@@ -161,6 +176,23 @@ export default function UploadForm() {
                       <SelectItem value="music">Music</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
                       <SelectItem value="file">File</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="releaseType">Release Type *</Label>
+                  <Select value={releaseType} onValueChange={(value) => {
+                    setReleaseType(value as 'single' | 'album');
+                    setMainFile(null);
+                    setAlbumFiles([]);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Single or Album" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">Single Track</SelectItem>
+                      <SelectItem value="album">Album (Multiple Tracks)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -230,22 +262,45 @@ export default function UploadForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="file">Main File *</Label>
+                  <Label htmlFor="file">{releaseType === 'album' ? 'Main Files *' : 'Main File *'}</Label>
                   <div className="mt-2">
                     <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                       <div className="text-center">
                         <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          {mainFile ? mainFile.name : 'Click to upload file'}
-                        </p>
+                        {releaseType === 'album' ? (
+                          <p className="text-sm text-muted-foreground">
+                            {albumFiles.length > 0 ? `${albumFiles.length} files selected` : 'Click to upload multiple files'}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {mainFile ? mainFile.name : 'Click to upload file'}
+                          </p>
+                        )}
                       </div>
                       <input
                         id="file"
                         type="file"
                         className="hidden"
-                        onChange={(e) => setMainFile(e.target.files?.[0] || null)}
+                        accept={formData.type === 'music' ? 'audio/*' : undefined}
+                        multiple={releaseType === 'album'}
+                        onChange={(e) => {
+                          if (releaseType === 'album') {
+                            setAlbumFiles(Array.from(e.target.files || []));
+                            setMainFile(null);
+                          } else {
+                            setMainFile(e.target.files?.[0] || null);
+                            setAlbumFiles([]);
+                          }
+                        }}
                       />
                     </label>
+                    {releaseType === 'album' && albumFiles.length > 0 && (
+                      <ul className="mt-2 max-h-28 overflow-y-auto text-sm text-muted-foreground">
+                        {albumFiles.map((f, i) => (
+                          <li key={i}>{f.name}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
 
