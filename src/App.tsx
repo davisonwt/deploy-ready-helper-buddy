@@ -98,7 +98,6 @@ import { BasketProvider } from "./hooks/useBasket";
 import { ProductBasketProvider } from "./contexts/ProductBasketContext";
 import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
-import { FloatingLiveWidget } from "./components/dashboard/FloatingLiveWidget";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
@@ -690,7 +689,6 @@ const App = () => (
                   </Suspense>
                 </ErrorBoundary>
               <LiveActivityWidget />
-              <FloatingLiveWidget />
               <FloatingBasketButton />
               <OnboardingTour />
               <HelpModal />
