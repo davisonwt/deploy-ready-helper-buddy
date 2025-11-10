@@ -13,7 +13,8 @@ import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload'
 
 export default function DJMusicUpload({ trigger }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [file, setFile] = useState(null)
+  const [files, setFiles] = useState([])
+  const [releaseType, setReleaseType] = useState('single') // 'single' or 'album'
   const [dragActive, setDragActive] = useState(false)
   const [trackData, setTrackData] = useState({
     title: '',
@@ -24,6 +25,12 @@ export default function DJMusicUpload({ trigger }) {
     type: 'music',
     tags: [],
     isExplicit: false
+  })
+  const [albumData, setAlbumData] = useState({
+    albumTitle: '',
+    artist: '',
+    genre: '',
+    tags: []
   })
   const [newTag, setNewTag] = useState('')
 
@@ -45,108 +52,191 @@ export default function DJMusicUpload({ trigger }) {
     e.stopPropagation()
     setDragActive(false)
 
-    const files = e.dataTransfer.files
-    if (files?.[0]) {
-      handleFileSelect(files[0])
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    if (droppedFiles.length > 0) {
+      if (releaseType === 'single') {
+        handleFileSelect([droppedFiles[0]])
+      } else {
+        handleFileSelect(droppedFiles)
+      }
     }
   }
 
-  const handleFileSelect = (selectedFile) => {
-    if (!selectedFile.type.startsWith('audio/')) {
-      alert('Please select an audio file')
-      return
-    }
+  const handleFileSelect = (selectedFiles) => {
+    const fileArray = Array.isArray(selectedFiles) ? selectedFiles : [selectedFiles]
+    const validFiles = []
 
-    // Check file size (25MB limit for better upload reliability)
+    // Check file size (25MB per file limit)
     const maxFileSize = 25 * 1024 * 1024 // 25MB in bytes
-    if (selectedFile.size > maxFileSize) {
-      alert(`File too large! Maximum size is 25MB. Your file is ${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB. Please convert to MP3 or reduce quality.`)
-      return
-    }
-
-    setFile(selectedFile)
     
-    // Try to extract metadata from filename
-    const fileName = selectedFile.name.replace(/\.[^/.]+$/, '')
-    const parts = fileName.split(' - ')
-    if (parts.length >= 2) {
-      setTrackData(prev => ({
-        ...prev,
-        artist: parts[0].trim(),
-        title: parts.slice(1).join(' - ').trim()
-      }))
-    } else {
-      setTrackData(prev => ({
-        ...prev,
-        title: fileName
-      }))
+    for (const file of fileArray) {
+      if (!file.type.startsWith('audio/')) {
+        alert(`${file.name} is not an audio file. Please select only audio files.`)
+        continue
+      }
+
+      if (file.size > maxFileSize) {
+        alert(`${file.name} is too large! Maximum size is 25MB per file. This file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`)
+        continue
+      }
+
+      validFiles.push(file)
     }
 
-    // Get audio duration
-    const audio = new Audio()
-    audio.src = URL.createObjectURL(selectedFile)
-    audio.addEventListener('loadedmetadata', () => {
-      setTrackData(prev => ({
-        ...prev,
-        duration: Math.round(audio.duration)
-      }))
-      URL.revokeObjectURL(audio.src)
-    })
+    if (validFiles.length === 0) return
+
+    setFiles(validFiles)
+    
+    // For single track, try to extract metadata from filename
+    if (releaseType === 'single' && validFiles.length > 0) {
+      const fileName = validFiles[0].name.replace(/\.[^/.]+$/, '')
+      const parts = fileName.split(' - ')
+      if (parts.length >= 2) {
+        setTrackData(prev => ({
+          ...prev,
+          artist: parts[0].trim(),
+          title: parts.slice(1).join(' - ').trim()
+        }))
+      } else {
+        setTrackData(prev => ({
+          ...prev,
+          title: fileName
+        }))
+      }
+
+      // Get audio duration
+      const audio = new Audio()
+      audio.src = URL.createObjectURL(validFiles[0])
+      audio.addEventListener('loadedmetadata', () => {
+        setTrackData(prev => ({
+          ...prev,
+          duration: Math.round(audio.duration)
+        }))
+        URL.revokeObjectURL(audio.src)
+      })
+    }
+
+    // For album, extract artist from first file
+    if (releaseType === 'album' && validFiles.length > 0) {
+      const fileName = validFiles[0].name.replace(/\.[^/.]+$/, '')
+      const parts = fileName.split(' - ')
+      if (parts.length >= 2) {
+        setAlbumData(prev => ({
+          ...prev,
+          artist: parts[0].trim()
+        }))
+      }
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    console.log('🎵 Form submitted', { file, trackData })
-    
-    if (!file) {
-      console.error('❌ No file selected')
-      alert('Please select an audio file')
+    if (files.length === 0) {
+      alert('Please select audio file(s)')
       return
     }
 
-    if (!trackData.title.trim()) {
-      console.error('❌ No title provided')
-      alert('Please enter a track title')
-      return
-    }
+    if (releaseType === 'single') {
+      if (!trackData.title.trim()) {
+        alert('Please enter a track title')
+        return
+      }
 
-    console.log('🎵 About to call uploadTrack')
-    const result = await directUpload(file, trackData, djProfile)
-    
-    if (result) {
-      // Reset form
-      setFile(null)
-      setTrackData({
-        title: '',
-        artist: '',
-        genre: '',
-        bpm: '',
-        duration: 0,
-        type: 'music',
-        tags: [],
-        isExplicit: false
-      })
-      setIsOpen(false)
-      fetchTracks() // Refresh the tracks list
+      const result = await directUpload(files[0], trackData, djProfile)
+      
+      if (result) {
+        resetForm()
+        fetchTracks()
+      }
+    } else {
+      // Album upload
+      if (!albumData.albumTitle.trim()) {
+        alert('Please enter an album title')
+        return
+      }
+
+      // Upload each track with album info
+      let successCount = 0
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileName = file.name.replace(/\.[^/.]+$/, '')
+        
+        const trackInfo = {
+          title: fileName,
+          artist: albumData.artist,
+          genre: albumData.genre,
+          tags: [...albumData.tags, albumData.albumTitle],
+          type: 'music',
+          duration: 0
+        }
+
+        const result = await directUpload(file, trackInfo, djProfile)
+        if (result) successCount++
+      }
+
+      if (successCount > 0) {
+        alert(`Successfully uploaded ${successCount} of ${files.length} tracks`)
+        resetForm()
+        fetchTracks()
+      }
     }
+  }
+
+  const resetForm = () => {
+    setFiles([])
+    setTrackData({
+      title: '',
+      artist: '',
+      genre: '',
+      bpm: '',
+      duration: 0,
+      type: 'music',
+      tags: [],
+      isExplicit: false
+    })
+    setAlbumData({
+      albumTitle: '',
+      artist: '',
+      genre: '',
+      tags: []
+    })
+    setIsOpen(false)
   }
 
   const addTag = () => {
-    if (newTag.trim() && !trackData.tags.includes(newTag.trim())) {
-      setTrackData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }))
-      setNewTag('')
+    if (!newTag.trim()) return
+
+    if (releaseType === 'single') {
+      if (!trackData.tags.includes(newTag.trim())) {
+        setTrackData(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag.trim()]
+        }))
+      }
+    } else {
+      if (!albumData.tags.includes(newTag.trim())) {
+        setAlbumData(prev => ({
+          ...prev,
+          tags: [...prev.tags, newTag.trim()]
+        }))
+      }
     }
+    setNewTag('')
   }
 
   const removeTag = (tagToRemove) => {
-    setTrackData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }))
+    if (releaseType === 'single') {
+      setTrackData(prev => ({
+        ...prev,
+        tags: prev.tags.filter(tag => tag !== tagToRemove)
+      }))
+    } else {
+      setAlbumData(prev => ({
+        ...prev,
+        tags: prev.tags.filter(tag => tag !== tagToRemove)
+      }))
+    }
   }
 
   const formatDuration = (seconds) => {
@@ -174,6 +264,23 @@ export default function DJMusicUpload({ trigger }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Release Type Selection */}
+          <div className="space-y-2">
+            <Label>Release Type</Label>
+            <Select value={releaseType} onValueChange={(value) => {
+              setReleaseType(value)
+              setFiles([])
+            }}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single">Single Track</SelectItem>
+                <SelectItem value="album">Album (Multiple Tracks)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* File Upload Area */}
           <Card>
             <CardContent className="p-6">
@@ -186,40 +293,55 @@ export default function DJMusicUpload({ trigger }) {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                {file ? (
+                {files.length > 0 ? (
                   <div className="space-y-2">
                     <Music className="h-8 w-8 mx-auto text-primary" />
-                    <p className="font-medium">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                      {trackData.duration > 0 && ` • ${formatDuration(trackData.duration)}`}
-                    </p>
+                    {files.length === 1 ? (
+                      <>
+                        <p className="font-medium">{files[0].name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(files[0].size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-medium">{files.length} files selected</p>
+                        <div className="max-h-32 overflow-y-auto space-y-1">
+                          {files.map((file, idx) => (
+                            <p key={idx} className="text-sm text-muted-foreground">
+                              {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </p>
+                          ))}
+                        </div>
+                      </>
+                    )}
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setFile(null)}
+                      onClick={() => setFiles([])}
                     >
-                      Remove File
+                      Remove Files
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p>Drop your audio file here or click to browse</p>
+                    <p>Drop your audio {releaseType === 'album' ? 'files' : 'file'} here or click to browse</p>
                     <p className="text-sm text-muted-foreground">
-                      Supported formats: MP3, WAV, FLAC, M4A
+                      Supported formats: MP3, WAV, FLAC, M4A (25MB per file max)
                     </p>
                     <Input
                       type="file"
                       accept="audio/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                      multiple={releaseType === 'album'}
+                      onChange={(e) => e.target.files && handleFileSelect(Array.from(e.target.files))}
                       className="hidden"
                       id="file-upload"
                     />
                     <Label htmlFor="file-upload" className="cursor-pointer">
                       <Button type="button" variant="outline">
-                        Choose File
+                        Choose {releaseType === 'album' ? 'Files' : 'File'}
                       </Button>
                     </Label>
                   </div>
@@ -228,81 +350,119 @@ export default function DJMusicUpload({ trigger }) {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Track Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Track Title *</Label>
-              <Input
-                id="title"
-                value={trackData.title}
-                onChange={(e) => setTrackData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter track title"
-                required
-              />
-            </div>
+          {releaseType === 'single' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Track Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">Track Title *</Label>
+                <Input
+                  id="title"
+                  value={trackData.title}
+                  onChange={(e) => setTrackData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter track title"
+                  required
+                />
+              </div>
 
-            {/* Artist Name */}
-            <div className="space-y-2">
-              <Label htmlFor="artist">Artist Name</Label>
-              <Input
-                id="artist"
-                value={trackData.artist}
-                onChange={(e) => setTrackData(prev => ({ ...prev, artist: e.target.value }))}
-                placeholder="Enter artist name"
-              />
-            </div>
+              {/* Artist Name */}
+              <div className="space-y-2">
+                <Label htmlFor="artist">Artist Name</Label>
+                <Input
+                  id="artist"
+                  value={trackData.artist}
+                  onChange={(e) => setTrackData(prev => ({ ...prev, artist: e.target.value }))}
+                  placeholder="Enter artist name"
+                />
+              </div>
 
-            {/* Genre */}
-            <div className="space-y-2">
-              <Label htmlFor="genre">Genre</Label>
-              <Input
-                id="genre"
-                value={trackData.genre}
-                onChange={(e) => setTrackData(prev => ({ ...prev, genre: e.target.value }))}
-                placeholder="e.g., Electronic, Rock, Jazz"
-              />
-            </div>
+              {/* Genre */}
+              <div className="space-y-2">
+                <Label htmlFor="genre">Genre</Label>
+                <Input
+                  id="genre"
+                  value={trackData.genre}
+                  onChange={(e) => setTrackData(prev => ({ ...prev, genre: e.target.value }))}
+                  placeholder="e.g., Electronic, Rock, Jazz"
+                />
+              </div>
 
-            {/* BPM */}
-            <div className="space-y-2">
-              <Label htmlFor="bpm">BPM</Label>
-              <Input
-                id="bpm"
-                type="number"
-                value={trackData.bpm}
-                onChange={(e) => setTrackData(prev => ({ ...prev, bpm: e.target.value ? parseInt(e.target.value) : '' }))}
-                placeholder="Beats per minute"
-                min="1"
-                max="300"
-              />
-            </div>
+              {/* BPM */}
+              <div className="space-y-2">
+                <Label htmlFor="bpm">BPM</Label>
+                <Input
+                  id="bpm"
+                  type="number"
+                  value={trackData.bpm}
+                  onChange={(e) => setTrackData(prev => ({ ...prev, bpm: e.target.value ? parseInt(e.target.value) : '' }))}
+                  placeholder="Beats per minute"
+                  min="1"
+                  max="300"
+                />
+              </div>
 
-            {/* Track Type */}
-            <div className="space-y-2">
-              <Label htmlFor="type">Track Type</Label>
-              <Select value={trackData.type} onValueChange={(value) => setTrackData(prev => ({ ...prev, type: value }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="music">Music Track</SelectItem>
-                  <SelectItem value="jingle">Jingle/Ident</SelectItem>
-                  <SelectItem value="voiceover">Voiceover</SelectItem>
-                  <SelectItem value="full_session">Full Session Recording</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Track Type */}
+              <div className="space-y-2">
+                <Label htmlFor="type">Track Type</Label>
+                <Select value={trackData.type} onValueChange={(value) => setTrackData(prev => ({ ...prev, type: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="music">Music Track</SelectItem>
+                    <SelectItem value="jingle">Jingle/Ident</SelectItem>
+                    <SelectItem value="voiceover">Voiceover</SelectItem>
+                    <SelectItem value="full_session">Full Session Recording</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Duration (read-only) */}
-            <div className="space-y-2">
-              <Label>Duration</Label>
-              <Input
-                value={trackData.duration > 0 ? formatDuration(trackData.duration) : 'Auto-detected'}
-                readOnly
-                className="bg-muted"
-              />
+              {/* Duration (read-only) */}
+              <div className="space-y-2">
+                <Label>Duration</Label>
+                <Input
+                  value={trackData.duration > 0 ? formatDuration(trackData.duration) : 'Auto-detected'}
+                  readOnly
+                  className="bg-muted"
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Album Title */}
+              <div className="space-y-2">
+                <Label htmlFor="albumTitle">Album Title *</Label>
+                <Input
+                  id="albumTitle"
+                  value={albumData.albumTitle}
+                  onChange={(e) => setAlbumData(prev => ({ ...prev, albumTitle: e.target.value }))}
+                  placeholder="Enter album title"
+                  required
+                />
+              </div>
+
+              {/* Artist Name */}
+              <div className="space-y-2">
+                <Label htmlFor="albumArtist">Artist Name</Label>
+                <Input
+                  id="albumArtist"
+                  value={albumData.artist}
+                  onChange={(e) => setAlbumData(prev => ({ ...prev, artist: e.target.value }))}
+                  placeholder="Enter artist name"
+                />
+              </div>
+
+              {/* Genre */}
+              <div className="space-y-2">
+                <Label htmlFor="albumGenre">Genre</Label>
+                <Input
+                  id="albumGenre"
+                  value={albumData.genre}
+                  onChange={(e) => setAlbumData(prev => ({ ...prev, genre: e.target.value }))}
+                  placeholder="e.g., Electronic, Rock, Jazz"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Tags */}
           <div className="space-y-2">
@@ -319,7 +479,7 @@ export default function DJMusicUpload({ trigger }) {
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {trackData.tags.map((tag, index) => (
+              {(releaseType === 'single' ? trackData.tags : albumData.tags).map((tag, index) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1">
                   {tag}
                   <X
@@ -336,8 +496,8 @@ export default function DJMusicUpload({ trigger }) {
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading || !file}>
-              {uploading ? 'Uploading...' : 'Upload Track'}
+            <Button type="submit" disabled={uploading || files.length === 0}>
+              {uploading ? 'Uploading...' : releaseType === 'album' ? `Upload ${files.length} Tracks` : 'Upload Track'}
             </Button>
           </div>
         </form>
