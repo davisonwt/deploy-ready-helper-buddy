@@ -276,7 +276,7 @@ export default function EditOrchardPage() {
       const existingImages = images.filter(img => img.isExisting).map(img => img.url)
       const newImageFiles = imageFiles
       
-      let uploadedImages = [...existingImages]
+      const uploadedImages = [...existingImages]
       for (const file of newImageFiles) {
         const result = await uploadFile(file, 'orchard-images', 'images/')
         if (result.success) {
