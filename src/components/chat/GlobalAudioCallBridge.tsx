@@ -3,26 +3,41 @@ import { FC, useEffect } from 'react';
 // Passive global audio bridge: renders hidden audio tags that WebRTC hooks can target
 // Does NOT create any WebRTC connections. The hooks (e.g. useSimpleWebRTC) will
 // attach MediaStreams to these elements by ID and call play() when available.
+
+interface WindowWithAudioContext extends Window {
+  __unlockedAudioCtx?: AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+}
+
 const GlobalAudioCallBridge: FC = () => {
   useEffect(() => {
     const unlockAndPlay = () => {
       try {
         // Create/resume a single global AudioContext to satisfy iOS autoplay policy
-        const w = window as any;
+        const w = window as WindowWithAudioContext;
         if (!w.__unlockedAudioCtx) {
-          w.__unlockedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const AudioContextConstructor = window.AudioContext || w.webkitAudioContext;
+          if (AudioContextConstructor) {
+            w.__unlockedAudioCtx = new AudioContextConstructor();
+          }
         }
-        const ctx: AudioContext = w.__unlockedAudioCtx;
+        const ctx = w.__unlockedAudioCtx;
         if (ctx && ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
+          ctx.resume().catch(() => {
+            // Ignore resume errors - non-critical
+          });
         }
-      } catch {}
+      } catch (audioError) {
+        // Ignore audio context creation errors - non-critical
+      }
 
       const remote = document.getElementById('global-remote-audio') as HTMLAudioElement | null;
       if (remote) {
         remote.muted = false;
         remote.volume = 1.0;
-        remote.play().catch(() => {});
+        remote.play().catch(() => {
+          // Ignore autoplay errors - expected on some browsers
+        });
       }
     };
 
