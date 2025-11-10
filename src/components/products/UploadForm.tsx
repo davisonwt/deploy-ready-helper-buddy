@@ -314,11 +314,38 @@ export default function UploadForm() {
                       />
                     </label>
                     {releaseType === 'album' && albumFiles.length > 0 && (
-                      <ul className="mt-2 max-h-28 overflow-y-auto text-sm text-muted-foreground">
-                        {albumFiles.map((f, i) => (
-                          <li key={i}>{f.name}</li>
-                        ))}
-                      </ul>
+                      <>
+                        <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">Total Size</span>
+                            <span className="text-sm font-bold">
+                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB / 50 MB
+                            </span>
+                          </div>
+                          <div className="w-full h-2 bg-background rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all ${
+                                (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 50 
+                                  ? 'bg-destructive' 
+                                  : (albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024) > 40
+                                  ? 'bg-warning'
+                                  : 'bg-primary'
+                              }`}
+                              style={{ 
+                                width: `${Math.min((albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024 / 50) * 100, 100)}%` 
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <ul className="mt-2 max-h-28 overflow-y-auto text-sm text-muted-foreground space-y-1">
+                          {albumFiles.map((f, i) => (
+                            <li key={i} className="flex justify-between">
+                              <span className="truncate mr-2">{f.name}</span>
+                              <span className="text-xs whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
                     )}
                   </div>
                 </div>
