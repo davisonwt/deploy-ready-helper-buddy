@@ -3,176 +3,50 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { stopAllRingtones } from '@/lib/ringtone';
+import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Early return if auth context isn't ready yet
-  if (user === undefined) {
-    return {
-      currentCall: null,
-      incomingCall: null,
-      outgoingCall: null,
-      callHistory: [],
-      callQueue: [],
-      startCall: () => {},
-      answerCall: () => {},
-      declineCall: () => {},
-      endCall: () => {},
-      loadCallHistory: () => {}
-    };
-  }
+  // ============================================
+  // ALL HOOKS AT TOP LEVEL - UNCONDITIONAL
+  // ============================================
   
+  // State hooks
   const [currentCall, setCurrentCall] = useState(null);
   const [incomingCall, setIncomingCall] = useState(null);
   const [outgoingCall, setOutgoingCall] = useState(null);
   const [callHistory, setCallHistory] = useState([]);
   const [callQueue, setCallQueue] = useState([]);
+  
+  // Refs
   const channelRef = useRef(null);
-
-  // Track locally-ended calls to avoid reacting to remote DB updates
   const endedByLocalRef = useRef(new Set());
-
-  // Refs to avoid stale closures in realtime handlers
   const currentCallRef = useRef(currentCall);
   const incomingCallRef = useRef(incomingCall);
   const outgoingCallRef = useRef(outgoingCall);
   const lastIncomingRef = useRef({ id: null, ts: 0 });
-
-  // Set up call signaling channel
-  const setupCallChannel = useCallback(() => {
-    if (!user) return;
-
-    console.log('📞 [CALL] Setting up call management channel');
-    
-    const channel = supabase
-      .channel(`user_calls_${user.id}`, {
-        config: {
-          broadcast: { self: false, ack: true }
-        }
-      })
-      .on('broadcast', { event: 'incoming_call' }, (payload) => {
-        const call = payload.payload || {};
-        if (!call?.id) return;
-        if (call.receiver_id && call.receiver_id !== user.id) return;
-        const now = Date.now();
-        const ts = typeof call.timestamp === 'number' ? call.timestamp : now;
-        if (lastIncomingRef.current.id === call.id && (now - lastIncomingRef.current.ts) < 15000) {
-          console.log('⏱️ [CALL] Ignoring duplicate incoming_call', call.id);
-          return;
-        }
-        if ((now - ts) > 60000) {
-          console.log('🗑️ [CALL] Ignoring stale incoming_call', { id: call.id, ageMs: now - ts });
-          return;
-        }
-        lastIncomingRef.current = { id: call.id, ts: now };
-        console.log('📞 [CALL] Incoming call (accepted):', call);
-        handleIncomingCall(call);
-      })
-      .on('broadcast', { event: 'call_answered' }, (payload) => {
-        console.log('📞 [CALL] Call answered:', payload.payload);
-        handleCallAnswered(payload.payload);
-      })
-      .on('broadcast', { event: 'call_declined' }, (payload) => {
-        console.log('📞 [CALL] Call declined:', payload.payload);
-        handleCallDeclined(payload.payload);
-      })
-      .on('broadcast', { event: 'call_ended' }, (payload) => {
-        console.log('📞 [CALL] Call ended:', payload.payload);
-        handleCallEnded(payload.payload);
-      })
-      .on('broadcast', { event: 'call_status' }, (payload) => {
-        console.log('📞 [CALL] Call status update:', payload.payload);
-        handleCallStatusUpdate(payload.payload);
-      })
-      // DB realtime fallback: ring events for receiver
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${user.id}` }, (payload) => {
-        try {
-          const row = payload.new;
-          const now = Date.now();
-          const ts = row?.created_at ? new Date(row.created_at).getTime() : now;
-          if (!row?.id) return;
-          if ((now - ts) > 60000) {
-            console.log('🗑️ [CALL][DB] Ignoring stale INSERT for incoming call', { id: row.id, ageMs: now - ts });
-            return;
-          }
-          if (row?.status === 'ringing') {
-            if (lastIncomingRef.current.id === row.id && (now - lastIncomingRef.current.ts) < 15000) {
-              console.log('⏱️ [CALL][DB] Ignoring duplicate incoming INSERT', row.id);
-              return;
-            }
-            lastIncomingRef.current = { id: row.id, ts: now };
-            handleIncomingCall({
-              id: row.id,
-              caller_id: row.caller_id,
-              receiver_id: row.receiver_id,
-              type: row.call_type || 'audio',
-              status: row.status,
-              isIncoming: true,
-            });
-          }
-        } catch (e) {
-          console.warn('⚠️ [CALL][DB] Fallback incoming handler error', e);
-        }
-      })
-      // DB realtime fallback: acceptance for caller
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `caller_id=eq.${user.id}` }, (payload) => {
-        try {
-          const row = payload.new;
-          console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
-
-          if (row?.status === 'accepted') {
-            console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
-            handleCallAnswered({
-              id: row.id,
-              caller_id: row.caller_id,
-              receiver_id: row.receiver_id,
-              type: row.call_type || 'audio',
-              status: 'accepted',
-              isIncoming: false,
-              startTime: Date.now(),
-            });
-            return;
-          }
-
-          if (row?.status === 'ended') {
-            const now = Date.now();
-            const acceptedAtMs = row?.accepted_at ? new Date(row.accepted_at).getTime() : 0;
-            const ageSinceAccept = acceptedAtMs ? (now - acceptedAtMs) : Infinity;
-
-            // Guard: ignore premature 'ended' updates unless we initiated them locally
-            if (!endedByLocalRef.current.has(row.id) && ageSinceAccept < 60000) {
-              console.warn('⏳ [CALL][DB] Ignoring premature ended within grace window', { id: row.id, ageSinceAccept });
-              return;
-            }
-
-            handleCallEnded({ id: row.id, reason: 'ended' });
-            return;
-          }
-
-          if (row?.status === 'declined') {
-            handleCallDeclined({ id: row.id, reason: 'declined' });
-            return;
-          }
-        } catch (e) {
-          console.warn('⚠️ [CALL][DB] Fallback update handler error', e);
-        }
-      })
-      .subscribe((status) => {
-        console.log('📞 [CALL] Channel subscription status:', status);
-      });
-
-    channelRef.current = channel;
-    return channel;
-  }, [user?.id]);
-
+  
+  // Flags for conditional logic AFTER all hooks
+  const hasUser = !!user;
+  const userId = user?.id || null;
+  
+  // ============================================
+  // CALLBACKS - ALL UNCONDITIONAL
+  // ============================================
+  
   // Handle incoming call
   const handleIncomingCall = useCallback((callData) => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, ignoring incoming call');
+      return;
+    }
+    
     console.log('📞 [CALL] Processing incoming call:', callData);
     
     // Check if this is a self-call (calling your own device)
-    const isSelfCall = callData.caller_id === user?.id;
+    const isSelfCall = callData.caller_id === userId;
     
     // Don't accept call if already in a call (unless it's a self-call test)
     if (currentCall && !isSelfCall) {
@@ -203,11 +77,16 @@ const useCallManagerInternal = () => {
         }
         return current;
       });
-    }, 30000);
-  }, [currentCall, user?.id, toast]);
+    }, CALL_CONSTANTS.RING_TIMEOUT);
+  }, [hasUser, userId, currentCall, toast]);
 
   // Handle call answered
   const handleCallAnswered = useCallback((callData) => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, ignoring call answered event');
+      return;
+    }
+    
     console.log('📞 [CALL] Call was answered, updating caller state:', callData);
     console.log('📞 [CALL] Previous outgoingCall:', outgoingCall?.id);
     
@@ -222,15 +101,25 @@ const useCallManagerInternal = () => {
     
     console.log('📞 [CALL] State updated, currentCall should now be set');
     
-    stopAllRingtones?.();
+    try {
+      stopAllRingtones?.();
+    } catch (error) {
+      console.error('📞 [CALL] Error stopping ringtones:', error);
+    }
+    
     toast({
       title: "Call Connected",
       description: "Call has been answered",
     });
-  }, [outgoingCall, toast]);
+  }, [hasUser, outgoingCall, toast]);
 
   // Handle call declined
   const handleCallDeclined = useCallback((callData) => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, ignoring call declined event');
+      return;
+    }
+    
     console.log('📞 [CALL] Call was declined:', callData);
     
     setOutgoingCall(null);
@@ -241,15 +130,29 @@ const useCallManagerInternal = () => {
       description: callData.reason === 'busy' ? 'User is busy' : 'Call was declined',
       variant: "destructive",
     });
-  }, [toast]);
+  }, [hasUser, toast]);
 
   // Handle call ended
   const handleCallEnded = useCallback((callData) => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, ignoring call ended event');
+      return;
+    }
+    
     console.log('📞 [CALL] Call ended:', callData);
-    stopAllRingtones?.();
+    
+    try {
+      stopAllRingtones?.();
+    } catch (error) {
+      console.error('📞 [CALL] Error stopping ringtones:', error);
+    }
 
     // Clear local end flag if present
-    try { endedByLocalRef.current.delete(callData.id); } catch {}
+    try {
+      endedByLocalRef.current.delete(callData.id);
+    } catch (error) {
+      console.error('📞 [CALL] Error clearing end flag:', error);
+    }
     
     // Add to call history
     if (currentCall) {
@@ -265,7 +168,7 @@ const useCallManagerInternal = () => {
         status: 'completed'
       };
       
-      setCallHistory(prev => [historyEntry, ...prev.slice(0, 49)]); // Keep last 50 calls
+      setCallHistory(prev => [historyEntry, ...prev.slice(0, CALL_CONSTANTS.HISTORY_LIMIT - 1)]);
     }
     
     setCurrentCall(null);
@@ -276,15 +179,24 @@ const useCallManagerInternal = () => {
       title: "Call Ended",
       description: "The call has been ended",
     });
-  }, [currentCall, toast]);
+  }, [hasUser, currentCall, toast]);
 
   // Handle call status updates
   const handleCallStatusUpdate = useCallback((statusUpdate) => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, ignoring status update');
+      return;
+    }
+    
     console.log('📞 [CALL] Status update:', statusUpdate);
 
     // Safety: if any party reports 'accepted', force-stop any ringtones
     if (statusUpdate?.status === 'accepted') {
-      try { stopAllRingtones?.(); } catch {}
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones on status update:', error);
+      }
     }
     
     if (currentCall && currentCall.id === statusUpdate.call_id) {
@@ -293,11 +205,210 @@ const useCallManagerInternal = () => {
         ...statusUpdate
       }));
     }
-  }, [currentCall]);
+  }, [hasUser, currentCall]);
+
+  // Set up call signaling channel
+  const setupCallChannel = useCallback(() => {
+    if (!hasUser || !userId) {
+      console.log('📞 [CALL] No user, skipping channel setup');
+      return null;
+    }
+
+    console.log('📞 [CALL] Setting up call management channel');
+    
+    const channel = supabase
+      .channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${userId}`, {
+        config: {
+          broadcast: { self: false, ack: true }
+        }
+      })
+      .on('broadcast', { event: 'incoming_call' }, (payload) => {
+        const call = payload.payload || {};
+        if (!call?.id) {
+          console.warn('📞 [CALL] Invalid incoming call payload');
+          return;
+        }
+        if (call.receiver_id && call.receiver_id !== userId) {
+          console.log('📞 [CALL] Call not for this user');
+          return;
+        }
+        const now = Date.now();
+        const ts = typeof call.timestamp === 'number' ? call.timestamp : now;
+        
+        if (isDuplicateCall(call.id, lastIncomingRef.current.id, lastIncomingRef.current.ts)) {
+          console.log('⏱️ [CALL] Ignoring duplicate incoming_call', call.id);
+          return;
+        }
+        
+        if (isCallStale(ts)) {
+          console.log('🗑️ [CALL] Ignoring stale incoming_call', { id: call.id, ageMs: now - ts });
+          return;
+        }
+        
+        lastIncomingRef.current = { id: call.id, ts: now };
+        console.log('📞 [CALL] Incoming call (accepted):', call);
+        handleIncomingCall(call);
+      })
+      .on('broadcast', { event: 'call_answered' }, (payload) => {
+        console.log('📞 [CALL] Call answered:', payload.payload);
+        handleCallAnswered(payload.payload);
+      })
+      .on('broadcast', { event: 'call_declined' }, (payload) => {
+        console.log('📞 [CALL] Call declined:', payload.payload);
+        handleCallDeclined(payload.payload);
+      })
+      .on('broadcast', { event: 'call_ended' }, (payload) => {
+        console.log('📞 [CALL] Call ended:', payload.payload);
+        handleCallEnded(payload.payload);
+      })
+      .on('broadcast', { event: 'call_status' }, (payload) => {
+        console.log('📞 [CALL] Call status update:', payload.payload);
+        handleCallStatusUpdate(payload.payload);
+      })
+      // DB realtime fallback: ring events for receiver
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${userId}` }, (payload) => {
+        try {
+          const row = payload.new;
+          const now = Date.now();
+          const ts = row?.created_at ? new Date(row.created_at).getTime() : now;
+          if (!row?.id) {
+            console.warn('📞 [CALL][DB] Invalid INSERT payload');
+            return;
+          }
+          if (isCallStale(ts)) {
+            console.log('🗑️ [CALL][DB] Ignoring stale INSERT for incoming call', { id: row.id, ageMs: now - ts });
+            return;
+          }
+          if (row?.status === 'ringing') {
+            if (isDuplicateCall(row.id, lastIncomingRef.current.id, lastIncomingRef.current.ts)) {
+              console.log('⏱️ [CALL][DB] Ignoring duplicate incoming INSERT', row.id);
+              return;
+            }
+            lastIncomingRef.current = { id: row.id, ts: now };
+            handleIncomingCall({
+              id: row.id,
+              caller_id: row.caller_id,
+              receiver_id: row.receiver_id,
+              type: row.call_type || 'audio',
+              status: row.status,
+              isIncoming: true,
+            });
+          }
+        } catch (e) {
+          console.warn('⚠️ [CALL][DB] Fallback incoming handler error', e);
+        }
+      })
+      // DB realtime fallback: acceptance for caller
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `caller_id=eq.${userId}` }, (payload) => {
+        try {
+          const row = payload.new;
+          console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
+
+          if (row?.status === 'accepted') {
+            console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
+            handleCallAnswered({
+              id: row.id,
+              caller_id: row.caller_id,
+              receiver_id: row.receiver_id,
+              type: row.call_type || 'audio',
+              status: 'accepted',
+              isIncoming: false,
+              startTime: Date.now(),
+            });
+            return;
+          }
+
+          if (row?.status === 'ended') {
+            const now = Date.now();
+            const acceptedAtMs = row?.accepted_at ? new Date(row.accepted_at).getTime() : 0;
+            const ageSinceAccept = acceptedAtMs ? (now - acceptedAtMs) : Infinity;
+
+            // Guard: ignore premature 'ended' updates unless we initiated them locally
+            if (!endedByLocalRef.current.has(row.id) && ageSinceAccept < CALL_CONSTANTS.PREMATURE_END_GRACE) {
+              console.warn('⏳ [CALL][DB] Ignoring premature ended within grace window', { id: row.id, ageSinceAccept });
+              return;
+            }
+
+            handleCallEnded({ id: row.id, reason: 'ended' });
+            return;
+          }
+
+          if (row?.status === 'declined') {
+            handleCallDeclined({ id: row.id, reason: 'declined' });
+            return;
+          }
+        } catch (e) {
+          console.warn('⚠️ [CALL][DB] Fallback update handler error', e);
+        }
+      })
+      .subscribe((status) => {
+        console.log('📞 [CALL] Channel subscription status:', status);
+      });
+
+    channelRef.current = channel;
+    return channel;
+  }, [hasUser, userId, handleIncomingCall, handleCallAnswered, handleCallDeclined, handleCallEnded, handleCallStatusUpdate]);
+
+  // Decline incoming call
+  const declineCall = useCallback(async (callId, reason = 'declined') => {
+    if (!hasUser) {
+      console.warn('📞 [CALL] No user, cannot decline call');
+      return;
+    }
+    
+    if (!incomingCall || incomingCall.id !== callId) {
+      console.log('📞 [CALL] No matching incoming call to decline');
+      return;
+    }
+
+    try {
+      console.log('📞 [CALL] Declining call:', callId, reason);
+      
+      // Update call record
+      const { error: updateError } = await supabase
+        .from('call_sessions')
+        .update({ 
+          status: 'declined',
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', callId);
+
+      if (updateError) {
+        console.error('❌ [CALL] Failed to update call record:', updateError);
+      }
+
+      setIncomingCall(null);
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones:', error);
+      }
+
+      // Notify caller (ack + cleanup)
+      const callerChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${incomingCall.caller_id}`, { 
+        config: { broadcast: { self: false, ack: true }}
+      });
+      const result = await callerChannel.send({
+        type: 'broadcast',
+        event: 'call_declined',
+        payload: { id: callId, reason }
+      });
+      console.log('📞 [CALL] Decline notify result:', result);
+      supabase.removeChannel(callerChannel);
+
+    } catch (error) {
+      console.error('❌ [CALL] Failed to decline call:', error);
+      toast({
+        title: "Error",
+        description: "Failed to decline call properly",
+        variant: "destructive",
+      });
+    }
+  }, [hasUser, incomingCall, toast]);
 
   // Start a new call
   const startCall = useCallback(async (receiverId, receiverName, type = 'audio', roomId = null) => {
-    if (!user) {
+    if (!hasUser || !userId) {
       toast({
         title: "Error",
         description: "You must be logged in to make calls",
@@ -322,7 +433,7 @@ const useCallManagerInternal = () => {
       const { data: callRecord, error: callError } = await supabase
         .from('call_sessions')
         .insert({
-          caller_id: user.id,
+          caller_id: userId,
           receiver_id: receiverId,
           call_type: type,
           status: 'ringing'
@@ -337,23 +448,23 @@ const useCallManagerInternal = () => {
 
       const callData = {
         id: callRecord.id,
-        caller_id: user.id,
+        caller_id: userId,
         caller_name: user.display_name || user.email,
         receiver_id: receiverId,
         receiver_name: receiverName,
         type: type,
         room_id: roomId,
-         status: 'ringing',
-         isIncoming: false,
-         timestamp: Date.now()
+        status: 'ringing',
+        isIncoming: false,
+        timestamp: Date.now()
       };
 
       setOutgoingCall(callData);
 
       // Send call signal to receiver with retries and ack
       // Allow self-broadcasts when calling yourself
-      const isSelfCall = receiverId === user.id;
-      const receiverChannel = supabase.channel(`user_calls_${receiverId}`, {
+      const isSelfCall = receiverId === userId;
+      const receiverChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${receiverId}`, {
         config: { broadcast: { self: isSelfCall, ack: true } }
       });
       await Promise.race([
@@ -383,7 +494,7 @@ const useCallManagerInternal = () => {
         });
       }, 4000);
 
-      // Auto-cancel after 30 seconds
+      // Auto-cancel after timeout
       setTimeout(() => {
         setOutgoingCall(current => {
           if (current && current.id === callData.id) {
@@ -393,7 +504,7 @@ const useCallManagerInternal = () => {
           }
           return current;
         });
-      }, 30000);
+      }, CALL_CONSTANTS.RING_TIMEOUT);
 
       toast({
         title: "Calling...",
@@ -411,10 +522,15 @@ const useCallManagerInternal = () => {
       });
       return null;
     }
-  }, [user, currentCall, outgoingCall, toast]);
+  }, [hasUser, userId, user, currentCall, outgoingCall, toast]);
 
   // Answer incoming call
   const answerCall = useCallback(async (callId) => {
+    if (!hasUser || !userId) {
+      console.warn('📞 [CALL] No user, cannot answer call');
+      return;
+    }
+    
     if (!incomingCall || incomingCall.id !== callId) {
       console.log('📞 [CALL] No matching incoming call to answer');
       return;
@@ -431,12 +547,16 @@ const useCallManagerInternal = () => {
 
     try {
       console.log('📞 [CALL] Answering call:', callId);
-      console.log('📞 [CALL] Current user:', user?.id);
+      console.log('📞 [CALL] Current user:', userId);
 
       // Optimistic UI update first (prevents user-facing failure toast)
       setCurrentCall(callData);
       setIncomingCall(null);
-      stopAllRingtones?.();
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones:', error);
+      }
 
       // Fire-and-forget: update call record (RLS may block, that's OK)
       supabase
@@ -453,7 +573,7 @@ const useCallManagerInternal = () => {
 
       // Notify caller that call was answered (tolerate realtime hiccups)
       const callerId = incomingCall.caller_id;
-      const callerChannel = supabase.channel(`user_calls_${callerId}`, {
+      const callerChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${callerId}`, {
         config: { broadcast: { self: false, ack: true } }
       });
 
@@ -476,11 +596,17 @@ const useCallManagerInternal = () => {
       supabase.removeChannel(callerChannel);
 
       // Also broadcast a status update for redundancy
-      channelRef.current?.send?.({
-        type: 'broadcast',
-        event: 'call_status',
-        payload: { call_id: callId, status: 'accepted' }
-      });
+      if (channelRef.current) {
+        try {
+          channelRef.current.send({
+            type: 'broadcast',
+            event: 'call_status',
+            payload: { call_id: callId, status: 'accepted' }
+          });
+        } catch (error) {
+          console.error('📞 [CALL] Error sending status update:', error);
+        }
+      }
 
       toast({
         title: 'Call Connected',
@@ -495,51 +621,15 @@ const useCallManagerInternal = () => {
         description: 'Answered locally. If audio doesn\'t connect, please retry.',
       });
     }
-  }, [incomingCall, toast, user?.id]);
-
-  // Decline incoming call
-  const declineCall = useCallback(async (callId, reason = 'declined') => {
-    if (!incomingCall || incomingCall.id !== callId) {
-      console.log('📞 [CALL] No matching incoming call to decline');
-      return;
-    }
-
-    try {
-      console.log('📞 [CALL] Declining call:', callId, reason);
-      
-      // Update call record
-      const { error: updateError } = await supabase
-        .from('call_sessions')
-        .update({ 
-          status: 'declined',
-          ended_at: new Date().toISOString()
-        })
-        .eq('id', callId);
-
-      if (updateError) {
-        console.error('❌ [CALL] Failed to update call record:', updateError);
-      }
-
-      setIncomingCall(null);
-      stopAllRingtones?.();
-
-      // Notify caller (ack + cleanup)
-      const callerChannel = supabase.channel(`user_calls_${incomingCall.caller_id}`, { config: { broadcast: { self: false, ack: true }}});
-      const result = await callerChannel.send({
-        type: 'broadcast',
-        event: 'call_declined',
-        payload: { id: callId, reason }
-      });
-      console.log('📞 [CALL] Decline notify result:', result);
-      supabase.removeChannel(callerChannel);
-
-    } catch (error) {
-      console.error('❌ [CALL] Failed to decline call:', error);
-    }
-  }, [incomingCall]);
+  }, [hasUser, userId, incomingCall, toast]);
 
   // End current call
   const endCall = useCallback(async (callId, reason = 'ended') => {
+    if (!hasUser || !userId) {
+      console.warn('📞 [CALL] No user, cannot end call');
+      return;
+    }
+    
     const call = currentCall || outgoingCall;
     if (!call || call.id !== callId) {
       console.log('📞 [CALL] No matching call to end');
@@ -548,12 +638,20 @@ const useCallManagerInternal = () => {
 
     try {
       console.log('📞 [CALL] Ending call:', callId, reason);
-      stopAllRingtones?.();
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones:', error);
+      }
       
       const duration = currentCall ? Math.floor((Date.now() - (currentCall.startTime || Date.now())) / 1000) : 0;
 
       // Mark as locally ended to ignore premature DB echoes
-      try { endedByLocalRef.current.add(callId); } catch {}
+      try {
+        endedByLocalRef.current.add(callId);
+      } catch (error) {
+        console.error('📞 [CALL] Error marking call as locally ended:', error);
+      }
       
       // Update call record
       const { error: updateError } = await supabase
@@ -569,8 +667,10 @@ const useCallManagerInternal = () => {
       }
 
       // Notify other party (ack + cleanup)
-      const otherId = call.caller_id === user.id ? call.receiver_id : call.caller_id;
-      const otherChannel = supabase.channel(`user_calls_${otherId}`, { config: { broadcast: { self: false, ack: true }}});
+      const otherId = call.caller_id === userId ? call.receiver_id : call.caller_id;
+      const otherChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${otherId}`, { 
+        config: { broadcast: { self: false, ack: true }}
+      });
       const notifyRes = await otherChannel.send({
         type: 'broadcast',
         event: 'call_ended',
@@ -593,7 +693,7 @@ const useCallManagerInternal = () => {
           status: 'completed'
         };
         
-        setCallHistory(prev => [historyEntry, ...prev.slice(0, 49)]);
+        setCallHistory(prev => [historyEntry, ...prev.slice(0, CALL_CONSTANTS.HISTORY_LIMIT - 1)]);
       }
 
       setCurrentCall(null);
@@ -608,19 +708,22 @@ const useCallManagerInternal = () => {
         variant: "destructive",
       });
     }
-  }, [currentCall, outgoingCall, user?.id, toast]);
+  }, [hasUser, userId, currentCall, outgoingCall, toast]);
 
   // Load call history
   const loadCallHistory = useCallback(async () => {
-    if (!user) return;
+    if (!hasUser || !userId) {
+      console.log('📞 [CALL] No user, skipping call history load');
+      return;
+    }
 
     try {
       const { data: history, error } = await supabase
         .from('call_sessions')
         .select('*')
-        .or(`caller_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(`caller_id.eq.${userId},receiver_id.eq.${userId}`)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(CALL_CONSTANTS.HISTORY_LIMIT);
 
       if (error) {
         console.error('❌ [CALL] Failed to load call history:', error);
@@ -637,7 +740,7 @@ const useCallManagerInternal = () => {
           type: call.call_type,
           duration,
           timestamp: new Date(call.created_at).getTime(),
-          caller_name: call.caller_id === user.id ? 'You' : 'Unknown', // Would need to join with profiles
+          caller_name: call.caller_id === userId ? 'You' : 'Unknown', // Would need to join with profiles
           caller_id: call.caller_id,
           receiver_id: call.receiver_id,
           status: call.status
@@ -649,14 +752,34 @@ const useCallManagerInternal = () => {
     } catch (error) {
       console.error('❌ [CALL] Error loading call history:', error);
     }
-  }, [user?.id]);
+  }, [hasUser, userId]);
+
+  // ============================================
+  // EFFECTS - ALL UNCONDITIONAL
+  // ============================================
+
+  // Sync refs with state for realtime handlers
+  useEffect(() => {
+    currentCallRef.current = currentCall;
+  }, [currentCall]);
+
+  useEffect(() => {
+    incomingCallRef.current = incomingCall;
+  }, [incomingCall]);
+
+  useEffect(() => {
+    outgoingCallRef.current = outgoingCall;
+  }, [outgoingCall]);
 
   // Initialize call manager
   useEffect(() => {
-    if (user) {
-      setupCallChannel();
-      loadCallHistory();
+    if (!hasUser || !userId) {
+      console.log('📞 [CALL] Waiting for user before initializing');
+      return;
     }
+    
+    setupCallChannel();
+    loadCallHistory();
 
     return () => {
       if (channelRef.current) {
@@ -664,19 +787,21 @@ const useCallManagerInternal = () => {
         channelRef.current = null;
       }
     };
-  }, [user?.id, setupCallChannel, loadCallHistory]);
+  }, [hasUser, userId, setupCallChannel, loadCallHistory]);
 
   // Resilience: Poll as a last resort if realtime fails to deliver incoming_call
   useEffect(() => {
-    if (!user || incomingCall || currentCall || outgoingCall) return;
+    if (!hasUser || !userId || incomingCall || currentCall || outgoingCall) {
+      return;
+    }
 
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - 30000).toISOString();
+        const sinceIso = new Date(Date.now() - CALL_CONSTANTS.RING_TIMEOUT).toISOString();
         const { data, error } = await supabase
           .from('call_sessions')
           .select('id, caller_id, receiver_id, call_type, status, created_at')
-          .eq('receiver_id', user.id)
+          .eq('receiver_id', userId)
           .eq('status', 'ringing')
           .gt('created_at', sinceIso)
           .order('created_at', { ascending: false })
@@ -695,10 +820,30 @@ const useCallManagerInternal = () => {
       } catch (e) {
         console.warn('⚠️ [CALL][POLL] Poll error', e);
       }
-    }, 2500);
+    }, CALL_CONSTANTS.POLL_INTERVAL);
 
     return () => clearInterval(poll);
-  }, [user?.id, incomingCall, currentCall, outgoingCall]);
+  }, [hasUser, userId, incomingCall, currentCall, outgoingCall, handleIncomingCall]);
+
+  // ============================================
+  // RETURN - Conditional on hasUser for stubs
+  // ============================================
+  
+  // Return stubs if no user yet (auth still loading)
+  if (!hasUser) {
+    return {
+      currentCall: null,
+      incomingCall: null,
+      outgoingCall: null,
+      callHistory: [],
+      callQueue: [],
+      startCall: () => Promise.resolve(null),
+      answerCall: () => Promise.resolve(),
+      declineCall: () => Promise.resolve(),
+      endCall: () => Promise.resolve(),
+      loadCallHistory: () => Promise.resolve()
+    };
+  }
 
   return {
     // Call states

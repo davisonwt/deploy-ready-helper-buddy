@@ -2,6 +2,11 @@ import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import { logInfo, logError } from '@/lib/logging';
 
+// Extend Window interface for custom properties
+interface WindowWithNavDirty extends Window {
+  __NAV_DIRTY?: boolean;
+}
+
 // Simple global beforeunload protection honoring window.__NAV_DIRTY
 export const NavigationMonitor = () => {
   const location = useLocation();
@@ -20,7 +25,7 @@ export const NavigationMonitor = () => {
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       // Only block if flagged as dirty
-      if ((window as any).__NAV_DIRTY) {
+      if ((window as WindowWithNavDirty).__NAV_DIRTY) {
         e.preventDefault();
         e.returnValue = '';
         logInfo('beforeunload blocked due to dirty state');
