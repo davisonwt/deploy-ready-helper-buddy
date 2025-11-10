@@ -1,13 +1,19 @@
 import React, { createContext, useContext } from 'react';
 
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, callback: (...args: unknown[]) => void) => void;
+  removeListener?: (event: string, callback: (...args: unknown[]) => void) => void;
+}
+
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: EthereumProvider;
   }
 }
 
 interface CryptoComContextType {
-  connector: any | null;
+  connector: EthereumProvider | null;
   connected: boolean;
   address: string | null;
   chainId: number | null;
@@ -25,7 +31,7 @@ const CryptoComContext = createContext<CryptoComContextType>({
 export const useCryptoComWallet = () => useContext(CryptoComContext);
 
 export class CryptoComProvider extends React.Component<{ children: React.ReactNode }, { connected: boolean; address: string | null; chainId: number | null; }> {
-  connector: any | null = null;
+  connector: EthereumProvider | null = null;
   state = {
     connected: false,
     address: null as string | null,
@@ -38,22 +44,23 @@ export class CryptoComProvider extends React.Component<{ children: React.ReactNo
         throw new Error('Wallet provider not found');
       }
       const provider = window.ethereum;
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      const accounts = await provider.request({ method: 'eth_requestAccounts' }) as string[];
       if (accounts && accounts.length > 0) {
         this.setState({ address: accounts[0], connected: true });
-        const network = await provider.request({ method: 'eth_chainId' });
+        const network = await provider.request({ method: 'eth_chainId' }) as string;
         this.setState({ chainId: parseInt(network, 16) });
 
         // Attach listeners after explicit connect
-        provider.on?.('accountsChanged', (accounts: string[]) => {
-          if (accounts?.length > 0) {
-            this.setState({ address: accounts[0], connected: true });
+        provider.on?.('accountsChanged', (accounts: unknown) => {
+          const accountsArray = accounts as string[];
+          if (accountsArray?.length > 0) {
+            this.setState({ address: accountsArray[0], connected: true });
           } else {
             this.setState({ address: null, connected: false });
           }
         });
-        provider.on?.('chainChanged', (networkId: string) => {
-          this.setState({ chainId: parseInt(networkId, 16) });
+        provider.on?.('chainChanged', (networkId: unknown) => {
+          this.setState({ chainId: parseInt(networkId as string, 16) });
         });
       }
     } catch (error) {
