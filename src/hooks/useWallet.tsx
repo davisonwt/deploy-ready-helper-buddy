@@ -3,12 +3,7 @@ import { useCryptoComWallet } from '@/providers/CryptoComProvider';
 import { ethers } from 'ethers';
 import { USDC_ADDRESS, USDC_ABI } from '@/lib/cronos';
 import { toast } from 'sonner';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+import '@/types/ethereum'; // Import for global Window.ethereum type
 
 export function useWallet() {
   const { connected, address, chainId, connect } = useCryptoComWallet();
@@ -29,9 +24,10 @@ export function useWallet() {
         toast.error('Wallet connection not available');
         return;
       }
-    } catch (error: any) {
-      console.error('Error connecting wallet:', error);
-      toast.error(error.message || 'Failed to connect wallet');
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error connecting wallet:', err);
+      toast.error(err.message || 'Failed to connect wallet');
     } finally {
       setLoading(false);
     }
