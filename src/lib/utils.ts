@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Safe currency formatting with fallback handling
  */
-export function formatCurrency(amount: any, currency = "USDC", fallback = "0.00") {
+export function formatCurrency(amount: number | string | undefined | null, currency = "USDC", fallback = "0.00") {
   // Handle undefined, null, or empty values
   if (amount === undefined || amount === null || amount === "") {
     return `${fallback} USDC`
@@ -23,7 +23,7 @@ export function formatCurrency(amount: any, currency = "USDC", fallback = "0.00"
   }
   
   // Convert to number and validate
-  const value = parseFloat(amount)
+  const value = parseFloat(String(amount))
   
   // Return fallback if not a valid number
   if (isNaN(value) || !isFinite(value)) {
@@ -37,7 +37,7 @@ export function formatCurrency(amount: any, currency = "USDC", fallback = "0.00"
 /**
  * Safe amount formatting without currency symbol
  */
-export function formatAmount(amount: any, fallback = "0.00") {
+export function formatAmount(amount: number | string | undefined | null, fallback = "0.00") {
   if (amount === undefined || amount === null || amount === "") {
     return fallback
   }
@@ -47,7 +47,7 @@ export function formatAmount(amount: any, fallback = "0.00") {
     if (amount === "") return fallback
   }
   
-  const value = parseFloat(amount)
+  const value = parseFloat(String(amount))
   
   if (isNaN(value) || !isFinite(value)) {
     return fallback
@@ -59,12 +59,12 @@ export function formatAmount(amount: any, fallback = "0.00") {
 /**
  * Safe percentage formatting
  */
-export function formatPercentage(value: any, fallback = "0.0") {
+export function formatPercentage(value: number | string | undefined | null, fallback = "0.0") {
   if (value === undefined || value === null || value === "") {
     return fallback
   }
   
-  const numValue = parseFloat(value)
+  const numValue = parseFloat(String(value))
   
   if (isNaN(numValue) || !isFinite(numValue)) {
     return fallback
@@ -76,12 +76,12 @@ export function formatPercentage(value: any, fallback = "0.0") {
 /**
  * Safe integer formatting
  */
-export function formatInteger(value: any, fallback = 0) {
+export function formatInteger(value: number | string | undefined | null, fallback = 0) {
   if (value === undefined || value === null || value === "") {
     return fallback
   }
   
-  const numValue = parseInt(value)
+  const numValue = parseInt(String(value))
   
   if (isNaN(numValue) || !isFinite(numValue)) {
     return fallback
@@ -120,7 +120,7 @@ function getLocaleForCurrency(currencyCode: string) {
 /**
  * Safe date formatting
  */
-export function formatDate(dateValue: any, fallback = "Unknown") {
+export function formatDate(dateValue: string | number | Date | undefined | null, fallback = "Unknown") {
   if (!dateValue) return fallback
   
   try {
@@ -138,7 +138,7 @@ export function formatDate(dateValue: any, fallback = "Unknown") {
   }
 }
 
-export function formatRelativeTime(dateValue: any, fallback = "Unknown") {
+export function formatRelativeTime(dateValue: string | number | Date | undefined | null, fallback = "Unknown") {
   if (!dateValue) return fallback
   
   try {
@@ -170,7 +170,7 @@ export function formatRelativeTime(dateValue: any, fallback = "Unknown") {
 
 // 🌱 ORCHARD-SPECIFIC UTILITIES
 
-export function getGrowthStage(daysGrowing: any) {
+export function getGrowthStage(daysGrowing: number | string | undefined | null) {
   const safeDays = formatInteger(daysGrowing, 0)
   if (safeDays <= 7) return "sprout"
   if (safeDays <= 21) return "young"
@@ -188,7 +188,7 @@ export function getGrowthStageColor(stage: string) {
   }
 }
 
-export function calculateCompletionRate(filled: any, total: any) {
+export function calculateCompletionRate(filled: number | string | undefined | null, total: number | string | undefined | null) {
   const safeFilled = formatInteger(filled, 0)
   const safeTotal = formatInteger(total, 0)
   
@@ -196,7 +196,7 @@ export function calculateCompletionRate(filled: any, total: any) {
   return Math.round((safeFilled / safeTotal) * 100)
 }
 
-export function generatePocketGrid(totalPockets: any, pocketsPerRow = 10) {
+export function generatePocketGrid(totalPockets: number | string | undefined | null, pocketsPerRow = 10) {
   const safePockets = formatInteger(totalPockets, 0)
   const safePerRow = formatInteger(pocketsPerRow, 10)
   
@@ -213,13 +213,13 @@ export function generatePocketGrid(totalPockets: any, pocketsPerRow = 10) {
 
 // 🔒 VALIDATION UTILITIES
 
-export function validateEmail(email: any) {
+export function validateEmail(email: string | undefined | null) {
   if (!email || typeof email !== 'string') return false
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email.trim())
 }
 
-export function validatePassword(password: any) {
+export function validatePassword(password: string | undefined | null) {
   if (!password || typeof password !== 'string') return false
   // At least 8 characters, one letter, one number
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
@@ -228,33 +228,33 @@ export function validatePassword(password: any) {
 
 // 🧮 SAFE CALCULATION HELPERS
 
-export function safeAdd(a: any, b: any) {
-  const numA = parseFloat(a) || 0
-  const numB = parseFloat(b) || 0
+export function safeAdd(a: number | string | undefined | null, b: number | string | undefined | null) {
+  const numA = parseFloat(String(a)) || 0
+  const numB = parseFloat(String(b)) || 0
   return numA + numB
 }
 
-export function safeMultiply(a: any, b: any) {
-  const numA = parseFloat(a) || 0
-  const numB = parseFloat(b) || 0
+export function safeMultiply(a: number | string | undefined | null, b: number | string | undefined | null) {
+  const numA = parseFloat(String(a)) || 0
+  const numB = parseFloat(String(b)) || 0
   return numA * numB
 }
 
-export function safeSubtract(a: any, b: any) {
-  const numA = parseFloat(a) || 0
-  const numB = parseFloat(b) || 0
+export function safeSubtract(a: number | string | undefined | null, b: number | string | undefined | null) {
+  const numA = parseFloat(String(a)) || 0
+  const numB = parseFloat(String(b)) || 0
   return numA - numB
 }
 
-export function safeDivide(a: any, b: any) {
-  const numA = parseFloat(a) || 0
-  const numB = parseFloat(b) || 1 // Avoid division by zero
+export function safeDivide(a: number | string | undefined | null, b: number | string | undefined | null) {
+  const numA = parseFloat(String(a)) || 0
+  const numB = parseFloat(String(b)) || 1 // Avoid division by zero
   return numA / numB
 }
 
 // ⚡ PERFORMANCE UTILITIES
 
-export function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+export function debounce<T extends (...args: unknown[]) => unknown>(func: T, wait: number) {
   let timeout: NodeJS.Timeout
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
@@ -266,7 +266,7 @@ export function debounce<T extends (...args: any[]) => any>(func: T, wait: numbe
   }
 }
 
-export function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
+export function throttle<T extends (...args: unknown[]) => unknown>(func: T, limit: number) {
   let inThrottle: boolean
   return function(...args: Parameters<T>) {
     if (!inThrottle) {
@@ -282,11 +282,11 @@ export function throttle<T extends (...args: any[]) => any>(func: T, limit: numb
 /**
  * Format Supabase error messages for user display
  */
-export function formatSupabaseError(error: any) {
+export function formatSupabaseError(error: unknown) {
   if (!error) return "Unknown error occurred"
   
   // Handle common Supabase error patterns
-  if (error.message) {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
     if (error.message.includes('duplicate key')) {
       return "This item already exists"
     }
@@ -308,7 +308,8 @@ export function formatSupabaseError(error: any) {
 /**
  * Check if user has specific role (for use with RLS policies)
  */
-export function hasRole(user: any, role: string) {
-  if (!user || !role) return false
-  return user.user_metadata?.roles?.includes(role) || false
+export function hasRole(user: unknown, role: string) {
+  if (!user || !role || typeof user !== 'object') return false
+  const userWithMetadata = user as { user_metadata?: { roles?: string[] } }
+  return userWithMetadata.user_metadata?.roles?.includes(role) || false
 }
