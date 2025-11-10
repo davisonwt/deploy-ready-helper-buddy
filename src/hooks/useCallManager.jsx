@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
+import { CallManagerContext, CallManagerProvider as Provider } from '@/contexts/CallManagerContext';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
@@ -36,6 +37,10 @@ const useCallManagerInternal = () => {
   // CALLBACKS - ALL UNCONDITIONAL
   // ============================================
   
+  // Refs for stable callback references (avoid circular deps)
+  const declineCallRef = useRef(null);
+  const endCallRef = useRef(null);
+
   // Handle incoming call
   const handleIncomingCall = useCallback((callData) => {
     if (!hasUser) {
@@ -51,7 +56,7 @@ const useCallManagerInternal = () => {
     // Don't accept call if already in a call (unless it's a self-call test)
     if (currentCall && !isSelfCall) {
       console.log('📞 [CALL] Busy, declining incoming call');
-      declineCall(callData.id, 'busy');
+      declineCallRef.current?.(callData.id, 'busy');
       return;
     }
 
@@ -72,7 +77,7 @@ const useCallManagerInternal = () => {
       setIncomingCall(current => {
         if (current && current.id === callData.id) {
           console.log('📞 [CALL] Auto-declining timed out call');
-          declineCall(callData.id, 'timeout');
+          declineCallRef.current?.(callData.id, 'timeout');
           return null;
         }
         return current;
@@ -405,6 +410,11 @@ const useCallManagerInternal = () => {
       });
     }
   }, [hasUser, incomingCall, toast]);
+  
+  // Update ref for use in other callbacks
+  useEffect(() => {
+    declineCallRef.current = declineCall;
+  }, [declineCall]);
 
   // Start a new call
   const startCall = useCallback(async (receiverId, receiverName, type = 'audio', roomId = null) => {
@@ -499,7 +509,7 @@ const useCallManagerInternal = () => {
         setOutgoingCall(current => {
           if (current && current.id === callData.id) {
             console.log('📞 [CALL] Auto-canceling timed out outgoing call');
-            endCall(callData.id, 'timeout');
+            endCallRef.current?.(callData.id, 'timeout');
             return null;
           }
           return current;
@@ -709,6 +719,11 @@ const useCallManagerInternal = () => {
       });
     }
   }, [hasUser, userId, currentCall, outgoingCall, toast]);
+  
+  // Update ref for use in other callbacks
+  useEffect(() => {
+    endCallRef.current = endCall;
+  }, [endCall]);
 
   // Load call history
   const loadCallHistory = useCallback(async () => {
@@ -864,20 +879,14 @@ const useCallManagerInternal = () => {
   };
 };
 
-// React Context to ensure a single shared CallManager instance across the app
-const CallManagerContext = createContext(null);
-
+// Export provider wrapper that uses the internal hook
 export const CallManagerProvider = ({ children }) => {
   const value = useCallManagerInternal();
-  return (
-    <CallManagerContext.Provider value={value}>
-      {children}
-    </CallManagerContext.Provider>
-  );
+  return <Provider value={value}>{children}</Provider>;
 };
 
 export const useCallManager = () => {
   const ctx = useContext(CallManagerContext);
-  // Fallback to an internal instance for environments/tests without the Provider
-  return ctx ?? useCallManagerInternal();
+  const fallback = useCallManagerInternal();
+  return ctx || fallback;
 };
