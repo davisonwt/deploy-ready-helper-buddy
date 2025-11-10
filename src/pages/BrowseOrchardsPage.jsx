@@ -14,6 +14,13 @@ import {
   Edit, Trash2
 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
@@ -349,12 +356,154 @@ export default function BrowseOrchardsPage() {
               </Link>
             </CardContent>
           </Card>
+        ) : viewMode === "grid" ? (
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full pb-16"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {filteredOrchards.map((orchard) => (
+                <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group flex flex-col h-full">
+                    <div className="relative">
+                      {orchard.main_image ? (
+                        <img 
+                          src={orchard.main_image} 
+                          alt={orchard.title}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gradient-to-br from-nav-community/30 to-nav-community/50 rounded-t-lg flex items-center justify-center">
+                          <TreePine className="h-12 w-12 text-green-600" />
+                        </div>
+                      )}
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-nav-community/90 text-green-700 border-0">
+                          {orchard.category}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-lg text-green-700 mb-2 line-clamp-2">
+                            {orchard.title}
+                          </CardTitle>
+                          <div className="flex items-center space-x-4 text-sm text-green-600">
+                            <span className="flex items-center">
+                              <User className="h-4 w-4 mr-1" />
+                              {orchard.grower_name}
+                            </span>
+                            {orchard.location && (
+                              <span className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {orchard.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="flex-1 flex flex-col">
+                      <div className="space-y-4 flex-1">
+                        <p className="text-green-600 text-sm line-clamp-3">
+                          {orchard.description}
+                        </p>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-green-600">Progress</span>
+                            <span className="text-sm font-medium text-green-700">
+                              {orchard.completion_percentage}%
+                            </span>
+                          </div>
+                          <Progress 
+                            value={orchard.completion_percentage} 
+                            className="h-2"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-green-600">Raised:</span>
+                            <p className="font-medium text-green-700">
+                              {formatAmount(orchard.raised_amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-green-600">Goal:</span>
+                            <p className="font-medium text-green-700">
+                              {formatAmount(orchard.goal_amount)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm text-green-500 mb-2">
+                          <span className="flex items-center">
+                            <Eye className="h-4 w-4 mr-1" />
+                            {orchard.views || 0} views
+                          </span>
+                          <span className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            {orchard.supporters || 0} supporters
+                          </span>
+                        </div>
+                        
+                        <div className="flex gap-2 pt-2 mt-auto">
+                          <Link to={`/animated-orchard/${orchard.id}`} className="flex-1">
+                            <Button 
+                              className="w-full text-white shadow-lg font-medium"
+                              style={{ 
+                                background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
+                                border: '2px solid #1e40af'
+                              }}
+                            >
+                              <Heart className="h-4 w-4 mr-2" />
+                              Bestow into this Orchard
+                            </Button>
+                          </Link>
+                        </div>
+                        
+                        {/* Owner Actions */}
+                        {user && orchard.user_id === user.id && (
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
+                            <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full border-nav-community/30 text-green-700 hover:bg-nav-community/10"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                            </Link>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteOrchard(orchard.id)}
+                              className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-[100px]"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         ) : (
-          <div className={`grid gap-6 md:gap-8 pb-16 ${
-            viewMode === "grid" 
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-              : "grid-cols-1 max-w-4xl mx-auto"
-          }`}>
+          <div className="grid gap-6 md:gap-8 pb-16 grid-cols-1 max-w-4xl mx-auto">
             {filteredOrchards.map((orchard) => (
               <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group flex flex-col">
                 <div className="relative">
