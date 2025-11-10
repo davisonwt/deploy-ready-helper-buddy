@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -25,12 +25,37 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
   const { user } = useAuth();
   const navigate = useNavigate();
   
   const isOwner = user?.id === product.sowers?.user_id;
+  const isAlbum = product.tags?.includes('album');
+
+  useEffect(() => {
+    const loadAudioUrl = async () => {
+      if (!isAlbum) {
+        setAudioUrl(product.file_url);
+        return;
+      }
+
+      try {
+        const response = await fetch(product.file_url);
+        const manifest = await response.json();
+        if (manifest.tracks && manifest.tracks.length > 0) {
+          setAudioUrl(manifest.tracks[0].url);
+        }
+      } catch (error) {
+        console.error('Failed to load album manifest:', error);
+      }
+    };
+
+    if (product.type === 'music') {
+      loadAudioUrl();
+    }
+  }, [product.file_url, product.type, isAlbum]);
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -60,8 +85,39 @@ export default function ProductCard({ product, featured, showActions = false }: 
     setDownloading(true);
     try {
       await supabase.rpc('increment_product_download_count', { product_uuid: product.id });
-      window.open(product.file_url, '_blank');
-      toast.success('Download started!');
+      
+      if (isAlbum) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error('Please login to download');
+          return;
+        }
+
+        const downloadUrl = `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/download-album?product_id=${product.id}`;
+        const response = await fetch(downloadUrl, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}_album.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Album downloaded!');
+      } else {
+        window.open(product.file_url, '_blank');
+        toast.success('Download started!');
+      }
     } catch (error) {
       console.error('Error downloading:', error);
       toast.error('Failed to download');
@@ -276,10 +332,10 @@ export default function ProductCard({ product, featured, showActions = false }: 
           </div>
 
           {/* Hidden audio element for music */}
-          {product.type === 'music' && (
+          {product.type === 'music' && audioUrl && (
             <audio
               ref={audioRef}
-              src={product.file_url}
+              src={audioUrl}
               onEnded={() => setIsPlaying(false)}
             />
           )}
