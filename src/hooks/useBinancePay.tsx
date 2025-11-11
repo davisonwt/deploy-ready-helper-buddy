@@ -68,7 +68,7 @@ export function useBinancePay() {
       }
 
       // Calculate distribution amounts based on bestowal map
-      const tithingAdminPercent = 0.105; // 10.5% (10% tithing + 0.5% admin)
+      const tithingAdminPercent = 0.15; // 15% (10% tithing + 5% admin)
       const growerPercent = details.growerId ? 0.10 : 0; // 10% if grower exists
       const sowerPercent = 1 - tithingAdminPercent - growerPercent;
 
