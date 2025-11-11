@@ -74,8 +74,8 @@ export function BinancePayButton({
           </h4>
           <div className="text-xs space-y-1 text-muted-foreground">
             <p>• Your payment goes to s2gholding wallet first</p>
-            <p>• 10.5% distributed to s2gbestow (tithing & admin)</p>
-            <p>• {growerId ? '79.5%' : '89.5%'} goes to the sower</p>
+            <p>• 15% distributed to s2gbestow (10% tithing + 5% admin)</p>
+            <p>• {growerId ? '75%' : '85%'} goes to the sower</p>
             {growerId && <p>• 10% goes to the grower (marketing agent)</p>}
           </div>
         </Card>
