@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, DollarSign, Heart, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, DollarSign, Heart, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useBestowals } from '@/hooks/useBestowals';
 import { supabase } from '@/integrations/supabase/client';
+import { BinancePayButton } from '@/components/payment/BinancePayButton';
 import { z } from 'zod';
 
 // Payment validation schema
 const paymentSchema = z.object({
-  amount: z.number().min(0.01, 'Amount must be at least 0.01 USDC'),
+  amount: z.number().min(0.01, 'Amount must be at least 0.01'),
   pockets_count: z.number().int().min(1, 'Must purchase at least 1 pocket'),
   message: z.string().max(500, 'Message must be less than 500 characters').optional()
 });
@@ -22,15 +20,12 @@ const paymentSchema = z.object({
 const EnhancedBestowalPayment = () => {
   const [orchard, setOrchard] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
   const [pocketsCount, setPocketsCount] = useState(1);
   const [message, setMessage] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
-  const [paymentStatus, setPaymentStatus] = useState(null);
   
   const { id: orchardId } = useParams();
   const { user } = useAuth();
-  const { createBestowal, updateBestowStatus } = useBestowals();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,12 +34,6 @@ const EnhancedBestowalPayment = () => {
       loadOrchardData();
     }
   }, [orchardId]);
-
-  useEffect(() => {
-    if (connected) {
-      refreshBalance();
-    }
-  }, [connected, refreshBalance]);
 
   // Real-time validation
   useEffect(() => {
@@ -99,13 +88,8 @@ const EnhancedBestowalPayment = () => {
         message
       });
 
-      // Check if user has sufficient balance
-      const errors = {};
-      if (connected && balance < amount) {
-        errors.amount = `Insufficient balance. You have ${balance.toFixed(2)} USDC but need ${amount.toFixed(2)} USDC`;
-      }
-
       // Check if enough pockets are available
+      const errors = {};
       const availablePockets = orchard.total_pockets - orchard.filled_pockets;
       if (pocketsCount > availablePockets) {
         errors.pockets_count = `Only ${availablePockets} pocket(s) available`;
@@ -129,6 +113,17 @@ const EnhancedBestowalPayment = () => {
     const value = parseInt(e.target.value) || 1;
     const maxAvailable = orchard ? orchard.total_pockets - orchard.filled_pockets : 1;
     setPocketsCount(Math.min(Math.max(1, value), maxAvailable));
+  };
+
+  const handlePaymentSuccess = () => {
+    toast({
+      title: 'Payment Initiated!',
+      description: 'Complete payment in Binance Pay window'
+    });
+    
+    setTimeout(() => {
+      navigate(`/orchard/${orchardId}`);
+    }, 2000);
   };
 
   const createBestowTransaction = async () => {
@@ -319,20 +314,11 @@ const EnhancedBestowalPayment = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Wallet Connection Status */}
-            {!connected ? (
+            {!user && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  You need to connect your wallet to make a bestowal
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Wallet connected: {walletAddress.slice(0, 8)}...{walletAddress.slice(-8)}
-                  <br />Balance: {balance.toFixed(2)} USDC
+                  You need to login to make a bestowal
                 </AlertDescription>
               </Alert>
             )}
@@ -379,58 +365,27 @@ const EnhancedBestowalPayment = () => {
             </div>
 
             {/* Payment Summary */}
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Pockets:</span>
-                <span>{pocketsCount} × {orchard.pocket_price} USDC</span>
+                <span>{pocketsCount} × ${orchard.pocket_price}</span>
               </div>
               <div className="flex justify-between font-medium text-lg border-t pt-2">
                 <span>Total:</span>
-                <span>{totalAmount.toFixed(2)} USDC</span>
+                <span>${totalAmount.toFixed(2)} USDC</span>
               </div>
             </div>
 
-            {validationErrors.amount && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{validationErrors.amount}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* Payment Status */}
-            {paymentStatus && (
-              <Alert className={
-                paymentStatus === 'completed' ? 'border-green-500 bg-green-50' :
-                paymentStatus === 'failed' ? 'border-red-500 bg-red-50' :
-                'border-blue-500 bg-blue-50'
-              }>
-                <div className="flex items-center">
-                  {paymentStatus === 'completed' && <CheckCircle className="h-4 w-4 text-green-500 mr-2" />}
-                  {paymentStatus === 'failed' && <AlertTriangle className="h-4 w-4 text-red-500 mr-2" />}
-                  {(paymentStatus === 'creating' || paymentStatus === 'processing') && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  
-                  <AlertDescription>
-                    {paymentStatus === 'creating' && 'Creating bestowal record...'}
-                    {paymentStatus === 'processing' && 'Processing payment...'}
-                    {paymentStatus === 'completed' && 'Bestowal completed successfully!'}
-                    {paymentStatus === 'failed' && 'Bestowal failed. Please try again.'}
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
-
-            {/* Submit Button */}
-            <Button 
-              onClick={createBestowTransaction}
-              className="w-full" 
-              disabled={!connected || processing || !validatePayment() || availablePockets === 0}
-              size="lg"
-            >
-              {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {availablePockets === 0 ? 'Orchard Fully Funded' : 
-               processing ? 'Processing...' : 
-               `Bestow ${totalAmount.toFixed(2)} USDC`}
-            </Button>
+            {/* Binance Pay Button */}
+            <BinancePayButton
+              orchardId={orchardId}
+              amount={totalAmount}
+              pocketsCount={pocketsCount}
+              message={message}
+              sowerId={orchard.user_id}
+              onSuccess={handlePaymentSuccess}
+              disabled={!user || !validatePayment() || availablePockets === 0}
+            />
           </div>
         </CardContent>
       </Card>

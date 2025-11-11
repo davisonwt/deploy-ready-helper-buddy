@@ -1,0 +1,92 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Loader2, Wallet, ExternalLink } from 'lucide-react';
+import { useBinancePay } from '@/hooks/useBinancePay';
+
+interface BinancePayButtonProps {
+  orchardId: string;
+  amount: number;
+  pocketsCount: number;
+  message?: string;
+  sowerId: string;
+  growerId?: string;
+  onSuccess?: () => void;
+  disabled?: boolean;
+}
+
+export function BinancePayButton({
+  orchardId,
+  amount,
+  pocketsCount,
+  message,
+  sowerId,
+  growerId,
+  onSuccess,
+  disabled
+}: BinancePayButtonProps) {
+  const { processing, initiateBinancePayment } = useBinancePay();
+  const [showInfo, setShowInfo] = useState(false);
+
+  const handlePayment = async () => {
+    const result = await initiateBinancePayment({
+      orchardId,
+      amount,
+      pocketsCount,
+      message,
+      sowerId,
+      growerId
+    });
+
+    if (result?.paymentUrl) {
+      // Open Binance Pay in new window
+      window.open(result.paymentUrl, '_blank');
+      onSuccess?.();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Button
+        onClick={handlePayment}
+        disabled={disabled || processing}
+        className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
+        size="lg"
+      >
+        {processing ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <Wallet className="mr-2 h-4 w-4" />
+            Pay with Binance Pay
+          </>
+        )}
+      </Button>
+
+      {showInfo && (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <h4 className="font-semibold text-sm mb-2 flex items-center">
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Payment Distribution
+          </h4>
+          <div className="text-xs space-y-1 text-muted-foreground">
+            <p>• Your payment goes to s2gholding wallet first</p>
+            <p>• 10.5% distributed to s2gbestow (tithing & admin)</p>
+            <p>• {growerId ? '79.5%' : '89.5%'} goes to the sower</p>
+            {growerId && <p>• 10% goes to the grower (marketing agent)</p>}
+          </div>
+        </Card>
+      )}
+
+      <button
+        onClick={() => setShowInfo(!showInfo)}
+        className="text-xs text-muted-foreground hover:text-foreground underline w-full text-center"
+      >
+        {showInfo ? 'Hide' : 'Show'} payment details
+      </button>
+    </div>
+  );
+}

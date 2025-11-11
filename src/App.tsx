@@ -51,6 +51,7 @@ const OrchardCreatedPage = lazy(() => import("./pages/OrchardCreatedPage"));
 const OrchardErrorPage = lazy(() => import("./pages/OrchardErrorPage"));
 const TithingPage = lazy(() => import("./pages/TithingPage"));
 const PaymentCancelledPage = lazy(() => import("./pages/PaymentCancelledPage"));
+const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage"));
 const FreeWillGiftingPage = lazy(() => import("./pages/FreeWillGiftingPage"));
 const SeedSubmissionPage = lazy(() => import("./pages/SeedSubmissionPage"));
 const YhvhOrchardsPage = lazy(() => import("./pages/YhvhOrchardsPage"));
@@ -598,6 +599,7 @@ const App = () => (
               
               {/* Payment Routes */}
               <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
               
               <Route path="/commissions" element={
                 <ProtectedRoute>
