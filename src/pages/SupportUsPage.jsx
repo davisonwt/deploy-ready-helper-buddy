@@ -7,12 +7,12 @@ export default function SupportUsPage() {
     <main className="container mx-auto py-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Support Us with USDC on Cronos</CardTitle>
+          <CardTitle>Support Us with Binance Pay (USDC)</CardTitle>
           <WalletHelpModal />
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-muted-foreground">
-            To support our work, please use your Crypto.com DeFi Wallet to send USDC to our organization wallet.
+            To support our work, please use Binance Pay in your Binance app to send USDC to our organization wallet.
           </p>
           <p className="text-sm text-muted-foreground">
             You can find wallet setup instructions and FAQs via the Payment Help button.
