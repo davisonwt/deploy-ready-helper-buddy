@@ -340,9 +340,9 @@ export default function DashboardPage() {
         <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
-            {user?.profile_picture ? (
+            {user?.avatar_url ? (
               <img 
-                src={user.profile_picture} 
+                src={user.avatar_url} 
                 alt="Profile" 
                 className="w-full h-full object-cover"
               />
@@ -782,9 +782,9 @@ export default function DashboardPage() {
                   }}
                 >
                   <div className="text-center">
-                    {user?.profile_picture ? (
+                    {user?.avatar_url ? (
                       <img 
-                        src={user.profile_picture} 
+                        src={user.avatar_url} 
                         alt="Profile" 
                         className="w-8 h-8 rounded-full mx-auto mb-2 border-2"
                         style={{ borderColor: '#9a3412' }}
