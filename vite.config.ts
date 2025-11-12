@@ -6,16 +6,16 @@ import { componentTagger } from "lovable-tagger";
 import eslint from "vite-plugin-eslint";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, command }) => ({
   server: {
     host: "::",
     port: 8080,
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
-    mode === 'development' && eslint({
-      failOnError: true, // Fail build on ESLint errors (including hook violations)
+    command === 'serve' && mode === 'development' && componentTagger(),
+    command === 'serve' && eslint({
+      failOnError: true, // Fail dev server on ESLint errors
       failOnWarning: false,
       emitError: true,
       emitWarning: true,

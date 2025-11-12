@@ -14,17 +14,17 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
       <Alert className="mb-4">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <p className="font-semibold mb-2">Payment requires Crypto.com Wallet</p>
+          <p className="font-semibold mb-2">Payments use Binance Pay</p>
           <p className="text-sm mb-2">
-            To make bestowals, you'll need the Crypto.com DeFi Wallet app installed with USDC, USDT, or CRO tokens.
+            Use the Binance app with Binance Pay enabled and USDC in your funding wallet.
           </p>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('https://crypto.com/defi-wallet', '_blank')}
+            onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
             className="mt-2"
           >
-            Download Wallet <ExternalLink className="ml-2 h-3 w-3" />
+            Open Binance Pay <ExternalLink className="ml-2 h-3 w-3" />
           </Button>
         </AlertDescription>
       </Alert>
@@ -50,17 +50,17 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
               <Download className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">1. Download Crypto.com DeFi Wallet</h3>
+              <h3 className="font-semibold text-base mb-1">1. Enable Binance Pay in the Binance app</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                Get the free Crypto.com DeFi Wallet app on your mobile device to manage your crypto payments.
+                Install the Binance app, complete verification if required, then enable Binance Pay and set up your Pay ID.
               </p>
               <div className="flex gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => window.open('https://crypto.com/defi-wallet', '_blank')}
+                  onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
                 >
-                  Download for iOS/Android <ExternalLink className="ml-2 h-3 w-3" />
+                  Open Binance Pay <ExternalLink className="ml-2 h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -74,21 +74,16 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
               <CreditCard className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">2. Add Funds to Your Wallet</h3>
+              <h3 className="font-semibold text-base mb-1">2. Add USDC to your Binance funding wallet</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                You'll need one of these tokens on the <strong>Cronos network</strong>:
+                You'll need USDC available to pay with Binance Pay.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1 ml-4 mb-3">
-                <li>• <strong>USDC</strong> - USD Coin (recommended for stable value)</li>
-                <li>• <strong>USDT</strong> - Tether USD (alternative stablecoin)</li>
-                <li>• <strong>CRO</strong> - Cronos native token</li>
-              </ul>
               <div className="bg-muted/50 rounded-lg p-3 text-sm">
                 <p className="font-semibold mb-1">💡 How to add funds:</p>
                 <ol className="space-y-1 ml-4 text-muted-foreground">
-                  <li>1. Buy crypto on Crypto.com app or exchange</li>
-                  <li>2. Transfer to your DeFi Wallet (Cronos network)</li>
-                  <li>3. Or use the built-in "Buy" feature in DeFi Wallet</li>
+                  <li>1. Deposit via card/bank, or transfer crypto to Binance</li>
+                  <li>2. Convert your balance to USDC (if needed)</li>
+                  <li>3. Ensure USDC is available in your Funding Wallet</li>
                 </ol>
               </div>
             </div>
