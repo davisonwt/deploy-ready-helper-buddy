@@ -485,7 +485,7 @@ export default function ProfilePage() {
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="Enter your first name"
                     />
                   ) : (
@@ -504,7 +504,7 @@ export default function ProfilePage() {
                       name="display_name"
                       value={formData.display_name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="How you want to be known in the community"
                     />
                   ) : (
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                       name="preferred_currency"
                       value={formData.preferred_currency}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -547,7 +547,7 @@ export default function ProfilePage() {
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="Enter your last name"
                     />
                   ) : (
@@ -577,7 +577,7 @@ export default function ProfilePage() {
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="City, Town, State"
                     />
                   ) : (
@@ -596,7 +596,7 @@ export default function ProfilePage() {
                       name="country"
                       value={formData.country}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="Your country"
                     />
                   ) : (
@@ -614,7 +614,7 @@ export default function ProfilePage() {
                       name="timezone"
                       value={formData.timezone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground"
                     >
                       <option value="">Select timezone</option>
                       <option value="America/New_York">Eastern (EST/EDT)</option>
@@ -653,7 +653,7 @@ export default function ProfilePage() {
                       name="website"
                       value={formData.website}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="https://yourwebsite.com"
                     />
                   ) : (
@@ -680,7 +680,7 @@ export default function ProfilePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                       placeholder="Phone number"
                     />
                   ) : (
@@ -699,7 +699,7 @@ export default function ProfilePage() {
                       value={formData.bio}
                       onChange={handleChange}
                       rows={4}
-                      className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 resize-none text-foreground placeholder:text-muted-foreground"
+                      className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 resize-none text-card-foreground placeholder:text-muted-foreground"
                       placeholder="Tell us about yourself and your journey in the community farm..."
                     />
                   ) : (
@@ -768,7 +768,7 @@ export default function ProfilePage() {
                         name="tiktok_url"
                         value={formData.tiktok_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                         placeholder="https://tiktok.com/@username"
                       />
                       {socialLinksError.tiktok && (
@@ -807,7 +807,7 @@ export default function ProfilePage() {
                         name="instagram_url"
                         value={formData.instagram_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                         placeholder="https://instagram.com/username"
                       />
                       {socialLinksError.instagram && (
@@ -846,7 +846,7 @@ export default function ProfilePage() {
                         name="facebook_url"
                         value={formData.facebook_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                         placeholder="https://facebook.com/username"
                       />
                       {socialLinksError.facebook && (
@@ -885,7 +885,7 @@ export default function ProfilePage() {
                         name="youtube_url"
                         value={formData.youtube_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-foreground placeholder:text-muted-foreground"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-card-foreground placeholder:text-muted-foreground"
                         placeholder="https://youtube.com/c/username"
                       />
                       {socialLinksError.youtube && (
