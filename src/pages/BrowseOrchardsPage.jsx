@@ -201,9 +201,9 @@ export default function BrowseOrchardsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
-                {user?.profile_picture ? (
+                {user?.avatar_url ? (
                   <img 
-                    src={user.profile_picture} 
+                    src={user.avatar_url} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
                   />
