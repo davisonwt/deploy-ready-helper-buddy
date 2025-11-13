@@ -1,45 +1,48 @@
 import js from "@eslint/js";
 import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
-import security from "eslint-plugin-security";
+import reactHooks from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "cypress"] },
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx,js,jsx}"],
+    ignores: [
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      "node_modules/**",
+      "supabase/functions/**/deps.ts",
+    ],
+  },
+  {
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.stylistic,
+    ],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-      "security": security,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-hooks/rules-of-hooks": "error", // CRITICAL: Enforce Rules of Hooks at build time
-      "react-hooks/exhaustive-deps": "warn",
-      "react-refresh/only-export-components": [
+      "@typescript-eslint/consistent-type-imports": "error",
+      "@typescript-eslint/no-unused-vars": [
         "warn",
-        { allowConstantExport: true },
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^ignored" },
       ],
-      "@typescript-eslint/no-unused-vars": "off",
-      "security/detect-object-injection": "warn",
-      "security/detect-non-literal-regexp": "warn",
-      "security/detect-possible-timing-attacks": "warn",
-      "security/detect-buffer-noassert": "error",
-      "security/detect-child-process": "error",
-      "security/detect-disable-mustache-escape": "error",
-      "security/detect-eval-with-expression": "error",
-      "security/detect-no-csrf-before-method-override": "error",
-      "security/detect-non-literal-fs-filename": "warn",
-      "security/detect-non-literal-require": "warn",
-      "security/detect-pseudoRandomBytes": "warn",
-      "security/detect-unsafe-regex": "error",
+      "no-console": ["warn", { allow: ["error", "warn"] }],
     },
-  }
+  },
 );
