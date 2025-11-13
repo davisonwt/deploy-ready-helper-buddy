@@ -9,7 +9,6 @@ interface BinancePayButtonProps {
   amount: number;
   pocketsCount: number;
   message?: string;
-  sowerId: string;
   growerId?: string;
   onSuccess?: () => void;
   disabled?: boolean;
@@ -20,7 +19,6 @@ export function BinancePayButton({
   amount,
   pocketsCount,
   message,
-  sowerId,
   growerId,
   onSuccess,
   disabled
@@ -34,12 +32,10 @@ export function BinancePayButton({
       amount,
       pocketsCount,
       message,
-      sowerId,
       growerId
     });
 
     if (result?.paymentUrl) {
-      // Open Binance Pay in new window
       window.open(result.paymentUrl, '_blank');
       onSuccess?.();
     }
