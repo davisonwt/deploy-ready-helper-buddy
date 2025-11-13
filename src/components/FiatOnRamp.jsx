@@ -9,7 +9,7 @@ import { useBinanceWallet } from '@/hooks/useBinanceWallet';
 import { toast } from 'sonner';
 
 export function FiatOnRamp() {
-  const { wallet, createTopUpOrder, linking } = useBinanceWallet();
+  const { wallet, createTopUpOrder } = useBinanceWallet();
   const [amount, setAmount] = useState(50);
 
   const handleTopUp = () => {
@@ -53,7 +53,7 @@ export function FiatOnRamp() {
             step="1"
             value={amount}
             onChange={(event) => setAmount(Number(event.target.value))}
-            disabled={linking}
+            disabled={!wallet?.wallet_address}
           />
         </div>
 
@@ -69,6 +69,12 @@ export function FiatOnRamp() {
             </Button>
           ))}
         </div>
+
+        {wallet?.origin === 'organization' && (
+          <div className="text-xs text-muted-foreground">
+            Top-ups created here will fund the organization wallet `{wallet.wallet_name ?? 's2gdavison'}`.
+          </div>
+        )}
 
         <Button className="w-full" onClick={handleTopUp}>
           Create Binance Pay checkout

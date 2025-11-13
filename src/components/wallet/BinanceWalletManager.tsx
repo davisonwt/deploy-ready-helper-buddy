@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,10 +30,13 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   const [payIdInput, setPayIdInput] = useState('');
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(50);
+  const [showLinkField, setShowLinkField] = useState(false);
 
-  const maskedPayId = wallet?.wallet_address
-    ? `${wallet.wallet_address.slice(0, 4)}••••${wallet.wallet_address.slice(-4)}`
-    : null;
+  useEffect(() => {
+    if (!wallet) {
+      setShowLinkField(false);
+    }
+  }, [wallet]);
 
   const handleLink = async () => {
     if (!payIdInput.trim()) {
@@ -44,6 +47,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
     const success = await linkWallet(payIdInput.trim());
     if (success) {
       setPayIdInput('');
+      setShowLinkField(false);
     }
   };
 
@@ -81,124 +85,142 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
               </div>
             )}
 
-            {!wallet && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Link your Binance Pay ID (Pay ID) so Sow2Grow can route distributions to your wallet and display your balance.
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="payId">Binance Pay ID</Label>
-                  <Input
-                    id="payId"
-                    placeholder="Enter your Binance Pay ID"
-                    value={payIdInput}
-                    onChange={(event) => setPayIdInput(event.target.value)}
-                    disabled={linking}
-                  />
+              {(!wallet || showLinkField) && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Link your Binance Pay ID (Pay ID) so Sow2Grow can route distributions to your wallet and display your balance.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="payId">Binance Pay ID</Label>
+                    <Input
+                      id="payId"
+                      placeholder="Enter your Binance Pay ID"
+                      value={payIdInput}
+                      onChange={(event) => setPayIdInput(event.target.value)}
+                      disabled={linking}
+                    />
+                  </div>
+                  <Button onClick={handleLink} disabled={linking} className="w-full">
+                    {linking ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Linking...
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        Link Binance Wallet
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <Button onClick={handleLink} disabled={linking} className="w-full">
-                  {linking ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Linking...
-                    </>
-                  ) : (
-                    <>
-                      <LinkIcon className="h-4 w-4 mr-2" />
-                      Link Binance Wallet
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+              )}
 
-            {wallet && (
-              <div className="space-y-5">
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <div className="text-xs font-semibold text-muted-foreground mb-1">
-                    Linked Binance Pay ID
-                  </div>
-                  <div className="text-lg font-semibold tracking-wide">
-                    {wallet.wallet_address}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Primary &bull; Active
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-lg border border-border p-4">
-                    <div className="text-xs font-semibold text-muted-foreground mb-1">
-                      Available Balance
+              {wallet && !showLinkField && (
+                <div className="space-y-5">
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-1">
+                    <div className="text-xs font-semibold text-muted-foreground">
+                      {wallet.origin === 'organization' ? 'Organization Wallet' : 'Linked Binance Pay ID'}
                     </div>
-                    <div className="text-2xl font-bold">
-                      {balance?.display ?? '$0.00'}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {balance?.updatedAt
-                        ? `Last synced ${new Date(balance.updatedAt).toLocaleString()}`
-                        : 'Sync to fetch the latest balance'}
+                    <div className="text-lg font-semibold tracking-wide break-all">
+                      {wallet.wallet_name ? `${wallet.wallet_name} • ${wallet.wallet_address}` : wallet.wallet_address}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Source: {balance?.source === 'binance' ? 'Binance Pay' : 'Platform ledger'}
+                      {wallet.origin === 'organization' ? 'Read-only • Admin access' : 'Primary • Active'}
                     </div>
+                    {wallet.origin === 'organization' && (
+                      <div className="text-[11px] text-muted-foreground">
+                        This wallet is shared by the organization (`{wallet.wallet_name ?? 's2gdavison'}`). Only administrators can view and top up this balance from Sow2Grow.
+                      </div>
+                    )}
                   </div>
 
-                  <div className="rounded-lg border border-border p-4">
-                    <div className="text-xs font-semibold text-muted-foreground mb-2">
-                      Quick Actions
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-lg border border-border p-4">
+                      <div className="text-xs font-semibold text-muted-foreground mb-1">
+                        Available Balance
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {balance?.display ?? '$0.00'}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {balance?.updatedAt
+                          ? `Last synced ${new Date(balance.updatedAt).toLocaleString()}`
+                          : 'Sync to fetch the latest balance'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Source: {balance?.source === 'binance' ? 'Binance Pay' : 'Platform ledger'}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={refreshBalance}
-                        disabled={refreshing}
-                      >
-                        {refreshing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Refreshing...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Refresh balance
-                          </>
-                        )}
-                      </Button>
-                      {showTopUpActions && (
+
+                    <div className="rounded-lg border border-border p-4">
+                      <div className="text-xs font-semibold text-muted-foreground mb-2">
+                        Quick Actions
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setTopUpDialogOpen(true)}
+                          onClick={refreshBalance}
+                          disabled={refreshing}
                         >
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Top up wallet
+                          {refreshing ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Refreshing...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Refresh balance
+                            </>
+                          )}
                         </Button>
-                      )}
+                        {showTopUpActions && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTopUpDialogOpen(true)}
+                          >
+                            <CreditCard className="h-4 w-4 mr-2" />
+                            Top up wallet
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="text-xs text-muted-foreground space-y-2">
-                  <p className="font-semibold text-foreground">Need your Pay ID?</p>
-                  <p>
-                    Open the Binance app &gt; tap <strong>Profile</strong> &gt; <strong>Pay</strong> &gt; <strong>Receive</strong> to copy your Pay ID.
-                  </p>
                   <Button
-                    variant="link"
+                    variant="ghost"
                     size="sm"
-                    className="p-0 h-auto"
-                    onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
+                    className="px-2"
+                    onClick={() => {
+                      setShowLinkField(true);
+                      setPayIdInput('');
+                    }}
                   >
-                    Binance Pay Help <ExternalLink className="h-3 w-3 ml-1" />
+                    <LinkIcon className="h-3 w-3 mr-2" />
+                    Link a different wallet
                   </Button>
+
+                  <div className="text-xs text-muted-foreground space-y-2">
+                    <p className="font-semibold text-foreground">Need your Pay ID?</p>
+                    <p>
+                      Open the Binance app &gt; tap <strong>Profile</strong> &gt; <strong>Pay</strong> &gt; <strong>Receive</strong> to copy your Pay ID.
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto"
+                      onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
+                    >
+                      Binance Pay Help <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </>
         )}
       </CardContent>

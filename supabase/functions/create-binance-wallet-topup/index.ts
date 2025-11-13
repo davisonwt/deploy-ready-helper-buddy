@@ -13,6 +13,7 @@ const requestSchema = z.object({
   amount: z.number().positive().max(1_000_000),
   currency: z.string().optional(),
   clientOrigin: z.string().url().optional(),
+  walletName: z.string().trim().optional(),
 });
 
 serve(async (req) => {
@@ -68,6 +69,42 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
+    let walletName: string | null = null;
+    if (payload.walletName) {
+      const { data: isAdmin, error: adminError } = await serviceClient.rpc(
+        "is_admin_or_gosat",
+        { _user_id: userData.user.id },
+      );
+
+      if (adminError) {
+        throw adminError;
+      }
+
+      if (!isAdmin) {
+        return jsonResponse({ error: "Forbidden" }, 403);
+      }
+
+      const { data: organizationWallet, error: organizationError } =
+        await serviceClient
+          .from("organization_wallets")
+          .select("wallet_address, wallet_name")
+          .eq("wallet_name", payload.walletName)
+          .eq("is_active", true)
+          .maybeSingle();
+
+      if (organizationError && organizationError.code !== "PGRST116") {
+        throw organizationError;
+      }
+
+      if (!organizationWallet?.wallet_address) {
+        return jsonResponse({
+          error: "Organization wallet not found",
+        }, 404);
+      }
+
+      walletName = organizationWallet.wallet_name ?? payload.walletName;
+    }
+
     const origin = payload.clientOrigin ??
       req.headers.get("origin") ??
       Deno.env.get("PUBLIC_SITE_URL") ??
@@ -94,10 +131,11 @@ serve(async (req) => {
             goodsName: "Wallet Top-Up",
           },
         ],
-        meta: {
-          userId: userData.user.id,
-          purpose: "wallet_topup",
-        },
+          meta: {
+            userId: userData.user.id,
+            purpose: "wallet_topup",
+            walletName: walletName ?? undefined,
+          },
       });
 
     try {
@@ -114,10 +152,11 @@ serve(async (req) => {
             type: "wallet_topup",
             response: orderResponse,
           },
-          metadata: {
-            user_id: userData.user.id,
-            purpose: "wallet_topup",
-          },
+            metadata: {
+              user_id: userData.user.id,
+              purpose: "wallet_topup",
+              wallet_name: walletName,
+            },
         });
     } catch (transactionError) {
       console.warn(
@@ -130,12 +169,13 @@ serve(async (req) => {
       orderResponse.prepayUrl ??
       orderResponse.qrcodeLink;
 
-    return jsonResponse({
-      success: true,
-      prepayId: orderResponse.prepayId,
-      paymentUrl,
-      tradeReference: tradeRef,
-    });
+      return jsonResponse({
+        success: true,
+        prepayId: orderResponse.prepayId,
+        paymentUrl,
+        tradeReference: tradeRef,
+        walletName,
+      });
   } catch (error) {
     console.error("Create Binance wallet top-up error:", error);
     return jsonResponse(

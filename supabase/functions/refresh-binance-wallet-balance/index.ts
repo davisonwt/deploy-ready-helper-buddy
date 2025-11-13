@@ -47,25 +47,74 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    const { data: wallet, error: walletError } = await serviceClient
-      .from("user_wallets")
-      .select("wallet_address, wallet_type")
-      .eq("user_id", userData.user.id)
-      .eq("wallet_type", "binance_pay")
-      .eq("is_active", true)
-      .order("is_primary", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const body = await req.json().catch(() => ({}));
+    const requestedWalletName = typeof body?.walletName === "string"
+      ? body.walletName.trim()
+      : null;
 
-    if (walletError && walletError.code !== "PGRST116") {
-      throw walletError;
-    }
+    let walletAddress: string | null = null;
+    let walletName: string | null = null;
+    let walletOrigin: "user" | "organization" = "user";
 
-    if (!wallet?.wallet_address) {
-      return jsonResponse({
-        success: false,
-        error: "No active Binance Pay wallet linked",
-      }, 404);
+    if (requestedWalletName) {
+      const { data: isAdmin, error: adminError } = await serviceClient.rpc(
+        "is_admin_or_gosat",
+        { _user_id: userData.user.id },
+      );
+
+      if (adminError) {
+        throw adminError;
+      }
+
+      if (!isAdmin) {
+        return jsonResponse({ error: "Forbidden" }, 403);
+      }
+
+      const { data: organizationWallet, error: organizationError } =
+        await serviceClient
+          .from("organization_wallets")
+          .select("wallet_address, wallet_name")
+          .eq("wallet_name", requestedWalletName)
+          .eq("is_active", true)
+          .maybeSingle();
+
+      if (organizationError && organizationError.code !== "PGRST116") {
+        throw organizationError;
+      }
+
+      if (!organizationWallet?.wallet_address) {
+        return jsonResponse({
+          success: false,
+          error: "Organization wallet not found",
+        }, 404);
+      }
+
+      walletAddress = organizationWallet.wallet_address;
+      walletName = organizationWallet.wallet_name ?? requestedWalletName;
+      walletOrigin = "organization";
+    } else {
+      const { data: wallet, error: walletError } = await serviceClient
+        .from("user_wallets")
+        .select("wallet_address, wallet_type")
+        .eq("user_id", userData.user.id)
+        .eq("wallet_type", "binance_pay")
+        .eq("is_active", true)
+        .order("is_primary", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (walletError && walletError.code !== "PGRST116") {
+        throw walletError;
+      }
+
+      if (!wallet?.wallet_address) {
+        return jsonResponse({
+          success: false,
+          error: "No active Binance Pay wallet linked",
+        }, 404);
+      }
+
+      walletAddress = wallet.wallet_address;
     }
 
     const binanceClient = new BinancePayClient();
@@ -74,7 +123,7 @@ serve(async (req) => {
 
     try {
       const balanceResponse = await binanceClient.getWalletBalance({
-        payeeId: wallet.wallet_address,
+        payeeId: walletAddress!,
       });
 
       const entries: BinanceBalanceDetail[] = Array.isArray(
@@ -109,7 +158,7 @@ serve(async (req) => {
         .from("wallet_balances")
         .select("usdc_balance, updated_at")
         .eq("user_id", userData.user.id)
-        .eq("wallet_address", wallet.wallet_address)
+        .eq("wallet_address", walletAddress!)
         .maybeSingle();
 
       if (cachedError && cachedError.code !== "PGRST116") {
@@ -121,22 +170,28 @@ serve(async (req) => {
         success: true,
         balance: fallback,
         source: "cache",
-        walletAddress: wallet.wallet_address,
+        walletAddress,
+        walletName,
+        walletOrigin,
         updatedAt: cachedBalance?.updated_at ?? null,
       });
     }
 
-    await serviceClient.rpc("update_wallet_balance_secure", {
-      target_user_id: userData.user.id,
-      target_wallet_address: wallet.wallet_address,
-      new_balance: fetchedBalance,
-    });
+    if (walletOrigin === "user") {
+      await serviceClient.rpc("update_wallet_balance_secure", {
+        target_user_id: userData.user.id,
+        target_wallet_address: walletAddress!,
+        new_balance: fetchedBalance,
+      });
+    }
 
     return jsonResponse({
       success: true,
       balance: fetchedBalance,
       source,
-      walletAddress: wallet.wallet_address,
+      walletAddress,
+      walletName,
+      walletOrigin,
       updatedAt: new Date().toISOString(),
     });
   } catch (error) {
