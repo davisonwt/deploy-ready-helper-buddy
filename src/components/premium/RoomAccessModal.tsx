@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useWallet } from '@/hooks/useWallet';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 
 interface RoomAccessModalProps {
   open: boolean;
@@ -23,7 +23,6 @@ export function RoomAccessModal({
   onAccessGranted
 }: RoomAccessModalProps) {
   const { user } = useAuth();
-  const { connected, balance, connectWallet } = useWallet();
   const { formatAmount } = useCurrency();
   const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
@@ -36,35 +35,28 @@ export function RoomAccessModal({
     }
 
     if (room.price > 0) {
-      if (!connected) {
-        toast.error('Please connect your wallet to purchase access');
-        await connectWallet();
-        return;
-      }
-
-      if (parseFloat(balance) < room.price) {
-        toast.error(`Insufficient balance. You need ${formatAmount(room.price)}`);
-        return;
-      }
+      toast.info('Binance Pay integration coming soon!');
+      // TODO: Implement Binance Pay purchase flow
+      return;
     }
 
     setProcessing(true);
 
     try {
-      // Grant room access
+      // Grant free room access
       const { error: accessError } = await supabase
         .from('premium_room_access')
         .insert({
           user_id: user.id,
           room_id: room.id,
           access_granted_at: new Date().toISOString(),
-          payment_amount: room.price,
-          payment_status: room.price > 0 ? 'completed' : 'free'
+          payment_amount: 0,
+          payment_status: 'free'
         });
 
       if (accessError) throw accessError;
 
-      toast.success(room.price > 0 ? 'Access purchased successfully!' : 'Welcome to the room!');
+      toast.success('Welcome to the room!');
       onAccessGranted?.();
       onOpenChange(false);
     } catch (error: any) {
@@ -82,33 +74,34 @@ export function RoomAccessModal({
           <DialogTitle>{room.price > 0 ? 'Purchase Room Access' : 'Join Room'}</DialogTitle>
           <DialogDescription>
             {room.price > 0 
-              ? 'Complete your purchase to access all room content'
+              ? 'Pay with USDC via Binance Pay'
               : 'Join this room to access all content'
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {room.price > 0 && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                All payments are processed through Binance Pay using USDC
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             <p className="text-sm font-medium">Room: {room.title}</p>
             <p className="text-sm text-muted-foreground">{room.description}</p>
           </div>
 
           {room.price > 0 && (
-            <>
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">Total:</span>
-                  <span className="text-2xl font-bold">{formatAmount(room.price)}</span>
-                </div>
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Total:</span>
+                <span className="text-2xl font-bold">{formatAmount(room.price)}</span>
               </div>
-
-              {connected && (
-                <div className="text-sm text-muted-foreground">
-                  Your balance: {formatAmount(balance)}
-                </div>
-              )}
-            </>
+            </div>
           )}
         </div>
 
@@ -118,7 +111,7 @@ export function RoomAccessModal({
           </Button>
           <Button onClick={handleJoinRoom} disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : (room.price > 0 ? 'Purchase Access' : 'Join Room')}
+            {processing ? 'Processing...' : (room.price > 0 ? 'Pay with Binance Pay' : 'Join Room')}
           </Button>
         </DialogFooter>
       </DialogContent>
