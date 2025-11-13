@@ -102,8 +102,8 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
                 When you're ready to make a bestowal:
               </p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                <li>• Click "Connect Wallet" on the payment page</li>
-                <li>• Approve the connection in your Crypto.com DeFi Wallet app</li>
+                <li>• Open your Binance app</li>
+                <li>• Use Binance Pay to send USDC</li>
                 <li>• Select amount and confirm the transaction</li>
                 <li>• Your bestowal will be confirmed in seconds!</li>
               </ul>
@@ -121,16 +121,16 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('https://help.crypto.com/en/collections/260584-crypto-com-defi-wallet', '_blank')}
+              onClick={() => window.open('https://www.binance.com/en/support/faq/binance-pay', '_blank')}
             >
-              Wallet Help Center <ExternalLink className="ml-2 h-3 w-3" />
+              Binance Pay Help <ExternalLink className="ml-2 h-3 w-3" />
             </Button>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('https://cronos.org/faq', '_blank')}
+              onClick={() => window.open('https://www.binance.com/en/usdc', '_blank')}
             >
-              Cronos Network FAQ <ExternalLink className="ml-2 h-3 w-3" />
+              USDC Guide <ExternalLink className="ml-2 h-3 w-3" />
             </Button>
           </div>
         </div>

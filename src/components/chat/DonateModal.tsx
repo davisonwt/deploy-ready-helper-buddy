@@ -28,7 +28,7 @@ export const DonateModal: FC<DonateModalProps> = ({
   const handleDonate = () => {
     // Mock webhook call: Split 90% to hostWallet, 10% to tithing
     console.log('Donation processed:', { hostWallet, amount });
-    // TODO: Replace with real Crypto.com Pay SDK
+    // TODO: Replace with real Binance Pay integration
     onClose();
   };
 

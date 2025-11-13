@@ -93,7 +93,7 @@ export default function VideoGifting({ video, onGiftSent }) {
                   <Wallet className="h-8 w-8 mx-auto mb-2 text-amber-600" />
                   <p className="text-amber-800 mb-3">Video gifting requires wallet setup</p>
                   <p className="text-sm text-muted-foreground">
-                    Configure your Crypto.com wallet in Wallet Settings to send gifts
+                    Configure your Binance Pay wallet in Wallet Settings to send gifts
                   </p>
                 </CardContent>
               </Card>

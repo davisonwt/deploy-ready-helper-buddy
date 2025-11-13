@@ -128,7 +128,7 @@ export default function BrowseOrchardsPage() {
       goal_amount: ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) * (orchard.pocket_price || 0),
       grower_name: orchard.profiles?.display_name || 
                    `${orchard.profiles?.first_name || ''} ${orchard.profiles?.last_name || ''}`.trim() || 
-                   'Anonymous Grower',
+                   'Anonymous Sower',
       main_image: orchard.images?.[0] || null // Already processed by processOrchardsUrls
     }))
   }, [orchards])

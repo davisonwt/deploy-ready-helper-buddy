@@ -173,7 +173,7 @@ export default function OrchardCreatedPage() {
             <div className="flex justify-center space-x-3 mt-4">
               <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
                 <Crown className="h-3 w-3 mr-1" />
-                Grower Status
+                Sower Status
               </Badge>
               <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                 <Sparkles className="h-3 w-3 mr-1" />

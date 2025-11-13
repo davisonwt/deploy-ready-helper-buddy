@@ -44,7 +44,7 @@ const PaymentModal = ({
   const paymentMethods = [
     {
       id: 'usdc',
-      name: 'USDC Wallet (Crypto.com)',
+      name: 'USDC Wallet (Binance Pay)',
       icon: <Coins className="h-5 w-5" />,
       description: connected ? `Balance: $${balance.toFixed(2)} USDC` : 'Low fees • Instant transfer',
       color: 'bg-emerald-50 border-emerald-200 text-emerald-800',

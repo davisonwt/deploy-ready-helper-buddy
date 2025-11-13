@@ -28,7 +28,7 @@ export default function UsdcPayment({ amount, orchardId, onSuccess }: UsdcPaymen
 
   const handlePayment = async () => {
     if (!connected || !publicKey) {
-      toast.error('Please connect your Crypto.com wallet first');
+      toast.error('Please connect your Binance Pay wallet first');
       return;
     }
 
@@ -122,7 +122,7 @@ export default function UsdcPayment({ amount, orchardId, onSuccess }: UsdcPaymen
       <CardContent className="space-y-4">
         {!connected ? (
           <Button onClick={connectWallet} className="w-full">
-            Connect Crypto.com Wallet
+            Connect Binance Pay Wallet
           </Button>
         ) : (
           <>

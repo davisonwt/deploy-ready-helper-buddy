@@ -6,7 +6,7 @@ interface WalletDistribution {
   s2gholding: string;
   s2gbestow: string;
   sower: string;
-  grower?: string;
+  productWhispers?: string;
 }
 
 interface PaymentDetails {
@@ -69,11 +69,11 @@ export function useBinancePay() {
 
       // Calculate distribution amounts based on bestowal map
       const tithingAdminPercent = 0.15; // 15% (10% tithing + 5% admin)
-      const growerPercent = details.growerId ? 0.10 : 0; // 10% if grower exists
-      const sowerPercent = 1 - tithingAdminPercent - growerPercent;
+      const productWhispersPercent = details.growerId ? 0.10 : 0; // 10% if product whispers exists
+      const sowerPercent = 1 - tithingAdminPercent - productWhispersPercent;
 
       const tithingAdminAmount = details.amount * tithingAdminPercent;
-      const growerAmount = details.amount * growerPercent;
+      const productWhispersAmount = details.amount * productWhispersPercent;
       const sowerAmount = details.amount * sowerPercent;
 
       // Create bestowal record
@@ -94,8 +94,8 @@ export function useBinancePay() {
             tithing_admin_amount: tithingAdminAmount,
             sower_wallet: wallets.sower,
             sower_amount: sowerAmount,
-            grower_wallet: wallets.grower,
-            grower_amount: growerAmount
+            grower_wallet: wallets.productWhispers,
+            grower_amount: productWhispersAmount
           }
         })
         .select()
