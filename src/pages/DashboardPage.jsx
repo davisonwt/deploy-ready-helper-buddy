@@ -33,9 +33,7 @@ import LiveActivityWidget from '@/components/LiveActivityWidget'
 import { GamificationHUD } from '@/components/gamification/GamificationHUD'
 import { GamificationFloatingButton } from '@/components/gamification/GamificationFloatingButton'
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
-import { useWallet } from '@/hooks/useWallet'
-import { ethers } from 'ethers'
-import { USDC_ADDRESS, USDC_ABI, CRONOS_RPC_URL, formatUSDC } from '@/lib/cronos'
+// Binance Pay - no wallet connection needed
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
@@ -88,56 +86,7 @@ export default function DashboardPage() {
   const [rolesLoading, setRolesLoading] = useState(false)
   const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
 
-  // Wallet visibility (connected or saved wallet)
-  const { connected, walletAddress: connectedAddress, balance: hookBalance, connectWallet } = useWallet()
-  const [walletAddress, setWalletAddress] = useState(null)
-  const [walletBalance, setWalletBalance] = useState('0')
-  const [walletLoading, setWalletLoading] = useState(false)
-
-  const fetchBalanceForAddress = async (addr) => {
-    try {
-      setWalletLoading(true)
-      const provider = new ethers.JsonRpcProvider(CRONOS_RPC_URL)
-      const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, provider)
-      const bal = await usdc.balanceOf(addr)
-      setWalletBalance(ethers.formatUnits(bal, 6))
-    } catch (e) {
-      console.error('Dashboard: balance fetch error', e)
-    } finally {
-      setWalletLoading(false)
-    }
-  }
-
-  const loadWalletInfo = async () => {
-    try {
-      if (connected && connectedAddress) {
-        setWalletAddress(connectedAddress)
-        setWalletBalance(hookBalance || '0')
-        return
-      }
-      if (!user?.id) return
-      const { data, error } = await supabase
-        .from('user_wallets')
-        .select('wallet_address')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle()
-      if (error) {
-        console.warn('Dashboard: user_wallets lookup error', error)
-      }
-      const addr = data?.wallet_address
-      if (addr) {
-        setWalletAddress(addr)
-        await fetchBalanceForAddress(addr)
-      }
-    } catch (e) {
-      console.error('Dashboard: loadWalletInfo error', e)
-    }
-  }
-
-  useEffect(() => {
-    loadWalletInfo()
-  }, [connected, connectedAddress, hookBalance, user?.id])
+  // Binance Pay - no wallet state needed
 
   useEffect(() => {
     let mounted = true
@@ -376,11 +325,11 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Quick access</p>
-                  <h3 className="text-lg font-semibold text-foreground">Wallet Settings for Payments</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Manage your organization's payment wallet</p>
+                  <h3 className="text-lg font-semibold text-foreground">Binance Pay Payment Settings</h3>
+                  <p className="text-sm text-muted-foreground mt-1">View organization payment wallet configuration</p>
                 </div>
                 <Link to="/wallet-settings">
-                  <Button className="ml-4">Open Wallet Settings</Button>
+                  <Button className="ml-4">View Payment Settings</Button>
                 </Link>
               </div>
             </CardContent>
@@ -460,46 +409,37 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Wallet Settings Link */}
+            {/* Binance Pay Payment Info */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <DollarSign className="h-5 w-5 mr-2" />
-                  Wallet Settings
+                  Payment System
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
-                    Configure your wallet and view your USDC balance.
+                    All payments are processed through Binance Pay using USDC
                   </p>
 
-                  <div className="rounded-lg border border-border p-4 bg-card/50">
-                    <div className="text-xs text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>Address</div>
-                    <div className="font-mono text-sm text-foreground break-all">
-                      {walletAddress ? `${walletAddress.slice(0, 10)}...${walletAddress.slice(-8)}` : 'Not connected'}
-                    </div>
-                    <div className="mt-3 text-xs text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>Balance (USDC)</div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-semibold text-foreground">
-                        {walletLoading ? '...' : `${formatUSDC(walletBalance)} USDC`}
-                      </span>
-                      <Button variant="outline" size="sm" onClick={loadWalletInfo} disabled={walletLoading}>
-                        {walletLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Refresh'}
-                      </Button>
+                  <div className="rounded-lg border border-primary/20 p-4 bg-primary/5">
+                    <div className="text-xs font-semibold text-foreground mb-2">💰 Payment Currency</div>
+                    <div className="text-lg font-bold text-foreground">USDC (USD Coin)</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      via Binance Pay
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link to="/wallet-settings">
-                      <Button className="w-full">Manage Wallet</Button>
-                    </Link>
-                    {!connected && (
-                      <Button variant="secondary" className="w-full" onClick={connectWallet}>
-                        Connect Wallet
-                      </Button>
-                    )}
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <p>✓ No wallet connection required</p>
+                    <p>✓ Pay directly from Binance app</p>
+                    <p>✓ Instant transactions</p>
                   </div>
+
+                  <Link to="/wallet-settings">
+                    <Button className="w-full">View Payment Settings</Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

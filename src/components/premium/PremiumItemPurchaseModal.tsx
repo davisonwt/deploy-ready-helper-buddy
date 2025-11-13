@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useWallet } from '@/hooks/useWallet';
 import { useCurrency } from '@/hooks/useCurrency';
-import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 
 interface PremiumItemPurchaseModalProps {
   open: boolean;
@@ -26,7 +25,6 @@ export function PremiumItemPurchaseModal({
   onPurchaseComplete
 }: PremiumItemPurchaseModalProps) {
   const { user } = useAuth();
-  const { connected, balance, connectWallet } = useWallet();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
 
@@ -36,32 +34,8 @@ export function PremiumItemPurchaseModal({
       return;
     }
 
-    if (!connected) {
-      toast.error('Please connect your wallet first');
-      await connectWallet();
-      return;
-    }
-
-    if (parseFloat(balance) < item.price) {
-      toast.error(`Insufficient balance. You need ${formatAmount(item.price)}`);
-      return;
-    }
-
-    setProcessing(true);
-
-    try {
-      // Generate a payment reference (in production this would come from blockchain tx)
-      const paymentRef = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      toast.success(`${itemType} purchased successfully!`);
-      onPurchaseComplete?.(paymentRef);
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Purchase failed:', error);
-      toast.error(error.message || 'Purchase failed');
-    } finally {
-      setProcessing(false);
-    }
+    toast.info('Binance Pay integration coming soon!');
+    // TODO: Implement Binance Pay purchase flow
   };
 
   return (
@@ -70,11 +44,18 @@ export function PremiumItemPurchaseModal({
         <DialogHeader>
           <DialogTitle>Purchase {itemType}</DialogTitle>
           <DialogDescription>
-            Complete your purchase to access this content
+            Pay with USDC via Binance Pay
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              All payments are processed through Binance Pay using USDC
+            </AlertDescription>
+          </Alert>
+
           <div className="space-y-2">
             <p className="text-sm font-medium">Item: {item.name}</p>
             <p className="text-sm text-muted-foreground">
@@ -88,12 +69,6 @@ export function PremiumItemPurchaseModal({
               <span className="text-2xl font-bold">{formatAmount(item.price)}</span>
             </div>
           </div>
-
-          {connected && (
-            <div className="text-sm text-muted-foreground">
-              Your balance: {formatAmount(balance)}
-            </div>
-          )}
         </div>
 
         <DialogFooter>
@@ -102,7 +77,7 @@ export function PremiumItemPurchaseModal({
           </Button>
           <Button onClick={handlePurchase} disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : 'Purchase'}
+            {processing ? 'Processing...' : 'Pay with Binance Pay'}
           </Button>
         </DialogFooter>
       </DialogContent>
