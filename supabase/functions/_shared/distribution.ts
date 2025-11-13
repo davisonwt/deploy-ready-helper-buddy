@@ -13,6 +13,13 @@ export interface DistributionData {
   grower_amount?: number | null;
   sower_user_id?: string;
   grower_user_id?: string | null;
+  mode: "automatic" | "manual";
+  hold_reason?: string | null;
+  orchard_type?: string | null;
+  courier_required?: boolean;
+  proof_sent_at?: string | null;
+  manual_release_at?: string | null;
+  manual_release_user_id?: string | null;
   percentages: {
     holding: number;
     tithing_admin: number;
@@ -29,6 +36,10 @@ export interface DistributionContext {
   totalAmount: number;
   currency: string;
   growerUserId?: string | null;
+  distributionMode?: "automatic" | "manual";
+  holdReason?: string | null;
+  orchardType?: string | null;
+  courierRequired?: boolean;
 }
 
 const DEFAULT_TITHING_PERCENT = Number(
@@ -43,6 +54,7 @@ export async function buildDistributionData(
   supabase: SupabaseClient,
   context: DistributionContext,
 ): Promise<DistributionData> {
+  const distributionMode = context.distributionMode ?? "automatic";
   const tithingPercent = clampPercentage(DEFAULT_TITHING_PERCENT);
   const growerPercent = context.growerUserId
     ? clampPercentage(DEFAULT_GROWER_PERCENT)
@@ -101,6 +113,13 @@ export async function buildDistributionData(
     grower_wallet: growerWallet,
     grower_amount: growerAmount || null,
     grower_user_id: context.growerUserId ?? null,
+    mode: distributionMode,
+    hold_reason: context.holdReason ?? null,
+    orchard_type: context.orchardType ?? null,
+    courier_required: context.courierRequired ?? false,
+    proof_sent_at: null,
+    manual_release_at: null,
+    manual_release_user_id: null,
     percentages: {
       holding: 1,
       tithing_admin: tithingPercent,

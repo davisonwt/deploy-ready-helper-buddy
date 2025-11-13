@@ -91,5 +91,14 @@ This project now includes a full Binance Pay payment flow with automatic bestowa
 - **Webhook URL**: configure Binance Pay to post to  
   `https://<your-supabase-project>.functions.supabase.co/binance-pay-webhook`
 - **UI flow**: the Binance Pay button now invokes the edge function and opens the official checkout experience. The success page informs users that confirmation happens automatically via webhook.
+- **Distribution rules**:
+  - *Standard orchards* – payments settle in `s2gholding` until a Gosat releases them through the manual distribution queue.
+  - *Full value orchards with courier* – follow the same holding pattern until delivery is confirmed.
+  - *Full value orchards without courier* and *Sow2Grow community products* – funds are distributed instantly to the sower, product whispers (when applicable), and `s2gbestow`.
+  - Every confirmed bestowal generates a proof message delivered to the bestower’s 1-on-1 chat with a Gosat.
+- **Wallet experience**:
+  - The dashboard and wallet settings show only the signed-in user’s personal Binance Pay balance, with a guided link flow for connecting a Pay ID.
+  - Admins/Gosats can top up or inspect organization wallets via the wallet manager and the manual distribution queue (`Wallet Settings → Pending Manual Distributions`).
+  - Attempting a bestowal with insufficient personal balance opens an in-app prompt directing the user to top up first.
 
 Ensure the `organization_wallets` table has active records for `s2gholding`, `s2gbestow`, and (optionally) `s2gdavison`, and each sower has an active Binance Pay wallet in `user_wallets` for payouts.
