@@ -2,6 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
 import { WalletOnboardingGuide } from '@/components/wallet/WalletOnboardingGuide'
+import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 
 export default function WalletSettingsPage() {
   return (
@@ -12,10 +13,13 @@ export default function WalletSettingsPage() {
           View Binance Pay wallet configuration and learn how to make payments
         </p>
 
-        {/* Onboarding Guide */}
         <div className="mb-6">
           <WalletOnboardingGuide />
         </div>
+
+          <div className="mb-6">
+            <BinanceWalletManager showTopUpActions />
+          </div>
 
         {/* Organization Wallet Setup (Admin View) */}
         <OrganizationWalletSetup />

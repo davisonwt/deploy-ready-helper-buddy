@@ -34,6 +34,22 @@ export interface BinanceOrderResponse {
   [key: string]: unknown;
 }
 
+export interface BinanceBalanceDetail {
+  asset?: string;
+  assetCode?: string;
+  currency?: string;
+  balance?: string;
+  totalAmount?: string;
+  availableAmount?: string;
+  freezeAmount?: string;
+  [key: string]: unknown;
+}
+
+export interface BinanceBalanceResponse {
+  balanceDetails?: BinanceBalanceDetail[];
+  [key: string]: unknown;
+}
+
 export interface TransferInstruction {
   requestId: string;
   payeeId: string;
@@ -194,6 +210,32 @@ export class BinancePayClient {
     }
 
     return response.data as BinanceTransferResponse;
+  }
+
+  async getWalletBalance(
+    params: {
+      payeeId: string;
+      payeeType?: string;
+    },
+  ): Promise<BinanceBalanceResponse> {
+    const requestBody = JSON.stringify({
+      merchantId: this.config.merchantId,
+      payeeId: params.payeeId,
+      payeeType: params.payeeType ?? "PAY_ID",
+    });
+
+    const response = await this.privateRequest(
+      "/binancepay/openapi/v3/balance",
+      requestBody,
+    );
+
+    if (response.code !== "SUCCESS") {
+      throw new Error(
+        `Failed to fetch Binance Pay balance: ${response.code} - ${response.errorMessage ?? response.message}`,
+      );
+    }
+
+    return response.data as BinanceBalanceResponse;
   }
 
   async verifyWebhookSignature(
