@@ -71,3 +71,22 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Binance Pay Integration
+
+This project now includes a full Binance Pay payment flow with automatic bestowal distribution.
+
+- **Edge functions**:
+  - `create-binance-pay-order` – creates a Binance Pay order, persists the bestowal, and returns the hosted checkout URL.
+  - `binance-pay-webhook` – verifies Binance signatures, confirms payments, and triggers wallet distribution.
+  - `distribute-bestowal` – reusable distribution handler that transfers funds based on the stored bestowal map.
+- **Environment variables** (set in Supabase Edge Function config):
+  - `BINANCE_PAY_API_KEY`
+  - `BINANCE_PAY_API_SECRET`
+  - `BINANCE_PAY_MERCHANT_ID`
+  - Optional: `BINANCE_PAY_API_BASE_URL`, `BINANCE_PAY_TRADE_TYPE`, `BESTOWAL_TITHING_PERCENT`, `BESTOWAL_GROWER_PERCENT`, `PUBLIC_SITE_URL`
+- **Webhook URL**: configure Binance Pay to post to  
+  `https://<your-supabase-project>.functions.supabase.co/binance-pay-webhook`
+- **UI flow**: the Binance Pay button now invokes the edge function and opens the official checkout experience. The success page informs users that confirmation happens automatically via webhook.
+
+Ensure the `organization_wallets` table has active records for `s2gholding`, `s2gbestow`, and (optionally) `s2gdavison`, and each sower has an active Binance Pay wallet in `user_wallets` for payouts.

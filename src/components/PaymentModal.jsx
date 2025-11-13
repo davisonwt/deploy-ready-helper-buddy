@@ -12,7 +12,6 @@ const PaymentModal = ({
   orchardId, 
   pocketsCount = 0, 
   orchardTitle = "Orchard",
-  sowerId,
   growerId,
   onPaymentComplete
 }) => {
@@ -75,7 +74,6 @@ const PaymentModal = ({
             orchardId={orchardId}
             amount={amount}
             pocketsCount={pocketsCount}
-            sowerId={sowerId}
             growerId={growerId}
             onSuccess={() => {
               if (onPaymentComplete) {

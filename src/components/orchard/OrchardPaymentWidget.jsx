@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { BinancePayButton } from '@/components/payment/BinancePayButton';
 
-const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availablePockets, sowerId, growerId }) => {
+const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availablePockets, growerId }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
   const [message, setMessage] = useState('');
   
@@ -93,7 +93,6 @@ const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availableP
           amount={totalAmount}
           pocketsCount={pocketsCount}
           message={message}
-          sowerId={sowerId}
           growerId={growerId}
           disabled={!user || availablePockets === 0}
           onSuccess={() => {
