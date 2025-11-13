@@ -34,6 +34,7 @@ import { GamificationHUD } from '@/components/gamification/GamificationHUD'
 import { GamificationFloatingButton } from '@/components/gamification/GamificationFloatingButton'
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
+import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 import { MyApprovedSlots } from '@/components/radio/MyApprovedSlots'
 import { LiveSessionsWidget } from '@/components/dashboard/LiveSessionsWidget'
 import { CoHostInvites } from '@/components/radio/CoHostInvites'
@@ -409,40 +410,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Binance Pay Payment Info */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DollarSign className="h-5 w-5 mr-2" />
-                  Payment System
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
-                    All payments are processed through Binance Pay using USDC
-                  </p>
-
-                  <div className="rounded-lg border border-primary/20 p-4 bg-primary/5">
-                    <div className="text-xs font-semibold text-foreground mb-2">💰 Payment Currency</div>
-                    <div className="text-lg font-bold text-foreground">USDC (USD Coin)</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      via Binance Pay
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <p>✓ No wallet connection required</p>
-                    <p>✓ Pay directly from Binance app</p>
-                    <p>✓ Instant transactions</p>
-                  </div>
-
-                  <Link to="/wallet-settings">
-                    <Button className="w-full">View Payment Settings</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+            <BinanceWalletManager className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour" />
 
             {/* Global Timezone Support */}
             <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl timezone-tour">

@@ -11,6 +11,8 @@ export interface DistributionData {
   sower_amount: number;
   grower_wallet?: string | null;
   grower_amount?: number | null;
+  sower_user_id?: string;
+  grower_user_id?: string | null;
   percentages: {
     holding: number;
     tithing_admin: number;
@@ -95,8 +97,10 @@ export async function buildDistributionData(
     tithing_admin_amount: tithingAmount,
     sower_wallet: sowerWallet,
     sower_amount: sowerAmount,
+    sower_user_id: context.orchardUserId,
     grower_wallet: growerWallet,
     grower_amount: growerAmount || null,
+    grower_user_id: context.growerUserId ?? null,
     percentages: {
       holding: 1,
       tithing_admin: tithingPercent,
@@ -159,6 +163,15 @@ export async function executeDistribution(
       currency: distribution.currency,
       response,
     });
+
+    if (distribution.sower_user_id) {
+      await incrementWalletBalance(
+        supabase,
+        distribution.sower_user_id,
+        distribution.sower_wallet,
+        distribution.sower_amount,
+      );
+    }
   }
 
   if (distribution.grower_wallet && (distribution.grower_amount ?? 0) > 0) {
@@ -177,6 +190,15 @@ export async function executeDistribution(
       currency: distribution.currency,
       response,
     });
+
+    if (distribution.grower_user_id) {
+      await incrementWalletBalance(
+        supabase,
+        distribution.grower_user_id,
+        distribution.grower_wallet,
+        distribution.grower_amount ?? 0,
+      );
+    }
   }
 
   await supabase
@@ -277,4 +299,35 @@ function clampPercentage(value: number): number {
 
 function roundAmount(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+async function incrementWalletBalance(
+  supabase: SupabaseClient,
+  userId: string,
+  walletAddress: string,
+  amountDelta: number,
+) {
+  try {
+    const { data: existing } = await supabase
+      .from("wallet_balances")
+      .select("usdc_balance")
+      .eq("user_id", userId)
+      .eq("wallet_address", walletAddress)
+      .maybeSingle();
+
+    const currentBalance = Number(existing?.usdc_balance ?? 0);
+    const newBalance = roundAmount(currentBalance + amountDelta);
+
+    await supabase.rpc("update_wallet_balance_secure", {
+      target_user_id: userId,
+      target_wallet_address: walletAddress,
+      new_balance: newBalance,
+    });
+  } catch (error) {
+    console.error(
+      "Failed to increment wallet balance for",
+      walletAddress,
+      ":", error,
+    );
+  }
 }
