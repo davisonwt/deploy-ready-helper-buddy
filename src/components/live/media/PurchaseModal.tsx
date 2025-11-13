@@ -149,7 +149,7 @@ export function PurchaseModal({ open, onOpenChange, mediaItem, onPurchaseComplet
               <div className="p-4 rounded-lg border bg-muted/50 text-center">
                 <Wallet className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  Pay with USDC on Cronos chain
+                  Pay with USDC via Binance Pay
                 </p>
               </div>
             </TabsContent>

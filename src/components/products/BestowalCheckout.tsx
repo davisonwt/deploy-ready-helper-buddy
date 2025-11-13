@@ -29,7 +29,7 @@ export default function BestowalCheckout() {
         const tithingAmount = amount * 0.10; // 10% tithing
         const adminFee = amount * 0.05; // 5% admin fee
         const sowerAmount = amount * 0.70; // 70% to sower
-        const growerAmount = amount * 0.15; // 15% to grower
+        const productWhispersAmount = amount * 0.15; // 15% to product whispers
 
         // Create bestowal record
         const { error: bestowError } = await supabase
@@ -41,7 +41,7 @@ export default function BestowalCheckout() {
             amount,
             s2g_fee: adminFee,
             sower_amount: sowerAmount,
-            grower_amount: growerAmount,
+            grower_amount: productWhispersAmount,
             status: 'completed'
           }]);
 
@@ -149,7 +149,7 @@ export default function BestowalCheckout() {
             <span className="text-primary">${(totalAmount * 0.70).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>To Growers (15%)</span>
+            <span>To Product Whispers (15%)</span>
             <span className="text-accent">${(totalAmount * 0.15).toFixed(2)}</span>
           </div>
           <Separator />

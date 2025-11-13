@@ -142,8 +142,8 @@ function IndexContent() {
           </p>
           
           <p className="text-lg md:text-xl text-white/80 mb-12 max-w-3xl mx-auto italic">
-            a fertile ground where <span className="text-green-300">every grower finds their orchard</span>, 
-            <span className="text-blue-300"> every seed becomes a fruit-bearing tree</span>, 
+            a fertile ground where <span className="text-green-300">every sower finds their orchard</span>, 
+            <span className="text-blue-300"> every seed becomes a fruit-bearing tree</span>,
             and <span className="text-amber-300">every harvest meets the hands destined to gather it</span>.
           </p>
           
@@ -182,7 +182,7 @@ function IndexContent() {
                 </div>
                 <h3 className="text-2xl font-bold text-brown-800 mb-4">community support</h3>
                 <p className="text-brown-700 leading-relaxed italic">
-                  growers sow, bestowers flow;<br />
+                  sowers sow, bestowers flow;<br />
                   shared harvest makes the body grow.
                 </p>
               </CardContent>

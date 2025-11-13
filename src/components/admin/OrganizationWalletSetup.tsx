@@ -66,8 +66,8 @@ export function OrganizationWalletSetup() {
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>All payments first go to <strong>s2gholding</strong></li>
               <li>15% distributed to <strong>s2gbestow</strong> (10% tithing + 5% admin)</li>
-              <li>75-85% goes to the sower (<strong>s2gdavison</strong>)</li>
-              <li>10% to grower (if applicable)</li>
+              <li>Depending on the "product whispers commission" set by the sower; the sowers bestowal will be bestowed to their own personal Binance wallet</li>
+              <li>Depending on the "product whispers commission" set by the sower; the product whispers bestowal will be bestowed to their own personal Binance wallet</li>
             </ul>
           </AlertDescription>
         </Alert>

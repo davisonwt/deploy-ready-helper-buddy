@@ -278,7 +278,7 @@ export default function ProfilePage() {
     totalReceived: 1800,
     orchardsCreated: 3,
     orchardsSupported: 12,
-    communityRank: "Faithful Grower",
+    communityRank: "Faithful Sower",
     verificationLevel: "Verified"
   }
 

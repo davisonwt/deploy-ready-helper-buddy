@@ -474,7 +474,7 @@ function Layout({ children }) {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                A scriptural community giving platform where growers create orchards and bestowers help them grow and stand up together.
+                A scriptural community giving platform where sowers create orchards and bestowers help them grow and stand up together.
               </p>
             </div>
             

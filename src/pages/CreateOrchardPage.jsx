@@ -1153,7 +1153,7 @@ const fetchOrchardById = async (oid) => {
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor="allowCommissionMarketing" className="text-sm font-medium">
-                  Allow other content marketers to promote this orchard for commissions
+                  Allow other product whispers to promote this orchard for commissions
                 </label>
               </div>
               
@@ -1172,7 +1172,7 @@ const fetchOrchardById = async (oid) => {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-600 mt-1">
-                    Higher commissions attract more marketers but reduce your final earnings
+                    Higher commissions attract more product whispers but reduce your final earnings
                   </p>
                 </div>
               )}
