@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const ORGANIZATION_SOWER_WALLET_NAME =
+const DEFAULT_ORGANIZATION_WALLET_NAME =
   import.meta.env.VITE_ORGANIZATION_SOWER_WALLET_NAME ?? 's2gdavison';
 
 interface LinkedWallet {
@@ -20,20 +20,34 @@ interface WalletBalance {
   source: 'binance' | 'cache';
 }
 
-export function useBinanceWallet() {
-    const [wallet, setWallet] = useState<LinkedWallet | null>(null);
+interface UseBinanceWalletOptions {
+  includeOrganizationWallet?: boolean;
+  organizationWalletName?: string;
+}
+
+export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
+  const {
+    includeOrganizationWallet = false,
+    organizationWalletName = DEFAULT_ORGANIZATION_WALLET_NAME,
+  } = options;
+
+  const [wallet, setWallet] = useState<LinkedWallet | null>(null);
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [linking, setLinking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    const loadWallet = useCallback(async () => {
+  const loadWallet = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError) {
         throw authError;
       }
@@ -44,112 +58,123 @@ export function useBinanceWallet() {
         return;
       }
 
-        const { data: walletRecord, error: walletError } = await supabase
-          .from('user_wallets')
-          .select('wallet_address, is_active, is_primary, updated_at')
-          .eq('wallet_type', 'binance_pay')
-          .eq('is_active', true)
-          .order('is_primary', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      const { data: walletRecord, error: walletError } = await supabase
+        .from('user_wallets')
+        .select('wallet_address, wallet_type, is_active, is_primary, updated_at')
+        .eq('user_id', user.id)
+        .eq('wallet_type', 'binance_pay')
+        .eq('is_active', true)
+        .order('is_primary', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (walletError && walletError.code !== 'PGRST116') {
         throw walletError;
       }
 
-      if (!walletRecord?.wallet_address) {
-          const { data: orgWallet, error: orgError } = await supabase
-            .from('organization_wallets')
-            .select('wallet_address, wallet_name')
-            .eq('wallet_name', ORGANIZATION_SOWER_WALLET_NAME)
-            .eq('is_active', true)
-            .maybeSingle();
-
-          if (orgError && orgError.code !== 'PGRST116') {
-            if (orgError.code === '42501') {
-              setError('You do not have permission to view the organization wallet.');
-              setWallet(null);
-              setBalance(null);
-              return;
-            }
-            throw orgError;
-          }
-
-          if (!orgWallet?.wallet_address) {
-            setWallet(null);
-            setBalance(null);
-            return;
-          }
-
-          setWallet({
-            wallet_address: orgWallet.wallet_address,
-            wallet_name: orgWallet.wallet_name ?? ORGANIZATION_SOWER_WALLET_NAME,
-            origin: 'organization',
-          });
-          try {
-            const { data: refreshed, error: refreshedError } = await supabase.functions.invoke<{
-              success: boolean;
-              balance?: number;
-              source?: 'binance' | 'cache';
-              updatedAt?: string | null;
-            }>('refresh-binance-wallet-balance', {
-              body: { walletName: orgWallet.wallet_name ?? ORGANIZATION_SOWER_WALLET_NAME },
-            });
-
-            if (refreshedError) {
-              console.warn('Failed to auto-refresh organization wallet balance:', refreshedError);
-              setBalance(null);
-            } else if (refreshed?.success && typeof refreshed.balance === 'number') {
-              setBalance({
-                usdc_balance: refreshed.balance,
-                updated_at: refreshed.updatedAt ?? new Date().toISOString(),
-                source: refreshed.source ?? 'binance',
-              });
-            } else {
-              setBalance(null);
-            }
-          } catch (refreshError) {
-            console.warn('Auto refresh for organization wallet failed:', refreshError);
-            setBalance(null);
-          }
-          return;
-      }
-
+      if (walletRecord?.wallet_address) {
         setWallet({
           wallet_address: walletRecord.wallet_address,
+          origin: 'user',
           is_active: walletRecord.is_active,
           is_primary: walletRecord.is_primary,
           updated_at: walletRecord.updated_at,
-          origin: 'user',
         });
 
-      const { data: cachedBalance, error: balanceError } = await supabase
-        .from('wallet_balances')
-        .select('usdc_balance, updated_at')
+        const { data: cachedBalance, error: cachedError } = await supabase
+          .from('wallet_balances')
+          .select('usdc_balance, updated_at')
           .eq('wallet_address', walletRecord.wallet_address)
-        .maybeSingle();
+          .maybeSingle();
 
-      if (balanceError && balanceError.code !== 'PGRST116') {
-        throw balanceError;
+        if (cachedError && cachedError.code !== 'PGRST116') {
+          throw cachedError;
+        }
+
+        if (cachedBalance) {
+          setBalance({
+            usdc_balance: Number(cachedBalance.usdc_balance ?? 0),
+            updated_at: cachedBalance.updated_at ?? null,
+            source: 'cache',
+          });
+        } else {
+          setBalance(null);
+        }
+
+        return;
       }
 
-      if (cachedBalance) {
-        setBalance({
-          usdc_balance: Number(cachedBalance.usdc_balance ?? 0),
-          updated_at: cachedBalance.updated_at ?? null,
-          source: 'cache',
-        });
-      } else {
+      if (!includeOrganizationWallet) {
+        setWallet(null);
+        setBalance(null);
+        return;
+      }
+
+      const { data: orgWallet, error: orgError } = await supabase
+        .from('organization_wallets')
+        .select('wallet_address, wallet_name')
+        .eq('wallet_name', organizationWalletName)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (orgError && orgError.code !== 'PGRST116') {
+        if (orgError.code === '42501') {
+          setError('You do not have permission to view this organization wallet.');
+          setWallet(null);
           setBalance(null);
+          return;
+        }
+        throw orgError;
+      }
+
+      if (!orgWallet?.wallet_address) {
+        setWallet(null);
+        setBalance(null);
+        return;
+      }
+
+      setWallet({
+        wallet_address: orgWallet.wallet_address,
+        wallet_name: orgWallet.wallet_name ?? organizationWalletName,
+        origin: 'organization',
+      });
+
+      try {
+        const { data: refreshed, error: refreshedError } = await supabase.functions.invoke<{
+          success: boolean;
+          balance?: number;
+          source?: 'binance' | 'cache';
+          updatedAt?: string | null;
+        }>('refresh-binance-wallet-balance', {
+          body: { walletName: orgWallet.wallet_name ?? organizationWalletName },
+        });
+
+        if (refreshedError) {
+          console.warn('Failed to refresh organization wallet balance:', refreshedError);
+          setBalance(null);
+        } else if (refreshed?.success && typeof refreshed.balance === 'number') {
+          setBalance({
+            usdc_balance: refreshed.balance,
+            updated_at: refreshed.updatedAt ?? new Date().toISOString(),
+            source: refreshed.source ?? 'binance',
+          });
+        } else {
+          setBalance(null);
+        }
+      } catch (refreshError) {
+        console.warn('Organization wallet balance refresh failed:', refreshError);
+        setBalance(null);
       }
     } catch (err) {
       console.error('Failed to load Binance wallet:', err);
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
+      setWallet(null);
+      setBalance(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [includeOrganizationWallet, organizationWalletName]);
 
   const linkWallet = useCallback(async (payId: string) => {
     if (!payId?.trim()) {
@@ -187,16 +212,16 @@ export function useBinanceWallet() {
 
     setRefreshing(true);
     try {
-      const invokeOptions = wallet.origin === 'organization' && wallet.wallet_name
-        ? { body: { walletName: wallet.wallet_name } }
-        : undefined;
+      const invokeOptions =
+        wallet.origin === 'organization' && wallet.wallet_name
+          ? { body: { walletName: wallet.wallet_name } }
+          : undefined;
 
       const { data, error } = await supabase.functions.invoke<{
         success: boolean;
         balance?: number;
         source?: 'binance' | 'cache';
         updatedAt?: string | null;
-        walletOrigin?: 'user' | 'organization';
       }>('refresh-binance-wallet-balance', invokeOptions);
 
       if (error) {
@@ -220,7 +245,7 @@ export function useBinanceWallet() {
     } finally {
       setRefreshing(false);
     }
-  }, [wallet?.wallet_address, wallet?.origin, wallet?.wallet_name]);
+  }, [wallet?.wallet_address, wallet?.wallet_name, wallet?.origin]);
 
   const createTopUpOrder = useCallback(async (amount: number) => {
     if (!wallet?.wallet_address) {
@@ -240,7 +265,7 @@ export function useBinanceWallet() {
         clientOrigin: window.location.origin,
       };
 
-      if (wallet?.origin === 'organization' && wallet.wallet_name) {
+      if (wallet.origin === 'organization' && wallet.wallet_name) {
         body.walletName = wallet.wallet_name;
       }
 
@@ -262,7 +287,7 @@ export function useBinanceWallet() {
       console.error('Top-up error:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to create top-up order');
     }
-  }, [wallet?.wallet_address, wallet?.origin, wallet?.wallet_name]);
+  }, [wallet?.wallet_address, wallet?.wallet_name, wallet?.origin]);
 
   useEffect(() => {
     loadWallet();

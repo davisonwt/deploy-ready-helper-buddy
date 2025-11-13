@@ -17,21 +17,50 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("Supabase configuration missing for distribution handler");
-    }
+      if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+        throw new Error("Supabase configuration missing for distribution handler");
+      }
 
-    const supabaseClient = createClient(
-      supabaseUrl,
-      serviceRoleKey,
-      { auth: { persistSession: false } },
-    );
+      const authHeader = req.headers.get("Authorization");
 
-    const { bestowId } = await req.json();
+      if (!authHeader) {
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
+
+      const token = authHeader.replace("Bearer ", "");
+
+      const authClient = createClient(supabaseUrl, anonKey, {
+        auth: { persistSession: false },
+      });
+
+      const { data: userData, error: userError } = await authClient.auth
+        .getUser(token);
+
+      if (userError || !userData?.user) {
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
+
+      const supabaseClient = createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        { auth: { persistSession: false } },
+      );
+
+      const { data: isGosat } = await supabaseClient.rpc(
+        "is_admin_or_gosat",
+        { _user_id: userData.user.id },
+      );
+
+      if (!isGosat) {
+        return jsonResponse({ success: false, error: "Forbidden" }, 403);
+      }
+
+      const { bestowId } = await req.json();
 
     if (!bestowId) {
       throw new Error("bestowId is required");
@@ -61,11 +90,17 @@ serve(async (req) => {
       );
     }
 
-    const distribution = bestowal.distribution_data as DistributionData | null;
+      const distribution = bestowal.distribution_data as DistributionData | null;
 
     if (!distribution) {
       throw new Error("Distribution data is missing for this bestowal");
     }
+
+      if (distribution.mode !== "manual") {
+        throw new Error(
+          "This bestowal is configured for automatic distribution and cannot be triggered manually.",
+        );
+      }
 
     const binanceClient = new BinancePayClient();
 
@@ -75,6 +110,17 @@ serve(async (req) => {
       bestowal.id,
       distribution,
     );
+
+      const updatedDistribution = {
+        ...distribution,
+        manual_release_at: new Date().toISOString(),
+        manual_release_user_id: userData.user.id,
+      };
+
+      await supabaseClient
+        .from("bestowals")
+        .update({ distribution_data: updatedDistribution })
+        .eq("id", bestowal.id);
 
     return jsonResponse({
       success: true,

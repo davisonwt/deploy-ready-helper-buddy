@@ -82,19 +82,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const payload = parsed.data as RequestPayload;
+      const payload = parsed.data as RequestPayload;
 
-    const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
-    });
+      const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { persistSession: false },
+      });
 
-    const { data: orchard, error: orchardError } = await serviceClient
-      .from("orchards")
-      .select(
-        "id, title, user_id, pocket_price, currency, status, commission_rate, allow_commission_marketing",
-      )
-      .eq("id", payload.orchardId)
-      .single();
+      const { data: orchard, error: orchardError } = await serviceClient
+        .from("orchards")
+        .select(
+          "id, title, user_id, pocket_price, currency, status, commission_rate, allow_commission_marketing, orchard_type, courier_cost",
+        )
+        .eq("id", payload.orchardId)
+        .single();
 
     if (orchardError || !orchard) {
       console.error("Failed to fetch orchard:", orchardError);
@@ -111,15 +111,33 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const currency = orchard.currency ?? "USDC";
-    const distribution = await buildDistributionData(serviceClient, {
-      orchardId: orchard.id,
-      orchardTitle: orchard.title,
-      orchardUserId: orchard.user_id,
-      totalAmount: payload.amount,
-      currency,
-      growerUserId: payload.growerId ?? null,
-    });
+      const currency = orchard.currency ?? "USDC";
+      const orchardType = (orchard.orchard_type as string | null) ?? "standard";
+      const courierRequired = !!(orchard.courier_cost && Number(orchard.courier_cost) > 0);
+
+      let distributionMode: "manual" | "automatic" = "automatic";
+      let holdReason: string | null = null;
+
+      if (orchardType === "standard") {
+        distributionMode = "manual";
+        holdReason = "Standard orchard bestowal awaiting Gosat release from holding wallet.";
+      } else if (orchardType === "full_value" && courierRequired) {
+        distributionMode = "manual";
+        holdReason = "Courier delivery required; funds held in s2gholding until delivery confirmed.";
+      }
+
+      const distribution = await buildDistributionData(serviceClient, {
+        orchardId: orchard.id,
+        orchardTitle: orchard.title,
+        orchardUserId: orchard.user_id,
+        totalAmount: payload.amount,
+        currency,
+        growerUserId: payload.growerId ?? null,
+        distributionMode,
+        holdReason,
+        orchardType,
+        courierRequired,
+      });
 
     const { data: bestowal, error: insertError } = await serviceClient
       .from("bestowals")

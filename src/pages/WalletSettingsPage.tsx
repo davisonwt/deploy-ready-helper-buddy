@@ -1,8 +1,8 @@
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
 import { WalletOnboardingGuide } from '@/components/wallet/WalletOnboardingGuide'
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
+import { ManualDistributionQueue } from '@/components/wallet/ManualDistributionQueue'
 
 export default function WalletSettingsPage() {
   return (
@@ -23,6 +23,7 @@ export default function WalletSettingsPage() {
 
         {/* Organization Wallet Setup (Admin View) */}
         <OrganizationWalletSetup />
+        <ManualDistributionQueue />
       </div>
     </div>
   )

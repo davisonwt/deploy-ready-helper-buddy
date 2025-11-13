@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink } from 'lucide-react';
 import { useBinanceWallet } from '@/hooks/useBinanceWallet';
+import { useLocation } from 'react-router-dom';
 
 export interface BinanceWalletManagerProps {
   className?: string;
@@ -31,12 +32,20 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(50);
   const [showLinkField, setShowLinkField] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     if (!wallet) {
       setShowLinkField(false);
     }
   }, [wallet]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('topup') === '1') {
+      setTopUpDialogOpen(true);
+    }
+  }, [location.search]);
 
   const handleLink = async () => {
     if (!payIdInput.trim()) {
