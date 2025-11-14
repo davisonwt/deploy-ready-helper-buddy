@@ -427,3 +427,31 @@ input::placeholder, textarea::placeholder, select::placeholder {
     }
   }
 }
+
+@layer components {
+  /* Uniform placeholder surfaces across the app */
+  .bg-white,
+  .bg-white\/80,
+  .bg-white\/90,
+  .bg-white\/95,
+  .bg-gray-50,
+  .bg-slate-50,
+  .bg-neutral-50 {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--heading-primary)) !important;
+    border-color: hsl(var(--border)) !important;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+  }
+  .bg-white *,
+  .bg-white\/80 *,
+  .bg-white\/90 *,
+  .bg-white\/95 *,
+  .bg-gray-50 *,
+  .bg-slate-50 *,
+  .bg-neutral-50 * {
+    color: inherit !important;
+  }
+  /* Normalize legacy white borders */
+  .border-white\/40 { border-color: hsl(var(--border)) !important; }
+}
+
