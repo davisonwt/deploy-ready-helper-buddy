@@ -123,20 +123,28 @@ serve(async (req) => {
     let source: "binance" | "cache" = "cache";
 
     try {
+      console.log(`[${new Date().toISOString()}] Fetching balance for wallet: ${walletAddress}`);
       const balanceResponse = await binanceClient.getWalletBalance({
         wallet: "FUNDING_WALLET",
         currency: "USDC",
       });
 
+      console.log("[Balance Response]", JSON.stringify(balanceResponse, null, 2));
+
       // Response format: { balance: number, asset: string, fiat: string, ... }
       if (balanceResponse && typeof balanceResponse.balance === 'number') {
         fetchedBalance = balanceResponse.balance;
         source = "binance";
+        console.log(`✅ Balance fetched successfully: ${fetchedBalance} USDC`);
       } else {
         console.warn("Unexpected balance response format:", balanceResponse);
       }
     } catch (binanceError) {
-      console.warn("Binance balance fetch failed, falling back to cache:", binanceError);
+      console.error("❌ Binance API error:", {
+        error: binanceError instanceof Error ? binanceError.message : String(binanceError),
+        wallet: walletAddress,
+        timestamp: new Date().toISOString()
+      });
     }
 
     if (fetchedBalance === null) {
