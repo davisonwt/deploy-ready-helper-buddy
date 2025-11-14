@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: orchard, error: orchardError } = await serviceClient
         .from("orchards")
         .select(
-          "id, title, user_id, pocket_price, currency, status, commission_rate, allow_commission_marketing, orchard_type, courier_cost",
+          "id, title, user_id, pocket_price, currency, status, commission_rate, allow_commission_marketing, orchard_type, courier_cost, product_type",
         )
         .eq("id", payload.orchardId)
         .single();
@@ -114,17 +114,26 @@ const handler = async (req: Request): Promise<Response> => {
 
       const currency = orchard.currency ?? "USDC";
       const orchardType = (orchard.orchard_type as string | null) ?? "standard";
+      const productType = (orchard.product_type as string | null) ?? "physical";
       const courierRequired = !!(orchard.courier_cost && Number(orchard.courier_cost) > 0);
 
-      let distributionMode: "manual" | "automatic" = "automatic";
+      // Digital products go directly to user wallets (automatic distribution)
+      // Physical products go to s2gholding first (manual distribution after courier)
+      let distributionMode: "manual" | "automatic" = productType === "digital" ? "automatic" : "manual";
       let holdReason: string | null = null;
 
-      if (orchardType === "standard") {
+      if (productType === "digital") {
+        distributionMode = "automatic";
+        holdReason = null;
+      } else if (orchardType === "standard") {
         distributionMode = "manual";
         holdReason = "Standard orchard bestowal awaiting Gosat release from holding wallet.";
       } else if (orchardType === "full_value" && courierRequired) {
         distributionMode = "manual";
         holdReason = "Courier delivery required; funds held in s2gholding until delivery confirmed.";
+      } else {
+        distributionMode = "manual";
+        holdReason = "Physical product bestowal held in s2gholding until distribution approved.";
       }
 
       const distribution = await buildDistributionData(serviceClient, {
@@ -138,6 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
         holdReason,
         orchardType,
         courierRequired,
+        productType,
       });
 
     const { data: bestowal, error: insertError } = await serviceClient
@@ -161,7 +171,26 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create bestowal record");
     }
 
-    const binanceClient = new BinancePayClient();
+    // Load s2gholding wallet credentials for payment collection
+    const { data: holdingWallet } = await serviceClient
+      .from("organization_wallets")
+      .select("api_key, api_secret, merchant_id")
+      .eq("wallet_name", "s2gholding")
+      .eq("is_active", true)
+      .single();
+
+    if (!holdingWallet?.api_key || !holdingWallet?.api_secret) {
+      throw new Error("s2gholding wallet credentials not configured");
+    }
+
+    const binanceClient = new BinancePayClient({
+      apiKey: holdingWallet.api_key,
+      apiSecret: holdingWallet.api_secret,
+      merchantId: holdingWallet.merchant_id || "",
+      apiBaseUrl: "https://bpay.binanceapi.com",
+      defaultTradeType: "WEB",
+      walletName: "s2gholding"
+    });
     const { returnUrl, cancelUrl } = buildReturnUrls(
       req,
       payload,
