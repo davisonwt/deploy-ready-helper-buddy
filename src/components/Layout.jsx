@@ -113,7 +113,7 @@ function Layout({ children }) {
     {
       name: "ChatApp",
       icon: MessageSquare,
-      color: { bg: '#3B82F6', border: '#3B82F6', text: '#ffffff' },
+      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'chatapp-tour',
       items: [
         { name: "Grove Feed", href: "/grove-feed", icon: Sprout, badge: "NEW" },
@@ -126,7 +126,7 @@ function Layout({ children }) {
     {
       name: "My Content",
       icon: User,
-      color: { bg: '#ffd6a5', border: '#ffd6a5', text: '#9a3412' },
+      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'browse-orchards-tour',
       items: [
         { name: "My Orchards", href: "/my-orchards", icon: User },
@@ -139,7 +139,7 @@ function Layout({ children }) {
     {
       name: "Let It Rain",
       icon: "🌧️", // Using emoji instead of Lucide icon
-      color: { bg: '#ffffff', border: '#3B82F6', text: '#1e293b' },
+      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'tithing-tour',
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
@@ -149,7 +149,7 @@ function Layout({ children }) {
     {
       name: "Support",
       icon: Heart,
-      color: { bg: '#ffb3ba', border: '#ffb3ba', text: '#1e293b' },
+      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'support-tour',
       items: [
         { name: "Support Us", href: "/support-us", icon: Heart }
@@ -158,7 +158,7 @@ function Layout({ children }) {
       ...(shouldShowAdminButton ? [{
         name: "gosat's",
         icon: Settings,
-        color: { bg: '#20b2aa', border: '#20b2aa', text: '#ffffff' },
+        color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
         items: [
           { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
           { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },

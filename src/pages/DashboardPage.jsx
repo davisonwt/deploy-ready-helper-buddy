@@ -578,22 +578,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="mt-8 bg-white/80 border-white/40 shadow-xl quick-actions-tour">
+          <Card className="mt-8 bg-card border-border shadow-xl quick-actions-tour">
           <CardHeader>
-            <CardTitle style={{ 
-              color: 'hsl(280, 100%, 60%)', 
-              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-            }}>Quick Actions</CardTitle>
+            <CardTitle className="text-heading-primary">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to="/create-orchard">
                 <Button 
-                  className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    backgroundColor: '#fdffb6',
-                    color: '#a16207'
-                  }}
+                  className="w-full h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
                 >
                   <div className="text-center">
                     <Plus className="h-6 w-6 mx-auto mb-2" />
@@ -603,36 +596,25 @@ export default function DashboardPage() {
               </Link>
               
               <div 
-                className="w-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-4 pb-6 cursor-pointer font-medium overflow-visible"
-                style={{
-                  backgroundColor: '#166534'
-                }}
+                className="w-full bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-4 pb-6 cursor-pointer font-medium overflow-visible"
               >
                 <div className="text-center mb-3">
-                  <TreePine className="h-6 w-6 mx-auto mb-2" style={{ color: '#86efac' }} />
-                  <span className="font-medium" style={{ color: '#86efac' }}>Browse Orchards</span>
+                  <TreePine className="h-6 w-6 mx-auto mb-2 text-heading-primary" />
+                  <span className="font-medium text-heading-primary">Browse Orchards</span>
                 </div>
                 <div className="flex justify-center space-x-3 mt-4">
                   <Link to="/browse-orchards">
                     <div 
-                      className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        backgroundColor: '#caffbf',
-                        borderColor: '#166534'
-                      }}
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                     >
-                      <Users className="h-5 w-5" style={{ color: '#166534' }} />
+                      <Users className="h-5 w-5 text-heading-primary" />
                     </div>
                   </Link>
                   <Link to="/my-orchards">
                     <div 
-                      className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        backgroundColor: '#ffd6a5',
-                        borderColor: '#9a3412'
-                      }}
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                     >
-                      <User className="h-5 w-5" style={{ color: '#9a3412' }} />
+                      <User className="h-5 w-5 text-heading-primary" />
                     </div>
                   </Link>
                   <Link 
@@ -642,13 +624,9 @@ export default function DashboardPage() {
                     }}
                   >
                     <div 
-                      className="w-10 h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                      style={{
-                        backgroundColor: '#e9d5ff',
-                        borderColor: '#7c3aed'
-                      }}
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                     >
-                      <Heart className="h-5 w-5" style={{ color: '#7c3aed' }} />
+                      <Heart className="h-5 w-5 text-heading-primary" />
                     </div>
                   </Link>
                 </div>
@@ -656,11 +634,7 @@ export default function DashboardPage() {
               
               <Link to="/profile">
                 <Button 
-                  className="w-full h-20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    backgroundColor: '#ffd6a5',
-                    color: '#9a3412'
-                  }}
+                  className="w-full h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
                 >
                   <div className="text-center">
                     {user?.avatar_url ? (
