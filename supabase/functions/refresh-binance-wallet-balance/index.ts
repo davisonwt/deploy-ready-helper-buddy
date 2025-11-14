@@ -119,26 +119,61 @@ serve(async (req) => {
       walletAddress = wallet.wallet_address;
     }
 
-    const binanceClient = new BinancePayClient();
+    // Build Binance client depending on wallet origin
+    let binanceClient: BinancePayClient | null = null;
     let fetchedBalance: number | null = null;
     let source: "binance" | "cache" = "cache";
 
     try {
-      console.log(`[${new Date().toISOString()}] Fetching balance for wallet: ${walletAddress}`);
-      const balanceResponse = await binanceClient.getWalletBalance({
-        wallet: "FUNDING_WALLET",
-        currency: "USDC",
-      });
+      if (walletOrigin === "user") {
+        // Load per-user Binance API credentials from user_wallets
+        const { data: userCreds, error: credsError } = await serviceClient
+          .from("user_wallets")
+          .select("api_key, api_secret, merchant_id")
+          .eq("user_id", userData.user.id)
+          .eq("wallet_type", "binance_pay")
+          .eq("is_active", true)
+          .order("is_primary", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      console.log("[Balance Response]", JSON.stringify(balanceResponse, null, 2));
+        if (credsError && credsError.code !== "PGRST116") {
+          throw credsError;
+        }
 
-      // Response format: { balance: number, asset: string, fiat: string, ... }
-      if (balanceResponse && typeof balanceResponse.balance === 'number') {
-        fetchedBalance = balanceResponse.balance;
-        source = "binance";
-        console.log(`✅ Balance fetched successfully: ${fetchedBalance} USDC`);
+        if (userCreds?.api_key && userCreds?.api_secret) {
+          binanceClient = new BinancePayClient({
+            apiKey: userCreds.api_key,
+            apiSecret: userCreds.api_secret,
+            merchantId: userCreds.merchant_id ?? "",
+            apiBaseUrl: Deno.env.get("BINANCE_PAY_API_BASE_URL") ?? "https://bpay.binanceapi.com",
+            defaultTradeType: Deno.env.get("BINANCE_PAY_TRADE_TYPE") ?? "WEB",
+            walletName,
+          });
+        } else {
+          console.warn("Missing user Binance credentials; will fall back to cached balance.");
+        }
       } else {
-        console.warn("Unexpected balance response format:", balanceResponse);
+        // Organization wallet uses platform-level credentials
+        binanceClient = new BinancePayClient();
+      }
+
+      if (binanceClient) {
+        console.log(`[${new Date().toISOString()}] Fetching balance for wallet: ${walletAddress}`);
+        const balanceResponse = await binanceClient.getWalletBalance({
+          wallet: "FUNDING_WALLET",
+          currency: "USDC",
+        });
+
+        console.log("[Balance Response]", JSON.stringify(balanceResponse, null, 2));
+
+        if (balanceResponse && typeof balanceResponse.balance === 'number') {
+          fetchedBalance = balanceResponse.balance;
+          source = "binance";
+          console.log(`✅ Balance fetched successfully: ${fetchedBalance} USDC`);
+        } else {
+          console.warn("Unexpected balance response format:", balanceResponse);
+        }
       }
     } catch (binanceError) {
       console.error("❌ Binance API error:", {
