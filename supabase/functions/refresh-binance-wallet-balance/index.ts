@@ -58,17 +58,18 @@ serve(async (req) => {
     let walletOrigin: "user" | "organization" = "user";
 
     if (requestedWalletName) {
-      const { data: isAdmin, error: adminError } = await serviceClient.rpc(
-        "is_admin_or_gosat",
-        { _user_id: userData.user.id },
+      // Only gosats can access organization wallets
+      const { data: isGosat, error: gosatError } = await serviceClient.rpc(
+        "has_role",
+        { _user_id: userData.user.id, _role: 'gosat' },
       );
 
-      if (adminError) {
-        throw adminError;
+      if (gosatError) {
+        throw gosatError;
       }
 
-      if (!isAdmin) {
-        return jsonResponse({ error: "Forbidden" }, 403);
+      if (!isGosat) {
+        return jsonResponse({ error: "Only gosats can access organization wallets" }, 403);
       }
 
       const { data: organizationWallet, error: organizationError } =
