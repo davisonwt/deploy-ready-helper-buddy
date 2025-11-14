@@ -300,8 +300,16 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         data = await res.json();
       }
 
-      if (!data?.success || typeof data.balance !== 'number') {
-        throw new Error('Failed to refresh wallet balance');
+      console.log('💰 Parsed balance data:', data);
+
+      if (!data?.success) {
+        console.error('❌ Balance refresh failed:', data);
+        throw new Error(data?.error || 'Failed to refresh wallet balance');
+      }
+
+      if (typeof data.balance !== 'number') {
+        console.error('❌ Invalid balance format:', data);
+        throw new Error('Invalid balance format received');
       }
 
       setBalance({
@@ -310,7 +318,8 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         source: data.source ?? 'binance',
       });
 
-      toast.success('Wallet balance updated');
+      const sourceLabel = data.source === 'binance' ? 'from Binance' : 'from cache';
+      toast.success(`Balance updated: $${data.balance.toFixed(2)} ${sourceLabel}`);
     } catch (err) {
       console.error('Refresh wallet balance error:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to refresh balance');
