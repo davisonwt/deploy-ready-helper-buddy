@@ -162,6 +162,7 @@ function Layout({ children }) {
         items: [
           { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
           { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
+          { name: "Organization Wallets", href: "/gosat/wallets", icon: Wallet },
           { name: "Seeds Management", href: "/admin/seeds", icon: Sprout }
         ]
       }] : [])
