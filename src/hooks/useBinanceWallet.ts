@@ -242,20 +242,54 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
 
     setRefreshing(true);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.error('Please sign in to refresh balance');
+        return;
+      }
+
       const invokeOptions =
         wallet.origin === 'organization' && wallet.wallet_name
           ? { body: { walletName: wallet.wallet_name } }
           : undefined;
 
-      const { data, error } = await supabase.functions.invoke<{
-        success: boolean;
-        balance?: number;
-        source?: 'binance' | 'cache';
-        updatedAt?: string | null;
-      }>('refresh-binance-wallet-balance', invokeOptions);
+      let primaryError: unknown = null;
+      let data: any = null;
 
-      if (error) {
-        throw new Error(error.message);
+      try {
+        const result = await supabase.functions.invoke<{
+          success: boolean;
+          balance?: number;
+          source?: 'binance' | 'cache';
+          updatedAt?: string | null;
+        }>('refresh-binance-wallet-balance', invokeOptions);
+        
+        if (result.error) primaryError = result.error;
+        else data = result.data;
+      } catch (e) {
+        primaryError = e;
+      }
+
+      if (primaryError) {
+        const url = 'https://zuwkgasbkpjlxzsjzumu.functions.supabase.co/refresh-binance-wallet-balance?t=' + Date.now();
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: invokeOptions?.body ? JSON.stringify(invokeOptions.body) : undefined,
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson?.error || `Failed to refresh balance (HTTP ${res.status})`);
+        }
+
+        data = await res.json();
       }
 
       if (!data?.success || typeof data.balance !== 'number') {
@@ -289,6 +323,15 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
     }
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast.error('Please sign in to top up');
+        return;
+      }
+
       const body: Record<string, unknown> = {
         amount,
         currency: 'USDC',
@@ -299,13 +342,38 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         body.walletName = wallet.wallet_name;
       }
 
-      const { data, error } = await supabase.functions.invoke<{
-        success: boolean;
-        paymentUrl?: string;
-      }>('create-binance-wallet-topup', { body });
+      let primaryError: unknown = null;
+      let data: any = null;
 
-      if (error) {
-        throw new Error(error.message);
+      try {
+        const result = await supabase.functions.invoke<{
+          success: boolean;
+          paymentUrl?: string;
+        }>('create-binance-wallet-topup', { body });
+        
+        if (result.error) primaryError = result.error;
+        else data = result.data;
+      } catch (e) {
+        primaryError = e;
+      }
+
+      if (primaryError) {
+        const url = 'https://zuwkgasbkpjlxzsjzumu.functions.supabase.co/create-binance-wallet-topup?t=' + Date.now();
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson?.error || `Failed to create top-up order (HTTP ${res.status})`);
+        }
+
+        data = await res.json();
       }
 
       if (!data?.success || !data.paymentUrl) {
