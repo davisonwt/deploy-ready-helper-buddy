@@ -119,104 +119,119 @@ export function ManualDistributionQueue() {
         <div>
           <CardTitle className="flex items-center gap-2">
             Pending Manual Distributions
-            <Badge variant="outline" className="bg-white">
-              {entries.length}
-            </Badge>
+            {entries.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {entries.length}
+              </Badge>
+            )}
           </CardTitle>
           <CardDescription>
-            Bestowals marked for manual routing remain in the holding wallet until you release them.
+            Bestowals awaiting distribution after courier confirms product delivery
           </CardDescription>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="self-start"
-          onClick={() => { void fetchPending(); }}
+          onClick={() => void fetchPending()}
           disabled={loading}
         >
           {loading ? (
-            <>
-              <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-              Refreshing…
-            </>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
-            <>
-              <RefreshCw className="mr-2 h-3.5 w-3.5" />
-              Refresh
-            </>
+            <RefreshCw className="h-4 w-4 mr-2" />
           )}
+          Refresh
         </Button>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading pending bestowals...
+
+      <CardContent>
+        {error && (
+          <div className="rounded-md bg-red-50 p-4 mb-4">
+            <p className="text-sm text-red-800">{error}</p>
           </div>
-        ) : error ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {error}
+        )}
+
+        {loading && entries.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-sm text-muted-foreground">Loading pending distributions...</span>
           </div>
         ) : entries.length === 0 ? (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            All caught up! No manual distributions are waiting.
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="font-medium">No pending distributions</p>
+            <p className="text-sm mt-1">All bestowals have been distributed or are set to auto-distribute</p>
           </div>
         ) : (
-          entries.map((entry, index) => (
-            <div key={entry.id} className="rounded-lg border border-amber-200 bg-white/90 p-4 shadow-sm">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-1">
-                  <div className="text-sm font-semibold text-amber-900">
-                    {entry.orchard_title ?? 'Untitled orchard'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Bestowal ID: <span className="font-mono">{entry.id}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Created: {new Date(entry.created_at).toLocaleString()}
-                  </div>
-                  {entry.orchard_type && (
-                    <div className="text-xs text-muted-foreground">
-                      Orchard type: {entry.orchard_type}
-                    </div>
+          <div className="space-y-4">
+            {entries.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-lg border bg-background"
+              >
+                <div className="flex-1 space-y-2">
+                  {entry.orchard_title && (
+                    <p className="font-medium text-sm">{entry.orchard_title}</p>
                   )}
-                  {entry.hold_reason && (
-                    <div className="text-xs text-muted-foreground">
-                      Hold reason: {entry.hold_reason}
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col items-start md:items-end gap-2">
-                  <div className="text-lg font-semibold text-slate-900">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: entry.currency ?? 'USD',
-                    }).format(entry.amount)}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDistribute(entry.id)}
-                    disabled={triggering[entry.id]}
-                  >
-                    {triggering[entry.id] ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="font-mono">
+                      {entry.id.substring(0, 8)}...
+                    </Badge>
+                    <span>•</span>
+                    <span>{new Date(entry.created_at).toLocaleString()}</span>
+                    {entry.orchard_type && (
                       <>
-                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                        Distributing...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-2 h-3.5 w-3.5" />
-                        Release Funds
+                        <span>•</span>
+                        <Badge variant="secondary">{entry.orchard_type}</Badge>
                       </>
                     )}
-                  </Button>
+                  </div>
+                  {entry.hold_reason && (
+                    <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
+                      Hold Reason: {entry.hold_reason}
+                    </p>
+                  )}
+                  <p className="text-sm font-bold text-primary">
+                    {entry.amount} {entry.currency}
+                  </p>
                 </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => void handleDistribute(entry.id)}
+                  disabled={triggering[entry.id]}
+                  className="whitespace-nowrap"
+                >
+                  {triggering[entry.id] ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      Distributing...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3 w-3 mr-2" />
+                      Release Funds
+                    </>
+                  )}
+                </Button>
               </div>
-              {index !== entries.length - 1 && <Separator className="mt-4" />}
-            </div>
-          ))
+            ))}
+          </div>
         )}
+
+        <Separator className="my-4" />
+        
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p className="font-medium">Distribution Process:</p>
+          <ol className="list-decimal list-inside space-y-1 ml-2">
+            <li>Orchard fully funded (all pockets filled)</li>
+            <li>Courier picks up product from sower</li>
+            <li>Courier confirms delivery to bestower</li>
+            <li>Gosat clicks "Release Funds" to distribute</li>
+            <li>Funds split: 85% to sower, remainder to whispers (if applicable)</li>
+          </ol>
+        </div>
       </CardContent>
     </Card>
   );
 }
+
