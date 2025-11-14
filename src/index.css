@@ -9,36 +9,53 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 100% 12%; /* Navy background in HSL */
-    --foreground: 210 40% 98%; /* Light text for readability on dark background */
+    /* NEW DESIGN SYSTEM - Navy Blue Theme */
+    --background: 210 67% 12%; /* #0A1931 - Deep navy blue */
+    --foreground: 210 17% 98%; /* #F8F9FA - Off-white for body text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 212 49% 24%; /* #1E3A5C - Lighter blue for cards */
+    --card-foreground: 210 17% 98%; /* #F8F9FA - Off-white text on cards */
 
-    --popover: 0 0% 100%; /* White popover background */
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 212 49% 24%; /* #1E3A5C - Same as cards */
+    --popover-foreground: 210 17% 98%;
 
-  /* sow2grow brand colors - matching landing page */
-  --primary: 142 76% 36%;  /* Green from landing page */
-  --primary-foreground: 210 40% 98%;
+  /* Primary interactive color - Teal/Cyan */
+  --primary: 188 78% 41%;  /* #17A2B8 - Vibrant teal for buttons */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF - White text on primary */
 
-  --secondary: 199 89% 50%;  /* Blue from landing page */
-  --secondary-foreground: 210 40% 98%;
+  /* Secondary - for alternative buttons */
+  --secondary: 212 49% 24%;  /* #1E3A5C - Card color */
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 60 8% 94%;  /* Light beige */
-  --muted-foreground: 215.4 16.3% 46.9%;
+  /* Muted text and helpers */
+  --muted: 210 11% 71%;  /* #ADB5BD - Light gray for muted text */
+  --muted-foreground: 210 11% 46%; /* #6C757D - Medium gray */
 
-  --accent: 43 74% 66%;  /* Amber from landing page */
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 188 78% 41%;  /* #17A2B8 - Teal accent */
+  --accent-foreground: 0 0% 100%;
   
-  /* sow2grow theme colors */
+  /* Headings */
+  --heading-primary: 0 0% 100%;  /* #FFFFFF - Pure white for H1, H2 */
+  --heading-secondary: 210 17% 98%; /* #F8F9FA - Off-white for H3, H4 */
+  
+  /* Form inputs */
+  --input-bg: 212 49% 24%; /* #1E3A5C - Input background */
+  --input-text: 0 0% 100%; /* #FFFFFF - Input text */
+  --input-border: 210 11% 71%; /* #ADB5BD - Default border */
+  --input-border-focus: 213 71% 58%; /* #4A90E2 - Focus border */
+  --input-placeholder: 210 11% 46%; /* #6C757D - Placeholder text */
+  
+  /* sow2grow theme colors (legacy support) */
   --s2g-green: 142 76% 36%;
   --s2g-blue: 199 89% 50%;
   --s2g-amber: 43 74% 66%;
   --s2g-brown: 30 35% 45%;
   --s2g-beige: 60 8% 94%;
   --s2g-purple: 270 75% 45%;
-  --brand-navy: 210 60% 22%;
+  --brand-navy: 210 67% 12%; /* Match new background */
+  
+  /* Button hover states */
+  --primary-hover: 188 78% 33%; /* #138496 - Darker teal */
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, hsl(var(--s2g-green)), hsl(var(--s2g-blue)));
@@ -64,37 +81,36 @@ All colors MUST be HSL.
   --light-beige: 60 8% 82%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;  /* Green ring */
+    --border: 210 11% 71%; /* #ADB5BD - Light gray borders */
+    --input: 212 49% 24%; /* #1E3A5C - Input background */
+    --ring: 188 78% 41%;  /* #17A2B8 - Teal ring */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 142 76% 36%;  /* Green */
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 60 8% 95%;  /* Light beige */
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 199 89% 50%;  /* Blue */
+    --sidebar-background: 212 49% 24%; /* #1E3A5C - Card color */
+    --sidebar-foreground: 210 17% 98%; /* #F8F9FA - Off-white */
+    --sidebar-primary: 188 78% 41%;  /* #17A2B8 - Teal */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 212 49% 24%;  /* #1E3A5C */
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 210 11% 71%; /* #ADB5BD */
+    --sidebar-ring: 188 78% 41%;  /* #17A2B8 - Teal */
 
-    --success: 142 76% 36%;  /* Green */
-    --success-foreground: 355.7 100% 97.3%;
-    --warning: 43 74% 66%;  /* Amber */
-    --warning-foreground: 26 83.3% 14.1%;
-    --info: 199 89% 50%;  /* Blue */
-    --info-foreground: 210 40% 98%;
+    --success: 142 76% 36%;  /* Keep green for success */
+    --success-foreground: 0 0% 100%;
+    --warning: 43 74% 66%;  /* Keep amber for warning */
+    --warning-foreground: 210 67% 12%;
+    --info: 188 78% 41%;  /* #17A2B8 - Teal */
+    --info-foreground: 0 0% 100%;
     --harvest: 43 74% 66%;  /* Amber */
-    --harvest-foreground: 210 40% 98%;
-    --login: 328 88% 35%;
-    --login-foreground: 210 40% 98%;
+    --harvest-foreground: 0 0% 100%;
+    --login: 188 78% 41%; /* #17A2B8 - Teal */
+    --login-foreground: 0 0% 100%;
 }
 
-/* Card foreground context fixes */
-/* Any light surface should switch foreground to dark card-foreground */
+/* Ensure proper text contrast on all surfaces */
 .bg-card,
 .bg-card\/80,
 .bg-card\/90,
@@ -111,21 +127,32 @@ All colors MUST be HSL.
 .bg-white\/90,
 .bg-white\/95 {
   color: hsl(var(--card-foreground));
-  --foreground: var(--card-foreground);
 }
 
-/* Form controls on light surfaces */
-.bg-card input, .bg-card select, .bg-card textarea,
-.bg-popover input, .bg-popover select, .bg-popover textarea,
-.bg-muted input, .bg-muted select, .bg-muted textarea,
-.bg-white input, .bg-white select, .bg-white textarea {
-  color: hsl(var(--card-foreground));
+/* Heading styles */
+h1, h2, .heading-primary {
+  color: hsl(var(--heading-primary));
 }
-.bg-card input::placeholder, .bg-card textarea::placeholder,
-.bg-popover input::placeholder, .bg-popover textarea::placeholder,
-.bg-muted input::placeholder, .bg-muted textarea::placeholder,
-.bg-white input::placeholder, .bg-white textarea::placeholder {
-  color: hsl(var(--card-foreground) / 0.6);
+
+h3, h4, h5, h6, .heading-secondary {
+  color: hsl(var(--heading-secondary));
+}
+
+/* Form control styles with new design system */
+input, select, textarea {
+  background-color: hsl(var(--input-bg));
+  color: hsl(var(--input-text));
+  border-color: hsl(var(--input-border));
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: hsl(var(--input-border-focus));
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--input-border-focus) / 0.2);
+}
+
+input::placeholder, textarea::placeholder, select::placeholder {
+  color: hsl(var(--input-placeholder));
 }
 
 /* Line clamp utilities */
