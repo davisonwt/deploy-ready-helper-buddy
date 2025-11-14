@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Settings, ChevronDown, Radio, Sprout } from "lucide-react";
+import { Settings, ChevronDown, Radio, Sprout, Wallet } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -74,6 +74,12 @@ export function AdminButton() {
                 <Link to="/admin/radio" className="flex items-center w-full px-2 py-1.5">
                   <Radio className="w-4 h-4 mr-2" />
                   AOD Station Radio Management
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link to="/gosat/wallets" className="flex items-center w-full px-2 py-1.5">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Organization Wallets
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
