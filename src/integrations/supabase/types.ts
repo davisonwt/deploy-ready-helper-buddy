@@ -229,6 +229,10 @@ export type Database = {
           blockchain_network: string | null
           created_at: string
           currency: string
+          distributed_at: string | null
+          distribution_data: Json | null
+          distribution_mode: string | null
+          hold_reason: string | null
           id: string
           message: string | null
           orchard_id: string
@@ -247,6 +251,10 @@ export type Database = {
           blockchain_network?: string | null
           created_at?: string
           currency?: string
+          distributed_at?: string | null
+          distribution_data?: Json | null
+          distribution_mode?: string | null
+          hold_reason?: string | null
           id?: string
           message?: string | null
           orchard_id: string
@@ -265,6 +273,10 @@ export type Database = {
           blockchain_network?: string | null
           created_at?: string
           currency?: string
+          distributed_at?: string | null
+          distribution_data?: Json | null
+          distribution_mode?: string | null
+          hold_reason?: string | null
           id?: string
           message?: string | null
           orchard_id?: string
@@ -1729,6 +1741,7 @@ export type Database = {
           original_seed_value: number
           payment_processing_fee: number
           pocket_price: number
+          product_type: string | null
           profile_id: string
           recipient_pubkey: string | null
           seed_value: number
@@ -1768,6 +1781,7 @@ export type Database = {
           original_seed_value: number
           payment_processing_fee?: number
           pocket_price?: number
+          product_type?: string | null
           profile_id: string
           recipient_pubkey?: string | null
           seed_value: number
@@ -1807,6 +1821,7 @@ export type Database = {
           original_seed_value?: number
           payment_processing_fee?: number
           pocket_price?: number
+          product_type?: string | null
           profile_id?: string
           recipient_pubkey?: string | null
           seed_value?: number
