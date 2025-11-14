@@ -830,6 +830,78 @@ export type Database = {
           },
         ]
       }
+      courier_deliveries: {
+        Row: {
+          bestowal_id: string
+          bestower_signature: string | null
+          courier_id: string
+          created_at: string
+          delivery_confirmed: boolean | null
+          delivery_confirmed_at: string | null
+          delivery_notes: string | null
+          delivery_photo_url: string | null
+          id: string
+          orchard_id: string
+          pickup_confirmed: boolean | null
+          pickup_confirmed_at: string | null
+          pickup_notes: string | null
+          pickup_photo_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bestowal_id: string
+          bestower_signature?: string | null
+          courier_id: string
+          created_at?: string
+          delivery_confirmed?: boolean | null
+          delivery_confirmed_at?: string | null
+          delivery_notes?: string | null
+          delivery_photo_url?: string | null
+          id?: string
+          orchard_id: string
+          pickup_confirmed?: boolean | null
+          pickup_confirmed_at?: string | null
+          pickup_notes?: string | null
+          pickup_photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bestowal_id?: string
+          bestower_signature?: string | null
+          courier_id?: string
+          created_at?: string
+          delivery_confirmed?: boolean | null
+          delivery_confirmed_at?: string | null
+          delivery_notes?: string | null
+          delivery_photo_url?: string | null
+          id?: string
+          orchard_id?: string
+          pickup_confirmed?: boolean | null
+          pickup_confirmed_at?: string | null
+          pickup_notes?: string | null
+          pickup_photo_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_deliveries_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: true
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "courier_deliveries_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dj_music_tracks: {
         Row: {
           artist_name: string | null
@@ -4623,6 +4695,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          binance_sub_account: string
+          created_at: string | null
+          id: string
+          is_master: boolean | null
+          type: string
+          wallet_address: string
+        }
+        Insert: {
+          binance_sub_account: string
+          created_at?: string | null
+          id?: string
+          is_master?: boolean | null
+          type: string
+          wallet_address: string
+        }
+        Update: {
+          binance_sub_account?: string
+          created_at?: string | null
+          id?: string
+          is_master?: boolean | null
+          type?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -5167,7 +5266,13 @@ export type Database = {
         | "marketing_tip"
         | "thumbnail"
         | "content_idea"
-      app_role: "user" | "gosat" | "admin" | "radio_admin" | "moderator"
+      app_role:
+        | "user"
+        | "gosat"
+        | "admin"
+        | "radio_admin"
+        | "moderator"
+        | "courier"
       chat_message_type:
         | "text"
         | "verification"
@@ -5347,7 +5452,14 @@ export const Constants = {
         "thumbnail",
         "content_idea",
       ],
-      app_role: ["user", "gosat", "admin", "radio_admin", "moderator"],
+      app_role: [
+        "user",
+        "gosat",
+        "admin",
+        "radio_admin",
+        "moderator",
+        "courier",
+      ],
       chat_message_type: [
         "text",
         "verification",
