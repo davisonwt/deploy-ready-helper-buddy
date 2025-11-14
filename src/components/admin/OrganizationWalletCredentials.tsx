@@ -33,6 +33,13 @@ export function OrganizationWalletCredentials() {
     api_secret: '',
     merchant_id: ''
   })
+  
+  const [s2gdavison, setS2gdavison] = useState<WalletCredentials>({
+    wallet_name: 's2gdavison',
+    api_key: '',
+    api_secret: '',
+    merchant_id: ''
+  })
 
   useEffect(() => {
     loadCredentials()
@@ -44,7 +51,7 @@ export function OrganizationWalletCredentials() {
       const { data, error } = await supabase
         .from('organization_wallets')
         .select('wallet_name, api_key, api_secret, merchant_id')
-        .in('wallet_name', ['s2gholding', 's2gbestow'])
+        .in('wallet_name', ['s2gholding', 's2gbestow', 's2gdavison'])
 
       if (error) throw error
 
@@ -58,6 +65,13 @@ export function OrganizationWalletCredentials() {
           }))
         } else if (wallet.wallet_name === 's2gbestow') {
           setS2gbestow(prev => ({
+            ...prev,
+            api_key: wallet.api_key || '',
+            api_secret: wallet.api_secret || '',
+            merchant_id: wallet.merchant_id || ''
+          }))
+        } else if (wallet.wallet_name === 's2gdavison') {
+          setS2gdavison(prev => ({
             ...prev,
             api_key: wallet.api_key || '',
             api_secret: wallet.api_secret || '',
@@ -212,6 +226,15 @@ export function OrganizationWalletCredentials() {
         'Receives 10% tithing + 5% admin fees (15% total) from distributions.',
         s2gbestow,
         setS2gbestow
+      )}
+
+      {s2gdavison.merchant_id && (
+        renderWalletForm(
+          's2gdavison Personal Wallet',
+          'Your personal Binance Pay wallet - only you can view and edit this wallet.',
+          s2gdavison,
+          setS2gdavison
+        )
       )}
     </div>
   )
