@@ -1,102 +1,154 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { BinancePayClient } from "../_shared/binance.ts";
+import {
+  DistributionData,
+  executeDistribution,
+} from "../_shared/distribution.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-    const { bestowId } = await req.json();
+      if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+        throw new Error("Supabase configuration missing for distribution handler");
+      }
+
+      const authHeader = req.headers.get("Authorization");
+
+      if (!authHeader) {
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
+
+      const token = authHeader.replace("Bearer ", "");
+
+      const authClient = createClient(supabaseUrl, anonKey, {
+        auth: { persistSession: false },
+      });
+
+      const { data: userData, error: userError } = await authClient.auth
+        .getUser(token);
+
+      if (userError || !userData?.user) {
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
+
+      const supabaseClient = createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        { auth: { persistSession: false } },
+      );
+
+      const { data: isGosat } = await supabaseClient.rpc(
+        "is_admin_or_gosat",
+        { _user_id: userData.user.id },
+      );
+
+      if (!isGosat) {
+        return jsonResponse({ success: false, error: "Forbidden" }, 403);
+      }
+
+      const { bestowId } = await req.json();
 
     if (!bestowId) {
-      throw new Error('bestowId is required');
+      throw new Error("bestowId is required");
     }
 
-    // Get bestowal details with distribution data
     const { data: bestowal, error: bestowError } = await supabaseClient
-      .from('bestowals')
-      .select('*, distribution_data')
-      .eq('id', bestowId)
+      .from("bestowals")
+      .select("id, payment_status, amount, currency, distribution_data")
+      .eq("id", bestowId)
       .single();
 
-    if (bestowError) throw bestowError;
-
-    if (!bestowal.distribution_data) {
-      throw new Error('No distribution data found');
+    if (bestowError || !bestowal) {
+      throw new Error(`Bestowal not found: ${bestowId}`);
     }
 
-    const dist = bestowal.distribution_data;
-
-    // Log the distribution (in production, this would trigger actual blockchain transfers)
-    console.log('Distributing bestowal:', {
-      bestowId,
-      totalAmount: bestowal.amount,
-      distributions: {
-        holding: dist.holding_wallet,
-        tithingAdmin: {
-          wallet: dist.tithing_admin_wallet,
-          amount: dist.tithing_admin_amount
-        },
-        sower: {
-          wallet: dist.sower_wallet,
-          amount: dist.sower_amount
-        },
-        grower: dist.grower_wallet ? {
-          wallet: dist.grower_wallet,
-          amount: dist.grower_amount
-        } : null
-      }
-    });
-
-    // TODO: Implement actual blockchain transfers using Binance Pay API
-    // For now, we just log and mark as distributed
-
-    // Update bestowal as distributed
-    const { error: updateError } = await supabaseClient
-      .from('bestowals')
-      .update({
-        payment_status: 'distributed',
-        distributed_at: new Date().toISOString()
-      })
-      .eq('id', bestowId);
-
-    if (updateError) throw updateError;
-
-    return new Response(
-      JSON.stringify({
+    if (bestowal.payment_status === "distributed") {
+      return jsonResponse({
         success: true,
-        message: 'Bestowal distributed successfully',
-        bestowId
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        message: "Bestowal already distributed",
+        bestowId,
+      });
+    }
+
+    if (bestowal.payment_status !== "completed") {
+      throw new Error(
+        `Bestowal status must be 'completed' before distribution. Current status: ${bestowal.payment_status}`,
+      );
+    }
+
+      const distribution = bestowal.distribution_data as DistributionData | null;
+
+    if (!distribution) {
+      throw new Error("Distribution data is missing for this bestowal");
+    }
+
+      if (distribution.mode !== "manual") {
+        throw new Error(
+          "This bestowal is configured for automatic distribution and cannot be triggered manually.",
+        );
       }
+
+    const binanceClient = new BinancePayClient();
+
+    const result = await executeDistribution(
+      supabaseClient,
+      binanceClient,
+      bestowal.id,
+      distribution,
     );
+
+      const updatedDistribution = {
+        ...distribution,
+        manual_release_at: new Date().toISOString(),
+        manual_release_user_id: userData.user.id,
+      };
+
+      await supabaseClient
+        .from("bestowals")
+        .update({ distribution_data: updatedDistribution })
+        .eq("id", bestowal.id);
+
+    return jsonResponse({
+      success: true,
+      message: "Bestowal distributed successfully",
+      bestowId,
+      transfers: result.transfers,
+    });
   } catch (error) {
-    console.error('Error distributing bestowal:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
+    console.error("Error distributing bestowal:", error);
+    return jsonResponse(
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      400,
     );
   }
 });
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(
+    JSON.stringify(body),
+    {
+      status,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+}

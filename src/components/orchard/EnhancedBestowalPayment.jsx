@@ -382,7 +382,6 @@ const EnhancedBestowalPayment = () => {
               amount={totalAmount}
               pocketsCount={pocketsCount}
               message={message}
-              sowerId={orchard.user_id}
               onSuccess={handlePaymentSuccess}
               disabled={!user || !validatePayment() || availablePockets === 0}
             />

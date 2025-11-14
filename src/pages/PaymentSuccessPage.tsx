@@ -1,24 +1,13 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight } from 'lucide-react';
-import { useBinancePay } from '@/hooks/useBinancePay';
-import { toast } from 'sonner';
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { confirmPayment } = useBinancePay();
-
-  useEffect(() => {
-    const bestowId = searchParams.get('orderId');
-    const paymentRef = searchParams.get('paymentRef');
-
-    if (bestowId && paymentRef) {
-      confirmPayment(bestowId, paymentRef);
-    }
-  }, [searchParams, confirmPayment]);
+  const bestowalId = useMemo(() => searchParams.get('orderId'), [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
@@ -27,20 +16,33 @@ export default function PaymentSuccessPage() {
           <div className="mx-auto mb-4 h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
-          <CardTitle className="text-2xl">Payment Successful!</CardTitle>
+          <CardTitle className="text-2xl">Payment Initiated!</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 text-center">
           <p className="text-muted-foreground">
-            Your bestowal has been received and is being distributed according to the bestowal map.
+            Thank you for supporting this orchard. Binance Pay is confirming the transaction and we&apos;ll distribute your bestowal automatically according to the bestowal map.
           </p>
+
+          {bestowalId && (
+            <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-1">
+              <p className="font-semibold">Reference</p>
+              <p className="text-muted-foreground break-words">
+                Bestowal ID: <span className="font-mono text-xs">{bestowalId}</span>
+              </p>
+            </div>
+          )}
           
           <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
-            <p className="font-semibold">Distribution:</p>
+            <p className="font-semibold">Distribution Overview</p>
             <ul className="space-y-1 text-muted-foreground">
-              <li>✓ 10.5% → Tithing & Admin (s2gbestow)</li>
-              <li>✓ 89.5% → Sower (creator)</li>
-              <li>✓ Payment confirmed on blockchain</li>
+              <li>✓ 15% → Tithing & Admin (s2gbestow)</li>
+              <li>✓ 85% → Sower (orchard owner)</li>
+              <li>✓ Additional 10% allocated to product whispers when configured</li>
             </ul>
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            You&apos;ll receive an email once the payment is confirmed and funds are distributed.
           </div>
 
           <div className="flex flex-col gap-3">
