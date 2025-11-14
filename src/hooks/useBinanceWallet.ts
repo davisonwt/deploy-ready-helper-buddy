@@ -184,12 +184,26 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
 
     setLinking(true);
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        toast.error('Please sign in to link your wallet');
+        return false;
+      }
+
       const { error } = await supabase.functions.invoke('link-binance-wallet', {
         body: { payId },
       });
 
       if (error) {
-        throw new Error(error.message);
+        // Improve message for common gateway/network issues
+        const msg =
+          error.message?.includes('Failed to send a request to the Edge Function')
+            ? 'Network/auth issue contacting the server. Please refresh, sign in again, and retry.'
+            : error.message;
+        throw new Error(msg || 'Failed to link wallet');
       }
 
       toast.success('Binance Pay ID linked successfully');
