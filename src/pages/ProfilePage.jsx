@@ -308,7 +308,7 @@ export default function ProfilePage() {
         <div className="max-w-6xl mx-auto space-y-8 p-6">
           {/* Enhanced Header */}
           <div className="text-center">
-            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-8 mx-auto max-w-4xl border shadow-2xl">
+            <div className="bg-card text-card-foreground backdrop-blur-md rounded-3xl p-8 mx-auto max-w-4xl border shadow-2xl">
               <div className="flex justify-center mb-6 relative">
                 {/* Enhanced Profile Picture */}
                 <div className="relative group">
