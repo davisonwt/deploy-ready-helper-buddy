@@ -69,6 +69,7 @@ const VideoUploadPage = lazy(() => import("./pages/VideoUploadPage"));
 const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
+const BinancePayTestPage = lazy(() => import("./pages/BinancePayTestPage"));
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
 const RadioSessions = lazy(() => import("./pages/RadioSessions"));
 const LiveRooms = lazy(() => import("./pages/LiveRooms"));
@@ -550,6 +551,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <WalletSettingsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/binance-pay-test" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <BinancePayTestPage />
                   </Layout>
                 </ProtectedRoute>
               } />
