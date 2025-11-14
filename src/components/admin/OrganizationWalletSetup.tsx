@@ -34,7 +34,7 @@ export function OrganizationWalletSetup() {
         .from('organization_wallets')
         .select('*')
         .eq('is_active', true)
-        .in('wallet_name', ['s2gholding', 's2gbestow'])
+        .in('wallet_name', ['s2gholding', 's2gbestow', 's2gdavison'])
         .order('wallet_name', { ascending: true });
 
       if (error) {
