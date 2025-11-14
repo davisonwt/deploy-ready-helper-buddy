@@ -69,6 +69,7 @@ const VideoUploadPage = lazy(() => import("./pages/VideoUploadPage"));
 const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
+const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const BinancePayTestPage = lazy(() => import("./pages/BinancePayTestPage"));
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
 const RadioSessions = lazy(() => import("./pages/RadioSessions"));
@@ -511,6 +512,17 @@ const App = () => (
                   <Suspense fallback={<div>Loading...</div>}>
                     <AdminPaymentsPage />
                   </Suspense>
+                </ProtectedRoute>
+              } />
+
+              {/* Gosat Organization Wallets */}
+              <Route path="/gosat/wallets" element={
+                <ProtectedRoute allowedRoles={['gosat']}>
+                  <Layout>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <GosatWalletsPage />
+                    </Suspense>
+                  </Layout>
                 </ProtectedRoute>
               } />
               
