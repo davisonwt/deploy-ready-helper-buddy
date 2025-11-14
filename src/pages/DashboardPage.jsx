@@ -287,7 +287,7 @@ export default function DashboardPage() {
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-card">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-dashboard shadow-lg">
             {user?.avatar_url ? (
@@ -298,22 +298,18 @@ export default function DashboardPage() {
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
-                <User className="h-10 w-10 text-slate-700" />
+                <User className="h-10 w-10 text-heading-primary" />
               </div>
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: '#9bf6ff', 
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              WebkitTextStroke: '1px rgba(0,0,0,0.5)'
-            }}>
+            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg text-heading-primary">
               Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
             </h1>
-            <p className="text-lg" style={{ color: 'hsl(220, 100%, 50%)' }}>
+            <p className="text-lg text-heading-primary">
               Ready to grow your orchard today?
             </p>
-            <p className="text-sm mt-1" style={{ color: 'hsl(220, 100%, 50%)' }}>
+            <p className="text-sm mt-1 text-heading-primary">
               Payment Method: USDC (USD Coin)
             </p>
           </div>
@@ -327,58 +323,58 @@ export default function DashboardPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
-          <div className="w-full p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90 stats-tour">
+          <div className="w-full p-8 rounded-2xl border shadow-2xl mb-8 bg-card stats-tour">
             <div className="flex flex-row flex-nowrap gap-3 w-full">
-              <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
+              <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">My Orchards</p>
-                    <p className="text-2xl font-bold text-slate-700">{stats.totalOrchards}</p>
+                    <p className="text-sm font-medium text-heading-primary">My Orchards</p>
+                    <p className="text-2xl font-bold text-heading-primary">{stats.totalOrchards}</p>
                   </div>
-                  <TreePine className="h-8 w-8 text-slate-600" />
+                  <TreePine className="h-8 w-8 text-heading-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Total Raised</p>
-                    <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalRaised)}</p>
+                    <p className="text-sm font-medium text-heading-primary">Total Raised</p>
+                    <p className="text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalRaised)}</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-emerald-600" />
+                  <TrendingUp className="h-8 w-8 text-heading-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Active Users</p>
-                    <p className="text-2xl font-bold text-blue-600">{activeUsers}</p>
-                    <p className="text-xs text-slate-500 mt-1">Last 30 days</p>
+                    <p className="text-sm font-medium text-heading-primary">Active Users</p>
+                    <p className="text-2xl font-bold text-heading-primary">{activeUsers}</p>
+                    <p className="text-xs text-heading-primary mt-1">Last 30 days</p>
                   </div>
-                  <Users className="h-8 w-8 text-blue-500" />
+                  <Users className="h-8 w-8 text-heading-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">My Bestowals</p>
-                    <p className="text-2xl font-bold text-slate-800">{stats.totalBestowals}</p>
+                    <p className="text-sm font-medium text-heading-primary">My Bestowals</p>
+                    <p className="text-2xl font-bold text-heading-primary">{stats.totalBestowals}</p>
                   </div>
-                  <Heart className="h-8 w-8 text-rose-500" />
+                  <Heart className="h-8 w-8 text-heading-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-white/80 border-white/40 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -393,15 +389,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <BinanceWalletManager className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl wallet-tour" />
+            <BinanceWalletManager className="lg:col-span-1 bg-card border-border shadow-xl wallet-tour" />
 
             {/* Global Timezone Support */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl timezone-tour">
+            <Card className="lg:col-span-1 bg-card border-border shadow-xl timezone-tour">
               <CardHeader>
-                <CardTitle className="flex items-center" style={{ 
-                  color: 'hsl(200, 100%, 40%)', 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                }}>
+                <CardTitle className="flex items-center text-heading-primary">
                   <Globe className="h-5 w-5 mr-2 text-blue-600" />
                   Global Time Zones
                 </CardTitle>
@@ -447,7 +440,7 @@ export default function DashboardPage() {
           {/* My Orchards and Recent Bestowals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* My Orchards */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl my-orchards-section-tour">
+            <Card className="lg:col-span-1 bg-card border-border shadow-xl my-orchards-section-tour">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center" style={{ 
@@ -464,10 +457,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {userOrchards.length === 0 ? (
-                <div className="bg-white/95 rounded-lg mx-4 p-8">
+                <div className="bg-card rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <TreePine className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-700 mb-6 font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>You haven't planted any seeds yet</p>
+                    <p className="mb-6 font-medium text-heading-primary">You haven't planted any seeds yet</p>
                     <Link to="/create-orchard">
                       <Button 
                         className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4"
@@ -484,10 +477,10 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-4">
                   {userOrchards.slice(0, 3).map((orchard) => (
-                    <div key={orchard.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={orchard.id} className="flex items-center justify-between p-4 bg-card/60 rounded-lg">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 mb-1">{orchard.title}</h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <h3 className="font-medium text-heading-primary mb-1">{orchard.title}</h3>
+                        <div className="flex items-center space-x-4 text-sm text-heading-primary">
                           <span className="flex items-center">
                             <Eye className="h-4 w-4 mr-1" />
                             {orchard.views || 0} views
@@ -499,8 +492,8 @@ export default function DashboardPage() {
                         </div>
                         <div className="mt-2">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-gray-600">Progress</span>
-                            <span className="text-sm font-medium">{getCompletionPercentage(orchard)}%</span>
+                            <span className="text-sm text-heading-primary">Progress</span>
+                            <span className="text-sm font-medium text-heading-primary">{getCompletionPercentage(orchard)}%</span>
                           </div>
                           <Progress value={getCompletionPercentage(orchard)} className="h-2" />
                         </div>
@@ -518,13 +511,10 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="lg:col-span-1 bg-white/80 border-white/40 shadow-xl bestowals-tour">
+            <Card className="lg:col-span-1 bg-card border-border shadow-xl bestowals-tour">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center" style={{ 
-                  color: 'hsl(0, 100%, 60%)', 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                }}>
+                <span className="flex items-center text-heading-primary">
                   <Heart className="h-5 w-5 mr-2 text-red-500" />
                   Recent Bestowals
                 </span>
@@ -535,10 +525,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               {userBestowals.length === 0 ? (
-                <div className="bg-white/95 rounded-lg mx-4 p-8">
+                <div className="bg-card rounded-lg mx-4 p-8">
                   <div className="text-center">
                     <Heart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-700 mb-6 font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>You haven't made any bestowals yet</p>
+                    <p className="mb-6 font-medium text-heading-primary">You haven't made any bestowals yet</p>
                     <Link to="/browse-orchards">
                       <Button 
                         className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4"
