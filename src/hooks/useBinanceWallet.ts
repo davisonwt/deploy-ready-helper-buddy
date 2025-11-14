@@ -193,16 +193,30 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         return false;
       }
 
-      const { data, error } = await supabase.functions.invoke('link-binance-wallet', {
+      // Primary attempt via Supabase SDK
+      const primary = await supabase.functions.invoke('link-binance-wallet', {
         body: { payId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      if (error) {
-        console.error('Link wallet error:', error);
-        throw new Error(error.message || 'Failed to link wallet');
+      if (primary.error && primary.error.message?.includes('Failed to send a request to the Edge Function')) {
+        // Fallback: call the function endpoint directly (same auth + body)
+        const url = 'https://zuwkgasbkpjlxzsjzumu.functions.supabase.co/link-binance-wallet?t=' + Date.now();
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ payId }),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson?.error || `Failed to link wallet (HTTP ${res.status})`);
+        }
+      } else if (primary.error) {
+        throw new Error(primary.error.message || 'Failed to link wallet');
       }
 
       toast.success('Binance Pay ID linked successfully');
