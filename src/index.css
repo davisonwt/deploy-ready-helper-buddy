@@ -92,6 +92,12 @@ All colors MUST be HSL.
     --login-foreground: 210 40% 98%;
 }
 
+/* Card foreground context fixes */
+.bg-card { color: hsl(var(--card-foreground)); --foreground: var(--card-foreground); }
+.on-card-foreground { --foreground: var(--card-foreground); }
+/* Ensure glass white cards use dark text */
+.bg-white\/90, .bg-white\/95 { color: hsl(var(--card-foreground)); --foreground: var(--card-foreground); }
+
 /* Line clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;

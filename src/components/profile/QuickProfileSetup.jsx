@@ -109,7 +109,7 @@ export function QuickProfileSetup({ onComplete, onClose }) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
         <div className="max-w-md mx-auto">
-          <Card className="bg-white/95 backdrop-blur-lg shadow-xl">
+          <Card className="bg-card text-card-foreground backdrop-blur-lg shadow-xl">
             <CardHeader className="text-center">
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mb-4">
                 <User className="h-8 w-8 text-white" />
@@ -203,7 +203,7 @@ export function QuickProfileSetup({ onComplete, onClose }) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
         <div className="max-w-md mx-auto">
-          <Card className="bg-white/95 backdrop-blur-lg shadow-xl">
+          <Card className="bg-card text-card-foreground backdrop-blur-lg shadow-xl">
             <CardHeader className="text-center">
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4">
                 <Camera className="h-8 w-8 text-white" />
@@ -296,7 +296,7 @@ export function QuickProfileSetup({ onComplete, onClose }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <div className="max-w-md mx-auto text-center">
-        <Card className="bg-white/95 backdrop-blur-lg shadow-xl">
+        <Card className="bg-card text-card-foreground backdrop-blur-lg shadow-xl">
           <CardContent className="p-8">
             <div className="mx-auto w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
               <CheckCircle className="h-10 w-10 text-white" />
