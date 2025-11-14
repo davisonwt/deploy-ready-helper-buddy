@@ -38,6 +38,7 @@ All colors MUST be HSL.
   --s2g-brown: 30 35% 45%;
   --s2g-beige: 60 8% 94%;
   --s2g-purple: 270 75% 45%;
+  --brand-navy: 210 60% 22%;
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, hsl(var(--s2g-green)), hsl(var(--s2g-blue)));
@@ -95,6 +96,9 @@ All colors MUST be HSL.
 /* Card foreground context fixes */
 /* Any light surface should switch foreground to dark card-foreground */
 .bg-card,
+.bg-card\/80,
+.bg-card\/90,
+.bg-card\/95,
 .bg-popover,
 .bg-muted,
 .bg-muted\/5,

@@ -103,7 +103,8 @@ export default {
 				'nav-tithing': 'hsl(var(--nav-tithing))',
 				'nav-gifting': 'hsl(var(--nav-gifting))',
 				// Heading colors
-				'heading-bg': 'hsl(var(--heading-bg))'
+				'heading-bg': 'hsl(var(--heading-bg))',
+				'brand-navy': 'hsl(var(--brand-navy))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
