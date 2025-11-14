@@ -40,6 +40,7 @@ export interface DistributionContext {
   holdReason?: string | null;
   orchardType?: string | null;
   courierRequired?: boolean;
+  productType?: string | null;
 }
 
 const DEFAULT_TITHING_PERCENT = Number(
