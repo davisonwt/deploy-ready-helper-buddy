@@ -4,6 +4,7 @@ export interface BinancePayConfig {
   merchantId: string;
   apiBaseUrl: string;
   defaultTradeType: string;
+  walletName?: string; // Track which wallet this config is for
 }
 
 export interface CreateOrderPayload {
@@ -59,7 +60,7 @@ export interface BinanceTransferResponse {
 
 const encoder = new TextEncoder();
 
-export function loadBinancePayConfig(): BinancePayConfig {
+export function loadBinancePayConfig(walletName?: string): BinancePayConfig {
   const apiKey = Deno.env.get("BINANCE_PAY_API_KEY");
   const apiSecret = Deno.env.get("BINANCE_PAY_API_SECRET");
   const merchantId = Deno.env.get("BINANCE_PAY_MERCHANT_ID");
@@ -77,6 +78,7 @@ export function loadBinancePayConfig(): BinancePayConfig {
     apiBaseUrl: Deno.env.get("BINANCE_PAY_API_BASE_URL") ??
       "https://bpay.binanceapi.com",
     defaultTradeType: Deno.env.get("BINANCE_PAY_TRADE_TYPE") ?? "WEB",
+    walletName,
   };
 }
 

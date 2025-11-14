@@ -1879,10 +1879,13 @@ export type Database = {
       }
       organization_wallets: {
         Row: {
+          api_key: string | null
+          api_secret: string | null
           blockchain: string | null
           created_at: string
           id: string
           is_active: boolean
+          merchant_id: string | null
           supported_tokens: string[]
           updated_at: string
           wallet_address: string
@@ -1890,10 +1893,13 @@ export type Database = {
           wallet_type: string | null
         }
         Insert: {
+          api_key?: string | null
+          api_secret?: string | null
           blockchain?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          merchant_id?: string | null
           supported_tokens?: string[]
           updated_at?: string
           wallet_address: string
@@ -1901,10 +1907,13 @@ export type Database = {
           wallet_type?: string | null
         }
         Update: {
+          api_key?: string | null
+          api_secret?: string | null
           blockchain?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          merchant_id?: string | null
           supported_tokens?: string[]
           updated_at?: string
           wallet_address?: string
@@ -4423,30 +4432,39 @@ export type Database = {
       }
       user_wallets: {
         Row: {
+          api_key: string | null
+          api_secret: string | null
           created_at: string
           id: string
           is_active: boolean | null
           is_primary: boolean
+          merchant_id: string | null
           updated_at: string
           user_id: string
           wallet_address: string
           wallet_type: string
         }
         Insert: {
+          api_key?: string | null
+          api_secret?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           is_primary?: boolean
+          merchant_id?: string | null
           updated_at?: string
           user_id: string
           wallet_address: string
           wallet_type?: string
         }
         Update: {
+          api_key?: string | null
+          api_secret?: string | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           is_primary?: boolean
+          merchant_id?: string | null
           updated_at?: string
           user_id?: string
           wallet_address?: string
