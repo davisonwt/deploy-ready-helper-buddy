@@ -93,10 +93,36 @@ All colors MUST be HSL.
 }
 
 /* Card foreground context fixes */
-.bg-card { color: hsl(var(--card-foreground)); --foreground: var(--card-foreground); }
-.on-card-foreground { --foreground: var(--card-foreground); }
-/* Ensure glass white cards use dark text */
-.bg-white\/90, .bg-white\/95 { color: hsl(var(--card-foreground)); --foreground: var(--card-foreground); }
+/* Any light surface should switch foreground to dark card-foreground */
+.bg-card,
+.bg-popover,
+.bg-muted,
+.bg-muted\/5,
+.bg-muted\/10,
+.bg-muted\/20,
+.bg-muted\/30,
+.bg-muted\/40,
+.bg-white,
+.bg-white\/80,
+.bg-white\/90,
+.bg-white\/95 {
+  color: hsl(var(--card-foreground));
+  --foreground: var(--card-foreground);
+}
+
+/* Form controls on light surfaces */
+.bg-card input, .bg-card select, .bg-card textarea,
+.bg-popover input, .bg-popover select, .bg-popover textarea,
+.bg-muted input, .bg-muted select, .bg-muted textarea,
+.bg-white input, .bg-white select, .bg-white textarea {
+  color: hsl(var(--card-foreground));
+}
+.bg-card input::placeholder, .bg-card textarea::placeholder,
+.bg-popover input::placeholder, .bg-popover textarea::placeholder,
+.bg-muted input::placeholder, .bg-muted textarea::placeholder,
+.bg-white input::placeholder, .bg-white textarea::placeholder {
+  color: hsl(var(--card-foreground) / 0.6);
+}
 
 /* Line clamp utilities */
 .line-clamp-2 {
