@@ -1903,6 +1903,7 @@ export type Database = {
           merchant_id: string | null
           supported_tokens: string[]
           updated_at: string
+          user_id: string | null
           wallet_address: string
           wallet_name: string
           wallet_type: string | null
@@ -1917,6 +1918,7 @@ export type Database = {
           merchant_id?: string | null
           supported_tokens?: string[]
           updated_at?: string
+          user_id?: string | null
           wallet_address: string
           wallet_name?: string
           wallet_type?: string | null
@@ -1931,6 +1933,7 @@ export type Database = {
           merchant_id?: string | null
           supported_tokens?: string[]
           updated_at?: string
+          user_id?: string | null
           wallet_address?: string
           wallet_name?: string
           wallet_type?: string | null
