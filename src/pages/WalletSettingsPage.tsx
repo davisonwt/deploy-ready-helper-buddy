@@ -32,12 +32,11 @@ export default function WalletSettingsPage() {
     
     setLoading(true)
     try {
-      // @ts-ignore - Supabase type inference issue
       const { data, error } = await supabase
         .from('user_wallets')
         .select('wallet_address, api_key, api_secret, merchant_id')
         .eq('user_id', user.id)
-        .eq('wallet_origin', 'binance_pay')
+        .eq('wallet_type', 'binance_pay')
         .maybeSingle()
 
       if (error) throw error
@@ -66,12 +65,11 @@ export default function WalletSettingsPage() {
 
     setSaving(true)
     try {
-      // @ts-ignore - Supabase type inference issue
       const { data: existing, error: fetchError } = await supabase
         .from('user_wallets')
         .select('id')
         .eq('user_id', user.id)
-        .eq('wallet_origin', 'binance_pay')
+        .eq('wallet_type', 'binance_pay')
         .maybeSingle()
 
       if (fetchError) throw fetchError
@@ -94,8 +92,7 @@ export default function WalletSettingsPage() {
           .insert({
             user_id: user.id,
             wallet_address: walletAddress,
-            wallet_origin: 'binance_pay',
-            blockchain_network: 'binance',
+            wallet_type: 'binance_pay',
             api_key: apiKey,
             api_secret: apiSecret,
             merchant_id: merchantId,
