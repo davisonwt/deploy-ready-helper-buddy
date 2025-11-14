@@ -320,23 +320,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-        <div className="max-w-4xl mx-auto px-4">
-          <Card className="mb-6 border-primary/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Quick access</p>
-                  <h3 className="text-lg font-semibold text-foreground">Binance Pay Payment Settings</h3>
-                  <p className="text-sm text-muted-foreground mt-1">View organization payment wallet configuration</p>
-                </div>
-                <Link to="/wallet-settings">
-                  <Button className="ml-4">View Payment Settings</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Real Traffic Overview (Lovable Analytics) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <TrafficOverview />
