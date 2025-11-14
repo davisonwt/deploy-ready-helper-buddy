@@ -7,13 +7,13 @@ const Card = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { variant?: string }
 >(({ className, variant = "default", ...props }, ref) => {
   const variants = {
-    default: "border border-border bg-card text-card-foreground hover:border-primary/30",
-    elevated: "border-0 bg-card text-card-foreground shadow-lg hover:shadow-2xl",
-    glass: "border border-border/20 bg-card/90 backdrop-blur-lg text-card-foreground",
-    gradient: "border-0 bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 text-card-foreground",
-    orchard: "border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-primary/5 hover:border-primary/50 hover:shadow-lg text-card-foreground",
-    rain: "border-2 border-info/30 bg-gradient-to-br from-info/10 via-card to-info/5 hover:border-info/50 hover:shadow-lg text-card-foreground",
-    harvest: "border-2 border-harvest/30 bg-gradient-to-br from-harvest/10 via-card to-harvest/5 hover:border-harvest/50 hover:shadow-lg text-card-foreground"
+    default: "border border-border bg-card hover:border-primary/30",
+    elevated: "border-0 bg-card shadow-lg hover:shadow-2xl",
+    glass: "border border-border/20 bg-card/90 backdrop-blur-lg",
+    gradient: "border-0 bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10",
+    orchard: "border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-primary/5 hover:border-primary/50 hover:shadow-lg",
+    rain: "border-2 border-info/30 bg-gradient-to-br from-info/10 via-card to-info/5 hover:border-info/50 hover:shadow-lg",
+    harvest: "border-2 border-harvest/30 bg-gradient-to-br from-harvest/10 via-card to-harvest/5 hover:border-harvest/50 hover:shadow-lg"
   }
   
   return (

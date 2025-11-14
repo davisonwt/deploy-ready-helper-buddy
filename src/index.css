@@ -121,11 +121,7 @@ All colors MUST be HSL.
 .bg-muted\/10,
 .bg-muted\/20,
 .bg-muted\/30,
-.bg-muted\/40,
-.bg-white,
-.bg-white\/80,
-.bg-white\/90,
-.bg-white\/95 {
+.bg-muted\/40 {
   color: hsl(var(--card-foreground));
 }
 
