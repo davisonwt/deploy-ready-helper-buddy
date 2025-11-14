@@ -93,7 +93,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.link-binance-wallet]
-verify_jwt = false
+verify_jwt = true
 
 [functions.refresh-binance-wallet-balance]
 verify_jwt = true
