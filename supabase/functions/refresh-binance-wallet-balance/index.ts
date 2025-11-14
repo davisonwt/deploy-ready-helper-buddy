@@ -124,31 +124,16 @@ serve(async (req) => {
 
     try {
       const balanceResponse = await binanceClient.getWalletBalance({
-        payeeId: walletAddress!,
+        wallet: "FUNDING_WALLET",
+        currency: "USDC",
       });
 
-      const entries: BinanceBalanceDetail[] = Array.isArray(
-        balanceResponse.balanceDetails,
-      )
-        ? balanceResponse.balanceDetails
-        : [];
-
-      const usdcEntry = entries.find((entry) =>
-        entry.assetCode === "USDC" ||
-        entry.asset === "USDC" ||
-        entry.currency === "USDC"
-      );
-
-      if (usdcEntry) {
-        const rawBalance = usdcEntry.availableAmount ??
-          usdcEntry.totalAmount ??
-          usdcEntry.balance ??
-          "0";
-        fetchedBalance = Number(rawBalance);
-        if (!Number.isFinite(fetchedBalance)) {
-          fetchedBalance = 0;
-        }
+      // Response format: { balance: number, asset: string, fiat: string, ... }
+      if (balanceResponse && typeof balanceResponse.balance === 'number') {
+        fetchedBalance = balanceResponse.balance;
         source = "binance";
+      } else {
+        console.warn("Unexpected balance response format:", balanceResponse);
       }
     } catch (binanceError) {
       console.warn("Binance balance fetch failed, falling back to cache:", binanceError);
