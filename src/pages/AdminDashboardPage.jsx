@@ -300,7 +300,7 @@ export default function AdminDashboardPage() {
   // Wait for roles to load before checking access
   if (rolesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
 
   if (!isAdminOrGosat) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-destructive/10 via-background to-destructive/10 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <Shield className="h-16 w-16 mx-auto text-destructive mb-4" />
@@ -334,10 +334,10 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-white/90">
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-card text-card-foreground">
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-primary/20 rounded-full">
