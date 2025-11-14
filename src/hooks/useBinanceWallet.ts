@@ -260,6 +260,7 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
       let data: any = null;
 
       try {
+        console.log('🔄 Invoking refresh-binance-wallet-balance...', invokeOptions);
         const result = await supabase.functions.invoke<{
           success: boolean;
           balance?: number;
@@ -267,9 +268,16 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
           updatedAt?: string | null;
         }>('refresh-binance-wallet-balance', invokeOptions);
         
-        if (result.error) primaryError = result.error;
-        else data = result.data;
+        console.log('📥 Balance refresh result:', result);
+        
+        if (result.error) {
+          console.error('❌ Refresh error:', result.error);
+          primaryError = result.error;
+        } else {
+          data = result.data;
+        }
       } catch (e) {
+        console.error('❌ Refresh exception:', e);
         primaryError = e;
       }
 
