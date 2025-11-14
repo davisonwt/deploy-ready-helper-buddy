@@ -191,10 +191,10 @@ function Layout({ children }) {
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-s2g-green font-playfair">
+                <h1 className="text-xl font-bold text-brand-navy font-playfair">
                   sow2grow
                 </h1>
-                <p className="text-xs text-s2g-blue">364yhvh community farm</p>
+                <p className="text-xs text-brand-navy">364yhvh community farm</p>
               </div>
             </Link>
             
@@ -468,10 +468,10 @@ function Layout({ children }) {
                 />
               </div>
                 <div>
-                  <h3 className="text-lg font-bold text-s2g-green font-playfair">
+                  <h3 className="text-lg font-bold text-brand-navy font-playfair">
                     sow2grow
                   </h3>
-                  <p className="text-xs text-s2g-blue">364yhvh community farm</p>
+                  <p className="text-xs text-brand-navy">364yhvh community farm</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -480,7 +480,7 @@ function Layout({ children }) {
             </div>
             
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-4">Community</h4>
+              <h4 className="text-sm font-semibold text-brand-navy mb-4">Community</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>• Faith-based giving</p>
                 <p>• Mutual community support</p>
@@ -490,7 +490,7 @@ function Layout({ children }) {
             </div>
             
             <div>
-              <h4 className="text-sm font-semibold text-foreground mb-4">Scripture</h4>
+              <h4 className="text-sm font-semibold text-brand-navy mb-4">Scripture</h4>
               <blockquote className="text-sm text-muted-foreground italic">
                 "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
                 <br />
