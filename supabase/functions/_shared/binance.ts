@@ -294,8 +294,12 @@ export class BinancePayClient {
       this.config.apiSecret,
     );
 
+    const fullUrl = `${this.config.apiBaseUrl}${endpoint}`;
+    console.log(`[Binance Pay] Request to: ${fullUrl}`);
+    console.log(`[Binance Pay] Request body: ${body}`);
+
     const response = await fetch(
-      `${this.config.apiBaseUrl}${endpoint}`,
+      fullUrl,
       {
         method: "POST",
         headers: buildHeaders(this.config, signature, timestamp, nonce),
@@ -303,14 +307,22 @@ export class BinancePayClient {
       },
     );
 
+    const responseText = await response.text();
+    console.log(`[Binance Pay] Response status: ${response.status}`);
+    console.log(`[Binance Pay] Response body: ${responseText}`);
+
     if (!response.ok) {
-      const errorBody = await response.text();
       throw new Error(
-        `Binance Pay HTTP error ${response.status}: ${errorBody}`,
+        `Binance Pay HTTP error ${response.status}: ${responseText}`,
       );
     }
 
-    return await response.json();
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      console.error(`[Binance Pay] Failed to parse response as JSON:`, e);
+      throw new Error(`Invalid JSON response from Binance Pay: ${responseText}`);
+    }
   }
 }
 
