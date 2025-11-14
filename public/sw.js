@@ -1,5 +1,5 @@
 // Lightweight Service Worker - Network-first strategy
-const CACHE_VERSION = '2025-11-08-v3'
+const CACHE_VERSION = '2025-11-14-v1'
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
 // Only cache critical static assets
