@@ -60,6 +60,7 @@ const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
 const MarketingVideosGallery = lazy(() => import("./pages/MarketingVideosGallery.jsx"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
+const CommunityOfferingPage = lazy(() => import("./pages/CommunityOfferingPage"));
 const TestBasketPage = lazy(() => import("./pages/TestBasketPage"));
 const GroveStationPage = lazy(() => import("./pages/GroveStationPage"));
 const RadioManagementPage = lazy(() => import("./pages/RadioManagementPage"));
@@ -505,6 +506,15 @@ const App = () => (
                    <Layout>
                      <CreateOrchardPage />
                    </Layout>
+                 </ProtectedRoute>
+               } />
+
+               {/* Community Offering Generator */}
+               <Route path="/community-offering" element={
+                 <ProtectedRoute>
+                   <Suspense fallback={<div>Loading...</div>}>
+                     <CommunityOfferingPage />
+                   </Suspense>
                  </ProtectedRoute>
                } />
 
