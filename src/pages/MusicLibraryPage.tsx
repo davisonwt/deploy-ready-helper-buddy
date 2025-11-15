@@ -8,8 +8,9 @@ import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
 import { LiveSessionPlaylistCart } from '@/components/music/LiveSessionPlaylistCart';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
-import { Music, Users, Radio } from 'lucide-react';
+import { Music, Users, Radio, Disc } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { PlaylistBrowser } from '@/components/music/PlaylistBrowser';
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
@@ -92,7 +93,7 @@ export default function MusicLibraryPage() {
       // Get ALL tracks regardless of user
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
-        .select('*, radio_djs(user_id)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -103,9 +104,9 @@ export default function MusicLibraryPage() {
       console.log('✅ Raw tracks fetched:', tracks?.length || 0);
       console.log('📊 Sample track:', tracks?.[0]);
       
-      // Get all unique user IDs from radio_djs
-      const userIds = [...new Set(tracks?.map(t => t.radio_djs?.user_id).filter(Boolean))];
-      console.log('👥 Unique user IDs found:', userIds.length);
+      // Skip profile association if radio_djs not accessible
+      const userIds: string[] = [];
+      console.log('👥 Unique user IDs found:', 0);
       
       // Fetch profiles for all users (guard empty to avoid IN error)
       let profileList: Array<{ id: string; username: string | null; avatar_url: string | null }> = [];
@@ -129,7 +130,7 @@ export default function MusicLibraryPage() {
       // Transform the data to include profile info
       const transformedTracks = (tracks || []).map(track => ({
         ...track,
-        profiles: track.radio_djs?.user_id ? profileMap.get(track.radio_djs.user_id) || { username: null, avatar_url: null } : { username: null, avatar_url: null }
+        profiles: { username: null, avatar_url: null }
       }));
       
       console.log('🎼 Final transformed tracks:', transformedTracks.length);
@@ -158,6 +159,10 @@ export default function MusicLibraryPage() {
           <TabsTrigger value="community" className="gap-2">
             <Users className="h-4 w-4" />
             Build Album
+          </TabsTrigger>
+          <TabsTrigger value="albums" className="gap-2">
+            <Disc className="h-4 w-4" />
+            Albums
           </TabsTrigger>
           <TabsTrigger value="live-sessions" className="gap-2">
             <Radio className="h-4 w-4" />
@@ -223,6 +228,20 @@ export default function MusicLibraryPage() {
               <AlbumBuilderCart />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="albums" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Disc className="h-5 w-5" />
+                S2G Community Albums
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PlaylistBrowser />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="live-sessions" className="space-y-4">
