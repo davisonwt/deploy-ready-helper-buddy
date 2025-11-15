@@ -4,12 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MusicLibraryTable } from '@/components/music/MusicLibraryTable';
+import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
+import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { Music, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
+  const { addTrack, removeTrack, isTrackSelected, selectedTracks } = useAlbumBuilder();
   const [activeTab, setActiveTab] = useState('my-music');
+
+  const handleTrackSelect = (track: any) => {
+    if (isTrackSelected(track.id)) {
+      removeTrack(track.id);
+    } else {
+      addTrack(track);
+    }
+  };
 
   // Fetch user's own music - get ALL tracks regardless of DJ profile status
   const { data: myMusic = [], isLoading: loadingMy } = useQuery({
@@ -140,26 +151,39 @@ export default function MusicLibraryPage() {
         </TabsContent>
 
         <TabsContent value="community" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Community Music Library
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingCommunity ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : (
-                <MusicLibraryTable 
-                  tracks={communityMusic} 
-                  showBestowalButton={true}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    S2G Community Music Library
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Select 10 tracks to build your custom album for $20
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {loadingCommunity ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <MusicLibraryTable 
+                      tracks={communityMusic} 
+                      showBestowalButton={true}
+                      allowSelection={true}
+                      onTrackSelect={handleTrackSelect}
+                      selectedTracks={selectedTracks.map(t => t.id)}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <AlbumBuilderCart />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
