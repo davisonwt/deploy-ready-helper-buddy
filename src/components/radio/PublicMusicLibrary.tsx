@@ -61,7 +61,7 @@ export default function PublicMusicLibrary() {
       const { data, error } = await supabase
         .from('music_purchases')
         .select('track_id')
-        .eq('user_id', user.id);
+        .eq('buyer_id', user.id);
 
       if (error) throw error;
       return data.map(p => p.track_id);
