@@ -106,3 +106,6 @@ verify_jwt = true
 
 [functions.distribute-bestowal]
 verify_jwt = true
+
+[functions.generate-community-offering]
+verify_jwt = true
