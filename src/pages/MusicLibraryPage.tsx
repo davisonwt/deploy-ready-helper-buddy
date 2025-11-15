@@ -5,20 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MusicLibraryTable } from '@/components/music/MusicLibraryTable';
 import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
+import { LiveSessionPlaylistCart } from '@/components/music/LiveSessionPlaylistCart';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
-import { Music, Users } from 'lucide-react';
+import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
+import { Music, Users, Radio } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
-  const { addTrack, removeTrack, isTrackSelected, selectedTracks } = useAlbumBuilder();
+  const albumBuilder = useAlbumBuilder();
+  const livePlaylist = useLiveSessionPlaylist();
   const [activeTab, setActiveTab] = useState('my-music');
 
-  const handleTrackSelect = (track: any) => {
-    if (isTrackSelected(track.id)) {
-      removeTrack(track.id);
+  const handleAlbumTrackSelect = (track: any) => {
+    if (albumBuilder.isTrackSelected(track.id)) {
+      albumBuilder.removeTrack(track.id);
     } else {
-      addTrack(track);
+      albumBuilder.addTrack(track);
+    }
+  };
+
+  const handleLiveTrackSelect = (track: any) => {
+    if (livePlaylist.isTrackSelected(track.id)) {
+      livePlaylist.removeTrack(track.id);
+    } else {
+      livePlaylist.addTrack(track);
     }
   };
 
@@ -122,7 +133,11 @@ export default function MusicLibraryPage() {
           </TabsTrigger>
           <TabsTrigger value="community" className="gap-2">
             <Users className="h-4 w-4" />
-            S2G Community Music
+            Build Album
+          </TabsTrigger>
+          <TabsTrigger value="live-sessions" className="gap-2">
+            <Radio className="h-4 w-4" />
+            Live Sessions
           </TabsTrigger>
         </TabsList>
 
@@ -173,8 +188,8 @@ export default function MusicLibraryPage() {
                       tracks={communityMusic} 
                       showBestowalButton={true}
                       allowSelection={true}
-                      onTrackSelect={handleTrackSelect}
-                      selectedTracks={selectedTracks.map(t => t.id)}
+                      onTrackSelect={handleAlbumTrackSelect}
+                      selectedTracks={albumBuilder.selectedTracks.map(t => t.id)}
                     />
                   )}
                 </CardContent>
@@ -182,6 +197,42 @@ export default function MusicLibraryPage() {
             </div>
             <div>
               <AlbumBuilderCart />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="live-sessions" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Radio className="h-5 w-5" />
+                    S2G Community Music for Live Sessions
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Select tracks to create playlists for your radio shows, rooms, and live streams
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {loadingCommunity ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
+                    <MusicLibraryTable 
+                      tracks={communityMusic} 
+                      showBestowalButton={false}
+                      allowSelection={true}
+                      onTrackSelect={handleLiveTrackSelect}
+                      selectedTracks={livePlaylist.selectedTracks.map(t => t.id)}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <LiveSessionPlaylistCart />
             </div>
           </div>
         </TabsContent>
