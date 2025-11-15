@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCurrency } from '@/hooks/useCurrency';
+
 
 interface MusicTrack {
   id: string;
@@ -48,6 +50,7 @@ export function MusicLibraryTable({
   selectedTracks = []
 }: MusicLibraryTableProps) {
   const { user } = useAuth();
+  const { formatAmount } = useCurrency();
   const musicPurchase = useMusicPurchase();
   const queryClient = useQueryClient();
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
@@ -88,7 +91,7 @@ export function MusicLibraryTable({
       if (audio.currentTime >= 30) {
         audio.pause();
         setPlayingTrack(null);
-        toast.info('Preview ended. Bestow $2 to download full track!');
+        toast.info(`Preview ended. Bestow ${formatAmount(2)} to download the full track.`);
       }
     });
 
@@ -117,10 +120,10 @@ export function MusicLibraryTable({
     }
 
     try {
-      await purchaseTrack(track.id, 2); // $2 including 10% tithing + 5% admin
-      toast.success('Track purchased! Check your downloads.');
+      await purchaseTrack(track.id, 2); // Bestowal of 2 USDC
+      toast.success('Bestowal completed! You can now download the track.');
     } catch (error) {
-      toast.error('Purchase failed. Please try again.');
+      toast.error('Bestowal failed. Please try again.');
     }
   };
 
@@ -181,7 +184,7 @@ export function MusicLibraryTable({
         <div className="col-span-4">Track / Artist</div>
         <div className="col-span-2">Genre</div>
         <div className="col-span-1">Duration</div>
-        <div className="col-span-1 text-center">Price</div>
+        <div className="col-span-1 text-center">Bestowal</div>
         <div className="col-span-4 text-center">Actions</div>
       </div>
 
@@ -253,7 +256,7 @@ export function MusicLibraryTable({
                 {/* Price */}
                 <div className="col-span-1 text-center">
                   <Badge className="bg-primary/10 text-primary border-primary/20">
-                    $2.00
+                    {formatAmount(2)}
                   </Badge>
                 </div>
 
