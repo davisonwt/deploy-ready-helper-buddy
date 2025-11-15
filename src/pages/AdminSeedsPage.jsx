@@ -195,3 +195,5 @@ export function AdminSeedsPage() {
     </div>
   );
 }
+
+export default AdminSeedsPage;

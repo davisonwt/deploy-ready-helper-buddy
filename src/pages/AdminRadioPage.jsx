@@ -3,7 +3,7 @@ import AdminRadioManagement from "../components/radio/AdminRadioManagement";
 import { RadioScheduleGrid } from "../components/radio/RadioScheduleGrid";
 import PersonnelSlotAssignment from "../components/radio/PersonnelSlotAssignment";
 
-export function AdminRadioPage() {
+function AdminRadioPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-6">
       <div className="max-w-[1600px] mx-auto space-y-6">
@@ -65,3 +65,5 @@ export function AdminRadioPage() {
     </div>
   );
 }
+
+export default AdminRadioPage;
