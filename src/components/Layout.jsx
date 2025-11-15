@@ -133,6 +133,7 @@ function Layout({ children }) {
         { name: "S2G Community Orchards", href: "/364yhvh-orchards", icon: Sprout },
         { name: "My Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
+        { name: "Music Library", href: "/music-library", icon: Mic },
         { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
       ]
     },
