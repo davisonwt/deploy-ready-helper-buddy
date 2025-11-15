@@ -11,22 +11,34 @@ export default function MusicLibraryPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('my-music');
 
-  // Fetch user's own music
+  // Fetch user's own music - get ALL tracks regardless of DJ profile status
   const { data: myMusic = [], isLoading: loadingMy } = useQuery({
     queryKey: ['my-music', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      // First get the DJ profile for this user
+      // Get user's profile first
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .single();
+      
+      // Try to get DJ profile
       const { data: djProfile } = await supabase
         .from('radio_djs')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (!djProfile) return [];
+      if (!djProfile) {
+        // No DJ profile yet - return empty for now
+        // User should create DJ profile first
+        return [];
+      }
       
-      const { data, error } = await supabase
+      // Fetch all tracks for this DJ
+      const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*')
         .eq('dj_id', djProfile.id)
@@ -34,14 +46,7 @@ export default function MusicLibraryPage() {
 
       if (error) throw error;
       
-      // Get profile info separately
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('id', user.id)
-        .single();
-      
-      return (data || []).map(track => ({
+      return (tracks || []).map(track => ({
         ...track,
         profiles: profile || { username: null, avatar_url: null }
       }));
@@ -49,7 +54,7 @@ export default function MusicLibraryPage() {
     enabled: !!user
   });
 
-  // Fetch all public community music
+  // Fetch all public community music - ALL tracks
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
     queryKey: ['community-music'],
     queryFn: async () => {
@@ -61,7 +66,7 @@ export default function MusicLibraryPage() {
 
       if (error) throw error;
       
-      // Get all unique user IDs
+      // Get all unique user IDs from radio_djs
       const userIds = [...new Set(tracks?.map(t => t.radio_djs?.user_id).filter(Boolean))];
       
       // Fetch profiles for all users
@@ -120,6 +125,7 @@ export default function MusicLibraryPage() {
                 <MusicLibraryTable 
                   tracks={myMusic} 
                   showBestowalButton={false}
+                  showEditButton={true}
                 />
               )}
             </CardContent>
