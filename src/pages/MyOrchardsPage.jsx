@@ -22,7 +22,8 @@ import {
   Share2,
   MapPin,
   Heart,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
@@ -246,15 +247,27 @@ export default function MyOrchardsPage() {
         <p className="text-sm text-muted-foreground mb-8">
           Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
         </p>
-        <Link to="/create-orchard">
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-green-500 to-lime-400 hover:from-green-600 hover:to-lime-500 text-white font-semibold shadow-lg"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Sow New Seed
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link to="/create-orchard">
+            <Button 
+              size="lg" 
+              className="bg-gradient-to-r from-green-500 to-lime-400 hover:from-green-600 hover:to-lime-500 text-white font-semibold shadow-lg"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Sow New Seed
+            </Button>
+          </Link>
+          <Link to="/community-offering">
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="border-2 border-purple-500 text-purple-700 hover:bg-purple-50 font-semibold shadow-lg"
+            >
+              <Sparkles className="h-5 w-5 mr-2" />
+              AI Offering Generator
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
