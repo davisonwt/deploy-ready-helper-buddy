@@ -100,6 +100,7 @@ import Layout from "./components/Layout";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { ProductBasketProvider } from "./contexts/ProductBasketContext";
+import { AlbumBuilderProvider } from "./contexts/AlbumBuilderContext";
 import { AppContextProvider } from "./contexts/AppContext";
 import LiveActivityWidget from "./components/LiveActivityWidget";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
@@ -131,7 +132,8 @@ const App = () => (
         <CallManagerProvider>
           <BasketProvider>
             <ProductBasketProvider>
-              <TooltipProvider>
+              <AlbumBuilderProvider>
+                <TooltipProvider>
               <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
                 <NavigationMonitor />
                 <DeadLinkDetector />
@@ -732,6 +734,7 @@ const App = () => (
               <HelpModal />
             </ThemeProvider>
           </TooltipProvider>
+        </AlbumBuilderProvider>
         </ProductBasketProvider>
       </BasketProvider>
       </CallManagerProvider>

@@ -35,7 +35,8 @@ interface MusicLibraryTableProps {
   showBestowalButton?: boolean;
   showEditButton?: boolean;
   allowSelection?: boolean;
-  onTrackSelect?: (trackId: string) => void;
+  onTrackSelect?: (track: MusicTrack) => void;
+  selectedTracks?: string[];
 }
 
 export function MusicLibraryTable({ 
@@ -43,7 +44,8 @@ export function MusicLibraryTable({
   showBestowalButton = true,
   showEditButton = false,
   allowSelection = false,
-  onTrackSelect 
+  onTrackSelect,
+  selectedTracks = []
 }: MusicLibraryTableProps) {
   const { user } = useAuth();
   const musicPurchase = useMusicPurchase();
@@ -188,16 +190,38 @@ export function MusicLibraryTable({
         {tracks.map((track) => {
           const isPurchased = hasPurchased(track.id);
           const isPlaying = playingTrack === track.id;
+          const isSelected = selectedTracks.includes(track.id);
 
           return (
             <Card 
               key={track.id} 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => allowSelection && onTrackSelect?.(track.id)}
+              className={`p-4 hover:shadow-md transition-shadow ${allowSelection ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-primary' : ''}`}
+              onClick={() => allowSelection && onTrackSelect?.(track)}
             >
               <div className="grid grid-cols-12 gap-4 items-center">
+                {/* Selection Checkbox */}
+                {allowSelection && (
+                  <div className="col-span-1 flex justify-center">
+                    <div 
+                      className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        isSelected ? 'bg-primary border-primary' : 'border-muted-foreground'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTrackSelect?.(track);
+                      }}
+                    >
+                      {isSelected && (
+                        <svg className="h-3 w-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Track Info */}
-                <div className="col-span-4 flex items-center gap-3">
+                <div className={`${allowSelection ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={track.profiles?.avatar_url || ''} />
                     <AvatarFallback className="bg-primary/10">
