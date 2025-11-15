@@ -94,6 +94,7 @@ export default function MusicLibraryPage() {
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*')
+        .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) {
