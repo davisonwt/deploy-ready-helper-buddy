@@ -3,11 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Share2, Download, DollarSign, Play, Pause } from 'lucide-react';
+import { Heart, Share2, Download, DollarSign, Play, Pause, Edit } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { EditTrackModal } from './EditTrackModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface MusicTrack {
   id: string;
@@ -31,6 +33,7 @@ interface MusicTrack {
 interface MusicLibraryTableProps {
   tracks: MusicTrack[];
   showBestowalButton?: boolean;
+  showEditButton?: boolean;
   allowSelection?: boolean;
   onTrackSelect?: (trackId: string) => void;
 }
@@ -38,13 +41,16 @@ interface MusicLibraryTableProps {
 export function MusicLibraryTable({ 
   tracks, 
   showBestowalButton = true,
+  showEditButton = false,
   allowSelection = false,
   onTrackSelect 
 }: MusicLibraryTableProps) {
   const { user } = useAuth();
   const { purchaseTrack, hasPurchased, processing } = useMusicPurchase();
+  const queryClient = useQueryClient();
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return 'N/A';
@@ -150,6 +156,19 @@ export function MusicLibraryTable({
 
   return (
     <div className="space-y-4">
+      {/* Edit Track Modal */}
+      {editingTrack && (
+        <EditTrackModal
+          track={editingTrack}
+          isOpen={!!editingTrack}
+          onClose={() => setEditingTrack(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['my-music'] });
+            queryClient.invalidateQueries({ queryKey: ['community-music'] });
+          }}
+        />
+      )}
+
       {/* Header Row */}
       <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
         <div className="col-span-4">Track / Artist</div>
@@ -211,6 +230,21 @@ export function MusicLibraryTable({
 
                 {/* Actions */}
                 <div className="col-span-4 flex items-center justify-end gap-2">
+                  {showEditButton && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingTrack(track);
+                      }}
+                      className="h-8 gap-1"
+                    >
+                      <Edit className="h-3 w-3" />
+                      Edit
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
                     variant="ghost"
