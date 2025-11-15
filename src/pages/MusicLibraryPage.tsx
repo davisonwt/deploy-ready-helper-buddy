@@ -8,7 +8,7 @@ import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
 import { LiveSessionPlaylistCart } from '@/components/music/LiveSessionPlaylistCart';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
-import { Music, Users, Radio, Disc } from 'lucide-react';
+import { Music, Users, Radio, Disc, Podcast } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PlaylistBrowser } from '@/components/music/PlaylistBrowser';
 
@@ -164,6 +164,10 @@ export default function MusicLibraryPage() {
             <Disc className="h-4 w-4" />
             Albums
           </TabsTrigger>
+          <TabsTrigger value="chatcast" className="gap-2">
+            <Podcast className="h-4 w-4" />
+            Chatcast
+          </TabsTrigger>
           <TabsTrigger value="live-sessions" className="gap-2">
             <Radio className="h-4 w-4" />
             Live Sessions
@@ -239,7 +243,24 @@ export default function MusicLibraryPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <PlaylistBrowser />
+              <PlaylistBrowser playlistType="album" emptyMessage="No albums available yet." />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chatcast" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Podcast className="h-5 w-5" />
+                Chatcast
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Listen to community podcasts and audio content
+              </p>
+            </CardHeader>
+            <CardContent>
+              <PlaylistBrowser playlistType="podcast" emptyMessage="No chatcasts available yet." />
             </CardContent>
           </Card>
         </TabsContent>

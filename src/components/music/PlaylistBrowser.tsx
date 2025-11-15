@@ -17,13 +17,18 @@ interface PlaylistWithTracks {
   tracks: Array<{ order: number; track: any }>;
 }
 
-export function PlaylistBrowser() {
+interface PlaylistBrowserProps {
+  playlistType?: string;
+  emptyMessage?: string;
+}
+
+export function PlaylistBrowser({ playlistType, emptyMessage = 'No public albums yet.' }: PlaylistBrowserProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data: playlists = [], isLoading } = useQuery({
-    queryKey: ['community-playlists'],
+    queryKey: ['community-playlists', playlistType],
     queryFn: async (): Promise<PlaylistWithTracks[]> => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('dj_playlists')
         .select(`
           id,
@@ -38,8 +43,13 @@ export function PlaylistBrowser() {
             dj_music_tracks(*)
           )
         `)
-        .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .eq('is_public', true);
+      
+      if (playlistType) {
+        query = query.eq('playlist_type', playlistType);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -68,7 +78,7 @@ export function PlaylistBrowser() {
   if (!playlists.length) {
     return (
       <Card className="p-8 text-center">
-        <p className="text-muted-foreground">No public albums yet.</p>
+        <p className="text-muted-foreground">{emptyMessage}</p>
       </Card>
     );
   }
