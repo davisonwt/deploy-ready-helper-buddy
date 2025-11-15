@@ -46,11 +46,16 @@ export function MusicLibraryTable({
   onTrackSelect 
 }: MusicLibraryTableProps) {
   const { user } = useAuth();
-  const { purchaseTrack, hasPurchased, processing } = useMusicPurchase();
+  const musicPurchase = useMusicPurchase();
   const queryClient = useQueryClient();
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
+  
+  // Safely extract functions with fallbacks
+  const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
+  const hasPurchased = musicPurchase?.hasPurchased || (() => false);
+  const processing = musicPurchase?.processing || false;
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return 'N/A';

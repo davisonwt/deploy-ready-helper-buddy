@@ -13,11 +13,11 @@ export function useMusicPurchase() {
     queryKey: ['music-purchases', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      // @ts-ignore - New table not yet in types
+      
       const { data, error } = await supabase
         .from('music_purchases')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('buyer_id', user.id);
 
       if (error) throw error;
       return data || [];
@@ -29,14 +29,18 @@ export function useMusicPurchase() {
     mutationFn: async ({ trackId, amount }: { trackId: string; amount: number }) => {
       if (!user) throw new Error('User not authenticated');
 
-      // @ts-ignore - New table not yet in types
-      const { data, error } = await (supabase
-        .from('music_purchases') as any)
+      const { data, error } = await supabase
+        .from('music_purchases')
         .insert({
-          user_id: user.id,
+          buyer_id: user.id,
           track_id: trackId,
           amount: amount,
-          currency: 'USDC',
+          total_amount: amount,
+          platform_fee: amount * 0.05,
+          sow2grow_fee: amount * 0.10,
+          artist_amount: amount * 0.85,
+          platform_amount: amount * 0.05,
+          admin_amount: amount * 0.10,
           payment_status: 'completed'
         })
         .select()
