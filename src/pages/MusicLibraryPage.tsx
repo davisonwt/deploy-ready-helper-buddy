@@ -25,26 +25,33 @@ export default function MusicLibraryPage() {
         .single();
       
       // Try to get DJ profile
-      const { data: djProfile } = await supabase
+      const { data: djProfiles } = await supabase
         .from('radio_djs')
         .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .eq('user_id', user.id);
       
-      if (!djProfile) {
-        // No DJ profile yet - return empty for now
-        // User should create DJ profile first
+      if (!djProfiles || djProfiles.length === 0) {
+        // No DJ profile yet - return empty
+        console.log('No DJ profile found for user:', user.id);
         return [];
       }
       
-      // Fetch all tracks for this DJ
+      // Get all DJ IDs for this user
+      const djIds = djProfiles.map(dj => dj.id);
+      
+      // Fetch all tracks for these DJ profiles
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*')
-        .eq('dj_id', djProfile.id)
+        .in('dj_id', djIds)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tracks:', error);
+        throw error;
+      }
+      
+      console.log(`Found ${tracks?.length || 0} tracks for user ${user.id}`);
       
       return (tracks || []).map(track => ({
         ...track,
@@ -54,14 +61,14 @@ export default function MusicLibraryPage() {
     enabled: !!user
   });
 
-  // Fetch all public community music - ALL tracks
+  // Fetch all public community music - ALL tracks from ALL users
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
     queryKey: ['community-music'],
     queryFn: async () => {
+      // Get ALL public tracks regardless of user
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*, radio_djs(user_id)')
-        .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -100,11 +107,11 @@ export default function MusicLibraryPage() {
         <TabsList className="bg-card">
           <TabsTrigger value="my-music" className="gap-2">
             <Music className="h-4 w-4" />
-            My Products
+            My Music
           </TabsTrigger>
           <TabsTrigger value="community" className="gap-2">
             <Users className="h-4 w-4" />
-            S2G Community Products
+            S2G Community Music
           </TabsTrigger>
         </TabsList>
 
