@@ -83,12 +83,13 @@ const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
+const MusicLibraryPage = lazy(() => import("./pages/MusicLibraryPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
-const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage").then(m => ({ default: m.AdminRadioPage })));
-const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage").then(m => ({ default: m.AdminSeedsPage })));
+const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage"));
+const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage"));
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
 const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
@@ -406,12 +407,20 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
-              <Route path="/radio-management" element={
+               <Route path="/radio-management" element={
                 <ProtectedRoute allowedRoles={['radio_admin', 'admin', 'gosat']}>
                   <Layout>
                     <RadioManagementPage />
                   </Layout>
                 </ProtectedRoute>
+               } />
+               
+               <Route path="/music-library" element={
+                 <Layout>
+                   <Suspense fallback={<LoadingFallback />}>
+                     <MusicLibraryPage />
+                   </Suspense>
+                 </Layout>
                } />
                
                <Route path="/apply-radio-slot" element={
@@ -519,7 +528,7 @@ const App = () => (
               <Route path="/gosat/wallets" element={
                 <ProtectedRoute allowedRoles={['gosat']}>
                   <Layout>
-                    <Suspense fallback={<div>Loading...</div>}>
+                    <Suspense fallback={<LoadingFallback />}>
                       <GosatWalletsPage />
                     </Suspense>
                   </Layout>
@@ -605,7 +614,9 @@ const App = () => (
               <Route path="/admin/radio" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
-                    <AdminRadioPage />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <AdminRadioPage />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />
@@ -613,7 +624,9 @@ const App = () => (
               <Route path="/admin/seeds" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
-                    <AdminSeedsPage />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <AdminSeedsPage />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />
