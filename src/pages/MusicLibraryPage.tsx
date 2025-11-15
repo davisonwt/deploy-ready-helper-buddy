@@ -107,15 +107,24 @@ export default function MusicLibraryPage() {
       const userIds = [...new Set(tracks?.map(t => t.radio_djs?.user_id).filter(Boolean))];
       console.log('👥 Unique user IDs found:', userIds.length);
       
-      // Fetch profiles for all users
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .in('id', userIds);
+      // Fetch profiles for all users (guard empty to avoid IN error)
+      let profileList: Array<{ id: string; username: string | null; avatar_url: string | null }> = [];
+      if (userIds.length > 0) {
+        const { data: profs, error: profErr } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .in('id', userIds);
+        if (profErr) {
+          console.warn('⚠️ Profiles fetch error, continuing without profiles:', profErr);
+        }
+        profileList = profs || [];
+      } else {
+        console.log('ℹ️ No user IDs found from radio_djs; proceeding without profiles.');
+      }
       
-      console.log('👤 Profiles fetched:', profiles?.length || 0);
+      console.log('👤 Profiles fetched:', profileList.length);
       
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const profileMap = new Map(profileList.map(p => [p.id, p]));
       
       // Transform the data to include profile info
       const transformedTracks = (tracks || []).map(track => ({
