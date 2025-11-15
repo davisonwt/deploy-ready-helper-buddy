@@ -87,16 +87,25 @@ export default function MusicLibraryPage() {
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
     queryKey: ['community-music'],
     queryFn: async () => {
-      // Get ALL public tracks regardless of user
+      console.log('🎵 Fetching community music...');
+      
+      // Get ALL tracks regardless of user
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*, radio_djs(user_id)')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching community tracks:', error);
+        throw error;
+      }
+      
+      console.log('✅ Raw tracks fetched:', tracks?.length || 0);
+      console.log('📊 Sample track:', tracks?.[0]);
       
       // Get all unique user IDs from radio_djs
       const userIds = [...new Set(tracks?.map(t => t.radio_djs?.user_id).filter(Boolean))];
+      console.log('👥 Unique user IDs found:', userIds.length);
       
       // Fetch profiles for all users
       const { data: profiles } = await supabase
@@ -104,13 +113,19 @@ export default function MusicLibraryPage() {
         .select('id, username, avatar_url')
         .in('id', userIds);
       
+      console.log('👤 Profiles fetched:', profiles?.length || 0);
+      
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
       // Transform the data to include profile info
-      return (tracks || []).map(track => ({
+      const transformedTracks = (tracks || []).map(track => ({
         ...track,
         profiles: track.radio_djs?.user_id ? profileMap.get(track.radio_djs.user_id) || { username: null, avatar_url: null } : { username: null, avatar_url: null }
       }));
+      
+      console.log('🎼 Final transformed tracks:', transformedTracks.length);
+      
+      return transformedTracks;
     }
   });
 
