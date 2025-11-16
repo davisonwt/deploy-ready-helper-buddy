@@ -540,7 +540,7 @@ const App = () => (
 
               {/* Gosat Organization Wallets */}
               <Route path="/gosat/wallets" element={
-                <ProtectedRoute allowedRoles={['gosat']}>
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <GosatWalletsPage />
