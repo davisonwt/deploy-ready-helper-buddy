@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings } from 'lucide-react';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
 declare global {
   interface Window {
@@ -21,7 +22,7 @@ interface JitsiRoomProps {
 export default function JitsiRoom({
   roomName,
   displayName = 'Guest',
-  domain = import.meta.env.VITE_JITSI_DOMAIN || 'meet.jit.si',
+  domain = JITSI_CONFIG.domain,
   onLeave,
   isModerator = false,
 }: JitsiRoomProps) {
