@@ -105,9 +105,25 @@ export default function MusicLibraryPage() {
       console.log('✅ Raw tracks fetched:', tracks?.length || 0);
       console.log('📊 Sample track:', tracks?.[0]);
       
-      // Skip profile association if radio_djs not accessible
-      const userIds: string[] = [];
-      console.log('👥 Unique user IDs found:', 0);
+      // Get unique DJ IDs from tracks
+      const djIds = [...new Set((tracks || []).map(t => t.dj_id).filter(Boolean))];
+      console.log('🎤 Unique DJ IDs found:', djIds.length);
+      
+      // Fetch DJ profiles to get user IDs
+      let userIds: string[] = [];
+      if (djIds.length > 0) {
+        const { data: djProfiles, error: djError } = await supabase
+          .from('radio_djs')
+          .select('id, user_id')
+          .in('id', djIds);
+        
+        if (djError) {
+          console.warn('⚠️ DJ profiles fetch error, continuing without profiles:', djError);
+        } else {
+          userIds = (djProfiles || []).map(dj => dj.user_id).filter(Boolean);
+          console.log('👥 Unique user IDs found:', userIds.length);
+        }
+      }
       
       // Fetch profiles for all users (guard empty to avoid IN error)
       let profileList: Array<{ id: string; username: string | null; avatar_url: string | null }> = [];
@@ -128,11 +144,27 @@ export default function MusicLibraryPage() {
       
       const profileMap = new Map(profileList.map(p => [p.id, p]));
       
+      // Create a DJ to user mapping
+      let djToUserMap = new Map<string, string>();
+      if (djIds.length > 0) {
+        const { data: djProfiles } = await supabase
+          .from('radio_djs')
+          .select('id, user_id')
+          .in('id', djIds);
+        if (djProfiles) {
+          djToUserMap = new Map(djProfiles.map(dj => [dj.id, dj.user_id]));
+        }
+      }
+      
       // Transform the data to include profile info
-      const transformedTracks = (tracks || []).map(track => ({
-        ...track,
-        profiles: { username: null, avatar_url: null }
-      }));
+      const transformedTracks = (tracks || []).map(track => {
+        const userId = djToUserMap.get(track.dj_id);
+        const profile = userId ? profileMap.get(userId) : null;
+        return {
+          ...track,
+          profiles: profile || { username: null, avatar_url: null }
+        };
+      });
       
       console.log('🎼 Final transformed tracks:', transformedTracks.length);
       
