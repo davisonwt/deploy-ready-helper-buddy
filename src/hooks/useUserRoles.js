@@ -11,7 +11,7 @@ export function useUserRoles() {
   const userId = user?.id
   
   const [userRoles, setUserRoles] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export function useUserRoles() {
 
         if (fetchError) throw fetchError
 
-        const roles = (data || []).map(r => r.role)
+        const roles = (data || []).map(r => String(r.role).toLowerCase())
         
         console.log('✅ [useUserRoles] Extracted roles:', roles)
         
