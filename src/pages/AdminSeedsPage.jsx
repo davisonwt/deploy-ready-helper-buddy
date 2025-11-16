@@ -8,7 +8,7 @@ import { useToast } from '../hooks/use-toast';
 import { useRoles } from '../hooks/useRoles';
 import { CheckCircle, XCircle, MessageCircle, ImageIcon } from 'lucide-react';
 
-export function AdminSeedsPage() {
+export default function AdminSeedsPage() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
