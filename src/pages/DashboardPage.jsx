@@ -654,34 +654,34 @@ export default function DashboardPage() {
                   <TreePine className="h-6 w-6 mx-auto mb-2 text-heading-primary" />
                   <span className="font-medium text-heading-primary">Browse Orchards</span>
                 </div>
-                <div className="flex justify-center space-x-3 mt-4">
-                  <Link to="/browse-orchards">
-                    <div 
-                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300"
-                    >
-                      <Users className="h-5 w-5 text-heading-primary group-hover:text-white transition-colors" />
-                    </div>
-                  </Link>
-                  <Link to="/my-orchards">
-                    <div 
-                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300"
-                    >
-                      <User className="h-5 w-5 text-heading-primary group-hover:text-white transition-colors" />
-                    </div>
-                  </Link>
-                  <Link 
+                	<div className="flex justify-center space-x-3 mt-4">
+                  	<Link to="/browse-orchards">
+                    	<div 
+                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                    	>
+                      	<Users className="h-5 w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                    	</div>
+                  	</Link>
+                  	<Link to="/my-orchards">
+                    	<div 
+                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                    	>
+                      	<User className="h-5 w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                    	</div>
+                  	</Link>
+                  	<Link 
                     to="/364yhvh-orchards"
                     onClick={(e) => {
                       console.log('🔗 Navigating to 364yhvh-orchards page');
                     }}
-                  >
-                    <div 
-                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300 cursor-pointer"
-                    >
-                      <Heart className="h-5 w-5 text-heading-primary group-hover:text-white transition-colors" />
-                    </div>
-                  </Link>
-                </div>
+                  	>
+                    	<div 
+                      className="group w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300 cursor-pointer"
+                    	>
+                      	<Heart className="h-5 w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                    	</div>
+                  	</Link>
+                	</div>
               </div>
               
               <Link to="/profile">
