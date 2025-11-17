@@ -657,16 +657,16 @@ export default function DashboardPage() {
                 <div className="flex justify-center space-x-3 mt-4">
                   <Link to="/browse-orchards">
                     <div 
-                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300"
                     >
-                      <Users className="h-5 w-5 text-heading-primary" />
+                      <Users className="h-5 w-5 text-heading-primary hover:text-white transition-colors" />
                     </div>
                   </Link>
                   <Link to="/my-orchards">
                     <div 
-                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300"
                     >
-                      <User className="h-5 w-5 text-heading-primary" />
+                      <User className="h-5 w-5 text-heading-primary hover:text-white transition-colors" />
                     </div>
                   </Link>
                   <Link 
@@ -676,9 +676,9 @@ export default function DashboardPage() {
                     }}
                   >
                     <div 
-                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                      className="w-10 h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-nav-browse-orchards hover:border-nav-browse-orchards transition-all duration-300 cursor-pointer"
                     >
-                      <Heart className="h-5 w-5 text-heading-primary" />
+                      <Heart className="h-5 w-5 text-heading-primary hover:text-white transition-colors" />
                     </div>
                   </Link>
                 </div>
