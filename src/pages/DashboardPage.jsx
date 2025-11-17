@@ -79,7 +79,9 @@ export default function DashboardPage() {
     totalOrchards: 0,
     totalBestowals: 0,
     totalRaised: 0,
-    totalSupported: 0
+    totalSupported: 0,
+    totalFollowers: 0,
+    newFollowers: 0
   })
   const [activeUsers, setActiveUsers] = useState(0)
   const [error, setError] = useState(null)
@@ -173,13 +175,49 @@ export default function DashboardPage() {
         fetchProfile(),
         fetchData(),
         fetchActiveUsers(),
-        fetchUserBestowals()
+        fetchUserBestowals(),
+        fetchFollowerStats()
       ]).catch(err => {
         console.error('❌ Dashboard: Error in data fetching:', err)
         setError('Failed to load dashboard data')
       })
     }
   }, [user, authLoading])
+
+  const fetchFollowerStats = async () => {
+    if (!user?.id) return
+    try {
+      console.log('🔍 Dashboard: Fetching follower stats...')
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+      // Get total followers
+      const { data: followers, error: followersError } = await supabase
+        .from('followers')
+        .select('id')
+        .eq('following_id', user.id)
+
+      // Get new followers (last 7 days)
+      const { data: newFollowers, error: newFollowersError } = await supabase
+        .from('followers')
+        .select('id')
+        .eq('following_id', user.id)
+        .gte('created_at', sevenDaysAgo.toISOString())
+
+      if (followersError) throw followersError
+      if (newFollowersError) throw newFollowersError
+
+      setStats(prev => ({
+        ...prev,
+        totalFollowers: followers?.length || 0,
+        newFollowers: newFollowers?.length || 0
+      }))
+
+      console.log('✅ Dashboard: Followers:', followers?.length || 0, 'New:', newFollowers?.length || 0)
+    } catch (error) {
+      console.error('❌ Dashboard: Error fetching follower stats:', error)
+    }
+  }
 
   const fetchActiveUsers = async () => {
     try {
@@ -234,17 +272,18 @@ export default function DashboardPage() {
 
     // Calculate stats
     const totalRaised = userCreatedOrchards.reduce((sum, orchard) => 
-      sum + (orchard.filled_pockets * orchard.pocket_value || 0), 0
+      sum + (orchard.filled_pockets * orchard.pocket_price || 0), 0
     )
 
-    setStats({
+    setStats(prev => ({
+      ...prev,
       totalOrchards: userCreatedOrchards.length,
       totalBestowals: userBestowals.length,
       totalRaised: totalRaised,
       totalSupported: userBestowals.reduce((sum, bestowal) => 
         sum + (bestowal.amount || 0), 0
       )
-    })
+    }))
   }, [orchards, userBestowals, user])
 
   const getCompletionPercentage = (orchard) => {
@@ -378,10 +417,23 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Total Supported</p>
-                    <p className="text-2xl font-bold text-slate-800">{formatCurrency(stats.totalSupported)}</p>
+                    <p className="text-sm font-medium text-heading-primary">Total Supported</p>
+                    <p className="text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalSupported)}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-amber-600" />
+                  <DollarSign className="h-8 w-8 text-heading-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-heading-primary">My Followers</p>
+                    <p className="text-2xl font-bold text-heading-primary">{stats.totalFollowers}</p>
+                    <p className="text-xs text-heading-primary mt-1">+{stats.newFollowers} this week</p>
+                  </div>
+                  <Users className="h-8 w-8 text-heading-primary" />
                 </div>
               </CardContent>
             </Card>
