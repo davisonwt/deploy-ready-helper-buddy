@@ -67,37 +67,39 @@ function IndexContent() {
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center py-4 sm:py-0 sm:h-[90px]">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20 md:h-[90px]">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center justify-center bg-transparent">
-                 <img
-  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
-  alt="sow2grow logo"
-  className="w-16 h-16 sm:w-[90px] sm:h-[90px] object-contain bg-transparent"
-  style={{ backgroundColor: 'transparent' }}
-/>
+                <img
+                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
+                  alt="sow2grow logo"
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-[90px] md:h-[90px] object-contain bg-transparent"
+                  style={{ backgroundColor: 'transparent' }}
+                />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-primary">sow2grow</h1>
-                <p className="text-xs text-green-600">364yhvh community farm</p>
+                <h1 className="text-base sm:text-xl font-bold text-primary">sow2grow</h1>
+                <p className="text-[10px] sm:text-xs text-green-600">364yhvh community farm</p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-6 w-full md:w-auto">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowVoiceCommands(true)}
-                className="hover-scale text-muted-foreground hover:text-primary"
+                className="hover-scale text-muted-foreground hover:text-primary h-9 w-9 sm:h-10 sm:w-10"
                 title="Voice Commands"
               >
-                <Mic className="h-5 w-5" />
+                <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
               
               <AdminButton />
               
               <Link to="/login">
-                <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
+                <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base">
+                  login
+                </Button>
               </Link>
             </div>
           </div>
@@ -105,7 +107,7 @@ function IndexContent() {
       </nav>
 
       {/* Hero Section with Video Background */}
-      <section className="relative h-screen w-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-5rem)] md:h-screen w-screen flex items-center justify-center overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full bg-black -z-10">
           <DeferredVideo
@@ -125,32 +127,32 @@ function IndexContent() {
         {/* Video Background Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/50 to-green-900/50 z-10"></div>
         
-        <div className="relative z-20 text-center max-w-6xl mx-auto px-4">
-          <div className="mb-8">
-            <div className="inline-flex items-center bg-amber-500/90 text-white px-6 py-2 rounded-full mb-8">
-              <Sprout className="w-5 h-5 mr-2" />
+        <div className="relative z-20 text-center max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="mb-4 sm:mb-8">
+            <div className="inline-flex items-center bg-amber-500/90 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-full mb-4 sm:mb-8 text-xs sm:text-base">
+              <Sprout className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               364yhvh community farm stall
             </div>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold text-primary mb-8 animate-fade-in">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-primary mb-4 sm:mb-8 animate-fade-in">
             welcome to sow2grow
           </h1>
           
-          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-4 sm:mb-8 max-w-4xl mx-auto leading-relaxed">
             the farm stall of the 364yhvh community; a haven of hands and harvest, where sacred seasons meet the fruits of faithful labor.
           </p>
           
-          <p className="text-lg md:text-xl text-white/80 mb-12 max-w-3xl mx-auto italic">
+          <p className="text-xs sm:text-base md:text-lg lg:text-xl text-white/80 mb-6 sm:mb-12 max-w-3xl mx-auto italic px-4">
             a fertile ground where <span className="text-green-300">every sower finds their orchard</span>, 
             <span className="text-blue-300"> every seed becomes a fruit-bearing tree</span>,
             and <span className="text-amber-300">every harvest meets the hands destined to gather it</span>.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/register">
-              <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
-                <Heart className="w-5 h-5 mr-2" />
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
+            <Link to="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg rounded-full">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 sow your first seed
               </Button>
             </Link>
@@ -159,16 +161,16 @@ function IndexContent() {
       </section>
 
       {/* Three Features Cards */}
-      <section className="py-20 bg-gradient-to-b from-green-50 to-blue-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-12">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12">
             <Card className="text-center bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-8">
-                <div className="w-16 h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Heart className="w-8 h-8 text-white" />
+              <CardContent className="p-6 sm:p-8">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-brown-800 mb-4">scriptural giving</h3>
-                <p className="text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">scriptural giving</h3>
+                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   give with joy, not just duty,<br />
                   first fruits and love, your tithe of beauty.
                 </p>
@@ -176,12 +178,12 @@ function IndexContent() {
             </Card>
 
             <Card className="text-center bg-gradient-to-br from-green-100 to-green-50 border-green-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-8">
-                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Users className="w-8 h-8 text-white" />
+              <CardContent className="p-6 sm:p-8">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-brown-800 mb-4">community support</h3>
-                <p className="text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community support</h3>
+                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   sowers sow, bestowers flow;<br />
                   shared harvest makes the body grow.
                 </p>
@@ -189,12 +191,12 @@ function IndexContent() {
             </Card>
 
             <Card className="text-center bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-8">
-                <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Gift className="w-8 h-8 text-white" />
+              <CardContent className="p-6 sm:p-8">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-brown-800 mb-4">s2g farm mall</h3>
-                <p className="text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">s2g farm mall</h3>
+                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   each stall blooms, each hand gives;<br />
                   fruit shared fresh, the body lives.
                 </p>
@@ -205,57 +207,57 @@ function IndexContent() {
       </section>
 
       {/* How it Works Section */}
-      <section className="py-20 bg-gradient-to-b from-white to-green-50">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
-          <p className="text-xl mb-16 italic" style={{ color: '#BCC4E9' }}>
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-green-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
+          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-16 italic px-4" style={{ color: '#BCC4E9' }}>
             roots receive, branches share; one grove, one people, one prayer.
           </p>
           
-          <div className="grid md:grid-cols-2 gap-16 items-start">
-            <div className="space-y-8">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-100">
-                <h3 className="text-2xl font-bold mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
-                <div className="space-y-4 text-left">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-start">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-green-100">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
+                <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span style={{ color: '#D3B8A1' }}>get your own farm stall</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>get your own farm stall</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span style={{ color: '#D3B8A1' }}>create multiple orchards</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>create multiple orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span style={{ color: '#D3B8A1' }}>sow into your own orchards</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>sow into your own orchards</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
-                    <span style={{ color: '#D3B8A1' }}>receive community support</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#9DD6AD' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#D3B8A1' }}>receive community support</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="space-y-8">
-              <div className="bg-white p-8 rounded-2xl shadow-lg border border-blue-100">
-                <h3 className="text-2xl font-bold mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
-                <div className="space-y-4 text-left">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-blue-100">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
+                <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span style={{ color: '#EF9967' }}>browse the farm mall</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>browse the farm mall</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span style={{ color: '#EF9967' }}>visit different farm stalls</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>visit different farm stalls</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span style={{ color: '#EF9967' }}>bestow support to projects</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>bestow support to projects</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
-                    <span style={{ color: '#EF9967' }}>build community connections</span>
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#B2C9E2' }}></div>
+                    <span className="text-sm sm:text-base" style={{ color: '#EF9967' }}>build community connections</span>
                   </div>
                 </div>
               </div>
@@ -265,34 +267,34 @@ function IndexContent() {
       </section>
 
       {/* Process Video Sections */}
-      <section className="py-20 bg-gradient-to-b from-green-50 to-white">
-        <div className="max-w-6xl mx-auto px-4 space-y-20">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 md:space-y-20">
           {/* Seeds Section */}
           <div className="text-center relative">
-            <h2 className="text-4xl font-bold mb-8" style={{ color: '#D69759' }}>Seeds</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#D69759' }}>Seeds</h2>
             
             {/* Seeds Strip with 3D Lifted Effect */}
-            <div className="relative mb-6 transform-gpu">
+            <div className="relative mb-4 sm:mb-6 transform-gpu">
               <div className="seeds-strip-container relative z-20 transform 
                             perspective-1000 
                             hover:scale-105 
                             transition-all duration-500 ease-out
-                            shadow-2xl 
-                            hover:shadow-3xl
+                            shadow-xl sm:shadow-2xl 
+                            hover:shadow-2xl sm:hover:shadow-3xl
                             rotate-x-5
-                             translate-y-[-20px]">
+                             translate-y-[-10px] sm:translate-y-[-20px]">
                  {/* Text Overlay */}
                  <div className="absolute inset-0 z-30 flex items-center justify-center">
-                    <div className="text-center px-8">
-                      <p className="text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#D5F6FB' }}>
+                    <div className="text-center px-4 sm:px-8">
+                      <p className="text-lg sm:text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#D5F6FB' }}>
                         products, produce...dreams
                       </p>
                     </div>
                  </div>
 <DeferredVideo
-  className="w-full h-64 object-cover rounded-lg 
-           shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-           hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+  className="w-full h-40 sm:h-48 md:h-64 object-cover rounded-lg 
+           shadow-[0_15px_30px_-8px_rgba(0,0,0,0.4)] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+           hover:shadow-[0_25px_45px_-8px_rgba(0,0,0,0.5)] sm:hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
            transition-shadow duration-500 border-0 outline-0"
   style={{ aspectRatio: '1920/350' }}
   autoPlay
@@ -307,18 +309,18 @@ function IndexContent() {
               </div>
               
               {/* Underneath shadow effect */}
-              <div className="absolute top-8 left-4 right-4 h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
+              <div className="absolute top-4 sm:top-6 md:top-8 left-2 sm:left-4 right-2 sm:right-4 h-40 sm:h-48 md:h-64 bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
             {/* First Video - Emerging from underneath */}
-            <div className="relative overflow-hidden mt-[-40px] mb-12 z-10">
-              <div className="video-emerging transform translate-y-8 
+            <div className="relative overflow-hidden mt-[-20px] sm:mt-[-30px] md:mt-[-40px] mb-8 sm:mb-10 md:mb-12 z-10">
+              <div className="video-emerging transform translate-y-4 sm:translate-y-6 md:translate-y-8 
                             transition-all duration-700 ease-out
                             hover:translate-y-0 hover:scale-105
-                            shadow-xl hover:shadow-2xl">
+                            shadow-lg sm:shadow-xl hover:shadow-xl sm:hover:shadow-2xl">
                 <DeferredVideo
-                  className="w-full h-screen object-cover rounded-lg 
-                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  className="w-full h-[50vh] sm:h-[60vh] md:h-screen object-cover rounded-lg 
+                           shadow-[0_15px_30px_-6px_rgba(0,0,0,0.3)] sm:shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
                   autoPlay
                   muted
                   loop
@@ -409,22 +411,22 @@ function IndexContent() {
 
           {/* Orchards Section */}
           <div className="text-center relative">
-            <h2 className="text-4xl font-bold mb-8" style={{ color: '#A5E3E0' }}>Orchards</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-8" style={{ color: '#A5E3E0' }}>Orchards</h2>
             
             {/* Third Seeds Strip with 3D Lifted Effect */}
-            <div className="relative mb-6 transform-gpu">
+            <div className="relative mb-4 sm:mb-6 transform-gpu">
               <div className="seeds-strip-container relative z-20 transform 
                             perspective-1000 
                             hover:scale-105 
                             transition-all duration-500 ease-out
-                            shadow-2xl 
-                            hover:shadow-3xl
+                            shadow-xl sm:shadow-2xl 
+                            hover:shadow-2xl sm:hover:shadow-3xl
                             rotate-x-5
-                             translate-y-[-20px]">
+                             translate-y-[-10px] sm:translate-y-[-20px]">
                  {/* Text Overlay */}
                  <div className="absolute inset-0 z-30 flex items-center justify-center">
-                    <div className="text-center px-8">
-                      <p className="text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#ffc40c' }}>
+                    <div className="text-center px-4 sm:px-8">
+                      <p className="text-lg sm:text-2xl md:text-3xl font-bold drop-shadow-2xl animate-fade-in leading-tight" style={{ color: '#ffc40c' }}>
                         your farm stall
                       </p>
                     </div>
@@ -696,26 +698,26 @@ function IndexContent() {
                                 translate-y-[-15px]">
                      {/* Text Overlay */}
                      <div className="absolute inset-0 z-30 flex items-center justify-center">
-                       <div className="text-center px-8">
-                         <p className="text-3xl md:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
+                       <div className="text-center px-4 sm:px-8">
+                         <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white drop-shadow-2xl animate-fade-in leading-tight">
                            our bestowers, our harvesters.
                          </p>
                        </div>
                      </div>
                      
-                     {/* Start Your Journey Button - Bottom Right */}
-                     <div className="absolute bottom-8 right-8 z-40">
+                     {/* Start Your Journey Button - Responsive positioning */}
+                     <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40">
                        <Link to="/register">
-                         <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                           <Heart className="w-5 h-5 mr-2" />
+                         <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base md:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                           <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                            start your journey
                          </Button>
                        </Link>
                      </div>
                      <video
-                       className="w-full h-screen object-cover rounded-lg
-                                shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
-                                hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
+                       className="w-full h-[50vh] sm:h-[60vh] md:h-screen object-cover rounded-lg
+                                shadow-[0_15px_30px_-8px_rgba(0,0,0,0.4)] sm:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
+                                hover:shadow-[0_25px_45px_-8px_rgba(0,0,0,0.5)] sm:hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
                                 transition-shadow duration-500"
                        autoPlay
                        muted
@@ -742,23 +744,23 @@ function IndexContent() {
               </div>
               
               {/* Floating Scripture Strip */}
-              <div className="relative mt-16 mb-12 transform-gpu">
+              <div className="relative mt-8 sm:mt-12 md:mt-16 mb-8 sm:mb-10 md:mb-12 transform-gpu">
                 <div className="floating-strip relative z-20 transform 
                               perspective-1000 
                               hover:scale-105 
                               transition-all duration-500 ease-out
-                              shadow-xl 
-                              hover:shadow-2xl
-                              translate-y-[-10px]
+                              shadow-lg sm:shadow-xl 
+                              hover:shadow-xl sm:hover:shadow-2xl
+                              translate-y-[-5px] sm:translate-y-[-10px]
                               animate-pulse">
-                  <div className="bg-green-100 rounded-lg p-8 text-center border border-green-200
-                                shadow-[0_15px_30px_-5px_rgba(34,197,94,0.3)]
-                                hover:shadow-[0_20px_40px_-5px_rgba(34,197,94,0.4)]
+                  <div className="bg-green-100 rounded-lg p-4 sm:p-6 md:p-8 text-center border border-green-200
+                                shadow-[0_10px_20px_-3px_rgba(34,197,94,0.3)] sm:shadow-[0_15px_30px_-5px_rgba(34,197,94,0.3)]
+                                hover:shadow-[0_15px_30px_-3px_rgba(34,197,94,0.4)] sm:hover:shadow-[0_20px_40px_-5px_rgba(34,197,94,0.4)]
                                 transition-shadow duration-500">
-                    <p className="text-2xl md:text-3xl font-bold text-green-800 mb-4 leading-tight">
+                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-800 mb-2 sm:mb-3 md:mb-4 leading-tight">
                       "I planted, apollos watered, but elohiym gave the growth."
                     </p>
-                    <p className="text-lg text-green-600 font-semibold italic">
+                    <p className="text-sm sm:text-base md:text-lg text-green-600 font-semibold italic">
                       1 Corinthians 3:6
                     </p>
                   </div>
