@@ -250,7 +250,7 @@ export default function BrowseOrchardsPage() {
           <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 shadow-lg hover:shadow-xl transition-all">
             <CardContent className="p-6">
             <div className="flex flex-wrap gap-4 items-end justify-center">
-              <div className="min-w-[150px]">
+                <div className="w-full sm:min-w-[150px]">
                 <label className="block text-sm font-medium text-green-700 mb-2">Category</label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger className="border-nav-community/30 focus:border-nav-community bg-white">
@@ -267,7 +267,7 @@ export default function BrowseOrchardsPage() {
                 </Select>
               </div>
               
-              <div className="min-w-[120px]">
+                <div className="w-full sm:min-w-[120px]">
                 <label className="block text-sm font-medium text-green-700 mb-2">Sort By</label>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="border-nav-community/30 focus:border-nav-community">
@@ -456,8 +456,8 @@ export default function BrowseOrchardsPage() {
                         
                         {/* Owner Actions */}
                         {user && orchard.user_id === user.id && (
-                          <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
-                            <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
+                              <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-full sm:min-w-[100px]">
                               <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -467,11 +467,11 @@ export default function BrowseOrchardsPage() {
                                 Edit
                               </Button>
                             </Link>
-                            <Button 
+                              <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => handleDeleteOrchard(orchard.id)}
-                              className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-[100px]"
+                                className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-full sm:min-w-[100px]"
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
                               Delete
@@ -594,8 +594,8 @@ export default function BrowseOrchardsPage() {
                     
                     {/* Owner Actions */}
                     {user && orchard.user_id === user.id && (
-                      <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
-                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
+                          <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-full sm:min-w-[100px]">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -605,11 +605,11 @@ export default function BrowseOrchardsPage() {
                             Edit
                           </Button>
                         </Link>
-                        <Button 
+                          <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => handleDeleteOrchard(orchard.id)}
-                          className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-[100px]"
+                            className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-full sm:min-w-[100px]"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Delete

@@ -317,8 +317,8 @@ export default function MyOrchardsPage() {
         <div className="mb-8">
           <div className="space-y-4">
             {/* Category Filter Row */}
-            <div className="flex justify-center">
-              <div className="min-w-[200px]">
+              <div className="flex justify-center">
+                <div className="w-full sm:min-w-[200px]">
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
                     <SelectValue placeholder="Filter by Category" />
@@ -532,14 +532,14 @@ export default function MyOrchardsPage() {
                         </div>
                       )}
                       
-                      <div className="flex flex-wrap gap-2 pt-2 mt-auto">
-                        <Link to={`/orchards/${orchard.id}`} className="flex-1 min-w-[100px]">
+                        <div className="flex flex-wrap gap-2 pt-2 mt-auto">
+                          <Link to={`/orchards/${orchard.id}`} className="flex-1 min-w-full sm:min-w-[100px]">
                           <Button variant="outline" size="sm" className="w-full border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600">
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                         </Link>
-                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
+                          <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-full sm:min-w-[100px]">
                           <Button variant="outline" size="sm" className="w-full border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600">
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
@@ -548,7 +548,7 @@ export default function MyOrchardsPage() {
                           <Button 
                           variant="outline" 
                           size="sm"
-                          className="flex-1 min-w-[100px] border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600"
+                            className="flex-1 min-w-full sm:min-w-[100px] border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600"
                           onClick={() => {
                             const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                             navigator.clipboard.writeText(url)

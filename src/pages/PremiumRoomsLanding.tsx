@@ -149,8 +149,8 @@ const PremiumRoomsLanding: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <ScrollArea className="h-[calc(100vh-300px)]">
+    {/* Main Content */}
+    <ScrollArea className="min-h-[60vh] md:h-[calc(100vh-300px)]">
         {loading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading rooms...</p>

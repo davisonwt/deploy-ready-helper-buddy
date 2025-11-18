@@ -240,7 +240,7 @@ export default function YhvhOrchardsPage() {
               </p>
             </div>
           </div>
-          <div className="mt-6 flex flex-wrap gap-4 items-center">
+            <div className="mt-6 flex flex-wrap gap-4 items-center">
             <Badge variant="outline" className="px-4 py-2 text-sm">
               {filteredOrchards.length} Active Orchards
             </Badge>
@@ -250,7 +250,7 @@ export default function YhvhOrchardsPage() {
             <Badge variant="outline" className="px-4 py-2 text-sm">
               Growing Together
             </Badge>
-            <div className="min-w-[200px] ml-auto">
+              <div className="w-full sm:w-auto sm:min-w-[200px] ml-0 sm:ml-auto">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="border-purple-400/30 focus:border-purple-500 bg-white">
                   <SelectValue placeholder="Filter by Category" />
