@@ -68,22 +68,22 @@ function IndexContent() {
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[90px]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center py-4 sm:py-0 sm:h-[90px]">
             <div className="flex items-center space-x-4">
               <div className="flex items-center justify-center bg-transparent">
-                 <img 
-                   src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-                   alt="sow2grow logo" 
-                   className="w-[90px] h-[90px] object-contain bg-transparent"
-                   style={{ backgroundColor: 'transparent' }}
-                 />
+                 <img
+  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png"
+  alt="sow2grow logo"
+  className="w-16 h-16 sm:w-[90px] sm:h-[90px] object-contain bg-transparent"
+  style={{ backgroundColor: 'transparent' }}
+/>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-primary">sow2grow</h1>
                 <p className="text-xs text-green-600">364yhvh community farm</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-6 w-full md:w-auto">
               <Button
                 variant="ghost"
                 size="icon"
