@@ -8,8 +8,8 @@ import eslint from "vite-plugin-eslint";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: "0.0.0.0", // Listen on all network interfaces
+    port: 5173,
   },
   plugins: [
     react(),
