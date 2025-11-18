@@ -66,15 +66,15 @@ function IndexContent() {
     <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[90px]">
-            <div className="flex items-center space-x-4">
+        <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center py-4 sm:py-0 sm:h-[90px]">
+              <div className="flex items-center space-x-4">
               <div className="flex items-center justify-center bg-transparent">
                  <img 
                    src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
                    alt="sow2grow logo" 
-                   className="w-[90px] h-[90px] object-contain bg-transparent"
+                     className="w-16 h-16 sm:w-[90px] sm:h-[90px] object-contain bg-transparent"
                    style={{ backgroundColor: 'transparent' }}
                  />
               </div>
@@ -83,7 +83,7 @@ function IndexContent() {
                 <p className="text-xs text-green-600">364yhvh community farm</p>
               </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
+              <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-6 w-full md:w-auto">
               <Button
                 variant="ghost"
                 size="icon"
@@ -96,20 +96,20 @@ function IndexContent() {
               
               <AdminButton />
               
-              <Link to="/login">
-                <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground">login</Button>
-              </Link>
+                <Link to="/login" className="w-full sm:w-auto">
+                  <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground w-full sm:w-auto">login</Button>
+                </Link>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section with Video Background */}
-      <section className="relative h-screen w-screen flex items-center justify-center overflow-hidden">
+        {/* Hero Section with Video Background */}
+        <section className="relative min-h-[80vh] md:min-h-screen w-full flex items-center justify-center overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 w-full h-full bg-black -z-10">
           <DeferredVideo
-            className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full max-w-none object-cover"
             src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/hero-background-new.mp4.mp4"
             autoPlay
             muted
@@ -133,7 +133,7 @@ function IndexContent() {
             </div>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-bold text-primary mb-8 animate-fade-in">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-primary mb-8 animate-fade-in">
             welcome to sow2grow
           </h1>
           
@@ -147,9 +147,9 @@ function IndexContent() {
             and <span className="text-amber-300">every harvest meets the hands destined to gather it</span>.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Link to="/register">
-              <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-stretch">
+              <Link to="/register" className="w-full sm:w-auto">
+                <Button size="lg" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 text-lg rounded-full w-full">
                 <Heart className="w-5 h-5 mr-2" />
                 sow your first seed
               </Button>
@@ -316,9 +316,9 @@ function IndexContent() {
                             transition-all duration-700 ease-out
                             hover:translate-y-0 hover:scale-105
                             shadow-xl hover:shadow-2xl">
-                <DeferredVideo
-                  className="w-full h-screen object-cover rounded-lg 
-                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  <DeferredVideo
+                    className="w-full max-w-none h-[60vh] md:h-screen object-cover rounded-lg 
+                             shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
                   autoPlay
                   muted
                   loop
@@ -393,9 +393,9 @@ function IndexContent() {
                   </div>
                 </div>
                 
-                <DeferredVideo
-                  className="w-full h-screen object-cover rounded-lg
-                           shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
+                  <DeferredVideo
+                    className="w-full max-w-none h-[60vh] md:h-screen object-cover rounded-lg
+                             shadow-[0_20px_40px_-8px_rgba(0,0,0,0.3)]"
                   autoPlay
                   muted
                   loop
@@ -471,8 +471,8 @@ function IndexContent() {
                             hover:shadow-3xl
                             rotate-x-2
                             translate-y-[-15px]">
-                <video
-                  className="w-full h-screen object-cover rounded-lg
+                  <video
+                    className="w-full max-w-none h-[60vh] md:h-screen object-cover rounded-lg
                            shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
                            hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
                            transition-shadow duration-500"
@@ -493,7 +493,7 @@ function IndexContent() {
               </div>
               
               {/* Underneath shadow effect */}
-              <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+                <div className="absolute top-8 left-4 right-4 min-h-[40vh] md:h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
             </div>
             
             {/* Fourth Seeds Strip with 3D Lifted Effect - Community Text Overlay */}
@@ -604,8 +604,8 @@ function IndexContent() {
                         </p>
                       </div>
                     </div>
-                    <video
-                     className="w-full h-screen object-cover rounded-lg
+                      <video
+                       className="w-full max-w-none h-[60vh] md:h-screen object-cover rounded-lg
                               shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
                               hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
                               transition-shadow duration-500"
@@ -629,7 +629,7 @@ function IndexContent() {
                  </div>
                  
                  {/* Underneath shadow effect */}
-                 <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+                   <div className="absolute top-8 left-4 right-4 min-h-[40vh] md:h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
                </div>
              </div>
              
@@ -712,8 +712,8 @@ function IndexContent() {
                          </Button>
                        </Link>
                      </div>
-                     <video
-                       className="w-full h-screen object-cover rounded-lg
+                      <video
+                       className="w-full max-w-none h-[60vh] md:h-screen object-cover rounded-lg
                                 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)]
                                 hover:shadow-[0_35px_60px_-12px_rgba(0,0,0,0.5)]
                                 transition-shadow duration-500"
@@ -737,7 +737,7 @@ function IndexContent() {
                   </div>
                   
                   {/* Underneath shadow effect */}
-                  <div className="absolute top-8 left-4 right-4 h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
+                   <div className="absolute top-8 left-4 right-4 min-h-[40vh] md:h-screen bg-black/20 rounded-lg blur-xl z-10"></div>
                 </div>
               </div>
               

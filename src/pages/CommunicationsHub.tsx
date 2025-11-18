@@ -340,7 +340,7 @@ const CommunicationsHub = () => {
   // If viewing a specific chat room
   if (currentRoomId) {
     return (
-      <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
+    <div className="container mx-auto p-4 max-w-7xl min-h-[70vh] md:h-[calc(100vh-2rem)] pb-16 md:pb-28">
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
       </div>
     );
@@ -437,7 +437,7 @@ const CommunicationsHub = () => {
                   />
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold">Your One-on-Ones</h3>
-                    <ScrollArea className="h-[calc(100vh-500px)]">
+                      <ScrollArea className="min-h-[40vh] md:h-[calc(100vh-500px)]">
                       <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
                     </ScrollArea>
                   </div>
@@ -446,7 +446,7 @@ const CommunicationsHub = () => {
                 <TabsContent value="circle" className="space-y-4 mt-4">
                   <div className="space-y-4">
                     <h3 className="text-xl font-semibold">Your Community Chats</h3>
-                    <ScrollArea className="h-[calc(100vh-500px)]">
+                      <ScrollArea className="min-h-[40vh] md:h-[calc(100vh-500px)]">
                       <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
                     </ScrollArea>
                   </div>

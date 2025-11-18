@@ -5,8 +5,8 @@ import PersonnelSlotAssignment from "../components/radio/PersonnelSlotAssignment
 
 function AdminRadioPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-6">
-      <div className="max-w-[1600px] mx-auto space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 md:p-6">
+        <div className="w-full max-w-5xl lg:max-w-6xl xl:max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
