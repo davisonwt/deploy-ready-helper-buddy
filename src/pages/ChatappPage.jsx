@@ -484,7 +484,7 @@ const ChatappPage = () => {
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
           {/* Sidebar - Room List */}
           <div className="lg:col-span-1 h-full">
-            <Card className="h-[calc(100vh-300px)] flex flex-col bg-white/10 backdrop-blur-md border-white/20">
+      <Card className="min-h-[60vh] md:h-[calc(100vh-300px)] flex flex-col bg-white/10 backdrop-blur-md border-white/20">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-white">
                   <MessageSquare className="h-5 w-5" />
@@ -494,21 +494,21 @@ const ChatappPage = () => {
               <CardContent className="flex-1 overflow-hidden p-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                   {/* Beautiful Tab Row */}
-                  <div className="flex gap-2 mb-4 pb-4 border-b border-white/20 overflow-x-auto">
+                    <div className="flex flex-wrap md:flex-nowrap gap-2 mb-4 pb-4 border-b border-white/20 overflow-visible md:overflow-x-auto">
                     {[
                       { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
                       { type: 'oneOnOne', label: 'One-on-Ones', icon: MessageSquare, activeColor: 'rgba(236, 72, 153, 0.3)', inactiveColor: 'rgba(236, 72, 153, 0.1)' },
                       { type: 'group', label: 'Grove Circles', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
                       { type: 'discover', label: 'Discover', icon: Sparkles, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }
                     ].map(({ type, label, icon: Icon, activeColor, inactiveColor }) => (
-                      <button
+                        <button
                         key={type}
                         onClick={() => setActiveTab(type)}
                         style={{
                           backgroundColor: activeTab === type ? activeColor : inactiveColor,
                           backdropFilter: 'blur(8px)'
                         }}
-                        className="relative flex-1 p-2 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[70px]"
+                          className="relative flex-1 min-w-full sm:min-w-[90px] p-2 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30"
                       >
                         <div className="flex flex-col items-center space-y-1">
                           <div className={`p-1.5 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
@@ -598,7 +598,7 @@ const ChatappPage = () => {
                 currentUser={user} 
               />
             )}
-            <div className="h-[calc(100vh-300px)]">
+            <div className="min-h-[60vh] md:h-[calc(100vh-300px)]">
               {/* Chat Interface */}
             {currentRoom ? (
               <Card className="h-full flex flex-col bg-white/10 backdrop-blur-md border-white/20">

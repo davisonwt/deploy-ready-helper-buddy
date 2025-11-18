@@ -55,8 +55,8 @@ const PremiumRoomsPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <ScrollArea className="h-[calc(100vh-300px)]">
+    {/* Main Content */}
+    <ScrollArea className="min-h-[60vh] md:h-[calc(100vh-300px)]">
         <Card className="border-2 border-dashed">
           <CardContent className="py-12 text-center space-y-4">
             <div className="h-20 w-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
