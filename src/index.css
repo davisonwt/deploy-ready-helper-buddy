@@ -455,3 +455,105 @@ input::placeholder, textarea::placeholder, select::placeholder {
   .border-white\/40 { border-color: hsl(var(--border)) !important; }
 }
 
+/* Mobile responsiveness improvements */
+@layer base {
+  /* Base button styles */
+  button,
+  .button,
+  button[type="button"],
+  button[type="submit"],
+  button[type="reset"] {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
+           font-semibold text-base transition-colors duration-200
+           bg-primary text-primary-foreground;
+  }
+  
+  button:hover:not(:disabled),
+  .button:hover:not(:disabled) {
+    @apply bg-primary-hover text-primary-foreground;
+  }
+  
+  button:disabled,
+  .button:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  /* Mobile-specific overrides */
+  @media (max-width: 768px) {
+    /* Reduce base font size for better readability on small screens */
+    html {
+      font-size: 14px;
+    }
+
+    /* Tighter spacing on mobile */
+    h1 { @apply text-2xl mb-3; }
+    h2 { @apply text-xl mb-2; }
+    h3 { @apply text-lg mb-2; }
+    h4 { @apply text-base mb-1; }
+    h5 { @apply text-sm mb-1; }
+    h6 { @apply text-xs mb-1; }
+
+    /* Reduce padding/gaps globally */
+    .container { @apply px-3; }
+    section { @apply py-8; }
+
+    /* Ensure minimum touch target sizes (48x48px) */
+    button,
+    .btn,
+    .Button,
+    [role="button"],
+    .touch-target,
+    .pocket-button,
+    .amount-btn {
+      min-height: 48px;
+      min-width: 48px;
+    }
+
+    /* Stack form elements vertically */
+    form { @apply flex-col gap-3; }
+  }
+}
+
+@layer utilities {
+  /* Mobile layout utilities */
+  @media (max-width: 768px) {
+    /* Force single column layouts */
+    .mobile-stack {
+      @apply flex-col !important;
+    }
+
+    /* Collapse grids to single column */
+    .grid {
+      @apply grid-cols-1 !important;
+    }
+
+    /* Make tables scrollable horizontally */
+    table {
+      @apply block overflow-x-auto;
+    }
+
+    /* Full width cards on mobile */
+    .card,
+    [class*="card-"] {
+      @apply w-full;
+    }
+
+    /* Hide decorative elements on mobile */
+    .mobile-hide {
+      @apply hidden;
+    }
+
+    /* Show only on mobile */
+    .mobile-show {
+      @apply block;
+    }
+  }
+
+  /* Show on desktop, hide on mobile */
+  @media (min-width: 769px) {
+    .mobile-show {
+      @apply hidden;
+    }
+  }
+}
+
