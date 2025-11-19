@@ -47,6 +47,9 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
     }
   }, [location.search]);
 
+  const pillButtonClasses =
+    "rounded-full border border-primary/40 bg-primary/15 text-primary-foreground/80 hover:bg-primary hover:text-primary-foreground transition-colors duration-200 shadow-sm px-4";
+
   const handleLink = async () => {
     if (!payIdInput.trim()) {
       toast.error('Enter your Binance Pay ID before linking.');
@@ -170,6 +173,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                         <Button
                           variant="outline"
                           size="sm"
+                          className={pillButtonClasses}
                           onClick={refreshBalance}
                           disabled={refreshing}
                         >
@@ -189,6 +193,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                           <Button
                             variant="outline"
                             size="sm"
+                            className={pillButtonClasses}
                             onClick={() => setTopUpDialogOpen(true)}
                           >
                             <CreditCard className="h-4 w-4 mr-2" />
@@ -202,9 +207,9 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   <Separator />
 
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="px-2"
+                    className={pillButtonClasses}
                     onClick={() => {
                       setShowLinkField(true);
                       setPayIdInput('');
