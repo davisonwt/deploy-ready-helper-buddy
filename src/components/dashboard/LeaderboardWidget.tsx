@@ -188,10 +188,25 @@ export const LeaderboardWidget: FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="orchards">Orchards</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 gap-2 sm:gap-3 bg-transparent p-0 border-none shadow-none">
+            <TabsTrigger 
+              value="products"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              Products
+            </TabsTrigger>
+            <TabsTrigger 
+              value="orchards"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              Orchards
+            </TabsTrigger>
+            <TabsTrigger 
+              value="marketing"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+            >
+              Marketing
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="mt-4">
