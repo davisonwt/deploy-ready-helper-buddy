@@ -188,7 +188,7 @@ export const LeaderboardWidget: FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 gap-2 sm:gap-3 bg-transparent p-0 border-none shadow-none">
+          <TabsList className="grid w-full grid-cols-3 gap-3 sm:gap-4 md:gap-6 bg-transparent p-1 sm:p-1.5 border-none shadow-none">
             <TabsTrigger 
               value="products"
               className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
