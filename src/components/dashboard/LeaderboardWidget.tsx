@@ -188,22 +188,22 @@ export const LeaderboardWidget: FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="flex w-full gap-4 bg-transparent p-1 sm:p-1.5 border-none shadow-none">
+          <TabsList className="grid w-full grid-cols-3 gap-4 bg-transparent p-0 border-none shadow-none h-auto">
             <TabsTrigger 
               value="products"
-              className="flex-1 rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg h-12"
             >
               Products
             </TabsTrigger>
             <TabsTrigger 
               value="orchards"
-              className="flex-1 rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg h-12"
             >
               Orchards
             </TabsTrigger>
             <TabsTrigger 
               value="marketing"
-              className="flex-1 rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+              className="rounded-2xl border border-primary/40 bg-primary/15 text-primary-foreground/80 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg h-12"
             >
               Marketing
             </TabsTrigger>
