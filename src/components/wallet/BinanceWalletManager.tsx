@@ -341,7 +341,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                           size="sm"
                           className={pillButtonClasses}
                           onClick={() => {
-                            setManualBalanceAmount(balance?.balance?.toString() || '0');
+                            setManualBalanceAmount(balance?.amount?.toString() || '0');
                             setManualBalanceDialogOpen(true);
                           }}
                         >

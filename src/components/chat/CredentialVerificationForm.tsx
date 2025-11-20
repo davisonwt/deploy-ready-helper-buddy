@@ -34,7 +34,14 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
   // Real-time validation
   const usernameMatch = username.toLowerCase() === prefillUsername.toLowerCase();
   const emailMatch = email.toLowerCase() === prefillEmail.toLowerCase();
-  const passwordValid = password.length >= 6;
+  // Enhanced password validation (client-side UX feedback)
+  // Note: Server-side validation in Supabase Dashboard is the real security layer
+  const passwordValid = 
+    password.length >= 10 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password) &&
+    /[^A-Za-z0-9]/.test(password);
   
   const allValid = usernameMatch && emailMatch && passwordValid;
   
