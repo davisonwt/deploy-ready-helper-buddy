@@ -104,12 +104,12 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
       // Fallback: direct fetch to functions endpoint if supabase.functions.invoke failed (CORS/proxy issues)
       if (err?.name === 'FunctionsFetchError' || err?.value?.name === 'FunctionsFetchError') {
         try {
-          // Use environment variables instead of hardcoded credentials
-          const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || supabase.supabaseUrl;
-          const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || supabase.supabaseKey;
+          // Use environment variables only (secure approach)
+          const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+          const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
           if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-            throw new Error('Supabase configuration not found');
+            throw new Error('Supabase configuration not found. Please check your environment variables.');
           }
 
           const { data: s } = await supabase.auth.getSession();
