@@ -29,9 +29,12 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
   // Load basket from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('productBasket');
+    console.log('Loading basket from localStorage:', saved);
     if (saved) {
       try {
-        setBasketItems(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        console.log('Parsed basket items:', parsed);
+        setBasketItems(parsed);
       } catch (error) {
         console.error('Error loading basket:', error);
       }
@@ -40,16 +43,21 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
 
   // Save basket to localStorage whenever it changes
   useEffect(() => {
+    console.log('Saving basket to localStorage:', basketItems);
     localStorage.setItem('productBasket', JSON.stringify(basketItems));
   }, [basketItems]);
 
   const addToBasket = (product: Product) => {
+    console.log('Adding to basket:', product);
     setBasketItems((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {
+        console.log('Product already in basket');
         return prev; // Don't add duplicates
       }
-      return [...prev, product];
+      const newItems = [...prev, product];
+      console.log('New basket items:', newItems);
+      return newItems;
     });
   };
 
