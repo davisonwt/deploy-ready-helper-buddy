@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FloatingBasketButton() {
   const { itemCount } = useProductBasket();
+  
+  console.log('FloatingBasketButton itemCount:', itemCount);
 
   if (itemCount === 0) return null;
 
