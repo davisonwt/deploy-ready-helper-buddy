@@ -61,9 +61,12 @@ export function useGamification() {
         .from('user_points')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) {
+        console.error('Error fetching user points:', error)
+        throw error
+      }
       
       if (!data) {
         // Initialize user points if they don't exist
@@ -71,15 +74,21 @@ export function useGamification() {
           .from('user_points')
           .insert({ user_id: user.id })
           .select()
-          .single()
+          .maybeSingle()
 
-        if (insertError) throw insertError
-        setUserPoints(newUserPoints)
+        if (insertError) {
+          console.error('Error initializing user points:', insertError)
+          throw insertError
+        }
+        
+        if (newUserPoints) {
+          setUserPoints(newUserPoints)
+        }
       } else {
         setUserPoints(data)
       }
     } catch (error) {
-      console.error('Error fetching user points:', error)
+      console.error('Error in fetchUserPoints:', error)
     }
   }
 
