@@ -131,9 +131,10 @@ serve(async (req) => {
     try {
       if (walletOrigin === "user") {
         // Try to use user's own Binance Pay API credentials
+        console.log(`[${new Date().toISOString()}] Checking for user API credentials for user_id: ${userData.user.id}`);
         const { data: userCreds, error: credsError } = await serviceClient
           .from("user_wallets")
-          .select("api_key, api_secret, merchant_id")
+          .select("api_key, api_secret, merchant_id, wallet_address, is_active, is_primary")
           .eq("user_id", userData.user.id)
           .eq("wallet_type", "binance_pay")
           .eq("is_active", true)
@@ -142,12 +143,23 @@ serve(async (req) => {
           .maybeSingle();
 
         if (credsError && credsError.code !== "PGRST116") {
+          console.error("Error fetching user credentials:", credsError);
           throw credsError;
         }
 
+        console.log(`[${new Date().toISOString()}] User credentials query result:`, {
+          found: !!userCreds,
+          hasApiKey: !!userCreds?.api_key,
+          hasApiSecret: !!userCreds?.api_secret,
+          hasMerchantId: !!userCreds?.merchant_id,
+          walletAddress: userCreds?.wallet_address,
+          isActive: userCreds?.is_active,
+          isPrimary: userCreds?.is_primary
+        });
+
         if (userCreds?.api_key && userCreds?.api_secret) {
           // User has their own Binance Pay merchant account - use their credentials
-          console.log(`[${new Date().toISOString()}] Using user's Binance Pay API credentials to fetch balance`);
+          console.log(`[${new Date().toISOString()}] ✅ Using user's Binance Pay API credentials to fetch balance`);
           binanceClient = new BinancePayClient({
             apiKey: userCreds.api_key,
             apiSecret: userCreds.api_secret,
@@ -157,8 +169,16 @@ serve(async (req) => {
             walletName,
           });
         } else {
-          console.log("User doesn't have Binance Pay API credentials - will use cached balance");
+          console.log(`[${new Date().toISOString()}] ⚠️ User doesn't have Binance Pay API credentials - will use cached balance`);
           console.log("💡 Tip: Add your Binance Pay API credentials in wallet settings to get real-time balance from Binance");
+          if (userCreds) {
+            console.log("   Found wallet but missing credentials:", {
+              hasApiKey: !!userCreds.api_key,
+              hasApiSecret: !!userCreds.api_secret
+            });
+          } else {
+            console.log("   No active wallet found for user");
+          }
         }
       } else {
         // Organization wallet - use platform credentials
