@@ -51,16 +51,33 @@ export async function checkRateLimit(
     });
 
     if (error) {
-      console.error('Rate limit check error:', error);
+      // Log rate limit failure for monitoring/alerting
+      console.error('[RATE_LIMIT_FAILURE] Rate limit check error:', {
+        error: error.message,
+        code: error.code,
+        identifier,
+        limitType,
+        timestamp: new Date().toISOString(),
+        severity: 'WARNING'
+      });
       // Fail open: allow request if rate limit check fails
       // This prevents legitimate requests from being blocked due to system errors
+      // NOTE: Monitor these failures - during outages, attackers could bypass rate limits
       return true;
     }
 
     return data === true;
   } catch (error) {
-    console.error('Rate limit check exception:', error);
-    // Fail open
+    // Log rate limit exception for monitoring/alerting
+    console.error('[RATE_LIMIT_FAILURE] Rate limit check exception:', {
+      error: error instanceof Error ? error.message : String(error),
+      identifier,
+      limitType,
+      timestamp: new Date().toISOString(),
+      severity: 'ERROR'
+    });
+    // Fail open: allow request if rate limit check fails
+    // NOTE: Monitor these failures - during outages, attackers could bypass rate limits
     return true;
   }
 }
@@ -137,8 +154,15 @@ export function withRateLimit(
       // If allowed, proceed with the original handler
       return await handler(req);
     } catch (error) {
-      console.error('Rate limit wrapper error:', error);
+      // Log rate limit wrapper failure for monitoring/alerting
+      console.error('[RATE_LIMIT_FAILURE] Rate limit wrapper error:', {
+        error: error instanceof Error ? error.message : String(error),
+        limitType: config.limitType,
+        timestamp: new Date().toISOString(),
+        severity: 'ERROR'
+      });
       // Fail open: proceed with request if rate limiter fails
+      // NOTE: Monitor these failures - during outages, attackers could bypass rate limits
       return await handler(req);
     }
   };
