@@ -30,15 +30,17 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
   // Load basket from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('productBasket');
-    console.log('Loading basket from localStorage:', saved);
+    console.log('🛒 ProductBasket: Loading from localStorage', saved);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        console.log('Parsed basket items:', parsed);
+        console.log('🛒 ProductBasket: Loaded from localStorage', parsed);
         setBasketItems(parsed);
       } catch (error) {
         console.error('Error loading basket:', error);
       }
+    } else {
+      console.log('🛒 ProductBasket: No saved basket found');
     }
     isInitialMount.current = false;
   }, []);
@@ -46,22 +48,22 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
   // Save basket to localStorage whenever it changes (skip initial mount)
   useEffect(() => {
     if (!isInitialMount.current) {
-      console.log('Saving basket to localStorage:', basketItems);
+      console.log('🛒 ProductBasket: Saving to localStorage', basketItems);
       localStorage.setItem('productBasket', JSON.stringify(basketItems));
     }
   }, [basketItems]);
 
   const addToBasket = (product: Product) => {
-    console.log('Adding to basket:', product);
+    console.log('🛒 ProductBasket: Adding product to basket', product);
     setBasketItems((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {
-        console.log('Product already in basket');
+        console.log('🛒 ProductBasket: Product already in basket, skipping');
         return prev; // Don't add duplicates
       }
-      const newItems = [...prev, product];
-      console.log('New basket items:', newItems);
-      return newItems;
+      const updated = [...prev, product];
+      console.log('🛒 ProductBasket: Updated basket items', updated);
+      return updated;
     });
   };
 

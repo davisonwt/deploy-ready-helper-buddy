@@ -119,14 +119,18 @@ serve(async (req) => {
       walletAddress = wallet.wallet_address;
     }
 
-    // Build Binance client depending on wallet origin
-    let binanceClient: BinancePayClient | null = null;
+    // Try to fetch balance from Binance API
+    // For user wallets: Use their own API credentials if available
+    // For organization wallets: Use platform credentials
+    // If API call fails or credentials missing, fall back to cached balance
+    
     let fetchedBalance: number | null = null;
     let source: "binance" | "cache" = "cache";
+    let binanceClient: BinancePayClient | null = null;
 
     try {
       if (walletOrigin === "user") {
-        // Load per-user Binance API credentials from user_wallets
+        // Try to use user's own Binance Pay API credentials
         const { data: userCreds, error: credsError } = await serviceClient
           .from("user_wallets")
           .select("api_key, api_secret, merchant_id")
@@ -142,6 +146,8 @@ serve(async (req) => {
         }
 
         if (userCreds?.api_key && userCreds?.api_secret) {
+          // User has their own Binance Pay merchant account - use their credentials
+          console.log(`[${new Date().toISOString()}] Using user's Binance Pay API credentials to fetch balance`);
           binanceClient = new BinancePayClient({
             apiKey: userCreds.api_key,
             apiSecret: userCreds.api_secret,
@@ -151,15 +157,17 @@ serve(async (req) => {
             walletName,
           });
         } else {
-          console.warn("Missing user Binance credentials; will fall back to cached balance.");
+          console.log("User doesn't have Binance Pay API credentials - will use cached balance");
+          console.log("💡 Tip: Add your Binance Pay API credentials in wallet settings to get real-time balance from Binance");
         }
       } else {
-        // Organization wallet uses platform-level credentials
+        // Organization wallet - use platform credentials
         binanceClient = new BinancePayClient();
       }
 
       if (binanceClient) {
-        console.log(`[${new Date().toISOString()}] Fetching balance for wallet: ${walletAddress}`);
+        console.log(`[${new Date().toISOString()}] Fetching balance from Binance API for wallet: ${walletAddress}`);
+        
         const balanceResponse = await binanceClient.getWalletBalance({
           wallet: "FUNDING_WALLET",
           currency: "USDC",
@@ -170,7 +178,7 @@ serve(async (req) => {
         if (balanceResponse && typeof balanceResponse.balance === 'number') {
           fetchedBalance = balanceResponse.balance;
           source = "binance";
-          console.log(`✅ Balance fetched successfully: ${fetchedBalance} USDC`);
+          console.log(`✅ Balance fetched from Binance: ${fetchedBalance} USDC`);
         } else {
           console.warn("Unexpected balance response format:", balanceResponse);
         }
@@ -179,11 +187,14 @@ serve(async (req) => {
       console.error("❌ Binance API error:", {
         error: binanceError instanceof Error ? binanceError.message : String(binanceError),
         wallet: walletAddress,
+        walletOrigin,
         timestamp: new Date().toISOString()
       });
+      // Fall through to cache
     }
 
     if (fetchedBalance === null) {
+      // Try to get cached balance from database
       const { data: cachedBalance, error: cachedError } = await serviceClient
         .from("wallet_balances")
         .select("usdc_balance, updated_at")
@@ -196,6 +207,21 @@ serve(async (req) => {
       }
 
       const fallback = Number(cachedBalance?.usdc_balance ?? 0);
+      
+      // If no cached balance exists and it's a user wallet, initialize with 0
+      if (!cachedBalance && walletOrigin === "user") {
+        console.log("No cached balance found, initializing wallet balance to 0");
+        try {
+          await serviceClient.rpc("update_wallet_balance_secure", {
+            target_user_id: userData.user.id,
+            target_wallet_address: walletAddress!,
+            new_balance: 0,
+          });
+        } catch (initError) {
+          console.warn("Failed to initialize wallet balance:", initError);
+        }
+      }
+      
       return jsonResponse({
         success: true,
         balance: fallback,
@@ -204,6 +230,9 @@ serve(async (req) => {
         walletName,
         walletOrigin,
         updatedAt: cachedBalance?.updated_at ?? null,
+        note: walletOrigin === "user" 
+          ? "User balance tracked in database. Update via webhooks or manual sync."
+          : undefined,
       });
     }
 

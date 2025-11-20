@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,12 @@ export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, clearBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
+  
+  // Debug: Log basket items
+  useEffect(() => {
+    console.log('🛒 BestowalCheckout: Basket items', basketItems);
+    console.log('🛒 BestowalCheckout: localStorage productBasket', localStorage.getItem('productBasket'));
+  }, [basketItems]);
 
   const handleBestow = async () => {
     if (!user) {
@@ -23,48 +29,36 @@ export default function BestowalCheckout() {
     setProcessing(true);
 
     try {
-      // Process each item in basket
+      // Process each item in basket using secure edge function
       for (const item of basketItems) {
         const amount = Number(item.price);
-        const tithingAmount = amount * 0.10; // 10% tithing
-        const adminFee = amount * 0.05; // 5% admin fee
-        const sowerAmount = amount * 0.70; // 70% to sower
-        const productWhispersAmount = amount * 0.15; // 15% to product whispers
 
-        // Create bestowal record
-        const { error: bestowError } = await supabase
-          .from('product_bestowals')
-          .insert([{
-            bestower_id: user.id,
-            product_id: item.id,
-            sower_id: item.sower_id,
-            amount,
-            s2g_fee: adminFee,
-            sower_amount: sowerAmount,
-            grower_amount: productWhispersAmount,
-            status: 'completed'
-          }]);
+        // Call edge function to handle bestowal completion, messaging, and accounting
+        const { data, error } = await supabase.functions.invoke('complete-product-bestowal', {
+          body: {
+            productId: item.id,
+            amount: amount,
+            sowerId: item.sower_id,
+          },
+        });
 
-        if (bestowError) throw bestowError;
+        if (error) {
+          console.error('Product bestowal error:', error);
+          throw new Error(error.message || 'Failed to complete bestowal');
+        }
 
-        // Update product bestowal count
-        const { error: updateError } = await supabase
-          .from('products')
-          .update({ 
-            bestowal_count: item.bestowal_count + 1 
-          })
-          .eq('id', item.id);
-
-        if (updateError) throw updateError;
+        if (!data?.success) {
+          throw new Error(data?.message || 'Bestowal completion failed');
+        }
       }
 
       toast.success('Bestowal completed successfully!', {
-        description: 'Thank you for supporting our creators!'
+        description: 'Thank you for supporting our sowers! Check your chat for invoice and messages.'
       });
       clearBasket();
     } catch (error) {
       console.error('Bestowal error:', error);
-      toast.error('Bestowal failed. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
     } finally {
       setProcessing(false);
     }

@@ -92,13 +92,39 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         }
 
         if (cachedBalance) {
+          const cachedBalanceValue = Number(cachedBalance.usdc_balance ?? 0);
+          const updatedAt = cachedBalance.updated_at ? new Date(cachedBalance.updated_at) : null;
+          const isStale = !updatedAt || (Date.now() - updatedAt.getTime()) > 5 * 60 * 1000; // 5 minutes
+          
           setBalance({
-            usdc_balance: Number(cachedBalance.usdc_balance ?? 0),
+            usdc_balance: cachedBalanceValue,
             updated_at: cachedBalance.updated_at ?? null,
             source: 'cache',
           });
+          
+          // Auto-refresh if balance is 0 or stale (use setTimeout to avoid calling before defined)
+          if (cachedBalanceValue === 0 || isStale) {
+            console.log('💰 Balance is 0 or stale, will auto-refresh...');
+            // Delay refresh to ensure function is defined
+            setTimeout(() => {
+              if (wallet?.wallet_address) {
+                refreshBalance().catch(err => {
+                  console.error('Auto-refresh failed:', err);
+                });
+              }
+            }, 1000);
+          }
         } else {
           setBalance(null);
+          // No cache, try to refresh after a delay
+          console.log('💰 No cached balance, will refresh...');
+          setTimeout(() => {
+            if (wallet?.wallet_address) {
+              refreshBalance().catch(err => {
+                console.error('Initial refresh failed:', err);
+              });
+            }
+          }, 1000);
         }
 
         return;
@@ -251,6 +277,29 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         return;
       }
 
+      // For user wallets, sync balance from payment history first
+      if (wallet.origin === 'user') {
+        try {
+          console.log('🔄 Syncing balance from payment history...');
+          const syncResult = await supabase.functions.invoke<{
+            success: boolean;
+            balance?: number;
+            totalReceived?: number;
+            totalSent?: number;
+          }>('sync-wallet-balance');
+          
+          if (syncResult.error) {
+            console.warn('⚠️ Balance sync failed, continuing with refresh:', syncResult.error);
+          } else if (syncResult.data?.success) {
+            console.log('✅ Balance synced:', syncResult.data);
+            toast.success(`Balance synced: $${(syncResult.data.balance || 0).toFixed(2)} (Received: $${(syncResult.data.totalReceived || 0).toFixed(2)}, Sent: $${(syncResult.data.totalSent || 0).toFixed(2)})`);
+          }
+        } catch (syncError) {
+          console.warn('⚠️ Balance sync error, continuing with refresh:', syncError);
+          // Continue with refresh even if sync fails
+        }
+      }
+
       const invokeOptions =
         wallet.origin === 'organization' && wallet.wallet_name
           ? { body: { walletName: wallet.wallet_name } }
@@ -315,10 +364,10 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
       setBalance({
         usdc_balance: data.balance,
         updated_at: data.updatedAt ?? new Date().toISOString(),
-        source: data.source ?? 'binance',
+        source: data.source ?? 'cache',
       });
 
-      const sourceLabel = data.source === 'binance' ? 'from Binance' : 'from cache';
+      const sourceLabel = data.source === 'binance' ? 'from Binance' : 'from platform ledger';
       toast.success(`Balance updated: $${data.balance.toFixed(2)} ${sourceLabel}`);
     } catch (err) {
       console.error('Refresh wallet balance error:', err);

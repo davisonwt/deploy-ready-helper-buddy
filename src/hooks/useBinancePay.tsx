@@ -33,6 +33,9 @@ export function useBinancePay() {
       }
 
       const origin = window.location.origin;
+      
+      // Generate idempotency key for payment
+      const idempotencyKey = `${user.id}-${details.orchardId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
       const { data, error } = await supabase.functions.invoke<BinancePaymentResponse>(
         'create-binance-pay-order',
@@ -44,6 +47,9 @@ export function useBinancePay() {
             message: details.message,
             growerId: details.growerId,
             clientOrigin: origin,
+          },
+          headers: {
+            'x-idempotency-key': idempotencyKey,
           },
         }
       );
