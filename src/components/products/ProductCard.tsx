@@ -127,8 +127,11 @@ export default function ProductCard({ product, featured, showActions = false }: 
   };
 
   const handleBestow = () => {
+    console.log('ProductCard: handleBestow called', product);
     addToBasket(product);
-    toast.success('Added to basket!');
+    toast.success('Added to basket!', {
+      description: `${product.title} has been added to your basket`
+    });
   };
 
   const handleDelete = async () => {

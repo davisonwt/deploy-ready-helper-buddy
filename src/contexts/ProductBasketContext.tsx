@@ -25,6 +25,7 @@ const ProductBasketContext = createContext<ProductBasketContextType | undefined>
 
 export function ProductBasketProvider({ children }: { children: ReactNode }) {
   const [basketItems, setBasketItems] = useState<Product[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load basket from localStorage on mount
   useEffect(() => {
@@ -39,13 +40,16 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
         console.error('Error loading basket:', error);
       }
     }
+    setIsLoaded(true);
   }, []);
 
-  // Save basket to localStorage whenever it changes
+  // Save basket to localStorage whenever it changes (but only after initial load)
   useEffect(() => {
-    console.log('Saving basket to localStorage:', basketItems);
-    localStorage.setItem('productBasket', JSON.stringify(basketItems));
-  }, [basketItems]);
+    if (isLoaded) {
+      console.log('Saving basket to localStorage:', basketItems);
+      localStorage.setItem('productBasket', JSON.stringify(basketItems));
+    }
+  }, [basketItems, isLoaded]);
 
   const addToBasket = (product: Product) => {
     console.log('Adding to basket:', product);
