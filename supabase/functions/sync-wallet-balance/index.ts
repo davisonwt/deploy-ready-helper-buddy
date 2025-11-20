@@ -1,17 +1,67 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { getSecureCorsHeaders, createErrorResponse, createSuccessResponse } from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+// Inline CORS headers (secure) - includes x-my-custom-header
+const getCorsHeaders = (req: Request): Record<string, string> => {
+  const origin = req.headers.get("origin");
+  const allowedOrigins = [
+    "https://sow2growapp.com",
+    "https://www.sow2growapp.com",
+    "https://app.sow2grow.com",
+    "http://localhost:5173",
+    "http://localhost:3000",
+  ];
+
+  if (!origin) {
+    return {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-idempotency-key, x-csrf-token, x-my-custom-header",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+    };
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-idempotency-key, x-csrf-token, x-my-custom-header",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Credentials": "true",
+    };
+  }
+
+  return {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-idempotency-key, x-csrf-token, x-my-custom-header",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+};
+
+const createErrorResponse = (message: string, status: number, req: Request): Response => {
+  return new Response(
+    JSON.stringify({ error: message }),
+    {
+      status,
+      headers: getCorsHeaders(req),
+    }
+  );
+};
+
+const createSuccessResponse = (data: unknown, req: Request): Response => {
+  return new Response(
+    JSON.stringify(data),
+    {
+      status: 200,
+      headers: getCorsHeaders(req),
+    }
+  );
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
