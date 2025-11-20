@@ -37,7 +37,7 @@ export default function UserWalletSettingsPage() {
         .from('user_wallets')
         .select('wallet_address, api_key, api_secret, merchant_id')
         .eq('user_id', user.id)
-        .eq('wallet_origin', 'binance_pay')
+        .eq('wallet_type', 'binance_pay')
         .maybeSingle()
 
       if (error) throw error
@@ -71,7 +71,7 @@ export default function UserWalletSettingsPage() {
         .from('user_wallets')
         .select('id')
         .eq('user_id', user.id)
-        .eq('wallet_origin', 'binance_pay')
+        .eq('wallet_type', 'binance_pay')
         .maybeSingle()
 
       if (fetchError) throw fetchError
@@ -84,6 +84,8 @@ export default function UserWalletSettingsPage() {
             api_key: apiKey,
             api_secret: apiSecret,
             merchant_id: merchantId,
+            is_active: true,
+            is_primary: true,
           })
           .eq('id', existing.id)
 
@@ -94,8 +96,9 @@ export default function UserWalletSettingsPage() {
           .insert({
             user_id: user.id,
             wallet_address: walletAddress,
-            wallet_origin: 'binance_pay',
-            blockchain_network: 'binance',
+            wallet_type: 'binance_pay',
+            is_active: true,
+            is_primary: true,
             api_key: apiKey,
             api_secret: apiSecret,
             merchant_id: merchantId,
