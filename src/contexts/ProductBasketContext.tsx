@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 interface Product {
   id: string;
@@ -25,7 +25,7 @@ const ProductBasketContext = createContext<ProductBasketContextType | undefined>
 
 export function ProductBasketProvider({ children }: { children: ReactNode }) {
   const [basketItems, setBasketItems] = useState<Product[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Load basket from localStorage on mount
   useEffect(() => {
@@ -40,16 +40,16 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
         console.error('Error loading basket:', error);
       }
     }
-    setIsLoaded(true);
+    isInitialMount.current = false;
   }, []);
 
-  // Save basket to localStorage whenever it changes (but only after initial load)
+  // Save basket to localStorage whenever it changes (skip initial mount)
   useEffect(() => {
-    if (isLoaded) {
+    if (!isInitialMount.current) {
       console.log('Saving basket to localStorage:', basketItems);
       localStorage.setItem('productBasket', JSON.stringify(basketItems));
     }
-  }, [basketItems, isLoaded]);
+  }, [basketItems]);
 
   const addToBasket = (product: Product) => {
     console.log('Adding to basket:', product);
