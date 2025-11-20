@@ -4840,6 +4840,18 @@ export type Database = {
       get_ai_usage_today:
         | { Args: { user_id_param?: string }; Returns: number }
         | { Args: never; Returns: number }
+      get_all_user_profiles: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          first_name: string
+          id: string
+          last_name: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_current_radio_show: { Args: never; Returns: Json }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
@@ -5184,8 +5196,11 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
+          first_name: string
           id: string
+          last_name: string
           user_id: string
+          username: string
         }[]
       }
       send_chat_message: {
