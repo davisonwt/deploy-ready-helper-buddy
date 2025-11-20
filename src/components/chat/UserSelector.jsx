@@ -40,35 +40,27 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
     run();
   }, [searchTerm, user]);
 
-  // Initial list for dropdown (use RPC to avoid RLS issues)
+  // Initial list for dropdown - get all users
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        // Use search_user_profiles RPC with wildcard to get all users (up to 20)
-        const { data, error } = await supabase.rpc('search_user_profiles', {
-          search_term: 'a', // Common letter to match most users
-        });
+        const { data, error } = await supabase.rpc('get_all_user_profiles');
         if (error) throw error;
-        
-        // Get more users with different search term
-        const { data: data2, error: error2 } = await supabase.rpc('search_user_profiles', {
-          search_term: 'e',
-        });
-        if (error2) throw error2;
-        
-        // Combine and deduplicate
-        const combined = [...(data || []), ...(data2 || [])];
-        const deduped = Array.from(new Map(combined.map(u => [u.user_id, u])).values());
-        
-        setAllUsers(deduped);
+        setAllUsers(data || []);
       } catch (e) {
         console.error('Error loading users list:', e);
       }
     })();
   }, [user]);
 
-  const getName = (p) => (p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Unknown User');
+  const getName = (p) => {
+    if (p?.display_name) return p.display_name;
+    const fullName = `${p?.first_name || ''} ${p?.last_name || ''}`.trim();
+    if (fullName) return fullName;
+    if (p?.username) return p.username;
+    return 'Unknown User';
+  };
 
   const dropdownOptions = useMemo(() => {
     const dedup = new Map();
