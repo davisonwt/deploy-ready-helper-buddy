@@ -82,6 +82,8 @@ export default function WalletSettingsPage() {
             api_key: apiKey,
             api_secret: apiSecret,
             merchant_id: merchantId,
+            is_active: true,
+            is_primary: true,
           })
           .eq('id', existing.id)
 
@@ -93,6 +95,8 @@ export default function WalletSettingsPage() {
             user_id: user.id,
             wallet_address: walletAddress,
             wallet_type: 'binance_pay',
+            is_active: true,
+            is_primary: true,
             api_key: apiKey,
             api_secret: apiSecret,
             merchant_id: merchantId,
