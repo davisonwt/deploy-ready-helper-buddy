@@ -9,53 +9,35 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* NEW DESIGN SYSTEM - Navy Blue Theme */
-    --background: 210 67% 12%; /* #0A1931 - Deep navy blue */
-    --foreground: 210 17% 98%; /* #F8F9FA - Off-white for body text */
+    --background: 210 100% 12%; /* Navy background in HSL */
+    --foreground: 210 40% 98%; /* Light text for readability on dark background */
 
-    --card: 212 49% 24%; /* #1E3A5C - Lighter blue for cards */
-    --card-foreground: 210 17% 98%; /* #F8F9FA - Off-white text on cards */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 212 49% 24%; /* #1E3A5C - Same as cards */
-    --popover-foreground: 210 17% 98%;
+    --popover: 0 0% 100%; /* White popover background */
+    --popover-foreground: 222.2 84% 4.9%;
 
-  /* Primary interactive color - Teal/Cyan */
-  --primary: 188 78% 41%;  /* #17A2B8 - Vibrant teal for buttons */
-  --primary-foreground: 0 0% 100%; /* #FFFFFF - White text on primary */
+  /* sow2grow brand colors - matching landing page */
+  --primary: 142 76% 36%;  /* Green from landing page */
+  --primary-foreground: 210 40% 98%;
 
-  /* Secondary - for alternative buttons */
-  --secondary: 212 49% 24%;  /* #1E3A5C - Card color */
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 199 89% 50%;  /* Blue from landing page */
+  --secondary-foreground: 210 40% 98%;
 
-  /* Muted text and helpers */
-  --muted: 210 11% 71%;  /* #ADB5BD - Light gray for muted text */
-  --muted-foreground: 210 11% 46%; /* #6C757D - Medium gray */
+  --muted: 60 8% 94%;  /* Light beige */
+  --muted-foreground: 215.4 16.3% 46.9%;
 
-  --accent: 188 78% 41%;  /* #17A2B8 - Teal accent */
-  --accent-foreground: 0 0% 100%;
+  --accent: 43 74% 66%;  /* Amber from landing page */
+  --accent-foreground: 222.2 47.4% 11.2%;
   
-  /* Headings */
-  --heading-primary: 0 0% 100%;  /* #FFFFFF - Pure white for H1, H2 */
-  --heading-secondary: 210 17% 98%; /* #F8F9FA - Off-white for H3, H4 */
-  
-  /* Form inputs */
-  --input-bg: 212 49% 24%; /* #1E3A5C - Input background */
-  --input-text: 0 0% 100%; /* #FFFFFF - Input text */
-  --input-border: 210 11% 71%; /* #ADB5BD - Default border */
-  --input-border-focus: 213 71% 58%; /* #4A90E2 - Focus border */
-  --input-placeholder: 210 11% 46%; /* #6C757D - Placeholder text */
-  
-  /* sow2grow theme colors (legacy support) */
+  /* sow2grow theme colors */
   --s2g-green: 142 76% 36%;
   --s2g-blue: 199 89% 50%;
   --s2g-amber: 43 74% 66%;
   --s2g-brown: 30 35% 45%;
   --s2g-beige: 60 8% 94%;
   --s2g-purple: 270 75% 45%;
-  --brand-navy: 210 67% 12%; /* Match new background */
-  
-  /* Button hover states */
-  --primary-hover: 188 78% 33%; /* #138496 - Darker teal */
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, hsl(var(--s2g-green)), hsl(var(--s2g-blue)));
@@ -81,74 +63,33 @@ All colors MUST be HSL.
   --light-beige: 60 8% 82%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 210 11% 71%; /* #ADB5BD - Light gray borders */
-    --input: 212 49% 24%; /* #1E3A5C - Input background */
-    --ring: 188 78% 41%;  /* #17A2B8 - Teal ring */
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 76% 36%;  /* Green ring */
 
     --radius: 0.5rem;
 
-    --sidebar-background: 212 49% 24%; /* #1E3A5C - Card color */
-    --sidebar-foreground: 210 17% 98%; /* #F8F9FA - Off-white */
-    --sidebar-primary: 188 78% 41%;  /* #17A2B8 - Teal */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 212 49% 24%;  /* #1E3A5C */
-    --sidebar-accent-foreground: 210 17% 98%;
-    --sidebar-border: 210 11% 71%; /* #ADB5BD */
-    --sidebar-ring: 188 78% 41%;  /* #17A2B8 - Teal */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 142 76% 36%;  /* Green */
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 60 8% 95%;  /* Light beige */
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 199 89% 50%;  /* Blue */
 
-    --success: 142 76% 36%;  /* Keep green for success */
-    --success-foreground: 0 0% 100%;
-    --warning: 43 74% 66%;  /* Keep amber for warning */
-    --warning-foreground: 210 67% 12%;
-    --info: 188 78% 41%;  /* #17A2B8 - Teal */
-    --info-foreground: 0 0% 100%;
+    --success: 142 76% 36%;  /* Green */
+    --success-foreground: 355.7 100% 97.3%;
+    --warning: 43 74% 66%;  /* Amber */
+    --warning-foreground: 26 83.3% 14.1%;
+    --info: 199 89% 50%;  /* Blue */
+    --info-foreground: 210 40% 98%;
     --harvest: 43 74% 66%;  /* Amber */
-    --harvest-foreground: 0 0% 100%;
-    --login: 188 78% 41%; /* #17A2B8 - Teal */
-    --login-foreground: 0 0% 100%;
-}
-
-/* Ensure proper text contrast on all surfaces */
-.bg-card,
-.bg-card\/80,
-.bg-card\/90,
-.bg-card\/95,
-.bg-popover,
-.bg-muted,
-.bg-muted\/5,
-.bg-muted\/10,
-.bg-muted\/20,
-.bg-muted\/30,
-.bg-muted\/40 {
-  color: hsl(var(--card-foreground));
-}
-
-/* Heading styles */
-h1, h2, .heading-primary {
-  color: hsl(var(--heading-primary));
-}
-
-h3, h4, h5, h6, .heading-secondary {
-  color: hsl(var(--heading-secondary));
-}
-
-/* Form control styles with new design system */
-input, select, textarea {
-  background-color: hsl(var(--input-bg));
-  color: hsl(var(--input-text));
-  border-color: hsl(var(--input-border));
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: hsl(var(--input-border-focus));
-  outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--input-border-focus) / 0.2);
-}
-
-input::placeholder, textarea::placeholder, select::placeholder {
-  color: hsl(var(--input-placeholder));
+    --harvest-foreground: 210 40% 98%;
+    --login: 328 88% 35%;
+    --login-foreground: 210 40% 98%;
 }
 
 /* Line clamp utilities */
@@ -427,77 +368,115 @@ input::placeholder, textarea::placeholder, select::placeholder {
     }
   }
 }
-
-@layer components {
-  /* Uniform placeholder surfaces across the app */
-  .bg-white,
-  .bg-white\/80,
-  .bg-white\/90,
-  .bg-white\/95,
-  .bg-gray-50,
-  .bg-slate-50,
-  .bg-neutral-50 {
-    background-color: hsl(var(--card)) !important;
-    color: hsl(var(--heading-primary)) !important;
-    border-color: hsl(var(--border)) !important;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
-  }
-  .bg-white *,
-  .bg-white\/80 *,
-  .bg-white\/90 *,
-  .bg-white\/95 *,
-  .bg-gray-50 *,
-  .bg-slate-50 *,
-  .bg-neutral-50 * {
-    color: inherit !important;
-  }
-  /* Normalize legacy white borders */
-  .border-white\/40 { border-color: hsl(var(--border)) !important; }
-}
-
-/* Mobile responsiveness improvements */
 @layer base {
-  /* Base button styles */
-  button,
-  .button,
-  button[type="button"],
-  button[type="submit"],
-  button[type="reset"] {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           font-semibold text-base transition-colors duration-200
-           bg-primary text-primary-foreground;
-  }
-  
-  button:hover:not(:disabled),
-  .button:hover:not(:disabled) {
-    @apply bg-primary-hover text-primary-foreground;
-  }
-  
-  button:disabled,
-  .button:disabled {
-    @apply opacity-60 cursor-not-allowed;
-  }
-
-  /* Mobile-specific overrides */
   @media (max-width: 768px) {
-    /* Reduce base font size for better readability on small screens */
-    html {
-      font-size: 14px;
+    :root {
+      font-size: 15px;
     }
 
-    /* Tighter spacing on mobile */
-    h1 { @apply text-2xl mb-3; }
-    h2 { @apply text-xl mb-2; }
-    h3 { @apply text-lg mb-2; }
-    h4 { @apply text-base mb-1; }
-    h5 { @apply text-sm mb-1; }
-    h6 { @apply text-xs mb-1; }
+    html,
+    body {
+      font-size: 1rem;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
 
-    /* Reduce padding/gaps globally */
-    .container { @apply px-3; }
-    section { @apply py-8; }
+    h1 {
+      font-size: 1.5rem;
+      line-height: 1.2;
+    }
 
-    /* Ensure minimum touch target sizes (48x48px) */
+    h2 {
+      font-size: 1.375rem;
+      line-height: 1.25;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      line-height: 1.3;
+    }
+
+    h4,
+    h5,
+    h6 {
+      font-size: 1.125rem;
+      line-height: 1.35;
+    }
+
+    p,
+    li,
+    label {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    section,
+    header,
+    nav,
+    main,
+    footer,
+    .app-card,
+    .bestowal-ui,
+    .orchard-page,
+    .container,
+    .max-w-7xl,
+    .max-w-6xl,
+    .max-w-5xl,
+    .max-w-4xl,
+    .max-w-3xl {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+      max-width: 100% !important;
+    }
+
+    .py-24,
+    .py-20,
+    .py-16,
+    .py-12,
+    .py-10,
+    section,
+    main {
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+    }
+
+    .px-12,
+    .px-10,
+    .px-8,
+    .px-6,
+    .px-5,
+    .px-4,
+    .px-3 {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+    }
+
+    .gap-24,
+    .gap-20,
+    .gap-16,
+    .gap-12,
+    .gap-10 {
+      gap: 1.25rem !important;
+    }
+
+    .w-screen {
+      width: 100% !important;
+    }
+
+    .h-screen {
+      min-height: 100vh;
+      height: auto;
+    }
+
+    img,
+    video,
+    canvas,
+    iframe {
+      width: 100% !important;
+      max-width: none !important;
+      height: auto !important;
+    }
+
     button,
     .btn,
     .Button,
@@ -508,52 +487,158 @@ input::placeholder, textarea::placeholder, select::placeholder {
       min-height: 48px;
       min-width: 48px;
     }
-
-    /* Stack form elements vertically */
-    form { @apply flex-col gap-3; }
   }
+}
+
+/* Neon Button Animation - Counter-clockwise rotating glow */
+@keyframes neon-rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+
+.neon-button {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.neon-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.neon-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+  background: conic-gradient(
+    from 60deg at 50% 50%,
+    transparent 0deg,
+    #4d3fd0 15deg,
+    #3b82f6 45deg,
+    #4d3fd0 75deg,
+    transparent 145deg,
+    transparent 325deg,
+    #4d3fd0 345deg
+  );
+  filter: blur(16px);
+  opacity: 0.7;
+  z-index: 0;
+  animation: neon-rotate 4s linear infinite;
+  pointer-events: none;
+}
+
+.neon-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+  background: conic-gradient(
+    from 60deg at 50% 50%,
+    transparent 0deg,
+    #4d3fd0 15deg,
+    #3b82f6 45deg,
+    #4d3fd0 75deg,
+    transparent 145deg,
+    transparent 325deg,
+    #4d3fd0 345deg
+  );
+  filter: blur(32px);
+  opacity: 0.4;
+  z-index: -1;
+  animation: neon-rotate 4s linear infinite;
+  pointer-events: none;
+}
+
+.neon-button:hover::before {
+  opacity: 0.9;
+  filter: blur(20px);
+}
+
+.neon-button:hover::after {
+  opacity: 0.6;
+  filter: blur(40px);
 }
 
 @layer utilities {
-  /* Mobile layout utilities */
   @media (max-width: 768px) {
-    /* Force single column layouts */
-    .mobile-stack {
-      @apply flex-col !important;
+    .grid-cols-2,
+    .grid-cols-3,
+    .grid-cols-4,
+    .grid-cols-5,
+    .grid-cols-6,
+    .grid-cols-7,
+    .grid-cols-8,
+    .grid-cols-9,
+    .grid-cols-10,
+    .grid-cols-11,
+    .grid-cols-12,
+    .md\:grid-cols-2,
+    .md\:grid-cols-3,
+    .md\:grid-cols-4,
+    .md\:grid-cols-5,
+    .md\:grid-cols-6,
+    .lg\:grid-cols-2,
+    .lg\:grid-cols-3,
+    .lg\:grid-cols-4,
+    .lg\:grid-cols-5,
+    .lg\:grid-cols-6,
+    .xl\:grid-cols-2,
+    .xl\:grid-cols-3,
+    .xl\:grid-cols-4 {
+      grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
     }
 
-    /* Collapse grids to single column */
-    .grid {
-      @apply grid-cols-1 !important;
+    .flex-row,
+    .md\:flex-row,
+    .lg\:flex-row {
+      flex-direction: column !important;
+      align-items: stretch;
     }
 
-    /* Make tables scrollable horizontally */
+    .space-x-12 > :not([hidden]) ~ :not([hidden]),
+    .space-x-10 > :not([hidden]) ~ :not([hidden]),
+    .space-x-8 > :not([hidden]) ~ :not([hidden]),
+    .space-x-6 > :not([hidden]) ~ :not([hidden]) {
+      --tw-space-x-reverse: 0;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      margin-top: 1rem;
+    }
+
+    .p-12,
+    .p-10,
+    .p-8,
+    .p-7,
+    .p-6 {
+      padding: 1.5rem !important;
+    }
+
+    .text-6xl,
+    .text-5xl,
+    .text-4xl,
+    .text-3xl {
+      font-size: clamp(1.5rem, 6vw, 1.75rem) !important;
+      line-height: 1.2 !important;
+    }
+
     table {
-      @apply block overflow-x-auto;
-    }
-
-    /* Full width cards on mobile */
-    .card,
-    [class*="card-"] {
-      @apply w-full;
-    }
-
-    /* Hide decorative elements on mobile */
-    .mobile-hide {
-      @apply hidden;
-    }
-
-    /* Show only on mobile */
-    .mobile-show {
-      @apply block;
-    }
-  }
-
-  /* Show on desktop, hide on mobile */
-  @media (min-width: 769px) {
-    .mobile-show {
-      @apply hidden;
+      display: block;
+      width: 100%;
+      overflow-x: auto;
     }
   }
 }
-
