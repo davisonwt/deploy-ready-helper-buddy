@@ -10,6 +10,9 @@ export default defineConfig(({ mode, command }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: {
+      overlay: false, // Disable error overlay to prevent blocking
+    },
   },
   plugins: [
     react(),
