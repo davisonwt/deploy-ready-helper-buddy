@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink } from 'lucide-react';
+import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink, Eye, EyeOff } from 'lucide-react';
 import { useBinanceWallet } from '@/hooks/useBinanceWallet';
 import { useLocation } from 'react-router-dom';
 
@@ -29,6 +29,11 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   } = useBinanceWallet();
 
   const [payIdInput, setPayIdInput] = useState('');
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiSecretInput, setApiSecretInput] = useState('');
+  const [merchantIdInput, setMerchantIdInput] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [showApiSecret, setShowApiSecret] = useState(false);
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(50);
   const [showLinkField, setShowLinkField] = useState(false);
@@ -56,9 +61,18 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
       return;
     }
 
-    const success = await linkWallet(payIdInput.trim());
+    // API credentials are optional - if provided, they enable direct Binance balance queries
+    const success = await linkWallet(
+      payIdInput.trim(),
+      apiKeyInput.trim() || undefined,
+      apiSecretInput.trim() || undefined,
+      merchantIdInput.trim() || undefined
+    );
     if (success) {
       setPayIdInput('');
+      setApiKeyInput('');
+      setApiSecretInput('');
+      setMerchantIdInput('');
       setShowLinkField(false);
     }
   };
@@ -102,8 +116,9 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   <p className="text-sm text-muted-foreground">
                     Link your Binance Pay ID (Pay ID) so Sow2Grow can route distributions to your wallet and display your balance.
                   </p>
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="payId">Binance Pay ID</Label>
+                    <Label htmlFor="payId">Binance Pay ID *</Label>
                     <Input
                       id="payId"
                       placeholder="Enter your Binance Pay ID"
@@ -111,7 +126,85 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                       onChange={(event) => setPayIdInput(event.target.value)}
                       disabled={linking}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Your unique Binance Pay ID for receiving payments
+                    </p>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="merchantId">Merchant ID (Optional)</Label>
+                    <Input
+                      id="merchantId"
+                      placeholder="Enter Binance Merchant ID"
+                      value={merchantIdInput}
+                      onChange={(event) => setMerchantIdInput(event.target.value)}
+                      disabled={linking}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required only if you have a Binance Pay merchant account
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="apiKey">API Key (Optional)</Label>
+                    <div className="relative">
+                      <Input
+                        id="apiKey"
+                        type={showApiKey ? 'text' : 'password'}
+                        placeholder="Enter Binance Pay API Key"
+                        value={apiKeyInput}
+                        onChange={(event) => setApiKeyInput(event.target.value)}
+                        disabled={linking}
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                      >
+                        {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Add API credentials to query your balance directly from Binance
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="apiSecret">API Secret (Optional)</Label>
+                    <div className="relative">
+                      <Input
+                        id="apiSecret"
+                        type={showApiSecret ? 'text' : 'password'}
+                        placeholder="Enter Binance Pay API Secret"
+                        value={apiSecretInput}
+                        onChange={(event) => setApiSecretInput(event.target.value)}
+                        disabled={linking}
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowApiSecret(!showApiSecret)}
+                      >
+                        {showApiSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Get these from Binance Pay Merchant Portal → API Management
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 p-3">
+                    <p className="text-xs text-blue-900 dark:text-blue-100">
+                      <strong>💡 Tip:</strong> Adding API credentials allows the app to query your actual Binance balance directly. Without them, the app will calculate balance from your payment history.
+                    </p>
+                  </div>
+
                   <Button onClick={handleLink} disabled={linking} className="w-full">
                     {linking ? (
                       <>

@@ -15,6 +15,9 @@ const requestSchema = z.object({
     .min(6, "Pay ID must be at least 6 characters")
     .max(64, "Pay ID must be at most 64 characters")
     .regex(/^[A-Za-z0-9]+$/, "Pay ID can only contain letters and numbers"),
+  apiKey: z.string().trim().optional(),
+  apiSecret: z.string().trim().optional(),
+  merchantId: z.string().trim().optional(),
 });
 
 serve(async (req) => {
@@ -97,16 +100,39 @@ serve(async (req) => {
       .eq("user_id", userData.user.id)
       .in("wallet_type", ["binance_pay", "binance", "binance_pay_id"]);
 
+    // Prepare wallet data with optional API credentials
+    const walletData: {
+      user_id: string;
+      wallet_address: string;
+      wallet_type: string;
+      is_primary: boolean;
+      is_active: boolean;
+      api_key?: string;
+      api_secret?: string;
+      merchant_id?: string;
+    } = {
+      user_id: userData.user.id,
+      wallet_address: normalizedPayId,
+      wallet_type: "binance_pay",
+      is_primary: true,
+      is_active: true,
+    };
+
+    // Add API credentials if provided
+    if (parsed.data.apiKey) {
+      walletData.api_key = parsed.data.apiKey;
+    }
+    if (parsed.data.apiSecret) {
+      walletData.api_secret = parsed.data.apiSecret;
+    }
+    if (parsed.data.merchantId) {
+      walletData.merchant_id = parsed.data.merchantId;
+    }
+
     // Upsert the new wallet
     const { error: upsertError } = await serviceClient
       .from("user_wallets")
-      .upsert({
-        user_id: userData.user.id,
-        wallet_address: normalizedPayId,
-        wallet_type: "binance_pay",
-        is_primary: true,
-        is_active: true,
-      }, {
+      .upsert(walletData, {
         onConflict: "user_id,wallet_address",
       });
 
