@@ -202,7 +202,12 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
     }
   }, [includeOrganizationWallet, organizationWalletName]);
 
-  const linkWallet = useCallback(async (payId: string) => {
+  const linkWallet = useCallback(async (
+    payId: string,
+    apiKey?: string,
+    apiSecret?: string,
+    merchantId?: string
+  ) => {
     if (!payId?.trim()) {
       toast.error('Enter a valid Binance Pay ID');
       return false;
@@ -219,10 +224,15 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
         return false;
       }
 
+      const body: { payId: string; apiKey?: string; apiSecret?: string; merchantId?: string } = { payId };
+      if (apiKey) body.apiKey = apiKey;
+      if (apiSecret) body.apiSecret = apiSecret;
+      if (merchantId) body.merchantId = merchantId;
+
       let primaryError: unknown = null;
       try {
         const primary = await supabase.functions.invoke('link-binance-wallet', {
-          body: { payId },
+          body,
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         if (primary.error) primaryError = primary.error;
@@ -239,7 +249,7 @@ export function useBinanceWallet(options: UseBinanceWalletOptions = {}) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ payId }),
+          body: JSON.stringify(body),
         });
 
         if (!res.ok) {
