@@ -1,13 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { getSecureCorsHeaders, validatePaymentAmount, getClientIp, createErrorResponse, createSuccessResponse } from "../_shared/security.ts";
 
 serve(async (req) => {
+  const corsHeaders = getSecureCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,40 +29,81 @@ serve(async (req) => {
     // Get the authorization header and extract user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("No authorization header");
+      return createErrorResponse("No authorization header", 401, req);
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !data.user) {
-      throw new Error("Invalid token or user not found");
+      return createErrorResponse("Invalid token or user not found", 401, req);
     }
 
     const user = data.user;
 
-    // Define validation schema
-    const transferSchema = z.object({
-      signature: z.string().min(64).max(150),
-      amount: z.number().positive().max(1000000),
-      orchardId: z.string().uuid(),
-      pocketsCount: z.number().int().positive().max(10000),
-      pocketNumbers: z.array(z.number().int().positive()).optional(),
-      fromWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-      toWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/)
+    // Rate limiting
+    const allowed = await checkRateLimit(
+      supabaseService,
+      user.id,
+      'payment',
+      RateLimitPresets.PAYMENT.maxAttempts,
+      RateLimitPresets.PAYMENT.timeWindowMinutes
+    );
+
+    if (!allowed) {
+      await supabaseService.rpc('log_payment_audit', {
+        user_id_param: user.id,
+        action_param: 'rate_limit_exceeded',
+        payment_method_param: 'usdc',
+        amount_param: 0,
+        currency_param: 'USDC',
+        ip_address_param: getClientIp(req),
+        user_agent_param: req.headers.get('user-agent') || null,
+      });
+      return createRateLimitResponse(3600);
+    }
+
+    // Parse request body first to get signature for idempotency
+    const rawBody = await req.json();
+    const signature = rawBody.signature;
+
+    // Check idempotency key (use signature as fallback)
+    const idempotencyKey = req.headers.get('x-idempotency-key') || `usdc-${signature}`;
+    
+    // Check if already processed
+    const { data: idempotencyCheck } = await supabaseService.rpc('check_payment_idempotency', {
+      idempotency_key_param: idempotencyKey,
+      user_id_param: user.id
     });
 
-    // Parse and validate the request body
-    const rawBody = await req.json();
+    if (idempotencyCheck?.exists) {
+      return createSuccessResponse(idempotencyCheck.result, req);
+    }
+
+    // Define validation schema with enhanced validation
+    const transferSchema = z.object({
+      signature: z.string().min(64).max(150),
+      amount: z.number().positive().max(1000000).refine((val) => {
+        const validation = validatePaymentAmount(val);
+        return validation.valid;
+      }, 'Amount validation failed'),
+      orchardId: z.string().uuid('Invalid orchard ID format'),
+      pocketsCount: z.number().int().positive().max(10000),
+      pocketNumbers: z.array(z.number().int().positive()).max(10000).optional(),
+      fromWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address format'),
+      toWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address format')
+    });
+
+    // Validate request body
     const validationResult = transferSchema.safeParse(rawBody);
     
     if (!validationResult.success) {
       console.error("Input validation failed:", validationResult.error);
-      throw new Error(`Invalid input: ${validationResult.error.errors.map(e => e.message).join(", ")}`);
+      const errorMessage = validationResult.error.errors.map(e => e.message).join(", ");
+      return createErrorResponse(`Invalid input: ${errorMessage}`, 400, req);
     }
     
     const { 
-      signature, 
       amount, 
       orchardId, 
       pocketsCount, 
@@ -79,20 +119,15 @@ serve(async (req) => {
       userId: user.id
     });
 
-    // Validate required fields
-    if (!signature || !amount || !orchardId || !fromWallet || !toWallet) {
-      throw new Error("Missing required fields");
-    }
-
-    // Check if transaction already exists
+    // Check if transaction already exists (additional check)
     const { data: existingTx } = await supabaseService
       .from('usdc_transactions')
       .select('id')
       .eq('signature', signature)
-      .single();
+      .maybeSingle();
 
     if (existingTx) {
-      throw new Error("Transaction already processed");
+      return createErrorResponse("Transaction already processed", 409, req);
     }
 
     // Create bestowal record
@@ -150,31 +185,76 @@ serve(async (req) => {
       signature
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        bestowal: bestowalData,
-        transaction: txData,
-        message: "USDC transfer processed successfully"
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    const result = {
+      success: true,
+      bestowal: bestowalData,
+      transaction: txData,
+      message: "USDC transfer processed successfully"
+    };
+
+    // Store idempotency result
+    await supabaseService.rpc('store_payment_idempotency', {
+      idempotency_key_param: idempotencyKey,
+      user_id_param: user.id,
+      result_param: result
+    });
+
+    // Audit log
+    await supabaseService.rpc('log_payment_audit', {
+      user_id_param: user.id,
+      action_param: 'payment_completed',
+      payment_method_param: 'usdc',
+      amount_param: amount,
+      currency_param: 'USDC',
+      bestowal_id_param: bestowalData.id,
+      transaction_id_param: signature,
+      ip_address_param: getClientIp(req),
+      user_agent_param: req.headers.get('user-agent') || null,
+      metadata_param: { orchardId, pocketsCount, fromWallet, toWallet, idempotencyKey }
+    });
+
+    return createSuccessResponse(result, req);
 
   } catch (error) {
     console.error("Error processing USDC transfer:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "Internal server error"
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+    // Try to log audit event
+    try {
+      const supabaseService = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        const supabaseClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+        );
+        const { data: userData } = await supabaseClient.auth.getUser(token);
+        if (userData?.user) {
+          await supabaseService.rpc('log_payment_audit', {
+            user_id_param: userData.user.id,
+            action_param: 'payment_failed',
+            payment_method_param: 'usdc',
+            amount_param: 0,
+            currency_param: 'USDC',
+            ip_address_param: getClientIp(req),
+            user_agent_param: req.headers.get('user-agent') || null,
+            metadata_param: { error: errorMessage }
+          });
+        }
       }
+    } catch (auditError) {
+      console.error("Failed to log audit event:", auditError);
+    }
+    
+    return createErrorResponse(
+      "Payment processing failed. Please try again or contact support.",
+      500,
+      req
     );
   }
 });

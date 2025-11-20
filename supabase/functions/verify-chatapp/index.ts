@@ -3,13 +3,27 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { checkRateLimit, createRateLimitResponse } from '../_shared/rateLimiter.ts'
 
 const getCorsHeaders = (req: Request) => {
-  const origin = req.headers.get('origin') || '*';
+  const origin = req.headers.get('origin');
+  const allowedOrigins = [
+    'https://sow2growapp.com',
+    'https://www.sow2growapp.com',
+    'https://app.sow2grow.com',
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-authorization, accept',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Credentials': 'true',
+      'Vary': 'Origin',
+    };
+  }
+  
+  // Deny unauthorized origins
   return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-authorization, accept',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
-    'Vary': 'Origin',
+    'Access-Control-Allow-Origin': 'null',
+    'Content-Type': 'application/json',
   };
 }
 
@@ -167,16 +181,16 @@ serve(async (req) => {
       .eq('message_type', 'text')
       .ilike('content', '%finish set-up%');
 
-    // Send success message
-    await supabase.from('chat_messages').insert({
-      room_id: roomId,
-      sender_id: null,
-      content: `✅ Verification successful! Welcome to Sow2Grow, ${profile.username}! Your account is now fully activated.`,
-      message_type: 'text',
-      system_metadata: {
+    // Send success message using secure system message function
+    await supabase.rpc('insert_system_chat_message', {
+      p_room_id: roomId,
+      p_content: `✅ Verification successful! Welcome to Sow2Grow, ${profile.username}! Your account is now fully activated.`,
+      p_message_type: 'text',
+      p_system_metadata: {
         type: 'verification_success',
         is_system: true,
-        sender_name: 'Sow2Grow Bot'
+        sender_name: 'Sow2Grow Bot',
+        user_id: userId
       }
     });
 

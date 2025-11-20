@@ -1,11 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { checkRateLimit, createRateLimitResponse, RateLimitPresets } from "../_shared/rateLimiter.ts";
+import { getSecureCorsHeaders, validatePaymentAmount, getClientIp, createErrorResponse, createSuccessResponse } from "../_shared/security.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -13,6 +10,8 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const corsHeaders = getSecureCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,22 +26,71 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      return createErrorResponse("No authorization header provided", 401, req);
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) {
+      return createErrorResponse(`Authentication error: ${userError.message}`, 401, req);
+    }
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    if (!user?.email) {
+      return createErrorResponse("User not authenticated", 401, req);
+    }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Define validation schema
+    // Rate limiting
+    const allowed = await checkRateLimit(
+      supabaseClient,
+      user.id,
+      'payment',
+      RateLimitPresets.PAYMENT.maxAttempts,
+      RateLimitPresets.PAYMENT.timeWindowMinutes
+    );
+
+    if (!allowed) {
+      logStep("Rate limit exceeded", { userId: user.id });
+      await supabaseClient.rpc('log_payment_audit', {
+        user_id_param: user.id,
+        action_param: 'rate_limit_exceeded',
+        payment_method_param: 'eft',
+        amount_param: 0,
+        currency_param: 'USD',
+        ip_address_param: getClientIp(req),
+        user_agent_param: req.headers.get('user-agent') || null,
+      });
+      return createRateLimitResponse(3600);
+    }
+
+    // Check idempotency key
+    const idempotencyKey = req.headers.get('x-idempotency-key');
+    if (!idempotencyKey) {
+      return createErrorResponse("Idempotency key required", 400, req);
+    }
+
+    // Check if already processed
+    const { data: idempotencyCheck } = await supabaseClient.rpc('check_payment_idempotency', {
+      idempotency_key_param: idempotencyKey,
+      user_id_param: user.id
+    });
+
+    if (idempotencyCheck?.exists) {
+      logStep("Idempotency key found, returning cached result", { idempotencyKey });
+      return createSuccessResponse(idempotencyCheck.result, req);
+    }
+
+    // Define validation schema with enhanced validation
     const eftPaymentSchema = z.object({
-      amount: z.number().positive().max(1000000),
+      amount: z.number().positive().max(1000000).refine((val) => {
+        const validation = validatePaymentAmount(val);
+        return validation.valid;
+      }, 'Amount validation failed'),
       currency: z.enum(['USD', 'ZAR', 'EUR', 'GBP']).optional(),
-      orchardId: z.string().uuid(),
+      orchardId: z.string().uuid('Invalid orchard ID format'),
       pocketsCount: z.number().int().min(0).max(10000).optional(),
-      pocketNumbers: z.array(z.number().int().positive()).optional()
+      pocketNumbers: z.array(z.number().int().positive()).max(10000).optional()
     });
 
     // Parse and validate request body
@@ -51,7 +99,8 @@ serve(async (req) => {
     
     if (!validationResult.success) {
       logStep('Input validation failed', { errors: validationResult.error });
-      throw new Error(`Invalid input: ${validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(", ")}`);
+      const errorMessage = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(", ");
+      return createErrorResponse(`Invalid input: ${errorMessage}`, 400, req);
     }
     
     const { amount, currency, orchardId, pocketsCount, pocketNumbers } = validationResult.data;
@@ -114,7 +163,7 @@ serve(async (req) => {
 
     logStep("EFT payment record created", { referenceNumber, bestowId: bestowal.id });
 
-    return new Response(JSON.stringify({
+    const result = {
       referenceNumber: referenceNumber,
       bankDetails: {
         bankName: paymentConfig.bank_name,
@@ -131,17 +180,67 @@ serve(async (req) => {
         "Allow 1-3 business days for processing",
         "You will receive a confirmation email once payment is verified",
       ],
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+    };
+
+    // Store idempotency result
+    await supabaseClient.rpc('store_payment_idempotency', {
+      idempotency_key_param: idempotencyKey,
+      user_id_param: user.id,
+      result_param: result
     });
+
+    // Audit log
+    await supabaseClient.rpc('log_payment_audit', {
+      user_id_param: user.id,
+      action_param: 'payment_created',
+      payment_method_param: 'eft',
+      amount_param: amount,
+      currency_param: currency || 'USD',
+      bestowal_id_param: bestowal.id,
+      transaction_id_param: referenceNumber,
+      ip_address_param: getClientIp(req),
+      user_agent_param: req.headers.get('user-agent') || null,
+      metadata_param: { orchardId, pocketsCount, idempotencyKey }
+    });
+
+    return createSuccessResponse(result, req);
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in EFT payment creation", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    
+    // Try to log audit event
+    try {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: userData } = await supabaseClient.auth.getUser(token);
+        if (userData?.user) {
+          await supabaseClient.rpc('log_payment_audit', {
+            user_id_param: userData.user.id,
+            action_param: 'payment_failed',
+            payment_method_param: 'eft',
+            amount_param: 0,
+            currency_param: 'USD',
+            ip_address_param: getClientIp(req),
+            user_agent_param: req.headers.get('user-agent') || null,
+            metadata_param: { error: errorMessage }
+          });
+        }
+      }
+    } catch (auditError) {
+      console.error("Failed to log audit event:", auditError);
+    }
+    
+    return createErrorResponse(
+      'Payment processing failed. Please try again or contact support.',
+      500,
+      req
+    );
   }
 });

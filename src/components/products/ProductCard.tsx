@@ -130,8 +130,13 @@ export default function ProductCard({ product, featured, showActions = false }: 
     console.log('ProductCard: handleBestow called', product);
     addToBasket(product);
     toast.success('Added to basket!', {
-      description: `${product.title} has been added to your basket`
+      action: {
+        label: 'View Basket',
+        onClick: () => navigate('/products/basket')
+      }
     });
+    // Navigate to basket after adding
+    navigate('/products/basket');
   };
 
   const handleDelete = async () => {

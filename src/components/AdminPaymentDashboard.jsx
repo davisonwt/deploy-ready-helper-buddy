@@ -46,23 +46,69 @@ export function AdminPaymentDashboard() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const { data } = await supabase
+      
+      // Fetch orchard bestowals
+      const { data: bestowals } = await supabase
         .from('bestowals')
         .select('id, created_at, amount, currency, payment_status, payment_reference')
         .order('created_at', { ascending: false })
         .limit(100);
-      setPayments(
-        (data || []).map((b) => ({
-          id: b.id,
-          created_at: b.created_at,
-          amount: b.amount,
-          token_symbol: b.currency,
-          confirmation_status: b.payment_status,
-          transaction_signature: b.payment_reference,
-          sender_address: null,
-          memo: null,
-        }))
-      );
+      
+      // Fetch product bestowals
+      const { data: productBestowals } = await supabase
+        .from('product_bestowals')
+        .select('id, created_at, amount, payment_reference, status, products:product_id(title)')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      // Fetch payment transactions (includes both types)
+      const { data: transactions } = await supabase
+        .from('payment_transactions')
+        .select('id, created_at, amount, currency, status, payment_provider_id, provider_response')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      
+      // Combine all payments
+      const allPayments = [];
+      
+      // Add orchard bestowals
+      if (bestowals) {
+        bestowals.forEach(b => {
+          allPayments.push({
+            id: b.id,
+            type: 'orchard',
+            created_at: b.created_at,
+            amount: b.amount,
+            token_symbol: b.currency || 'USDC',
+            confirmation_status: b.payment_status || 'completed',
+            transaction_signature: b.payment_reference,
+            sender_address: null,
+            memo: null,
+          });
+        });
+      }
+      
+      // Add product bestowals
+      if (productBestowals) {
+        productBestowals.forEach(pb => {
+          allPayments.push({
+            id: pb.id,
+            type: 'product',
+            created_at: pb.created_at,
+            amount: pb.amount,
+            token_symbol: 'USDC',
+            confirmation_status: pb.status || 'completed',
+            transaction_signature: pb.payment_reference,
+            sender_address: null,
+            memo: pb.products?.title || 'Product Bestowal',
+          });
+        });
+      }
+      
+      // Sort by date (newest first)
+      allPayments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      setPayments(allPayments.slice(0, 100));
     } catch (e) {
       console.error('Error fetching payments:', e);
       setPayments([]);
@@ -355,6 +401,7 @@ export function AdminPaymentDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
                       <TableHead>From</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Token</TableHead>
@@ -370,17 +417,24 @@ export function AdminPaymentDashboard() {
                           {new Date(payment.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
+                          <Badge variant={payment.type === 'product' ? 'secondary' : 'default'}>
+                            {payment.type === 'product' ? 'Product' : 'Orchard'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-sm">
-                              {formatAddress(payment.sender_address)}
+                              {payment.sender_address ? formatAddress(payment.sender_address) : '-'}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(payment.sender_address, "Sender address copied")}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                            {payment.sender_address && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(payment.sender_address, "Sender address copied")}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="font-mono">

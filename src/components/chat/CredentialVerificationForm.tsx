@@ -104,8 +104,13 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
       // Fallback: direct fetch to functions endpoint if supabase.functions.invoke failed (CORS/proxy issues)
       if (err?.name === 'FunctionsFetchError' || err?.value?.name === 'FunctionsFetchError') {
         try {
-          const SUPABASE_URL = 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
-          const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU';
+          // Use environment variables instead of hardcoded credentials
+          const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || supabase.supabaseUrl;
+          const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || supabase.supabaseKey;
+
+          if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            throw new Error('Supabase configuration not found');
+          }
 
           const { data: s } = await supabase.auth.getSession();
           const access = s?.session?.access_token;
@@ -114,6 +119,7 @@ export const CredentialVerificationForm: React.FC<CredentialVerificationFormProp
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': access ? `Bearer ${access}` : '',
               apikey: SUPABASE_ANON_KEY,
               'x-client-info': 'manual-fetch-fallback'
             },

@@ -1,12 +1,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getSecureCorsHeaders } from '../_shared/security.ts';
 
 serve(async (req) => {
+  const corsHeaders = getSecureCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -118,13 +117,13 @@ serve(async (req) => {
       .from(bucket)
       .createSignedUrl(media.file_path, 2592000); // 30 days
 
-    // Send delivery message to chat room
-    await supabase.from('chat_messages').insert({
-      room_id: roomId,
-      sender_id: null, // System message
-      content: `📦 Purchase Complete: ${media.file_name}`,
-      message_type: 'purchase_delivery',
-      system_metadata: {
+    // Send delivery message to chat room using secure system message function
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await supabase.rpc('insert_system_chat_message', {
+      p_room_id: roomId,
+      p_content: `📦 Purchase Complete: ${media.file_name}`,
+      p_message_type: 'purchase_delivery',
+      p_system_metadata: {
         type: 'purchase_delivery',
         file_url: signedUrl?.signedUrl,
         file_name: media.file_name,
@@ -132,8 +131,10 @@ serve(async (req) => {
         price_paid: totalCents / 100,
         media_type: media.media_type,
         purchase_id: purchase.id,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
+        user_id: user.id,
+        expires_at: expiresAt,
+        is_system: true
+      }
     });
 
     console.log('Purchase completed successfully');
