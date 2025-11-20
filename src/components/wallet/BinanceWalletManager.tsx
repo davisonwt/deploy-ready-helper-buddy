@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink, Eye, EyeOff, Edit } from 'lucide-react';
 import { useBinanceWallet } from '@/hooks/useBinanceWallet';
 import { useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface BinanceWalletManagerProps {
   className?: string;
@@ -37,6 +39,9 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(50);
   const [showLinkField, setShowLinkField] = useState(false);
+  const [manualBalanceDialogOpen, setManualBalanceDialogOpen] = useState(false);
+  const [manualBalanceAmount, setManualBalanceAmount] = useState('');
+  const [updatingBalance, setUpdatingBalance] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -84,6 +89,44 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
     }
     await createTopUpOrder(topUpAmount);
     setTopUpDialogOpen(false);
+  };
+
+  const handleManualBalanceUpdate = async () => {
+    const amount = parseFloat(manualBalanceAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error('Enter a valid balance amount (0 or greater).');
+      return;
+    }
+
+    setUpdatingBalance(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please sign in to update balance');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('manual-update-balance', {
+        body: { balance: amount },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(`Balance updated to $${amount.toFixed(2)}`);
+        setManualBalanceDialogOpen(false);
+        setManualBalanceAmount('');
+        await refreshBalance();
+      } else {
+        throw new Error(data?.error || 'Failed to update balance');
+      }
+    } catch (err) {
+      console.error('Manual balance update error:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to update balance');
+    } finally {
+      setUpdatingBalance(false);
+    }
   };
 
   return (
@@ -293,6 +336,18 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                             Top up wallet
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={pillButtonClasses}
+                          onClick={() => {
+                            setManualBalanceAmount(balance?.balance?.toString() || '0');
+                            setManualBalanceDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Set balance
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -366,6 +421,63 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
             </div>
             <Button onClick={handleTopUp} className="w-full">
               Create Binance Pay order
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={manualBalanceDialogOpen} onOpenChange={setManualBalanceDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manually Set Balance</DialogTitle>
+            <DialogDescription>
+              If your Binance balance doesn't match what's shown, you can manually set it here. This is useful when you have external deposits or the API can't query your balance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="manualBalance">Balance (USDC)</Label>
+              <Input
+                id="manualBalance"
+                type="number"
+                min={0}
+                step="0.01"
+                value={manualBalanceAmount}
+                onChange={(event) => setManualBalanceAmount(event.target.value)}
+                placeholder="Enter your actual Binance balance"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter the exact balance shown in your Binance wallet
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[10, 25, 45, 100].map((preset) => (
+                <Button
+                  key={preset}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setManualBalanceAmount(preset.toString())}
+                >
+                  ${preset}
+                </Button>
+              ))}
+            </div>
+            <Button 
+              onClick={handleManualBalanceUpdate} 
+              disabled={updatingBalance}
+              className="w-full"
+            >
+              {updatingBalance ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Update Balance
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
