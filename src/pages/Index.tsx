@@ -97,7 +97,7 @@ function IndexContent() {
               <AdminButton />
               
               <Link to="/login">
-                <Button variant="neon" className="h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base">
+                <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base">
                   login
                 </Button>
               </Link>
