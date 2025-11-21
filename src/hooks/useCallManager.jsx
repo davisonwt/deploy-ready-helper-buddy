@@ -928,32 +928,25 @@ const useCallManagerInternal = () => {
     outgoingCallRef.current = outgoingCall;
   }, [outgoingCall]);
 
-  // Initialize call manager
+  // Initialize call manager - CRITICAL: Don't recreate channel unnecessarily
   useEffect(() => {
     if (!hasUser || !userId) {
       console.log('📞 [CALL] Waiting for user before initializing');
       return;
     }
     
-    setupCallChannel();
+    // CRITICAL FIX: Only setup channel once, don't recreate
+    if (!channelRef.current) {
+      console.log('📞 [CALL] Setting up channel (first time)');
+      setupCallChannel();
+    }
     loadCallHistory();
 
+    // CRITICAL FIX: Don't cleanup on dependency changes - only on unmount
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      // CRITICAL FIX: Clean up any stale state on unmount
-      setCurrentCall(null);
-      setOutgoingCall(null);
-      setIncomingCall(null);
-      try {
-        stopAllRingtones?.();
-      } catch (error) {
-        console.error('📞 [CALL] Error stopping ringtones on unmount:', error);
-      }
+      // Only cleanup on actual unmount
     };
-  }, [hasUser, userId, setupCallChannel, loadCallHistory]);
+  }, [hasUser, userId, loadCallHistory]);
   
   // CRITICAL FIX: Safety cleanup - clear stale ended calls periodically
   useEffect(() => {
