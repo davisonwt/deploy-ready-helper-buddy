@@ -84,7 +84,9 @@ const useCallManagerInternal = () => {
       timestamp: Date.now()
     };
 
+    console.log('📞 [CALL] Setting incomingCall state:', incomingCallData);
     setIncomingCall(incomingCallData);
+    console.log('📞 [CALL] setIncomingCall called, state should update now');
 
     // Show notification
     toast({
@@ -248,16 +250,16 @@ const useCallManagerInternal = () => {
         }
       })
       .on('broadcast', { event: 'incoming_call' }, (payload) => {
-        console.log('📞 [CALL] Broadcast received:', { payload, userId, event: 'incoming_call' });
+        console.log('📞 [CALL] 🔔 BROADCAST RECEIVED:', { payload, userId, event: 'incoming_call' });
         const call = payload.payload || {};
         console.log('📞 [CALL] Parsed call data:', call);
         if (!call?.id) {
-          console.warn('📞 [CALL] Invalid incoming call payload - missing id');
+          console.warn('📞 [CALL] ❌ Invalid incoming call payload - missing id');
           return;
         }
-        console.log('📞 [CALL] Checking receiver_id:', { call_receiver_id: call.receiver_id, userId });
+        console.log('📞 [CALL] Checking receiver_id:', { call_receiver_id: call.receiver_id, userId, match: call.receiver_id === userId });
         if (call.receiver_id && call.receiver_id !== userId) {
-          console.log('📞 [CALL] Call not for this user', { call_receiver_id: call.receiver_id, userId });
+          console.log('📞 [CALL] ⚠️ Call not for this user', { call_receiver_id: call.receiver_id, userId });
           return;
         }
         const now = Date.now();
@@ -274,7 +276,7 @@ const useCallManagerInternal = () => {
         }
         
         lastIncomingRef.current = { id: call.id, ts: now };
-        console.log('📞 [CALL] Incoming call (accepted), calling handleIncomingCall:', call);
+        console.log('📞 [CALL] ✅ Incoming call (accepted), calling handleIncomingCall NOW:', call);
         handleIncomingCall(call);
       })
       .on('broadcast', { event: 'call_answered' }, (payload) => {
@@ -375,7 +377,12 @@ const useCallManagerInternal = () => {
         }
       })
       .subscribe((status) => {
-        console.log('📞 [CALL] Channel subscription status:', status);
+        console.log('📞 [CALL] 🔌 Channel subscription status:', status, 'userId:', userId);
+        if (status === 'SUBSCRIBED') {
+          console.log('📞 [CALL] ✅ Successfully subscribed to call channel for user:', userId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('📞 [CALL] ❌ Channel subscription error for user:', userId);
+        }
       });
 
     channelRef.current = channel;
@@ -808,6 +815,7 @@ const useCallManagerInternal = () => {
 
   useEffect(() => {
     incomingCallRef.current = incomingCall;
+    console.log('📞 [CALL] incomingCall state changed:', incomingCall ? { id: incomingCall.id, caller_name: incomingCall.caller_name } : null);
   }, [incomingCall]);
 
   useEffect(() => {
@@ -850,20 +858,29 @@ const useCallManagerInternal = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (!error && data && data.length && !incomingCallRef.current) {
-          handleIncomingCall({
-            id: data[0].id,
-            caller_id: data[0].caller_id,
-            receiver_id: data[0].receiver_id,
-            type: data[0].call_type || 'audio',
-            status: data[0].status,
-            isIncoming: true,
-          });
+        if (error) {
+          console.warn('⚠️ [CALL][POLL] Poll query error:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          console.log('📞 [CALL][POLL] Found ringing call:', data[0], 'current incomingCall:', incomingCallRef.current?.id);
+          if (!incomingCallRef.current || incomingCallRef.current.id !== data[0].id) {
+            console.log('📞 [CALL][POLL] Triggering handleIncomingCall from poll');
+            handleIncomingCall({
+              id: data[0].id,
+              caller_id: data[0].caller_id,
+              receiver_id: data[0].receiver_id,
+              type: data[0].call_type || 'audio',
+              status: data[0].status,
+              isIncoming: true,
+            });
+          }
         }
       } catch (e) {
         console.warn('⚠️ [CALL][POLL] Poll error', e);
       }
-    }, CALL_CONSTANTS.POLL_INTERVAL);
+    }, 1000); // Poll every 1 second instead of 2.5
 
     return () => clearInterval(poll);
   }, [hasUser, userId, incomingCall, currentCall, outgoingCall, handleIncomingCall]);
