@@ -1,12 +1,107 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { BinancePayClient } from "../_shared/binance.ts";
-import {
-  DistributionData,
-  executeDistribution,
-} from "../_shared/distribution.ts";
 
-import { getSecureCorsHeaders } from '../_shared/security.ts';
+// Inline Binance signature verification (to avoid shared file dependency)
+const encoder = new TextEncoder();
+
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+}
+
+async function verifyBinanceWebhookSignature(
+  rawBody: string,
+  headers: Headers,
+  apiSecret: string,
+): Promise<boolean> {
+  const timestamp = headers.get("BinancePay-Timestamp");
+  const nonce = headers.get("BinancePay-Nonce");
+  const signature = headers.get("BinancePay-Signature");
+  const certificateSn = headers.get("BinancePay-Certificate-SN");
+  const apiKey = Deno.env.get("BINANCE_PAY_API_KEY");
+
+  if (!timestamp || !nonce || !signature || !certificateSn) {
+    return false;
+  }
+
+  // Verify certificate matches API key
+  if (apiKey && certificateSn !== apiKey) {
+    console.error("Binance Pay certificate mismatch", certificateSn);
+    return false;
+  }
+
+  // Check timestamp (prevent replay attacks)
+  const now = Date.now();
+  const requestTime = Number(timestamp);
+  const toleranceMs = 5 * 60 * 1000; // 5 minutes
+
+  if (Number.isFinite(requestTime) && Math.abs(now - requestTime) > toleranceMs) {
+    console.warn(
+      `Binance Pay webhook timestamp outside tolerance: now=${now}, timestamp=${requestTime}`,
+    );
+    return false;
+  }
+
+  // Verify signature
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(apiSecret),
+    {
+      name: "HMAC",
+      hash: "SHA-512",
+    },
+    false,
+    ["sign"],
+  );
+
+  const payload = `${timestamp}\n${nonce}\n${rawBody}\n`;
+  const computedSignature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(payload),
+  );
+
+  const computedHex = toHex(computedSignature);
+  return computedHex === signature.toUpperCase();
+}
+
+// Import distribution types (we'll need to inline executeDistribution too, but for now let's try a simpler approach)
+interface DistributionData {
+  mode: "automatic" | "manual";
+  [key: string]: unknown;
+}
+
+// Inline CORS headers (secure) - to avoid shared file dependency in Dashboard deployment
+const getSecureCorsHeaders = (req: Request): Record<string, string> => {
+  const origin = req.headers.get("origin");
+  const allowedOrigins = [
+    "https://sow2growapp.com",
+    "https://www.sow2growapp.com",
+    "https://app.sow2grow.com",
+  ];
+
+  if (!origin) {
+    return {
+      "Content-Type": "application/json",
+    };
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-idempotency-key, x-csrf-token, x-my-custom-header",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Credentials": "true",
+    };
+  }
+
+  return {
+    "Content-Type": "application/json",
+  };
+};
 
 const successResponse = {
   code: "SUCCESS",
@@ -29,11 +124,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   const rawBody = await req.text();
-  const binanceClient = new BinancePayClient();
+  
+  // Get Binance API secret from environment
+  const binanceApiSecret = Deno.env.get("BINANCE_PAY_API_SECRET");
+  if (!binanceApiSecret) {
+    console.error("BINANCE_PAY_API_SECRET not configured");
+    return jsonResponse({ code: "ERROR", message: "Server misconfigured" }, 500, req);
+  }
 
-  const isValidSignature = await binanceClient.verifyWebhookSignature(
+  const isValidSignature = await verifyBinanceWebhookSignature(
     rawBody,
     req.headers,
+    binanceApiSecret,
   );
 
   if (!isValidSignature) {
@@ -153,6 +255,42 @@ const handler = async (req: Request): Promise<Response> => {
         })
         .eq("id", bestowal.id);
 
+        // Deduct balance from bestower's wallet when they send payment
+        try {
+          const { data: bestowerWallet } = await supabase
+            .from("user_wallets")
+            .select("wallet_address")
+            .eq("user_id", bestowal.bestower_id)
+            .eq("wallet_type", "binance_pay")
+            .eq("is_active", true)
+            .order("is_primary", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (bestowerWallet?.wallet_address) {
+            const { data: currentBalance } = await supabase
+              .from("wallet_balances")
+              .select("usdc_balance")
+              .eq("user_id", bestowal.bestower_id)
+              .eq("wallet_address", bestowerWallet.wallet_address)
+              .maybeSingle();
+
+            const current = Number(currentBalance?.usdc_balance ?? 0);
+            const newBalance = Math.max(0, current - bestowal.amount);
+
+            await supabase.rpc("update_wallet_balance_secure", {
+              target_user_id: bestowal.bestower_id,
+              target_wallet_address: bestowerWallet.wallet_address,
+              new_balance: newBalance,
+            });
+
+            console.log(`Deducted ${bestowal.amount} from bestower ${bestowal.bestower_id} balance. New balance: ${newBalance}`);
+          }
+        } catch (balanceError) {
+          console.error("Failed to deduct balance from bestower:", balanceError);
+          // Don't fail the webhook if balance update fails
+        }
+
       try {
         await supabase
           .from("payment_transactions")
@@ -174,6 +312,8 @@ const handler = async (req: Request): Promise<Response> => {
         const distribution = bestowal.distribution_data as DistributionData | null;
         const distributionMode = distribution?.mode ?? "automatic";
 
+        // Note: Distribution is handled by a separate function that uses shared files
+        // For Dashboard deployment, we'll mark it for manual distribution if automatic fails
         if (
           distributionMode === "automatic" &&
           bestowal.payment_status !== "distributed"
@@ -186,33 +326,48 @@ const handler = async (req: Request): Promise<Response> => {
             return jsonResponse(successResponse, 200, req);
           }
 
+          // Try to call distribution via edge function (if available)
           try {
-            const distributionResult = await executeDistribution(
-              supabase,
-              binanceClient,
-              bestowal.id,
-              distribution,
-            );
+            const distributionUrl = `${supabaseUrl}/functions/v1/execute-distribution`;
+            const distributionResponse = await fetch(distributionUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${serviceRoleKey}`,
+              },
+              body: JSON.stringify({
+                bestowalId: bestowal.id,
+                distributionData: distribution,
+              }),
+            });
 
-            console.log(
-              "Distribution completed for bestowal:",
-              bestowal.id,
-              distributionResult,
-            );
+            if (distributionResponse.ok) {
+              console.log(
+                "Distribution completed for bestowal:",
+                bestowal.id,
+              );
+            } else {
+              console.warn(
+                "Distribution function not available or failed. Bestowal will require manual distribution:",
+                bestowal.id,
+              );
+              // Mark for manual distribution
+              await supabase
+                .from("bestowals")
+                .update({ payment_status: "pending_distribution" })
+                .eq("id", bestowal.id);
+            }
           } catch (distributionError) {
-            console.error(
-              "Failed to execute distribution for bestowal:",
+            console.warn(
+              "Distribution service unavailable. Bestowal marked for manual distribution:",
               bestowal.id,
               distributionError,
             );
-            return jsonResponse(
-              {
-                code: "ERROR",
-                message: "Distribution failed",
-              },
-              500,
-              req
-            );
+            // Mark for manual distribution instead of failing
+            await supabase
+              .from("bestowals")
+              .update({ payment_status: "pending_distribution" })
+              .eq("id", bestowal.id);
           }
         } else if (distributionMode === "manual") {
           console.log(
