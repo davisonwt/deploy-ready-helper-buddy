@@ -722,6 +722,51 @@ export type Database = {
           },
         ]
       }
+      chat_system_message_audit: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string | null
+          message_type: string
+          metadata: Json | null
+          room_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          message_type: string
+          metadata?: Json | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          message_type?: string
+          metadata?: Json | null
+          room_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_system_message_audit_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_system_message_audit_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clubhouse_gifts: {
         Row: {
           amount: number
@@ -1940,6 +1985,59 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_audit_log: {
+        Row: {
+          action: string
+          amount: number
+          bestowal_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          payment_method: string
+          transaction_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          amount: number
+          bestowal_id?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          payment_method: string
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number
+          bestowal_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          payment_method?: string
+          transaction_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_audit_log_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_config: {
         Row: {
           bank_account_name: string
@@ -2024,6 +2122,33 @@ export type Database = {
           id?: string
           last_accessed?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_idempotency: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          idempotency_key: string
+          result: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          idempotency_key: string
+          result: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          result?: Json
+          user_id?: string
         }
         Relationships: []
       }
@@ -2245,6 +2370,30 @@ export type Database = {
           room_type?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      processed_webhooks: {
+        Row: {
+          id: string
+          payload_hash: string
+          processed_at: string
+          provider: string
+          webhook_id: string
+        }
+        Insert: {
+          id?: string
+          payload_hash: string
+          processed_at?: string
+          provider: string
+          webhook_id: string
+        }
+        Update: {
+          id?: string
+          payload_hash?: string
+          processed_at?: string
+          provider?: string
+          webhook_id?: string
         }
         Relationships: []
       }
@@ -4803,9 +4952,21 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      can_access_verification_room: {
+        Args: { p_room_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_join_session_early: {
         Args: { schedule_id_param: string }
         Returns: boolean
+      }
+      check_chat_rate_limit: {
+        Args: { p_room_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      check_payment_idempotency: {
+        Args: { idempotency_key_param: string; user_id_param: string }
+        Returns: Json
       }
       check_rate_limit_enhanced: {
         Args: {
@@ -4816,6 +4977,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_webhook_processed: {
+        Args: { provider_param: string; webhook_id_param: string }
+        Returns: boolean
+      }
+      cleanup_expired_idempotency_keys: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       create_verification_room_for_user: {
         Args: { target_user_id: string }
@@ -5110,6 +5276,15 @@ export type Database = {
         Args: { video_uuid: string }
         Returns: undefined
       }
+      insert_system_chat_message: {
+        Args: {
+          p_content: string
+          p_message_type?: string
+          p_room_id: string
+          p_system_metadata?: Json
+        }
+        Returns: string
+      }
       is_active_participant: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
@@ -5153,6 +5328,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_payment_audit: {
+        Args: {
+          action_param: string
+          amount_param: number
+          bestowal_id_param?: string
+          currency_param: string
+          ip_address_param?: unknown
+          metadata_param?: Json
+          payment_method_param: string
+          transaction_id_param?: string
+          user_agent_param?: string
+          user_id_param: string
+        }
+        Returns: string
+      }
       log_security_event: {
         Args: { details?: Json; event_type: string; user_id_param?: string }
         Returns: undefined
@@ -5164,6 +5354,14 @@ export type Database = {
           ip_address_param?: unknown
           severity_level?: string
           target_user_id?: string
+        }
+        Returns: undefined
+      }
+      mark_webhook_processed: {
+        Args: {
+          payload_hash_param: string
+          provider_param: string
+          webhook_id_param: string
         }
         Returns: undefined
       }
@@ -5237,6 +5435,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      store_payment_idempotency: {
+        Args: {
+          idempotency_key_param: string
+          result_param: Json
+          user_id_param: string
+        }
+        Returns: undefined
+      }
       update_document_page: {
         Args: { document_id_param: string; new_page: number }
         Returns: boolean
@@ -5307,6 +5513,10 @@ export type Database = {
       }
       user_is_in_room: {
         Args: { check_room_id: string; check_user_id: string }
+        Returns: boolean
+      }
+      validate_file_download_access: {
+        Args: { p_file_url: string; p_room_id: string; p_user_id: string }
         Returns: boolean
       }
     }
