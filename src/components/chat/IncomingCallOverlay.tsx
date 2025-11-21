@@ -196,15 +196,25 @@ export default function IncomingCallOverlay() {
     }
   }, [currentCall?.id, currentCall?.status]);
 
-  const handleAnswer = () => {
+  const handleAnswer = async () => {
     console.log('📞 [OVERLAY] handleAnswer called, incomingCall:', incomingCall);
-    // Stop ring first, then transition
+    // Stop ring first
     hardStopRingtone();
     try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
-    setHasAnswered(true);
+    
     if (incomingCall?.id) {
       console.log('📞 [OVERLAY] Calling answerCall with id:', incomingCall.id);
-      answerCall(incomingCall.id);
+      try {
+        const result = await answerCall(incomingCall.id);
+        console.log('📞 [OVERLAY] answerCall result:', result);
+        // Set hasAnswered after a brief delay to allow currentCall to be set
+        setTimeout(() => {
+          setHasAnswered(true);
+        }, 200);
+      } catch (error) {
+        console.error('📞 [OVERLAY] Error answering call:', error);
+        // If answer fails, don't set hasAnswered so user can try again
+      }
     } else {
       console.error('📞 [OVERLAY] No incomingCall.id to answer!');
     }
@@ -234,9 +244,10 @@ export default function IncomingCallOverlay() {
     }
   };
 
-  // CRITICAL FIX: Show overlay for incoming calls OR outgoing calls (but not if call is active)
-  // For incoming: show if exists, not answered, and no active call
-  const showIncomingOverlay = incomingCall && !hasAnswered && !currentCall;
+  // CRITICAL FIX: Show overlay for incoming calls OR outgoing calls
+  // For incoming: show if exists AND (not answered OR currentCall not set yet)
+  // This prevents the overlay from disappearing before currentCall is set
+  const showIncomingOverlay = incomingCall && (!hasAnswered || !currentCall) && incomingCall.status === 'ringing';
   // For outgoing: show if exists, no active call, and status is ringing
   const showOutgoingOverlay = outgoingCall && !currentCall && (outgoingCall.status === 'ringing' || !outgoingCall.status);
   
@@ -244,17 +255,15 @@ export default function IncomingCallOverlay() {
   console.log('📞 [OVERLAY] Render decision:', {
     showIncomingOverlay,
     showOutgoingOverlay,
-    incomingCall: !!incomingCall,
-    outgoingCall: !!outgoingCall,
+    incomingCall: incomingCall ? { id: incomingCall.id, status: incomingCall.status } : null,
+    outgoingCall: outgoingCall ? { id: outgoingCall.id, status: outgoingCall.status } : null,
     hasAnswered,
-    currentCall: !!currentCall,
-    incomingStatus: incomingCall?.status,
-    outgoingStatus: outgoingCall?.status
+    currentCall: currentCall ? { id: currentCall.id, status: currentCall.status } : null
   });
   
-  // Don't render if no call to show
-  if (!showIncomingOverlay && !showOutgoingOverlay) {
-    console.log('📞 [OVERLAY] ❌ NOT RENDERING - No call to show');
+  // Don't render if no call to show OR if call is fully active
+  if ((!showIncomingOverlay && !showOutgoingOverlay) || (currentCall && currentCall.status === 'accepted')) {
+    console.log('📞 [OVERLAY] ❌ NOT RENDERING - No call to show or call is active');
     return null;
   }
   
@@ -299,10 +308,14 @@ export default function IncomingCallOverlay() {
       <div
         className={cn(
           'flex flex-col items-center gap-6 rounded-2xl bg-white px-10 py-8 text-center shadow-2xl border-2 border-primary/20',
-          'dark:bg-gray-900 dark:text-white min-w-[320px] z-[10000]'
+          'dark:bg-gray-900 dark:text-white min-w-[320px]'
         )}
         onClick={(e) => e.stopPropagation()}
-        style={{ position: 'fixed', zIndex: 10000 }}
+        style={{ 
+          position: 'relative',
+          zIndex: 10001,
+          pointerEvents: 'auto'
+        }}
       >
         <div className="text-2xl font-bold">
           {isIncoming ? 'Incoming Call' : 'Calling...'}
@@ -341,7 +354,7 @@ export default function IncomingCallOverlay() {
           </div>
         )}
 
-        <div className="flex gap-6 mt-2">
+        <div className="flex gap-6 mt-2" style={{ zIndex: 10001, position: 'relative' }}>
           {isIncoming ? (
             <>
               <Button
@@ -355,7 +368,12 @@ export default function IncomingCallOverlay() {
                 }}
                 aria-label="Decline"
                 className="h-16 w-16 rounded-full shadow-lg"
-                style={{ zIndex: 10001 }}
+                style={{ 
+                  zIndex: 10002,
+                  position: 'relative',
+                  pointerEvents: 'auto',
+                  cursor: 'pointer'
+                }}
               >
                 <PhoneOff className="h-6 w-6" />
               </Button>
@@ -370,7 +388,12 @@ export default function IncomingCallOverlay() {
                 }}
                 aria-label="Answer"
                 className="h-16 w-16 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white"
-                style={{ zIndex: 10001 }}
+                style={{ 
+                  zIndex: 10002,
+                  position: 'relative',
+                  pointerEvents: 'auto',
+                  cursor: 'pointer'
+                }}
               >
                 <Phone className="h-6 w-6" />
               </Button>
@@ -387,7 +410,12 @@ export default function IncomingCallOverlay() {
               }}
               aria-label="Cancel Call"
               className="h-16 w-16 rounded-full shadow-lg"
-              style={{ zIndex: 10001 }}
+              style={{ 
+                zIndex: 10002,
+                position: 'relative',
+                pointerEvents: 'auto',
+                cursor: 'pointer'
+              }}
             >
               <PhoneOff className="h-6 w-6" />
             </Button>

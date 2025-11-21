@@ -694,6 +694,9 @@ const useCallManagerInternal = () => {
         title: 'Call Connected',
         description: 'Call has been connected successfully',
       });
+      
+      // Return success
+      return true;
 
     } catch (error) {
       console.error('❌ [CALL] Failed to answer call:', error);
@@ -702,6 +705,7 @@ const useCallManagerInternal = () => {
         title: 'Continuing…',
         description: 'Answered locally. If audio doesn\'t connect, please retry.',
       });
+      return false;
     }
   }, [hasUser, userId, incomingCall, toast]);
 
