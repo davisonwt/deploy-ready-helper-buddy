@@ -313,9 +313,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     } catch (error) {
       console.error('Error starting live stream:', error)
       toast({
-        title: "E
-        
-        rror",
+        title: "Error",
         description: "Failed to start live stream",
         variant: "destructive"
       })
