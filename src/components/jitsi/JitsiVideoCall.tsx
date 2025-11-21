@@ -96,9 +96,13 @@ export default function JitsiVideoCall({
                   size="sm"
                   variant="destructive"
                   onClick={hangUp}
-                  className="h-8 w-8 p-0"
+                  className={`p-0 ${connectionState === 'connected' ? 'h-8 w-8' : 'h-8 px-3'}`}
+                  title={connectionState === 'connected' ? 'End Call' : 'Cancel Call'}
                 >
                   <PhoneOff className="h-4 w-4" />
+                  {connectionState !== 'connected' && (
+                    <span className="ml-1 text-xs">Cancel</span>
+                  )}
                 </Button>
               </div>
             </div>
@@ -109,24 +113,26 @@ export default function JitsiVideoCall({
             </div>
 
             {/* Mini controls */}
-            <div className="flex justify-center gap-2 mt-3">
-              <Button
-                size="sm"
-                variant={isAudioMuted ? 'destructive' : 'outline'}
-                onClick={toggleAudio}
-                className="h-8 w-8 p-0"
-              >
-                {isAudioMuted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-              </Button>
-              <Button
-                size="sm"
-                variant={isVideoMuted ? 'secondary' : 'outline'}
-                onClick={toggleVideo}
-                className="h-8 w-8 p-0"
-              >
-                {isVideoMuted ? <VideoOff className="h-3 w-3" /> : <Video className="h-3 w-3" />}
-              </Button>
-            </div>
+            {connectionState === 'connected' && (
+              <div className="flex justify-center gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant={isAudioMuted ? 'destructive' : 'outline'}
+                  onClick={toggleAudio}
+                  className="h-8 w-8 p-0"
+                >
+                  {isAudioMuted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={isVideoMuted ? 'secondary' : 'outline'}
+                  onClick={toggleVideo}
+                  className="h-8 w-8 p-0"
+                >
+                  {isVideoMuted ? <VideoOff className="h-3 w-3" /> : <Video className="h-3 w-3" />}
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -180,31 +186,38 @@ export default function JitsiVideoCall({
       {/* Controls */}
       <div className="p-6 border-t bg-background/95 backdrop-blur">
         <div className="flex items-center justify-center gap-4">
-          <Button
-            variant={isAudioMuted ? 'destructive' : 'outline'}
-            size="lg"
-            onClick={toggleAudio}
-            className="rounded-full h-14 w-14"
-          >
-            {isAudioMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-          </Button>
+          {connectionState === 'connected' && (
+            <>
+              <Button
+                variant={isAudioMuted ? 'destructive' : 'outline'}
+                size="lg"
+                onClick={toggleAudio}
+                className="rounded-full h-14 w-14"
+              >
+                {isAudioMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+              </Button>
 
-          <Button
-            variant={isVideoMuted ? 'secondary' : 'outline'}
-            size="lg"
-            onClick={toggleVideo}
-            className="rounded-full h-14 w-14"
-          >
-            {isVideoMuted ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
-          </Button>
+              <Button
+                variant={isVideoMuted ? 'secondary' : 'outline'}
+                size="lg"
+                onClick={toggleVideo}
+                className="rounded-full h-14 w-14"
+              >
+                {isVideoMuted ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
+              </Button>
+            </>
+          )}
 
           <Button
             variant="destructive"
             size="lg"
             onClick={hangUp}
-            className="rounded-full h-16 w-16 shadow-lg"
+            className={`rounded-full shadow-lg ${connectionState === 'connected' ? 'h-16 w-16' : 'h-16 px-8'}`}
           >
             <PhoneOff className="h-7 w-7" />
+            {connectionState !== 'connected' && (
+              <span className="ml-2 font-semibold">Cancel</span>
+            )}
           </Button>
         </div>
       </div>
