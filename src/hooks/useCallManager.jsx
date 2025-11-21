@@ -980,7 +980,7 @@ const useCallManagerInternal = () => {
     return () => clearInterval(cleanupInterval);
   }, [hasUser, userId]);
 
-  // CRITICAL FIX: Poll aggressively for incoming calls - don't stop if outgoingCall exists
+  // CRITICAL FIX: Poll aggressively for incoming calls - ALWAYS poll when no incoming call
   useEffect(() => {
     if (!hasUser || !userId) {
       return;
@@ -990,9 +990,12 @@ const useCallManagerInternal = () => {
       return;
     }
 
+    console.log('📞 [CALL][POLL] Starting poll for incoming calls, userId:', userId);
+    
     const poll = setInterval(async () => {
       try {
-        const sinceIso = new Date(Date.now() - CALL_CONSTANTS.RING_TIMEOUT).toISOString();
+        // Poll for calls from last 35 seconds
+        const sinceIso = new Date(Date.now() - 35000).toISOString();
         const { data, error } = await supabase
           .from('call_sessions')
           .select('id, caller_id, receiver_id, call_type, status, created_at')
@@ -1008,26 +1011,31 @@ const useCallManagerInternal = () => {
         }
 
         if (data && data.length > 0) {
-          console.log('📞 [CALL][POLL] Found ringing call:', data[0], 'current incomingCall:', incomingCallRef.current?.id);
-          if (!incomingCallRef.current || incomingCallRef.current.id !== data[0].id) {
-            console.log('📞 [CALL][POLL] Triggering handleIncomingCall from poll');
+          const call = data[0];
+          const currentIncomingId = incomingCallRef.current?.id;
+          console.log('📞 [CALL][POLL] 🚨 FOUND RINGING CALL:', call.id, 'current incomingCall:', currentIncomingId);
+          if (!currentIncomingId || currentIncomingId !== call.id) {
+            console.log('📞 [CALL][POLL] 🚨🚨🚨 TRIGGERING handleIncomingCall FROM POLL - RECEIVER SHOULD SEE CALL NOW');
             handleIncomingCall({
-              id: data[0].id,
-              caller_id: data[0].caller_id,
-              receiver_id: data[0].receiver_id,
-              type: data[0].call_type || 'audio',
-              status: data[0].status,
+              id: call.id,
+              caller_id: call.caller_id,
+              receiver_id: call.receiver_id,
+              type: call.call_type || 'audio',
+              status: call.status,
               isIncoming: true,
             });
           }
         }
       } catch (e) {
-        console.warn('⚠️ [CALL][POLL] Poll error', e);
+        console.error('⚠️ [CALL][POLL] Poll error', e);
       }
-    }, 1000); // Poll every 1 second instead of 2.5
+    }, 1000); // Poll every 1 second
 
-    return () => clearInterval(poll);
-  }, [hasUser, userId, incomingCall, currentCall, outgoingCall, handleIncomingCall]);
+    return () => {
+      console.log('📞 [CALL][POLL] Stopping poll');
+      clearInterval(poll);
+    };
+  }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall]);
 
   // ============================================
   // RETURN - Conditional on hasUser for stubs
