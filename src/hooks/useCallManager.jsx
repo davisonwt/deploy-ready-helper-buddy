@@ -568,7 +568,9 @@ const useCallManagerInternal = () => {
         timestamp: Date.now()
       };
 
+      // CRITICAL FIX: Set outgoing call state BEFORE channel operations
       setOutgoingCall(callData);
+      console.log('📞 [CALL] Outgoing call state set:', callData.id);
 
       // Send call signal to receiver with retries and ack
       // Allow self-broadcasts when calling yourself
@@ -576,13 +578,22 @@ const useCallManagerInternal = () => {
       const receiverChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${receiverId}`, {
         config: { broadcast: { self: isSelfCall, ack: true } }
       });
+      
+      // CRITICAL FIX: Wait for subscription before sending
       await Promise.race([
         new Promise((resolve) => {
           receiverChannel.subscribe((status) => {
-            if (status === 'SUBSCRIBED') resolve(true);
+            console.log('📞 [CALL] Receiver channel status:', status);
+            if (status === 'SUBSCRIBED') {
+              console.log('📞 [CALL] ✅ Receiver channel subscribed');
+              resolve(true);
+            }
           });
         }),
-        new Promise((resolve) => setTimeout(resolve, 1500))
+        new Promise((resolve) => setTimeout(() => {
+          console.log('📞 [CALL] ⚠️ Receiver channel subscription timeout');
+          resolve(false);
+        }, 3000))
       ]);
 
       const sendOnce = async (label = 'initial') => {
