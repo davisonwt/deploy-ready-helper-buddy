@@ -59,7 +59,7 @@ const stopGlobalRingtone = (): void => {
 /* ------------------------------------------------ */
 
 export default function IncomingCallOverlay() {
-  const { incomingCall, currentCall, answerCall, declineCall } = useCallManager();
+  const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
   const [hasAnswered, setHasAnswered] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
 
@@ -111,7 +111,16 @@ export default function IncomingCallOverlay() {
 
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
-    if (!incomingCall || hasAnswered) return;
+    if (!incomingCall || hasAnswered || currentCall) {
+      console.log('📞 [OVERLAY] Skipping ringtone:', { 
+        incomingCall: !!incomingCall, 
+        hasAnswered, 
+        currentCall: !!currentCall 
+      });
+      return;
+    }
+    
+    console.log('📞 [OVERLAY] Starting ringtone for incoming call:', incomingCall.id);
 
     // Pre-kill any ghost/duplicate ring before creating a new one
     hardStopRingtone();
@@ -180,59 +189,115 @@ export default function IncomingCallOverlay() {
   }, [currentCall?.id, currentCall?.status]);
 
   const handleAnswer = () => {
+    console.log('📞 [OVERLAY] handleAnswer called, incomingCall:', incomingCall);
     // Stop ring first, then transition
     hardStopRingtone();
     try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
     setHasAnswered(true);
     if (incomingCall?.id) {
+      console.log('📞 [OVERLAY] Calling answerCall with id:', incomingCall.id);
       answerCall(incomingCall.id);
+    } else {
+      console.error('📞 [OVERLAY] No incomingCall.id to answer!');
     }
   };
 
   const handleDecline = () => {
+    console.log('📞 [OVERLAY] handleDecline called, incomingCall:', incomingCall);
     hardStopRingtone();
     try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
     if (incomingCall?.id) {
+      console.log('📞 [OVERLAY] Calling declineCall with id:', incomingCall.id);
       declineCall(incomingCall.id, 'declined');
+    } else {
+      console.error('📞 [OVERLAY] No incomingCall.id to decline!');
+    }
+  };
+  
+  const handleCancel = () => {
+    console.log('📞 [OVERLAY] handleCancel called, outgoingCall:', outgoingCall);
+    hardStopRingtone();
+    try { stopAllRingtones?.(); } catch { /* stopAllRingtones may not be available */ }
+    if (outgoingCall?.id) {
+      console.log('📞 [OVERLAY] Calling endCall with id:', outgoingCall.id);
+      endCall(outgoingCall.id, 'cancelled');
+    } else {
+      console.error('📞 [OVERLAY] No outgoingCall.id to cancel!');
     }
   };
 
-  // CRITICAL FIX: Don't render if incomingCall is gone, hasAnswered is true, OR currentCall exists
-  if (!incomingCall || hasAnswered || currentCall) {
+  // CRITICAL FIX: Show overlay for incoming calls OR outgoing calls (but not if call is active)
+  const showIncomingOverlay = incomingCall && !hasAnswered && !currentCall;
+  const showOutgoingOverlay = outgoingCall && !currentCall && outgoingCall.status === 'ringing';
+  
+  // Don't render if no call to show
+  if (!showIncomingOverlay && !showOutgoingOverlay) {
     console.log('📞 [OVERLAY] Not rendering:', { 
       incomingCall: !!incomingCall, 
+      outgoingCall: !!outgoingCall,
       hasAnswered, 
-      currentCall: !!currentCall 
+      currentCall: !!currentCall,
+      outgoingStatus: outgoingCall?.status
     });
     return null;
   }
 
-  console.log('📞 [OVERLAY] Rendering incoming call overlay:', incomingCall);
+  const callToShow = showIncomingOverlay ? incomingCall : outgoingCall;
+  const isIncoming = !!showIncomingOverlay;
+  
+  console.log('📞 [OVERLAY] Rendering call overlay:', { 
+    type: isIncoming ? 'INCOMING' : 'OUTGOING',
+    call: callToShow 
+  });
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      style={{ 
+        zIndex: 99999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        pointerEvents: 'auto'
+      }}
       onClick={(e) => {
         // Prevent closing on background click
         e.stopPropagation();
         // Allow a single tap to unlock audio if autoplay blocked
         if (needsUnlock && audioCtxRef.current?.resume) {
           audioCtxRef.current.resume()
-            .then(() => setNeedsUnlock(false))
-            .catch(() => {});
+            .then(() => {
+              setNeedsUnlock(false);
+              console.log('🔊 [RING] Audio unlocked via background tap');
+            })
+            .catch((err) => {
+              console.error('❌ [RING] Resume failed:', err);
+            });
         }
       }}
     >
       <div
         className={cn(
           'flex flex-col items-center gap-6 rounded-2xl bg-white px-10 py-8 text-center shadow-2xl border-2 border-primary/20',
-          'dark:bg-gray-900 dark:text-white min-w-[320px]'
+          'dark:bg-gray-900 dark:text-white min-w-[320px] z-[10000]'
         )}
         onClick={(e) => e.stopPropagation()}
+        style={{ position: 'fixed', zIndex: 10000 }}
       >
-        <div className="text-2xl font-bold">Incoming Call</div>
+        <div className="text-2xl font-bold">
+          {isIncoming ? 'Incoming Call' : 'Calling...'}
+        </div>
         <div className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-          {incomingCall.caller_name || 'Unknown Caller'}
+          {isIncoming 
+            ? (callToShow.caller_name || 'Unknown Caller')
+            : (callToShow.receiver_name || 'Unknown User')}
+        </div>
+        <div className="text-sm text-gray-500">
+          {isIncoming 
+            ? (callToShow.type === 'video' ? 'Video Call' : 'Voice Call')
+            : 'Waiting for answer...'}
         </div>
 
         {needsUnlock && (
@@ -259,34 +324,56 @@ export default function IncomingCallOverlay() {
         )}
 
         <div className="flex gap-6 mt-2">
-          <Button
-            size="lg"
-            variant="destructive"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              e.preventDefault();
-              console.log('📞 [OVERLAY] Decline clicked');
-              handleDecline(); 
-            }}
-            aria-label="Decline"
-            className="h-16 w-16 rounded-full shadow-lg"
-          >
-            <PhoneOff className="h-6 w-6" />
-          </Button>
-          <Button
-            size="lg"
-            variant="default"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              e.preventDefault();
-              console.log('📞 [OVERLAY] Answer clicked');
-              handleAnswer(); 
-            }}
-            aria-label="Answer"
-            className="h-16 w-16 rounded-full shadow-lg bg-green-600 hover:bg-green-700"
-          >
-            <Phone className="h-6 w-6" />
-          </Button>
+          {isIncoming ? (
+            <>
+              <Button
+                size="lg"
+                variant="destructive"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  e.preventDefault();
+                  console.log('📞 [OVERLAY] Decline clicked');
+                  handleDecline(); 
+                }}
+                aria-label="Decline"
+                className="h-16 w-16 rounded-full shadow-lg"
+                style={{ zIndex: 10001 }}
+              >
+                <PhoneOff className="h-6 w-6" />
+              </Button>
+              <Button
+                size="lg"
+                variant="default"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  e.preventDefault();
+                  console.log('📞 [OVERLAY] Answer clicked');
+                  handleAnswer(); 
+                }}
+                aria-label="Answer"
+                className="h-16 w-16 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white"
+                style={{ zIndex: 10001 }}
+              >
+                <Phone className="h-6 w-6" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="lg"
+              variant="destructive"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                e.preventDefault();
+                console.log('📞 [OVERLAY] Cancel outgoing call clicked');
+                handleCancel();
+              }}
+              aria-label="Cancel Call"
+              className="h-16 w-16 rounded-full shadow-lg"
+              style={{ zIndex: 10001 }}
+            >
+              <PhoneOff className="h-6 w-6" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
