@@ -42,7 +42,7 @@ const useCallManagerInternal = () => {
   const endCallRef = useRef(null);
 
   // Handle incoming call
-  const handleIncomingCall = useCallback((callData) => {
+  const handleIncomingCall = useCallback(async (callData) => {
     if (!hasUser) {
       console.warn('📞 [CALL] No user, ignoring incoming call');
       return;
@@ -60,16 +60,36 @@ const useCallManagerInternal = () => {
       return;
     }
 
-    setIncomingCall({
+    // Fetch caller's name if not provided
+    let callerName = callData.caller_name;
+    if (!callerName && callData.caller_id) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, first_name')
+          .eq('user_id', callData.caller_id)
+          .single();
+        
+        callerName = profile?.display_name || profile?.first_name || 'Unknown';
+      } catch (error) {
+        console.warn('📞 [CALL] Failed to fetch caller name:', error);
+        callerName = 'Unknown';
+      }
+    }
+
+    const incomingCallData = {
       ...callData,
+      caller_name: callerName,
       isIncoming: true,
       timestamp: Date.now()
-    });
+    };
+
+    setIncomingCall(incomingCallData);
 
     // Show notification
     toast({
       title: "Incoming Call",
-      description: `${callData.caller_name || 'Unknown'} is calling you`,
+      description: `${callerName} is calling you`,
     });
 
     // Auto-decline after 30 seconds
