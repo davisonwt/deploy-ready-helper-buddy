@@ -53,11 +53,18 @@ const useCallManagerInternal = () => {
     // Check if this is a self-call (calling your own device)
     const isSelfCall = callData.caller_id === userId;
     
-    // Don't accept call if already in a call (unless it's a self-call test)
-    if (currentCall && !isSelfCall) {
+    // CRITICAL FIX: Only reject if call is actually active (not ended)
+    const hasActiveCall = currentCall && currentCall.status !== 'ended';
+    if (hasActiveCall && !isSelfCall) {
       console.log('📞 [CALL] Busy, declining incoming call');
       declineCallRef.current?.(callData.id, 'busy');
       return;
+    }
+    
+    // CRITICAL FIX: Clear stale state if present
+    if (currentCall && currentCall.status === 'ended') {
+      console.log('📞 [CALL] Clearing stale ended call state');
+      setCurrentCall(null);
     }
 
     // Fetch caller's name if not provided
@@ -168,6 +175,7 @@ const useCallManagerInternal = () => {
     
     console.log('📞 [CALL] Call ended:', callData);
     
+    // CRITICAL FIX: Stop ringtone FIRST
     try {
       stopAllRingtones?.();
     } catch (error) {
@@ -176,12 +184,17 @@ const useCallManagerInternal = () => {
 
     // Clear local end flag if present
     try {
-      endedByLocalRef.current.delete(callData.id);
+      if (callData?.id) {
+        endedByLocalRef.current.delete(callData.id);
+      }
     } catch (error) {
       console.error('📞 [CALL] Error clearing end flag:', error);
     }
     
-    // Add to call history
+    // CRITICAL FIX: Clear ALL call state immediately (don't wait for matching)
+    const wasActiveCall = currentCall || outgoingCall || incomingCall;
+    
+    // Add to call history before clearing
     if (currentCall) {
       const duration = Math.floor((Date.now() - (currentCall.startTime || Date.now())) / 1000);
       const historyEntry = {
@@ -198,14 +211,17 @@ const useCallManagerInternal = () => {
       setCallHistory(prev => [historyEntry, ...prev.slice(0, CALL_CONSTANTS.HISTORY_LIMIT - 1)]);
     }
     
+    // CRITICAL FIX: Always clear all state, regardless of callId match
     setCurrentCall(null);
     setOutgoingCall(null);
     setIncomingCall(null);
     
-    toast({
-      title: "Call Ended",
-      description: "The call has been ended",
-    });
+    if (wasActiveCall) {
+      toast({
+        title: "Call Ended",
+        description: "The call has been ended",
+      });
+    }
   }, [hasUser, currentCall, toast]);
 
   // Handle call status updates
@@ -462,13 +478,31 @@ const useCallManagerInternal = () => {
       return null;
     }
 
-    if (currentCall || outgoingCall) {
+    // CRITICAL FIX: Check all call states, but also allow if calls are stale/ended
+    const hasActiveCall = (currentCall && currentCall.status !== 'ended') || 
+                          (outgoingCall && outgoingCall.status !== 'ended') ||
+                          (incomingCall && incomingCall.status !== 'ended');
+    
+    if (hasActiveCall) {
+      console.log('📞 [CALL] Already in a call:', { 
+        currentCall: currentCall?.id, 
+        outgoingCall: outgoingCall?.id,
+        incomingCall: incomingCall?.id 
+      });
       toast({
         title: "Error", 
         description: "You are already in a call",
         variant: "destructive",
       });
       return null;
+    }
+    
+    // CRITICAL FIX: Clear any stale state before starting new call
+    if (currentCall || outgoingCall || incomingCall) {
+      console.log('📞 [CALL] Clearing stale call state before starting new call');
+      setCurrentCall(null);
+      setOutgoingCall(null);
+      setIncomingCall(null);
     }
 
     try {
@@ -581,6 +615,13 @@ const useCallManagerInternal = () => {
       return;
     }
 
+    // CRITICAL FIX: Stop ringtone IMMEDIATELY before any state changes
+    try {
+      stopAllRingtones?.();
+    } catch (error) {
+      console.error('📞 [CALL] Error stopping ringtones:', error);
+    }
+
     // Prepare call data and optimistically switch UI into active call state immediately
     const callData = {
       ...incomingCall,
@@ -594,14 +635,10 @@ const useCallManagerInternal = () => {
       console.log('📞 [CALL] Answering call:', callId);
       console.log('📞 [CALL] Current user:', userId);
 
-      // Optimistic UI update first (prevents user-facing failure toast)
-      setCurrentCall(callData);
+      // CRITICAL FIX: Clear incomingCall FIRST, then set currentCall
+      // This ensures overlay disappears immediately and ringtone stops
       setIncomingCall(null);
-      try {
-        stopAllRingtones?.();
-      } catch (error) {
-        console.error('📞 [CALL] Error stopping ringtones:', error);
-      }
+      setCurrentCall(callData);
 
       // Fire-and-forget: update call record (RLS may block, that's OK)
       supabase
@@ -675,19 +712,35 @@ const useCallManagerInternal = () => {
       return;
     }
     
-    const call = currentCall || outgoingCall;
+    const call = currentCall || outgoingCall || incomingCall;
     if (!call || call.id !== callId) {
-      console.log('📞 [CALL] No matching call to end');
-      return;
-    }
-
-    try {
-      console.log('📞 [CALL] Ending call:', callId, reason);
+      console.log('📞 [CALL] No matching call to end, clearing all state anyway');
+      // CRITICAL FIX: Clear all state even if call doesn't match (stuck state cleanup)
+      setCurrentCall(null);
+      setOutgoingCall(null);
+      setIncomingCall(null);
       try {
         stopAllRingtones?.();
       } catch (error) {
         console.error('📞 [CALL] Error stopping ringtones:', error);
       }
+      return;
+    }
+
+    try {
+      console.log('📞 [CALL] Ending call:', callId, reason);
+      
+      // CRITICAL FIX: Stop ringtone FIRST
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones:', error);
+      }
+      
+      // CRITICAL FIX: Clear state IMMEDIATELY (optimistic update)
+      setCurrentCall(null);
+      setOutgoingCall(null);
+      setIncomingCall(null);
       
       const duration = currentCall ? Math.floor((Date.now() - (currentCall.startTime || Date.now())) / 1000) : 0;
 
@@ -698,31 +751,44 @@ const useCallManagerInternal = () => {
         console.error('📞 [CALL] Error marking call as locally ended:', error);
       }
       
-      // Update call record
-      const { error: updateError } = await supabase
+      // Update call record (fire and forget - don't block UI)
+      supabase
         .from('call_sessions')
         .update({ 
           status: reason,
           ended_at: new Date().toISOString()
         })
-        .eq('id', callId);
+        .eq('id', callId)
+        .then(({ error }) => {
+          if (error) {
+            console.error('❌ [CALL] Failed to update call record:', error);
+          }
+        })
+        .catch((error) => {
+          console.error('❌ [CALL] Error updating call record:', error);
+        });
 
-      if (updateError) {
-        console.error('❌ [CALL] Failed to update call record:', updateError);
-      }
-
-      // Notify other party (ack + cleanup)
+      // Notify other party (fire and forget - don't block UI)
       const otherId = call.caller_id === userId ? call.receiver_id : call.caller_id;
-      const otherChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${otherId}`, { 
-        config: { broadcast: { self: false, ack: true }}
-      });
-      const notifyRes = await otherChannel.send({
-        type: 'broadcast',
-        event: 'call_ended',
-        payload: { id: callId, reason, duration }
-      });
-      console.log('📞 [CALL] End notify result:', notifyRes);
-      supabase.removeChannel(otherChannel);
+      if (otherId && otherId !== userId) {
+        const otherChannel = supabase.channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${otherId}`, { 
+          config: { broadcast: { self: false, ack: true }}
+        });
+        otherChannel.send({
+          type: 'broadcast',
+          event: 'call_ended',
+          payload: { id: callId, reason, duration }
+        })
+        .then((notifyRes) => {
+          console.log('📞 [CALL] End notify result:', notifyRes);
+        })
+        .catch((error) => {
+          console.error('❌ [CALL] Error notifying other party:', error);
+        })
+        .finally(() => {
+          supabase.removeChannel(otherChannel);
+        });
+      }
 
       // Add to history if it was a completed call
       if (currentCall && duration > 0) {
@@ -740,10 +806,6 @@ const useCallManagerInternal = () => {
         
         setCallHistory(prev => [historyEntry, ...prev.slice(0, CALL_CONSTANTS.HISTORY_LIMIT - 1)]);
       }
-
-      setCurrentCall(null);
-      setOutgoingCall(null);
-      setIncomingCall(null);
 
     } catch (error) {
       console.error('❌ [CALL] Failed to end call:', error);
@@ -837,8 +899,49 @@ const useCallManagerInternal = () => {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
+      // CRITICAL FIX: Clean up any stale state on unmount
+      setCurrentCall(null);
+      setOutgoingCall(null);
+      setIncomingCall(null);
+      try {
+        stopAllRingtones?.();
+      } catch (error) {
+        console.error('📞 [CALL] Error stopping ringtones on unmount:', error);
+      }
     };
   }, [hasUser, userId, setupCallChannel, loadCallHistory]);
+  
+  // CRITICAL FIX: Safety cleanup - clear stale ended calls periodically
+  useEffect(() => {
+    if (!hasUser || !userId) return;
+    
+    const cleanupInterval = setInterval(() => {
+      // Clear any calls that are marked as ended
+      setCurrentCall(prev => {
+        if (prev && prev.status === 'ended') {
+          console.log('📞 [CALL] Cleaning up stale ended currentCall');
+          return null;
+        }
+        return prev;
+      });
+      setOutgoingCall(prev => {
+        if (prev && prev.status === 'ended') {
+          console.log('📞 [CALL] Cleaning up stale ended outgoingCall');
+          return null;
+        }
+        return prev;
+      });
+      setIncomingCall(prev => {
+        if (prev && prev.status === 'ended') {
+          console.log('📞 [CALL] Cleaning up stale ended incomingCall');
+          return null;
+        }
+        return prev;
+      });
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(cleanupInterval);
+  }, [hasUser, userId]);
 
   // Resilience: Poll as a last resort if realtime fails to deliver incoming_call
   useEffect(() => {

@@ -161,18 +161,21 @@ export default function IncomingCallOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall?.id, hasAnswered]);
 
-  // Stop when the incoming call disappears (declined/cancelled). Do NOT stop just because currentCall is set.
+  // CRITICAL FIX: Stop ringtone immediately when incoming call disappears OR when currentCall is set
   useEffect(() => {
-    if (!incomingCall) {
+    if (!incomingCall || currentCall) {
+      console.log('📞 [OVERLAY] Stopping ringtone - incomingCall:', !!incomingCall, 'currentCall:', !!currentCall);
       hardStopRingtone();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [incomingCall?.id]);
+  }, [incomingCall?.id, currentCall?.id]);
 
   // Safety: if current call transitions to accepted, ensure ringtone is stopped
   useEffect(() => {
-    if (currentCall?.status === 'accepted') {
+    if (currentCall) {
+      console.log('📞 [OVERLAY] Current call exists, stopping ringtone');
       hardStopRingtone();
+      setHasAnswered(true);
     }
   }, [currentCall?.id, currentCall?.status]);
 
@@ -194,8 +197,13 @@ export default function IncomingCallOverlay() {
     }
   };
 
-  if (!incomingCall || hasAnswered) {
-    console.log('📞 [OVERLAY] Not rendering:', { incomingCall: !!incomingCall, hasAnswered });
+  // CRITICAL FIX: Don't render if incomingCall is gone, hasAnswered is true, OR currentCall exists
+  if (!incomingCall || hasAnswered || currentCall) {
+    console.log('📞 [OVERLAY] Not rendering:', { 
+      incomingCall: !!incomingCall, 
+      hasAnswered, 
+      currentCall: !!currentCall 
+    });
     return null;
   }
 
