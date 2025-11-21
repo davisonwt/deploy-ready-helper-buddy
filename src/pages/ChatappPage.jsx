@@ -314,7 +314,8 @@ const ChatappPage = () => {
   };
 
   // Render Jitsi-powered call interfaces
-  const activeCallData = currentCall || outgoingCall || incomingCall;
+  // NOTE: Don't render Jitsi component for incoming calls - let IncomingCallOverlay handle it
+  const activeCallData = currentCall || outgoingCall;
   if (activeCallData) {
     const CallComponent = activeCallData.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
     const callerInfo = {

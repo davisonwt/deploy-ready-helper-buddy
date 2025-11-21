@@ -437,7 +437,8 @@ const ChatApp = () => {
   }
 
   // Render call interface if active (Jitsi-powered)
-  const activeCall = currentCall || incomingCall || outgoingCall;
+  // NOTE: Don't render Jitsi component for incoming calls - let IncomingCallOverlay handle it
+  const activeCall = currentCall || outgoingCall;
   if (activeCall) {
     const CallComponent = activeCall?.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
     console.log('📞 [JITSI][UI] Active call render', { 
