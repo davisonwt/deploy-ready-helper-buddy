@@ -277,6 +277,9 @@ export default function IncomingCallOverlay() {
     call: callToShow 
   });
 
+  // CRITICAL: Force render - this overlay MUST be visible
+  console.log('📞 [OVERLAY] 🚨 FORCE RENDERING OVERLAY - Call exists:', !!callToShow);
+  
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
@@ -287,7 +290,12 @@ export default function IncomingCallOverlay() {
         left: 0,
         right: 0,
         bottom: 0,
-        pointerEvents: 'auto'
+        width: '100vw',
+        height: '100vh',
+        pointerEvents: 'auto',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
       onClick={(e) => {
         // Prevent closing on background click
@@ -313,22 +321,31 @@ export default function IncomingCallOverlay() {
         onClick={(e) => e.stopPropagation()}
         style={{ 
           position: 'relative',
-          zIndex: 10001,
-          pointerEvents: 'auto'
+          zIndex: 100001,
+          pointerEvents: 'auto',
+          backgroundColor: 'white',
+          padding: '2rem',
+          borderRadius: '1rem',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
         }}
       >
-        <div className="text-2xl font-bold">
-          {isIncoming ? 'Incoming Call' : 'Calling...'}
+        <div className="text-2xl font-bold mb-2">
+          {isIncoming ? '📞 Incoming Call' : '📞 Calling...'}
         </div>
-        <div className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+        <div className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
           {isIncoming 
             ? (callToShow.caller_name || 'Unknown Caller')
             : (callToShow.receiver_name || 'Unknown User')}
         </div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 mb-4">
           {isIncoming 
             ? (callToShow.type === 'video' ? 'Video Call' : 'Voice Call')
             : 'Waiting for answer...'}
+        </div>
+        
+        {/* DEBUG: Show call ID for troubleshooting */}
+        <div className="text-xs text-gray-400 mb-2">
+          Call ID: {callToShow.id?.substring(0, 8)}...
         </div>
 
         {needsUnlock && (
