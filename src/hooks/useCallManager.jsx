@@ -980,9 +980,13 @@ const useCallManagerInternal = () => {
     return () => clearInterval(cleanupInterval);
   }, [hasUser, userId]);
 
-  // Resilience: Poll as a last resort if realtime fails to deliver incoming_call
+  // CRITICAL FIX: Poll aggressively for incoming calls - don't stop if outgoingCall exists
   useEffect(() => {
-    if (!hasUser || !userId || incomingCall || currentCall || outgoingCall) {
+    if (!hasUser || !userId) {
+      return;
+    }
+    // CRITICAL: Only skip if we already have an incoming call or active call
+    if (incomingCall || currentCall) {
       return;
     }
 
