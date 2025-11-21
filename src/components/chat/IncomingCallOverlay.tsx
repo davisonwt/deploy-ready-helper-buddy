@@ -110,12 +110,19 @@ export default function IncomingCallOverlay() {
     setNeedsUnlock(false);
   };
 
-  // Reset hasAnswered when a NEW incoming call arrives
+  // Reset hasAnswered when a NEW incoming call arrives OR when currentCall ends
   useEffect(() => {
     if (incomingCall?.id) {
       setHasAnswered(false);
     }
   }, [incomingCall?.id]);
+  
+  // CRITICAL FIX: Reset hasAnswered when currentCall ends or is cleared
+  useEffect(() => {
+    if (!currentCall) {
+      setHasAnswered(false);
+    }
+  }, [currentCall]);
 
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
