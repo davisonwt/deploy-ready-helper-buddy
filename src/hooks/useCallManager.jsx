@@ -567,7 +567,6 @@ const useCallManagerInternal = () => {
         isIncoming: false,
         timestamp: Date.now()
       };
-
       // CRITICAL FIX: Set outgoing call state BEFORE channel operations
       setOutgoingCall(callData);
       console.log('📞 [CALL] Outgoing call state set:', callData.id);
@@ -614,10 +613,10 @@ const useCallManagerInternal = () => {
         });
       }, 4000);
 
-      // Auto-cancel after timeout
+      // Auto-cancel after timeout (but don't clear if call was answered)
       setTimeout(() => {
         setOutgoingCall(current => {
-          if (current && current.id === callData.id) {
+          if (current && current.id === callData.id && !currentCall) {
             console.log('📞 [CALL] Auto-canceling timed out outgoing call');
             endCallRef.current?.(callData.id, 'timeout');
             return null;
