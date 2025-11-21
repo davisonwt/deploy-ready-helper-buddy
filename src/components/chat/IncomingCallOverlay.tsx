@@ -62,6 +62,14 @@ export default function IncomingCallOverlay() {
   const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
   const [hasAnswered, setHasAnswered] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
+  
+  // DEBUG: Log state on every render
+  console.log('📞 [OVERLAY] Component render - State:', {
+    incomingCall: incomingCall ? { id: incomingCall.id, status: incomingCall.status, caller_name: incomingCall.caller_name } : null,
+    outgoingCall: outgoingCall ? { id: outgoingCall.id, status: outgoingCall.status, receiver_name: outgoingCall.receiver_name } : null,
+    currentCall: currentCall ? { id: currentCall.id, status: currentCall.status } : null,
+    hasAnswered
+  });
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -227,20 +235,30 @@ export default function IncomingCallOverlay() {
   };
 
   // CRITICAL FIX: Show overlay for incoming calls OR outgoing calls (but not if call is active)
+  // For incoming: show if exists, not answered, and no active call
   const showIncomingOverlay = incomingCall && !hasAnswered && !currentCall;
-  const showOutgoingOverlay = outgoingCall && !currentCall && outgoingCall.status === 'ringing';
+  // For outgoing: show if exists, no active call, and status is ringing
+  const showOutgoingOverlay = outgoingCall && !currentCall && (outgoingCall.status === 'ringing' || !outgoingCall.status);
+  
+  // DEBUG: Log decision
+  console.log('📞 [OVERLAY] Render decision:', {
+    showIncomingOverlay,
+    showOutgoingOverlay,
+    incomingCall: !!incomingCall,
+    outgoingCall: !!outgoingCall,
+    hasAnswered,
+    currentCall: !!currentCall,
+    incomingStatus: incomingCall?.status,
+    outgoingStatus: outgoingCall?.status
+  });
   
   // Don't render if no call to show
   if (!showIncomingOverlay && !showOutgoingOverlay) {
-    console.log('📞 [OVERLAY] Not rendering:', { 
-      incomingCall: !!incomingCall, 
-      outgoingCall: !!outgoingCall,
-      hasAnswered, 
-      currentCall: !!currentCall,
-      outgoingStatus: outgoingCall?.status
-    });
+    console.log('📞 [OVERLAY] ❌ NOT RENDERING - No call to show');
     return null;
   }
+  
+  console.log('📞 [OVERLAY] ✅ RENDERING - Will show overlay');
 
   const callToShow = showIncomingOverlay ? incomingCall : outgoingCall;
   const isIncoming = !!showIncomingOverlay;
