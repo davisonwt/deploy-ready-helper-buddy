@@ -255,8 +255,8 @@ export default function IncomingCallOverlay() {
   // For incoming: show if exists AND (not answered OR currentCall not set yet)
   // This prevents the overlay from disappearing before currentCall is set
   const showIncomingOverlay = incomingCall && (!hasAnswered || !currentCall) && incomingCall.status === 'ringing';
-  // For outgoing: show if exists, no active call, and status is ringing
-  const showOutgoingOverlay = outgoingCall && !currentCall && (outgoingCall.status === 'ringing' || !outgoingCall.status);
+  // For outgoing: show if exists and no active call (keep showing until answered/declined)
+  const showOutgoingOverlay = outgoingCall && !currentCall;
   
   // DEBUG: Log decision
   console.log('📞 [OVERLAY] Render decision:', {
