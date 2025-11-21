@@ -4,7 +4,12 @@
  */
 
 export const JITSI_CONFIG = {
-  domain: (typeof window !== 'undefined' ? ((window as any).__JITSI_DOMAIN__ || window.localStorage?.getItem('jitsi_domain')) : null) || 'meet.jit.si',
+  domain: (typeof window !== 'undefined' 
+    ? ((window as any).__JITSI_DOMAIN__ 
+      || window.localStorage?.getItem('jitsi_domain')
+      || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_JITSI_DOMAIN))
+    : (typeof import.meta !== 'undefined' && import.meta.env?.VITE_JITSI_DOMAIN)) 
+    || 'meet.jit.si',
   setDomain: (d: string) => { try { if (typeof window !== 'undefined') window.localStorage?.setItem('jitsi_domain', d) } catch {} ; (JITSI_CONFIG as any).domain = d; },
   // Default configuration for all Jitsi instances
   getDefaultConfig: () => ({
