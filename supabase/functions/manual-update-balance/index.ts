@@ -152,6 +152,3 @@ function jsonResponse(body: unknown, status = 200, req: Request): Response {
     },
   );
 }
-
-
-
