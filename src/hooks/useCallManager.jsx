@@ -248,13 +248,16 @@ const useCallManagerInternal = () => {
         }
       })
       .on('broadcast', { event: 'incoming_call' }, (payload) => {
+        console.log('📞 [CALL] Broadcast received:', { payload, userId, event: 'incoming_call' });
         const call = payload.payload || {};
+        console.log('📞 [CALL] Parsed call data:', call);
         if (!call?.id) {
-          console.warn('📞 [CALL] Invalid incoming call payload');
+          console.warn('📞 [CALL] Invalid incoming call payload - missing id');
           return;
         }
+        console.log('📞 [CALL] Checking receiver_id:', { call_receiver_id: call.receiver_id, userId });
         if (call.receiver_id && call.receiver_id !== userId) {
-          console.log('📞 [CALL] Call not for this user');
+          console.log('📞 [CALL] Call not for this user', { call_receiver_id: call.receiver_id, userId });
           return;
         }
         const now = Date.now();
@@ -271,7 +274,7 @@ const useCallManagerInternal = () => {
         }
         
         lastIncomingRef.current = { id: call.id, ts: now };
-        console.log('📞 [CALL] Incoming call (accepted):', call);
+        console.log('📞 [CALL] Incoming call (accepted), calling handleIncomingCall:', call);
         handleIncomingCall(call);
       })
       .on('broadcast', { event: 'call_answered' }, (payload) => {
@@ -292,12 +295,14 @@ const useCallManagerInternal = () => {
       })
       // DB realtime fallback: ring events for receiver
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${userId}` }, (payload) => {
+        console.log('📞 [CALL][DB] INSERT event received:', { payload, userId });
         try {
           const row = payload.new;
           const now = Date.now();
           const ts = row?.created_at ? new Date(row.created_at).getTime() : now;
+          console.log('📞 [CALL][DB] Processing INSERT:', { row, userId, status: row?.status });
           if (!row?.id) {
-            console.warn('📞 [CALL][DB] Invalid INSERT payload');
+            console.warn('📞 [CALL][DB] Invalid INSERT payload - missing id');
             return;
           }
           if (isCallStale(ts)) {
@@ -310,6 +315,7 @@ const useCallManagerInternal = () => {
               return;
             }
             lastIncomingRef.current = { id: row.id, ts: now };
+            console.log('📞 [CALL][DB] Calling handleIncomingCall from DB INSERT');
             handleIncomingCall({
               id: row.id,
               caller_id: row.caller_id,
@@ -318,9 +324,11 @@ const useCallManagerInternal = () => {
               status: row.status,
               isIncoming: true,
             });
+          } else {
+            console.log('📞 [CALL][DB] INSERT status is not "ringing":', row.status);
           }
         } catch (e) {
-          console.warn('⚠️ [CALL][DB] Fallback incoming handler error', e);
+          console.error('⚠️ [CALL][DB] Fallback incoming handler error', e);
         }
       })
       // DB realtime fallback: acceptance for caller
