@@ -126,8 +126,13 @@ export default function IncomingCallOverlay() {
 
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
-    if (!incomingCall || hasAnswered || currentCall) {
-      console.log('📞 [OVERLAY] Skipping ringtone:', { 
+    if (!incomingCall) {
+      return;
+    }
+    
+    // CRITICAL FIX: Only skip if answered OR active call exists
+    if (hasAnswered || currentCall) {
+      console.log('📞 [OVERLAY] Skipping ringtone - call answered or active:', { 
         incomingCall: !!incomingCall, 
         hasAnswered, 
         currentCall: !!currentCall 
@@ -135,7 +140,7 @@ export default function IncomingCallOverlay() {
       return;
     }
     
-    console.log('📞 [OVERLAY] Starting ringtone for incoming call:', incomingCall.id);
+    console.log('📞 [OVERLAY] 🚨🚨🚨 STARTING RINGTONE FOR INCOMING CALL:', incomingCall.id);
 
     // Pre-kill any ghost/duplicate ring before creating a new one
     hardStopRingtone();
