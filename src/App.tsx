@@ -11,7 +11,6 @@ import HelpModal from "./components/help/HelpModal";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import { Card, CardContent } from "@/components/ui/card";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
-import GlobalAudioCallBridge from "./components/chat/GlobalAudioCallBridge";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 
@@ -146,7 +145,6 @@ const App = () => (
                 <SoundUnlockBanner />
                 <NotificationBanner />
                 <IncomingCallOverlay />
-                <GlobalAudioCallBridge />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />

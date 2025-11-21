@@ -32,4 +32,3 @@ export const LazyVideoMarketingDashboard = lazy(() => import('./ai/VideoMarketin
 // Lazy load voice/call features
 export const LazyCallInterface = lazy(() => import('./chat/CallInterface'))
 export const LazyIncomingCallOverlay = lazy(() => import('./chat/IncomingCallOverlay'))
-export const LazyVoiceVideoCall = lazy(() => import('./webrtc/VoiceVideoCall'))
