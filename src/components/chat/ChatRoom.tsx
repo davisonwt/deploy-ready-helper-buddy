@@ -21,7 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 import { useCallManager } from '@/hooks/useCallManager';
-import Peer from 'peerjs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -45,12 +44,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   // Voice recording
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
-  
-  // WebRTC call
-  const [callActive, setCallActive] = useState(false);
-  const [videoOn, setVideoOn] = useState(false);
-  const peerRef = useRef(null);
-  const localStreamRef = useRef(null);
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
