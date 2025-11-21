@@ -93,27 +93,32 @@ export default function JitsiAudioCall({
 
           {/* Controls */}
           <div className="flex justify-center gap-4 pt-4">
-            <Button
-              variant={isAudioMuted ? 'destructive' : 'outline'}
-              size="icon"
-              className="h-14 w-14 rounded-full"
-              onClick={toggleAudio}
-              disabled={isLoading}
-            >
-              {isAudioMuted ? (
-                <MicOff className="h-6 w-6" />
-              ) : (
-                <Mic className="h-6 w-6" />
-              )}
-            </Button>
+            {connectionState === 'connected' && (
+              <Button
+                variant={isAudioMuted ? 'destructive' : 'outline'}
+                size="icon"
+                className="h-14 w-14 rounded-full"
+                onClick={toggleAudio}
+                disabled={isLoading}
+              >
+                {isAudioMuted ? (
+                  <MicOff className="h-6 w-6" />
+                ) : (
+                  <Mic className="h-6 w-6" />
+                )}
+              </Button>
+            )}
 
             <Button
               variant="destructive"
               size="icon"
-              className="h-16 w-16 rounded-full"
+              className={`h-16 w-16 rounded-full ${connectionState !== 'connected' ? 'w-auto px-6' : ''}`}
               onClick={hangUp}
             >
               <PhoneOff className="h-7 w-7" />
+              {connectionState !== 'connected' && (
+                <span className="ml-2 font-semibold">Cancel</span>
+              )}
             </Button>
           </div>
         </div>
