@@ -50,12 +50,21 @@ const useCallManagerInternal = () => {
     
     console.log('📞 [CALL] Processing incoming call:', callData);
     
+    // CRITICAL FIX: Ignore "ringing" calls that are already answered
+    if (callData.status === 'ringing' && currentCall && currentCall.id === callData.id) {
+      const isAccepted = currentCall.status === 'accepted' || currentCall.status === 'active';
+      if (isAccepted) {
+        console.log('📞 [CALL] 🚫 Ignoring "ringing" status for already-accepted call:', callData.id);
+        return;
+      }
+    }
+    
     // Check if this is a self-call (calling your own device)
     const isSelfCall = callData.caller_id === userId;
     
     // CRITICAL FIX: Only reject if call is actually active (not ended)
     const hasActiveCall = currentCall && currentCall.status !== 'ended';
-    if (hasActiveCall && !isSelfCall) {
+    if (hasActiveCall && !isSelfCall && currentCall.id !== callData.id) {
       console.log('📞 [CALL] Busy, declining incoming call');
       declineCallRef.current?.(callData.id, 'busy');
       return;
@@ -278,6 +287,18 @@ const useCallManagerInternal = () => {
           console.log('📞 [CALL] ⚠️ Call not for this user', { call_receiver_id: call.receiver_id, userId });
           return;
         }
+        
+        // CRITICAL FIX: Ignore "ringing" broadcasts for calls that are already answered
+        const existingCall = currentCall;
+        if (existingCall && existingCall.id === call.id) {
+          const isAccepted = existingCall.status === 'accepted' || existingCall.status === 'active';
+          const isRinging = call.status === 'ringing';
+          if (isAccepted && isRinging) {
+            console.log('📞 [CALL] 🚫 Ignoring stale "ringing" broadcast for already-accepted call:', call.id);
+            return;
+          }
+        }
+        
         const now = Date.now();
         const ts = typeof call.timestamp === 'number' ? call.timestamp : now;
         
@@ -292,7 +313,7 @@ const useCallManagerInternal = () => {
         }
         
         lastIncomingRef.current = { id: call.id, ts: now };
-        console.log('📞 [CALL] ✅ Incoming call (accepted), calling handleIncomingCall NOW:', call);
+        console.log('📞 [CALL] ✅ Processing incoming_call, calling handleIncomingCall NOW:', call);
         handleIncomingCall(call);
       })
       .on('broadcast', { event: 'call_answered' }, (payload) => {
@@ -328,6 +349,15 @@ const useCallManagerInternal = () => {
             return;
           }
           if (row?.status === 'ringing') {
+            // CRITICAL FIX: Ignore "ringing" DB inserts for calls that are already answered
+            if (currentCall && currentCall.id === row.id) {
+              const isAccepted = currentCall.status === 'accepted' || currentCall.status === 'active';
+              if (isAccepted) {
+                console.log('📞 [CALL][DB] 🚫 Ignoring "ringing" INSERT for already-accepted call:', row.id);
+                return;
+              }
+            }
+            
             if (isDuplicateCall(row.id, lastIncomingRef.current.id, lastIncomingRef.current.ts)) {
               console.log('⏱️ [CALL][DB] Ignoring duplicate incoming INSERT', row.id);
               return;
