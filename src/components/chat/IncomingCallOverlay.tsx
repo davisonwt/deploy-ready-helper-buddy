@@ -194,12 +194,19 @@ export default function IncomingCallOverlay() {
     }
   };
 
-  if (!incomingCall || hasAnswered) return null;
+  if (!incomingCall || hasAnswered) {
+    console.log('📞 [OVERLAY] Not rendering:', { incomingCall: !!incomingCall, hasAnswered });
+    return null;
+  }
+
+  console.log('📞 [OVERLAY] Rendering incoming call overlay:', incomingCall);
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60"
-      onClick={() => {
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={(e) => {
+        // Prevent closing on background click
+        e.stopPropagation();
         // Allow a single tap to unlock audio if autoplay blocked
         if (needsUnlock && audioCtxRef.current?.resume) {
           audioCtxRef.current.resume()
@@ -210,13 +217,14 @@ export default function IncomingCallOverlay() {
     >
       <div
         className={cn(
-          'flex flex-col items-center gap-4 rounded-2xl bg-white/90 px-8 py-6 text-center shadow-lg',
-          'dark:bg-gray-900/90 dark:text-white'
+          'flex flex-col items-center gap-6 rounded-2xl bg-white px-10 py-8 text-center shadow-2xl border-2 border-primary/20',
+          'dark:bg-gray-900 dark:text-white min-w-[320px]'
         )}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-lg font-semibold">Incoming call</div>
-        <div className="text-sm text-gray-600 dark:text-gray-300">
-          {incomingCall.caller_name || 'Unknown'}
+        <div className="text-2xl font-bold">Incoming Call</div>
+        <div className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+          {incomingCall.caller_name || 'Unknown Caller'}
         </div>
 
         {needsUnlock && (
@@ -242,21 +250,34 @@ export default function IncomingCallOverlay() {
           </div>
         )}
 
-        <div className="flex gap-4">
+        <div className="flex gap-6 mt-2">
           <Button
-            size="icon"
+            size="lg"
             variant="destructive"
-            onClick={(e) => { e.stopPropagation(); handleDecline(); }}
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              e.preventDefault();
+              console.log('📞 [OVERLAY] Decline clicked');
+              handleDecline(); 
+            }}
             aria-label="Decline"
+            className="h-16 w-16 rounded-full shadow-lg"
           >
-            <PhoneOff className="h-5 w-5" />
+            <PhoneOff className="h-6 w-6" />
           </Button>
           <Button
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); handleAnswer(); }}
+            size="lg"
+            variant="default"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              e.preventDefault();
+              console.log('📞 [OVERLAY] Answer clicked');
+              handleAnswer(); 
+            }}
             aria-label="Answer"
+            className="h-16 w-16 rounded-full shadow-lg bg-green-600 hover:bg-green-700"
           >
-            <Phone className="h-5 w-5" />
+            <Phone className="h-6 w-6" />
           </Button>
         </div>
       </div>
