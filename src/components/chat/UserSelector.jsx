@@ -99,7 +99,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
         {/* Dropdown list (not transparent, high z-index) */}
         <div className="space-y-2">
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger className="w-full justify-between">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a sower/bestower" />
             </SelectTrigger>
             <SelectContent className="bg-popover text-popover-foreground">
