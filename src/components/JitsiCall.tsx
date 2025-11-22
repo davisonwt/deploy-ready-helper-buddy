@@ -74,15 +74,11 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
           ENABLE_WELCOME_PAGE_TOOLBAR_BUTTON: true,
           PREJOIN_PAGE_ENABLED: true,
         }}
-        onReady={() => {
-          // Hide any spinners when Jitsi is ready
-          const spinners = document.querySelectorAll('[class*="spinner"], [class*="loading"]');
-          spinners.forEach((el) => {
-            (el as HTMLElement).style.display = 'none';
+        onApiReady={(externalApi) => {
+          // API is ready
+          externalApi.addListener('readyToClose', () => {
+            onLeave();
           });
-        }}
-        onLeave={() => {
-          onLeave();
         }}
         getIFrameRef={(iframeRef) => {
           if (iframeRef) {
