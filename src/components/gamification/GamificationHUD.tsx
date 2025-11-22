@@ -89,7 +89,7 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="text-3xl font-bold text-secondary">Level {userPoints.level}</div>
+                  <div className="text-3xl font-bold text-primary">Level {userPoints.level}</div>
                   <div className="text-sm text-muted-foreground">Current Level</div>
                 </CardContent>
               </Card>
