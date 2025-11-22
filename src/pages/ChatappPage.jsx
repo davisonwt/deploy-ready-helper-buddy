@@ -40,6 +40,7 @@ import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm';
 import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession';
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
+import ContactsList from '@/components/chat/ContactsList';
 
 // REMOVED: React call flow - using direct Jitsi links instead
 // import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
