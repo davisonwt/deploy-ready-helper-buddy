@@ -428,6 +428,24 @@ const useCallManagerInternal = () => {
           console.log('📞 [CALL] ✅ Successfully subscribed to call channel for user:', userId);
         } else if (status === 'CHANNEL_ERROR') {
           console.error('📞 [CALL] ❌ Channel subscription error for user:', userId);
+          // Retry channel setup after a delay (only if channel still exists and user still exists)
+          setTimeout(() => {
+            if (channelRef.current && hasUser && userId) {
+              console.log('📞 [CALL] Retrying channel subscription after error');
+              try {
+                channelRef.current.unsubscribe();
+              } catch (e) {
+                console.warn('📞 [CALL] Error unsubscribing from failed channel:', e);
+              }
+              channelRef.current = null;
+              // Small delay before retry to avoid rapid retries
+              setTimeout(() => {
+                if (!channelRef.current && hasUser && userId) {
+                  setupCallChannel();
+                }
+              }, 1000);
+            }
+          }, 5000); // Wait 5 seconds before retry
         }
       });
 
@@ -938,7 +956,7 @@ const useCallManagerInternal = () => {
     // CRITICAL FIX: Only setup channel once, don't recreate
     if (!channelRef.current) {
       console.log('📞 [CALL] Setting up channel (first time)');
-      setupCallChannel();
+      setupCallChannel(); // This already sets channelRef.current internally
     }
     loadCallHistory();
 
