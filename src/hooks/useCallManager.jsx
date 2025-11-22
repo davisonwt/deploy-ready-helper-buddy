@@ -100,9 +100,17 @@ const useCallManagerInternal = () => {
       timestamp: Date.now()
     };
 
-    console.log('📞 [CALL] Setting incomingCall state:', incomingCallData);
+    console.log('📞 [CALL] 🚨🚨🚨 SETTING INCOMING CALL STATE:', incomingCallData);
+    console.log('📞 [CALL] Call data details:', {
+      id: incomingCallData.id,
+      caller_id: incomingCallData.caller_id,
+      caller_name: incomingCallData.caller_name,
+      receiver_id: incomingCallData.receiver_id,
+      status: incomingCallData.status,
+      isIncoming: incomingCallData.isIncoming
+    });
     setIncomingCall(incomingCallData);
-    console.log('📞 [CALL] setIncomingCall called, state should update now');
+    console.log('📞 [CALL] ✅ setIncomingCall called - IncomingCallOverlay should render NOW');
 
     // Show notification
     toast({
@@ -1021,8 +1029,8 @@ const useCallManagerInternal = () => {
     
     const poll = setInterval(async () => {
       try {
-        // Poll for calls from last 35 seconds
-        const sinceIso = new Date(Date.now() - 35000).toISOString();
+        // Poll for calls from last 60 seconds (increased window)
+        const sinceIso = new Date(Date.now() - 60000).toISOString();
         const { data, error } = await supabase
           .from('call_sessions')
           .select('id, caller_id, receiver_id, call_type, status, created_at')
@@ -1040,18 +1048,48 @@ const useCallManagerInternal = () => {
         if (data && data.length > 0) {
           const call = data[0];
           const currentIncomingId = incomingCallRef.current?.id;
-          console.log('📞 [CALL][POLL] 🚨 FOUND RINGING CALL:', call.id, 'current incomingCall:', currentIncomingId);
+          console.log('📞 [CALL][POLL] 🚨 FOUND RINGING CALL:', {
+            call_id: call.id,
+            caller_id: call.caller_id,
+            receiver_id: call.receiver_id,
+            current_user_id: userId,
+            current_incomingCall_id: currentIncomingId,
+            match: call.receiver_id === userId
+          });
+          
           if (!currentIncomingId || currentIncomingId !== call.id) {
-            console.log('📞 [CALL][POLL] 🚨🚨🚨 TRIGGERING handleIncomingCall FROM POLL - RECEIVER SHOULD SEE CALL NOW');
+            // Need to fetch caller name for the call
+            const { data: callerProfile } = await supabase
+              .from('profiles')
+              .select('user_id, display_name, first_name, last_name')
+              .eq('user_id', call.caller_id)
+              .single();
+            
+            const callerName = callerProfile?.display_name || 
+                             `${callerProfile?.first_name || ''} ${callerProfile?.last_name || ''}`.trim() ||
+                             'Unknown';
+            
+            console.log('📞 [CALL][POLL] 🚨🚨🚨 TRIGGERING handleIncomingCall FROM POLL - RECEIVER SHOULD SEE CALL NOW', {
+              call_id: call.id,
+              caller_name: callerName
+            });
+            
             handleIncomingCall({
               id: call.id,
               caller_id: call.caller_id,
+              caller_name: callerName,
               receiver_id: call.receiver_id,
               type: call.call_type || 'audio',
               status: call.status,
               isIncoming: true,
+              timestamp: new Date(call.created_at).getTime()
             });
+          } else {
+            console.log('📞 [CALL][POLL] Call already in incomingCall state, skipping');
           }
+        } else {
+          // Log that polling is working but no calls found
+          console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
         }
       } catch (e) {
         console.error('⚠️ [CALL][POLL] Poll error', e);
