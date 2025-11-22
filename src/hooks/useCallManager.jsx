@@ -133,24 +133,11 @@ const useCallManagerInternal = () => {
     console.log('📞 [CALL] Call was answered, updating caller state:', callData);
     console.log('📞 [CALL] Previous outgoingCall:', outgoingCall?.id);
     
-    // CRITICAL FIX: Clear any pending timeout for this call
-    if (callData._timeoutId) {
-      clearTimeout(callData._timeoutId);
-      console.log('📞 [CALL] Cleared timeout for answered call');
-    }
-    
-    // Also check outgoingCall for timeout ID
-    const outgoing = outgoingCallRef.current;
-    if (outgoing && outgoing.id === callData.id && outgoing._timeoutId) {
-      clearTimeout(outgoing._timeoutId);
-      console.log('📞 [CALL] Cleared timeout from outgoingCall ref');
-    }
-    
     setOutgoingCall(null);
     setCurrentCall({
       ...callData,
       status: 'accepted',
-      startTime: callData.startTime || Date.now(),
+      startTime: Date.now(),
       // CRITICAL: caller must remain isIncoming=false to create the SDP offer
       isIncoming: false
     });
@@ -396,40 +383,19 @@ const useCallManagerInternal = () => {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_sessions', filter: `caller_id=eq.${userId}` }, (payload) => {
         try {
           const row = payload.new;
-          const oldRow = payload.old;
-          console.log('🛟 [CALL][DB] Caller saw DB update:', { 
-            id: row.id, 
-            old_status: oldRow?.status, 
-            new_status: row.status, 
-            accepted_at: row.accepted_at,
-            outgoingCall_id: outgoingCallRef.current?.id,
-            currentCall_id: currentCallRef.current?.id
-          });
+          console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
 
-          // Only process if this matches our outgoing call
-          const matchesOutgoing = outgoingCallRef.current && outgoingCallRef.current.id === row.id;
-          const alreadyActive = currentCallRef.current && currentCallRef.current.id === row.id;
-          
-          if (row?.status === 'accepted' && matchesOutgoing && !alreadyActive) {
-            console.log('🛟 [CALL][DB] ✅ Fallback accepted update, triggering handleCallAnswered');
+          if (row?.status === 'accepted') {
+            console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
             handleCallAnswered({
               id: row.id,
               caller_id: row.caller_id,
               receiver_id: row.receiver_id,
-              caller_name: outgoingCallRef.current?.caller_name,
-              receiver_name: outgoingCallRef.current?.receiver_name,
               type: row.call_type || 'audio',
               status: 'accepted',
               isIncoming: false,
-              startTime: row.accepted_at ? new Date(row.accepted_at).getTime() : Date.now(),
-              room_id: outgoingCallRef.current?.room_id
+              startTime: Date.now(),
             });
-            return;
-          } else if (row?.status === 'accepted' && alreadyActive) {
-            console.log('🛟 [CALL][DB] Call already active, ignoring duplicate accepted update');
-            return;
-          } else if (row?.status === 'accepted' && !matchesOutgoing) {
-            console.log('🛟 [CALL][DB] Accepted update for different call, ignoring');
             return;
           }
 
@@ -647,91 +613,17 @@ const useCallManagerInternal = () => {
         });
       }, 4000);
 
-      // Send push notification to receiver (fire and forget)
-      try {
-        const { error: notifError } = await supabase.functions.invoke('send-notification', {
-          body: {
-            user_id: receiverId,
-            type: 'incoming_call',
-            title: `Incoming ${type === 'video' ? 'Video' : 'Voice'} Call`,
-            body: `${user.display_name || user.email} is calling you`,
-            url: `/chatapp?room=${roomId || 'direct'}`,
-            data: {
-              call_id: callRecord.id,
-              caller_id: userId,
-              caller_name: user.display_name || user.email,
-              call_type: type,
-              room_id: roomId
-            }
-          }
-        });
-        if (notifError) {
-          console.warn('📞 [CALL] Failed to send push notification:', notifError);
-        } else {
-          console.log('📞 [CALL] Push notification sent to receiver');
-        }
-      } catch (notifErr) {
-        console.warn('📞 [CALL] Error sending push notification (non-blocking):', notifErr);
-      }
-
       // Auto-cancel after timeout (but don't clear if call was answered)
-      // CRITICAL FIX: Check database status before timing out and increase timeout slightly
-      const timeoutId = setTimeout(async () => {
-        // Check current state first
-        const currentOutgoing = outgoingCallRef.current;
-        const currentActiveCall = currentCallRef.current;
-        
-        // If we already have an active call for this ID, don't timeout
-        if (currentActiveCall && currentActiveCall.id === callData.id) {
-          console.log('📞 [CALL] Call already active, skipping timeout');
-          return;
-        }
-        
-        // If outgoing call is gone or doesn't match, don't timeout
-        if (!currentOutgoing || currentOutgoing.id !== callData.id) {
-          console.log('📞 [CALL] Outgoing call no longer matches, skipping timeout');
-          return;
-        }
-        
-        // Before timing out, check database to see if call was actually accepted
-        console.log('📞 [CALL] Timeout reached, checking DB status for call:', callData.id);
-        const { data, error } = await supabase
-          .from('call_sessions')
-          .select('status, accepted_at')
-          .eq('id', callData.id)
-          .single();
-          
-        if (error) {
-          console.warn('📞 [CALL] Error checking call status before timeout:', error);
-          // If we can't check DB, be conservative and don't timeout
-          return;
-        }
-        
-        if (data?.status === 'accepted') {
-          console.log('📞 [CALL] ✅ Call was accepted in DB, triggering handleCallAnswered (missed broadcast)');
-          // Call was accepted but we didn't receive the broadcast - trigger manually
-          handleCallAnswered({
-            ...callData,
-            status: 'accepted',
-            startTime: data.accepted_at ? new Date(data.accepted_at).getTime() : Date.now()
-          });
-          return;
-        }
-        
-        // Only timeout if status is still 'ringing'
-        if (data?.status === 'ringing') {
-          console.log('📞 [CALL] ⏱️ Auto-canceling timed out outgoing call (still ringing after', CALL_CONSTANTS.RING_TIMEOUT, 'ms)');
-          endCallRef.current?.(callData.id, 'timeout');
-        } else {
-          console.log('📞 [CALL] Call status changed to:', data?.status, '- not timing out');
-        }
-      }, CALL_CONSTANTS.RING_TIMEOUT + 5000); // Add 5s buffer for DB propagation
-      
-      // Store timeout ID in callData for cleanup
-      callData._timeoutId = timeoutId;
-      
-      // Store timeout ID in callData for cleanup
-      callData._timeoutId = timeoutIdRef.current;
+      setTimeout(() => {
+        setOutgoingCall(current => {
+          if (current && current.id === callData.id && !currentCall) {
+            console.log('📞 [CALL] Auto-canceling timed out outgoing call');
+            endCallRef.current?.(callData.id, 'timeout');
+            return null;
+          }
+          return current;
+        });
+      }, CALL_CONSTANTS.RING_TIMEOUT);
 
       toast({
         title: "Calling...",
