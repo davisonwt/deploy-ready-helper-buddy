@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
-import { useCallManager } from '@/hooks/useCallManager';
+// REMOVED: React call flow - using direct Jitsi links instead
+// import { useCallManager } from '@/hooks/useCallManager';
+import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -39,8 +41,9 @@ import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSessio
 import InviteModal from '@/components/chat/InviteModal';
 import UserSelector from '@/components/chat/UserSelector';
 
-import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
-import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
+// REMOVED: React call flow - using direct Jitsi links instead
+// import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
+// import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import ChatModerationPanel from '@/components/chat/ChatModerationPanel';
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface';
@@ -69,16 +72,16 @@ const ChatappPage = () => {
     deleteConversation,
   } = useChat();
 
-  // Advanced WebRTC call management
-  const {
-    currentCall,
-    incomingCall,
-    outgoingCall,
-    startCall,
-    answerCall,
-    declineCall,
-    endCall
-  } = useCallManager();
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // const {
+  //   currentCall,
+  //   incomingCall,
+  //   outgoingCall,
+  //   startCall,
+  //   answerCall,
+  //   declineCall,
+  //   endCall
+  // } = useCallManager();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showQuickCreator, setShowQuickCreator] = useState(false);
@@ -203,8 +206,16 @@ const ChatappPage = () => {
                          `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() ||
                          'Unknown User';
 
-      // Use new call manager
-      await startCall(otherUserId, receiverName, callType, currentRoom?.id);
+      // REMOVED: React call flow - using direct Jitsi links instead
+      // Generate room name and open Jitsi
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let roomName = '';
+      for (let i = 0; i < 12; i++) {
+        roomName += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
+      const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
+      window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
       
     } catch (error) {
       console.error('Error starting call:', error);
@@ -313,25 +324,20 @@ const ChatappPage = () => {
     return configs[type] || configs.all;
   };
 
-  // Render Jitsi-powered call interfaces
-  // NOTE: Don't render Jitsi component for incoming calls - let IncomingCallOverlay handle it
-  const activeCallData = currentCall || outgoingCall;
-  if (activeCallData) {
-    const CallComponent = activeCallData.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
-    const callerInfo = {
-      display_name: activeCallData.caller_name || activeCallData.receiver_name || 'Unknown User',
-      avatar_url: null
-    };
-
-    return (
-      <CallComponent
-        callSession={activeCallData}
-        currentUserId={user?.id || ''}
-        callerInfo={callerInfo}
-        onEndCall={() => handleEndCall(activeCallData.id)}
-      />
-    );
-  }
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // Call interface removed - users open Jitsi Meet directly
+  // const activeCallData = currentCall || outgoingCall;
+  // if (activeCallData) {
+  //   const CallComponent = activeCallData.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
+  //   return (
+  //     <CallComponent
+  //       callSession={activeCallData}
+  //       currentUserId={user?.id || ''}
+  //       callerInfo={callerInfo}
+  //       onEndCall={() => handleEndCall(activeCallData.id)}
+  //     />
+  //   );
+  // }
 
   if (!user) {
     return (
