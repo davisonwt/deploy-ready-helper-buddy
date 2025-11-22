@@ -90,6 +90,7 @@ const ChatappPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showJitsi, setShowJitsi] = useState(false);
   const [showUserSelector, setShowUserSelector] = useState(false);
+  const [showContactsList, setShowContactsList] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   // Remove old activeCall state - now using useCallManager
   const [selectedFile, setSelectedFile] = useState(null);
@@ -601,7 +602,7 @@ const ChatappPage = () => {
           )}
 
           {/* Main Chat Area */}
-          <div className={`${showUserSelector ? 'lg:col-span-1' : 'lg:col-span-2'} flex flex-col gap-4`}>
+          <div className={`${showUserSelector || showContactsList ? 'lg:col-span-1' : 'lg:col-span-2'} flex flex-col gap-4`}>
             {currentRoom && (
               <ChatModerationPanel 
                 currentRoom={currentRoom} 
