@@ -5,12 +5,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings } from 'lucide-react';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
-
 interface JitsiRoomProps {
   roomName: string;
   displayName?: string;
@@ -69,6 +63,7 @@ export default function JitsiRoom({
           parentNode: jitsiContainer.current,
           userInfo: {
             displayName,
+            email: '',
           },
           configOverwrite: {
             startWithAudioMuted: false,

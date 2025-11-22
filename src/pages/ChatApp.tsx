@@ -65,7 +65,6 @@ const ChatApp = () => {
   const [isStartingDirect, setIsStartingDirect] = useState(false);
   const [activeTab, setActiveTab] = useState<'one' | 'circle'>('one');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
-  const [showJitsi, setShowJitsi] = useState(false);
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');

@@ -3,12 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
-
 interface JitsiCallOptions {
   callSession: {
     id: string;
