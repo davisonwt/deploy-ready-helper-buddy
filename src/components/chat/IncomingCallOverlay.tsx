@@ -126,21 +126,35 @@ export default function IncomingCallOverlay() {
 
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
+    console.log('📞 [OVERLAY][RINGTONE] Effect triggered:', {
+      hasIncomingCall: !!incomingCall,
+      incomingCallId: incomingCall?.id,
+      hasAnswered,
+      hasCurrentCall: !!currentCall,
+      currentCallId: currentCall?.id
+    });
+    
     if (!incomingCall) {
+      console.log('📞 [OVERLAY][RINGTONE] No incoming call, stopping ringtone');
+      hardStopRingtone();
       return;
     }
     
-    // CRITICAL FIX: Only skip if answered OR active call exists
-    if (hasAnswered || currentCall) {
-      console.log('📞 [OVERLAY] Skipping ringtone - call answered or active:', { 
-        incomingCall: !!incomingCall, 
+    // CRITICAL FIX: Only skip if answered OR active call exists for THIS call
+    if (hasAnswered || (currentCall && currentCall.id === incomingCall.id)) {
+      console.log('📞 [OVERLAY][RINGTONE] Skipping ringtone - call answered or active:', { 
+        incomingCall: !!incomingCall,
+        incomingCallId: incomingCall.id,
         hasAnswered, 
-        currentCall: !!currentCall 
+        currentCall: !!currentCall,
+        currentCallId: currentCall?.id,
+        sameCall: currentCall?.id === incomingCall.id
       });
+      hardStopRingtone();
       return;
     }
     
-    console.log('📞 [OVERLAY] 🚨🚨🚨 STARTING RINGTONE FOR INCOMING CALL:', incomingCall.id);
+    console.log('📞 [OVERLAY] 🚨🚨🚨 STARTING RINGTONE FOR INCOMING CALL:', incomingCall.id, 'caller:', incomingCall.caller_name);
 
     // Pre-kill any ghost/duplicate ring before creating a new one
     hardStopRingtone();
