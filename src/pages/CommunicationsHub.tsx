@@ -369,7 +369,7 @@ const CommunicationsHub = () => {
 
         {/* Main Tabs Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-2 gap-3">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-2 gap-3 bg-transparent border-none shadow-none">
             <TabsTrigger 
               value="chats" 
               className="flex flex-col gap-2 py-3 rounded-2xl data-[state=active]:bg-teal-500/30 data-[state=active]:text-white data-[state=inactive]:bg-teal-500/10 data-[state=inactive]:text-teal-300"
@@ -425,7 +425,7 @@ const CommunicationsHub = () => {
 
               {/* Chat Type Tabs */}
               <Tabs value={chatType} onValueChange={(v) => setChatType(v as 'one' | 'circle')}>
-                <TabsList className="gap-4">
+                <TabsList className="gap-4 bg-transparent border-none shadow-none">
                   <TabsTrigger value="one" className="rounded-2xl">One-on-Ones</TabsTrigger>
                   <TabsTrigger value="circle" className="rounded-2xl">Community</TabsTrigger>
                 </TabsList>
