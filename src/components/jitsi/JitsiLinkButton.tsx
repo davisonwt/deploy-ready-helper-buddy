@@ -19,15 +19,9 @@ export function JitsiLinkButton({ callType = 'audio', className }: JitsiLinkButt
       className={`flex items-center gap-2 ${className || ''}`}
     >
       {callType === 'video' ? (
-        <>
-          <Video className="h-4 w-4" />
-          chatapp call
-        </>
+        <Video className="h-4 w-4" />
       ) : (
-        <>
-          <Phone className="h-4 w-4" />
-          chatapp call
-        </>
+        <Phone className="h-4 w-4" />
       )}
     </a>
   );
