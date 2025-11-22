@@ -613,6 +613,33 @@ const useCallManagerInternal = () => {
         });
       }, 4000);
 
+      // Send push notification to receiver (fire and forget)
+      try {
+        const { error: notifError } = await supabase.functions.invoke('send-notification', {
+          body: {
+            user_id: receiverId,
+            type: 'incoming_call',
+            title: `Incoming ${type === 'video' ? 'Video' : 'Voice'} Call`,
+            body: `${user.display_name || user.email} is calling you`,
+            url: `/chatapp?room=${roomId || 'direct'}`,
+            data: {
+              call_id: callRecord.id,
+              caller_id: userId,
+              caller_name: user.display_name || user.email,
+              call_type: type,
+              room_id: roomId
+            }
+          }
+        });
+        if (notifError) {
+          console.warn('📞 [CALL] Failed to send push notification:', notifError);
+        } else {
+          console.log('📞 [CALL] Push notification sent to receiver');
+        }
+      } catch (notifErr) {
+        console.warn('📞 [CALL] Error sending push notification (non-blocking):', notifErr);
+      }
+
       // Auto-cancel after timeout (but don't clear if call was answered)
       setTimeout(() => {
         setOutgoingCall(current => {
