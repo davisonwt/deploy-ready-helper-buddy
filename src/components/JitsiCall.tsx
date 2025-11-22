@@ -31,6 +31,12 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
           DISABLE_VIDEO_BACKGROUND: true,
           DISABLE_FOCUS_INDICATOR: true,
         }}
+        onReady={() => {
+          console.log('Jitsi iframe mounted');
+        }}
+        onError={(e) => {
+          console.warn('Jitsi error:', e);
+        }}
         onApiReady={(externalApi) => {
           console.log("Jitsi iframe rendered");
           externalApi.addListener('readyToClose', () => {
