@@ -8,6 +8,7 @@ import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { JitsiCall } from '@/components/JitsiCall';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showJitsi, setShowJitsi] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -115,15 +117,9 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
             <Button
               variant="outline"
               size="sm"
-              asChild
+              onClick={() => setShowJitsi(true)}
             >
-              <a
-                href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
-                target="_blank"
-                rel="noopener"
-              >
-                <Phone className="h-4 w-4" />
-              </a>
+              <Phone className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -189,14 +185,14 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
                       >
                         <MessageSquare className="h-4 w-4" />
                       </Button>
-                      <a
-                        href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
-                        target="_blank"
-                        rel="noopener"
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0"
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowJitsi(true)}
+                        className="h-8 w-8 p-0"
                       >
                         <Phone className="h-4 w-4" />
-                      </a>
+                      </Button>
                     </div>
                   </div>
                 );
@@ -205,6 +201,16 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
           </div>
         </ScrollArea>
       </CardContent>
+      
+      {/* Jitsi Call */}
+      {showJitsi && (
+        <div className="p-4 border-t">
+          <JitsiCall
+            roomName={crypto.randomUUID().slice(0, 12)}
+            onLeave={() => setShowJitsi(false)}
+          />
+        </div>
+      )}
     </Card>
   );
 };

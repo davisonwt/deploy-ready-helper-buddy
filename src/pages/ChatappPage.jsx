@@ -27,7 +27,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat.jsx';
 // REMOVED: React call flow - using direct Jitsi links instead
 // import { useCallManager } from '@/hooks/useCallManager';
-import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
+import { JitsiCall } from '@/components/JitsiCall';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -87,6 +87,7 @@ const ChatappPage = () => {
   const [showQuickCreator, setShowQuickCreator] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [showJitsi, setShowJitsi] = useState(false);
   const [showUserSelector, setShowUserSelector] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   // Remove old activeCall state - now using useCallManager
@@ -206,16 +207,8 @@ const ChatappPage = () => {
                          `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() ||
                          'Unknown User';
 
-      // REMOVED: React call flow - using direct Jitsi links instead
-      // Generate room name and open Jitsi
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let roomName = '';
-      for (let i = 0; i < 12; i++) {
-        roomName += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-      const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
-      window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+      // Start embedded Jitsi call
+      setShowJitsi(true);
       
     } catch (error) {
       console.error('Error starting call:', error);
@@ -395,6 +388,15 @@ const ChatappPage = () => {
         minHeight: '100vh'
       }}
     >
+      {/* Jitsi Call */}
+      {showJitsi && (
+        <div className="p-4 border-b border-blue-900">
+          <JitsiCall
+            roomName={crypto.randomUUID().slice(0, 12)}
+            onLeave={() => setShowJitsi(false)}
+          />
+        </div>
+      )}
       <div className="container mx-auto p-6 flex flex-col min-h-screen pb-24">
         {/* Header */}
         <div className="max-w-6xl mx-auto mb-8 p-6 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">

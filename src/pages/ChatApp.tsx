@@ -49,7 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 // import { useCallManager } from '@/hooks/useCallManager';
 // import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
 // import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
-import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
+import { JitsiCall } from '@/components/JitsiCall';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -65,6 +65,7 @@ const ChatApp = () => {
   const [isStartingDirect, setIsStartingDirect] = useState(false);
   const [activeTab, setActiveTab] = useState<'one' | 'circle'>('one');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [showJitsi, setShowJitsi] = useState(false);
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -230,18 +231,12 @@ const ChatApp = () => {
     }
   };
 
-  // REMOVED: React call flow - using direct Jitsi links instead
-  // Calls now open Jitsi Meet directly via JitsiLinkButton component
+  // Embedded Jitsi call state
+  const [showJitsi, setShowJitsi] = useState(false);
+  
   const handleStartCall = async (otherUserId, callType) => {
-    // Generate room name and open Jitsi
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let roomName = '';
-    for (let i = 0; i < 12; i++) {
-      roomName += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-    const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
-    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+    // Start embedded Jitsi call
+    setShowJitsi(true);
   };
 
   // Fetch users when search term changes
@@ -457,6 +452,16 @@ const ChatApp = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
+      {/* Jitsi Call */}
+      {showJitsi && (
+        <div className="mb-4 p-4 border rounded-lg">
+          <JitsiCall
+            roomName={crypto.randomUUID().slice(0, 12)}
+            onLeave={() => setShowJitsi(false)}
+          />
+        </div>
+      )}
+
       {currentRoomId ? (
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
       ) : (
