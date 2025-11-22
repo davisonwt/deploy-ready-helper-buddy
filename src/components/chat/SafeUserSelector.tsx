@@ -28,10 +28,10 @@ class LocalErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
 
 export default function SafeUserSelector({
   onStartDirectChat,
-  onStartCall,
+  onStartCall, // REMOVED: React call flow - using direct Jitsi links instead
 }: {
   onStartDirectChat: (otherUserId: string) => void;
-  onStartCall: (otherUserId: string, callType: 'audio' | 'video') => void;
+  onStartCall?: (otherUserId: string, callType: 'audio' | 'video') => void; // Optional - not used anymore
 }) {
   // Ensure we only render on client after mount to avoid any edge initialization issues
   const [mounted, setMounted] = useState(false);
@@ -44,7 +44,7 @@ export default function SafeUserSelector({
       <Suspense fallback={null}>
         <UserSelector
           onStartDirectChat={onStartDirectChat}
-          onStartCall={onStartCall}
+          onStartCall={onStartCall || (() => {})} // REMOVED: React call flow - using direct Jitsi links instead
         />
       </Suspense>
     </LocalErrorBoundary>
