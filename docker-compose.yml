@@ -148,8 +148,8 @@ services:
         image: jitsi/jvb:stable-9258
         restart: ${RESTART_POLICY:-unless-stopped}
         ports:
-            - '${JVB_PORT:-10000}:${JVB_PORT:-10000}/udp'
-            - '${JVB_TCP_MAPPED_PORT:-4443}:${JVB_TCP_PORT:-4443}'
+            - '10000:10000/udp'
+            - '4443:4443/tcp'
         volumes:
             - ${CONFIG}/jvb:/config:Z
         environment:
