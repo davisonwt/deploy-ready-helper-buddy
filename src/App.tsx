@@ -10,8 +10,7 @@ import OnboardingTour from "./components/onboarding/OnboardingTour";
 import HelpModal from "./components/help/HelpModal";
 import AccessibilityChecker from "./components/accessibility/AccessibilityChecker";
 import { Card, CardContent } from "@/components/ui/card";
-// REMOVED: React call flow - using direct Jitsi links instead
-// import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
+import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 
@@ -108,8 +107,7 @@ import LiveActivityWidget from "./components/LiveActivityWidget";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
 import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
-// REMOVED: React call flow - using direct Jitsi links instead
-// import { CallManagerProvider } from '@/providers/CallManagerProvider';
+import { CallManagerProvider } from '@/providers/CallManagerProvider';
 import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
 import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
@@ -132,7 +130,7 @@ const App = () => (
   }}>
     <AuthProvider>
       <AppContextProvider>
-        {/* REMOVED: CallManagerProvider - using direct Jitsi links */}
+        <CallManagerProvider>
         <BasketProvider>
             <ProductBasketProvider>
               <AlbumBuilderProvider>
@@ -146,7 +144,7 @@ const App = () => (
                 <AudioUnlocker />
                 <SoundUnlockBanner />
                 <NotificationBanner />
-                {/* REMOVED: IncomingCallOverlay - using direct Jitsi links */}
+                <IncomingCallOverlay />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />
@@ -750,6 +748,7 @@ const App = () => (
         </AlbumBuilderProvider>
         </ProductBasketProvider>
       </BasketProvider>
+      </CallManagerProvider>
     </AppContextProvider>
   </AuthProvider>
 </EnhancedErrorBoundary>
