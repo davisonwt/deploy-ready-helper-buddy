@@ -213,14 +213,14 @@ export default function IncomingCallOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall?.id, currentCall?.id]);
 
-  // Safety: if current call transitions to accepted, ensure ringtone is stopped
+  // Safety: if current call transitions to accepted for THIS incoming call, ensure ringtone is stopped
   useEffect(() => {
-    if (currentCall) {
-      console.log('📞 [OVERLAY] Current call exists, stopping ringtone');
+    if (currentCall && incomingCall && currentCall.id === incomingCall.id) {
+      console.log('📞 [OVERLAY] Current call matches incoming call, stopping ringtone');
       hardStopRingtone();
       setHasAnswered(true);
     }
-  }, [currentCall?.id, currentCall?.status]);
+  }, [currentCall?.id, currentCall?.status, incomingCall?.id]);
 
   const handleAnswer = async () => {
     console.log('📞 [OVERLAY] handleAnswer called, incomingCall:', incomingCall);
