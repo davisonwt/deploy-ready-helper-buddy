@@ -369,31 +369,31 @@ const CommunicationsHub = () => {
 
         {/* Main Tabs Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-2 gap-2">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-2 gap-3">
             <TabsTrigger 
               value="chats" 
-              className="flex flex-col gap-2 py-3 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
+              className="flex flex-col gap-2 py-3 rounded-2xl data-[state=active]:bg-teal-500/30 data-[state=active]:text-white data-[state=inactive]:bg-teal-500/10 data-[state=inactive]:text-teal-300"
             >
               <MessageSquare className="h-5 w-5" />
               <span className="text-sm font-semibold">Chats</span>
             </TabsTrigger>
             <TabsTrigger 
               value="radio"
-              className="flex flex-col gap-2 py-3 data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-600 dark:data-[state=active]:text-orange-400"
+              className="flex flex-col gap-2 py-3 rounded-2xl data-[state=active]:bg-teal-500/30 data-[state=active]:text-white data-[state=inactive]:bg-teal-500/10 data-[state=inactive]:text-teal-300"
             >
               <Radio className="h-5 w-5" />
               <span className="text-sm font-semibold">Live Radio</span>
             </TabsTrigger>
             <TabsTrigger 
               value="premium"
-              className="flex flex-col gap-2 py-3 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-600 dark:data-[state=active]:text-purple-400"
+              className="flex flex-col gap-2 py-3 rounded-2xl data-[state=active]:bg-teal-500/30 data-[state=active]:text-white data-[state=inactive]:bg-teal-500/10 data-[state=inactive]:text-teal-300"
             >
               <GraduationCap className="h-5 w-5" />
               <span className="text-sm font-semibold">Premium Rooms</span>
             </TabsTrigger>
             <TabsTrigger 
               value="discover"
-              className="flex flex-col gap-2 py-3 data-[state=active]:bg-green-500/20 data-[state=active]:text-green-600 dark:data-[state=active]:text-green-400"
+              className="flex flex-col gap-2 py-3 rounded-2xl data-[state=active]:bg-teal-500/30 data-[state=active]:text-white data-[state=inactive]:bg-teal-500/10 data-[state=inactive]:text-teal-300"
             >
               <Sparkles className="h-5 w-5" />
               <span className="text-sm font-semibold">Discover</span>
@@ -416,7 +416,7 @@ const CommunicationsHub = () => {
                 </div>
                 <Button 
                   onClick={() => setIsCreateDialogOpen(true)}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700"
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 rounded-2xl"
                 >
                   <Plus className="h-4 w-4" />
                   New Chat
