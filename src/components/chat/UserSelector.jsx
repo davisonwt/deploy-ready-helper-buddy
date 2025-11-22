@@ -112,12 +112,14 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
             <Button size="sm" onClick={() => selectedUserId && onStartDirectChat(selectedUserId)} disabled={!selectedUserId}>
               <MessageSquare className="h-4 w-4 mr-1" /> Chat
             </Button>
-            <Button size="sm" variant="outline" onClick={() => selectedUserId && onStartCall(selectedUserId, 'audio')} disabled={!selectedUserId}>
-              <Phone className="h-4 w-4 mr-1" /> Call
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => selectedUserId && onStartCall(selectedUserId, 'video')} disabled={!selectedUserId}>
-              <Video className="h-4 w-4 mr-1" /> Video
-            </Button>
+            <a
+              href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
+            >
+              <Phone className="h-4 w-4 mr-1" /> Launch Jitsi
+            </a>
           </div>
         </div>
 
@@ -182,28 +184,14 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
                       >
                         <MessageSquare className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          console.log('📞 Audio call clicked for:', displayName, profile.user_id);
-                          onStartCall(profile.user_id, 'audio');
-                        }}
-                        className="h-8 w-8 p-0"
+                      <a
+                        href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0"
                       >
                         <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          console.log('📹 Video call clicked for:', displayName, profile.user_id);
-                          onStartCall(profile.user_id, 'video');
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Video className="h-4 w-4" />
-                      </Button>
+                      </a>
                     </div>
                   </div>
                 );
