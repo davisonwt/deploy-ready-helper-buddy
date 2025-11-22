@@ -334,7 +334,14 @@ const useCallManagerInternal = () => {
       })
       // DB realtime fallback: ring events for receiver
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_sessions', filter: `receiver_id=eq.${userId}` }, (payload) => {
-        console.log('📞 [CALL][DB] INSERT event received:', { payload, userId });
+        console.log('📞 [CALL][DB] 🔔 INSERT event received for receiver:', { 
+          payload, 
+          userId, 
+          receiver_id: payload.new?.receiver_id,
+          caller_id: payload.new?.caller_id,
+          status: payload.new?.status,
+          match: payload.new?.receiver_id === userId
+        });
         try {
           const row = payload.new;
           const now = Date.now();
@@ -636,7 +643,7 @@ const useCallManagerInternal = () => {
         setOutgoingCall(current => {
           if (current && current.id === callData.id && !currentCall) {
             console.log('📞 [CALL] Auto-canceling timed out outgoing call');
-            endCallRef.current?.(callData.id, 'timeout');
+            endCallRef.current?.(callData.id, 'declined'); // Use 'declined' instead of 'timeout' (not in DB constraint)
             return null;
           }
           return current;
@@ -814,10 +821,12 @@ const useCallManagerInternal = () => {
       }
       
       // Update call record (fire and forget - don't block UI)
+      // CRITICAL FIX: Map 'timeout' to 'declined' since DB constraint only allows: ringing, accepted, declined, ended
+      const dbStatus = reason === 'timeout' ? 'declined' : reason;
       supabase
         .from('call_sessions')
         .update({ 
-          status: reason,
+          status: dbStatus,
           ended_at: new Date().toISOString()
         })
         .eq('id', callId)
