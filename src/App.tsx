@@ -750,11 +750,9 @@ const App = () => (
         </AlbumBuilderProvider>
         </ProductBasketProvider>
       </BasketProvider>
-      </CallManagerProvider>
     </AppContextProvider>
   </AuthProvider>
 </EnhancedErrorBoundary>
-    
 );
 
 export default App;
