@@ -177,5 +177,21 @@ services:
         networks:
             meet.jitsi:
 
+    # TURN server (coturn)
+    coturn:
+        image: coturn/coturn:latest
+        restart: ${RESTART_POLICY:-unless-stopped}
+        ports:
+            - '3478:3478/udp'
+            - '3478:3478/tcp'
+            - '443:443/tcp'
+            - '5349:5349/udp'
+            - '5349:5349/tcp'
+        volumes:
+            - ./turnserver.conf:/etc/turnserver.conf:ro
+        command: ["-c", "/etc/turnserver.conf"]
+        networks:
+            meet.jitsi:
+
 networks:
     meet.jitsi:
