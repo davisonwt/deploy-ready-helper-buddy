@@ -20,8 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
-// REMOVED: React call flow - using direct Jitsi links instead
-// import { useCallManager } from '@/hooks/useCallManager';
+import { useCallManager } from '@/hooks/useCallManager';
 import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -35,8 +34,7 @@ interface ChatRoomProps {
 export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  // REMOVED: React call flow - using direct Jitsi links instead
-  // const { startCall } = useCallManager();
+  const { startCall, currentCall, endCall } = useCallManager();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -50,9 +48,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
-
-  // Jitsi call state
-  const [showJitsi, setShowJitsi] = useState(false);
 
 
   // Typing indicators
@@ -702,7 +697,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowJitsi(true)}
+              onClick={async () => {
+                // Find the other participant (not the current user)
+                const otherParticipant = participants.find((p: any) => p.user_id !== user?.id);
+                if (!otherParticipant) {
+                  toast({
+                    title: "Error",
+                    description: "No other participant found in this chat",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                const receiverName = otherParticipant.profiles?.display_name || 
+                                   `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim() ||
+                                   'User';
+                console.log('📞 [ChatRoom] Starting call to:', otherParticipant.user_id, receiverName);
+                await startCall(otherParticipant.user_id, receiverName, 'video', roomId);
+              }}
             >
               <Phone className="h-4 w-4" />
             </Button>
