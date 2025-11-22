@@ -28,6 +28,7 @@ const useCallManagerInternal = () => {
   const incomingCallRef = useRef(incomingCall);
   const outgoingCallRef = useRef(outgoingCall);
   const lastIncomingRef = useRef({ id: null, ts: 0 });
+  const timeoutIdRef = useRef(null);
   
   // Flags for conditional logic AFTER all hooks
   const hasUser = !!user;
@@ -138,19 +139,36 @@ const useCallManagerInternal = () => {
       return;
     }
     
-    console.log('📞 [CALL] Call was answered, updating caller state:', callData);
-    console.log('📞 [CALL] Previous outgoingCall:', outgoingCall?.id);
+    console.log('📞 [CALL] 🚨🚨🚨 CALL ANSWERED - Updating caller state:', callData);
+    console.log('📞 [CALL] Previous outgoingCall:', outgoingCallRef.current?.id);
+    console.log('📞 [CALL] Previous currentCall:', currentCallRef.current?.id);
     
+    // CRITICAL: Clear timeout so it doesn't fire after call is answered
+    if (timeoutIdRef.current) {
+      console.log('📞 [CALL] 🚨 Clearing timeout because call was answered');
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+    
+    // CRITICAL: Clear outgoing call first
     setOutgoingCall(null);
-    setCurrentCall({
+    outgoingCallRef.current = null;
+    
+    // CRITICAL: Set current call with all required fields
+    const newCurrentCall = {
       ...callData,
       status: 'accepted',
-      startTime: Date.now(),
+      startTime: callData.startTime || Date.now(),
       // CRITICAL: caller must remain isIncoming=false to create the SDP offer
-      isIncoming: false
-    });
+      isIncoming: false,
+      room_id: callData.room_id || callData.roomId
+    };
     
-    console.log('📞 [CALL] State updated, currentCall should now be set');
+    console.log('📞 [CALL] 🚨🚨🚨 SETTING CURRENT CALL:', newCurrentCall);
+    setCurrentCall(newCurrentCall);
+    currentCallRef.current = newCurrentCall;
+    
+    console.log('📞 [CALL] ✅ State updated - currentCallRef:', currentCallRef.current);
     
     try {
       stopAllRingtones?.();
@@ -162,7 +180,7 @@ const useCallManagerInternal = () => {
       title: "Call Connected",
       description: "Call has been answered",
     });
-  }, [hasUser, outgoingCall, toast]);
+  }, [hasUser, toast]);
 
   // Handle call declined
   const handleCallDeclined = useCallback((callData) => {
@@ -647,16 +665,33 @@ const useCallManagerInternal = () => {
       }, 4000);
 
       // Auto-cancel after timeout (but don't clear if call was answered)
-      setTimeout(() => {
-        setOutgoingCall(current => {
-          if (current && current.id === callData.id && !currentCall) {
-            console.log('📞 [CALL] Auto-canceling timed out outgoing call');
-            endCallRef.current?.(callData.id, 'declined'); // Use 'declined' instead of 'timeout' (not in DB constraint)
-            return null;
-          }
-          return current;
+      // CRITICAL FIX: Store timeout ID so it can be cleared when call is answered
+      const timeoutId = setTimeout(() => {
+        // CRITICAL: Check refs instead of stale closure values
+        const currentOutgoing = outgoingCallRef.current;
+        const currentActiveCall = currentCallRef.current;
+        
+        console.log('📞 [CALL] ⏱️ Timeout check:', {
+          outgoing_id: currentOutgoing?.id,
+          call_data_id: callData.id,
+          current_call_id: currentActiveCall?.id,
+          match: currentOutgoing?.id === callData.id,
+          has_active_call: !!currentActiveCall
         });
+        
+        // Only timeout if:
+        // 1. Outgoing call still exists and matches
+        // 2. No active call exists for this call ID
+        if (currentOutgoing && currentOutgoing.id === callData.id && !currentActiveCall) {
+          console.log('📞 [CALL] ⏱️ Auto-canceling timed out outgoing call');
+          endCallRef.current?.(callData.id, 'declined');
+        } else {
+          console.log('📞 [CALL] ⏱️ Skipping timeout - call was answered or cleared');
+        }
       }, CALL_CONSTANTS.RING_TIMEOUT);
+      
+      // Store timeout ID in a way that can be cleared
+      timeoutIdRef.current = timeoutId;
 
       toast({
         title: "Calling...",
