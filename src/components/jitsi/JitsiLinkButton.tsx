@@ -21,12 +21,12 @@ export function JitsiLinkButton({ callType = 'audio', className }: JitsiLinkButt
       {callType === 'video' ? (
         <>
           <Video className="h-4 w-4" />
-          Launch Jitsi
+          chatapp call
         </>
       ) : (
         <>
           <Phone className="h-4 w-4" />
-          Launch Jitsi
+          chatapp call
         </>
       )}
     </a>
