@@ -778,12 +778,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         </div>
       </div>
 
-      {/* Jitsi Call */}
-      {showJitsi && (
+      {/* Jitsi Call - Show when call is accepted */}
+      {currentCall && currentCall.status === 'accepted' && (
         <div className="p-4 border-b">
           <JitsiCall
-            roomName={crypto.randomUUID().slice(0, 12)}
-            onLeave={() => setShowJitsi(false)}
+            roomName={currentCall.id.replace(/-/g, '').substring(0, 12)}
+            onLeave={() => {
+              if (currentCall?.id) {
+                endCall(currentCall.id, 'ended');
+              }
+            }}
           />
         </div>
       )}
