@@ -1,7 +1,7 @@
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { useEffect } from 'react';
 
-// Component for Jitsi video calls using self-hosted instance
+// Jitsi video call component for self-hosted instance
 
 interface JitsiCallProps {
   roomName: string;
@@ -31,13 +31,8 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
           DISABLE_VIDEO_BACKGROUND: true,
           DISABLE_FOCUS_INDICATOR: true,
         }}
-        onReady={() => {
-          console.log('Jitsi iframe mounted');
-        }}
-        onError={(e) => {
-          console.warn('Jitsi error:', e);
-        }}
         onApiReady={(externalApi) => {
+          console.log('Jitsi ready');
           console.log("Jitsi iframe rendered");
           externalApi.addListener('readyToClose', () => {
             onLeave();
