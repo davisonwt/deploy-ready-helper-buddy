@@ -32,6 +32,7 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
           DISABLE_FOCUS_INDICATOR: true,
         }}
         onApiReady={(externalApi) => {
+          console.log("Jitsi iframe rendered");
           externalApi.addListener('readyToClose', () => {
             onLeave();
           });
