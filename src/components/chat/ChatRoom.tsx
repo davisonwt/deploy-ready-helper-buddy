@@ -22,7 +22,7 @@ import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 // REMOVED: React call flow - using direct Jitsi links instead
 // import { useCallManager } from '@/hooks/useCallManager';
-import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
+import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -50,6 +50,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
+
+  // Jitsi call state
+  const [showJitsi, setShowJitsi] = useState(false);
 
 
   // Typing indicators
@@ -641,7 +644,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-[600px]">
       {/* Header */}
       <div className="border-b bg-card p-4">
         <div className="flex items-center justify-between">
@@ -699,15 +702,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             <Button
               variant="ghost"
               size="sm"
-              asChild
+              onClick={() => setShowJitsi(true)}
             >
-              <a
-                href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
-                target="_blank"
-                rel="noopener"
-              >
-                <Phone className="h-4 w-4" />
-              </a>
+              <Phone className="h-4 w-4" />
             </Button>
             
             
@@ -769,6 +766,16 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Jitsi Call */}
+      {showJitsi && (
+        <div className="p-4 border-b">
+          <JitsiCall
+            roomName={crypto.randomUUID().slice(0, 12)}
+            onLeave={() => setShowJitsi(false)}
+          />
+        </div>
+      )}
 
       {/* Messages Area */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">

@@ -15,6 +15,7 @@
     "@deficonnect/web3-connector": "^2.0.3",
     "@hookform/resolvers": "^3.9.0",
     "@huggingface/transformers": "^3.6.3",
+    "@jitsi/react-sdk": "^1.4.4",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
