@@ -132,13 +132,12 @@ const App = () => (
   }}>
     <AuthProvider>
       <AppContextProvider>
-        {/* REMOVED: CallManagerProvider - using direct Jitsi links */}
         <BasketProvider>
-            <ProductBasketProvider>
-              <AlbumBuilderProvider>
-                <LiveSessionPlaylistProvider>
-                  <TooltipProvider>
-              <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+          <ProductBasketProvider>
+            <AlbumBuilderProvider>
+              <LiveSessionPlaylistProvider>
+                <TooltipProvider>
+                  <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
                 <NavigationMonitor />
                 <DeadLinkDetector />
                 <Toaster />
@@ -146,12 +145,12 @@ const App = () => (
                 <AudioUnlocker />
                 <SoundUnlockBanner />
                 <NotificationBanner />
-                {/* REMOVED: IncomingCallOverlay - using direct Jitsi links */}
-                <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <AccessibilityChecker />
-                      <ResponsiveLayout>
-            <Routes>
+                    {/* REMOVED: IncomingCallOverlay - using direct Jitsi links */}
+                    <ErrorBoundary>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AccessibilityChecker />
+                        <ResponsiveLayout>
+                          <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
@@ -736,23 +735,23 @@ const App = () => (
               
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  </ResponsiveLayout>
-                  </Suspense>
-                </ErrorBoundary>
-              <LiveActivityWidget />
-              <FloatingBasketButton />
-              <OnboardingTour />
-              <HelpModal />
-            </ThemeProvider>
-          </TooltipProvider>
-        </LiveSessionPlaylistProvider>
-        </AlbumBuilderProvider>
-        </ProductBasketProvider>
-      </BasketProvider>
-    </AppContextProvider>
-  </AuthProvider>
-</EnhancedErrorBoundary>
+                          </Routes>
+                        </ResponsiveLayout>
+                      </Suspense>
+                    </ErrorBoundary>
+                    <LiveActivityWidget />
+                    <FloatingBasketButton />
+                    <OnboardingTour />
+                    <HelpModal />
+                  </ThemeProvider>
+                </TooltipProvider>
+              </LiveSessionPlaylistProvider>
+            </AlbumBuilderProvider>
+          </ProductBasketProvider>
+        </BasketProvider>
+      </AppContextProvider>
+    </AuthProvider>
+  </EnhancedErrorBoundary>
 );
 
 export default App;
