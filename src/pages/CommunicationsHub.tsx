@@ -369,7 +369,7 @@ const CommunicationsHub = () => {
 
         {/* Main Tabs Interface */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-2">
+          <TabsList className="grid w-full grid-cols-4 h-auto p-2 gap-2">
             <TabsTrigger 
               value="chats" 
               className="flex flex-col gap-2 py-3 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400"
@@ -425,7 +425,7 @@ const CommunicationsHub = () => {
 
               {/* Chat Type Tabs */}
               <Tabs value={chatType} onValueChange={(v) => setChatType(v as 'one' | 'circle')}>
-                <TabsList>
+                <TabsList className="gap-4">
                   <TabsTrigger value="one">One-on-Ones</TabsTrigger>
                   <TabsTrigger value="circle">Community</TabsTrigger>
                 </TabsList>
@@ -562,7 +562,7 @@ const CommunicationsHub = () => {
                 <p className="text-sm text-muted-foreground">
                   {selectedUsers.length} member(s) selected
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-4">
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancel
                   </Button>
