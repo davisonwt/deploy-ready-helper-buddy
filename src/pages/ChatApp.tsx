@@ -45,9 +45,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { useCallManager } from '@/hooks/useCallManager';
-import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
-import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
+// REMOVED: React call flow - using direct Jitsi links instead
+// import { useCallManager } from '@/hooks/useCallManager';
+// import JitsiAudioCall from '@/components/jitsi/JitsiAudioCall';
+// import JitsiVideoCall from '@/components/jitsi/JitsiVideoCall';
+import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -140,15 +142,16 @@ const ChatApp = () => {
     prevRoomRef.current = currentRoomId;
   }, [currentRoomId]);
 
-  const { 
-    startCall, 
-    currentCall, 
-    incomingCall, 
-    outgoingCall,
-    answerCall,
-    declineCall,
-    endCall
-  } = useCallManager();
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // const { 
+  //   startCall, 
+  //   currentCall, 
+  //   incomingCall, 
+  //   outgoingCall,
+  //   answerCall,
+  //   declineCall,
+  //   endCall
+  // } = useCallManager();
 
   const handleStartDirectChat = async (otherUserId) => {
     if (!user?.id || !otherUserId) return;
@@ -227,20 +230,18 @@ const ChatApp = () => {
     }
   };
 
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // Calls now open Jitsi Meet directly via JitsiLinkButton component
   const handleStartCall = async (otherUserId, callType) => {
-    try {
-      const { data: userProfile, error } = await supabase
-        .from('profiles')
-        .select('display_name, first_name, last_name, avatar_url')
-        .eq('user_id', otherUserId)
-        .single();
-      if (error) throw error;
-      const receiverName = userProfile.display_name || `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'Unknown User';
-      await startCall(otherUserId, receiverName, callType, null);
-    } catch (error) {
-      console.error('Error starting call:', error);
-      toast({ title: 'Error', description: 'Failed to start call', variant: 'destructive' });
+    // Generate room name and open Jitsi
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let roomName = '';
+    for (let i = 0; i < 12; i++) {
+      roomName += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
+    const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
+    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
   };
 
   // Fetch users when search term changes
@@ -436,29 +437,23 @@ const ChatApp = () => {
     );
   }
 
-  // Render call interface if active (Jitsi-powered)
-  // NOTE: Don't render Jitsi component for incoming calls - let IncomingCallOverlay handle it
-  const activeCall = currentCall || outgoingCall;
-  if (activeCall) {
-    const CallComponent = activeCall?.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
-    console.log('📞 [JITSI][UI] Active call render', { 
-      id: activeCall?.id, 
-      status: activeCall?.status, 
-      type: activeCall?.type 
-    });
-    
-    return (
-      <CallComponent
-        callSession={activeCall}
-        currentUserId={user?.id || ''}
-        callerInfo={{
-          display_name: activeCall?.caller_name || activeCall?.receiver_name || 'Unknown',
-          avatar_url: null
-        }}
-        onEndCall={() => activeCall && endCall(activeCall.id, 'ended')}
-      />
-    );
-  }
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // Call interface removed - users open Jitsi Meet directly
+  // const activeCall = currentCall || outgoingCall;
+  // if (activeCall) {
+  //   const CallComponent = activeCall?.type === 'video' ? JitsiVideoCall : JitsiAudioCall;
+  //   return (
+  //     <CallComponent
+  //       callSession={activeCall}
+  //       currentUserId={user?.id || ''}
+  //       callerInfo={{
+  //         display_name: activeCall?.caller_name || activeCall?.receiver_name || 'Unknown',
+  //         avatar_url: null
+  //       }}
+  //       onEndCall={() => activeCall && endCall(activeCall.id, 'ended')}
+  //     />
+  //   );
+  // }
 
   return (
     <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">

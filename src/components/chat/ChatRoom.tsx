@@ -20,7 +20,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
-import { useCallManager } from '@/hooks/useCallManager';
+// REMOVED: React call flow - using direct Jitsi links instead
+// import { useCallManager } from '@/hooks/useCallManager';
+import { JitsiLinkButton } from '@/components/jitsi/JitsiLinkButton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -33,7 +35,8 @@ interface ChatRoomProps {
 export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { startCall } = useCallManager();
+  // REMOVED: React call flow - using direct Jitsi links instead
+  // const { startCall } = useCallManager();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -615,27 +618,17 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
-  const handleCallClick = async () => {
-    try {
-      await ensureMembership();
-      await fetchParticipants();
-
-      const otherParticipant = participants.find(p => p.user_id !== user?.id);
-      if (!otherParticipant) {
-        toast({ title: 'No other participants', description: 'Add someone to this chat before calling.', variant: 'destructive' });
-        return;
-      }
-
-      const receiverName = otherParticipant.profiles?.display_name
-        || `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim()
-        || 'Unknown User';
-
-      // Start call immediately without device check modal
-      await startCall(otherParticipant.user_id, receiverName, 'audio', roomId);
-    } catch (err) {
-      console.error('Call start error:', err);
-      toast({ title: 'Call Failed', description: 'Unable to start the call', variant: 'destructive' });
+  // REMOVED: React call flow - using direct Jitsi links instead
+  const handleCallClick = () => {
+    // Generate room name and open Jitsi
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let roomName = '';
+    for (let i = 0; i < 12; i++) {
+      roomName += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
+    const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
+    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
   };
 
 
@@ -703,13 +696,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
               <Mic className="h-4 w-4" />
             </Button>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCallClick}
-            >
-              <Phone className="h-4 w-4" />
-            </Button>
+            <JitsiLinkButton callType="audio" className="h-8 px-2" />
             
             
             <Button
