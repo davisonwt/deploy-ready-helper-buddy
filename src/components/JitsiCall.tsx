@@ -1,4 +1,4 @@
-import { JitsiMeet } from '@jitsi/react-sdk';
+import { JitsiMeeting } from '@jitsi/react-sdk';
 import { useEffect } from 'react';
 
 interface JitsiCallProps {
