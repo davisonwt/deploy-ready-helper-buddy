@@ -613,6 +613,17 @@ const ChatappPage = () => {
             </div>
           )}
 
+          {/* Contacts List */}
+          {showContactsList && (
+            <div className="lg:col-span-1 h-[calc(100vh-200px)]">
+              <ContactsList
+                onStartDirectChat={handleStartDirectChat}
+                onStartCall={handleStartCall}
+                selectedContactId={currentRoom?.id}
+              />
+            </div>
+          )}
+
           {/* Main Chat Area */}
           <div className={`${showUserSelector || showContactsList ? 'lg:col-span-1' : 'lg:col-span-2'} flex flex-col gap-4`}>
             {currentRoom && (
