@@ -110,7 +110,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <Button size="sm" onClick={() => selectedUserId && onStartDirectChat(selectedUserId)} disabled={!selectedUserId}>
               <MessageSquare className="h-4 w-4 mr-1" /> Chat
             </Button>
