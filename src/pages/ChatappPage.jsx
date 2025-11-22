@@ -504,106 +504,117 @@ const ChatappPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
-          {/* Sidebar - Room List */}
-          <div className="lg:col-span-1 h-full">
-            <Card className="h-[calc(100vh-300px)] flex flex-col bg-white/10 backdrop-blur-md border-white/20">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <MessageSquare className="h-5 w-5" />
-                  My Rooms
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                  {/* Beautiful Tab Row */}
-                  <div className="flex gap-2 mb-4 pb-4 border-b border-white/20 overflow-x-auto">
-                    {[
-                      { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
-                      { type: 'oneOnOne', label: 'One-on-Ones', icon: MessageSquare, activeColor: 'rgba(236, 72, 153, 0.3)', inactiveColor: 'rgba(236, 72, 153, 0.1)' },
-                      { type: 'group', label: 'Grove Circles', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
-                      { type: 'discover', label: 'Discover', icon: Sparkles, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }
-                    ].map(({ type, label, icon: Icon, activeColor, inactiveColor }) => (
-                      <button
-                        key={type}
-                        onClick={() => setActiveTab(type)}
-                        style={{
-                          backgroundColor: activeTab === type ? activeColor : inactiveColor,
-                          backdropFilter: 'blur(8px)'
-                        }}
-                        className="relative flex-1 p-2 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[70px]"
-                      >
-                        <div className="flex flex-col items-center space-y-1">
-                          <div className={`p-1.5 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
-                            <Icon 
-                              className="h-3.5 w-3.5 transition-all duration-300 text-white drop-shadow-lg" 
-                            />
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
+          {/* Left Sidebar - Contacts List (Always Visible, Telegram-style) */}
+          <div className="lg:col-span-1 h-[calc(100vh-200px)]">
+            <ContactsList
+              onStartDirectChat={handleStartDirectChat}
+              onStartCall={handleStartCall}
+              selectedContactId={currentRoom?.id}
+            />
+          </div>
+
+          {/* Middle Sidebar - Room List (Optional, can be toggled) */}
+          {showContactsList && (
+            <div className="lg:col-span-1 h-full">
+              <Card className="h-[calc(100vh-300px)] flex flex-col bg-white/10 backdrop-blur-md border-white/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <MessageSquare className="h-5 w-5" />
+                    My Rooms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 overflow-hidden p-4">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                    {/* Beautiful Tab Row */}
+                    <div className="flex gap-2 mb-4 pb-4 border-b border-white/20 overflow-x-auto">
+                      {[
+                        { type: 'all', label: 'All', icon: MessageSquare, activeColor: 'rgba(59, 130, 246, 0.3)', inactiveColor: 'rgba(59, 130, 246, 0.1)' },
+                        { type: 'oneOnOne', label: '1-1', icon: MessageSquare, activeColor: 'rgba(236, 72, 153, 0.3)', inactiveColor: 'rgba(236, 72, 153, 0.1)' },
+                        { type: 'group', label: 'Group', icon: Users, activeColor: 'rgba(34, 197, 94, 0.3)', inactiveColor: 'rgba(34, 197, 94, 0.1)' },
+                        { type: 'discover', label: 'Discover', icon: Sparkles, activeColor: 'rgba(168, 85, 247, 0.3)', inactiveColor: 'rgba(168, 85, 247, 0.1)' }
+                      ].map(({ type, label, icon: Icon, activeColor, inactiveColor }) => (
+                        <button
+                          key={type}
+                          onClick={() => setActiveTab(type)}
+                          style={{
+                            backgroundColor: activeTab === type ? activeColor : inactiveColor,
+                            backdropFilter: 'blur(8px)'
+                          }}
+                          className="relative flex-1 p-2 rounded-xl transition-all duration-300 border-2 hover:scale-105 hover:shadow-lg group border-white/30 min-w-[70px]"
+                        >
+                          <div className="flex flex-col items-center space-y-1">
+                            <div className={`p-1.5 rounded-lg ${activeTab === type ? 'bg-white/30' : 'bg-white/10'}`}>
+                              <Icon 
+                                className="h-3.5 w-3.5 transition-all duration-300 text-white drop-shadow-lg" 
+                              />
+                            </div>
+                            <span 
+                              className="text-xs font-bold text-white transition-all duration-300"
+                              style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+                            >
+                              {label}
+                            </span>
                           </div>
-                          <span 
-                            className="text-xs font-bold text-white transition-all duration-300"
-                            style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
-                          >
-                            {label}
-                          </span>
-                        </div>
-                        {activeTab === type && (
-                          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/10 to-white/5 pointer-events-none" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  {/* Room Content */}
-                  <TabsContent value={activeTab} className="flex-1 overflow-hidden mt-0">
-                    {activeTab !== 'discover' ? (
-                      <ScrollArea className="h-full">
-                        {activeTab === 'oneOnOne' && (
-                          <div className="mb-3">
-                            <Button size="sm" onClick={() => setShowUserSelector(true)}>
-                              Start Direct Chat
-                            </Button>
-                          </div>
-                        )}
-                        <div className="space-y-3 pr-3">
-                          {filteredRooms.map((room) => (
-                            <ChatRoomCard
-                              key={room.id}
-                              room={room}
-                              isActive={currentRoom?.id === room.id}
-                              onClick={setCurrentRoom}
-                              participantCount={room.chat_participants?.length || 0}
-                              showInviteButton={true}
-                              currentUserId={user?.id}
-                              onDeleteConversation={deleteConversation}
-                              onStartLiveVideo={handleStartLiveVideo}
-                            />
-                          ))}
-                          {filteredRooms.length === 0 && (
-                            <div className="text-center py-8">
-                              <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
-                              <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-                                {activeTab === 'group' ? 'No Grove Circles yet' : activeTab === 'oneOnOne' ? 'No one-on-one chats yet' : 'No rooms found'}
-                              </p>
-                              <Button 
-                                onClick={() => setShowCreateModal(true)}
-                                style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
-                                className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                {activeTab === 'group' ? 'Create your first Grove Circle' : 'Create your first room'}
+                          {activeTab === type && (
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/10 to-white/5 pointer-events-none" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Room Content */}
+                    <TabsContent value={activeTab} className="flex-1 overflow-hidden mt-0">
+                      {activeTab !== 'discover' ? (
+                        <ScrollArea className="h-full">
+                          {activeTab === 'oneOnOne' && (
+                            <div className="mb-3">
+                              <Button size="sm" onClick={() => setShowUserSelector(true)}>
+                                Start Direct Chat
                               </Button>
                             </div>
                           )}
-                        </div>
-                      </ScrollArea>
-                    ) : null}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+                          <div className="space-y-3 pr-3">
+                            {filteredRooms.map((room) => (
+                              <ChatRoomCard
+                                key={room.id}
+                                room={room}
+                                isActive={currentRoom?.id === room.id}
+                                onClick={setCurrentRoom}
+                                participantCount={room.chat_participants?.length || 0}
+                                showInviteButton={true}
+                                currentUserId={user?.id}
+                                onDeleteConversation={deleteConversation}
+                                onStartLiveVideo={handleStartLiveVideo}
+                              />
+                            ))}
+                            {filteredRooms.length === 0 && (
+                              <div className="text-center py-8">
+                                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-white drop-shadow-lg" />
+                                <p className="text-sm text-white font-semibold mb-4 px-3 py-2 rounded-lg bg-black/40 backdrop-blur-sm" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                                  {activeTab === 'group' ? 'No Grove Circles yet' : activeTab === 'oneOnOne' ? 'No one-on-one chats yet' : 'No rooms found'}
+                                </p>
+                                <Button 
+                                  onClick={() => setShowCreateModal(true)}
+                                  style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
+                                  className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  {activeTab === 'group' ? 'Create your first Grove Circle' : 'Create your first room'}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      ) : null}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {/* User Selector */}
+          {/* User Selector (Optional) */}
           {showUserSelector && (
             <div className="lg:col-span-1">
               <UserSelector
@@ -613,19 +624,8 @@ const ChatappPage = () => {
             </div>
           )}
 
-          {/* Contacts List */}
-          {showContactsList && (
-            <div className="lg:col-span-1 h-[calc(100vh-200px)]">
-              <ContactsList
-                onStartDirectChat={handleStartDirectChat}
-                onStartCall={handleStartCall}
-                selectedContactId={currentRoom?.id}
-              />
-            </div>
-          )}
-
           {/* Main Chat Area */}
-          <div className={`${showUserSelector || showContactsList ? 'lg:col-span-1' : 'lg:col-span-2'} flex flex-col gap-4`}>
+          <div className={`${showUserSelector || showContactsList ? 'lg:col-span-2' : 'lg:col-span-3'} flex flex-col gap-4`}>
             {currentRoom && (
               <ChatModerationPanel 
                 currentRoom={currentRoom} 

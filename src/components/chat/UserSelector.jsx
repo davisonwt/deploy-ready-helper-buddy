@@ -99,7 +99,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
         {/* Dropdown list (not transparent, high z-index) */}
         <div className="space-y-2">
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full justify-between">
               <SelectValue placeholder="Select a sower/bestower" />
             </SelectTrigger>
             <SelectContent className="bg-popover text-popover-foreground">
@@ -110,7 +110,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <Button size="sm" onClick={() => selectedUserId && onStartDirectChat(selectedUserId)} disabled={!selectedUserId}>
               <MessageSquare className="h-4 w-4 mr-1" /> Chat
             </Button>
