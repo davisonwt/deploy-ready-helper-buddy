@@ -698,9 +698,27 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
               variant="ghost"
               size="sm"
               onClick={async () => {
+                console.log('📞 [ChatRoom] Phone button clicked');
+                console.log('📞 [ChatRoom] Current user:', user?.id);
+                console.log('📞 [ChatRoom] Participants:', participants);
+                console.log('📞 [ChatRoom] startCall function:', typeof startCall);
+                
+                if (!startCall) {
+                  console.error('❌ [ChatRoom] startCall is not available!');
+                  toast({
+                    title: "Error",
+                    description: "Call system not initialized. Please refresh the page.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
                 // Find the other participant (not the current user)
                 const otherParticipant = participants.find((p: any) => p.user_id !== user?.id);
+                console.log('📞 [ChatRoom] Other participant found:', otherParticipant);
+                
                 if (!otherParticipant) {
+                  console.error('❌ [ChatRoom] No other participant found');
                   toast({
                     title: "Error",
                     description: "No other participant found in this chat",
@@ -708,11 +726,32 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                   });
                   return;
                 }
+                
                 const receiverName = otherParticipant.profiles?.display_name || 
                                    `${otherParticipant.profiles?.first_name || ''} ${otherParticipant.profiles?.last_name || ''}`.trim() ||
                                    'User';
+                
                 console.log('📞 [ChatRoom] Starting call to:', otherParticipant.user_id, receiverName);
-                await startCall(otherParticipant.user_id, receiverName, 'video', roomId);
+                
+                try {
+                  const result = await startCall(otherParticipant.user_id, receiverName, 'video', roomId);
+                  console.log('📞 [ChatRoom] startCall result:', result);
+                  if (!result) {
+                    console.error('❌ [ChatRoom] startCall returned null/undefined');
+                    toast({
+                      title: "Call Failed",
+                      description: "Failed to start the call. Check console for details.",
+                      variant: "destructive"
+                    });
+                  }
+                } catch (error) {
+                  console.error('❌ [ChatRoom] Error calling startCall:', error);
+                  toast({
+                    title: "Call Error",
+                    description: error instanceof Error ? error.message : "Unknown error occurred",
+                    variant: "destructive"
+                  });
+                }
               }}
             >
               <Phone className="h-4 w-4" />
