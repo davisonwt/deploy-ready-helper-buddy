@@ -1,6 +1,8 @@
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { useEffect } from 'react';
 
+// Component for Jitsi video calls using self-hosted instance
+
 interface JitsiCallProps {
   roomName: string;
   onLeave: () => void;
