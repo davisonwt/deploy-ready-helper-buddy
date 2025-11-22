@@ -426,8 +426,8 @@ const CommunicationsHub = () => {
               {/* Chat Type Tabs */}
               <Tabs value={chatType} onValueChange={(v) => setChatType(v as 'one' | 'circle')}>
                 <TabsList className="gap-4">
-                  <TabsTrigger value="one">One-on-Ones</TabsTrigger>
-                  <TabsTrigger value="circle">Community</TabsTrigger>
+                  <TabsTrigger value="one" className="rounded-2xl">One-on-Ones</TabsTrigger>
+                  <TabsTrigger value="circle" className="rounded-2xl">Community</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="one" className="space-y-4 mt-4">
