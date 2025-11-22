@@ -1,4 +1,4 @@
-import { JitsiMeet } from '@jitsi/react-sdk';
+import { JitsiMeeting } from '@jitsi/react-sdk';
 import { useEffect } from 'react';
 
 interface JitsiCallProps {
@@ -17,7 +17,7 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
 
   return (
     <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
-      <JitsiMeet
+      <JitsiMeeting
         domain="meet.sow2growapp.com"
         roomName={roomName}
         configOverwrite={{
@@ -74,15 +74,10 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
           ENABLE_WELCOME_PAGE_TOOLBAR_BUTTON: true,
           PREJOIN_PAGE_ENABLED: true,
         }}
-        onReady={() => {
-          // Hide any spinners when Jitsi is ready
-          const spinners = document.querySelectorAll('[class*="spinner"], [class*="loading"]');
-          spinners.forEach((el) => {
-            (el as HTMLElement).style.display = 'none';
+        onApiReady={(externalApi) => {
+          externalApi.addListener('readyToClose', () => {
+            onLeave();
           });
-        }}
-        onLeave={() => {
-          onLeave();
         }}
         getIFrameRef={(iframeRef) => {
           if (iframeRef) {
