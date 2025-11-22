@@ -147,6 +147,8 @@ services:
     jvb:
         image: jitsi/jvb:stable-9258
         restart: ${RESTART_POLICY:-unless-stopped}
+        expose:
+            - '9090'
         ports:
             - '10000:10000/udp'
             - '4443:4443/tcp'
