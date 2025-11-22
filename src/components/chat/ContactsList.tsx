@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Phone, Video, Search, Users, Star, Heart, Sparkles, UserCheck } from 'lucide-react';
+import { MessageSquare, Phone, Video, Search, Star, UserCheck, CheckCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallManager } from '@/hooks/useCallManager';
 import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Contact {
   user_id: string;
@@ -20,25 +20,29 @@ interface Contact {
   avatar_url: string;
   bio: string;
   is_verified: boolean;
-  category?: string;
+  last_message?: string;
+  last_message_time?: string;
+  unread_count?: number;
 }
 
-type ContactCategory = 'all' | 'family' | 'community_364' | 's2g_sowers' | 's2g_bestowers' | 'favorites' | 'recent';
+type ContactCategory = 'all' | 'unread' | 'favorites' | 'family' | 'community_364' | 's2g_sowers' | 's2g_bestowers' | 's2g_whisperers';
 
 interface ContactsListProps {
   onStartDirectChat: (userId: string) => void;
   onStartCall?: (userId: string, callType: 'audio' | 'video') => void;
+  selectedContactId?: string;
 }
 
-const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => {
+const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: ContactsListProps) => {
   const { user } = useAuth();
   const { startCall } = useCallManager();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<ContactCategory>('all');
+  const [activeTab, setActiveTab] = useState<ContactCategory>('all');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [recentContacts, setRecentContacts] = useState<string[]>([]);
+  const [whisperers, setWhisperers] = useState<Set<string>>(new Set());
 
   // Load contacts
   useEffect(() => {
@@ -46,6 +50,8 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
     loadContacts();
     loadFavorites();
     loadRecentContacts();
+    loadLastMessages();
+    loadWhisperers();
   }, [user]);
 
   const loadContacts = async () => {
@@ -61,7 +67,6 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
 
       if (error) throw error;
       
-      // Filter out users with blank names
       const validContacts = (data || []).filter((c: any) => {
         const name = c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim();
         return name && name.length > 1 && name !== ' ';
@@ -75,6 +80,46 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
     }
   };
 
+  const loadLastMessages = async () => {
+    if (!user) return;
+    try {
+      // Get last messages for each contact
+      const { data: messages } = await supabase
+        .from('chat_messages')
+        .select('id, content, sender_id, room_id, created_at, chat_rooms!inner(room_type, chat_participants!inner(user_id))')
+        .eq('chat_rooms.chat_participants.user_id', user.id)
+        .eq('chat_rooms.room_type', 'direct')
+        .order('created_at', { ascending: false });
+
+      if (messages) {
+        // Group by contact and get latest message
+        const contactMessages = new Map<string, { content: string; time: string }>();
+        messages.forEach((msg: any) => {
+          const participants = msg.chat_rooms?.chat_participants || [];
+          const otherUser = participants.find((p: any) => p.user_id !== user.id);
+          if (otherUser && !contactMessages.has(otherUser.user_id)) {
+            contactMessages.set(otherUser.user_id, {
+              content: msg.content || '',
+              time: msg.created_at
+            });
+          }
+        });
+
+        // Update contacts with last messages
+        setContacts(prev => prev.map(contact => {
+          const lastMsg = contactMessages.get(contact.user_id);
+          return lastMsg ? {
+            ...contact,
+            last_message: lastMsg.content,
+            last_message_time: lastMsg.time
+          } : contact;
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading last messages:', error);
+    }
+  };
+
   const loadFavorites = async () => {
     if (!user) return;
     try {
@@ -83,7 +128,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
         .select('favorite_user_id')
         .eq('user_id', user.id);
       
-      if (error && error.code !== '42P01') { // Ignore "table doesn't exist" error
+      if (error && error.code !== '42P01') {
         console.error('Error loading favorites:', error);
         return;
       }
@@ -92,7 +137,6 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
         setFavorites(new Set(data.map((f: any) => f.favorite_user_id)));
       }
     } catch (error: any) {
-      // Table might not exist yet - that's okay, favorites will be empty
       if (error.code !== '42P01') {
         console.error('Error loading favorites:', error);
       }
@@ -111,6 +155,42 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
     }
   };
 
+  const loadWhisperers = async () => {
+    if (!user) return;
+    try {
+      // Load users who are content marketing members (whisperers)
+      // Check if they have marketing videos or are in sowers table
+      const { data: sowersData } = await supabase
+        .from('sowers')
+        .select('user_id');
+      
+      // Also check for users who have uploaded marketing videos
+      const { data: marketingVideos } = await supabase
+        .from('ai_creations')
+        .select('user_id')
+        .eq('content_type', 'marketing_tip')
+        .not('user_id', 'is', null);
+      
+      const whispererIds = new Set<string>();
+      
+      if (sowersData) {
+        sowersData.forEach((sower: any) => {
+          if (sower.user_id) whispererIds.add(sower.user_id);
+        });
+      }
+      
+      if (marketingVideos) {
+        marketingVideos.forEach((video: any) => {
+          if (video.user_id) whispererIds.add(video.user_id);
+        });
+      }
+      
+      setWhisperers(whispererIds);
+    } catch (error) {
+      console.error('Error loading whisperers:', error);
+    }
+  };
+
   const toggleFavorite = async (userId: string) => {
     if (!user) return;
     const isFavorite = favorites.has(userId);
@@ -122,9 +202,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
           .eq('user_id', user.id)
           .eq('favorite_user_id', userId);
         
-        if (error && error.code !== '42P01') {
-          throw error;
-        }
+        if (error && error.code !== '42P01') throw error;
         
         setFavorites(prev => {
           const next = new Set(prev);
@@ -136,14 +214,11 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
           .from('user_favorites')
           .insert({ user_id: user.id, favorite_user_id: userId });
         
-        if (error && error.code !== '42P01') {
-          throw error;
-        }
+        if (error && error.code !== '42P01') throw error;
         
         setFavorites(prev => new Set([...prev, userId]));
       }
     } catch (error: any) {
-      // Table might not exist yet - use localStorage as fallback
       if (error.code === '42P01') {
         const favsKey = `favorites_${user.id}`;
         const stored = localStorage.getItem(favsKey);
@@ -173,12 +248,13 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
     });
   };
 
-  const handleMessage = (contact: Contact) => {
+  const handleContactClick = (contact: Contact) => {
     addToRecent(contact.user_id);
     onStartDirectChat(contact.user_id);
   };
 
-  const handleCall = async (contact: Contact, callType: 'audio' | 'video') => {
+  const handleCall = async (contact: Contact, callType: 'audio' | 'video', e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!user) return;
     addToRecent(contact.user_id);
     
@@ -199,38 +275,16 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
            'Unknown User';
   };
 
-  const categorizeContact = (contact: Contact): ContactCategory[] => {
-    const categories: ContactCategory[] = [];
-    
-    // Check favorites
-    if (favorites.has(contact.user_id)) {
-      categories.push('favorites');
-    }
-    
-    // Check recent
-    if (recentContacts.includes(contact.user_id)) {
-      categories.push('recent');
-    }
-    
-    // TODO: Add logic to determine s2g_sowers and s2g_bestowers based on user roles
-    // For now, we'll use a simple check - you can enhance this later
-    // categories.push('s2g_sowers'); // if user is a sower
-    // categories.push('s2g_bestowers'); // if user is a bestower
-    
-    return categories;
-  };
-
   const filteredContacts = useMemo(() => {
     let filtered = contacts;
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      if (selectedCategory === 'favorites') {
-        filtered = filtered.filter(c => favorites.has(c.user_id));
-      } else if (selectedCategory === 'recent') {
-        filtered = filtered.filter(c => recentContacts.includes(c.user_id));
-      }
-      // Add more category filters as needed
+    // Filter by tab
+    if (activeTab === 'unread') {
+      filtered = filtered.filter(c => (c.unread_count || 0) > 0);
+    } else if (activeTab === 'favorites') {
+      filtered = filtered.filter(c => favorites.has(c.user_id));
+    } else if (activeTab === 's2g_whisperers') {
+      filtered = filtered.filter(c => whisperers.has(c.user_id));
     }
 
     // Filter by search term
@@ -239,175 +293,186 @@ const ContactsList = ({ onStartDirectChat, onStartCall }: ContactsListProps) => 
       filtered = filtered.filter(c => {
         const name = getDisplayName(c).toLowerCase();
         const bio = (c.bio || '').toLowerCase();
-        return name.includes(term) || bio.includes(term);
+        const lastMsg = (c.last_message || '').toLowerCase();
+        return name.includes(term) || bio.includes(term) || lastMsg.includes(term);
       });
     }
 
-    // Sort: favorites first, then by name
+    // Sort: unread first, then favorites, then by last message time or name
     return filtered.sort((a, b) => {
+      const aUnread = (a.unread_count || 0) > 0;
+      const bUnread = (b.unread_count || 0) > 0;
+      if (aUnread && !bUnread) return -1;
+      if (!aUnread && bUnread) return 1;
+      
       const aIsFavorite = favorites.has(a.user_id);
       const bIsFavorite = favorites.has(b.user_id);
       if (aIsFavorite && !bIsFavorite) return -1;
       if (!aIsFavorite && bIsFavorite) return 1;
+      
+      if (a.last_message_time && b.last_message_time) {
+        return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+      }
+      
       return getDisplayName(a).localeCompare(getDisplayName(b));
     });
-  }, [contacts, selectedCategory, searchTerm, favorites, recentContacts]);
+  }, [contacts, activeTab, searchTerm, favorites]);
 
-  const categoryOptions = [
-    { value: 'all', label: 'All Contacts', icon: Users },
-    { value: 'favorites', label: 'Favorites', icon: Star },
-    { value: 'recent', label: 'Recent', icon: Sparkles },
-    { value: 'family', label: 'Family', icon: Heart },
-    { value: 'community_364', label: '364 Community', icon: Users },
-    { value: 's2g_sowers', label: 'S2G Sowers', icon: UserCheck },
-    { value: 's2g_bestowers', label: 'S2G Bestowers', icon: Sparkles },
-  ];
+  const unreadCount = contacts.filter(c => (c.unread_count || 0) > 0).length;
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Contacts
-          </CardTitle>
-          <Badge variant="secondary">{filteredContacts.length}</Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col gap-3 overflow-hidden">
-        {/* Category Filter */}
-        <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as ContactCategory)}>
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {categoryOptions.map((option) => {
-              const Icon = option.icon;
-              return (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    {option.label}
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-
-        {/* Search */}
+    <div className="h-full flex flex-col bg-background border-r">
+      {/* Search Bar */}
+      <div className="p-3 border-b">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search contacts..."
-            className="pl-10"
+            placeholder="Search"
+            className="pl-10 bg-muted/50"
           />
         </div>
+      </div>
 
-        {/* Contacts List */}
-        <ScrollArea className="flex-1">
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading contacts...</div>
-          ) : filteredContacts.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {searchTerm ? 'No contacts found' : 'No contacts available'}
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {filteredContacts.map((contact) => {
-                const displayName = getDisplayName(contact);
-                const isFavorite = favorites.has(contact.user_id);
-                const isRecent = recentContacts.includes(contact.user_id);
+      {/* Tabs */}
+      <div className="px-3 pt-3 border-b">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ContactCategory)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="all" className="relative">
+              All
+              {contacts.length > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                  {contacts.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="unread" className="relative">
+              Unread
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-                return (
-                  <div
-                    key={contact.user_id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg transition-all cursor-pointer group",
-                      "hover:bg-accent hover:shadow-sm border border-transparent hover:border-border"
-                    )}
-                    onClick={() => handleMessage(contact)}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-12 w-12 ring-2 ring-background">
-                        <AvatarImage src={contact.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {displayName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {contact.is_verified && (
-                        <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-0.5">
-                          <UserCheck className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
+      {/* Contacts List */}
+      <ScrollArea className="flex-1">
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading contacts...</div>
+        ) : filteredContacts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {searchTerm ? 'No contacts found' : 'No contacts available'}
+          </div>
+        ) : (
+          <div className="divide-y">
+            {filteredContacts.map((contact) => {
+              const displayName = getDisplayName(contact);
+              const isFavorite = favorites.has(contact.user_id);
+              const isSelected = selectedContactId === contact.user_id;
+              const hasUnread = (contact.unread_count || 0) > 0;
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold truncate">{displayName}</p>
-                        {isFavorite && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+              return (
+                <div
+                  key={contact.user_id}
+                  className={cn(
+                    "flex items-start gap-3 p-3 cursor-pointer transition-colors group",
+                    "hover:bg-accent/50",
+                    isSelected && "bg-primary/10 border-l-2 border-l-primary"
+                  )}
+                  onClick={() => handleContactClick(contact)}
+                >
+                  <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarImage src={contact.avatar_url} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      {displayName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className={cn(
+                          "font-medium truncate",
+                          hasUnread && "font-semibold"
+                        )}>
+                          {displayName}
+                        </p>
+                        {contact.is_verified && (
+                          <UserCheck className="h-4 w-4 text-primary flex-shrink-0" />
                         )}
-                        {isRecent && (
-                          <Badge variant="outline" className="text-xs">Recent</Badge>
+                        {isFavorite && (
+                          <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                         )}
                       </div>
-                      {contact.bio && (
-                        <p className="text-sm text-muted-foreground truncate">{contact.bio}</p>
+                      {contact.last_message_time && (
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          {formatDistanceToNow(new Date(contact.last_message_time), { addSuffix: true })
+                            .replace('about ', '')
+                            .replace(' ago', '')}
+                        </span>
                       )}
                     </div>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(contact.user_id);
-                        }}
-                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        <Star className={cn("h-4 w-4", isFavorite && "fill-yellow-500 text-yellow-500")} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCall(contact, 'audio');
-                        }}
-                        title="Voice call"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCall(contact, 'video');
-                        }}
-                        title="Video call"
-                      >
-                        <Video className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    
+                    {contact.last_message ? (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground truncate flex-1">
+                          {contact.last_message}
+                        </p>
+                        {hasUnread && (
+                          <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs flex-shrink-0">
+                            {contact.unread_count}
+                          </Badge>
+                        )}
+                        {!hasUnread && contact.last_message && (
+                          <CheckCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        No messages yet
+                      </p>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+
+                  {/* Action buttons on hover */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(contact.user_id);
+                      }}
+                      className="p-1.5 rounded hover:bg-accent transition-colors"
+                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Star className={cn("h-4 w-4", isFavorite && "fill-yellow-500 text-yellow-500")} />
+                    </button>
+                    <button
+                      onClick={(e) => handleCall(contact, 'audio', e)}
+                      className="p-1.5 rounded hover:bg-accent transition-colors"
+                      title="Voice call"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleCall(contact, 'video', e)}
+                      className="p-1.5 rounded hover:bg-accent transition-colors"
+                      title="Video call"
+                    >
+                      <Video className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
   );
 };
 
 export default ContactsList;
-
