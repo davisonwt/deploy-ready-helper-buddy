@@ -23,9 +23,11 @@ interface Contact {
   last_message?: string;
   last_message_time?: string;
   unread_count?: number;
+  has_one_on_one?: boolean;
+  has_group_chat?: boolean;
 }
 
-type ContactCategory = 'all' | 'unread' | 'favorites' | 'family' | 'community_364' | 's2g_sowers' | 's2g_bestowers' | 's2g_whisperers';
+type ContactCategory = 'all' | 'unread' | 'favorites' | 'family' | 'community_364' | 's2g_sowers' | 's2g_bestowers' | 's2g_whisperers' | 'one_on_one' | 'group';
 
 interface ContactsListProps {
   onStartDirectChat: (userId: string) => void;
@@ -43,6 +45,8 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [recentContacts, setRecentContacts] = useState<string[]>([]);
   const [whisperers, setWhisperers] = useState<Set<string>>(new Set());
+  const [oneOnOneContacts, setOneOnOneContacts] = useState<Set<string>>(new Set());
+  const [groupChatContacts, setGroupChatContacts] = useState<Set<string>>(new Set());
 
   // Load contacts
   useEffect(() => {
@@ -52,6 +56,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
     loadRecentContacts();
     loadLastMessages();
     loadWhisperers();
+    loadChatRooms();
   }, [user]);
 
   const loadContacts = async () => {
@@ -285,6 +290,10 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
       filtered = filtered.filter(c => favorites.has(c.user_id));
     } else if (activeTab === 's2g_whisperers') {
       filtered = filtered.filter(c => whisperers.has(c.user_id));
+    } else if (activeTab === 'one_on_one') {
+      filtered = filtered.filter(c => oneOnOneContacts.has(c.user_id));
+    } else if (activeTab === 'group') {
+      filtered = filtered.filter(c => groupChatContacts.has(c.user_id));
     }
 
     // Filter by search term
@@ -316,7 +325,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
       
       return getDisplayName(a).localeCompare(getDisplayName(b));
     });
-  }, [contacts, activeTab, searchTerm, favorites]);
+  }, [contacts, activeTab, searchTerm, favorites, oneOnOneContacts, groupChatContacts]);
 
   const unreadCount = contacts.filter(c => (c.unread_count || 0) > 0).length;
 
@@ -335,25 +344,36 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Category Dropdown */}
       <div className="px-3 pt-3 border-b">
+        <Select value={activeTab} onValueChange={(v) => setActiveTab(v as ContactCategory)}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Contacts" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Contacts</SelectItem>
+            <SelectItem value="unread">Unread ({unreadCount})</SelectItem>
+            <SelectItem value="favorites">Favorites</SelectItem>
+            <SelectItem value="one_on_one">1-1 Chats</SelectItem>
+            <SelectItem value="group">Group Chats</SelectItem>
+            <SelectItem value="s2g_sowers">S2G Sowers</SelectItem>
+            <SelectItem value="s2g_bestowers">S2G Bestowers</SelectItem>
+            <SelectItem value="s2g_whisperers">S2G Whisperers</SelectItem>
+            <SelectItem value="family">Family</SelectItem>
+            <SelectItem value="community_364">364 Community</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Quick Tabs for 1-1 vs Group */}
+      <div className="px-3 pt-2 border-b">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ContactCategory)}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all" className="relative">
-              All
-              {contacts.length > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
-                  {contacts.length}
-                </Badge>
-              )}
+            <TabsTrigger value="one_on_one" className="relative">
+              1-1
             </TabsTrigger>
-            <TabsTrigger value="unread" className="relative">
-              Unread
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
-                  {unreadCount}
-                </Badge>
-              )}
+            <TabsTrigger value="group" className="relative">
+              Group
             </TabsTrigger>
           </TabsList>
         </Tabs>
