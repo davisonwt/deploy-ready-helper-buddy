@@ -423,12 +423,24 @@ const ChatappPage = () => {
               <div className="flex flex-wrap gap-2">
                 <Button 
                   onClick={() => {
+                    setShowContactsList(!showContactsList);
+                    setShowUserSelector(false);
+                  }} 
+                  variant={showContactsList ? "default" : "outline"}
+                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                >
+                  <Users className="h-4 w-4" />
+                  Contacts
+                </Button>
+                <Button 
+                  onClick={() => {
                     console.log('🎯 Direct Chat button clicked!');
                     console.log('Current showUserSelector state:', showUserSelector);
                     setShowUserSelector(!showUserSelector);
+                    setShowContactsList(false);
                     console.log('New showUserSelector state:', !showUserSelector);
                   }} 
-                  style={{ backgroundColor: '#60A5FA', color: 'white', borderColor: '#60A5FA' }}
+                  variant={showUserSelector ? "default" : "outline"}
                   className="gap-2 hover:shadow-lg transition-all duration-300"
                 >
                   <MessageSquare className="h-4 w-4" />
