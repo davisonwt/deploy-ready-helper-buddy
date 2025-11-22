@@ -112,14 +112,19 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
             <Button size="sm" onClick={() => selectedUserId && onStartDirectChat(selectedUserId)} disabled={!selectedUserId}>
               <MessageSquare className="h-4 w-4 mr-1" /> Chat
             </Button>
-            <a
-              href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
-              target="_blank"
-              rel="noopener"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9 p-0"
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
             >
-              <Phone className="h-4 w-4" />
-            </a>
+              <a
+                href={`https://meet.sow2growapp.com/${crypto.randomUUID().slice(0,12)}`}
+                target="_blank"
+                rel="noopener"
+              >
+                <Phone className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
         </div>
 

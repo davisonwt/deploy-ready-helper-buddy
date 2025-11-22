@@ -12,18 +12,24 @@ export function JitsiLinkButton({ callType = 'audio', className }: JitsiLinkButt
   const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
 
   return (
-    <a
-      href={jitsiUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`flex items-center gap-2 ${className || ''}`}
+    <Button
+      variant="ghost"
+      size="sm"
+      asChild
+      className={className}
     >
-      {callType === 'video' ? (
-        <Video className="h-4 w-4" />
-      ) : (
-        <Phone className="h-4 w-4" />
-      )}
-    </a>
+      <a
+        href={jitsiUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {callType === 'video' ? (
+          <Video className="h-4 w-4" />
+        ) : (
+          <Phone className="h-4 w-4" />
+        )}
+      </a>
+    </Button>
   );
 }
 
