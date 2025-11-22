@@ -16,7 +16,7 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
   }, []);
 
   return (
-    <div className="w-full h-full min-h-[600px] rounded-lg overflow-hidden border border-border">
+    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-border">
       <JitsiMeet
         domain="meet.sow2growapp.com"
         roomName={roomName}
