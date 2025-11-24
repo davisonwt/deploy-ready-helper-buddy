@@ -24,6 +24,7 @@ import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
+import { RelationshipLayerChatApp } from '@/components/chat/RelationshipLayerChatApp';
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ const CommunicationsHub = () => {
   const [isStartingDirect, setIsStartingDirect] = useState(false);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [chatType, setChatType] = useState<'one' | 'circle'>('one');
+  const [useRelationshipLayer, setUseRelationshipLayer] = useState(false);
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -104,6 +106,14 @@ const CommunicationsHub = () => {
     localStorage.setItem('communications-hub-tab', activeTab);
     window.location.hash = activeTab;
   }, [activeTab]);
+
+  // Check if user wants relationship layer (check localStorage preference)
+  useEffect(() => {
+    const preference = localStorage.getItem('chatapp:relationship-layer');
+    if (preference === 'enabled') {
+      setUseRelationshipLayer(true);
+    }
+  }, []);
 
   // Fetch users when search term changes
   useEffect(() => {
@@ -402,26 +412,47 @@ const CommunicationsHub = () => {
 
           {/* Chats Tab */}
           <TabsContent value="chats" className="space-y-6">
-            <div className="space-y-4">
-              {/* Search and Create */}
-              <div className="flex gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search chats..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+            {useRelationshipLayer ? (
+              // Relationship Layer Mode
+              <RelationshipLayerChatApp 
+                onCompleteOnboarding={() => {
+                  // Keep relationship layer enabled after onboarding
+                  localStorage.setItem('chatapp:relationship-layer', 'enabled');
+                }}
+              />
+            ) : (
+              <div className="space-y-4">
+                {/* Search and Create */}
+                <div className="flex gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search chats..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setUseRelationshipLayer(true);
+                      localStorage.setItem('chatapp:relationship-layer', 'enabled');
+                    }}
+                    className="gap-2 rounded-2xl"
+                  >
+                    <Users className="h-4 w-4" />
+                    Try Circles
+                  </Button>
+                  <Button 
+                    onClick={() => setIsCreateDialogOpen(true)}
+                    className="gap-2 bg-blue-600 hover:bg-blue-700 rounded-2xl"
+                  >
+                    <Plus className="h-4 w-4" />
+                    New Chat
+                  </Button>
                 </div>
-                <Button 
-                  onClick={() => setIsCreateDialogOpen(true)}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700 rounded-2xl"
-                >
-                  <Plus className="h-4 w-4" />
-                  New Chat
-                </Button>
-              </div>
 
               {/* Chat Type Tabs */}
               <Tabs value={chatType} onValueChange={(v) => setChatType(v as 'one' | 'circle')}>
@@ -453,6 +484,7 @@ const CommunicationsHub = () => {
                 </TabsContent>
               </Tabs>
             </div>
+            )}
           </TabsContent>
 
           {/* Live Radio Tab */}
