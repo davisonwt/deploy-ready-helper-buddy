@@ -52,16 +52,20 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, full_name, avatar_url, bio')
+        .select('id, user_id, username, first_name, last_name, avatar_url, bio')
         .neq('user_id', user.id)
         .limit(50);
 
       if (error) throw error;
 
-      // Add mock tags for now (you can add tags column to profiles table)
+      // Add mock tags
       const profilesWithTags = (data || []).map(profile => ({
-        ...profile,
-        tags: ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1),
+        id: profile.id,
+        username: profile.username,
+        full_name: profile.username || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+        avatar_url: profile.avatar_url,
+        bio: profile.bio,
+        tags: ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1)
       }));
 
       setProfiles(profilesWithTags);
@@ -186,7 +190,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
                   handleSwipe('left', info);
                 }
               }}
-              whileDrag={{ rotate: info => (info.offset.x / 10) }}
             >
               <Card className="h-full cursor-grab active:cursor-grabbing">
                 <CardContent className="p-6 h-full flex flex-col">
