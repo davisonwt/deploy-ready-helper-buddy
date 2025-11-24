@@ -92,8 +92,6 @@ export function CirclesBubbleRail({
                 exit={{ opacity: 0, scale: 0.8 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onLongPress={() => handleLongPress(index)}
-                onTouchEnd={handleDragEnd}
                 className="relative flex-shrink-0"
               >
                 <Button

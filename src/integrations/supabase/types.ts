@@ -767,6 +767,65 @@ export type Database = {
           },
         ]
       }
+      circle_members: {
+        Row: {
+          added_by: string | null
+          circle_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          circle_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          circle_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_members_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circles: {
+        Row: {
+          color: string
+          created_at: string | null
+          emoji: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          emoji: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          emoji?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       clubhouse_gifts: {
         Row: {
           amount: number
@@ -1675,6 +1734,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           viewer_count?: number | null
+        }
+        Relationships: []
+      }
+      message_streaks: {
+        Row: {
+          id: string
+          last_message_date: string | null
+          streak_days: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_message_date?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_message_date?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -4439,6 +4522,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_circles: {
+        Row: {
+          circle_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_circles_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           action_url: string | null
@@ -5019,6 +5131,7 @@ export type Database = {
         }[]
       }
       get_current_radio_show: { Args: never; Returns: Json }
+      get_message_streak: { Args: { user_id_param: string }; Returns: number }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
