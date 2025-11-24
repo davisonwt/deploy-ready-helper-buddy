@@ -65,17 +65,21 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, display_name, first_name, last_name, avatar_url, bio, is_verified')
+        .select('user_id, username, first_name, last_name, avatar_url, bio')
         .neq('user_id', user.id)
-        .not('display_name', 'is', null)
-        .order('display_name', { ascending: true });
+        .not('username', 'is', null)
+        .order('username', { ascending: true });
 
       if (error) throw error;
       
       const validContacts = (data || []).filter((c: any) => {
-        const name = c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim();
+        const name = c.username || `${c.first_name || ''} ${c.last_name || ''}`.trim();
         return name && name.length > 1 && name !== ' ';
-      });
+      }).map((c: any) => ({
+        ...c,
+        display_name: c.username || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+        is_verified: false
+      }));
 
       setContacts(validContacts);
     } catch (error) {
@@ -126,23 +130,9 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
   };
 
   const loadFavorites = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from('user_favorites')
-        .select('favorite_user_id')
-        .eq('user_id', user.id);
-      
-      if (error && error.code !== '42P01') {
-        console.error('Error loading favorites:', error);
-        return;
-      }
-      
-      if (data) {
-        setFavorites(new Set(data.map((f: any) => f.favorite_user_id)));
-      }
-    } catch (error: any) {
-      if (error.code !== '42P01') {
+    // Favorites feature not needed in circles UI
+    setFavorites(new Set());
+  };
         console.error('Error loading favorites:', error);
       }
     }
@@ -197,32 +187,9 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
   };
 
   const toggleFavorite = async (userId: string) => {
-    if (!user) return;
-    const isFavorite = favorites.has(userId);
-    try {
-      if (isFavorite) {
-        const { error } = await supabase
-          .from('user_favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('favorite_user_id', userId);
-        
-        if (error && error.code !== '42P01') throw error;
-        
-        setFavorites(prev => {
-          const next = new Set(prev);
-          next.delete(userId);
-          return next;
-        });
-      } else {
-        const { error } = await supabase
-          .from('user_favorites')
-          .insert({ user_id: user.id, favorite_user_id: userId });
-        
-        if (error && error.code !== '42P01') throw error;
-        
-        setFavorites(prev => new Set([...prev, userId]));
-      }
+    // Favorites feature not needed in circles UI
+    console.log('Favorites not implemented in circles UI');
+  };
     } catch (error: any) {
       if (error.code === '42P01') {
         const favsKey = `favorites_${user.id}`;

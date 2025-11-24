@@ -279,7 +279,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <UserPlus className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
                   Select a circle to see conversations
                 </p>
