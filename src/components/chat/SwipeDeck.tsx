@@ -58,11 +58,18 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
       if (error) throw error;
 
-      // Add mock tags for now (you can add tags column to profiles table)
-      const profilesWithTags = (data || []).map(profile => ({
-        ...profile,
-        tags: ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1),
-      }));
+      // Add mock tags for now
+      const profilesWithTags = (data || []).map(profile => {
+        const tags = ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1);
+        return {
+          id: profile.id,
+          username: profile.username,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          bio: profile.bio,
+          tags
+        };
+      });
 
       setProfiles(profilesWithTags);
       setLoading(false);
@@ -186,7 +193,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
                   handleSwipe('left', info);
                 }
               }}
-              whileDrag={{ rotate: info => (info.offset.x / 10) }}
             >
               <Card className="h-full cursor-grab active:cursor-grabbing">
                 <CardContent className="p-6 h-full flex flex-col">

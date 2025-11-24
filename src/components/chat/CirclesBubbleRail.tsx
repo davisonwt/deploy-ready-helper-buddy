@@ -92,8 +92,14 @@ export function CirclesBubbleRail({
                 exit={{ opacity: 0, scale: 0.8 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onLongPress={() => handleLongPress(index)}
-                onTouchEnd={handleDragEnd}
+                onPointerDown={(e) => {
+                  const timer = setTimeout(() => handleLongPress(index), 500);
+                  const cleanup = () => {
+                    clearTimeout(timer);
+                    document.removeEventListener('pointerup', cleanup);
+                  };
+                  document.addEventListener('pointerup', cleanup);
+                }}
                 className="relative flex-shrink-0"
               >
                 <Button
