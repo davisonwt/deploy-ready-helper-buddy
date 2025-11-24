@@ -56,7 +56,7 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
     loadRecentContacts();
     loadLastMessages();
     loadWhisperers();
-    loadChatRooms();
+    // Chat rooms loading removed - using circles instead
   }, [user]);
 
   const loadContacts = async () => {
