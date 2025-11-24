@@ -109,3 +109,9 @@ verify_jwt = true
 
 [functions.generate-community-offering]
 verify_jwt = true
+
+[functions.create-cryptomus-payment]
+verify_jwt = true
+
+[functions.cryptomus-webhook]
+verify_jwt = false
