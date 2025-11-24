@@ -185,8 +185,9 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
   // Onboarding flow
   if (showOnboarding) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <Card className="w-full max-w-md">
+      <div className="relative min-h-screen flex items-center justify-center p-4">
+        <AnimatedGradientBackground />
+        <Card className="w-full max-w-md relative z-10 bg-background/95 backdrop-blur">
           <CardContent className="p-6">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-2">Welcome to Your Circles</h2>
