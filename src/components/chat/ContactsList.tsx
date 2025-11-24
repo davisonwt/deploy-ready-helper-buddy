@@ -133,10 +133,6 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
     // Favorites feature not needed in circles UI
     setFavorites(new Set());
   };
-        console.error('Error loading favorites:', error);
-      }
-    }
-  };
 
   const loadRecentContacts = async () => {
     if (!user) return;
@@ -189,26 +185,6 @@ const ContactsList = ({ onStartDirectChat, onStartCall, selectedContactId }: Con
   const toggleFavorite = async (userId: string) => {
     // Favorites feature not needed in circles UI
     console.log('Favorites not implemented in circles UI');
-  };
-    } catch (error: any) {
-      if (error.code === '42P01') {
-        const favsKey = `favorites_${user.id}`;
-        const stored = localStorage.getItem(favsKey);
-        const favs = stored ? JSON.parse(stored) : [];
-        
-        if (isFavorite) {
-          const updated = favs.filter((id: string) => id !== userId);
-          localStorage.setItem(favsKey, JSON.stringify(updated));
-          setFavorites(new Set(updated));
-        } else {
-          const updated = [...favs, userId];
-          localStorage.setItem(favsKey, JSON.stringify(updated));
-          setFavorites(new Set(updated));
-        }
-      } else {
-        console.error('Error toggling favorite:', error);
-      }
-    }
   };
 
   const addToRecent = (userId: string) => {
