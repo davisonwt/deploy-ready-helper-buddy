@@ -12,7 +12,8 @@ import {
   Search,
   Plus,
   Mic,
-  LogIn
+  LogIn,
+  Users
 } from 'lucide-react';
 import { ChatList } from '@/components/chat/ChatList';
 import { LiveRadioTab } from '@/components/chat/LiveRadioTab';
