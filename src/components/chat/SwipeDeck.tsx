@@ -52,7 +52,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, full_name, avatar_url, bio')
+        .select('id, user_id, username, first_name, last_name, avatar_url, bio')
         .neq('user_id', user.id)
         .limit(50);
 
@@ -60,11 +60,12 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
       // Add mock tags for now
       const profilesWithTags = (data || []).map(profile => {
+        const fullName = profile.username || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
         const tags = ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1);
         return {
           id: profile.id,
           username: profile.username,
-          full_name: profile.full_name,
+          full_name: fullName,
           avatar_url: profile.avatar_url,
           bio: profile.bio,
           tags
