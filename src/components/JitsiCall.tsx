@@ -6,9 +6,14 @@ import { useEffect } from 'react';
 interface JitsiCallProps {
   roomName: string;
   onLeave: () => void;
+  userInfo?: {
+    displayName: string;
+    email: string;
+  };
+  isAudioOnly?: boolean;
 }
 
-export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
+export function JitsiCall({ roomName, onLeave, userInfo, isAudioOnly = false }: JitsiCallProps) {
   useEffect(() => {
     // Hide any loading spinners when component mounts
     const spinners = document.querySelectorAll('[class*="spinner"], [class*="loading"]');
@@ -22,12 +27,15 @@ export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
       <JitsiMeeting
         domain="meet.sow2growapp.com"
         roomName={roomName}
+        userInfo={userInfo}
         configOverwrite={{
           startWithAudioMuted: false,
-          startWithVideoMuted: false,
+          startWithVideoMuted: isAudioOnly ? true : false,
         }}
         interfaceConfigOverwrite={{
-          TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup'],
+          TOOLBAR_BUTTONS: isAudioOnly 
+            ? ['microphone', 'hangup'] 
+            : ['microphone', 'camera', 'hangup'],
           DISABLE_VIDEO_BACKGROUND: true,
           DISABLE_FOCUS_INDICATOR: true,
         }}
