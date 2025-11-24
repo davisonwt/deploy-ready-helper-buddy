@@ -94,7 +94,7 @@ export default function LiveTimezoneDisplay() {
         </Badge>
       </div>
       
-      <div className="text-xs text-center text-muted-foreground pt-2 border-t" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
+      <div className="text-xs text-center text-white pt-2 border-t">
         <Radio className="h-3 w-3 inline mr-1" />
         Radio shows scheduled across all zones
       </div>
