@@ -72,9 +72,28 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
-## Binance Pay Integration
+## Payment Gateway Integration
 
-This project now includes a full Binance Pay payment flow with automatic bestowal distribution.
+This project supports multiple payment gateways:
+
+### Cryptomus Payment Gateway (Recommended)
+
+Cryptomus is the preferred payment gateway for cryptocurrency payments with support for multiple currencies and networks.
+
+- **Quick Start**: See `CRYPTOMUS_QUICK_START.md`
+- **DNS Setup**: See `CRYPTOMUS_DNS_SETUP.md`
+- **Full Guide**: See `CRYPTOMUS_INTEGRATION.md`
+
+**Features:**
+- Multiple cryptocurrencies (USDC, USDT, BTC, ETH, etc.)
+- Multiple networks (TRC20, ERC20, BEP20, etc.)
+- Wallet-to-wallet payments
+- Automatic payment confirmation via webhooks
+- Low transaction fees (especially TRC20)
+
+### Binance Pay Integration (Legacy)
+
+This project includes a full Binance Pay payment flow with automatic bestowal distribution.
 
 - **Edge functions**:
   - `create-binance-pay-order` – creates a Binance Pay order, persists the bestowal, and returns the hosted checkout URL.

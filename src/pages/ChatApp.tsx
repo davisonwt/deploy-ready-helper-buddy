@@ -23,7 +23,8 @@ import {
   Search,
   Plus,
   LogIn,
-  X
+  X,
+  Users
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
@@ -31,6 +32,7 @@ import SafeUserSelector from '@/components/chat/SafeUserSelector';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
+import { RelationshipLayerChatApp } from '@/components/chat/RelationshipLayerChatApp';
 import {
   Dialog,
   DialogContent,
@@ -63,8 +65,9 @@ const ChatApp = () => {
   const [newChatName, setNewChatName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isStartingDirect, setIsStartingDirect] = useState(false);
-  const [activeTab, setActiveTab] = useState<'one' | 'circle'>('one');
+  const [activeTab, setActiveTab] = useState<'one' | 'circle' | 'relationship'>('one');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [useRelationshipLayer, setUseRelationshipLayer] = useState(false);
   
   // User selection states
   const [userSearchTerm, setUserSearchTerm] = useState('');
@@ -95,6 +98,14 @@ const ChatApp = () => {
     
     checkVerification();
   }, [user?.id]);
+
+  // Check if user wants relationship layer (check localStorage preference)
+  useEffect(() => {
+    const preference = localStorage.getItem('chatapp:relationship-layer');
+    if (preference === 'enabled') {
+      setUseRelationshipLayer(true);
+    }
+  }, []);
 
   // Persist last opened room and auto-open it on login
   useEffect(() => {
@@ -463,6 +474,14 @@ const ChatApp = () => {
 
       {currentRoomId ? (
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
+      ) : useRelationshipLayer ? (
+        // Relationship Layer Mode
+        <RelationshipLayerChatApp 
+          onCompleteOnboarding={() => {
+            // Keep relationship layer enabled after onboarding
+            localStorage.setItem('chatapp:relationship-layer', 'enabled');
+          }}
+        />
       ) : (
         <>
           {/* Verification Banner */}
@@ -477,13 +496,27 @@ const ChatApp = () => {
                   Click on a chat below to send messages, voice notes, make calls & more
                 </p>
               </div>
-              <Button 
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                New Chat
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setUseRelationshipLayer(true);
+                    localStorage.setItem('chatapp:relationship-layer', 'enabled');
+                  }}
+                  className="gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Try Circles
+                </Button>
+                <Button 
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  New Chat
+                </Button>
+              </div>
             </div>
 
             {/* Search Bar */}
