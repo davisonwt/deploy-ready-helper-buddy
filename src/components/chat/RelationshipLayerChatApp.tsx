@@ -208,35 +208,12 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
 
   // Main chat interface
   return (
-    <div
-      ref={backgroundRef}
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `linear-gradient(${hueRotation}deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))`,
-        transition: 'background 30s ease',
-      }}
-    >
-      {/* Animated gradient overlay */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={{
-          background: [
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-          ],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      />
-
+    <div className="relative min-h-screen">
+      <AnimatedGradientBackground />
+      
       <div className="relative z-10 flex flex-col h-screen">
         {/* Header with streak badge */}
-        <div className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-background/95 backdrop-blur">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold">ChatApp</h1>
             {streakDays > 0 && (
