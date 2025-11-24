@@ -5,6 +5,7 @@ import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
 import { BestowalCoin } from './BestowalCoin';
+import { AnimatedGradientBackground } from './AnimatedGradientBackground';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame, UserPlus } from 'lucide-react';

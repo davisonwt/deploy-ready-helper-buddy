@@ -99,12 +99,9 @@ const ChatApp = () => {
     checkVerification();
   }, [user?.id]);
 
-  // Check if user wants relationship layer (check localStorage preference)
+  // Auto-enable relationship layer by default
   useEffect(() => {
-    const preference = localStorage.getItem('chatapp:relationship-layer');
-    if (preference === 'enabled') {
-      setUseRelationshipLayer(true);
-    }
+    localStorage.setItem('chatapp:relationship-layer', 'enabled');
   }, []);
 
   // Persist last opened room and auto-open it on login
