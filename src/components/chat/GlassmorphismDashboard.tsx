@@ -455,16 +455,6 @@ export function GlassmorphismDashboard({
         </Button>
       </motion.div>
 
-      <style jsx>{`
-        @keyframes aurora {
-          0% {
-            transform: rotate(0deg) scale(1);
-          }
-          100% {
-            transform: rotate(360deg) scale(1.1);
-          }
-        }
-      `}</style>
     </div>
   );
 }

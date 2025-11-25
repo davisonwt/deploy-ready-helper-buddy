@@ -6,6 +6,7 @@ import { SwipeDeck } from './SwipeDeck';
 import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
 import { BestowalCoin } from './BestowalCoin';
 import { GlassmorphismDashboard } from './GlassmorphismDashboard';
+import { CircleMembersList } from './CircleMembersList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, X } from 'lucide-react';
