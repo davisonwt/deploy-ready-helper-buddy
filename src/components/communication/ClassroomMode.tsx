@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { CreateClassroomDialog } from './CreateClassroomDialog';
 
 interface ClassroomSession {
   id: string;
@@ -32,6 +33,7 @@ export const ClassroomMode: React.FC = () => {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<ClassroomSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     loadSessions();
@@ -90,7 +92,7 @@ export const ClassroomMode: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-2">Interactive Classrooms</h2>
           <p className="text-white/80">Join live learning sessions with whiteboards and collaboration</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
           <Plus className="w-4 h-4" />
           Create Session
         </Button>
@@ -104,7 +106,7 @@ export const ClassroomMode: React.FC = () => {
               <BookOpen className="w-16 h-16 mx-auto mb-4 text-primary/50" />
               <h3 className="text-xl font-semibold text-white mb-2">No Active Classrooms</h3>
               <p className="text-white/70 mb-4">Be the first to create an interactive learning session</p>
-              <Button>
+              <Button onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Classroom
               </Button>
@@ -179,6 +181,12 @@ export const ClassroomMode: React.FC = () => {
           ))
         )}
       </div>
+
+      <CreateClassroomDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={loadSessions}
+      />
     </div>
   );
 };

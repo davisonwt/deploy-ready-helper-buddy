@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { CreateTrainingDialog } from './CreateTrainingDialog';
 
 interface Course {
   id: string;
@@ -25,6 +26,7 @@ export const TrainingMode: React.FC = () => {
   const { toast } = useToast();
   const [userXP, setUserXP] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [courses] = useState<Course[]>([
     {
       id: '1',
@@ -98,11 +100,16 @@ export const TrainingMode: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header with XP Stats */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">Training Sessions</h2>
           <p className="text-white/80">Complete courses and earn XP to level up</p>
         </div>
+        
+        <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="w-4 h-4" />
+          Create New Training
+        </Button>
         
         <Card className="glass-card bg-transparent border border-primary/20 min-w-[200px]">
           <CardContent className="p-4">
@@ -191,6 +198,17 @@ export const TrainingMode: React.FC = () => {
           );
         })}
       </div>
+
+      <CreateTrainingDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={() => {
+          toast({
+            title: 'Success',
+            description: 'Training session created successfully',
+          });
+        }}
+      />
     </div>
   );
 };
