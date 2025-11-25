@@ -199,7 +199,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="flex flex-wrap gap-6 justify-center">
       {members.map((member) => {
         const tags = [];
         if (member.is_sower) tags.push('Sower');
@@ -213,38 +213,28 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="overflow-hidden hover:shadow-xl transition-all border-2 hover:border-primary/30">
-              <CardContent className="p-4">
-                {/* Avatar with glow */}
-                <div className="flex justify-center mb-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
-                    <Avatar className="h-24 w-24 border-4 border-primary/10 relative z-10">
-                      <AvatarImage src={member.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/50 to-primary/20">
-                        {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+            <Card className="overflow-hidden hover:shadow-xl transition-all border-2 hover:border-primary/30 rounded-full aspect-square w-48 h-48">
+              <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+                {/* Avatar */}
+                <div className="mb-2">
+                  <Avatar className="h-16 w-16 border-2 border-primary/10">
+                    <AvatarImage src={member.avatar_url} />
+                    <AvatarFallback className="text-xl bg-gradient-to-br from-primary/50 to-primary/20">
+                      {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
 
                 {/* Name */}
-                <h3 className="font-bold text-center mb-1 line-clamp-1">
+                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2">
                   {member.full_name || member.display_name || 'User'}
                 </h3>
 
-                {/* Bio */}
-                {member.bio && (
-                  <p className="text-xs text-muted-foreground text-center mb-2 line-clamp-2">
-                    {member.bio}
-                  </p>
-                )}
-
                 {/* Tags */}
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 justify-center mb-3">
+                  <div className="flex flex-wrap gap-1 justify-center mb-2">
                     {tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
                         {tag}
                       </Badge>
                     ))}
@@ -252,27 +242,26 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-1 mt-auto">
                   {onStartChat && (
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => onStartChat(member.user_id)}
-                      className="flex-1"
+                      className="h-7 w-7 p-0 rounded-full"
                     >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      Chat
+                      <MessageCircle className="h-3 w-3" />
                     </Button>
                   )}
                   
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <ArrowRightLeft className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full">
+                          <ArrowRightLeft className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent className="bg-background z-50">
                         {circles
                           .filter(c => c.id !== circleId)
                           .map(circle => (
@@ -289,10 +278,11 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
 
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="ghost"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
+                    className="h-7 w-7 p-0 rounded-full hover:bg-destructive/10"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 text-destructive" />
                   </Button>
                 </div>
               </CardContent>
