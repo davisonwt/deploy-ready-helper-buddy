@@ -240,8 +240,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           />
         </div>
 
-        {/* Chat Room or Empty State */}
-        <div className="flex-1 overflow-hidden">
+        {/* Chat Room or Members List */}
+        <div className="flex-1 overflow-auto">
           {selectedRoomId ? (
             <GroupChatRoomEnhanced
               roomId={selectedRoomId}
@@ -249,12 +249,18 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
               participants={[]}
               onBack={() => setSelectedRoomId(null)}
             />
+          ) : activeCircleId ? (
+            <CircleMembersList 
+              circleId={activeCircleId}
+              circleName={circles.find(c => c.id === activeCircleId)?.name || ''}
+              onMemberRemove={loadCircles}
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <UserPlus className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
-                  Select a circle to see conversations
+                  Select a circle to see members
                 </p>
               </div>
             </div>
