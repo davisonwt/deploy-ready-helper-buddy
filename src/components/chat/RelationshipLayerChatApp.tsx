@@ -5,6 +5,7 @@ import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
 import { BestowalCoin } from './BestowalCoin';
+import { GlassmorphismDashboard } from './GlassmorphismDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame, UserPlus, Users, ArrowLeft, X } from 'lucide-react';
@@ -38,6 +39,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
   const [hueRotation, setHueRotation] = useState(0);
   const [circleMembers, setCircleMembers] = useState<CircleMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
   const backgroundRef = useRef<HTMLDivElement>(null);
 
   // Animated gradient background
@@ -364,6 +366,26 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  // Show glassmorphism dashboard
+  if (showDashboard && !showOnboarding) {
+    return (
+      <GlassmorphismDashboard 
+        circles={circles}
+        activeCircleId={activeCircleId || undefined}
+        onCircleSelect={(circleId) => {
+          setActiveCircleId(circleId);
+          setShowDashboard(false);
+          loadCircleMembers(circleId);
+        }}
+        onAddPeople={() => setShowOnboarding(true)}
+        onNavigate={(mode) => {
+          setShowDashboard(false);
+          // Handle navigation to specific mode
+        }}
+      />
     );
   }
 
