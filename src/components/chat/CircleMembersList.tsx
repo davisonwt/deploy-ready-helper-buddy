@@ -392,17 +392,17 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             onMouseLeave={handleMouseLeave}
             className="fixed z-[1001] pointer-events-auto"
             style={{
-              top: 'calc(15% + 240px)',
+              top: 'calc(15% + 165px)',
               left: '50%',
               transform: 'translateX(-50%)',
               width: '220px',
               maxWidth: 'calc(100vw - 2rem)',
-              maxHeight: 'calc(100vh - 15% - 240px - 2rem)',
+              maxHeight: 'calc(100vh - 15% - 165px - 2rem)',
               height: 'auto',
             }}
           >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: 'calc(100vh - 15% - 240px - 2rem)', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent className="p-4" style={{ display: 'flex', flexDirection: 'column', padding: '1rem', maxHeight: '100%', overflow: 'hidden' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: 'calc(100vh - 15% - 165px - 2rem)', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <CardContent className="p-4" style={{ display: 'flex', flexDirection: 'column', padding: '1rem', height: '100%', overflow: 'hidden' }}>
                     <h4 className="text-sm font-semibold text-white text-center mb-3 flex-shrink-0">
                       What do you want to do?
                     </h4>
@@ -410,9 +410,9 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                       flex: '1 1 auto',
                       overflowY: 'scroll',
                       overflowX: 'hidden',
-                      maxHeight: 'calc(100vh - 15% - 240px - 120px)',
-                      minHeight: '150px',
-                      WebkitOverflowScrolling: 'touch'
+                      height: 'calc(100% - 50px)',
+                      WebkitOverflowScrolling: 'touch',
+                      paddingRight: '8px'
                     }}>
                       <div className="space-y-1 pr-2">
                           {actions.map((action, idx) => {
