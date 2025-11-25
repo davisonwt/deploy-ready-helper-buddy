@@ -23,6 +23,7 @@ export interface RateLimitConfig {
   limitType: string;
   maxAttempts?: number;
   timeWindowMinutes?: number;
+  failClosed?: boolean; // If true, deny requests when rate limiter fails (default: false for backward compatibility)
 }
 
 /**
@@ -40,7 +41,8 @@ export async function checkRateLimit(
   identifier: string,
   limitType: string,
   maxAttempts: number = 10,
-  timeWindowMinutes: number = 15
+  timeWindowMinutes: number = 15,
+  failClosed: boolean = false
 ): Promise<boolean> {
   try {
     const { data, error } = await supabase.rpc('check_rate_limit_enhanced', {
@@ -52,6 +54,12 @@ export async function checkRateLimit(
 
     if (error) {
       console.error('Rate limit check error:', error);
+      // For critical operations (payments, etc.), fail closed to prevent abuse
+      // For general operations, fail open to prevent blocking legitimate users
+      if (failClosed) {
+        console.warn('Rate limiter failed closed due to error - denying request');
+        return false;
+      }
       // Fail open: allow request if rate limit check fails
       // This prevents legitimate requests from being blocked due to system errors
       return true;
@@ -60,7 +68,12 @@ export async function checkRateLimit(
     return data === true;
   } catch (error) {
     console.error('Rate limit check exception:', error);
-    // Fail open
+    // For critical operations, fail closed
+    if (failClosed) {
+      console.warn('Rate limiter exception - failing closed, denying request');
+      return false;
+    }
+    // Fail open for backward compatibility
     return true;
   }
 }
@@ -104,6 +117,7 @@ export function withRateLimit(
     maxAttempts?: number;
     timeWindowMinutes?: number;
     getIdentifier?: (req: Request) => Promise<string>;
+    failClosed?: boolean; // If true, deny requests when rate limiter fails
   }
 ) {
   return async (req: Request): Promise<Response> => {
@@ -125,7 +139,8 @@ export function withRateLimit(
         identifier,
         config.limitType,
         config.maxAttempts,
-        config.timeWindowMinutes
+        config.timeWindowMinutes,
+        config.failClosed || false
       );
 
       if (!allowed) {
@@ -138,7 +153,17 @@ export function withRateLimit(
       return await handler(req);
     } catch (error) {
       console.error('Rate limit wrapper error:', error);
-      // Fail open: proceed with request if rate limiter fails
+      // For critical operations, fail closed
+      if (config.failClosed) {
+        return new Response(
+          JSON.stringify({
+            error: 'Rate limit check failed',
+            message: 'Unable to verify rate limits. Request denied for security.'
+          }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      // Fail open: proceed with request if rate limiter fails (backward compatibility)
       return await handler(req);
     }
   };
@@ -175,11 +200,12 @@ async function getDefaultIdentifier(req: Request): Promise<string> {
  * Pre-configured rate limit configs for common use cases
  */
 export const RateLimitPresets = {
-  /** Payment operations: 5 attempts per hour */
+  /** Payment operations: 5 attempts per hour - FAILS CLOSED for security */
   PAYMENT: {
     limitType: 'payment',
     maxAttempts: 5,
-    timeWindowMinutes: 60
+    timeWindowMinutes: 60,
+    failClosed: true // Critical: fail closed to prevent abuse
   },
   
   /** AI generation: 10 attempts per 5 minutes */

@@ -6,25 +6,23 @@ This document addresses the security issues identified in the comprehensive secu
 
 ### 1. Jitsi Authentication Passwords
 
-**Status**: ⚠️ **ACTION REQUIRED**
+**Status**: ✅ **FIXED** (Credentials removed from .env, but **ROTATION STILL REQUIRED**)
 
-**Issue**: Jitsi server authentication passwords were found in configuration files.
+**Issue**: Jitsi server authentication passwords were found in `.env` file (lines 10-16).
 
 **Files Affected**:
-- `turnserver.conf` - Contains `static-auth-secret=jitsiturn:turnpass`
-- `.env` file (if exists) - Should NOT contain actual passwords
+- `.env` - **FIXED**: Exposed credentials removed (lines 10-16)
+- `turnserver.conf` - Contains `static-auth-secret=jitsiturn:turnpass` (server-side config)
+- `.env.example` - **CREATED**: Template file without actual credentials
 
-**Remediation Steps**:
+**Remediation Steps Completed**:
+1. ✅ Removed exposed credentials from `.env` file (kept only lines 1-4)
+2. ✅ Created `.env.example` template file
+3. ✅ Ensured `.env` is in `.gitignore`
 
-1. **Remove hardcoded credentials from repository**:
-   ```bash
-   # If .env file exists, ensure it's in .gitignore
-   # Remove any committed .env files from git history:
-   git rm --cached .env
-   git commit -m "Remove .env from version control"
-   ```
+**⚠️ CRITICAL: Still Required Actions**:
 
-2. **Rotate ALL Jitsi credentials** (they are considered compromised):
+1. **Rotate ALL Jitsi credentials** (they are considered compromised):
    - Generate new passwords:
      ```bash
      openssl rand -hex 16  # For JICOFO_AUTH_PASSWORD
@@ -33,13 +31,14 @@ This document addresses the security issues identified in the comprehensive secu
      ```
    - Update your Jitsi server configuration
    - Update environment variables in your deployment platform (Lovable, Supabase, etc.)
+   - Update `turnserver.conf` with new credentials
 
-3. **Use environment variables**:
-   - Never hardcode credentials in configuration files
+2. **Never commit credentials again**:
    - Use environment variables or secure vaults
-   - Update `turnserver.conf` to use environment variable substitution
+   - Reference `.env.example` for required variables
+   - Never push `.env` files to version control
 
-**Note**: The `turnserver.conf` file is a server-side configuration file. While it's less critical than client-side exposure, it should still be secured and credentials rotated.
+**Note**: The `turnserver.conf` file is a server-side configuration file. Credentials should be rotated there as well.
 
 ### 2. Enable Leaked Password Protection
 
@@ -54,23 +53,29 @@ This document addresses the security issues identified in the comprehensive secu
 
 ### 3. Database Functions - search_path
 
-**Status**: ⚠️ **ACTION REQUIRED**
+**Status**: ✅ **VERIFIED** (Most functions already fixed, verification migration created)
 
 **Issue**: Some database functions don't have `search_path` set, which could allow schema injection attacks.
 
-**Remediation**:
-1. Review all database functions in Supabase SQL Editor
-2. Add `SET search_path = public` to the beginning of each function:
+**Remediation Completed**:
+1. ✅ Created verification migration: `20250101000000_verify_all_functions_have_search_path.sql`
+2. ✅ Most functions already have `search_path` set from previous migrations
+3. ✅ Migration includes SQL query to identify any remaining functions without `search_path`
+
+**Remaining Action**:
+1. Run the verification query in Supabase SQL Editor to check for any remaining functions:
    ```sql
-   CREATE OR REPLACE FUNCTION your_function()
-   RETURNS void
-   LANGUAGE plpgsql
-   SECURITY DEFINER
-   SET search_path = public
-   AS $$
-   -- function body
-   $$;
+   SELECT 
+       p.proname as function_name,
+       pg_get_functiondef(p.oid) as function_definition
+   FROM pg_proc p
+   JOIN pg_namespace n ON p.pronamespace = n.oid
+   WHERE n.nspname = 'public'
+   AND p.prosecdef = true  -- SECURITY DEFINER
+   AND pg_get_functiondef(p.oid) NOT LIKE '%SET search_path%'
+   ORDER BY p.proname;
    ```
+2. If any functions are found, update them with `SET search_path = public`
 
 ## 🟠 HIGH PRIORITY - Review and Configure
 
@@ -135,16 +140,26 @@ This document addresses the security issues identified in the comprehensive secu
 - Add privacy controls for user following relationships
 - Consider implementing "private mode" for sensitive operations
 
-### 8. Rate Limiter Monitoring
+### 8. Rate Limiter Fail-Open Behavior
 
-**Status**: ⚠️ **MONITORING REQUIRED**
+**Status**: ✅ **IMPROVED** (Now supports fail-closed for critical operations)
 
-**Issue**: Rate limiter fails open on errors.
+**Issue**: Rate limiter fails open on errors, which could allow bypass during outages.
 
-**Recommendation**:
+**Remediation Completed**:
+1. ✅ Added `failClosed` parameter to `checkRateLimit()` function
+2. ✅ Updated `withRateLimit()` wrapper to support fail-closed mode
+3. ✅ Payment operations now use fail-closed mode by default (`RateLimitPresets.PAYMENT`)
+
+**Implementation Details**:
+- **Fail-open (default)**: General operations continue to fail open to prevent blocking legitimate users
+- **Fail-closed (new)**: Critical operations (payments) now fail closed to prevent abuse during outages
+- Payment rate limiter preset now includes `failClosed: true`
+
+**Remaining Recommendations**:
 - Add monitoring/alerting for rate limiter failures
-- Consider failing closed instead of open for critical operations
 - Log all rate limiter errors for analysis
+- Consider adding fail-closed mode to other critical operations (AI generation, etc.)
 
 ## ✅ Positive Security Practices
 
@@ -161,15 +176,19 @@ The following security practices are already in place:
 
 ## 📋 Action Checklist
 
-- [ ] Rotate Jitsi credentials
-- [ ] Remove any .env files from version control
+- [x] Remove exposed credentials from .env file
+- [x] Create .env.example template
+- [x] Ensure .env is in .gitignore
+- [x] Add fail-closed mode to rate limiter for critical operations
+- [x] Create database function verification migration
+- [ ] **CRITICAL**: Rotate Jitsi credentials (they are compromised)
 - [ ] Enable leaked password protection in Supabase
-- [ ] Add `search_path` to all database functions
+- [ ] Run database function verification query in Supabase SQL Editor
 - [ ] Review profile visibility RLS policies
 - [ ] Plan migration of wallet API credentials to secure vault
 - [ ] Review payment encryption key management
 - [ ] Add privacy controls for public data
-- [ ] Implement rate limiter monitoring
+- [ ] Implement rate limiter monitoring/alerting
 
 ## 🔒 Best Practices Going Forward
 
