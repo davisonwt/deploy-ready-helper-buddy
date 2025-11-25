@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, X, UserPlus, Phone, Video, GraduationCap, Radio } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,7 +40,34 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+  
+  const handleMouseEnter = (memberId: string) => {
+    // Clear any pending timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredMemberId(memberId);
+  };
+  
+  const handleMouseLeave = () => {
+    // Add a delay before hiding to allow mouse movement to menu
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredMemberId(null);
+      hoverTimeoutRef.current = null;
+    }, 300); // 300ms delay to allow mouse movement
+  };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     loadMembers();
@@ -283,8 +310,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               zIndex: isHovered ? 50 : 1
             }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            onMouseEnter={() => setHoveredMemberId(member.user_id)}
-            onMouseLeave={() => setHoveredMemberId(null)}
+            onMouseEnter={() => handleMouseEnter(member.user_id)}
+            onMouseLeave={handleMouseLeave}
             className="relative"
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
@@ -325,7 +352,9 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 z-50 w-64"
+                onMouseEnter={() => handleMouseEnter(member.user_id)}
+                onMouseLeave={handleMouseLeave}
+                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50 w-64"
               >
                 <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl">
                   <CardContent className="p-4">
