@@ -361,7 +361,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             </Card>
 
             {/* Action Menu - Appears on click */}
-            {isSelected && (
+            {isSelected && actions.length > 0 && (
               <motion.div
                 ref={menuRef}
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -381,6 +381,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   // Ensure menu stays within viewport - use simpler calculation
                   maxHeight: 'min(calc(100vh - 50vh - 116px - 1rem), 350px)',
                   minHeight: '200px',
+                  visibility: 'visible',
+                  display: 'block',
                 }}
               >
                 <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '350px', minHeight: '200px' }}>
