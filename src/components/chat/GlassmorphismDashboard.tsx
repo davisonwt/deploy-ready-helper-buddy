@@ -425,7 +425,7 @@ export function GlassmorphismDashboard({
                 <Activity className="h-5 w-5" />
                 ACTIVITY STREAM
               </CardTitle>
-              <Button className="bg-gradient-to-r from-amber-500/20 to-coral-500/20 hover:from-amber-500/30 hover:to-coral-500/30 text-amber-200 border border-amber-500/30">
+              <Button className="bg-white text-[#0A1931] border-2 border-[#0A1931] hover:bg-[#0A1931]/5">
                 <Plus className="h-4 w-4 mr-2" />
                 Compose Post
               </Button>

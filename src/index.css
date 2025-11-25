@@ -83,7 +83,6 @@ All colors MUST be HSL.
   --cyan-accent: 180 75% 55%;
   --light-beige: 60 8% 82%;
 
-<<<<<<< HEAD
   /* Glassmorphism Dashboard Colors - Warm Palette */
   --amber-50: 48 96% 96%;
   --amber-100: 45 93% 88%;
@@ -494,21 +493,22 @@ input::placeholder, textarea::placeholder, select::placeholder {
   }
 
   .glass-button {
-    background: rgba(23, 162, 184, 0.15); /* --primary teal with low opacity */
+    background: white; /* White background */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(23, 162, 184, 0.3);
+    border: 2px solid #0A1931; /* Dark navy blue border - WCAG AA compliant */
+    color: #0A1931; /* Dark navy blue text - WCAG AA compliant */
     transition: all 0.3s ease;
   }
 
   .glass-button:hover {
-    background: rgba(23, 162, 184, 0.25);
-    border-color: rgba(23, 162, 184, 0.5);
-    box-shadow: 0 0 20px rgba(23, 162, 184, 0.3);
+    background: rgba(10, 25, 49, 0.05); /* Light dark blue tint on hover */
+    border-color: #0A1931;
+    box-shadow: 0 0 20px rgba(10, 25, 49, 0.2);
   }
 
   .glass-button:active {
-    background: rgba(23, 162, 184, 0.35);
+    background: rgba(10, 25, 49, 0.1);
     transform: scale(0.98);
   }
 
