@@ -433,7 +433,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <Card className="max-w-md mx-auto overflow-hidden border-2 hover:border-primary/50 transition-all">
+        <Card className="max-w-md mx-auto overflow-hidden glass-card border-2 border-primary/30 hover:border-primary/50 transition-all">
           <CardContent className="p-8 flex flex-col items-center">
             {/* Avatar with glow */}
             <div className="relative mb-6">
@@ -447,13 +447,13 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
             </div>
 
             {/* Name with gradient */}
-            <h3 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold text-center mb-2 text-white drop-shadow-lg">
               {currentProfile.full_name || currentProfile.username || 'User'}
             </h3>
 
             {/* Bio */}
             {currentProfile.bio && (
-              <p className="text-sm text-muted-foreground text-center mb-4 line-clamp-3">
+              <p className="text-sm text-foreground/90 text-center mb-4 line-clamp-3">
                 {currentProfile.bio}
               </p>
             )}
@@ -471,8 +471,8 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
 
             {/* Already in circles */}
             {currentProfile.in_circles && currentProfile.in_circles.length > 0 && (
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg w-full">
-                <p className="text-xs text-muted-foreground text-center mb-2">
+              <div className="mb-4 p-3 glass-panel border border-primary/20 rounded-lg w-full">
+                <p className="text-xs text-foreground/80 text-center mb-2">
                   Already in circles:
                 </p>
                 <div className="flex flex-wrap gap-1 justify-center">
