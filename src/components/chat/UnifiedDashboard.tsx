@@ -89,7 +89,9 @@ export const UnifiedDashboard: React.FC = () => {
             transition={{ duration: 0.5 }}
           >
             <div className="flex flex-wrap gap-2 justify-center">
-              {modes.map((mode) => (
+              {modes.map((mode) => {
+                const isActive = activeMode === mode.id;
+                return (
                 <motion.button
                   key={mode.id}
                   onClick={() => handleModeChange(mode.id)}
@@ -99,13 +101,27 @@ export const UnifiedDashboard: React.FC = () => {
                     'hover:scale-105 active:scale-95'
                   )}
                   style={{
-                    backgroundColor: activeMode === mode.id ? '#9bf6ff' : 'hsl(212, 49%, 24%)',
-                    borderColor: activeMode === mode.id ? '#9bf6ff' : 'hsl(188, 78%, 41%)',
-                    color: activeMode === mode.id ? '#1e293b' : '#ffffff',
+                    backgroundColor: isActive ? '#9bf6ff' : 'hsl(212, 49%, 24%)',
+                    borderColor: isActive ? '#9bf6ff' : 'hsl(188, 78%, 41%)',
+                    color: isActive ? '#1e293b' : '#ffffff',
                     borderRadius: '21px',
-                    boxShadow: activeMode === mode.id
+                    boxShadow: isActive
                       ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
                       : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = '#9bf6ff';
+                      e.currentTarget.style.borderColor = '#9bf6ff';
+                      e.currentTarget.style.color = '#1e293b';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = 'hsl(212, 49%, 24%)';
+                      e.currentTarget.style.borderColor = 'hsl(188, 78%, 41%)';
+                      e.currentTarget.style.color = '#ffffff';
+                    }
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
@@ -125,7 +141,8 @@ export const UnifiedDashboard: React.FC = () => {
                     </motion.span>
                   )}
                 </motion.button>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
