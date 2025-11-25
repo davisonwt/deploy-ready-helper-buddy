@@ -220,7 +220,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="overflow-hidden hover:shadow-xl transition-all border-2 hover:border-primary/30 rounded-full aspect-square w-48 h-48">
+            <Card className="overflow-hidden hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full">
                 {/* Avatar */}
                 <div className="mb-2">
@@ -233,7 +233,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                 </div>
 
                 {/* Name */}
-                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2">
+                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2 text-white">
                   {member.full_name || member.display_name || 'User'}
                 </h3>
 
