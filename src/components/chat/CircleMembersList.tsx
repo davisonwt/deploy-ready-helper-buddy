@@ -413,10 +413,10 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                      <ScrollArea className="h-full" style={{ height: '300px' }}>
+                    <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', maxHeight: '300px' }}>
+                      <ScrollArea className="h-full w-full">
                         <div className="space-y-1 pr-4">
-                        {actions.map((action, idx) => {
+                          {actions.map((action, idx) => {
                           const Icon = action.icon;
                           
                           if (action.isDropdown) {
@@ -466,9 +466,10 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                               {action.label}
                             </Button>
                           );
-                        })}
-                      </div>
-                    </ScrollArea>
+                          })}
+                        </div>
+                      </ScrollArea>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
