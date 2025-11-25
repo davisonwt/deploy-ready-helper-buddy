@@ -291,15 +291,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
 
   // Main Circles Interface
   return (
-    <div
-      ref={backgroundRef}
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `linear-gradient(${hueRotation}deg, #1e3a5c 0%, #17a2b8 50%, #4dd0e1 100%)`,
-        transition: 'background 30s linear',
-      }}
-    >
-      <div className="relative z-10 p-4 md:p-6">
+    <div className="w-full">
+      <div className="p-4 md:p-6">
         {/* Circles Bubble Rail */}
         <div className="mb-6">
           <CirclesBubbleRail
