@@ -219,9 +219,9 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                 <div className="flex justify-center mb-3">
                   <div className="relative">
                     <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
-                    <Avatar className="h-24 w-24 border-4 border-primary/10 relative z-10">
-                      <AvatarImage src={member.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/50 to-primary/20">
+                    <Avatar className="h-24 w-24 rounded-full border-4 border-primary/10 relative z-10">
+                      <AvatarImage src={member.avatar_url} className="rounded-full" />
+                      <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/50 to-primary/20 rounded-full">
                         {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
