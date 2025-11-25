@@ -169,24 +169,43 @@ If any functions are found, they should be updated with `SET search_path = publi
 
 ### 8. Rate Limiter Fail-Open Behavior
 
-**Status**: ✅ **IMPROVED** (Now supports fail-closed for critical operations)
+**Status**: ✅ **FIXED** (Now defaults to fail-closed for all operations)
 
-**Issue**: Rate limiter fails open on errors, which could allow bypass during outages.
+**Issue**: Rate limiter was failing open on errors, which could allow bypass during outages.
 
 **Remediation Completed**:
-1. ✅ Added `failClosed` parameter to `checkRateLimit()` function
-2. ✅ Updated `withRateLimit()` wrapper to support fail-closed mode
-3. ✅ Payment operations now use fail-closed mode by default (`RateLimitPresets.PAYMENT`)
+1. ✅ Changed default behavior to **fail-closed** (deny requests when rate limiter fails)
+2. ✅ Added `logRateLimiterFailure()` function for monitoring/alerting
+3. ✅ Updated all rate limit presets to use fail-closed mode:
+   - `PAYMENT`: fail-closed (critical)
+   - `AI_GENERATION`: fail-closed (expensive operations)
+   - `EMAIL`: fail-closed (prevent spam)
+   - `GENERAL_API`: fail-closed (prevent abuse)
+   - `CREDENTIAL_VERIFICATION`: fail-closed (security-critical)
+4. ✅ Added detailed error logging with structured data for monitoring
+5. ✅ Added `GENERAL_API_LEGACY` preset for backward compatibility (explicit fail-open)
 
 **Implementation Details**:
-- **Fail-open (default)**: General operations continue to fail open to prevent blocking legitimate users
-- **Fail-closed (new)**: Critical operations (payments) now fail closed to prevent abuse during outages
-- Payment rate limiter preset now includes `failClosed: true`
+- **Fail-closed (default)**: All operations now fail closed by default to prevent abuse during outages
+- **Fail-open (legacy)**: Only available via explicit `failClosed: false` configuration for backward compatibility
+- **Monitoring**: All rate limiter failures are logged with structured data for alerting
+- **Error responses**: Include `X-RateLimit-Status` header and `Retry-After` suggestion
 
-**Remaining Recommendations**:
-- Add monitoring/alerting for rate limiter failures
-- Log all rate limiter errors for analysis
-- Consider adding fail-closed mode to other critical operations (AI generation, etc.)
+**Security Benefits**:
+- Prevents abuse during database outages or rate limiter failures
+- Protects expensive operations (AI generation) from abuse
+- Prevents spam during email service outages
+- Maintains security posture even when rate limiter infrastructure fails
+
+**Monitoring**:
+Rate limiter failures are logged with:
+- Identifier (user ID or IP)
+- Limit type
+- Fail mode (closed/open)
+- Error details
+- Timestamp
+
+Consider setting up alerts for `rate_limiter_failure` events in your monitoring system.
 
 ## ✅ Positive Security Practices
 
