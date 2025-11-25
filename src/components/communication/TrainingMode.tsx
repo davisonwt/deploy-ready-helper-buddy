@@ -106,7 +106,11 @@ export const TrainingMode: React.FC = () => {
           <p className="text-white/80">Complete courses and earn XP to level up</p>
         </div>
         
-        <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+        <Button 
+          className="gap-2" 
+          onClick={() => setCreateDialogOpen(true)}
+          style={{ backgroundColor: '#0A1931', color: 'white' }}
+        >
           <Plus className="w-4 h-4" />
           Create New Training
         </Button>

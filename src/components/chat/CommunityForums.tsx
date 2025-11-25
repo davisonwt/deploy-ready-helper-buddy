@@ -271,7 +271,10 @@ export const CommunityForums: React.FC = () => {
           
           <Dialog open={newPostOpen} onOpenChange={setNewPostOpen}>
             <DialogTrigger asChild>
-              <Button className="glass-button gap-2">
+              <Button 
+                className="gap-2" 
+                style={{ backgroundColor: '#0A1931', color: 'white' }}
+              >
                 <Plus className="w-4 h-4" />
                 New Post
               </Button>
