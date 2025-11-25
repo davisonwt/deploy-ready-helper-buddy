@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, X, ArrowRightLeft } from 'lucide-react';
+import { MessageCircle, X, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +18,7 @@ interface CircleMembersListProps {
   circleId: string;
   onStartChat?: (userId: string) => void;
   circles?: Array<{ id: string; name: string; emoji: string }>;
+  onMemberRemoved?: () => void;
 }
 
 interface Member {
@@ -32,7 +33,7 @@ interface Member {
   is_gosat?: boolean;
 }
 
-export function CircleMembersList({ circleId, onStartChat, circles = [] }: CircleMembersListProps) {
+export function CircleMembersList({ circleId, onStartChat, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -110,21 +111,28 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
     }
   };
 
-  const handleMoveToCircle = async (memberId: string, memberName: string, newCircleId: string) => {
+  const handleAddToCircle = async (memberId: string, memberName: string, newCircleId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Remove from current circle
-      const { error: removeError } = await supabase
+      // Check if already in the target circle
+      const { data: existing } = await supabase
         .from('circle_members')
-        .delete()
-        .eq('circle_id', circleId)
-        .eq('user_id', memberId);
+        .select('id')
+        .eq('circle_id', newCircleId)
+        .eq('user_id', memberId)
+        .maybeSingle();
 
-      if (removeError) throw removeError;
+      if (existing) {
+        toast({
+          title: 'Already added',
+          description: `${memberName} is already in that circle`,
+        });
+        return;
+      }
 
-      // Add to new circle
+      // Add to new circle (without removing from current)
       const { error: addError } = await supabase
         .from('circle_members')
         .insert({
@@ -137,17 +145,18 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
 
       // Refresh the list
       loadMembers();
+      onMemberRemoved?.();
 
       const newCircleName = circles.find(c => c.id === newCircleId)?.name || 'circle';
       toast({
-        title: 'Moved!',
-        description: `${memberName} moved to ${newCircleName}`,
+        title: 'Added!',
+        description: `${memberName} also added to ${newCircleName}`,
       });
     } catch (error) {
-      console.error('Error moving member:', error);
+      console.error('Error adding member:', error);
       toast({
         title: 'Error',
-        description: 'Failed to move member to new circle',
+        description: 'Failed to add member to circle',
         variant: 'destructive',
       });
     }
@@ -169,6 +178,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
       });
 
       loadMembers();
+      onMemberRemoved?.();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({
@@ -196,7 +206,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="flex flex-wrap gap-6 justify-center">
       {members.map((member) => {
         const tags = [];
         if (member.is_sower) tags.push('Sower');
@@ -210,38 +220,28 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="overflow-hidden hover:shadow-xl transition-all border-2 hover:border-primary/30">
-              <CardContent className="p-4">
-                {/* Avatar with glow */}
-                <div className="flex justify-center mb-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
-                    <Avatar className="h-20 w-20 border-4 border-primary/10 relative z-10">
-                      <AvatarImage src={member.avatar_url} />
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-primary/50 to-primary/20">
-                        {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
+            <Card className="overflow-hidden hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent">
+              <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+                {/* Avatar */}
+                <div className="mb-2">
+                  <Avatar className="h-16 w-16 border-2 border-primary/10">
+                    <AvatarImage src={member.avatar_url} />
+                    <AvatarFallback className="text-xl bg-gradient-to-br from-primary/50 to-primary/20">
+                      {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
 
                 {/* Name */}
-                <h3 className="font-bold text-center mb-1 line-clamp-1">
+                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2 text-white">
                   {member.full_name || member.display_name || 'User'}
                 </h3>
 
-                {/* Bio */}
-                {member.bio && (
-                  <p className="text-xs text-muted-foreground text-center mb-2 line-clamp-2">
-                    {member.bio}
-                  </p>
-                )}
-
                 {/* Tags */}
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 justify-center mb-3">
+                  <div className="flex flex-wrap gap-1 justify-center mb-2">
                     {tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
                         {tag}
                       </Badge>
                     ))}
@@ -249,33 +249,49 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-1 mt-auto">
                   {onStartChat && (
                     <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => onStartChat(member.user_id)}
-                      className="flex-1"
+                      style={{ backgroundColor: 'white', color: '#0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
                     >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      Chat
+                      <MessageCircle className="h-4 w-4" />
                     </Button>
                   )}
                   
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <ArrowRightLeft className="h-4 w-4" />
+                        <Button 
+                          size="sm" 
+                          style={{ 
+                            backgroundColor: 'white', 
+                            color: '#0A1931',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            padding: '0',
+                            minWidth: '32px',
+                            minHeight: '32px'
+                          }}
+                          className="border-0 hover:opacity-90" 
+                          title="Also add to another circle"
+                        >
+                          <UserPlus className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent className="bg-background z-50">
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          Also add to:
+                        </div>
                         {circles
                           .filter(c => c.id !== circleId)
                           .map(circle => (
                             <DropdownMenuItem
                               key={circle.id}
-                              onClick={() => handleMoveToCircle(member.user_id, member.full_name || 'User', circle.id)}
+                              onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
                             >
                               {circle.emoji} {circle.name}
                             </DropdownMenuItem>
@@ -286,8 +302,9 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
 
                   <Button
                     size="sm"
-                    variant="destructive"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
+                    style={{ backgroundColor: '#0A1931', color: 'white' }}
+                    className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>

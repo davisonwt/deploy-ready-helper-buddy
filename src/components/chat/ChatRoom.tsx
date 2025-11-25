@@ -647,9 +647,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={onBack}
+              onClick={() => {
+                console.log('Back button clicked');
+                onBack();
+              }}
+              className="text-foreground hover:bg-primary/10"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              <span className="text-sm">Back</span>
             </Button>
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-primary/10 text-primary">

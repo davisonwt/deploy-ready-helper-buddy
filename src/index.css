@@ -83,6 +83,7 @@ All colors MUST be HSL.
   --cyan-accent: 180 75% 55%;
   --light-beige: 60 8% 82%;
 
+<<<<<<< HEAD
   /* Glassmorphism Dashboard Colors - Warm Palette */
   --amber-50: 48 96% 96%;
   --amber-100: 45 93% 88%;
@@ -116,6 +117,12 @@ All colors MUST be HSL.
   --charcoal-700: 210 20% 20%;
   --charcoal-800: 210 20% 15%; /* #1F2937 */
   --charcoal-900: 210 20% 10%; /* #111827 */
+
+  /* Glass morphism effects */
+  --glass-bg: 212 49% 24%; /* card color with 70% opacity */
+  --glass-border: 0 0% 100%; /* white with 10% opacity */
+  --glass-shadow: 0 0% 0%; /* black with 20% opacity */
+  --glass-glow: 188 78% 41%; /* teal glow */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -278,13 +285,18 @@ input::placeholder, textarea::placeholder, select::placeholder {
     @apply border-border;
   }
 
-  html, body, #root {
-    background-color: hsl(var(--background));
+  html, body {
     min-height: 100%;
+  }
+  
+  #root {
+    min-height: 100%;
+    background: transparent;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: hsl(var(--background));
     min-height: 100vh;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
@@ -462,6 +474,82 @@ input::placeholder, textarea::placeholder, select::placeholder {
     90% {
       transform: translate3d(0, -3px, 0);
     }
+  }
+
+  /* Glass Morphism Design System */
+  .glass-card {
+    background: rgba(10, 25, 49, 0.35); /* Slightly darker for better readability */
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-panel {
+    background: rgba(10, 25, 49, 0.4); /* Slightly darker */
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(23, 162, 184, 0.25); /* --primary teal border */
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-button {
+    background: rgba(23, 162, 184, 0.15); /* --primary teal with low opacity */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .glass-button:hover {
+    background: rgba(23, 162, 184, 0.25);
+    border-color: rgba(23, 162, 184, 0.5);
+    box-shadow: 0 0 20px rgba(23, 162, 184, 0.3);
+  }
+
+  .glass-button:active {
+    background: rgba(23, 162, 184, 0.35);
+    transform: scale(0.98);
+  }
+
+  .glass-input {
+    background: rgba(30, 58, 92, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: hsl(var(--foreground));
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(30, 58, 92, 0.4);
+    border-color: rgba(23, 162, 184, 0.5);
+    outline: none;
+    box-shadow: 0 0 20px rgba(23, 162, 184, 0.2);
+  }
+
+  .glass-input {
+    background: rgba(30, 58, 92, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-input:focus {
+    background: rgba(30, 58, 92, 0.4);
+    border-color: rgba(23, 162, 184, 0.5);
+    box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.2);
+  }
+
+  /* Glow effects */
+  .teal-glow {
+    box-shadow: 0 0 20px rgba(23, 162, 184, 0.4),
+                0 0 40px rgba(23, 162, 184, 0.2);
+  }
+
+  .cyan-glow {
+    box-shadow: 0 0 20px rgba(77, 208, 225, 0.4),
+                0 0 40px rgba(77, 208, 225, 0.2);
   }
 }
 
