@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio } from 'lucide-react';
+import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicationModes';
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
@@ -11,6 +12,7 @@ import { ClassroomMode } from '../communication/ClassroomMode';
 import { LectureMode } from '../communication/LectureMode';
 import { TrainingMode } from '../communication/TrainingMode';
 import { RadioMode } from '../communication/RadioMode';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface ModeConfig {
@@ -30,6 +32,7 @@ const modes: ModeConfig[] = [
 ];
 
 export const UnifiedDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { activeMode, setActiveMode, unreadCounts, clearUnread } = useCommunicationModes();
   const [selectedCircle, setSelectedCircle] = useState<string | null>(null);
 
@@ -61,6 +64,23 @@ export const UnifiedDashboard: React.FC = () => {
     <AuroraBackground>
       <div className="min-h-screen p-4 md:p-6">
         <div className="max-w-[1800px] mx-auto">
+          {/* Back to Dashboard Button */}
+          <motion.div 
+            className="mb-4"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2 text-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </Button>
+          </motion.div>
+
           {/* Mode Selector - Horizontal Pills */}
           <motion.div 
             className="glass-panel rounded-2xl p-3 mb-6"
