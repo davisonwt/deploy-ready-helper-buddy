@@ -31,11 +31,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
+import { CirclesBubbleRail, Circle } from './Circles } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { CircleMembersList } from './CircleMembersList';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ActivityUpdate {
   id: string;
@@ -76,6 +77,125 @@ interface GlassmorphismDashboardProps {
   onMemberRemoved?: () => void;
 }
 
+// Component to show users not in any circle
+function AvailableUsersSection({ circles, onAddToCircle }: { circles: Circle[], onAddToCircle: (userId: string, userName: string, circleId: string) => void }) {
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadAvailableUsers();
+  }, [circles]);
+
+  const loadAvailableUsers = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get all users in circles
+      const { data: circleMembersData } = await supabase
+        .from('circle_members')
+        .select('user_id');
+      
+      const usersInCircles = new Set((circleMembersData || []).map((m: any) => m.user_id));
+
+      // Get all profiles except current user
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url')
+        .neq('user_id', user.id)
+        .limit(50);
+
+      // Filter out users already in circles
+      const available = (profilesData || []).filter((p: any) => !usersInCircles.has(p.user_id));
+      setAvailableUsers(available);
+    } catch (error) {
+      console.error('Error loading available users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card variant="glass" className="backdrop-blur-xl bg-charcoal/60 border-amber-500/20 mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (availableUsers.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card variant="glass" className="backdrop-blur-xl bg-charcoal/60 border-amber-500/20 mb-6">
+      <CardHeader>
+        <CardTitle className="text-amber-200 flex items-center gap-2">
+          <UserPlus className="h-5 w-5" />
+          Available to Add to Circles
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-4">
+          {availableUsers.map((user) => (
+            <AvailableUserCard
+              key={user.user_id}
+              user={user}
+              circles={circles}
+              onAddToCircle={onAddToCircle}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AvailableUserCard({ user, circles, onAddToCircle }: { user: any, circles: Circle[], onAddToCircle: (userId: string, userName: string, circleId: string) => void }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.display_name || 'User';
+
+  return (
+    <DropdownMenu open={showDropdown} onOpenChange={setShowDropdown}>
+      <DropdownMenuTrigger asChild>
+        <div className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform">
+          <Avatar className="h-16 w-16 border-2 border-primary/30 hover:border-primary/50 mb-2">
+            <AvatarImage src={user.avatar_url} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/50 to-primary/20">
+              {fullName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-xs text-white text-center max-w-[80px] truncate">
+            {fullName}
+          </span>
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+          Add to circle:
+        </div>
+        {circles.map(circle => (
+          <DropdownMenuItem
+            key={circle.id}
+            onClick={() => {
+              onAddToCircle(user.user_id, fullName, circle.id);
+              setShowDropdown(false);
+            }}
+          >
+            {circle.emoji} {circle.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function GlassmorphismDashboard({ 
   onNavigate, 
   circles = [],
@@ -92,6 +212,7 @@ export function GlassmorphismDashboard({
   onMemberRemoved
 }: GlassmorphismDashboardProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [hueRotation, setHueRotation] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [activeMode, setActiveMode] = useState<'chat' | 'community' | 'classroom' | 'radio' | 'training'>('chat');
