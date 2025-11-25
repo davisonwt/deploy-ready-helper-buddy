@@ -196,8 +196,8 @@ function Layout({ children }) {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
-                      hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
+                    className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                      hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
                       ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                       ${item.className || ''}
                     `}
@@ -209,6 +209,20 @@ function Layout({ children }) {
                       boxShadow: isActive(item.href)
                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = '#9bf6ff';
+                        e.currentTarget.style.borderColor = '#9bf6ff';
+                        e.currentTarget.style.color = '#1e293b';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive(item.href)) {
+                        e.currentTarget.style.backgroundColor = item.color.bg;
+                        e.currentTarget.style.borderColor = item.color.border;
+                        e.currentTarget.style.color = item.color.text;
+                      }
                     }}
                     onClick={() => {
                       console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname });
@@ -230,8 +244,8 @@ function Layout({ children }) {
                   <DropdownMenu key={group.name}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-200 border-2 
-                          hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center
+                        className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                          hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
                           ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                           ${group.className || ''}
                         `}
@@ -243,6 +257,20 @@ function Layout({ children }) {
                       boxShadow: isGroupHighlighted
                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
                         : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isGroupHighlighted) {
+                        e.currentTarget.style.backgroundColor = '#9bf6ff';
+                        e.currentTarget.style.borderColor = '#9bf6ff';
+                        e.currentTarget.style.color = '#1e293b';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isGroupHighlighted) {
+                        e.currentTarget.style.backgroundColor = group.color.bg;
+                        e.currentTarget.style.borderColor = group.color.border;
+                        e.currentTarget.style.color = group.color.text;
+                      }
                     }}
                       >
                         {isEmojiIcon ? (
