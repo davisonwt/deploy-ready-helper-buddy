@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { X, Heart, UserPlus, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { UserPlus, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,11 +28,13 @@ interface SwipeDeckProps {
   initialCircleId?: string;
 }
 
+const USERS_PER_PAGE = 21;
+
 export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDeckProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || 'friends');
-  const [swipeCount, setSwipeCount] = useState(0);
+  const [addedUsers, setAddedUsers] = useState<Set<string>>(new Set());
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -213,47 +215,50 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     }
   };
 
-  const handleSwipe = (direction: 'left' | 'right', info?: PanInfo) => {
-    if (currentIndex >= profiles.length) return;
-
-    const currentProfile = profiles[currentIndex];
-
-    if (direction === 'right') {
-      // Haptic feedback
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-
-      // Confetti burst
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 2000);
-
-      // Add to circle - use user_id if available, otherwise use id
-      const profileToAdd = {
-        ...currentProfile,
-        id: currentProfile.user_id || currentProfile.id,
-      };
-      onSwipeRight(profileToAdd, selectedCircle);
-      setSwipeCount(prev => prev + 1);
-
+  const handleAddToCircle = async (profile: Profile) => {
+    const profileId = profile.user_id || profile.id;
+    
+    // Check if already added
+    if (addedUsers.has(profileId)) {
       toast({
-        title: 'Added!',
-        description: `${currentProfile.full_name || currentProfile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
+        title: 'Already added',
+        description: `${profile.full_name || profile.username} is already in ${circles.find(c => c.id === selectedCircle)?.name}`,
       });
-
-      // After 3 swipes, show group creation prompt
-      if (swipeCount + 1 >= 3) {
-        setTimeout(() => {
-          onComplete();
-        }, 500);
-      }
+      return;
     }
 
-    // Move to next card
-    setCurrentIndex(prev => prev + 1);
+    // Haptic feedback
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    // Confetti burst
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 2000);
+
+    // Add to circle - use user_id if available, otherwise use id
+    const profileToAdd = {
+      ...profile,
+      id: profileId,
+    };
+    
+    await onSwipeRight(profileToAdd, selectedCircle);
+    
+    // Mark as added
+    setAddedUsers(prev => new Set(prev).add(profileId));
+
+    toast({
+      title: 'Added!',
+      description: `${profile.full_name || profile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
+    });
   };
 
-  const currentProfile = profiles[currentIndex];
+  // Get current page of users (21 at a time)
+  const startIndex = currentPage * USERS_PER_PAGE;
+  const endIndex = startIndex + USERS_PER_PAGE;
+  const currentPageProfiles = profiles.slice(startIndex, endIndex);
+  const hasMore = endIndex < profiles.length;
+  const hasPrevious = currentPage > 0;
 
   if (loading) {
     return (
@@ -263,14 +268,14 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     );
   }
 
-  if (currentIndex >= profiles.length) {
+  if (profiles.length === 0 && !loading) {
     return (
       <Card className="p-8 text-center">
         <CardContent>
           <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h3 className="text-xl font-semibold mb-2">All caught up!</h3>
+          <h3 className="text-xl font-semibold mb-2">No users found</h3>
           <p className="text-muted-foreground mb-4">
-            You've seen everyone. Check back later for new people.
+            There are no registered sowers, bestowers, or gosat users to add yet.
           </p>
           <Button onClick={onComplete}>Done</Button>
         </CardContent>
@@ -279,7 +284,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   }
 
   return (
-    <div className="relative w-full max-w-md mx-auto h-[600px]">
+    <div className="relative w-full max-w-4xl mx-auto">
       {showConfetti && (
         <Confetti
           width={window.innerWidth}
@@ -346,98 +351,107 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         </div>
       </div>
 
-      {/* Swipe cards */}
-      <div className="relative h-full">
-        {profiles.slice(currentIndex, currentIndex + 3).map((profile, stackIndex) => {
-          const isTop = stackIndex === 0;
-          const zIndex = 3 - stackIndex;
-          const scale = 1 - stackIndex * 0.05;
-          const yOffset = stackIndex * 10;
-
-          return (
-            <motion.div
-              key={profile.id}
-              className="absolute inset-0"
-              style={{ zIndex }}
-              initial={{ scale, y: yOffset, opacity: isTop ? 1 : 0.7 }}
-              animate={{ scale, y: yOffset, opacity: isTop ? 1 : 0.7 }}
-              drag={isTop ? 'x' : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={(_, info) => {
-                if (!isTop) return;
-                const threshold = 100;
-                if (info.offset.x > threshold) {
-                  handleSwipe('right', info);
-                } else if (info.offset.x < -threshold) {
-                  handleSwipe('left', info);
-                }
-              }}
-              whileDrag={{ rotate: info => (info.offset.x / 10) }}
-            >
-              <Card className="h-full cursor-grab active:cursor-grabbing">
-                <CardContent className="p-6 h-full flex flex-col">
-                  {/* Avatar */}
-                  <div className="flex justify-center mb-4">
-                    <Avatar className="h-32 w-32">
+      {/* Users Grid - 21 at a time */}
+      <div className="mb-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
+          {currentPageProfiles.map((profile) => {
+            const profileId = profile.user_id || profile.id;
+            const isAdded = addedUsers.has(profileId);
+            
+            return (
+              <motion.div
+                key={profileId}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative"
+              >
+                <Card className={`
+                  cursor-pointer transition-all hover:shadow-lg
+                  ${isAdded ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' : ''}
+                `}>
+                  <CardContent className="p-3 flex flex-col items-center">
+                    {/* Avatar */}
+                    <Avatar className="h-16 w-16 mb-2">
                       <AvatarImage src={profile.avatar_url} />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-lg">
                         {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                  </div>
 
-                  {/* Name */}
-                  <h3 className="text-2xl font-bold text-center mb-2">
-                    {profile.full_name || profile.username || 'Anonymous'}
-                  </h3>
+                    {/* Name */}
+                    <h4 className="text-xs font-semibold text-center mb-1 line-clamp-1">
+                      {profile.full_name || profile.username || 'User'}
+                    </h4>
 
-                  {/* Bio */}
-                  {profile.bio && (
-                    <p className="text-muted-foreground text-center mb-4 text-sm">
-                      {profile.bio}
-                    </p>
-                  )}
+                    {/* Tags */}
+                    {profile.tags && profile.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 justify-center mb-2">
+                        {profile.tags.slice(0, 2).map((tag, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Tags */}
-                  {profile.tags && profile.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center mb-6">
-                      {profile.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Action buttons */}
-                  <div className="flex gap-4 justify-center mt-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-full h-14 w-14 p-0"
-                      onClick={() => handleSwipe('left')}
-                    >
-                      <X className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="rounded-full h-14 w-14 p-0 bg-primary"
-                      onClick={() => handleSwipe('right')}
-                    >
-                      <Heart className="h-6 w-6" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+                    {/* Add Button */}
+                    {!isAdded ? (
+                      <Button
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => handleAddToCircle(profile)}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400">
+                        ✓ Added
+                      </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Instructions */}
-      <p className="text-center text-sm text-muted-foreground mt-4">
-        Swipe right to add • Swipe left to skip
-      </p>
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-6 gap-4">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+          disabled={!hasPrevious}
+          className={hasPrevious ? '' : 'opacity-50 cursor-not-allowed'}
+        >
+          ← Previous
+        </Button>
+        
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-sm font-medium text-foreground">
+            Page {currentPage + 1} of {Math.ceil(profiles.length / USERS_PER_PAGE) || 1}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Showing {startIndex + 1}-{Math.min(endIndex, profiles.length)} of {profiles.length} users
+          </span>
+        </div>
+        
+        <div className="flex gap-2">
+          {hasMore ? (
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+              Next 21 →
+            </Button>
+          ) : (
+            <Button onClick={onComplete}>
+              Done
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
