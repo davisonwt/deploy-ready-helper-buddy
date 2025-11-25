@@ -1085,17 +1085,9 @@ const useCallManagerInternal = () => {
         if (data && data.length > 0) {
           const call = data[0];
           const currentIncomingId = incomingCallRef.current?.id;
-          console.log('📞 [CALL][POLL] 🚨 FOUND RINGING CALL:', {
-            call_id: call.id,
-            caller_id: call.caller_id,
-            receiver_id: call.receiver_id,
-            current_user_id: userId,
-            current_incomingCall_id: currentIncomingId,
-            match: call.receiver_id === userId
-          });
           
           if (!currentIncomingId || currentIncomingId !== call.id) {
-            // Need to fetch caller name for the call
+            // Fetch caller name for the call
             const { data: callerProfile } = await supabase
               .from('profiles')
               .select('user_id, display_name, first_name, last_name')
@@ -1106,7 +1098,7 @@ const useCallManagerInternal = () => {
                              `${callerProfile?.first_name || ''} ${callerProfile?.last_name || ''}`.trim() ||
                              'Unknown';
             
-            console.log('📞 [CALL][POLL] 🚨🚨🚨 TRIGGERING handleIncomingCall FROM POLL - RECEIVER SHOULD SEE CALL NOW', {
+            console.log('📞 [CALL] Incoming call detected:', {
               call_id: call.id,
               caller_name: callerName
             });
@@ -1121,6 +1113,7 @@ const useCallManagerInternal = () => {
               isIncoming: true,
               timestamp: new Date(call.created_at).getTime()
             });
+<<<<<<< HEAD
           } else {
             // Only log occasionally when call is already in state
             if (pollCount % 10 === 0) {
@@ -1132,14 +1125,20 @@ const useCallManagerInternal = () => {
           if (pollCount % 10 === 0) {
             console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
           }
+=======
+          }
+>>>>>>> 5ce026350aef5b86b8c0f4871039596e6f3cca4a
         }
+        // Removed excessive "no calls found" logging
       } catch (e) {
-        console.error('⚠️ [CALL][POLL] Poll error', e);
+        console.error('⚠️ [CALL] Poll error:', e);
       }
-    }, 1000); // Poll every 1 second
+    }, 2000); // Poll every 2 seconds (reduced frequency)
 
     return () => {
-      console.log('📞 [CALL][POLL] Stopping poll');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📞 [CALL] Stopping poll');
+      }
       clearInterval(poll);
     };
   }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall]);
