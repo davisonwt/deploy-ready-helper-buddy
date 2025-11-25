@@ -5,6 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,10 +33,91 @@ export const ChatListView: React.FC = () => {
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [creatingChat, setCreatingChat] = useState(false);
 
   useEffect(() => {
     loadConversations();
-  }, [user]);
+    if (showNewChatDialog) {
+      loadAvailableUsers();
+    }
+  }, [user, showNewChatDialog]);
+
+  const loadAvailableUsers = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, first_name, last_name')
+        .neq('id', user.id)
+        .limit(50);
+
+      if (error) throw error;
+      setAvailableUsers(profiles || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const createNewChat = async (otherUserId: string) => {
+    if (!user) return;
+    
+    setCreatingChat(true);
+    try {
+      // Check if a direct chat already exists
+      const { data: existingRooms } = await supabase
+        .from('chat_participants')
+        .select('room_id, chat_rooms!inner(room_type)')
+        .eq('user_id', user.id);
+
+      for (const room of existingRooms || []) {
+        const { data: participants } = await supabase
+          .from('chat_participants')
+          .select('user_id')
+          .eq('room_id', room.room_id);
+
+        if (participants?.length === 2 && participants.some(p => p.user_id === otherUserId)) {
+          setSelectedRoomId(room.room_id);
+          setShowNewChatDialog(false);
+          setCreatingChat(false);
+          return;
+        }
+      }
+
+      // Create new direct room
+      const { data: newRoom, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          room_type: 'direct',
+          created_by: user.id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Add both participants
+      const { error: participantsError } = await supabase
+        .from('chat_participants')
+        .insert([
+          { room_id: newRoom.id, user_id: user.id, is_active: true },
+          { room_id: newRoom.id, user_id: otherUserId, is_active: true }
+        ]);
+
+      if (participantsError) throw participantsError;
+
+      setSelectedRoomId(newRoom.id);
+      setShowNewChatDialog(false);
+      await loadConversations();
+    } catch (error) {
+      console.error('Error creating chat:', error);
+    } finally {
+      setCreatingChat(false);
+    }
+  };
 
   const loadConversations = async () => {
     if (!user) return;
@@ -168,7 +251,7 @@ export const ChatListView: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-1">Messages</h2>
           <p className="text-white/70 text-sm">Your recent conversations</p>
         </div>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2" onClick={() => setShowNewChatDialog(true)}>
           <MessageCircle className="w-4 h-4" />
           New Chat
         </Button>
@@ -304,13 +387,53 @@ export const ChatListView: React.FC = () => {
             <MessageCircle className="w-16 h-16 mx-auto mb-4 text-primary/50" />
             <h3 className="text-xl font-semibold text-white mb-2">No conversations yet</h3>
             <p className="text-white/70 mb-4">Start chatting with sowers and bestowers</p>
-            <Button>
+            <Button onClick={() => setShowNewChatDialog(true)}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Start New Chat
             </Button>
           </CardContent>
         </Card>
       )}
+
+      {/* New Chat Dialog */}
+      <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
+        <DialogContent className="glass-card bg-background/95 border-primary/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">Start New Chat</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <Input 
+              placeholder="Search users..." 
+              className="bg-background/50 border-primary/20 text-white"
+            />
+            <div className="max-h-96 overflow-y-auto space-y-2">
+              {availableUsers.map((profile) => (
+                <Card 
+                  key={profile.id}
+                  className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all cursor-pointer"
+                  onClick={() => !creatingChat && createNewChat(profile.id)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 border-2 border-primary/30">
+                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary/20 text-white">
+                          {profile.display_name?.charAt(0) || profile.first_name?.charAt(0) || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-white">
+                          {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
