@@ -31,23 +31,38 @@ interface SwipeDeckProps {
 export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDeckProps) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || 'friends');
+  const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || '');
   const [swipeCount, setSwipeCount] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [circles, setCircles] = useState<Array<{ id: string; name: string; emoji: string; color: string }>>([]);
   const { toast } = useToast();
 
-  const circles = [
-    { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500' },
-    { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500' },
-    { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500' },
-    { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500' },
-    { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500' },
-  ];
-
   useEffect(() => {
+    loadCircles();
     loadProfiles();
   }, []);
+
+  const loadCircles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('circles')
+        .select('id, name, emoji, color')
+        .order('name');
+
+      if (error) {
+        console.error('Error loading circles:', error);
+        return;
+      }
+
+      setCircles(data || []);
+      if (data && data.length > 0 && !selectedCircle) {
+        setSelectedCircle(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading circles:', error);
+    }
+  };
 
   const loadProfiles = async () => {
     try {
@@ -263,7 +278,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
   const currentProfile = profiles[currentIndex];
 
-  if (loading) {
+  if (loading || circles.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
