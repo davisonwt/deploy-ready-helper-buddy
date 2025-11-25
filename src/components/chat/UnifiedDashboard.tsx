@@ -5,6 +5,7 @@ import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicati
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
 import { CommunityForums } from './CommunityForums';
+import { ChatListView } from './ChatListView';
 import { RelationshipLayerChatApp } from './RelationshipLayerChatApp';
 import { ClassroomMode } from '../communication/ClassroomMode';
 import { LectureMode } from '../communication/LectureMode';
@@ -40,7 +41,7 @@ export const UnifiedDashboard: React.FC = () => {
   const renderContent = () => {
     switch (activeMode) {
       case 'chat':
-        return <RelationshipLayerChatApp />;
+        return <ChatListView />;
       case 'community':
         return <CommunityForums />;
       case 'classroom':
