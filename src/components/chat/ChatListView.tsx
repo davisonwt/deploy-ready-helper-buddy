@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Users, Phone, Video, MoreVertical, ArrowLeft } from 'lucide-react';
+import { MessageCircle, Users, Phone, Video, MoreVertical } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
-import { RelationshipLayerChatApp } from './RelationshipLayerChatApp';
+import { ChatRoom } from './ChatRoom';
 
 interface ChatConversation {
   id: string;
@@ -135,21 +135,9 @@ export const ChatListView: React.FC = () => {
     setSelectedRoomId(null);
   };
 
-  // If a chat is selected, show the full chat interface
+  // If a chat is selected, show the actual chat room messaging interface
   if (selectedRoomId) {
-    return (
-      <div className="space-y-4">
-        <Button 
-          variant="ghost" 
-          onClick={closeChat}
-          className="gap-2 text-white hover:text-white/80"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Messages
-        </Button>
-        <RelationshipLayerChatApp />
-      </div>
-    );
+    return <ChatRoom roomId={selectedRoomId} onBack={closeChat} />;
   }
 
   if (loading) {
