@@ -392,22 +392,24 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   e.stopPropagation();
                   handleMouseLeave(e);
                 }}
-                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64"
+                className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64`}
                 style={{
-                  maxWidth: 'calc(100vw - 2rem)',
-                  maxHeight: 'calc(100vh - 250px)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  // Ensure menu stays within viewport
-                  position: 'absolute'
+                  maxWidth: 'min(calc(100vw - 2rem), 256px)',
+                  position: isHovered ? 'fixed' : 'absolute',
+                  ...(isHovered ? {
+                    top: 'calc(50% + 120px)', // Position below centered card
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    maxHeight: 'calc(100vh - 50% - 150px)', // Ensure it doesn't go below viewport
+                  } : {})
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl max-h-[calc(100vh-200px)] flex flex-col">
-                  <CardContent className="p-4 flex flex-col flex-1 min-h-0">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden">
+                  <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="flex-1 min-h-0 max-h-[calc(100vh-300px)]">
+                    <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: 'min(400px, calc(100vh - 300px))' }}>
                       <div className="space-y-1 pr-4">
                         {actions.map((action, idx) => {
                           const Icon = action.icon;
