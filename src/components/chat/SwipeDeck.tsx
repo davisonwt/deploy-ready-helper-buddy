@@ -240,17 +240,25 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         title: 'Added!',
         description: `${currentProfile.full_name || currentProfile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
       });
-
-      // After 3 swipes, show group creation prompt
-      if (swipeCount + 1 >= 3) {
-        setTimeout(() => {
-          onComplete();
-        }, 500);
-      }
     }
 
     // Move to next card
     setCurrentIndex(prev => prev + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      if (navigator.vibrate) {
+        navigator.vibrate(20);
+      }
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < profiles.length) {
+      handleSwipe('left');
+    }
   };
 
   const currentProfile = profiles[currentIndex];
@@ -372,7 +380,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
                   handleSwipe('left', info);
                 }
               }}
-              whileDrag={{ rotate: info => (info.offset.x / 10) }}
             >
               <Card className="h-full cursor-grab active:cursor-grabbing">
                 <CardContent className="p-6 h-full flex flex-col">
@@ -434,10 +441,35 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         })}
       </div>
 
-      {/* Instructions */}
-      <p className="text-center text-sm text-muted-foreground mt-4">
-        Swipe right to add • Swipe left to skip
-      </p>
+      {/* Navigation Controls */}
+      <div className="flex items-center justify-center gap-4 mt-6">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={handlePrevious}
+          disabled={currentIndex === 0}
+          className="rounded-full w-16 h-16 p-0"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </Button>
+        <div className="text-center">
+          <p className="text-sm font-medium">{currentIndex + 1} / {profiles.length}</p>
+          <p className="text-xs text-muted-foreground">Swipe or use buttons</p>
+        </div>
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={handleNext}
+          disabled={currentIndex >= profiles.length - 1}
+          className="rounded-full w-16 h-16 p-0"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </Button>
+      </div>
     </div>
   );
 }
