@@ -44,21 +44,31 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
-  const handleMouseEnter = (memberId: string) => {
+  const handleMouseEnter = (memberId: string, e?: React.MouseEvent) => {
+    // Prevent event bubbling
+    e?.stopPropagation();
+    
     // Clear any pending timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
       hoverTimeoutRef.current = null;
     }
-    setHoveredMemberId(memberId);
+    
+    // Only set if different member to prevent glitching
+    if (hoveredMemberId !== memberId) {
+      setHoveredMemberId(memberId);
+    }
   };
   
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e?: React.MouseEvent) => {
+    // Prevent event bubbling
+    e?.stopPropagation();
+    
     // Add a delay before hiding to allow mouse movement to menu
     hoverTimeoutRef.current = setTimeout(() => {
       setHoveredMemberId(null);
       hoverTimeoutRef.current = null;
-    }, 300); // 300ms delay to allow mouse movement
+    }, 200); // Reduced delay to prevent glitching
   };
   
   // Cleanup timeout on unmount
@@ -291,7 +301,15 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
   };
 
   return (
-    <div className="flex flex-wrap gap-6 justify-center relative">
+    <div 
+      className="flex flex-wrap gap-6 justify-center relative"
+      onMouseLeave={(e) => {
+        // Only clear hover if mouse leaves the entire container
+        if (e.target === e.currentTarget) {
+          handleMouseLeave(e);
+        }
+      }}
+    >
       {members.map((member, index) => {
         const tags = [];
         if (member.is_sower) tags.push('Sower');
@@ -311,16 +329,19 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               zIndex: isHovered ? 50 : 1
             }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            onMouseEnter={() => handleMouseEnter(member.user_id)}
-            onMouseLeave={handleMouseLeave}
+            onMouseEnter={(e) => handleMouseEnter(member.user_id, e)}
+            onMouseLeave={(e) => handleMouseLeave(e)}
             className="relative"
             style={isHovered ? {
               position: 'fixed',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              zIndex: 1000
-            } : {}}
+              zIndex: 1000,
+              pointerEvents: 'auto'
+            } : {
+              pointerEvents: hoveredMemberId && !isHovered ? 'none' : 'auto'
+            }}
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full relative">
@@ -360,16 +381,33 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                onMouseEnter={() => handleMouseEnter(member.user_id)}
-                onMouseLeave={handleMouseLeave}
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  if (hoverTimeoutRef.current) {
+                    clearTimeout(hoverTimeoutRef.current);
+                    hoverTimeoutRef.current = null;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.stopPropagation();
+                  handleMouseLeave(e);
+                }}
                 className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64"
+                style={{
+                  maxWidth: 'calc(100vw - 2rem)',
+                  maxHeight: 'calc(100vh - 250px)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  // Ensure menu stays within viewport
+                  position: 'absolute'
+                }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl">
-                  <CardContent className="p-4">
-                    <h4 className="text-sm font-semibold text-white mb-3 text-center">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl max-h-[calc(100vh-200px)] flex flex-col">
+                  <CardContent className="p-4 flex flex-col flex-1 min-h-0">
+                    <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="h-[300px] max-h-[60vh]">
+                    <ScrollArea className="flex-1 min-h-0 max-h-[calc(100vh-300px)]">
                       <div className="space-y-1 pr-4">
                         {actions.map((action, idx) => {
                           const Icon = action.icon;
