@@ -40,32 +40,34 @@ interface Member {
 export function CircleMembersList({ circleId, onStartChat, onStartCall, onNavigateToTraining, onNavigateToRadio, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   
-  // Close menu when clicking outside
+  const handleMouseEnter = (memberId: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredMemberId(memberId);
+  };
+  
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredMemberId(null);
+      hoverTimeoutRef.current = null;
+    }, 200);
+  };
+  
+  // Cleanup timeout on unmount
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setSelectedMemberId(null);
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
       }
     };
-
-    if (selectedMemberId) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [selectedMemberId]);
-  
-  const handleMemberClick = (memberId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Toggle selection - if already selected, deselect
-    setSelectedMemberId(prev => prev === memberId ? null : memberId);
-  };
+  }, []);
 
   useEffect(() => {
     loadMembers();
@@ -303,33 +305,30 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
         if (member.is_bestower) tags.push('Bestower');
         if (member.is_gosat) tags.push('Gosat');
 
-        const isSelected = selectedMemberId === member.user_id;
-        const actions = getAvailableActions(member);
+        const isHovered = hoveredMemberId === member.user_id;
 
         return (
           <motion.div
             key={member.user_id}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ 
-              opacity: isSelected ? 1 : selectedMemberId ? 0.4 : 1,
-              scale: isSelected ? 1.15 : selectedMemberId ? 0.9 : 1,
-              zIndex: isSelected ? 50 : 1
+              opacity: isHovered ? 1 : hoveredMemberId ? 0.3 : 1,
+              scale: isHovered ? 1.15 : hoveredMemberId ? 0.9 : 1,
+              zIndex: isHovered ? 50 : 1
             }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMemberClick(member.user_id, e);
-            }}
+            onMouseEnter={() => handleMouseEnter(member.user_id)}
+            onMouseLeave={handleMouseLeave}
             className="relative cursor-pointer"
-            style={isSelected ? {
+            style={isHovered ? {
               position: 'fixed',
-              top: '50%',
+              top: '20%',
               left: '50%',
-              transform: 'translate(-50%, -50%)',
+              transform: 'translate(-50%, 0)',
               zIndex: 1000,
               pointerEvents: 'auto'
             } : {
-              pointerEvents: selectedMemberId && !isSelected ? 'none' : 'auto'
+              pointerEvents: hoveredMemberId && !isHovered ? 'none' : 'auto'
             }}
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
@@ -363,38 +362,43 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               </CardContent>
             </Card>
 
-            {/* Action Menu - Appears on click - Render outside card container */}
           </motion.div>
         );
       })}
       
-      {/* Render menu separately when a member is selected */}
-      {selectedMemberId && (() => {
-        const selectedMember = members.find(m => m.user_id === selectedMemberId);
-        if (!selectedMember) return null;
-        const actions = getAvailableActions(selectedMember);
+      {/* Render menu separately when a member is hovered */}
+      {hoveredMemberId && (() => {
+        const hoveredMember = members.find(m => m.user_id === hoveredMemberId);
+        if (!hoveredMember) return null;
+        const actions = getAvailableActions(hoveredMember);
         if (actions.length === 0) return null;
         
         return (
           <motion.div
-            key={`menu-${selectedMemberId}`}
+            key={`menu-${hoveredMemberId}`}
             ref={menuRef}
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+                hoverTimeoutRef.current = null;
+              }
+            }}
+            onMouseLeave={handleMouseLeave}
             className="fixed z-[1001] pointer-events-auto"
             style={{
-              // Position menu below the centered card
-              // Card center is at 50vh, card is 192px tall (w-48), so bottom is at 50vh + 96px
+              // Position menu below the hovered card
+              // Card is at top: 20%, card height is 192px (w-48), so bottom is at 20% + 192px
               // Menu starts 20px below card bottom
-              top: 'calc(50vh + 116px)',
+              top: 'calc(20% + 212px)',
               left: '50%',
               transform: 'translateX(-50%)',
               width: '256px',
               maxWidth: 'min(calc(100vw - 2rem), 256px)',
-              maxHeight: 'min(calc(100vh - 50vh - 116px - 1rem), 350px)',
+              maxHeight: 'min(calc(100vh - 20% - 212px - 1rem), 350px)',
               minHeight: '200px',
             }}
           >
@@ -430,7 +434,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                                     .map(circle => (
                                       <DropdownMenuItem
                                         key={circle.id}
-                                        onClick={() => handleAddToCircle(selectedMember.user_id, selectedMember.full_name || 'User', circle.id)}
+                                        onClick={() => handleAddToCircle(hoveredMember.user_id, hoveredMember.full_name || 'User', circle.id)}
                                       >
                                         {circle.emoji} {circle.name}
                                       </DropdownMenuItem>
@@ -446,7 +450,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                               variant="ghost"
                             onClick={() => {
                               action.onClick?.();
-                              setSelectedMemberId(null);
+                              setHoveredMemberId(null);
                             }}
                               className="w-full justify-start hover:bg-primary/20 text-white"
                               style={{ backgroundColor: 'transparent' }}
