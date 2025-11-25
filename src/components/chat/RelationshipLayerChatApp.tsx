@@ -309,7 +309,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           {activeCircleId ? (
             <div className="space-y-6">
               {/* Circle Members List */}
-              <Card className="glass-card border border-primary/20">
+              <Card className="glass-card border border-primary/20 bg-transparent">
                 <CardContent className="p-6">
                   <CircleMembersList
                     circleId={activeCircleId}
@@ -320,7 +320,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
               </Card>
             </div>
           ) : (
-            <Card className="glass-card border border-primary/20">
+            <Card className="glass-card border border-primary/20 bg-transparent">
               <CardContent className="p-6 text-center">
                 <p className="text-foreground/80">
                   Select a circle above to view members or add new people
@@ -330,7 +330,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           )}
 
           {/* Swipe Deck - Always Available */}
-          <Card className="mt-6 glass-card border border-primary/20">
+          <Card className="mt-6 glass-card border border-primary/20 bg-transparent">
             <CardContent className="p-6">
               <h2 className="text-2xl font-bold text-white mb-4">
                 Add People to Circles

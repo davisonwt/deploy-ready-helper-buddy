@@ -433,7 +433,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <Card className="max-w-md mx-auto overflow-hidden glass-card border-2 border-primary/30 hover:border-primary/50 transition-all">
+        <Card className="max-w-md mx-auto overflow-hidden glass-card border-2 border-primary/30 hover:border-primary/50 transition-all bg-transparent">
           <CardContent className="p-8 flex flex-col items-center">
             {/* Avatar with glow */}
             <div className="relative mb-6">
