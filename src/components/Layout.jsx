@@ -105,7 +105,7 @@ function Layout({ children }) {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'dashboard-tour' },
     { name: "chatapp", href: "/communications-hub", icon: MessageSquare, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'chatapp-tour' }
   ]
 
