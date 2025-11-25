@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -39,6 +41,9 @@ export const ChatListView: React.FC = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [creatingChat, setCreatingChat] = useState(false);
+  const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState('');
 
   useEffect(() => {
     loadConversations();
@@ -120,6 +125,79 @@ export const ChatListView: React.FC = () => {
     } finally {
       setCreatingChat(false);
     }
+  };
+
+  const createGroupChat = async () => {
+    if (!user || selectedUsers.length < 2 || !groupName.trim()) {
+      toast({
+        title: 'Missing information',
+        description: 'Please enter a group name and select at least 2 people',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCreatingChat(true);
+    try {
+      // Create new group room
+      const { data: newRoom, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          room_type: 'group',
+          name: groupName,
+          created_by: user.id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Add all participants including creator
+      const participants = [
+        { room_id: newRoom.id, user_id: user.id, is_active: true, is_moderator: true },
+        ...selectedUsers.map(userId => ({
+          room_id: newRoom.id,
+          user_id: userId,
+          is_active: true,
+          is_moderator: false
+        }))
+      ];
+
+      const { error: participantsError } = await supabase
+        .from('chat_participants')
+        .insert(participants);
+
+      if (participantsError) throw participantsError;
+
+      toast({
+        title: 'Group created!',
+        description: `${groupName} has been created with ${selectedUsers.length} members`,
+      });
+
+      setSelectedRoomId(newRoom.id);
+      setShowNewChatDialog(false);
+      setGroupName('');
+      setSelectedUsers([]);
+      await loadConversations();
+    } catch (error) {
+      console.error('Error creating group:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create group chat',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreatingChat(false);
+    }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
   const loadConversations = async () => {
@@ -497,41 +575,109 @@ export const ChatListView: React.FC = () => {
 
       {/* New Chat Dialog */}
       <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-        <DialogContent className="glass-card bg-background/95 border-primary/20">
+        <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Start New Chat</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <Input 
-              placeholder="Search users..." 
-              className="bg-background/50 border-primary/20 text-white"
-            />
-            <div className="max-h-96 overflow-y-auto space-y-2">
-              {availableUsers.map((profile) => (
-                <Card 
-                  key={profile.id}
-                  className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all cursor-pointer"
-                  onClick={() => !creatingChat && createNewChat(profile.id)}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10 border-2 border-primary/30">
-                        <AvatarImage src={profile.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-white">
-                          {profile.display_name?.charAt(0) || profile.first_name?.charAt(0) || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-medium text-white">
-                          {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
-                        </p>
+          
+          <Tabs value={chatType} onValueChange={(v) => setChatType(v as 'direct' | 'group')} className="mt-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="direct">Direct Chat</TabsTrigger>
+              <TabsTrigger value="group">Group Chat</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="direct" className="space-y-4">
+              <Input 
+                placeholder="Search users..." 
+                className="bg-background/50 border-primary/20 text-white"
+              />
+              <div className="max-h-96 overflow-y-auto space-y-2">
+                {availableUsers.map((profile) => (
+                  <Card 
+                    key={profile.id}
+                    className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all cursor-pointer"
+                    onClick={() => !creatingChat && createNewChat(profile.id)}
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10 border-2 border-primary/30">
+                          <AvatarImage src={profile.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/20 text-white">
+                            {profile.display_name?.charAt(0) || profile.first_name?.charAt(0) || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium text-white">
+                            {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="group" className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block text-white">Group Name</label>
+                <Input 
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  placeholder="Enter group name..." 
+                  className="bg-background/50 border-primary/20 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block text-white">
+                  Select Members ({selectedUsers.length} selected)
+                </label>
+                <Input 
+                  placeholder="Search users..." 
+                  className="bg-background/50 border-primary/20 text-white mb-3"
+                />
+                <div className="max-h-80 overflow-y-auto space-y-2">
+                  {availableUsers.map((profile) => (
+                    <Card 
+                      key={profile.id}
+                      className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all cursor-pointer"
+                      onClick={() => toggleUserSelection(profile.id)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedUsers.includes(profile.id)}
+                            onCheckedChange={() => toggleUserSelection(profile.id)}
+                            className="border-primary/30"
+                          />
+                          <Avatar className="w-10 h-10 border-2 border-primary/30">
+                            <AvatarImage src={profile.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/20 text-white">
+                              {profile.display_name?.charAt(0) || profile.first_name?.charAt(0) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium text-white">
+                              {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={createGroupChat} 
+                disabled={creatingChat || selectedUsers.length < 2 || !groupName.trim()}
+                className="w-full"
+              >
+                {creatingChat ? 'Creating...' : 'Create Group Chat'}
+              </Button>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>
