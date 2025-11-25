@@ -390,53 +390,80 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         </div>
       </div>
 
-      {/* Circle Selector */}
-      <div className="mb-8">
-        <p className="text-sm text-muted-foreground mb-4 text-center font-medium">
-          Select a circle for this person:
-        </p>
-        <div className="flex gap-3 justify-center flex-wrap">
+      {/* Circle Selector - More Prominent */}
+      <div className="mb-8 bg-primary/5 border-2 border-primary/20 rounded-2xl p-6">
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-bold text-primary mb-2">
+            Choose a Circle
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Click a circle below to select where you want to place{' '}
+            <span className="font-semibold text-foreground">
+              {currentProfile?.full_name || 'this person'}
+            </span>
+          </p>
+        </div>
+        
+        <div className="flex gap-4 justify-center flex-wrap">
           {circles.map((circle) => (
             <motion.button
               key={circle.id}
               onClick={() => setSelectedCircle(circle.id)}
               className={`
-                relative flex flex-col items-center justify-center
-                w-20 h-20 rounded-full border-4 transition-all
+                relative flex flex-col items-center justify-center gap-2
+                w-24 h-24 rounded-full border-4 transition-all cursor-pointer
                 ${selectedCircle === circle.id 
-                  ? `${circle.color} border-white shadow-2xl scale-110` 
-                  : 'bg-muted border-muted-foreground/30 hover:scale-105'
+                  ? `${circle.color} border-white shadow-[0_0_30px_rgba(255,255,255,0.5)] scale-110` 
+                  : 'bg-muted/50 border-border hover:border-primary/50 hover:scale-105 hover:shadow-lg'
                 }
               `}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: selectedCircle === circle.id ? 1.1 : 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <div className={`
                 absolute inset-0 rounded-full
-                ${selectedCircle === circle.id ? 'animate-pulse' : ''}
+                ${selectedCircle === circle.id ? 'animate-pulse bg-white/10' : ''}
               `} />
               
-              <span className="text-2xl relative z-10">{circle.emoji}</span>
+              <span className="text-3xl relative z-10 drop-shadow-lg">
+                {circle.emoji}
+              </span>
               
               <span className={`
-                text-xs mt-1 relative z-10 font-medium
-                ${selectedCircle === circle.id ? 'text-white' : 'text-muted-foreground'}
+                text-xs relative z-10 font-bold px-2 py-1 rounded-full
+                ${selectedCircle === circle.id 
+                  ? 'text-white bg-white/20' 
+                  : 'text-muted-foreground'
+                }
               `}>
                 {circle.name.split('-')[0]}
               </span>
               
               {selectedCircle === circle.id && (
                 <motion.div
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 >
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
                 </motion.div>
               )}
             </motion.button>
           ))}
         </div>
+        
+        {!selectedCircle && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 text-center text-sm text-amber-500 font-medium"
+          >
+            ⚠️ Please select a circle before adding
+          </motion.div>
+        )}
       </div>
 
       {/* Single Profile Card */}
