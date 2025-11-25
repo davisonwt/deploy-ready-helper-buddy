@@ -408,7 +408,7 @@ export function GlassmorphismDashboard({
 
           {/* Circles Section */}
           <Card variant="glass" className="backdrop-blur-xl bg-charcoal/60 border-amber-500/20 mb-6">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between py-6">
               <div className="flex items-center gap-3">
                 {activeCircleId && onCircleDeselect && (
                   <Button
@@ -421,8 +421,8 @@ export function GlassmorphismDashboard({
                     Back
                   </Button>
                 )}
-                <CardTitle className="text-amber-200 flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                <CardTitle className="text-amber-200 flex items-center gap-2 text-2xl font-bold">
+                  <Users className="h-6 w-6" />
                   {activeCircleId ? circles.find(c => c.id === activeCircleId)?.name || 'Circle Members' : 'YOUR CIRCLES'}
                 </CardTitle>
               </div>

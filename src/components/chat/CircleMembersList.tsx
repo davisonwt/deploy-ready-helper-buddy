@@ -324,7 +324,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             className="relative cursor-pointer"
             style={isHovered ? {
               position: 'fixed',
-              top: '15%',
+              top: '10%',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 1000,
@@ -392,16 +392,16 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             onMouseLeave={handleMouseLeave}
             className="fixed z-[1001] pointer-events-auto"
             style={{
-              top: 'calc(15% + 165px)',
+              top: 'calc(10% + 165px)',
               left: '50%',
               transform: 'translateX(-50%)',
               width: '220px',
               maxWidth: 'calc(100vw - 2rem)',
-              maxHeight: 'calc(100vh - 15% - 165px - 2rem)',
+              maxHeight: 'calc(100vh - 10% - 165px - 2rem)',
               height: 'auto',
             }}
           >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: 'calc(100vh - 15% - 165px - 2rem)', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: 'calc(100vh - 10% - 165px - 2rem)', display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <CardContent className="p-4" style={{ display: 'flex', flexDirection: 'column', padding: '1rem', height: '100%', overflow: 'hidden' }}>
                     <h4 className="text-sm font-semibold text-white text-center mb-3 flex-shrink-0">
                       What do you want to do?
