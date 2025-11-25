@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { ChatRoom } from './ChatRoom';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatConversation {
   id: string;
@@ -30,6 +32,7 @@ interface ChatConversation {
 
 export const ChatListView: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -218,6 +221,79 @@ export const ChatListView: React.FC = () => {
     setSelectedRoomId(null);
   };
 
+  const handleDeleteConversation = async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!confirm('Delete this conversation? This cannot be undone.')) return;
+    
+    try {
+      // Delete all messages in the room
+      await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('room_id', conversationId);
+
+      // Delete all participants
+      await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('room_id', conversationId);
+
+      // Delete the room
+      await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', conversationId);
+
+      toast({
+        title: 'Conversation deleted',
+        description: 'The conversation has been removed',
+      });
+
+      loadConversations();
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete conversation',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleMuteConversation = async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast({
+      title: 'Muted',
+      description: 'Conversation has been muted',
+    });
+  };
+
+  const handleArchiveConversation = async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      await supabase
+        .from('chat_rooms')
+        .update({ is_active: false })
+        .eq('id', conversationId);
+
+      toast({
+        title: 'Archived',
+        description: 'Conversation has been archived',
+      });
+
+      loadConversations();
+    } catch (error) {
+      console.error('Error archiving conversation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to archive conversation',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // If a chat is selected, show the actual chat room messaging interface
   if (selectedRoomId) {
     return <ChatRoom roomId={selectedRoomId} onBack={closeChat} />;
@@ -345,7 +421,11 @@ export const ChatListView: React.FC = () => {
                       className="h-8 w-8"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Call:', conversation.id);
+                        openChat(conversation.id);
+                        toast({
+                          title: 'Voice call',
+                          description: 'Open the chat to start a voice call',
+                        });
                       }}
                     >
                       <Phone className="w-4 h-4" />
@@ -356,22 +436,42 @@ export const ChatListView: React.FC = () => {
                       className="h-8 w-8"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Video call:', conversation.id);
+                        openChat(conversation.id);
+                        toast({
+                          title: 'Video call',
+                          description: 'Open the chat to start a video call',
+                        });
                       }}
                     >
                       <Video className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('More options:', conversation.id);
-                      }}
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="glass-panel">
+                        <DropdownMenuItem onClick={(e) => handleMuteConversation(conversation.id, e)}>
+                          Mute notifications
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => handleArchiveConversation(conversation.id, e)}>
+                          Archive conversation
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          Delete conversation
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
