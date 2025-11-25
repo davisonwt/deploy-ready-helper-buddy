@@ -1,4 +1,7 @@
 
+/* Glassmorphism Dashboard Fonts - Must be before @tailwind */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -79,6 +82,40 @@ All colors MUST be HSL.
   --royal-purple: 270 75% 45%;
   --cyan-accent: 180 75% 55%;
   --light-beige: 60 8% 82%;
+
+  /* Glassmorphism Dashboard Colors - Warm Palette */
+  --amber-50: 48 96% 96%;
+  --amber-100: 45 93% 88%;
+  --amber-200: 43 96% 76%;
+  --amber-300: 43 96% 56%;
+  --amber-400: 43 96% 50%;
+  --amber-500: 43 96% 56%; /* #FB923C */
+  --amber-600: 43 96% 48%;
+  --amber-700: 43 96% 40%;
+  --amber-800: 43 96% 32%;
+  --amber-900: 43 96% 24%;
+
+  --coral-50: 0 100% 97%;
+  --coral-100: 0 96% 94%;
+  --coral-200: 0 93% 88%;
+  --coral-300: 0 90% 78%;
+  --coral-400: 0 88% 70%;
+  --coral-500: 0 84% 60%; /* #FF6B6B */
+  --coral-600: 0 78% 52%;
+  --coral-700: 0 72% 44%;
+  --coral-800: 0 66% 36%;
+  --coral-900: 0 60% 28%;
+
+  --charcoal-50: 210 20% 98%;
+  --charcoal-100: 210 20% 96%;
+  --charcoal-200: 210 20% 90%;
+  --charcoal-300: 210 20% 80%;
+  --charcoal-400: 210 20% 60%;
+  --charcoal-500: 210 20% 40%;
+  --charcoal-600: 210 20% 30%;
+  --charcoal-700: 210 20% 20%;
+  --charcoal-800: 210 20% 15%; /* #1F2937 */
+  --charcoal-900: 210 20% 10%; /* #111827 */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
