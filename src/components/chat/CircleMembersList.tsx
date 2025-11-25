@@ -254,17 +254,17 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                     <Button
                       size="sm"
                       onClick={() => onStartChat(member.user_id)}
-                      className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-[#1E3A5C] text-white"
+                      className="h-8 w-8 p-0 rounded-full bg-white hover:bg-white/90 text-[#0A1931]"
                     >
-                      <MessageCircle className="h-3 w-3" />
+                      <MessageCircle className="h-4 w-4" />
                     </Button>
                   )}
                   
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-[#1E3A5C] text-white" title="Also add to another circle">
-                          <UserPlus className="h-3 w-3" />
+                        <Button size="sm" className="h-8 w-8 p-0 rounded-full bg-white hover:bg-white/90 text-[#0A1931]" title="Also add to another circle">
+                          <UserPlus className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-background z-50">
@@ -288,9 +288,9 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   <Button
                     size="sm"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
-                    className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-destructive text-white"
+                    className="h-8 w-8 p-0 rounded-full bg-white hover:bg-destructive text-[#0A1931] hover:text-white"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
