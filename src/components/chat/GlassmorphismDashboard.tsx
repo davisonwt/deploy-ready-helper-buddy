@@ -61,6 +61,8 @@ interface GlassmorphismDashboardProps {
   loadingMembers?: boolean;
   onCircleSelect?: (circleId: string) => void;
   onCircleDeselect?: () => void;
+  onStartChat?: (userId: string) => void;
+  onStartCall?: (userId: string, callType: 'audio' | 'video') => void;
   onAddPeople?: () => void;
   onMemberRemoved?: () => void;
 }
@@ -73,6 +75,8 @@ export function GlassmorphismDashboard({
   loadingMembers = false,
   onCircleSelect,
   onCircleDeselect,
+  onStartChat,
+  onStartCall,
   onAddPeople,
   onMemberRemoved
 }: GlassmorphismDashboardProps) {
@@ -434,6 +438,8 @@ export function GlassmorphismDashboard({
                     <CircleMembersList
                       circleId={activeCircleId}
                       circles={circles}
+                      onStartChat={onStartChat}
+                      onStartCall={onStartCall}
                       onMemberRemoved={onMemberRemoved}
                     />
                   )}
