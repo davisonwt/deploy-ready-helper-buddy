@@ -316,7 +316,10 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               zIndex: isSelected ? 50 : 1
             }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            onClick={(e) => handleMemberClick(member.user_id, e)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMemberClick(member.user_id, e);
+            }}
             className="relative cursor-pointer"
             style={isSelected ? {
               position: 'fixed',
@@ -360,31 +363,41 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               </CardContent>
             </Card>
 
-            {/* Action Menu - Appears on click */}
-            {isSelected && actions.length > 0 && (
-              <motion.div
-                ref={menuRef}
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                onClick={(e) => e.stopPropagation()}
-                className="fixed z-[1001] pointer-events-auto"
-                style={{
-                  // Position menu below the centered card
-                  // Card center is at 50vh, card bottom is at 50vh + 96px, menu starts 20px below
-                  top: 'calc(50vh + 116px)',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '256px',
-                  maxWidth: 'min(calc(100vw - 2rem), 256px)',
-                  // Ensure menu stays within viewport - use simpler calculation
-                  maxHeight: 'min(calc(100vh - 50vh - 116px - 1rem), 350px)',
-                  minHeight: '200px',
-                  visibility: 'visible',
-                  display: 'block',
-                }}
-              >
+            {/* Action Menu - Appears on click - Render outside card container */}
+          </motion.div>
+        );
+      })}
+      
+      {/* Render menu separately when a member is selected */}
+      {selectedMemberId && (() => {
+        const selectedMember = members.find(m => m.user_id === selectedMemberId);
+        if (!selectedMember) return null;
+        const actions = getAvailableActions(selectedMember);
+        if (actions.length === 0) return null;
+        
+        return (
+          <motion.div
+            key={`menu-${selectedMemberId}`}
+            ref={menuRef}
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed z-[1001] pointer-events-auto"
+            style={{
+              // Position menu below the centered card
+              // Card center is at 50vh, card is 192px tall (w-48), so bottom is at 50vh + 96px
+              // Menu starts 20px below card bottom
+              top: 'calc(50vh + 116px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '256px',
+              maxWidth: 'min(calc(100vw - 2rem), 256px)',
+              maxHeight: 'min(calc(100vh - 50vh - 116px - 1rem), 350px)',
+              minHeight: '200px',
+            }}
+          >
                 <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '350px', minHeight: '200px' }}>
                   <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
@@ -417,7 +430,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                                     .map(circle => (
                                       <DropdownMenuItem
                                         key={circle.id}
-                                        onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
+                                        onClick={() => handleAddToCircle(selectedMember.user_id, selectedMember.full_name || 'User', circle.id)}
                                       >
                                         {circle.emoji} {circle.name}
                                       </DropdownMenuItem>
