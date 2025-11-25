@@ -42,14 +42,38 @@ This document addresses the security issues identified in the comprehensive secu
 
 ### 2. Enable Leaked Password Protection
 
-**Status**: ⚠️ **ACTION REQUIRED**
+**Status**: ⚠️ **ACTION REQUIRED** - Manual Configuration Needed
 
-**Issue**: Supabase project does not have leaked password protection enabled.
+**Issue**: Supabase project does not have leaked password protection enabled. Users can currently set passwords that have appeared in data breaches.
 
-**Remediation**:
-1. Go to Supabase Dashboard → Authentication → Policies
-2. Enable "Check passwords against Have I Been Pwned database"
-3. This prevents users from using compromised passwords
+**Risk**: Users may use compromised passwords, making their accounts vulnerable to credential stuffing attacks.
+
+**Remediation Steps** (Must be done in Supabase Dashboard):
+
+1. **Navigate to Supabase Dashboard**:
+   - Go to https://supabase.com/dashboard
+   - Select your project
+
+2. **Enable Leaked Password Protection**:
+   - Go to **Authentication** → **Policies** (or **Settings** → **Auth**)
+   - Look for **"Password Protection"** or **"Leaked Password Protection"** section
+   - Enable **"Check passwords against Have I Been Pwned database"**
+   - Save the changes
+
+3. **Alternative Path** (if the above doesn't work):
+   - Go to **Authentication** → **Settings**
+   - Scroll to **"Password Protection"** section
+   - Enable **"Check passwords against Have I Been Pwned database"**
+
+4. **Verify**:
+   - Try creating a test account with a known compromised password (e.g., "password123")
+   - The system should reject it with an error message
+
+**Reference**: 
+- Supabase Docs: https://supabase.com/docs/guides/auth/password-security
+- Lovable Docs: https://docs.lovable.dev/features/security#leaked-password-protection-disabled
+
+**Note**: This is a dashboard configuration change and cannot be done via code or migrations.
 
 ### 3. Database Functions - search_path
 
@@ -184,8 +208,9 @@ The following security practices are already in place:
 - [x] Ensure .env is in .gitignore
 - [x] Add fail-closed mode to rate limiter for critical operations
 - [x] Create database function verification migration
+- [x] Fix remaining SECURITY DEFINER functions with search_path
 - [ ] **CRITICAL**: Rotate Jitsi credentials (they are compromised)
-- [ ] Enable leaked password protection in Supabase
+- [ ] **HIGH PRIORITY**: Enable leaked password protection in Supabase Dashboard
 - [ ] Run database function verification query in Supabase SQL Editor
 - [ ] Review profile visibility RLS policies
 - [ ] Plan migration of wallet API credentials to secure vault
