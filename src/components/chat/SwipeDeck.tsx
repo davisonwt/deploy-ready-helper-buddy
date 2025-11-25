@@ -54,7 +54,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all registered sowers
+      // Fetch all registered sowers - use left join to get all sowers even without profiles
       const { data: sowersData, error: sowersError } = await supabase
         .from('sowers')
         .select(`
@@ -62,7 +62,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
           display_name,
           logo_url,
           bio,
-          profiles!inner (
+          profiles (
             id,
             user_id,
             username,
@@ -76,6 +76,8 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       if (sowersError) {
         console.error('Error loading sowers:', sowersError);
       }
+
+      console.log('📊 Loaded sowers:', sowersData?.length || 0);
 
       // Fetch all registered bestowers (users who have made bestowals)
       const { data: bestowalsData, error: bestowalsError } = await supabase
@@ -145,15 +147,15 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       // Combine sowers and bestowers, deduplicate by user_id
       const allProfilesMap = new Map<string, any>();
 
-      // Add sowers
+      // Add sowers - handle both cases: with and without profiles
       (sowersData || []).forEach((sower: any) => {
-        if (sower.profiles && sower.user_id) {
-          const profile = sower.profiles;
+        if (sower.user_id) {
+          const profile = sower.profiles || {};
           allProfilesMap.set(sower.user_id, {
-            id: profile.id,
-            user_id: profile.user_id || sower.user_id,
+            id: profile.id || sower.user_id,
+            user_id: sower.user_id,
             username: profile.username,
-            full_name: profile.full_name || sower.display_name,
+            full_name: profile.full_name || sower.display_name || 'Sower',
             avatar_url: profile.avatar_url || sower.logo_url,
             bio: profile.bio || sower.bio,
             is_sower: true,
@@ -211,6 +213,50 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
           ...profile,
           tags: tags.length > 0 ? tags : ['Member'],
         };
+      });
+
+      // If no profiles found, try fetching all profiles directly as fallback
+      if (profilesWithTags.length === 0) {
+        console.log('⚠️ No profiles from joins, trying direct fetch...');
+        
+        // Collect all user IDs we want
+        const allUserIds = new Set<string>();
+        (sowersData || []).forEach((s: any) => s.user_id && allUserIds.add(s.user_id));
+        bestowerIds.forEach(id => allUserIds.add(id));
+        gosatIds.forEach(id => allUserIds.add(id));
+        
+        if (allUserIds.size > 0) {
+          const { data: directProfiles, error: directError } = await supabase
+            .from('profiles')
+            .select('id, user_id, username, full_name, avatar_url, bio')
+            .in('user_id', Array.from(allUserIds))
+            .neq('user_id', user.id);
+          
+          if (!directError && directProfiles) {
+            directProfiles.forEach((profile: any) => {
+              const tags: string[] = [];
+              if (sowersData?.some((s: any) => s.user_id === profile.user_id)) tags.push('Sower');
+              if (bestowerIds.has(profile.user_id)) tags.push('Bestower');
+              if (gosatIds.has(profile.user_id)) tags.push('Gosat');
+              
+              profilesWithTags.push({
+                ...profile,
+                tags: tags.length > 0 ? tags : ['Member'],
+                is_sower: tags.includes('Sower'),
+                is_bestower: tags.includes('Bestower'),
+                is_gosat: tags.includes('Gosat'),
+              });
+            });
+            console.log('✅ Loaded profiles via direct fetch:', profilesWithTags.length);
+          }
+        }
+      }
+
+      console.log('✅ Total profiles loaded:', profilesWithTags.length);
+      console.log('📋 Profiles breakdown:', {
+        sowers: profilesWithTags.filter(p => p.is_sower).length,
+        bestowers: profilesWithTags.filter(p => p.is_bestower).length,
+        gosat: profilesWithTags.filter(p => p.is_gosat).length,
       });
 
       setProfiles(profilesWithTags);
@@ -297,20 +343,61 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         />
       )}
 
-      {/* Circle selector */}
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-        {circles.map((circle) => (
-          <Button
-            key={circle.id}
-            onClick={() => setSelectedCircle(circle.id)}
-            variant={selectedCircle === circle.id ? 'default' : 'outline'}
-            size="sm"
-            className={`${selectedCircle === circle.id ? circle.color : ''} flex-shrink-0`}
-          >
-            <span className="mr-1">{circle.emoji}</span>
-            {circle.name}
-          </Button>
-        ))}
+      {/* Visual Circle Selector with actual circles */}
+      <div className="mb-6">
+        <p className="text-sm text-muted-foreground mb-3 text-center">
+          Select a circle to add people to:
+        </p>
+        <div className="flex gap-3 justify-center flex-wrap">
+          {circles.map((circle) => (
+            <motion.button
+              key={circle.id}
+              onClick={() => setSelectedCircle(circle.id)}
+              className={`
+                relative flex flex-col items-center justify-center
+                w-20 h-20 rounded-full border-4 transition-all
+                ${selectedCircle === circle.id 
+                  ? `${circle.color} border-white shadow-2xl scale-110` 
+                  : 'bg-muted border-muted-foreground/30 hover:scale-105'
+                }
+              `}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* Circle visual */}
+              <div className={`
+                absolute inset-0 rounded-full
+                ${selectedCircle === circle.id ? 'animate-pulse' : ''}
+              `} style={{
+                background: selectedCircle === circle.id 
+                  ? `radial-gradient(circle, ${circle.color.replace('bg-', '')} 0%, transparent 70%)`
+                  : 'transparent'
+              }} />
+              
+              {/* Emoji */}
+              <span className="text-2xl relative z-10">{circle.emoji}</span>
+              
+              {/* Circle name */}
+              <span className={`
+                text-xs mt-1 relative z-10 font-medium
+                ${selectedCircle === circle.id ? 'text-white' : 'text-muted-foreground'}
+              `}>
+                {circle.name.split('-')[0]}
+              </span>
+              
+              {/* Selected indicator */}
+              {selectedCircle === circle.id && (
+                <motion.div
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                >
+                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                </motion.div>
+              )}
+            </motion.button>
+          ))}
+        </div>
       </div>
 
       {/* Swipe cards */}
