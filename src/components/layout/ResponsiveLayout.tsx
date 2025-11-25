@@ -64,10 +64,13 @@ const ResponsiveLayout = ({ children, showSidebar = false }: Props) => {
   
   // Check if current route should hide sidebar
   const shouldHideSidebar = true;
+  
+  // Don't apply solid background on communications hub (has its own aurora background)
+  const hasCustomBackground = location.pathname === '/communications-hub';
 
   if (shouldHideSidebar) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className={`min-h-screen ${hasCustomBackground ? '' : 'bg-background'}`}>
         {children}
       </div>
     );
