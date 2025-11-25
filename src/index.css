@@ -247,13 +247,18 @@ input::placeholder, textarea::placeholder, select::placeholder {
     @apply border-border;
   }
 
-  html, body, #root {
-    background-color: hsl(var(--background));
+  html, body {
     min-height: 100%;
+  }
+  
+  #root {
+    min-height: 100%;
+    background: transparent;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: hsl(var(--background));
     min-height: 100vh;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
