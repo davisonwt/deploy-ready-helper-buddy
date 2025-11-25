@@ -220,19 +220,31 @@ export const CommunityForums: React.FC = () => {
           profilesData?.map(p => [p.user_id, p.id]) || []
         );
 
-        // Add creator and selected members to the group with profile_id
-        const participantInserts = allUserIds.map(userId => ({
-          room_id: groupRoom.id,
-          user_id: userId,
-          profile_id: userToProfileMap.get(userId) || null,
-          is_active: true,
-        }));
-
-        const { error: participantError } = await supabase
+        // Check for existing participants to avoid duplicates
+        const { data: existingParticipants } = await supabase
           .from('chat_participants')
-          .insert(participantInserts);
+          .select('user_id')
+          .eq('room_id', groupRoom.id);
 
-        if (participantError) throw participantError;
+        const existingUserIds = new Set(existingParticipants?.map(p => p.user_id) || []);
+
+        // Only add participants that don't already exist
+        const participantInserts = allUserIds
+          .filter(userId => !existingUserIds.has(userId))
+          .map(userId => ({
+            room_id: groupRoom.id,
+            user_id: userId,
+            profile_id: userToProfileMap.get(userId) || null,
+            is_active: true,
+          }));
+
+        if (participantInserts.length > 0) {
+          const { error: participantError } = await supabase
+            .from('chat_participants')
+            .insert(participantInserts);
+
+          if (participantError) throw participantError;
+        }
 
         // Post the content as a message in the group with sender_profile_id
         const { error: messageError } = await supabase
