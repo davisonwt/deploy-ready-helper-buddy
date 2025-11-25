@@ -106,7 +106,7 @@ function Layout({ children }) {
   // Primary navigation (direct buttons)
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
-    { name: "Communications", href: "/communications-hub", icon: MessageSquare, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'chatapp-tour' }
+    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'chatapp-tour' }
   ]
 
   // Grouped navigation (dropdowns)
@@ -202,9 +202,9 @@ function Layout({ children }) {
                       ${item.className || ''}
                     `}
                     style={{
-                      backgroundColor: item.color.bg,
-                      borderColor: item.color.border,
-                      color: item.color.text,
+                      backgroundColor: isActive(item.href) ? '#9bf6ff' : item.color.bg,
+                      borderColor: isActive(item.href) ? '#9bf6ff' : item.color.border,
+                      color: isActive(item.href) ? '#1e293b' : item.color.text,
                       borderRadius: '21px',
                       boxShadow: isActive(item.href)
                         ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
@@ -235,15 +235,15 @@ function Layout({ children }) {
                           ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                           ${group.className || ''}
                         `}
-                        style={{
-                          backgroundColor: group.color.bg,
-                          borderColor: group.color.border,
-                          color: group.color.text,
-                          borderRadius: '21px',
-                          boxShadow: isGroupHighlighted
-                            ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                            : 'inset 0 2px 4px rgba(0,0,0,0.1)'
-                        }}
+                    style={{
+                      backgroundColor: isGroupHighlighted ? '#9bf6ff' : group.color.bg,
+                      borderColor: isGroupHighlighted ? '#9bf6ff' : group.color.border,
+                      color: isGroupHighlighted ? '#1e293b' : group.color.text,
+                      borderRadius: '21px',
+                      boxShadow: isGroupHighlighted
+                        ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                    }}
                       >
                         {isEmojiIcon ? (
                           <span className="text-base mr-1">{Icon}</span>
@@ -288,7 +288,7 @@ function Layout({ children }) {
             </nav>
             
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-3 ml-4">
                 {/* Voice Commands Button */}
                 <Button
                   variant="ghost"
