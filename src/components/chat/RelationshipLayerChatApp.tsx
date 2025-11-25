@@ -82,108 +82,50 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     if (!user) return;
 
     try {
-      // Load user's circles
-      const { data, error } = await supabase
-        .from('user_circles')
-        .select(`
-          circle_id,
-          circles (
-            id,
-            name,
-            emoji,
-            color,
-            unread_count,
-            is_live,
-            member_count
-          )
-        `)
-        .eq('user_id', user.id);
+      // Load circles from database
+      const { data: circlesData, error: circlesError } = await supabase
+        .from('circles')
+        .select('id, name, emoji, color')
+        .order('name');
 
-      if (error) {
-        // Table might not exist yet, use default circles
-        console.warn('Circles table not available:', error);
-        const defaultCircles: Circle[] = [
-          { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-          { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-          { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-          { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-          { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-        ];
-        
-        // Fetch member counts for default circles
-        const circleIds = defaultCircles.map(c => c.id);
-        const { data: memberCounts } = await supabase
-          .from('circle_members')
-          .select('circle_id')
-          .in('circle_id', circleIds);
-
-        const counts = new Map<string, number>();
-        (memberCounts || []).forEach((m: any) => {
-          counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);
-        });
-
-        const circlesWithCounts = defaultCircles.map(circle => ({
-          ...circle,
-          memberCount: counts.get(circle.id) || 0,
-        }));
-
-        setCircles(circlesWithCounts);
+      if (circlesError) {
+        console.error('Error loading circles:', circlesError);
         return;
       }
 
-      // Default circles
-      const defaultCircles: Circle[] = [
-        { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-        { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-        { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-        { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-        { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-      ];
-
-      if (data && data.length > 0) {
-        const formattedCircles: Circle[] = data.map((uc: any) => ({
-          id: uc.circle_id,
-          name: uc.circles?.name || '',
-          emoji: uc.circles?.emoji || '👥',
-          color: uc.circles?.color || 'bg-gray-500',
-          unreadCount: uc.circles?.unread_count || 0,
-          isLive: uc.circles?.is_live || false,
-          memberCount: uc.circles?.member_count || 0,
-        }));
-        setCircles(formattedCircles);
-      } else {
-        // No circles in database, use defaults and fetch member counts
-        const circleIds = defaultCircles.map(c => c.id);
-        const { data: memberCounts } = await supabase
-          .from('circle_members')
-          .select('circle_id')
-          .in('circle_id', circleIds);
-
-        // Count members per circle
-        const counts = new Map<string, number>();
-        (memberCounts || []).forEach((m: any) => {
-          counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);
-        });
-
-        // Update default circles with member counts
-        const circlesWithCounts = defaultCircles.map(circle => ({
-          ...circle,
-          memberCount: counts.get(circle.id) || 0,
-        }));
-
-        setCircles(circlesWithCounts);
+      if (!circlesData || circlesData.length === 0) {
+        console.warn('No circles found in database');
+        return;
       }
+
+      // Fetch member counts for all circles
+      const circleIds = circlesData.map(c => c.id);
+      const { data: memberCounts } = await supabase
+        .from('circle_members')
+        .select('circle_id')
+        .in('circle_id', circleIds);
+
+      // Count members per circle
+      const counts = new Map<string, number>();
+      (memberCounts || []).forEach((m: any) => {
+        counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);
+      });
+
+      // Format circles with member counts
+      const formattedCircles: Circle[] = circlesData.map((circle: any) => ({
+        id: circle.id,
+        name: circle.name,
+        emoji: circle.emoji,
+        color: circle.color,
+        unreadCount: 0,
+        isLive: false,
+        memberCount: counts.get(circle.id) || 0,
+      }));
+
+      console.log('✅ Loaded circles with counts:', formattedCircles);
+      setCircles(formattedCircles);
     } catch (error) {
       console.error('Error loading circles:', error);
-      // Fallback to default circles
-      const defaultCircles: Circle[] = [
-        { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-        { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-        { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-        { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-        { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-      ];
-      setCircles(defaultCircles);
     }
   };
 
@@ -251,37 +193,45 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     
     setLoadingMembers(true);
     try {
-      // Load circle members with their profile data
-      const { data, error } = await supabase
+      console.log('🔍 Loading members for circle:', circleId);
+      
+      // Load circle members
+      const { data: membersData, error: membersError } = await supabase
         .from('circle_members')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            user_id,
-            display_name,
-            full_name,
-            avatar_url,
-            first_name,
-            last_name
-          )
-        `)
+        .select('user_id')
         .eq('circle_id', circleId);
 
-      if (error) {
-        console.error('Error loading circle members:', error);
+      if (membersError) {
+        console.error('❌ Error loading circle members:', membersError);
         setCircleMembers([]);
+        setLoadingMembers(false);
         return;
       }
 
-      // Also check if members are sowers, bestowers, or gosat
-      const userIds = (data || []).map((m: any) => m.user_id).filter(Boolean);
+      const userIds = (membersData || []).map((m: any) => m.user_id).filter(Boolean);
+      
+      console.log('📋 Found user IDs in circle:', userIds.length);
       
       if (userIds.length === 0) {
         setCircleMembers([]);
         setLoadingMembers(false);
         return;
       }
+
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, full_name, avatar_url, first_name, last_name')
+        .in('user_id', userIds);
+
+      if (profilesError) {
+        console.error('❌ Error loading profiles:', profilesError);
+        setCircleMembers([]);
+        setLoadingMembers(false);
+        return;
+      }
+
+      console.log('✅ Loaded profiles:', profilesData?.length || 0);
 
       // Fetch sowers
       const { data: sowersData } = await supabase
@@ -307,20 +257,18 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
       const gosatIds = new Set((gosatData || []).map((g: any) => g.user_id));
 
       // Format members with role flags
-      const members: CircleMember[] = (data || []).map((member: any) => {
-        const profile = member.profiles || {};
-        return {
-          id: profile.id || member.user_id,
-          user_id: member.user_id,
-          display_name: profile.display_name,
-          full_name: profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
-          avatar_url: profile.avatar_url,
-          is_sower: sowerIds.has(member.user_id),
-          is_bestower: bestowerIds.has(member.user_id),
-          is_gosat: gosatIds.has(member.user_id),
-        };
-      });
+      const members: CircleMember[] = (profilesData || []).map((profile: any) => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        display_name: profile.display_name,
+        full_name: profile.full_name || profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'User',
+        avatar_url: profile.avatar_url,
+        is_sower: sowerIds.has(profile.user_id),
+        is_bestower: bestowerIds.has(profile.user_id),
+        is_gosat: gosatIds.has(profile.user_id),
+      }));
 
+      console.log('✅ Formatted members:', members.length);
       setCircleMembers(members);
     } catch (error) {
       console.error('Error loading circle members:', error);
