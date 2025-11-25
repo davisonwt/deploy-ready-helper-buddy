@@ -53,29 +53,32 @@ This document addresses the security issues identified in the comprehensive secu
 
 ### 3. Database Functions - search_path
 
-**Status**: ✅ **VERIFIED** (Most functions already fixed, verification migration created)
+**Status**: ✅ **FIXED** (All known functions now have search_path set)
 
 **Issue**: Some database functions don't have `search_path` set, which could allow schema injection attacks.
 
 **Remediation Completed**:
 1. ✅ Created verification migration: `20250101000000_verify_all_functions_have_search_path.sql`
-2. ✅ Most functions already have `search_path` set from previous migrations
-3. ✅ Migration includes SQL query to identify any remaining functions without `search_path`
+2. ✅ Fixed remaining functions: `20250102000000_fix_remaining_functions_search_path.sql`
+   - Fixed `get_message_streak` function
+   - Fixed `update_message_streak` function
+3. ✅ Most other functions already have `search_path` set from previous migrations
 
-**Remaining Action**:
-1. Run the verification query in Supabase SQL Editor to check for any remaining functions:
-   ```sql
-   SELECT 
-       p.proname as function_name,
-       pg_get_functiondef(p.oid) as function_definition
-   FROM pg_proc p
-   JOIN pg_namespace n ON p.pronamespace = n.oid
-   WHERE n.nspname = 'public'
-   AND p.prosecdef = true  -- SECURITY DEFINER
-   AND pg_get_functiondef(p.oid) NOT LIKE '%SET search_path%'
-   ORDER BY p.proname;
-   ```
-2. If any functions are found, update them with `SET search_path = public`
+**Verification**:
+Run this query in Supabase SQL Editor to verify all functions have search_path:
+```sql
+SELECT 
+    p.proname as function_name,
+    pg_get_functiondef(p.oid) as function_definition
+FROM pg_proc p
+JOIN pg_namespace n ON p.pronamespace = n.oid
+WHERE n.nspname = 'public'
+AND p.prosecdef = true  -- SECURITY DEFINER
+AND pg_get_functiondef(p.oid) NOT LIKE '%SET search_path%'
+ORDER BY p.proname;
+```
+
+If any functions are found, they should be updated with `SET search_path = public` or `SET search_path TO 'public'`
 
 ## 🟠 HIGH PRIORITY - Review and Configure
 
