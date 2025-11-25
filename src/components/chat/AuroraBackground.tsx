@@ -110,35 +110,38 @@ export const AuroraBackground: React.FC<{ children?: React.ReactNode }> = ({ chi
   }, []);
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      {/* Animated gradient background */}
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            'linear-gradient(135deg, hsl(210, 67%, 12%) 0%, hsl(212, 49%, 24%) 25%, hsl(188, 78%, 41%) 50%, hsl(199, 89%, 50%) 75%, hsl(212, 49%, 24%) 100%)',
-            'linear-gradient(135deg, hsl(212, 49%, 24%) 0%, hsl(188, 78%, 41%) 25%, hsl(199, 89%, 50%) 50%, hsl(212, 49%, 24%) 75%, hsl(210, 67%, 12%) 100%)',
-            'linear-gradient(135deg, hsl(210, 67%, 12%) 0%, hsl(212, 49%, 24%) 25%, hsl(188, 78%, 41%) 50%, hsl(199, 89%, 50%) 75%, hsl(212, 49%, 24%) 100%)',
-          ],
-        }}
-        transition={{
-          duration: 30,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      />
+    <>
+      {/* Fixed background layer behind everything */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        {/* Animated gradient background */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            background: [
+              'linear-gradient(135deg, hsl(210, 67%, 12%) 0%, hsl(212, 49%, 24%) 25%, hsl(188, 78%, 41%) 50%, hsl(199, 89%, 50%) 75%, hsl(212, 49%, 24%) 100%)',
+              'linear-gradient(135deg, hsl(212, 49%, 24%) 0%, hsl(188, 78%, 41%) 25%, hsl(199, 89%, 50%) 50%, hsl(212, 49%, 24%) 75%, hsl(210, 67%, 12%) 100%)',
+              'linear-gradient(135deg, hsl(210, 67%, 12%) 0%, hsl(212, 49%, 24%) 25%, hsl(188, 78%, 41%) 50%, hsl(199, 89%, 50%) 75%, hsl(212, 49%, 24%) 100%)',
+            ],
+          }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+        
+        {/* Particle canvas */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 opacity-60"
+          style={{ mixBlendMode: 'screen' }}
+        />
+      </div>
       
-      {/* Particle canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 opacity-60"
-        style={{ mixBlendMode: 'screen' }}
-      />
-      
-      {/* Content */}
-      <div className="relative z-10">
+      {/* Content layer above background */}
+      <div className="relative">
         {children}
       </div>
-    </div>
+    </>
   );
 };
