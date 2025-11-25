@@ -299,16 +299,22 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
       <GlassmorphismDashboard 
         circles={circles}
         activeCircleId={activeCircleId || undefined}
+        circleMembers={activeCircleId ? circleMembers : undefined}
+        loadingMembers={loadingMembers}
         onCircleSelect={(circleId) => {
           setActiveCircleId(circleId);
-          setShowDashboard(false);
           loadCircleMembers(circleId);
+        }}
+        onCircleDeselect={() => {
+          setActiveCircleId(null);
+          setCircleMembers([]);
         }}
         onAddPeople={() => setShowOnboarding(true)}
         onNavigate={(mode) => {
           setShowDashboard(false);
           // Handle navigation to specific mode
         }}
+        onMemberRemoved={handleMemberRemoved}
       />
     );
   }

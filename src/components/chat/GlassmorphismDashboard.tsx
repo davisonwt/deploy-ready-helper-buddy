@@ -26,7 +26,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
+import { CircleMembersList } from './CircleMembersList';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft } from 'lucide-react';
 
 interface ActivityUpdate {
   id: string;
@@ -46,16 +48,33 @@ interface GlassmorphismDashboardProps {
   onNavigate?: (mode: string) => void;
   circles?: Circle[];
   activeCircleId?: string;
+  circleMembers?: Array<{
+    id: string;
+    user_id: string;
+    display_name?: string;
+    full_name?: string;
+    avatar_url?: string;
+    is_sower?: boolean;
+    is_bestower?: boolean;
+    is_gosat?: boolean;
+  }>;
+  loadingMembers?: boolean;
   onCircleSelect?: (circleId: string) => void;
+  onCircleDeselect?: () => void;
   onAddPeople?: () => void;
+  onMemberRemoved?: () => void;
 }
 
 export function GlassmorphismDashboard({ 
   onNavigate, 
   circles = [],
   activeCircleId: propActiveCircleId,
+  circleMembers,
+  loadingMembers = false,
   onCircleSelect,
-  onAddPeople 
+  onCircleDeselect,
+  onAddPeople,
+  onMemberRemoved
 }: GlassmorphismDashboardProps) {
   const { user } = useAuth();
   const [hueRotation, setHueRotation] = useState(0);
@@ -375,11 +394,24 @@ export function GlassmorphismDashboard({
           {/* Circles Section */}
           <Card variant="glass" className="backdrop-blur-xl bg-charcoal/60 border-amber-500/20 mb-6">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-amber-200 flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                YOUR CIRCLES
-              </CardTitle>
-              {onAddPeople && (
+              <div className="flex items-center gap-3">
+                {activeCircleId && onCircleDeselect && (
+                  <Button
+                    onClick={onCircleDeselect}
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-200 hover:text-amber-100 hover:bg-amber-500/20"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                )}
+                <CardTitle className="text-amber-200 flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  {activeCircleId ? circles.find(c => c.id === activeCircleId)?.name || 'Circle Members' : 'YOUR CIRCLES'}
+                </CardTitle>
+              </div>
+              {!activeCircleId && onAddPeople && (
                 <Button 
                   onClick={onAddPeople}
                   className="bg-gradient-to-r from-amber-500/20 to-coral-500/20 hover:from-amber-500/30 hover:to-coral-500/30 text-amber-200 border border-amber-500/30"
@@ -391,7 +423,22 @@ export function GlassmorphismDashboard({
               )}
             </CardHeader>
             <CardContent>
-              {circles.length > 0 ? (
+              {activeCircleId ? (
+                // Show circle members inline
+                <div className="space-y-4">
+                  {loadingMembers ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500" />
+                    </div>
+                  ) : (
+                    <CircleMembersList
+                      circleId={activeCircleId}
+                      circles={circles}
+                      onMemberRemoved={onMemberRemoved}
+                    />
+                  )}
+                </div>
+              ) : circles.length > 0 ? (
                 <CirclesBubbleRail
                   circles={circles}
                   activeCircleId={activeCircleId}
