@@ -408,14 +408,13 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   left: isHovered ? '50%' : undefined,
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', padding: '1rem' }}>
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', maxHeight: '300px' }}>
-                      <ScrollArea className="h-full w-full">
-                        <div className="space-y-1 pr-4">
+                    <ScrollArea style={{ height: '300px', width: '100%' }}>
+                      <div className="space-y-1 pr-4">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
                           
