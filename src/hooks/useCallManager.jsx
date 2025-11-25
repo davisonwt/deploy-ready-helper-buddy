@@ -1062,8 +1062,10 @@ const useCallManagerInternal = () => {
 
     console.log('📞 [CALL][POLL] Starting poll for incoming calls, userId:', userId);
     
+    let pollCount = 0;
     const poll = setInterval(async () => {
       try {
+        pollCount++;
         // Poll for calls from last 60 seconds (increased window)
         const sinceIso = new Date(Date.now() - 60000).toISOString();
         const { data, error } = await supabase
@@ -1120,11 +1122,16 @@ const useCallManagerInternal = () => {
               timestamp: new Date(call.created_at).getTime()
             });
           } else {
-            console.log('📞 [CALL][POLL] Call already in incomingCall state, skipping');
+            // Only log occasionally when call is already in state
+            if (pollCount % 10 === 0) {
+              console.log('📞 [CALL][POLL] Call already in incomingCall state, skipping');
+            }
           }
         } else {
-          // Log that polling is working but no calls found
-          console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
+          // Only log every 10 seconds (every 10th poll) to reduce console spam
+          if (pollCount % 10 === 0) {
+            console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
+          }
         }
       } catch (e) {
         console.error('⚠️ [CALL][POLL] Poll error', e);

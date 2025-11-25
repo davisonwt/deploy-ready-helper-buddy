@@ -366,10 +366,10 @@ export const useChat = () => {
 
       console.log('Adding participants:', participantsToAdd);
 
-      // Insert all participants (creator + moderators)
+      // Upsert all participants (creator + moderators) - use upsert to handle database trigger that may already add creator
       const { error: participantError } = await supabase
         .from('chat_participants')
-        .insert(participantsToAdd);
+        .upsert(participantsToAdd, { onConflict: 'room_id,user_id' });
 
       if (participantError) {
         console.error('Participant creation error:', participantError);
@@ -425,10 +425,11 @@ export const useChat = () => {
     try {
       const { error } = await supabase
         .from('chat_participants')
-        .insert({
+        .upsert({
           room_id: roomId,
           user_id: user.id,
-        });
+          is_active: true,
+        }, { onConflict: 'room_id,user_id' });
 
       if (error) throw error;
 
