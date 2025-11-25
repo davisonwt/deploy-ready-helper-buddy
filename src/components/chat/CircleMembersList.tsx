@@ -369,22 +369,23 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                className="fixed z-[1001] w-64"
+                className="fixed z-[1001]"
                 style={{
-                  maxWidth: 'min(calc(100vw - 2rem), 256px)',
-                  // Position menu below the centered card
-                  top: `clamp(120px, calc(50vh + 140px), calc(100vh - 380px))`,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  maxHeight: 'min(calc(100vh - 200px), 350px)',
+                  // Position menu below the centered card with proper viewport awareness
+                  // Card is at 50vh - 96px (half of 192px card height), menu starts 20px below
+                  top: `clamp(1rem, calc(50vh + 116px), calc(100vh - 400px))`,
+                  left: 'clamp(1rem, calc(50% - 128px), calc(100vw - 272px))',
+                  width: '256px',
+                  maxWidth: 'calc(100vw - 2rem)',
+                  maxHeight: 'min(calc(100vh - clamp(1rem, calc(50vh + 116px), calc(100vh - 400px)) - 1rem), 350px)',
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: 'min(calc(100vh - 200px), 350px)' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden w-full h-full" style={{ maxHeight: 'inherit' }}>
                   <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="flex-1">
+                    <ScrollArea className="flex-1 min-h-0">
                       <div className="space-y-1 pr-4">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
