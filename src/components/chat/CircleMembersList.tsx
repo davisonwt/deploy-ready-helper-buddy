@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, X, ArrowRightLeft } from 'lucide-react';
+import { MessageCircle, X, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -111,21 +111,28 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
     }
   };
 
-  const handleMoveToCircle = async (memberId: string, memberName: string, newCircleId: string) => {
+  const handleAddToCircle = async (memberId: string, memberName: string, newCircleId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Remove from current circle
-      const { error: removeError } = await supabase
+      // Check if already in the target circle
+      const { data: existing } = await supabase
         .from('circle_members')
-        .delete()
-        .eq('circle_id', circleId)
-        .eq('user_id', memberId);
+        .select('id')
+        .eq('circle_id', newCircleId)
+        .eq('user_id', memberId)
+        .maybeSingle();
 
-      if (removeError) throw removeError;
+      if (existing) {
+        toast({
+          title: 'Already added',
+          description: `${memberName} is already in that circle`,
+        });
+        return;
+      }
 
-      // Add to new circle
+      // Add to new circle (without removing from current)
       const { error: addError } = await supabase
         .from('circle_members')
         .insert({
@@ -142,14 +149,14 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
 
       const newCircleName = circles.find(c => c.id === newCircleId)?.name || 'circle';
       toast({
-        title: 'Moved!',
-        description: `${memberName} moved to ${newCircleName}`,
+        title: 'Added!',
+        description: `${memberName} also added to ${newCircleName}`,
       });
     } catch (error) {
-      console.error('Error moving member:', error);
+      console.error('Error adding member:', error);
       toast({
         title: 'Error',
-        description: 'Failed to move member to new circle',
+        description: 'Failed to add member to circle',
         variant: 'destructive',
       });
     }
@@ -257,17 +264,20 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full">
-                          <ArrowRightLeft className="h-3 w-3" />
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full" title="Also add to another circle">
+                          <UserPlus className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-background z-50">
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          Also add to:
+                        </div>
                         {circles
                           .filter(c => c.id !== circleId)
                           .map(circle => (
                             <DropdownMenuItem
                               key={circle.id}
-                              onClick={() => handleMoveToCircle(member.user_id, member.full_name || 'User', circle.id)}
+                              onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
                             >
                               {circle.emoji} {circle.name}
                             </DropdownMenuItem>
