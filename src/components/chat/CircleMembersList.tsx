@@ -220,7 +220,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="overflow-hidden hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48">
+            <Card className="overflow-hidden hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full">
                 {/* Avatar */}
                 <div className="mb-2">
