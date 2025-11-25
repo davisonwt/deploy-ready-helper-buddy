@@ -31,7 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CirclesBubbleRail, Circle } from './Circles } from './CirclesBubbleRail';
+import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { CircleMembersList } from './CircleMembersList';
 import { supabase } from '@/integrations/supabase/client';
