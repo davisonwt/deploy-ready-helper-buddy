@@ -468,7 +468,6 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                           })}
                         </div>
                       </ScrollArea>
-                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
