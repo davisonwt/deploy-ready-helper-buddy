@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
+import { CircleMembersList } from './CircleMembersList';
 import { BestowalCoin } from './BestowalCoin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
