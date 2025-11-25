@@ -119,10 +119,10 @@ export const UnifiedDashboard: React.FC = () => {
           </motion.div>
 
           {/* Main Layout - Content + Activity Feed */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,350px] gap-6">
             {/* Main Content Area */}
             <motion.div
-              className="min-h-[600px]"
+              className="min-h-[500px]"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -140,12 +140,13 @@ export const UnifiedDashboard: React.FC = () => {
               </AnimatePresence>
             </motion.div>
 
-            {/* Activity Feed Sidebar */}
+            {/* Activity Feed Sidebar - Fixed height to fit under banner */}
             <motion.div
-              className="hidden lg:block"
+              className="hidden lg:block lg:sticky lg:top-6"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              style={{ height: 'calc(100vh - 180px)', maxHeight: '800px' }}
             >
               <ActivityFeed />
             </motion.div>
