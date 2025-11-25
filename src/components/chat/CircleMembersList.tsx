@@ -377,17 +377,18 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   left: '50%',
                   transform: 'translateX(-50%)',
                   width: '256px',
-                  maxWidth: 'calc(100vw - 2rem)',
-                  // Ensure menu stays within viewport
-                  maxHeight: 'calc(100vh - 50vh - 116px - 1rem)',
+                  maxWidth: 'min(calc(100vw - 2rem), 256px)',
+                  // Ensure menu stays within viewport - use simpler calculation
+                  maxHeight: 'min(calc(100vh - 50vh - 116px - 1rem), 350px)',
+                  minHeight: '200px',
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '350px' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '350px', minHeight: '200px' }}>
                   <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: '300px' }}>
+                    <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: '300px', minHeight: '150px' }}>
                       <div className="space-y-1 pr-4">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
