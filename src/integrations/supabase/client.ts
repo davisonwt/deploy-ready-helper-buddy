@@ -13,9 +13,8 @@ if (import.meta.env.DEV && (!import.meta.env.VITE_SUPABASE_URL || (!import.meta.
   console.warn('⚠️ Using fallback Supabase configuration. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your .env file.');
 }
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
+// Export the Supabase client instance
+// Usage in other files: import { supabase } from "@/integrations/supabase/client";
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
