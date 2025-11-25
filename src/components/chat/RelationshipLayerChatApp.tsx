@@ -5,6 +5,7 @@ import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
 import { BestowalCoin } from './BestowalCoin';
+import { CircleMembersList } from './CircleMembersList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame, UserPlus, Users, ArrowLeft, X } from 'lucide-react';
@@ -441,61 +442,21 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
             />
           ) : activeCircleId ? (
             <ScrollArea className="h-full p-6">
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-6xl mx-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold mb-2">
                     {circles.find(c => c.id === activeCircleId)?.name || 'Circle'}
                   </h2>
-                  <p className="text-muted-foreground">
-                    {circleMembers.length} member{circleMembers.length !== 1 ? 's' : ''}
-                  </p>
                 </div>
 
-                {loadingMembers ? (
-                  <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-                  </div>
-                ) : circleMembers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <Users className="h-16 w-16 mb-4 text-muted-foreground opacity-50" />
-                    <p className="text-muted-foreground mb-4">
-                      No members in this circle yet
-                    </p>
-                    <Button onClick={() => setShowOnboarding(true)}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add People
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {circleMembers.map((member) => (
-                      <Card key={member.id} className="hover:shadow-lg transition-shadow">
-                        <CardContent className="p-4 flex flex-col items-center">
-                          <Avatar className="h-16 w-16 mb-3">
-                            <AvatarImage src={member.avatar_url} />
-                            <AvatarFallback>
-                              {(member.display_name || member.full_name || 'U').charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <h3 className="font-semibold text-sm text-center mb-2 line-clamp-1">
-                            {member.display_name || member.full_name || 'User'}
-                          </h3>
-                          <div className="flex flex-wrap gap-1 justify-center">
-                            {member.is_sower && (
-                              <Badge variant="destructive" className="text-[10px] px-1 py-0">Sower</Badge>
-                            )}
-                            {member.is_bestower && (
-                              <Badge variant="secondary" className="text-[10px] px-1 py-0">Bestower</Badge>
-                            )}
-                            {member.is_gosat && (
-                              <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-500 text-white">Gosat</Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                <CircleMembersList
+                  circleId={activeCircleId}
+                  onStartChat={(userId) => {
+                    // TODO: Implement chat functionality
+                    console.log('Start chat with:', userId);
+                  }}
+                  circles={circles}
+                />
               </div>
             </ScrollArea>
           ) : (
