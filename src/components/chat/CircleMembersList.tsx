@@ -40,45 +40,32 @@ interface Member {
 export function CircleMembersList({ circleId, onStartChat, onStartCall, onNavigateToTraining, onNavigateToRadio, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  const handleMouseEnter = (memberId: string, e?: React.MouseEvent) => {
-    // Prevent event bubbling
-    e?.stopPropagation();
-    
-    // Clear any pending timeout
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-    
-    // Only set if different member to prevent glitching
-    if (hoveredMemberId !== memberId) {
-      setHoveredMemberId(memberId);
-    }
-  };
-  
-  const handleMouseLeave = (e?: React.MouseEvent) => {
-    // Prevent event bubbling
-    e?.stopPropagation();
-    
-    // Add a delay before hiding to allow mouse movement to menu
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredMemberId(null);
-      hoverTimeoutRef.current = null;
-    }, 200); // Reduced delay to prevent glitching
-  };
-  
-  // Cleanup timeout on unmount
+  // Close menu when clicking outside
   useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setSelectedMemberId(null);
       }
     };
-  }, []);
+
+    if (selectedMemberId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [selectedMemberId]);
+  
+  const handleMemberClick = (memberId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Toggle selection - if already selected, deselect
+    setSelectedMemberId(prev => prev === memberId ? null : memberId);
+  };
 
   useEffect(() => {
     loadMembers();
@@ -316,7 +303,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
         if (member.is_bestower) tags.push('Bestower');
         if (member.is_gosat) tags.push('Gosat');
 
-        const isHovered = hoveredMemberId === member.user_id;
+        const isSelected = selectedMemberId === member.user_id;
         const actions = getAvailableActions(member);
 
         return (
@@ -324,15 +311,14 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             key={member.user_id}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ 
-              opacity: isHovered ? 1 : hoveredMemberId ? 0.3 : 1,
-              scale: isHovered ? 1.15 : hoveredMemberId ? 0.9 : 1,
-              zIndex: isHovered ? 50 : 1
+              opacity: isSelected ? 1 : selectedMemberId ? 0.4 : 1,
+              scale: isSelected ? 1.15 : selectedMemberId ? 0.9 : 1,
+              zIndex: isSelected ? 50 : 1
             }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            onMouseEnter={(e) => handleMouseEnter(member.user_id, e)}
-            onMouseLeave={(e) => handleMouseLeave(e)}
-            className="relative"
-            style={isHovered ? {
+            onClick={(e) => handleMemberClick(member.user_id, e)}
+            className="relative cursor-pointer"
+            style={isSelected ? {
               position: 'fixed',
               top: '50%',
               left: '50%',
@@ -340,7 +326,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               zIndex: 1000,
               pointerEvents: 'auto'
             } : {
-              pointerEvents: hoveredMemberId && !isHovered ? 'none' : 'auto'
+              pointerEvents: selectedMemberId && !isSelected ? 'none' : 'auto'
             }}
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
@@ -374,29 +360,20 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               </CardContent>
             </Card>
 
-            {/* Action Menu - Appears on hover */}
-            {isHovered && (
+            {/* Action Menu - Appears on click */}
+            {isSelected && (
               <motion.div
+                ref={menuRef}
                 initial={{ opacity: 0, y: -10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                onMouseEnter={(e) => {
-                  e.stopPropagation();
-                  if (hoverTimeoutRef.current) {
-                    clearTimeout(hoverTimeoutRef.current);
-                    hoverTimeoutRef.current = null;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.stopPropagation();
-                  handleMouseLeave(e);
-                }}
+                onClick={(e) => e.stopPropagation()}
                 className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64`}
                 style={{
                   maxWidth: 'min(calc(100vw - 2rem), 256px)',
-                  position: isHovered ? 'fixed' : 'absolute',
-                  ...(isHovered ? {
+                  position: isSelected ? 'fixed' : 'absolute',
+                  ...(isSelected ? {
                     // Calculate position to keep menu visible
                     top: `clamp(200px, calc(50% + 120px), calc(100vh - 420px))`,
                     left: '50%',
@@ -404,8 +381,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                     maxHeight: '400px',
                   } : {}),
                   // Ensure menu doesn't go off screen
-                  right: isHovered ? 'auto' : undefined,
-                  left: isHovered ? '50%' : undefined,
+                  right: isSelected ? 'auto' : undefined,
+                  left: isSelected ? '50%' : undefined,
                 }}
               >
                 <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
@@ -454,10 +431,10 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                             <Button
                               key={`action-${idx}`}
                               variant="ghost"
-                              onClick={() => {
-                                action.onClick?.();
-                                setHoveredMemberId(null);
-                              }}
+                            onClick={() => {
+                              action.onClick?.();
+                              setSelectedMemberId(null);
+                            }}
                               className="w-full justify-start hover:bg-primary/20 text-white"
                               style={{ backgroundColor: 'transparent' }}
                             >
