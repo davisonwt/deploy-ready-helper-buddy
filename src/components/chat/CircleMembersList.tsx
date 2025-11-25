@@ -392,30 +392,26 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             onMouseLeave={handleMouseLeave}
             className="fixed z-[1001] pointer-events-auto"
             style={{
-              // Position menu below the card at 15%
-              // Card is 192px * 1.15 = 220px tall, so bottom is at 15% + 220px
-              // Menu starts 20px below that
               top: 'calc(15% + 240px)',
               left: '50%',
               transform: 'translateX(-50%)',
               width: '220px',
               maxWidth: 'calc(100vw - 2rem)',
-              maxHeight: 'calc(100vh - 15% - 240px - 4rem)',
-              minHeight: '300px',
+              maxHeight: 'calc(100vh - 15% - 240px - 2rem)',
               height: 'auto',
             }}
           >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100vh - 15% - 240px - 4rem)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100%', overflow: 'hidden' }}>
-                    <h4 className="text-sm font-semibold text-white text-center flex-shrink-0 mb-3">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: 'calc(100vh - 15% - 240px - 2rem)', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent className="p-4" style={{ display: 'flex', flexDirection: 'column', padding: '1rem', maxHeight: '100%', overflow: 'hidden' }}>
+                    <h4 className="text-sm font-semibold text-white text-center mb-3 flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ 
-                      height: 'calc(100% - 60px)',
-                      maxHeight: 'calc(100% - 60px)', 
-                      minHeight: '150px', 
-                      overflowY: 'auto', 
+                    <div style={{ 
+                      flex: '1 1 auto',
+                      overflowY: 'scroll',
                       overflowX: 'hidden',
+                      maxHeight: 'calc(100vh - 15% - 240px - 120px)',
+                      minHeight: '150px',
                       WebkitOverflowScrolling: 'touch'
                     }}>
                       <div className="space-y-1 pr-2">
