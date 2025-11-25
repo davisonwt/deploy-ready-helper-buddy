@@ -3,16 +3,11 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
-import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
-import { BestowalCoin } from './BestowalCoin';
-import { CircleMembersList } from './CircleMembersList';
+import { UnifiedDashboard } from './UnifiedDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, UserPlus, Users, ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface RelationshipLayerChatAppProps {
   onCompleteOnboarding?: () => void;
@@ -336,111 +331,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     );
   }
 
-  // Main chat interface
-  return (
-    <div
-      ref={backgroundRef}
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `linear-gradient(${hueRotation}deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))`,
-        transition: 'background 30s ease',
-      }}
-    >
-      {/* Animated gradient overlay */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={{
-          background: [
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-          ],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      />
-
-      <div className="relative z-10 flex flex-col h-screen">
-        {/* Header with streak badge */}
-        <div className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">ChatApp</h1>
-            {streakDays > 0 && (
-              <Badge variant="secondary" className="gap-1">
-                <Flame className="h-3 w-3 text-orange-500" />
-                {streakDays} day{streakDays !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowOnboarding(true)}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add People
-          </Button>
-        </div>
-
-        {/* Circles Bubble Rail */}
-        <div className="p-4 bg-background/80 backdrop-blur-sm border-b">
-          <CirclesBubbleRail
-            circles={circles}
-            activeCircleId={activeCircleId || undefined}
-            onCircleSelect={handleCircleSelect}
-            onCircleReorder={(newCircles) => setCircles(newCircles)}
-            onCircleHide={(circleId) => {
-              setCircles(circles.filter(c => c.id !== circleId));
-            }}
-          />
-        </div>
-
-        {/* Chat Room or Circle Members View */}
-        <div className="flex-1 overflow-hidden">
-          {selectedRoomId ? (
-            <GroupChatRoomEnhanced
-              roomId={selectedRoomId}
-              roomName="Room Name"
-              participants={[]}
-              onBack={() => setSelectedRoomId(null)}
-            />
-          ) : activeCircleId ? (
-            <ScrollArea className="h-full p-6">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-2">
-                    {circles.find(c => c.id === activeCircleId)?.name || 'Circle'}
-                  </h2>
-                </div>
-
-                <CircleMembersList
-                  circleId={activeCircleId}
-                  onStartChat={(userId) => {
-                    // TODO: Implement chat functionality
-                    console.log('Start chat with:', userId);
-                  }}
-                  circles={circles}
-                  onMemberRemoved={handleMemberRemoved}
-                />
-              </div>
-            </ScrollArea>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
-                  Select a circle to see members
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  // Main chat interface - Now using UnifiedDashboard
+  return <UnifiedDashboard />;
 }
 
