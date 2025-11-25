@@ -440,7 +440,7 @@ input::placeholder, textarea::placeholder, select::placeholder {
 
   /* Glass Morphism Design System */
   .glass-card {
-    background: rgba(10, 25, 49, 0.15); /* Much more transparent for aurora visibility */
+    background: rgba(10, 25, 49, 0.35); /* Slightly darker for better readability */
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -448,7 +448,7 @@ input::placeholder, textarea::placeholder, select::placeholder {
   }
 
   .glass-panel {
-    background: rgba(10, 25, 49, 0.2); /* More transparent */
+    background: rgba(10, 25, 49, 0.4); /* Slightly darker */
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(23, 162, 184, 0.25); /* --primary teal border */
