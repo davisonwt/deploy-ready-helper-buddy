@@ -54,30 +54,19 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all registered sowers - use left join to get all sowers even without profiles
+      console.log('🔍 Starting to load profiles for user:', user.id);
+
+      // Fetch all registered sowers (just get user_ids - no join needed)
       const { data: sowersData, error: sowersError } = await supabase
         .from('sowers')
-        .select(`
-          user_id,
-          display_name,
-          logo_url,
-          bio,
-          profiles (
-            id,
-            user_id,
-            username,
-            full_name,
-            avatar_url,
-            bio
-          )
-        `)
+        .select('user_id, display_name, logo_url, bio')
         .neq('user_id', user.id);
 
       if (sowersError) {
-        console.error('Error loading sowers:', sowersError);
+        console.error('❌ Error loading sowers:', sowersError);
       }
 
-      console.log('📊 Loaded sowers:', sowersData?.length || 0);
+      console.log('📊 Loaded sowers:', sowersData?.length || 0, sowersData);
 
       // Fetch all registered bestowers (users who have made bestowals)
       const { data: bestowalsData, error: bestowalsError } = await supabase
@@ -110,95 +99,88 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         (gosatRolesData || []).map((r: any) => r.user_id).filter(Boolean)
       );
 
-      // Fetch profiles for bestowers
-      let bestowerProfiles: any[] = [];
-      if (bestowerIds.size > 0) {
-        const { data: bestowerProfilesData, error: bestowerProfilesError } = await supabase
+      // Get unique sower user IDs
+      const sowerIds = new Set(
+        (sowersData || []).map((s: any) => s.user_id).filter(Boolean)
+      );
+
+      console.log('📋 User ID sets:', {
+        sowers: sowerIds.size,
+        bestowers: bestowerIds.size,
+        gosat: gosatIds.size,
+      });
+
+      // Collect ALL unique user IDs we need profiles for
+      const allUserIds = new Set<string>();
+      sowerIds.forEach(id => allUserIds.add(id));
+      bestowerIds.forEach(id => allUserIds.add(id));
+      gosatIds.forEach(id => allUserIds.add(id));
+
+      console.log('👥 Total unique user IDs to fetch:', allUserIds.size);
+
+      // Fetch ALL profiles for these users in one query
+      let allProfilesData: any[] = [];
+      if (allUserIds.size > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, user_id, username, full_name, avatar_url, bio')
-          .in('user_id', Array.from(bestowerIds))
+          .select('id, user_id, username, full_name, avatar_url, bio, display_name, first_name, last_name')
+          .in('user_id', Array.from(allUserIds))
           .neq('user_id', user.id);
 
-        if (!bestowerProfilesError && bestowerProfilesData) {
-          bestowerProfiles = bestowerProfilesData.map((p: any) => ({
-            ...p,
-            is_bestower: true,
-          }));
+        if (profilesError) {
+          console.error('❌ Error loading profiles:', profilesError);
+        } else {
+          allProfilesData = profilesData || [];
+          console.log('✅ Loaded profiles:', allProfilesData.length);
         }
       }
 
-      // Fetch profiles for gosat users
-      let gosatProfiles: any[] = [];
-      if (gosatIds.size > 0) {
-        const { data: gosatProfilesData, error: gosatProfilesError } = await supabase
-          .from('profiles')
-          .select('id, user_id, username, full_name, avatar_url, bio')
-          .in('user_id', Array.from(gosatIds))
-          .neq('user_id', user.id);
-
-        if (!gosatProfilesError && gosatProfilesData) {
-          gosatProfiles = gosatProfilesData.map((p: any) => ({
-            ...p,
-            is_gosat: true,
-          }));
-        }
-      }
-
-      // Combine sowers and bestowers, deduplicate by user_id
-      const allProfilesMap = new Map<string, any>();
-
-      // Add sowers - handle both cases: with and without profiles
+      // Create a map of sower data by user_id for quick lookup
+      const sowersMap = new Map<string, any>();
       (sowersData || []).forEach((sower: any) => {
         if (sower.user_id) {
-          const profile = sower.profiles || {};
+          sowersMap.set(sower.user_id, sower);
+        }
+      });
+
+      // Combine all profiles and mark their roles
+      const allProfilesMap = new Map<string, any>();
+
+      allProfilesData.forEach((profile: any) => {
+        if (!profile.user_id) return;
+
+        const sowerData = sowersMap.get(profile.user_id);
+        
+        allProfilesMap.set(profile.user_id, {
+          id: profile.id,
+          user_id: profile.user_id,
+          username: profile.username,
+          full_name: profile.full_name || profile.display_name || 
+                     `${profile.first_name || ''} ${profile.last_name || ''}`.trim() ||
+                     sowerData?.display_name || 
+                     'User',
+          avatar_url: profile.avatar_url || sowerData?.logo_url,
+          bio: profile.bio || sowerData?.bio,
+          is_sower: sowerIds.has(profile.user_id),
+          is_bestower: bestowerIds.has(profile.user_id),
+          is_gosat: gosatIds.has(profile.user_id),
+        });
+      });
+
+      // Also add sowers that might not have profiles yet
+      sowersData?.forEach((sower: any) => {
+        if (sower.user_id && !allProfilesMap.has(sower.user_id)) {
           allProfilesMap.set(sower.user_id, {
-            id: profile.id || sower.user_id,
+            id: sower.user_id, // Use user_id as id if no profile
             user_id: sower.user_id,
-            username: profile.username,
-            full_name: profile.full_name || sower.display_name || 'Sower',
-            avatar_url: profile.avatar_url || sower.logo_url,
-            bio: profile.bio || sower.bio,
+            username: null,
+            full_name: sower.display_name || 'Sower',
+            avatar_url: sower.logo_url,
+            bio: sower.bio,
             is_sower: true,
             is_bestower: bestowerIds.has(sower.user_id),
             is_gosat: gosatIds.has(sower.user_id),
           });
-        }
-      });
-
-      // Add bestowers (if not already added as sowers)
-      bestowerProfiles.forEach((profile: any) => {
-        if (!allProfilesMap.has(profile.user_id)) {
-          allProfilesMap.set(profile.user_id, {
-            ...profile,
-            is_bestower: true,
-            is_sower: false,
-            is_gosat: gosatIds.has(profile.user_id),
-          });
-        } else {
-          // Update existing profile to mark as bestower too
-          const existing = allProfilesMap.get(profile.user_id);
-          if (existing) {
-            existing.is_bestower = true;
-            existing.is_gosat = gosatIds.has(profile.user_id) || existing.is_gosat;
-          }
-        }
-      });
-
-      // Add gosat users (if not already added)
-      gosatProfiles.forEach((profile: any) => {
-        if (!allProfilesMap.has(profile.user_id)) {
-          allProfilesMap.set(profile.user_id, {
-            ...profile,
-            is_gosat: true,
-            is_sower: false,
-            is_bestower: bestowerIds.has(profile.user_id),
-          });
-        } else {
-          // Update existing profile to mark as gosat too
-          const existing = allProfilesMap.get(profile.user_id);
-          if (existing) {
-            existing.is_gosat = true;
-          }
         }
       });
 
@@ -215,42 +197,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         };
       });
 
-      // If no profiles found, try fetching all profiles directly as fallback
-      if (profilesWithTags.length === 0) {
-        console.log('⚠️ No profiles from joins, trying direct fetch...');
-        
-        // Collect all user IDs we want
-        const allUserIds = new Set<string>();
-        (sowersData || []).forEach((s: any) => s.user_id && allUserIds.add(s.user_id));
-        bestowerIds.forEach(id => allUserIds.add(id));
-        gosatIds.forEach(id => allUserIds.add(id));
-        
-        if (allUserIds.size > 0) {
-          const { data: directProfiles, error: directError } = await supabase
-            .from('profiles')
-            .select('id, user_id, username, full_name, avatar_url, bio')
-            .in('user_id', Array.from(allUserIds))
-            .neq('user_id', user.id);
-          
-          if (!directError && directProfiles) {
-            directProfiles.forEach((profile: any) => {
-              const tags: string[] = [];
-              if (sowersData?.some((s: any) => s.user_id === profile.user_id)) tags.push('Sower');
-              if (bestowerIds.has(profile.user_id)) tags.push('Bestower');
-              if (gosatIds.has(profile.user_id)) tags.push('Gosat');
-              
-              profilesWithTags.push({
-                ...profile,
-                tags: tags.length > 0 ? tags : ['Member'],
-                is_sower: tags.includes('Sower'),
-                is_bestower: tags.includes('Bestower'),
-                is_gosat: tags.includes('Gosat'),
-              });
-            });
-            console.log('✅ Loaded profiles via direct fetch:', profilesWithTags.length);
-          }
-        }
-      }
 
       console.log('✅ Total profiles loaded:', profilesWithTags.length);
       console.log('📋 Profiles breakdown:', {
