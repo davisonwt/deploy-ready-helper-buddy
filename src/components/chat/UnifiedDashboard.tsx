@@ -5,7 +5,7 @@ import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicati
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
 import { CommunityForums } from './CommunityForums';
-import { ChatRoom } from './ChatRoom';
+import { RelationshipLayerChatApp } from './RelationshipLayerChatApp';
 import { cn } from '@/lib/utils';
 
 interface ModeConfig {
@@ -36,12 +36,7 @@ export const UnifiedDashboard: React.FC = () => {
   const renderContent = () => {
     switch (activeMode) {
       case 'chat':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">1-on-1 Chats</h2>
-            <p className="text-muted-foreground">Your existing circle chat functionality will be integrated here. Select a circle member to start chatting.</p>
-          </div>
-        );
+        return <RelationshipLayerChatApp />;
       case 'community':
         return <CommunityForums />;
       case 'classroom':
