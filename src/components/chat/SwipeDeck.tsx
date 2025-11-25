@@ -19,6 +19,7 @@ interface Profile {
   tags?: string[];
   is_sower?: boolean;
   is_bestower?: boolean;
+  is_gosat?: boolean;
 }
 
 interface SwipeDeckProps {
@@ -86,9 +87,25 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         console.error('Error loading bestowals:', bestowalsError);
       }
 
+      // Fetch all gosat users
+      const { data: gosatRolesData, error: gosatError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'gosat')
+        .neq('user_id', user.id);
+
+      if (gosatError) {
+        console.error('Error loading gosat users:', gosatError);
+      }
+
       // Get unique bestower IDs
       const bestowerIds = new Set(
         (bestowalsData || []).map((b: any) => b.bestower_id).filter(Boolean)
+      );
+
+      // Get unique gosat user IDs
+      const gosatIds = new Set(
+        (gosatRolesData || []).map((r: any) => r.user_id).filter(Boolean)
       );
 
       // Fetch profiles for bestowers
@@ -104,6 +121,23 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
           bestowerProfiles = bestowerProfilesData.map((p: any) => ({
             ...p,
             is_bestower: true,
+          }));
+        }
+      }
+
+      // Fetch profiles for gosat users
+      let gosatProfiles: any[] = [];
+      if (gosatIds.size > 0) {
+        const { data: gosatProfilesData, error: gosatProfilesError } = await supabase
+          .from('profiles')
+          .select('id, user_id, username, full_name, avatar_url, bio')
+          .in('user_id', Array.from(gosatIds))
+          .neq('user_id', user.id);
+
+        if (!gosatProfilesError && gosatProfilesData) {
+          gosatProfiles = gosatProfilesData.map((p: any) => ({
+            ...p,
+            is_gosat: true,
           }));
         }
       }
@@ -124,6 +158,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
             bio: profile.bio || sower.bio,
             is_sower: true,
             is_bestower: bestowerIds.has(sower.user_id),
+            is_gosat: gosatIds.has(sower.user_id),
           });
         }
       });
@@ -135,12 +170,32 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
             ...profile,
             is_bestower: true,
             is_sower: false,
+            is_gosat: gosatIds.has(profile.user_id),
           });
         } else {
           // Update existing profile to mark as bestower too
           const existing = allProfilesMap.get(profile.user_id);
           if (existing) {
             existing.is_bestower = true;
+            existing.is_gosat = gosatIds.has(profile.user_id) || existing.is_gosat;
+          }
+        }
+      });
+
+      // Add gosat users (if not already added)
+      gosatProfiles.forEach((profile: any) => {
+        if (!allProfilesMap.has(profile.user_id)) {
+          allProfilesMap.set(profile.user_id, {
+            ...profile,
+            is_gosat: true,
+            is_sower: false,
+            is_bestower: bestowerIds.has(profile.user_id),
+          });
+        } else {
+          // Update existing profile to mark as gosat too
+          const existing = allProfilesMap.get(profile.user_id);
+          if (existing) {
+            existing.is_gosat = true;
           }
         }
       });
@@ -150,6 +205,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         const tags: string[] = [];
         if (profile.is_sower) tags.push('Sower');
         if (profile.is_bestower) tags.push('Bestower');
+        if (profile.is_gosat) tags.push('Gosat');
         
         return {
           ...profile,
