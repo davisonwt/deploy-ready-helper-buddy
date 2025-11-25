@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -290,8 +291,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
   };
 
   return (
-    <div className="flex flex-wrap gap-6 justify-center">
-      {members.map((member) => {
+    <div className="flex flex-wrap gap-6 justify-center relative">
+      {members.map((member, index) => {
         const tags = [];
         if (member.is_sower) tags.push('Sower');
         if (member.is_bestower) tags.push('Bestower');
@@ -313,6 +314,13 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             onMouseEnter={() => handleMouseEnter(member.user_id)}
             onMouseLeave={handleMouseLeave}
             className="relative"
+            style={isHovered ? {
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1000
+            } : {}}
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full relative">
@@ -354,66 +362,68 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 transition={{ duration: 0.2 }}
                 onMouseEnter={() => handleMouseEnter(member.user_id)}
                 onMouseLeave={handleMouseLeave}
-                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50 w-64"
+                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64"
               >
                 <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl">
                   <CardContent className="p-4">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center">
                       What do you want to do?
                     </h4>
-                    <div className="space-y-1">
-                      {actions.map((action, idx) => {
-                        const Icon = action.icon;
-                        
-                        if (action.isDropdown) {
+                    <ScrollArea className="h-[300px] max-h-[60vh]">
+                      <div className="space-y-1 pr-4">
+                        {actions.map((action, idx) => {
+                          const Icon = action.icon;
+                          
+                          if (action.isDropdown) {
+                            return (
+                              <DropdownMenu key={`action-${idx}`}>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start hover:bg-primary/20 text-white"
+                                    style={{ backgroundColor: 'transparent' }}
+                                  >
+                                    <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
+                                    {action.label}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="bg-background z-[1001]">
+                                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                    Also add to:
+                                  </div>
+                                  {circles
+                                    .filter(c => c.id !== circleId)
+                                    .map(circle => (
+                                      <DropdownMenuItem
+                                        key={circle.id}
+                                        onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
+                                      >
+                                        {circle.emoji} {circle.name}
+                                      </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            );
+                          }
+                          
                           return (
-                            <DropdownMenu key={`action-${idx}`}>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start hover:bg-primary/20 text-white"
-                                  style={{ backgroundColor: 'transparent' }}
-                                >
-                                  <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
-                                  {action.label}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="bg-background z-50">
-                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                  Also add to:
-                                </div>
-                                {circles
-                                  .filter(c => c.id !== circleId)
-                                  .map(circle => (
-                                    <DropdownMenuItem
-                                      key={circle.id}
-                                      onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
-                                    >
-                                      {circle.emoji} {circle.name}
-                                    </DropdownMenuItem>
-                                  ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Button
+                              key={`action-${idx}`}
+                              variant="ghost"
+                              onClick={() => {
+                                action.onClick?.();
+                                setHoveredMemberId(null);
+                              }}
+                              className="w-full justify-start hover:bg-primary/20 text-white"
+                              style={{ backgroundColor: 'transparent' }}
+                            >
+                              <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
+                              {action.label}
+                            </Button>
                           );
-                        }
-                        
-                        return (
-                          <Button
-                            key={`action-${idx}`}
-                            variant="ghost"
-                            onClick={() => {
-                              action.onClick?.();
-                              setHoveredMemberId(null);
-                            }}
-                            className="w-full justify-start hover:bg-primary/20 text-white"
-                            style={{ backgroundColor: 'transparent' }}
-                          >
-                            <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
-                            {action.label}
-                          </Button>
-                        );
-                      })}
-                    </div>
+                        })}
+                      </div>
+                    </ScrollArea>
                   </CardContent>
                 </Card>
               </motion.div>

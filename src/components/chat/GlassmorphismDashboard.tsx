@@ -268,7 +268,7 @@ export function GlassmorphismDashboard({
               className="text-4xl sm:text-5xl font-bold mb-2 bg-gradient-to-r from-amber-200 via-coral-200 to-amber-200 bg-clip-text text-transparent"
               style={{ fontFamily: 'Playfair Display, serif' }}
             >
-              FlowSync Dashboard
+              chatapp FrequencySync Dashboard
             </motion.h1>
             <p className="text-charcoal-300 text-lg">Your unified communication hub</p>
           </div>
