@@ -273,7 +273,7 @@ export const CommunityForums: React.FC = () => {
             <DialogTrigger asChild>
               <Button 
                 className="gap-2" 
-                style={{ backgroundColor: '#0A1931', color: 'white' }}
+                style={{ backgroundColor: '#17A2B8', color: 'white' }}
               >
                 <Plus className="w-4 h-4" />
                 New Post
