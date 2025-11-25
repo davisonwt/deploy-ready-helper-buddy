@@ -31,6 +31,7 @@
  */
 
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { recordRateLimiterFailure } from './rateLimiterMonitoring.ts';
 
 export interface RateLimitConfig {
   identifier: string;
@@ -52,6 +53,7 @@ export interface RateLimitConfig {
  */
 /**
  * Log rate limiter failure for monitoring/alerting
+ * Delegates to the monitoring module for consistent logging
  */
 function logRateLimiterFailure(
   identifier: string,
@@ -59,20 +61,7 @@ function logRateLimiterFailure(
   error: any,
   failClosed: boolean
 ): void {
-  const logData = {
-    type: 'rate_limiter_failure',
-    identifier,
-    limitType,
-    failMode: failClosed ? 'closed' : 'open',
-    error: error instanceof Error ? error.message : String(error),
-    timestamp: new Date().toISOString()
-  };
-  
-  // Log to console for monitoring
-  console.error('🚨 Rate Limiter Failure:', JSON.stringify(logData));
-  
-  // In production, you might want to send this to a monitoring service
-  // Example: await sendToMonitoringService(logData);
+  recordRateLimiterFailure(identifier, limitType, error, failClosed);
 }
 
 export async function checkRateLimit(
@@ -97,7 +86,18 @@ export async function checkRateLimit(
       // Fail closed by default to prevent abuse during outages
       // Only fail open if explicitly requested (for backward compatibility)
       if (failClosed) {
-        console.warn(`Rate limiter failed closed due to error - denying request for ${limitType}`);
+        const severity = determineFailureSeverity(limitType, failClosed);
+        console.warn(`Rate limiter failed closed due to error - denying request for ${limitType} (severity: ${severity})`);
+        
+        // For critical operations, log additional details
+        if (severity === 'critical' || severity === 'high') {
+          console.error(`CRITICAL: Rate limiter failure for ${limitType}`, {
+            identifier,
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString()
+          });
+        }
+        
         return false;
       }
       // Fail open: only for non-critical operations that explicitly request it
