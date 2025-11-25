@@ -1113,21 +1113,17 @@ const useCallManagerInternal = () => {
               isIncoming: true,
               timestamp: new Date(call.created_at).getTime()
             });
-<<<<<<< HEAD
           } else {
-            // Only log occasionally when call is already in state
-            if (pollCount % 10 === 0) {
+            // Only log occasionally when call is already in state (every 5th poll = 10 seconds)
+            if (pollCount % 5 === 0 && process.env.NODE_ENV === 'development') {
               console.log('📞 [CALL][POLL] Call already in incomingCall state, skipping');
             }
           }
         } else {
-          // Only log every 10 seconds (every 10th poll) to reduce console spam
-          if (pollCount % 10 === 0) {
+          // Only log every 10 seconds (every 5th poll since we poll every 2 seconds) to reduce console spam
+          if (pollCount % 5 === 0 && process.env.NODE_ENV === 'development') {
             console.log('📞 [CALL][POLL] Polling active, no ringing calls found for user:', userId);
           }
-=======
-          }
->>>>>>> 5ce026350aef5b86b8c0f4871039596e6f3cca4a
         }
         // Removed excessive "no calls found" logging
       } catch (e) {
