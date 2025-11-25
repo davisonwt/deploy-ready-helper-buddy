@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
-import { UnifiedDashboard } from './UnifiedDashboard';
+import { CircleMembersList } from './CircleMembersList';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, X } from 'lucide-react';
@@ -289,9 +289,72 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircles();
   };
 
-  // Skip onboarding - go straight to UnifiedDashboard
+  // Main Circles Interface
+  return (
+    <div
+      ref={backgroundRef}
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        background: `linear-gradient(${hueRotation}deg, #1e3a5c 0%, #17a2b8 50%, #4dd0e1 100%)`,
+        transition: 'background 30s linear',
+      }}
+    >
+      <div className="relative z-10 p-4 md:p-6">
+        {/* Circles Bubble Rail */}
+        <div className="mb-6">
+          <CirclesBubbleRail
+            circles={circles}
+            activeCircleId={activeCircleId || undefined}
+            onCircleSelect={handleCircleSelect}
+            onCircleReorder={() => {}}
+            onCircleHide={() => {}}
+          />
+        </div>
 
-  // Main chat interface - Always show UnifiedDashboard (skip onboarding)
-  return <UnifiedDashboard />;
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto">
+          {activeCircleId ? (
+            <div className="space-y-6">
+              {/* Circle Members List */}
+              <Card className="bg-card/90 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <CircleMembersList
+                    circleId={activeCircleId}
+                    circles={circles}
+                    onMemberRemoved={handleMemberRemoved}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card className="bg-card/90 backdrop-blur-sm">
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">
+                  Select a circle above to view members or add new people
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Swipe Deck - Always Available */}
+          <Card className="mt-6 bg-card/90 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold text-heading-primary mb-4">
+                Add People to Circles
+              </h2>
+              <SwipeDeck
+                onSwipeRight={handleSwipeRight}
+                onComplete={() => {
+                  loadCircles();
+                }}
+                initialCircleId={activeCircleId || undefined}
+                refreshKey={swipeDeckRefreshKey}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
 
