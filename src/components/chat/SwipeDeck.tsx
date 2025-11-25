@@ -20,6 +20,7 @@ interface Profile {
   is_sower?: boolean;
   is_bestower?: boolean;
   is_gosat?: boolean;
+  in_circles?: string[];
 }
 
 interface SwipeDeckProps {
@@ -52,7 +53,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
   useEffect(() => {
     loadCircles();
     loadProfiles();
-  }, [refreshKey]);
+  }, [refreshKey, selectedCircle]);
 
   useEffect(() => {
     // Load next batch when needed
@@ -107,16 +108,17 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
 
       console.log('🔍 Loading ALL registered users except current user');
 
-      // Fetch existing circle members to exclude them
+      // Fetch existing members in the SELECTED circle only
       const { data: existingMembers } = await supabase
         .from('circle_members')
-        .select('user_id');
+        .select('user_id')
+        .eq('circle_id', selectedCircle);
       
       const existingMemberIds = new Set(
         (existingMembers || []).map((m: any) => m.user_id)
       );
 
-      console.log('📋 Users already in circles:', existingMemberIds.size);
+      console.log('📋 Users already in THIS circle:', existingMemberIds.size);
 
       // Fetch ALL profiles except current user
       const { data: allProfilesData, error: profilesError } = await supabase
@@ -166,7 +168,19 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
         }
       });
 
-      // Process all profiles and filter out those already in circles
+      // Fetch ALL circle memberships to show which circles each person is in
+      const { data: allCircleMemberships } = await supabase
+        .from('circle_members')
+        .select('user_id, circle_id');
+
+      const userCirclesMap = new Map<string, string[]>();
+      (allCircleMemberships || []).forEach((membership: any) => {
+        const existing = userCirclesMap.get(membership.user_id) || [];
+        existing.push(membership.circle_id);
+        userCirclesMap.set(membership.user_id, existing);
+      });
+
+      // Process all profiles and filter out those already in THIS circle
       const profilesWithTags = (allProfilesData || [])
         .filter((profile: any) => !existingMemberIds.has(profile.user_id))
         .map((profile: any) => {
@@ -176,6 +190,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
           if (sowerIds.has(profile.user_id)) tags.push('Sower');
           if (bestowerIds.has(profile.user_id)) tags.push('Bestower');
           if (gosatIds.has(profile.user_id)) tags.push('Gosat');
+
+          // Add info about which circles they're already in
+          const inCircles = userCirclesMap.get(profile.user_id) || [];
 
           return {
             id: profile.id,
@@ -191,10 +208,11 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
             is_bestower: bestowerIds.has(profile.user_id),
             is_gosat: gosatIds.has(profile.user_id),
             tags: tags.length > 0 ? tags : ['Member'],
+            in_circles: inCircles,
           };
         });
 
-      console.log('✅ Available profiles (excluding circle members):', profilesWithTags.length);
+      console.log('✅ Available profiles (excluding THIS circle members):', profilesWithTags.length);
 
       setAllProfiles(profilesWithTags);
       setLoading(false);
@@ -233,14 +251,17 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
     
     await onSwipeRight(profileToAdd, selectedCircle);
     
-    // Remove from available profiles
-    setAllProfiles(prev => prev.filter(p => (p.user_id || p.id) !== profileId));
+    // Don't remove from allProfiles since they can be in multiple circles
+    // Just remove from current batch and reload to update circle membership
     setCurrentBatch(prev => prev.filter(p => (p.user_id || p.id) !== profileId));
 
     toast({
       title: 'Added!',
       description: `${profile.full_name || profile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
     });
+
+    // Reload profiles to update circle membership info
+    loadProfiles();
 
     // Move to next profile
     if (currentIndex >= currentBatch.length - 1) {
@@ -439,12 +460,31 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
 
             {/* Tags/Roles */}
             {currentProfile.tags && currentProfile.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center mb-6">
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
                 {currentProfile.tags.map((tag, idx) => (
                   <Badge key={idx} variant="secondary" className="text-sm px-3 py-1">
                     {tag}
                   </Badge>
                 ))}
+              </div>
+            )}
+
+            {/* Already in circles */}
+            {currentProfile.in_circles && currentProfile.in_circles.length > 0 && (
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg w-full">
+                <p className="text-xs text-muted-foreground text-center mb-2">
+                  Already in circles:
+                </p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {currentProfile.in_circles.map((circleId) => {
+                    const circle = circles.find(c => c.id === circleId);
+                    return circle ? (
+                      <Badge key={circleId} variant="outline" className="text-xs">
+                        {circle.emoji} {circle.name.split('-')[0]}
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
 
