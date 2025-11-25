@@ -115,7 +115,11 @@ export const RadioMode: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-2">Radio Broadcasts</h2>
           <p className="text-white/80">24/7 live streams • 2-hour slots available</p>
         </div>
-        <Button className="gap-2" onClick={() => setScheduleDialogOpen(true)}>
+        <Button 
+          className="gap-2" 
+          onClick={() => setScheduleDialogOpen(true)}
+          style={{ backgroundColor: '#0A1931', color: 'white' }}
+        >
           <Plus className="w-4 h-4" />
           Request Radio Slot
         </Button>
