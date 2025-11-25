@@ -66,70 +66,43 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     if (!user) return;
 
     try {
-      // Load user's circles
-      const { data, error } = await supabase
-        .from('user_circles')
-        .select(`
-          circle_id,
-          circles (
-            id,
-            name,
-            emoji,
-            color,
-            unread_count,
-            is_live,
-            member_count
-          )
-        `)
-        .eq('user_id', user.id);
+      // Load all circles from database
+      const { data: allCircles, error: circlesError } = await supabase
+        .from('circles')
+        .select('*')
+        .order('name');
 
-      if (error) {
-        // Table might not exist yet, use default circles
-        console.warn('Circles table not available:', error);
-        const defaultCircles: Circle[] = [
-          { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-          { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-          { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-          { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-          { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-        ];
-        setCircles(defaultCircles);
+      if (circlesError) {
+        console.error('Error loading circles:', circlesError);
         return;
       }
 
-      if (data && data.length > 0) {
-        const formattedCircles: Circle[] = data.map((uc: any) => ({
-          id: uc.circle_id,
-          name: uc.circles?.name || '',
-          emoji: uc.circles?.emoji || '👥',
-          color: uc.circles?.color || 'bg-gray-500',
-          unreadCount: uc.circles?.unread_count || 0,
-          isLive: uc.circles?.is_live || false,
-          memberCount: uc.circles?.member_count || 0,
-        }));
-        setCircles(formattedCircles);
-      } else {
-        // No circles yet, show default ones
-        const defaultCircles: Circle[] = [
-          { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-          { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-          { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-          { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-          { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-        ];
-        setCircles(defaultCircles);
+      // Format circles with member counts
+      const circlesWithCounts = await Promise.all(
+        (allCircles || []).map(async (circle) => {
+          const { count } = await supabase
+            .from('circle_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('circle_id', circle.id);
+
+          return {
+            id: circle.id,
+            name: circle.name,
+            emoji: circle.emoji,
+            color: circle.color,
+            unreadCount: 0,
+            isLive: false,
+            memberCount: count || 0,
+          };
+        })
+      );
+
+      setCircles(circlesWithCounts);
+      if (circlesWithCounts.length > 0 && !activeCircleId) {
+        setActiveCircleId(circlesWithCounts[0].id);
       }
     } catch (error) {
       console.error('Error loading circles:', error);
-      // Fallback to default circles
-      const defaultCircles: Circle[] = [
-        { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },
-        { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },
-        { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },
-        { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },
-        { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },
-      ];
-      setCircles(defaultCircles);
     }
   };
 
