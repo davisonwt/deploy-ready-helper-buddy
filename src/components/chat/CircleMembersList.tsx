@@ -332,7 +332,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full relative">
                 {/* Avatar */}
-                <div className="mb-2 z-10">
+                <div className="mb-2 z-10 flex-shrink-0">
                   <Avatar className="h-16 w-16 border-2 border-primary/10">
                     <AvatarImage src={member.avatar_url} />
                     <AvatarFallback className="text-xl bg-gradient-to-br from-primary/50 to-primary/20">
@@ -342,13 +342,13 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 </div>
 
                 {/* Name */}
-                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2 text-white z-10">
+                <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2 text-white z-10 flex-shrink-0">
                   {member.full_name || member.display_name || 'User'}
                 </h3>
 
                 {/* Tags */}
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 justify-center mb-2 z-10">
+                  <div className="flex flex-wrap gap-1 justify-center mb-2 z-10 flex-shrink-0">
                     {tags.map((tag, idx) => (
                       <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
                         {tag}
@@ -369,28 +369,22 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 onClick={(e) => e.stopPropagation()}
-                className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-[1001] w-64`}
+                className="fixed z-[1001] w-64"
                 style={{
                   maxWidth: 'min(calc(100vw - 2rem), 256px)',
-                  position: isSelected ? 'fixed' : 'absolute',
-                  ...(isSelected ? {
-                    // Calculate position to keep menu visible
-                    top: `clamp(200px, calc(50% + 120px), calc(100vh - 420px))`,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    maxHeight: '400px',
-                  } : {}),
-                  // Ensure menu doesn't go off screen
-                  right: isSelected ? 'auto' : undefined,
-                  left: isSelected ? '50%' : undefined,
+                  // Position menu below the centered card
+                  top: `clamp(120px, calc(50vh + 140px), calc(100vh - 380px))`,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  maxHeight: 'min(calc(100vh - 200px), 350px)',
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', padding: '1rem' }}>
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: 'min(calc(100vh - 200px), 350px)' }}>
+                  <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea style={{ height: '300px', width: '100%' }}>
+                    <ScrollArea className="flex-1">
                       <div className="space-y-1 pr-4">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
