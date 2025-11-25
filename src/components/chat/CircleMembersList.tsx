@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, X, UserPlus, Phone, Video } from 'lucide-react';
+import { MessageCircle, X, UserPlus, Phone, Video, GraduationCap, Radio } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +18,8 @@ interface CircleMembersListProps {
   circleId: string;
   onStartChat?: (userId: string) => void;
   onStartCall?: (userId: string, callType: 'audio' | 'video') => void;
+  onNavigateToTraining?: (userId: string) => void;
+  onNavigateToRadio?: (userId: string) => void;
   circles?: Array<{ id: string; name: string; emoji: string }>;
   onMemberRemoved?: () => void;
 }
@@ -34,7 +36,7 @@ interface Member {
   is_gosat?: boolean;
 }
 
-export function CircleMembersList({ circleId, onStartChat, onStartCall, circles = [], onMemberRemoved }: CircleMembersListProps) {
+export function CircleMembersList({ circleId, onStartChat, onStartCall, onNavigateToTraining, onNavigateToRadio, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -287,6 +289,32 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, circles 
                       title="Video call"
                     >
                       <Video className="h-4 w-4" />
+                    </Button>
+                  )}
+                  
+                  {/* Training Button */}
+                  {onNavigateToTraining && (
+                    <Button
+                      size="sm"
+                      onClick={() => onNavigateToTraining(member.user_id)}
+                      style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                      title="Training"
+                    >
+                      <GraduationCap className="h-4 w-4" />
+                    </Button>
+                  )}
+                  
+                  {/* Radio Button */}
+                  {onNavigateToRadio && (
+                    <Button
+                      size="sm"
+                      onClick={() => onNavigateToRadio(member.user_id)}
+                      style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                      title="Radio"
+                    >
+                      <Radio className="h-4 w-4" />
                     </Button>
                   )}
                   

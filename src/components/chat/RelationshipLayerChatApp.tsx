@@ -357,6 +357,24 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     }
   };
 
+  const handleNavigateToTraining = (userId: string) => {
+    // Navigate to training/classroom modules
+    navigate('/chatapp?mode=training');
+    toast({
+      title: 'Training',
+      description: 'Opening training modules',
+    });
+  };
+
+  const handleNavigateToRadio = (userId: string) => {
+    // Navigate to radio page
+    navigate('/radio');
+    toast({
+      title: 'Radio',
+      description: 'Opening radio station',
+    });
+  };
+
   // Show glassmorphism dashboard
   if (showDashboard && !showOnboarding) {
     return (
@@ -375,6 +393,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
         }}
         onStartChat={handleStartChat}
         onStartCall={handleStartCall}
+        onNavigateToTraining={handleNavigateToTraining}
+        onNavigateToRadio={handleNavigateToRadio}
         onAddPeople={() => setShowOnboarding(true)}
         onNavigate={(mode) => {
           setShowDashboard(false);
@@ -412,6 +432,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
                     circles={circles}
                     onStartChat={handleStartChat}
                     onStartCall={handleStartCall}
+                    onNavigateToTraining={handleNavigateToTraining}
+                    onNavigateToRadio={handleNavigateToRadio}
                     onMemberRemoved={handleMemberRemoved}
                   />
                 </CardContent>
