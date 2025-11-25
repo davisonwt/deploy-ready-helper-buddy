@@ -157,6 +157,32 @@ If any functions are found, they should be updated with `SET search_path = publi
 3. Implement key rotation policies
 4. Monitor for any key compromise
 
+### 9. Password Validation Strength
+
+**Status**: ✅ **FIXED** (Now requires strong passwords with complexity)
+
+**Issue**: Password validation only checked for minimum 6 characters without complexity requirements, allowing weak passwords.
+
+**Remediation Completed**:
+1. ✅ Updated `validatePassword()` function in `src/lib/utils.ts`:
+   - Minimum 10 characters (was 8, now 10+)
+   - Requires uppercase letter
+   - Requires lowercase letter
+   - Requires number
+   - Requires special character
+2. ✅ Updated `QuickRegistration.jsx` to use strong password validation
+3. ✅ Added `getPasswordValidationFeedback()` helper for user-friendly error messages
+4. ✅ Updated password input placeholder to show requirements
+
+**New Password Requirements**:
+- Minimum 10 characters (12+ recommended for very strong)
+- At least one uppercase letter (A-Z)
+- At least one lowercase letter (a-z)
+- At least one number (0-9)
+- At least one special character (!@#$%^&* etc.)
+
+**Note**: Supabase Dashboard password policies should also be configured to match these requirements. See section 2 for enabling leaked password protection.
+
 ## 🟡 MEDIUM PRIORITY - Improvements
 
 ### 7. Privacy Controls
