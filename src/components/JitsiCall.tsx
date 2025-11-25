@@ -6,9 +6,11 @@ import { useEffect } from 'react';
 interface JitsiCallProps {
   roomName: string;
   onLeave: () => void;
+  userInfo?: { displayName: string; email: string };
+  isAudioOnly?: boolean;
 }
 
-export function JitsiCall({ roomName, onLeave }: JitsiCallProps) {
+export function JitsiCall({ roomName, onLeave, userInfo, isAudioOnly }: JitsiCallProps) {
   useEffect(() => {
     // Hide any loading spinners when component mounts
     const spinners = document.querySelectorAll('[class*="spinner"], [class*="loading"]');

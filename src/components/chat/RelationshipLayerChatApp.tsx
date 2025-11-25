@@ -7,7 +7,7 @@ import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';
 import { BestowalCoin } from './BestowalCoin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, UserPlus } from 'lucide-react';
+import { Flame, UserPlus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 

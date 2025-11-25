@@ -70,24 +70,9 @@ export function BestowalCoin({
         return;
       }
 
-      // For now, we'll create a simple bestowal
-      // You can integrate with your existing bestowal system
-      const { error } = await supabase
-        .from('bestowals')
-        .insert({
-          bestower_id: user.id,
-          amount: amount,
-          currency: 'USDC',
-          payment_method: 'cryptomus',
-          payment_status: 'pending',
-          // Add asset reference
-        });
-
-      if (error) throw error;
-
-      // Trigger payment
+      // Trigger payment directly
       const paymentResult = await initiateCryptomusPayment({
-        orchardId: assetId, // Using assetId as reference
+        orchardId: assetId,
         amount: amount,
         pocketsCount: 1,
         currency: 'USDC',
