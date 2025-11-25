@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface RelationshipLayerChatAppProps {
   onCompleteOnboarding?: () => void;
@@ -29,6 +31,8 @@ interface CircleMember {
 
 export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipLayerChatAppProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [circles, setCircles] = useState<Circle[]>([]);
   const [activeCircleId, setActiveCircleId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -293,6 +297,66 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircles();
   };
 
+  const handleStartChat = async (userId: string) => {
+    if (!user) return;
+    
+    try {
+      // Create or get direct room
+      const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: userId,
+      });
+
+      if (error) throw error;
+
+      // Navigate to chat app with the room
+      navigate(`/chatapp?room=${roomId}`);
+      
+      toast({
+        title: 'Chat opened',
+        description: 'Direct message room is ready',
+      });
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start chat',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleStartCall = async (userId: string, callType: 'audio' | 'video') => {
+    if (!user) return;
+    
+    try {
+      // Generate unique room name for Jitsi
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let roomName = '';
+      for (let i = 0; i < 12; i++) {
+        roomName += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
+      const jitsiUrl = `https://${jitsiDomain}/${roomName}${callType === 'audio' ? '?config.startAudioOnly=true' : ''}`;
+      
+      // Open Jitsi in new window
+      window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+      
+      toast({
+        title: `${callType === 'audio' ? 'Voice' : 'Video'} call started`,
+        description: 'Call window opened in new tab',
+      });
+    } catch (error) {
+      console.error('Error starting call:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start call',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Show glassmorphism dashboard
   if (showDashboard && !showOnboarding) {
     return (
@@ -309,6 +373,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
           setActiveCircleId(null);
           setCircleMembers([]);
         }}
+        onStartChat={handleStartChat}
+        onStartCall={handleStartCall}
         onAddPeople={() => setShowOnboarding(true)}
         onNavigate={(mode) => {
           setShowDashboard(false);
@@ -344,6 +410,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
                   <CircleMembersList
                     circleId={activeCircleId}
                     circles={circles}
+                    onStartChat={handleStartChat}
+                    onStartCall={handleStartCall}
                     onMemberRemoved={handleMemberRemoved}
                   />
                 </CardContent>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, X, UserPlus } from 'lucide-react';
+import { MessageCircle, X, UserPlus, Phone, Video } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 interface CircleMembersListProps {
   circleId: string;
   onStartChat?: (userId: string) => void;
+  onStartCall?: (userId: string, callType: 'audio' | 'video') => void;
   circles?: Array<{ id: string; name: string; emoji: string }>;
   onMemberRemoved?: () => void;
 }
@@ -33,7 +34,7 @@ interface Member {
   is_gosat?: boolean;
 }
 
-export function CircleMembersList({ circleId, onStartChat, circles = [], onMemberRemoved }: CircleMembersListProps) {
+export function CircleMembersList({ circleId, onStartChat, onStartCall, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -249,18 +250,47 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-1 mt-auto">
+                <div className="flex flex-wrap gap-1 mt-auto justify-center">
+                  {/* Message Button */}
                   {onStartChat && (
                     <Button
                       size="sm"
                       onClick={() => onStartChat(member.user_id)}
                       style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
                       className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                      title="Send message"
                     >
                       <MessageCircle className="h-4 w-4" />
                     </Button>
                   )}
                   
+                  {/* Voice Call Button */}
+                  {onStartCall && (
+                    <Button
+                      size="sm"
+                      onClick={() => onStartCall(member.user_id, 'audio')}
+                      style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                      title="Voice call"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                  )}
+                  
+                  {/* Video Call Button */}
+                  {onStartCall && (
+                    <Button
+                      size="sm"
+                      onClick={() => onStartCall(member.user_id, 'video')}
+                      style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                      title="Video call"
+                    >
+                      <Video className="h-4 w-4" />
+                    </Button>
+                  )}
+                  
+                  {/* Add to Another Circle */}
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -274,9 +304,10 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                             height: '32px',
                             padding: '0',
                             minWidth: '32px',
-                            minHeight: '32px'
+                            minHeight: '32px',
+                            border: '2px solid #0A1931'
                           }}
-                          className="border-0 hover:opacity-90" 
+                          className="hover:opacity-90" 
                           title="Also add to another circle"
                         >
                           <UserPlus className="h-4 w-4" />
@@ -300,11 +331,13 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                     </DropdownMenu>
                   )}
 
+                  {/* Remove Member Button */}
                   <Button
                     size="sm"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
                     style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
                     className="h-8 w-8 p-0 rounded-full hover:opacity-90"
+                    title="Remove from circle"
                   >
                     <X className="h-4 w-4" />
                   </Button>
