@@ -108,12 +108,10 @@ const CommunicationsHub = () => {
     window.location.hash = activeTab;
   }, [activeTab]);
 
-  // Check if user wants relationship layer (check localStorage preference)
+  // Check if user wants relationship layer (ALWAYS USE UNIFIED DASHBOARD NOW)
   useEffect(() => {
-    const preference = localStorage.getItem('chatapp:relationship-layer');
-    if (preference === 'enabled') {
-      setUseRelationshipLayer(true);
-    }
+    // Always enable the new unified dashboard
+    setUseRelationshipLayer(true);
   }, []);
 
   // Fetch users when search term changes
