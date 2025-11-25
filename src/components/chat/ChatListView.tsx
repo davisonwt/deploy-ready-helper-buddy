@@ -38,75 +38,86 @@ export const ChatListView: React.FC = () => {
     if (!user) return;
 
     try {
-      // Load user's chat rooms with latest messages
-      const { data: rooms } = await supabase
+      // Load user's chat rooms with participants and latest messages
+      const { data: rooms, error } = await supabase
         .from('chat_rooms')
         .select(`
           id,
           name,
           room_type,
-          chat_participants!inner(user_id, is_active),
-          chat_messages(content, created_at)
+          created_at,
+          chat_participants!inner(
+            user_id,
+            is_active,
+            profile_id,
+            profiles(display_name, avatar_url, first_name, last_name)
+          )
         `)
         .eq('chat_participants.user_id', user.id)
         .eq('chat_participants.is_active', true)
+        .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
-      // Mock data for demo purposes (replace with actual data processing)
-      const mockConversations: ChatConversation[] = [
-        {
-          id: '1',
-          name: 'S2G-Sowers',
-          avatar_url: null,
-          last_message: 'New seed planted! 🌱',
-          last_message_time: new Date().toISOString(),
-          unread_count: 3,
-          is_group: true,
-          participants: [
-            { id: '1', avatar_url: null, display_name: 'John' },
-            { id: '2', avatar_url: null, display_name: 'Sarah' },
-            { id: '3', avatar_url: null, display_name: 'Mike' }
-          ]
-        },
-        {
-          id: '2',
-          name: 'David',
-          avatar_url: null,
-          last_message: 'See you at the meeting!',
-          last_message_time: new Date(Date.now() - 3600000).toISOString(),
-          unread_count: 1,
-          is_group: false,
-          status: 'online'
-        },
-        {
-          id: '3',
-          name: '364yhvh-Family',
-          avatar_url: null,
-          last_message: 'Dinner tonight?',
-          last_message_time: new Date(Date.now() - 7200000).toISOString(),
-          unread_count: 0,
-          is_group: true,
-          participants: [
-            { id: '4', avatar_url: null, display_name: 'Mom' },
-            { id: '5', avatar_url: null, display_name: 'Dad' },
-            { id: '6', avatar_url: null, display_name: 'Sister' },
-            { id: '7', avatar_url: null, display_name: 'Brother' }
-          ]
-        },
-        {
-          id: '4',
-          name: 'Sarah Johnson',
-          avatar_url: null,
-          last_message: 'Thanks for the support! 🙏',
-          last_message_time: new Date(Date.now() - 86400000).toISOString(),
-          unread_count: 0,
-          is_group: false,
-          status: 'offline'
+      if (error) throw error;
+
+      // Process rooms into conversations
+      const conversationPromises = (rooms || []).map(async (room) => {
+        // Get latest message for this room
+        const { data: messages } = await supabase
+          .from('chat_messages')
+          .select('content, created_at, sender_id')
+          .eq('room_id', room.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const latestMessage = messages?.[0];
+
+        // Get all participants for group display
+        const { data: allParticipants } = await supabase
+          .from('chat_participants')
+          .select(`
+            user_id,
+            profiles(id, display_name, avatar_url, first_name, last_name)
+          `)
+          .eq('room_id', room.id)
+          .eq('is_active', true)
+          .neq('user_id', user.id);
+
+        const isGroup = room.room_type === 'group';
+        let conversationName = room.name || 'Chat';
+        let avatarUrl = null;
+
+        // For direct chats, use the other participant's name
+        if (!isGroup && allParticipants && allParticipants.length > 0) {
+          const otherProfile = allParticipants[0].profiles;
+          conversationName = otherProfile?.display_name || 
+                           `${otherProfile?.first_name || ''} ${otherProfile?.last_name || ''}`.trim() ||
+                           'Unknown User';
+          avatarUrl = otherProfile?.avatar_url || null;
         }
-      ];
 
-      setConversations(mockConversations);
+        return {
+          id: room.id,
+          name: conversationName,
+          avatar_url: avatarUrl,
+          last_message: latestMessage?.content || 'No messages yet',
+          last_message_time: latestMessage?.created_at || room.created_at,
+          unread_count: 0, // TODO: Implement unread count tracking
+          is_group: isGroup,
+          participants: allParticipants?.map(p => ({
+            id: p.profiles?.id || '',
+            avatar_url: p.profiles?.avatar_url || null,
+            display_name: p.profiles?.display_name || 
+                         `${p.profiles?.first_name || ''} ${p.profiles?.last_name || ''}`.trim() ||
+                         'Unknown'
+          })),
+          status: 'offline' as const
+        };
+      });
+
+      const processedConversations = await Promise.all(conversationPromises);
+      setConversations(processedConversations);
     } catch (error) {
       console.error('Error loading conversations:', error);
     } finally {
