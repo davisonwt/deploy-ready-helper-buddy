@@ -605,6 +605,30 @@ export function GlassmorphismDashboard({
             </CardContent>
           </Card>
 
+          {/* Available Users Section - Users not in any circle */}
+          <AvailableUsersSection 
+            circles={circles}
+            onAddToCircle={async (userId, userName, circleId) => {
+              try {
+                const { error } = await supabase
+                  .from('circle_members')
+                  .insert({ circle_id: circleId, user_id: userId });
+                if (error) throw error;
+                toast({
+                  title: 'Added to circle',
+                  description: `${userName} added to ${circles.find(c => c.id === circleId)?.name || 'circle'}`,
+                });
+                onMemberRemoved?.();
+              } catch (error: any) {
+                toast({
+                  title: 'Error',
+                  description: error.message || 'Failed to add user to circle',
+                  variant: 'destructive',
+                });
+              }
+            }}
+          />
+
           {/* Activity Stream */}
           <Card variant="glass" className="backdrop-blur-xl bg-charcoal/60 border-amber-500/20">
             <CardHeader className="flex flex-row items-center justify-between">
