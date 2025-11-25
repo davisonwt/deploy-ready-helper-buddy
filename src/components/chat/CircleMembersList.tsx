@@ -266,8 +266,17 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                       <DropdownMenuTrigger asChild>
                         <Button 
                           size="sm" 
-                          style={{ backgroundColor: 'white', color: '#0A1931' }}
-                          className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0" 
+                          style={{ 
+                            backgroundColor: 'white', 
+                            color: '#0A1931',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            padding: '0',
+                            minWidth: '32px',
+                            minHeight: '32px'
+                          }}
+                          className="border-0 hover:opacity-90" 
                           title="Also add to another circle"
                         >
                           <UserPlus className="h-4 w-4" />
