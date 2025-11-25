@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +41,8 @@ export const CommunityForums: React.FC = () => {
   const [newPostOpen, setNewPostOpen] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
-  const [selectedCircle, setSelectedCircle] = useState<string>('');
+  const [selectedCircles, setSelectedCircles] = useState<string[]>([]);
+  const [postToNonCircle, setPostToNonCircle] = useState(false);
   const [userCircles, setUserCircles] = useState<any[]>([]);
   const { toast } = useToast();
 
@@ -63,12 +65,17 @@ export const CommunityForums: React.FC = () => {
       
       const circles = data?.map(item => item.circles).filter(Boolean) || [];
       setUserCircles(circles);
-      if (circles.length > 0) {
-        setSelectedCircle(circles[0].id);
-      }
     } catch (error) {
       console.error('Error fetching circles:', error);
     }
+  };
+
+  const toggleCircleSelection = (circleId: string) => {
+    setSelectedCircles(prev => 
+      prev.includes(circleId) 
+        ? prev.filter(id => id !== circleId)
+        : [...prev, circleId]
+    );
   };
 
   const fetchPosts = async () => {
@@ -125,10 +132,19 @@ export const CommunityForums: React.FC = () => {
   };
 
   const handleCreatePost = async () => {
-    if (!newPostTitle.trim() || !newPostContent.trim() || !selectedCircle) {
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
       toast({
         title: 'Missing information',
-        description: 'Please fill in all fields',
+        description: 'Please enter a title and content',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (selectedCircles.length === 0 && !postToNonCircle) {
+      toast({
+        title: 'No audience selected',
+        description: 'Please select at least one circle or "Not in any circles"',
         variant: 'destructive',
       });
       return;
@@ -144,26 +160,40 @@ export const CommunityForums: React.FC = () => {
         .eq('user_id', user.id)
         .single();
 
-      const { error } = await supabase
-        .from('community_posts')
-        .insert({
-          title: newPostTitle,
-          content: newPostContent,
-          circle_id: selectedCircle,
-          author_id: user.id,
-          author_profile_id: profile?.id,
-        });
+      // If posting to "Not in any circles", create a special circle or handle differently
+      // For now, we'll post to all selected circles
+      const circlesToPost = postToNonCircle ? [...selectedCircles, 'non-circle'] : selectedCircles;
+      
+      // Create a post for each selected circle
+      const postPromises = selectedCircles.map(circleId => 
+        supabase
+          .from('community_posts')
+          .insert({
+            title: newPostTitle,
+            content: newPostContent,
+            circle_id: circleId,
+            author_id: user.id,
+            author_profile_id: profile?.id,
+          })
+      );
 
-      if (error) throw error;
+      const results = await Promise.all(postPromises);
+      const errors = results.filter(r => r.error);
+
+      if (errors.length > 0) {
+        throw new Error('Some posts failed to create');
+      }
 
       toast({
         title: 'Post created!',
-        description: 'Your post has been shared with the community',
+        description: `Your post has been shared with ${selectedCircles.length} circle${selectedCircles.length > 1 ? 's' : ''}`,
       });
 
       setNewPostOpen(false);
       setNewPostTitle('');
       setNewPostContent('');
+      setSelectedCircles([]);
+      setPostToNonCircle(false);
       fetchPosts();
     } catch (error) {
       console.error('Error creating post:', error);
@@ -252,18 +282,46 @@ export const CommunityForums: React.FC = () => {
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Circle</label>
-                  <select
-                    value={selectedCircle}
-                    onChange={(e) => setSelectedCircle(e.target.value)}
-                    className="w-full glass-input rounded-lg px-3 py-2"
-                  >
+                  <label className="text-sm font-medium mb-3 block">Select Circles to Post To</label>
+                  <div className="space-y-3 max-h-48 overflow-y-auto glass-card p-4 rounded-lg">
                     {userCircles.map((circle) => (
-                      <option key={circle.id} value={circle.id}>
-                        {circle.emoji} {circle.name}
-                      </option>
+                      <div key={circle.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
+                        <Checkbox
+                          id={`circle-${circle.id}`}
+                          checked={selectedCircles.includes(circle.id)}
+                          onCheckedChange={() => toggleCircleSelection(circle.id)}
+                          className="border-primary/30"
+                        />
+                        <label
+                          htmlFor={`circle-${circle.id}`}
+                          className="flex-1 text-sm font-medium cursor-pointer"
+                        >
+                          {circle.emoji} {circle.name}
+                        </label>
+                      </div>
                     ))}
-                  </select>
+                    
+                    {/* Not in any circles option */}
+                    <div className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors border-t border-border/30 pt-3 mt-3">
+                      <Checkbox
+                        id="non-circle"
+                        checked={postToNonCircle}
+                        onCheckedChange={(checked) => setPostToNonCircle(!!checked)}
+                        className="border-primary/30"
+                      />
+                      <label
+                        htmlFor="non-circle"
+                        className="flex-1 text-sm font-medium cursor-pointer"
+                      >
+                        🌐 Not in any circles
+                      </label>
+                    </div>
+                  </div>
+                  {selectedCircles.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {selectedCircles.length} circle{selectedCircles.length > 1 ? 's' : ''} selected
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Title</label>
