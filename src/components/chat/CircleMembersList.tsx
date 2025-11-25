@@ -409,7 +409,14 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                     <h4 className="text-sm font-semibold text-white text-center flex-shrink-0 mb-3">
                       What do you want to do?
                     </h4>
-                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100% - 60px)', minHeight: '150px', overflowY: 'auto', overflowX: 'hidden' }}>
+                    <div className="flex-1 overflow-y-auto" style={{ 
+                      maxHeight: 'calc(100% - 60px)', 
+                      minHeight: '150px', 
+                      overflowY: 'auto', 
+                      overflowX: 'hidden',
+                      WebkitOverflowScrolling: 'touch',
+                      height: '100%'
+                    }}>
                       <div className="space-y-1 pr-2">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
