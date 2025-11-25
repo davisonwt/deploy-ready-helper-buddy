@@ -397,20 +397,25 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   maxWidth: 'min(calc(100vw - 2rem), 256px)',
                   position: isHovered ? 'fixed' : 'absolute',
                   ...(isHovered ? {
-                    top: 'calc(50% + 120px)', // Position below centered card
+                    // Calculate position to keep menu visible
+                    top: `clamp(200px, calc(50% + 120px), calc(100vh - 420px))`,
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    maxHeight: 'calc(100vh - 50% - 150px)', // Ensure it doesn't go below viewport
-                  } : {})
+                    maxHeight: '400px',
+                  } : {}),
+                  // Ensure menu doesn't go off screen
+                  right: isHovered ? 'auto' : undefined,
+                  left: isHovered ? '50%' : undefined,
                 }}
               >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden">
-                  <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: 'min(400px, calc(100vh - 300px))' }}>
-                      <div className="space-y-1 pr-4">
+                    <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                      <ScrollArea className="h-full" style={{ height: '300px' }}>
+                        <div className="space-y-1 pr-4">
                         {actions.map((action, idx) => {
                           const Icon = action.icon;
                           
