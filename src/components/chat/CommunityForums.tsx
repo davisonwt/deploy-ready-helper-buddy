@@ -56,15 +56,16 @@ export const CommunityForums: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('circle_members')
-        .select('circle_id, circles(id, name, emoji)')
-        .eq('user_id', user.id);
+      // Fetch all circles directly
+      const { data: allCircles, error: circlesError } = await supabase
+        .from('circles')
+        .select('id, name, emoji, color')
+        .order('name');
 
-      if (error) throw error;
+      if (circlesError) throw circlesError;
       
-      const circles = data?.map(item => item.circles).filter(Boolean) || [];
-      setUserCircles(circles);
+      console.log('Loaded circles:', allCircles);
+      setUserCircles(allCircles || []);
     } catch (error) {
       console.error('Error fetching circles:', error);
     }
