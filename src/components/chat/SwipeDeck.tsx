@@ -417,9 +417,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
             {/* Avatar with glow */}
             <div className="relative mb-6">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-              <Avatar className="h-24 w-24 rounded-full border-4 border-primary/20 relative z-10">
-                <AvatarImage src={currentProfile.avatar_url} className="rounded-full" />
-                <AvatarFallback className="text-3xl bg-gradient-to-br from-primary to-primary/50 rounded-full">
+              <Avatar className="h-24 w-24 border-4 border-primary/20 relative z-10">
+                <AvatarImage src={currentProfile.avatar_url} />
+                <AvatarFallback className="text-3xl bg-gradient-to-br from-primary to-primary/50">
                   {(currentProfile.full_name || currentProfile.username || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
