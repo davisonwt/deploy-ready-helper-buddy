@@ -5,7 +5,11 @@ import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicati
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
 import { CommunityForums } from './CommunityForums';
-import { ChatRoom } from './ChatRoom';
+import { ChatMode } from './modes/ChatMode';
+import { ClassroomMode } from './modes/ClassroomMode';
+import { LectureMode } from './modes/LectureMode';
+import { TrainingMode } from './modes/TrainingMode';
+import { RadioMode } from './modes/RadioMode';
 import { cn } from '@/lib/utils';
 
 interface ModeConfig {
@@ -36,42 +40,17 @@ export const UnifiedDashboard: React.FC = () => {
   const renderContent = () => {
     switch (activeMode) {
       case 'chat':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">1-on-1 Chats</h2>
-            <p className="text-muted-foreground">Your existing circle chat functionality will be integrated here. Select a circle member to start chatting.</p>
-          </div>
-        );
+        return <ChatMode />;
       case 'community':
         return <CommunityForums />;
       case 'classroom':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">Interactive Classrooms</h2>
-            <p className="text-muted-foreground">Coming soon: Join live learning sessions with whiteboards and breakout rooms</p>
-          </div>
-        );
+        return <ClassroomMode />;
       case 'lecture':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">Lecture Halls</h2>
-            <p className="text-muted-foreground">Coming soon: Attend presentations and Q&A sessions</p>
-          </div>
-        );
+        return <LectureMode />;
       case 'training':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">Training Sessions</h2>
-            <p className="text-muted-foreground">Coming soon: Complete courses and earn XP points</p>
-          </div>
-        );
+        return <TrainingMode />;
       case 'radio':
-        return (
-          <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-heading-primary mb-4">Radio Broadcasts</h2>
-            <p className="text-muted-foreground">Coming soon: Listen to live audio streams and participate in discussions</p>
-          </div>
-        );
+        return <RadioMode />;
       default:
         return null;
     }
