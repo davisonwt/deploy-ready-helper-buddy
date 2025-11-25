@@ -35,7 +35,7 @@ import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { CircleMembersList } from './CircleMembersList';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, UserPlus } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ActivityUpdate {
@@ -85,7 +85,8 @@ function AvailableUsersSection({ circles, onAddToCircle }: { circles: Circle[], 
 
   useEffect(() => {
     loadAvailableUsers();
-  }, [circles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [circles.length]);
 
   const loadAvailableUsers = async () => {
     try {
