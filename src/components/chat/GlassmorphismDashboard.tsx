@@ -336,56 +336,6 @@ export function GlassmorphismDashboard({
         }}
       />
 
-      {/* Floating Navigation */}
-      <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ 
-          y: scrollY > 50 ? 0 : 20,
-          opacity: 1,
-        }}
-        transition={{ duration: 0.3 }}
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 ${
-          scrollY > 50 ? 'backdrop-blur-xl bg-charcoal/80 shadow-2xl' : 'backdrop-blur-md bg-charcoal/60'
-        } rounded-2xl px-6 py-3 border border-amber-500/20`}
-      >
-        <div className="flex items-center gap-2">
-          {navigationModes.map((mode) => {
-            const Icon = mode.icon;
-            const isActive = activeMode === mode.id;
-            return (
-              <motion.button
-                key={mode.id}
-                onClick={() => {
-                  setActiveMode(mode.id as any);
-                  onNavigate?.(mode.id);
-                }}
-                className={`
-                  relative px-4 py-2 rounded-xl transition-all duration-300
-                  ${isActive 
-                    ? 'bg-gradient-to-r ' + mode.color + ' text-amber-100 shadow-lg' 
-                    : 'text-charcoal-300 hover:text-amber-200 hover:bg-charcoal/40'
-                  }
-                `}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm font-medium hidden sm:inline">{mode.label}</span>
-                </div>
-                {isActive && (
-                  <motion.div
-                    layoutId="activeMode"
-                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-500/30 to-coral-500/30 -z-10"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
-
       {/* Main Content */}
       <div className="relative z-10 pt-24 pb-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
