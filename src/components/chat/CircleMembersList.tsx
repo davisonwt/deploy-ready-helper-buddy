@@ -254,7 +254,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                     <Button
                       size="sm"
                       onClick={() => onStartChat(member.user_id)}
-                      className="h-8 w-8 p-0 rounded-full bg-white hover:bg-white/90 text-[#0A1931]"
+                      style={{ backgroundColor: 'white', color: '#0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
                     >
                       <MessageCircle className="h-4 w-4" />
                     </Button>
@@ -263,7 +264,12 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" className="h-8 w-8 p-0 rounded-full bg-white hover:bg-white/90 text-[#0A1931]" title="Also add to another circle">
+                        <Button 
+                          size="sm" 
+                          style={{ backgroundColor: 'white', color: '#0A1931' }}
+                          className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0" 
+                          title="Also add to another circle"
+                        >
                           <UserPlus className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -288,7 +294,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   <Button
                     size="sm"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
-                    className="h-8 w-8 p-0 rounded-full bg-white hover:bg-destructive text-[#0A1931] hover:text-white"
+                    style={{ backgroundColor: 'white', color: '#0A1931' }}
+                    className="h-8 w-8 p-0 rounded-full hover:opacity-90 hover:bg-destructive hover:text-white border-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>
