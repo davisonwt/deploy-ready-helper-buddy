@@ -44,28 +44,32 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
   const loadMembers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First get member user_ids from circle_members
+      const { data: memberData, error: memberError } = await supabase
         .from('circle_members')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            user_id,
-            full_name,
-            display_name,
-            first_name,
-            last_name,
-            avatar_url,
-            bio
-          )
-        `)
+        .select('user_id')
         .eq('circle_id', circleId);
 
-      if (error) throw error;
+      if (memberError) throw memberError;
+
+      const userIds = (memberData || []).map((m: any) => m.user_id);
+      
+      if (userIds.length === 0) {
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+
+      // Now get profiles for those users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio')
+        .in('user_id', userIds);
+
+      if (profilesError) throw profilesError;
 
       // Get user roles
-      const userIds = (data || []).map((m: any) => m.user_id);
-      
       const { data: sowersData } = await supabase
         .from('sowers')
         .select('user_id')
@@ -86,17 +90,16 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
       const bestowerIds = new Set((bestowalsData || []).map((b: any) => b.bestower_id));
       const gosatIds = new Set((gosatData || []).map((g: any) => g.user_id));
 
-      const formattedMembers: Member[] = (data || []).map((member: any) => ({
-        id: member.profiles?.id || member.user_id,
-        user_id: member.user_id,
-        full_name: member.profiles?.full_name || 
-                   `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim(),
-        display_name: member.profiles?.display_name,
-        avatar_url: member.profiles?.avatar_url,
-        bio: member.profiles?.bio,
-        is_sower: sowerIds.has(member.user_id),
-        is_bestower: bestowerIds.has(member.user_id),
-        is_gosat: gosatIds.has(member.user_id),
+      const formattedMembers: Member[] = (profilesData || []).map((profile: any) => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        full_name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.display_name || 'User',
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        bio: profile.bio,
+        is_sower: sowerIds.has(profile.user_id),
+        is_bestower: bestowerIds.has(profile.user_id),
+        is_gosat: gosatIds.has(profile.user_id),
       }));
 
       setMembers(formattedMembers);
