@@ -28,28 +28,75 @@ interface SwipeDeckProps {
   initialCircleId?: string;
 }
 
-const USERS_PER_PAGE = 21;
+const BATCH_SIZE = 8; // Load 8 profiles at a time
 
 export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDeckProps) {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || 'friends');
-  const [addedUsers, setAddedUsers] = useState<Set<string>>(new Set());
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
+  const [currentBatch, setCurrentBatch] = useState<Profile[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [batchIndex, setBatchIndex] = useState(0);
+  const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || '');
+  const [processedUsers, setProcessedUsers] = useState<Set<string>>(new Set());
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const circles = [
-    { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500' },
-    { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500' },
-    { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500' },
-    { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500' },
-    { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500' },
-  ];
+  const [circles, setCircles] = useState<Array<{
+    id: string;
+    name: string;
+    emoji: string;
+    color: string;
+  }>>([]);
 
   useEffect(() => {
+    loadCircles();
     loadProfiles();
   }, []);
+
+  useEffect(() => {
+    // Load next batch when needed
+    if (allProfiles.length > 0 && currentBatch.length === 0) {
+      loadNextBatch();
+    }
+  }, [allProfiles, currentBatch]);
+
+  const loadCircles = async () => {
+    try {
+      const { data: circlesData, error } = await supabase
+        .from('circles')
+        .select('id, name, emoji, color')
+        .order('created_at');
+
+      if (error) {
+        console.error('Error loading circles:', error);
+        return;
+      }
+
+      if (circlesData && circlesData.length > 0) {
+        setCircles(circlesData);
+        if (!selectedCircle) {
+          setSelectedCircle(circlesData[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading circles:', error);
+    }
+  };
+
+  const loadNextBatch = () => {
+    const start = batchIndex * BATCH_SIZE;
+    const end = start + BATCH_SIZE;
+    const nextBatch = allProfiles.slice(start, end);
+    
+    if (nextBatch.length > 0) {
+      setCurrentBatch(nextBatch);
+      setCurrentIndex(0);
+      setBatchIndex(prev => prev + 1);
+    } else {
+      // No more profiles
+      onComplete();
+    }
+  };
 
   const loadProfiles = async () => {
     try {
@@ -207,7 +254,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         gosat: profilesWithTags.filter(p => p.is_gosat).length,
       });
 
-      setProfiles(profilesWithTags);
+      setAllProfiles(profilesWithTags);
       setLoading(false);
     } catch (error) {
       console.error('Error loading profiles:', error);
@@ -216,16 +263,16 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   };
 
   const handleAddToCircle = async (profile: Profile) => {
-    const profileId = profile.user_id || profile.id;
-    
-    // Check if already added
-    if (addedUsers.has(profileId)) {
+    if (!selectedCircle) {
       toast({
-        title: 'Already added',
-        description: `${profile.full_name || profile.username} is already in ${circles.find(c => c.id === selectedCircle)?.name}`,
+        title: 'Select a circle',
+        description: 'Please select a circle first',
+        variant: 'destructive',
       });
       return;
     }
+
+    const profileId = profile.user_id || profile.id;
 
     // Haptic feedback
     if (navigator.vibrate) {
@@ -236,7 +283,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 2000);
 
-    // Add to circle - use user_id if available, otherwise use id
+    // Add to circle
     const profileToAdd = {
       ...profile,
       id: profileId,
@@ -244,23 +291,42 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     
     await onSwipeRight(profileToAdd, selectedCircle);
     
-    // Mark as added
-    setAddedUsers(prev => new Set(prev).add(profileId));
+    // Mark as processed
+    setProcessedUsers(prev => new Set(prev).add(profileId));
 
     toast({
       title: 'Added!',
       description: `${profile.full_name || profile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
     });
+
+    // Move to next profile
+    moveToNext();
   };
 
-  // Get current page of users (21 at a time)
-  const startIndex = currentPage * USERS_PER_PAGE;
-  const endIndex = startIndex + USERS_PER_PAGE;
-  const currentPageProfiles = profiles.slice(startIndex, endIndex);
-  const hasMore = endIndex < profiles.length;
-  const hasPrevious = currentPage > 0;
+  const handleSkip = () => {
+    const profile = currentBatch[currentIndex];
+    if (profile) {
+      const profileId = profile.user_id || profile.id;
+      setProcessedUsers(prev => new Set(prev).add(profileId));
+    }
+    moveToNext();
+  };
 
-  if (loading) {
+  const moveToNext = () => {
+    if (currentIndex < currentBatch.length - 1) {
+      // More profiles in current batch
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      // Load next batch
+      setCurrentBatch([]);
+    }
+  };
+
+  const currentProfile = currentBatch[currentIndex];
+  const progress = ((batchIndex - 1) * BATCH_SIZE + currentIndex + 1);
+  const total = allProfiles.length;
+
+  if (loading || circles.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -268,7 +334,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     );
   }
 
-  if (profiles.length === 0 && !loading) {
+  if (allProfiles.length === 0 && !loading) {
     return (
       <Card className="p-8 text-center">
         <CardContent>
@@ -278,6 +344,21 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
             There are no registered sowers, bestowers, or gosat users to add yet.
           </p>
           <Button onClick={onComplete}>Done</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!currentProfile) {
+    return (
+      <Card className="p-8 text-center">
+        <CardContent>
+          <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
+          <h3 className="text-xl font-semibold mb-2">All done!</h3>
+          <p className="text-muted-foreground mb-4">
+            You've reviewed all available profiles.
+          </p>
+          <Button onClick={onComplete}>Complete</Button>
         </CardContent>
       </Card>
     );
@@ -294,10 +375,25 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         />
       )}
 
-      {/* Visual Circle Selector with actual circles */}
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground mb-3 text-center">
-          Select a circle to add people to:
+      {/* Progress indicator */}
+      <div className="mb-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Profile {progress} of {total}
+        </p>
+        <div className="w-full bg-muted rounded-full h-2 mt-2">
+          <motion.div
+            className="bg-primary h-2 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${(progress / total) * 100}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+      </div>
+
+      {/* Circle Selector */}
+      <div className="mb-8">
+        <p className="text-sm text-muted-foreground mb-4 text-center font-medium">
+          Select a circle for this person:
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           {circles.map((circle) => (
@@ -315,20 +411,13 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Circle visual */}
               <div className={`
                 absolute inset-0 rounded-full
                 ${selectedCircle === circle.id ? 'animate-pulse' : ''}
-              `} style={{
-                background: selectedCircle === circle.id 
-                  ? `radial-gradient(circle, ${circle.color.replace('bg-', '')} 0%, transparent 70%)`
-                  : 'transparent'
-              }} />
+              `} />
               
-              {/* Emoji */}
               <span className="text-2xl relative z-10">{circle.emoji}</span>
               
-              {/* Circle name */}
               <span className={`
                 text-xs mt-1 relative z-10 font-medium
                 ${selectedCircle === circle.id ? 'text-white' : 'text-muted-foreground'}
@@ -336,7 +425,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
                 {circle.name.split('-')[0]}
               </span>
               
-              {/* Selected indicator */}
               {selectedCircle === circle.id && (
                 <motion.div
                   className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center"
@@ -351,107 +439,74 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         </div>
       </div>
 
-      {/* Users Grid - 21 at a time */}
-      <div className="mb-4">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
-          {currentPageProfiles.map((profile) => {
-            const profileId = profile.user_id || profile.id;
-            const isAdded = addedUsers.has(profileId);
-            
-            return (
-              <motion.div
-                key={profileId}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="relative"
+      {/* Single Profile Card */}
+      <motion.div
+        key={currentProfile.user_id || currentProfile.id}
+        initial={{ opacity: 0, x: 100, scale: 0.9 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -100, scale: 0.9 }}
+        transition={{ duration: 0.3 }}
+        className="mb-6"
+      >
+        <Card className="max-w-md mx-auto overflow-hidden border-2 hover:border-primary/50 transition-all">
+          <CardContent className="p-8 flex flex-col items-center">
+            {/* Avatar with glow */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+              <Avatar className="h-32 w-32 border-4 border-primary/20 relative z-10">
+                <AvatarImage src={currentProfile.avatar_url} />
+                <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/50">
+                  {(currentProfile.full_name || currentProfile.username || 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* Name with gradient */}
+            <h3 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              {currentProfile.full_name || currentProfile.username || 'User'}
+            </h3>
+
+            {/* Bio */}
+            {currentProfile.bio && (
+              <p className="text-sm text-muted-foreground text-center mb-4 line-clamp-3">
+                {currentProfile.bio}
+              </p>
+            )}
+
+            {/* Tags/Roles */}
+            {currentProfile.tags && currentProfile.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center mb-6">
+                {currentProfile.tags.map((tag, idx) => (
+                  <Badge key={idx} variant="secondary" className="text-sm px-3 py-1">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 w-full">
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1"
+                onClick={handleSkip}
               >
-                <Card className={`
-                  cursor-pointer transition-all hover:shadow-lg
-                  ${isAdded ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950' : ''}
-                `}>
-                  <CardContent className="p-3 flex flex-col items-center">
-                    {/* Avatar */}
-                    <Avatar className="h-16 w-16 mb-2">
-                      <AvatarImage src={profile.avatar_url} />
-                      <AvatarFallback className="text-lg">
-                        {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    {/* Name */}
-                    <h4 className="text-xs font-semibold text-center mb-1 line-clamp-1">
-                      {profile.full_name || profile.username || 'User'}
-                    </h4>
-
-                    {/* Tags */}
-                    {profile.tags && profile.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center mb-2">
-                        {profile.tags.slice(0, 2).map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Add Button */}
-                    {!isAdded ? (
-                      <Button
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => handleAddToCircle(profile)}
-                      >
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    ) : (
-                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400">
-                        ✓ Added
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-6 gap-4">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-          disabled={!hasPrevious}
-          className={hasPrevious ? '' : 'opacity-50 cursor-not-allowed'}
-        >
-          ← Previous
-        </Button>
-        
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-sm font-medium text-foreground">
-            Page {currentPage + 1} of {Math.ceil(profiles.length / USERS_PER_PAGE) || 1}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, profiles.length)} of {profiles.length} users
-          </span>
-        </div>
-        
-        <div className="flex gap-2">
-          {hasMore ? (
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              Next 21 →
-            </Button>
-          ) : (
-            <Button onClick={onComplete}>
-              Done
-            </Button>
-          )}
-        </div>
-      </div>
+                Skip
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1"
+                onClick={() => handleAddToCircle(currentProfile)}
+                disabled={!selectedCircle}
+              >
+                <UserPlus className="h-5 w-5 mr-2" />
+                Add to Circle
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
