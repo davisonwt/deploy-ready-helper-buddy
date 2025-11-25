@@ -36,7 +36,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   const [currentIndex, setCurrentIndex] = useState(0);
   const [batchIndex, setBatchIndex] = useState(0);
   const [selectedCircle, setSelectedCircle] = useState<string>(initialCircleId || '');
-  const [processedUsers, setProcessedUsers] = useState<Set<string>>(new Set());
+  const [addedUsers, setAddedUsers] = useState<Set<string>>(new Set()); // Track only added users
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -93,8 +93,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       setCurrentIndex(0);
       setBatchIndex(prev => prev + 1);
     } else {
-      // No more profiles
-      onComplete();
+      // Reset to beginning - endless loop through all profiles
+      setBatchIndex(0);
+      setCurrentBatch([]);
     }
   };
 
@@ -291,8 +292,8 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     
     await onSwipeRight(profileToAdd, selectedCircle);
     
-    // Mark as processed
-    setProcessedUsers(prev => new Set(prev).add(profileId));
+    // Mark as added (only track added users, not skipped)
+    setAddedUsers(prev => new Set(prev).add(profileId));
 
     toast({
       title: 'Added!',
@@ -304,11 +305,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   };
 
   const handleSkip = () => {
-    const profile = currentBatch[currentIndex];
-    if (profile) {
-      const profileId = profile.user_id || profile.id;
-      setProcessedUsers(prev => new Set(prev).add(profileId));
-    }
+    // Just move to next, don't track skipped users
     moveToNext();
   };
 
@@ -344,21 +341,6 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
             There are no registered sowers, bestowers, or gosat users to add yet.
           </p>
           <Button onClick={onComplete}>Done</Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!currentProfile) {
-    return (
-      <Card className="p-8 text-center">
-        <CardContent>
-          <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h3 className="text-xl font-semibold mb-2">All done!</h3>
-          <p className="text-muted-foreground mb-4">
-            You've reviewed all available profiles.
-          </p>
-          <Button onClick={onComplete}>Complete</Button>
         </CardContent>
       </Card>
     );

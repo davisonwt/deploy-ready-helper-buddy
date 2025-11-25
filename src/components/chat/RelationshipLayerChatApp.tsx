@@ -208,6 +208,19 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     // Add person to circle - use user_id if available, otherwise use id
     const userIdToAdd = profile.user_id || profile.id;
     
+    // Check if already exists
+    const { data: existing } = await supabase
+      .from('circle_members')
+      .select('id')
+      .eq('circle_id', circleId)
+      .eq('user_id', userIdToAdd)
+      .maybeSingle();
+
+    if (existing) {
+      console.log('User already in circle');
+      return;
+    }
+
     const { error } = await supabase
       .from('circle_members')
       .insert({
@@ -224,7 +237,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
         loadCircleMembers(circleId);
       }
       // Update circle member count
-      loadCircles();
+      await loadCircles();
     }
 
     // Haptic feedback
