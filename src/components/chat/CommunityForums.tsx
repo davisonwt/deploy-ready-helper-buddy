@@ -355,116 +355,118 @@ export const CommunityForums: React.FC = () => {
                 New Post
               </Button>
             </DialogTrigger>
-            <DialogContent className="glass-panel">
+            <DialogContent className="glass-panel max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Create New Post</DialogTitle>
                 <DialogDescription>Share your thoughts with your community</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label className="text-sm font-medium mb-3 block">Select Circles to Post To</label>
-                  <div className="space-y-3 max-h-48 overflow-y-auto glass-card p-4 rounded-lg">
-                    {userCircles.map((circle) => (
-                      <div key={circle.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
+              <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium mb-3 block">Select Circles to Post To</label>
+                    <div className="space-y-3 max-h-48 overflow-y-auto glass-card p-4 rounded-lg">
+                      {userCircles.map((circle) => (
+                        <div key={circle.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
+                          <Checkbox
+                            id={`circle-${circle.id}`}
+                            checked={selectedCircles.includes(circle.id)}
+                            onCheckedChange={() => toggleCircleSelection(circle.id)}
+                            className="border-primary/30"
+                          />
+                          <label
+                            htmlFor={`circle-${circle.id}`}
+                            className="flex-1 text-sm font-medium cursor-pointer"
+                          >
+                            {circle.emoji} {circle.name}
+                          </label>
+                        </div>
+                      ))}
+                      
+                      {/* Not in any circles option */}
+                      <div className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors border-t border-border/30 pt-3 mt-3">
                         <Checkbox
-                          id={`circle-${circle.id}`}
-                          checked={selectedCircles.includes(circle.id)}
-                          onCheckedChange={() => toggleCircleSelection(circle.id)}
+                          id="non-circle"
+                          checked={postToNonCircle}
+                          onCheckedChange={(checked) => setPostToNonCircle(!!checked)}
                           className="border-primary/30"
                         />
                         <label
-                          htmlFor={`circle-${circle.id}`}
+                          htmlFor="non-circle"
                           className="flex-1 text-sm font-medium cursor-pointer"
                         >
-                          {circle.emoji} {circle.name}
+                          🌐 Not in any circles
                         </label>
-                      </div>
-                    ))}
-                    
-                    {/* Not in any circles option */}
-                    <div className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors border-t border-border/30 pt-3 mt-3">
-                      <Checkbox
-                        id="non-circle"
-                        checked={postToNonCircle}
-                        onCheckedChange={(checked) => setPostToNonCircle(!!checked)}
-                        className="border-primary/30"
-                      />
-                      <label
-                        htmlFor="non-circle"
-                        className="flex-1 text-sm font-medium cursor-pointer"
-                      >
-                        🌐 Not in any circles
-                      </label>
-                     </div>
-                   </div>
-                   {selectedCircles.length > 0 && (
-                     <p className="text-xs text-muted-foreground mt-2">
-                       {selectedCircles.length} circle{selectedCircles.length > 1 ? 's' : ''} selected
-                     </p>
-                   )}
-                 </div>
-
-                 {/* Custom Group Selection */}
-                 <div>
-                   <label className="text-sm font-medium mb-3 block">Or Select Individual Members for Custom Group</label>
-                   <div className="space-y-2 max-h-60 overflow-y-auto glass-card p-4 rounded-lg">
-                     {allMembers.map((member) => (
-                       <div key={member.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
-                         <Checkbox
-                           id={`member-${member.id}`}
-                           checked={selectedMembers.includes(member.user_id)}
-                           onCheckedChange={() => toggleMemberSelection(member.user_id)}
-                           className="border-primary/30"
-                         />
-                         <Avatar className="h-8 w-8">
-                           <AvatarImage src={member.avatar_url} />
-                           <AvatarFallback>
-                             {(member.display_name || member.first_name || 'U')[0]}
-                           </AvatarFallback>
-                         </Avatar>
-                         <label
-                           htmlFor={`member-${member.id}`}
-                           className="flex-1 text-sm font-medium cursor-pointer"
-                         >
-                           {member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Unknown User'}
-                         </label>
                        </div>
-                     ))}
-                     {allMembers.length === 0 && (
-                       <p className="text-sm text-muted-foreground text-center py-4">
-                         No members available
+                     </div>
+                     {selectedCircles.length > 0 && (
+                       <p className="text-xs text-muted-foreground mt-2">
+                         {selectedCircles.length} circle{selectedCircles.length > 1 ? 's' : ''} selected
                        </p>
                      )}
                    </div>
-                   {selectedMembers.length > 0 && (
-                     <p className="text-xs text-muted-foreground mt-2">
-                       {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected for custom group
-                     </p>
-                   )}
-                 </div>
 
-                 <div>
-                  <label className="text-sm font-medium mb-2 block">Title</label>
-                  <Input
-                    value={newPostTitle}
-                    onChange={(e) => setNewPostTitle(e.target.value)}
-                    placeholder="Enter post title"
-                    className="glass-input"
-                  />
+                   {/* Custom Group Selection */}
+                   <div>
+                     <label className="text-sm font-medium mb-3 block">Or Select Individual Members for Custom Group</label>
+                     <div className="space-y-2 max-h-60 overflow-y-auto glass-card p-4 rounded-lg">
+                       {allMembers.map((member) => (
+                         <div key={member.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
+                           <Checkbox
+                             id={`member-${member.id}`}
+                             checked={selectedMembers.includes(member.user_id)}
+                             onCheckedChange={() => toggleMemberSelection(member.user_id)}
+                             className="border-primary/30"
+                           />
+                           <Avatar className="h-8 w-8">
+                             <AvatarImage src={member.avatar_url} />
+                             <AvatarFallback>
+                               {(member.display_name || member.first_name || 'U')[0]}
+                             </AvatarFallback>
+                           </Avatar>
+                           <label
+                             htmlFor={`member-${member.id}`}
+                             className="flex-1 text-sm font-medium cursor-pointer"
+                           >
+                             {member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Unknown User'}
+                           </label>
+                         </div>
+                       ))}
+                       {allMembers.length === 0 && (
+                         <p className="text-sm text-muted-foreground text-center py-4">
+                           No members available
+                         </p>
+                       )}
+                     </div>
+                     {selectedMembers.length > 0 && (
+                       <p className="text-xs text-muted-foreground mt-2">
+                         {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected for custom group
+                       </p>
+                     )}
+                   </div>
+
+                   <div>
+                    <label className="text-sm font-medium mb-2 block">Title</label>
+                    <Input
+                      value={newPostTitle}
+                      onChange={(e) => setNewPostTitle(e.target.value)}
+                      placeholder="Enter post title"
+                      className="glass-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Content</label>
+                    <Textarea
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      placeholder="What's on your mind?"
+                      className="glass-input min-h-[120px]"
+                    />
+                  </div>
+                  <Button onClick={handleCreatePost} className="w-full">
+                    Post to Community
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Content</label>
-                  <Textarea
-                    value={newPostContent}
-                    onChange={(e) => setNewPostContent(e.target.value)}
-                    placeholder="What's on your mind?"
-                    className="glass-input min-h-[120px]"
-                  />
-                </div>
-                <Button onClick={handleCreatePost} className="w-full">
-                  Post to Community
-                </Button>
-              </div>
+              </ScrollArea>
             </DialogContent>
           </Dialog>
         </div>
