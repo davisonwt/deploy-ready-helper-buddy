@@ -298,43 +298,42 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       )}
 
       {/* Visual Circle Selector with actual circles */}
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground mb-3 text-center">
-          Select a circle to add people to:
+      <div className="mb-8">
+        <p className="text-sm text-muted-foreground mb-4 text-center font-medium">
+          Choose a circle to add this person to:
         </p>
-        <div className="flex gap-3 justify-center flex-wrap">
+        <div className="flex gap-4 justify-center flex-wrap">
           {circles.map((circle) => (
             <motion.button
               key={circle.id}
               onClick={() => setSelectedCircle(circle.id)}
               className={`
                 relative flex flex-col items-center justify-center
-                w-20 h-20 rounded-full border-4 transition-all
+                w-24 h-24 rounded-full border-4 transition-all
                 ${selectedCircle === circle.id 
                   ? `${circle.color} border-white shadow-2xl scale-110` 
-                  : 'bg-muted border-muted-foreground/30 hover:scale-105'
+                  : 'bg-muted/50 border-muted-foreground/30 hover:scale-105 hover:border-muted-foreground/50'
                 }
               `}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Circle visual */}
-              <div className={`
-                absolute inset-0 rounded-full
-                ${selectedCircle === circle.id ? 'animate-pulse' : ''}
-              `} style={{
-                background: selectedCircle === circle.id 
-                  ? `radial-gradient(circle, ${circle.color.replace('bg-', '')} 0%, transparent 70%)`
-                  : 'transparent'
-              }} />
+              {/* Glow effect */}
+              {selectedCircle === circle.id && (
+                <motion.div
+                  className={`absolute inset-0 rounded-full ${circle.color} blur-xl opacity-50`}
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
               
               {/* Emoji */}
-              <span className="text-2xl relative z-10">{circle.emoji}</span>
+              <span className="text-3xl relative z-10 mb-1">{circle.emoji}</span>
               
               {/* Circle name */}
               <span className={`
-                text-xs mt-1 relative z-10 font-medium
-                ${selectedCircle === circle.id ? 'text-white' : 'text-muted-foreground'}
+                text-xs font-bold relative z-10 text-center px-2
+                ${selectedCircle === circle.id ? 'text-white drop-shadow-lg' : 'text-muted-foreground'}
               `}>
                 {circle.name.split('-')[0]}
               </span>
@@ -342,9 +341,10 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
               {/* Selected indicator */}
               {selectedCircle === circle.id && (
                 <motion.div
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 200 }}
                 >
                   <div className="w-3 h-3 bg-green-500 rounded-full" />
                 </motion.div>
@@ -382,34 +382,39 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
               }}
             >
               <Card className="h-full cursor-grab active:cursor-grabbing">
-                <CardContent className="p-6 h-full flex flex-col">
-                  {/* Avatar */}
-                  <div className="flex justify-center mb-4">
-                    <Avatar className="h-32 w-32">
+                <CardContent className="p-8 h-full flex flex-col bg-gradient-to-br from-card/80 to-card/40 backdrop-blur">
+                  {/* Avatar with glow */}
+                  <div className="flex justify-center mb-6 relative">
+                    <motion.div
+                      className="absolute inset-0 bg-primary/20 rounded-full blur-2xl"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <Avatar className="h-40 w-40 ring-4 ring-primary/30 shadow-2xl relative z-10">
                       <AvatarImage src={profile.avatar_url} />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-4xl bg-gradient-to-br from-primary/30 to-primary/10">
                         {(profile.full_name || profile.username || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
 
                   {/* Name */}
-                  <h3 className="text-2xl font-bold text-center mb-2">
+                  <h3 className="text-3xl font-bold text-center mb-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
                     {profile.full_name || profile.username || 'Anonymous'}
                   </h3>
 
                   {/* Bio */}
                   {profile.bio && (
-                    <p className="text-muted-foreground text-center mb-4 text-sm">
+                    <p className="text-muted-foreground text-center mb-6 text-sm leading-relaxed">
                       {profile.bio}
                     </p>
                   )}
 
                   {/* Tags */}
                   {profile.tags && profile.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center mb-6">
+                    <div className="flex flex-wrap gap-2 justify-center mb-8">
                       {profile.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="secondary">
+                        <Badge key={idx} variant="secondary" className="px-3 py-1">
                           {tag}
                         </Badge>
                       ))}
@@ -417,22 +422,26 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
                   )}
 
                   {/* Action buttons */}
-                  <div className="flex gap-4 justify-center mt-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-full h-14 w-14 p-0"
-                      onClick={() => handleSwipe('left')}
-                    >
-                      <X className="h-6 w-6" />
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="rounded-full h-14 w-14 p-0 bg-primary"
-                      onClick={() => handleSwipe('right')}
-                    >
-                      <Heart className="h-6 w-6" />
-                    </Button>
+                  <div className="flex gap-6 justify-center mt-auto">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="rounded-full h-16 w-16 p-0 border-2"
+                        onClick={() => handleSwipe('left')}
+                      >
+                        <X className="h-7 w-7" />
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <Button
+                        size="lg"
+                        className="rounded-full h-20 w-20 p-0 bg-gradient-to-r from-primary to-primary/80 shadow-xl shadow-primary/50"
+                        onClick={() => handleSwipe('right')}
+                      >
+                        <Heart className="h-8 w-8" />
+                      </Button>
+                    </motion.div>
                   </div>
                 </CardContent>
               </Card>
