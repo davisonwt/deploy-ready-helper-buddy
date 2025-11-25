@@ -440,25 +440,25 @@ input::placeholder, textarea::placeholder, select::placeholder {
 
   /* Glass Morphism Design System */
   .glass-card {
-    background: rgba(30, 58, 92, 0.7); /* --card with opacity */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(30, 58, 92, 0.4); /* More transparent for aurora visibility */
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   }
 
   .glass-panel {
-    background: rgba(10, 25, 49, 0.8); /* --background with opacity */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 25, 49, 0.5); /* More transparent */
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid rgba(23, 162, 184, 0.2); /* --primary teal border */
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
   }
 
   .glass-button {
     background: rgba(23, 162, 184, 0.15); /* --primary teal with low opacity */
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(23, 162, 184, 0.3);
     transition: all 0.3s ease;
   }
@@ -475,14 +475,30 @@ input::placeholder, textarea::placeholder, select::placeholder {
   }
 
   .glass-input {
-    background: rgba(30, 58, 92, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(30, 58, 92, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: hsl(var(--foreground));
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(30, 58, 92, 0.4);
+    border-color: rgba(23, 162, 184, 0.5);
+    outline: none;
+    box-shadow: 0 0 20px rgba(23, 162, 184, 0.2);
+  }
+
+  .glass-input {
+    background: rgba(30, 58, 92, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .glass-input:focus {
-    background: rgba(30, 58, 92, 0.7);
+    background: rgba(30, 58, 92, 0.4);
     border-color: rgba(23, 162, 184, 0.5);
     box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.2);
   }
