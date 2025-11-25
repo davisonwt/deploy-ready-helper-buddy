@@ -20,6 +20,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/data/countries';
+import { validatePassword, getPasswordValidationFeedback } from '@/lib/utils';
 
 const POPULAR_COUNTRIES = [
   'United States',
@@ -54,8 +55,10 @@ export function QuickRegistration() {
   const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Use strong password validation (10+ chars with complexity requirements)
+    if (!validatePassword(formData.password)) {
+      const feedback = getPasswordValidationFeedback(formData.password);
+      setError(feedback.feedback.join('. ') || 'Password does not meet security requirements');
       return;
     }
 
@@ -156,11 +159,12 @@ export function QuickRegistration() {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password (min 6 characters)"
+                  placeholder="Password (min 10 chars: uppercase, lowercase, number, special)"
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   className="pl-10 pr-10"
                   required
+                  minLength={10}
                 />
                 <button
                   type="button"

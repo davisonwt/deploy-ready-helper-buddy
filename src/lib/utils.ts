@@ -219,11 +219,87 @@ export function validateEmail(email: string | undefined | null) {
   return emailRegex.test(email.trim())
 }
 
-export function validatePassword(password: string | undefined | null) {
+/**
+ * Validates password strength according to security best practices
+ * Requirements:
+ * - Minimum 10 characters (12+ recommended)
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ * 
+ * @param password - Password string to validate
+ * @returns true if password meets all requirements, false otherwise
+ */
+export function validatePassword(password: string | undefined | null): boolean {
   if (!password || typeof password !== 'string') return false
-  // At least 8 characters, one letter, one number
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/
-  return passwordRegex.test(password)
+  
+  // Minimum 10 characters for security
+  if (password.length < 10) return false
+  
+  // Must contain at least one uppercase letter
+  if (!/[A-Z]/.test(password)) return false
+  
+  // Must contain at least one lowercase letter
+  if (!/[a-z]/.test(password)) return false
+  
+  // Must contain at least one number
+  if (!/[0-9]/.test(password)) return false
+  
+  // Must contain at least one special character
+  if (!/[^A-Za-z0-9]/.test(password)) return false
+  
+  return true
+}
+
+/**
+ * Gets password validation feedback for user display
+ * @param password - Password string to validate
+ * @returns Object with validation status and feedback messages
+ */
+export function getPasswordValidationFeedback(password: string | undefined | null): {
+  isValid: boolean
+  feedback: string[]
+  strength: 'weak' | 'fair' | 'strong' | 'very-strong'
+} {
+  const feedback: string[] = []
+  let strength: 'weak' | 'fair' | 'strong' | 'very-strong' = 'weak'
+  
+  if (!password || typeof password !== 'string') {
+    return { isValid: false, feedback: ['Password is required'], strength }
+  }
+  
+  if (password.length < 10) {
+    feedback.push(`Password must be at least 10 characters (currently ${password.length})`)
+  } else if (password.length >= 16) {
+    strength = 'very-strong'
+  } else if (password.length >= 12) {
+    strength = 'strong'
+  } else {
+    strength = 'fair'
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    feedback.push('Password must contain at least one uppercase letter')
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    feedback.push('Password must contain at least one lowercase letter')
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    feedback.push('Password must contain at least one number')
+  }
+  
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    feedback.push('Password must contain at least one special character (!@#$%^&* etc.)')
+  }
+  
+  return {
+    isValid: feedback.length === 0,
+    feedback,
+    strength: feedback.length === 0 ? strength : 'weak'
+  }
 }
 
 // 🧮 SAFE CALCULATION HELPERS
