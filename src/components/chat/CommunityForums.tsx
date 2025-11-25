@@ -206,11 +206,25 @@ export const CommunityForums: React.FC = () => {
 
         if (roomError) throw roomError;
 
-        // Add creator and selected members to the group
-        const participantsToAdd = [user.id, ...selectedMembers];
-        const participantInserts = participantsToAdd.map(userId => ({
+        // Fetch profile IDs for all participants including the creator
+        const allUserIds = [user.id, ...selectedMembers];
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, user_id')
+          .in('user_id', allUserIds);
+
+        if (profilesError) throw profilesError;
+
+        // Create a map of user_id to profile_id
+        const userToProfileMap = new Map(
+          profilesData?.map(p => [p.user_id, p.id]) || []
+        );
+
+        // Add creator and selected members to the group with profile_id
+        const participantInserts = allUserIds.map(userId => ({
           room_id: groupRoom.id,
           user_id: userId,
+          profile_id: userToProfileMap.get(userId) || null,
           is_active: true,
         }));
 
@@ -220,12 +234,13 @@ export const CommunityForums: React.FC = () => {
 
         if (participantError) throw participantError;
 
-        // Post the content as a message in the group
+        // Post the content as a message in the group with sender_profile_id
         const { error: messageError } = await supabase
           .from('chat_messages')
           .insert({
             room_id: groupRoom.id,
             sender_id: user.id,
+            sender_profile_id: profile?.id,
             content: `**${newPostTitle}**\n\n${newPostContent}`,
             message_type: 'text',
           });
