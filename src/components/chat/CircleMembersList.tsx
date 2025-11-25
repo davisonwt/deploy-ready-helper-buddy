@@ -253,9 +253,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   {onStartChat && (
                     <Button
                       size="sm"
-                      variant="ghost"
                       onClick={() => onStartChat(member.user_id)}
-                      className="h-7 w-7 p-0 rounded-full"
+                      className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-[#1E3A5C] text-white"
                     >
                       <MessageCircle className="h-3 w-3" />
                     </Button>
@@ -264,7 +263,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   {circles.length > 1 && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-full" title="Also add to another circle">
+                        <Button size="sm" className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-[#1E3A5C] text-white" title="Also add to another circle">
                           <UserPlus className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -288,11 +287,10 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
 
                   <Button
                     size="sm"
-                    variant="ghost"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
-                    className="h-7 w-7 p-0 rounded-full hover:bg-destructive/10"
+                    className="h-7 w-7 p-0 rounded-full bg-[#0A1931] hover:bg-destructive text-white"
                   >
-                    <X className="h-3 w-3 text-destructive" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
               </CardContent>
