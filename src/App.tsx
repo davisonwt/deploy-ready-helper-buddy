@@ -339,7 +339,9 @@ const App = () => (
               <Route path="/communications-hub" element={
                 <ProtectedRoute>
                   <Layout>
-                    <CommunicationsHub />
+                    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading Communications Hub...</div></div>}>
+                      <CommunicationsHub />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />
