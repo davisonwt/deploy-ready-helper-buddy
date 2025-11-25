@@ -1,0 +1,158 @@
+[1mdiff --git a/src/components/chat/RelationshipLayerChatApp.tsx b/src/components/chat/RelationshipLayerChatApp.tsx[m
+[1mindex 6ac60f1..6300af8 100644[m
+[1m--- a/src/components/chat/RelationshipLayerChatApp.tsx[m
+[1m+++ b/src/components/chat/RelationshipLayerChatApp.tsx[m
+[36m@@ -5,7 +5,11 @@[m [mimport { CirclesBubbleRail, Circle } from './CirclesBubbleRail';[m
+ import { SwipeDeck } from './SwipeDeck';[m
+ import { GroupChatRoomEnhanced } from './GroupChatRoomEnhanced';[m
+ import { BestowalCoin } from './BestowalCoin';[m
+[32m+[m[32m<<<<<<< HEAD[m
+ import { GlassmorphismDashboard } from './GlassmorphismDashboard';[m
+[32m+[m[32m=======[m
+[32m+[m[32mimport { CircleMembersList } from './CircleMembersList';[m
+[32m+[m[32m>>>>>>> c8afe3d5834e231c8b0e33a183843e286e3ab588[m
+ import { Button } from '@/components/ui/button';[m
+ import { Card, CardContent } from '@/components/ui/card';[m
+ import { Flame, UserPlus, Users, ArrowLeft, X } from 'lucide-react';[m
+[36m@@ -83,108 +87,50 @@[m [mexport function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL[m
+     if (!user) return;[m
+ [m
+     try {[m
+[31m-      // Load user's circles[m
+[31m-      const { data, error } = await supabase[m
+[31m-        .from('user_circles')[m
+[31m-        .select(`[m
+[31m-          circle_id,[m
+[31m-          circles ([m
+[31m-            id,[m
+[31m-            name,[m
+[31m-            emoji,[m
+[31m-            color,[m
+[31m-            unread_count,[m
+[31m-            is_live,[m
+[31m-            member_count[m
+[31m-          )[m
+[31m-        `)[m
+[31m-        .eq('user_id', user.id);[m
+[31m-[m
+[31m-      if (error) {[m
+[31m-        // Table might not exist yet, use default circles[m
+[31m-        console.warn('Circles table not available:', error);[m
+[31m-        const defaultCircles: Circle[] = [[m
+[31m-          { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },[m
+[31m-          { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },[m
+[31m-          { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },[m
+[31m-          { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },[m
+[31m-          { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },[m
+[31m-        ];[m
+[31m-        [m
+[31m-        // Fetch member counts for default circles[m
+[31m-        const circleIds = defaultCircles.map(c => c.id);[m
+[31m-        const { data: memberCounts } = await supabase[m
+[31m-          .from('circle_members')[m
+[31m-          .select('circle_id')[m
+[31m-          .in('circle_id', circleIds);[m
+[31m-[m
+[31m-        const counts = new Map<string, number>();[m
+[31m-        (memberCounts || []).forEach((m: any) => {[m
+[31m-          counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);[m
+[31m-        });[m
+[31m-[m
+[31m-        const circlesWithCounts = defaultCircles.map(circle => ({[m
+[31m-          ...circle,[m
+[31m-          memberCount: counts.get(circle.id) || 0,[m
+[31m-        }));[m
+[31m-[m
+[31m-        setCircles(circlesWithCounts);[m
+[32m+[m[32m      // Load circles from database[m
+[32m+[m[32m      const { data: circlesData, error: circlesError } = await supabase[m
+[32m+[m[32m        .from('circles')[m
+[32m+[m[32m        .select('id, name, emoji, color')[m
+[32m+[m[32m        .order('name');[m
+[32m+[m
+[32m+[m[32m      if (circlesError) {[m
+[32m+[m[32m        console.error('Error loading circles:', circlesError);[m
+         return;[m
+       }[m
+ [m
+[31m-      // Default circles[m
+[31m-      const defaultCircles: Circle[] = [[m
+[31m-        { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },[m
+[31m-        { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },[m
+[31m-        { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },[m
+[31m-        { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },[m
+[31m-        { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadCount: 0 },[m
+[31m-      ];[m
+[31m-[m
+[31m-      if (data && data.length > 0) {[m
+[31m-        const formattedCircles: Circle[] = data.map((uc: any) => ({[m
+[31m-          id: uc.circle_id,[m
+[31m-          name: uc.circles?.name || '',[m
+[31m-          emoji: uc.circles?.emoji || '👥',[m
+[31m-          color: uc.circles?.color || 'bg-gray-500',[m
+[31m-          unreadCount: uc.circles?.unread_count || 0,[m
+[31m-          isLive: uc.circles?.is_live || false,[m
+[31m-          memberCount: uc.circles?.member_count || 0,[m
+[31m-        }));[m
+[31m-        setCircles(formattedCircles);[m
+[31m-      } else {[m
+[31m-        // No circles in database, use defaults and fetch member counts[m
+[31m-        const circleIds = defaultCircles.map(c => c.id);[m
+[31m-        const { data: memberCounts } = await supabase[m
+[31m-          .from('circle_members')[m
+[31m-          .select('circle_id')[m
+[31m-          .in('circle_id', circleIds);[m
+[31m-[m
+[31m-        // Count members per circle[m
+[31m-        const counts = new Map<string, number>();[m
+[31m-        (memberCounts || []).forEach((m: any) => {[m
+[31m-          counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);[m
+[31m-        });[m
+[31m-[m
+[31m-        // Update default circles with member counts[m
+[31m-        const circlesWithCounts = defaultCircles.map(circle => ({[m
+[31m-          ...circle,[m
+[31m-          memberCount: counts.get(circle.id) || 0,[m
+[31m-        }));[m
+[31m-[m
+[31m-        setCircles(circlesWithCounts);[m
+[32m+[m[32m      if (!circlesData || circlesData.length === 0) {[m
+[32m+[m[32m        console.warn('No circles found in database');[m
+[32m+[m[32m        return;[m
+       }[m
+[32m+[m
+[32m+[m[32m      // Fetch member counts for all circles[m
+[32m+[m[32m      const circleIds = circlesData.map(c => c.id);[m
+[32m+[m[32m      const { data: memberCounts } = await supabase[m
+[32m+[m[32m        .from('circle_members')[m
+[32m+[m[32m        .select('circle_id')[m
+[32m+[m[32m        .in('circle_id', circleIds);[m
+[32m+[m
+[32m+[m[32m      // Count members per circle[m
+[32m+[m[32m      const counts = new Map<string, number>();[m
+[32m+[m[32m      (memberCounts || []).forEach((m: any) => {[m
+[32m+[m[32m        counts.set(m.circle_id, (counts.get(m.circle_id) || 0) + 1);[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m      // Format circles with member counts[m
+[32m+[m[32m      const formattedCircles: Circle[] = circlesData.map((circle: any) => ({[m
+[32m+[m[32m        id: circle.id,[m
+[32m+[m[32m        name: circle.name,[m
+[32m+[m[32m        emoji: circle.emoji,[m
+[32m+[m[32m        color: circle.color,[m
+[32m+[m[32m        unreadCount: 0,[m
+[32m+[m[32m        isLive: false,[m
+[32m+[m[32m        memberCount: counts.get(circle.id) || 0,[m
+[32m+[m[32m      }));[m
+[32m+[m
+[32m+[m[32m      console.log('✅ Loaded circles with counts:', formattedCircles);[m
+[32m+[m[32m      setCircles(formattedCircles);[m
+     } catch (error) {[m
+       console.error('Error loading circles:', error);[m
+[31m-      // Fallback to default circles[m
+[31m-      const defaultCircles: Circle[] = [[m
+[31m-        { id: 'sowers', name: 'S2G-Sowers', emoji: '🔴', color: 'bg-red-500', unreadCount: 0 },[m
+[31m-        { id: 'whisperers', name: 'S2G-Whisperers', emoji: '🟡', color: 'bg-yellow-500', unreadCount: 0 },[m
+[31m-        { id: 'family-364', name: '364yhvh-Family', emoji: '🟢', color: 'bg-green-500', unreadCount: 0 },[m
+[31m-        { id: 'family', name: 'Family', emoji: '🔵', color: 'bg-blue-500', unreadCount: 0 },[m
+[31m-        { id: 'friends', name: 'Friends', emoji: '🟣', color: 'bg-purple-500', unreadC

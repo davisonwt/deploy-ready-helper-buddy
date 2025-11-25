@@ -345,15 +345,15 @@ export function PremiumRoomCreationWizard({ onClose }) {
 
       if (roomError) throw roomError;
 
-      // Add creator as participant and moderator
+      // Add creator as participant and moderator - use upsert to handle database trigger that may already add creator
       const { error: participantError } = await supabase
         .from('chat_participants')
-        .insert({
+        .upsert({
           room_id: room.id,
           user_id: user.id,
           is_moderator: true,
           is_active: true
-        });
+        }, { onConflict: 'room_id,user_id' });
 
       if (participantError) throw participantError;
 

@@ -348,7 +348,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         is_moderator: false,
         is_active: true
       }));
-      const { error } = await supabase.from('chat_participants').insert(rows);
+      const { error } = await supabase.from('chat_participants').upsert(rows, { onConflict: 'room_id,user_id' });
       if (error) throw error;
       toast({ title: 'Invitations sent', description: `${selectedInvitees.length} user(s) invited` });
       setInviteOpen(false);
