@@ -105,24 +105,12 @@ function Layout({ children }) {
   
   // Primary navigation (direct buttons)
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' }
+    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: '#9bf6ff', border: '#9bf6ff', text: '#1e293b' }, className: 'dashboard-tour' },
+    { name: "Communications", href: "/communications-hub", icon: MessageSquare, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'chatapp-tour' }
   ]
 
   // Grouped navigation (dropdowns)
   const groupedNavigation = [
-    {
-      name: "ChatApp",
-      icon: MessageSquare,
-      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
-      className: 'chatapp-tour',
-      items: [
-        { name: "Grove Feed", href: "/grove-feed", icon: Sprout, badge: "NEW" },
-        { name: "Chats", href: "/communications-hub", icon: MessageSquare },
-        { name: "Premium Rooms", href: "/premium-rooms", icon: Crown },
-        { name: "Heretics Radio", href: "/grove-station", icon: Radio },
-        { name: "Live Sessions", href: "/live-rooms", icon: Users }
-      ]
-    },
     {
       name: "My Content",
       icon: User,
