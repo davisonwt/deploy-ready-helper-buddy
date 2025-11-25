@@ -292,9 +292,25 @@ const ChatApp = () => {
           console.error('Error loading bestowals:', bestowalsError);
         }
 
+        // Fetch all gosat users
+        const { data: gosatRolesData, error: gosatError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'gosat')
+          .neq('user_id', user.id);
+
+        if (gosatError) {
+          console.error('Error loading gosat users:', gosatError);
+        }
+
         // Get unique bestower IDs
         const bestowerIds = new Set(
           (bestowalsData || []).map((b: any) => b.bestower_id).filter(Boolean)
+        );
+
+        // Get unique gosat user IDs
+        const gosatIds = new Set(
+          (gosatRolesData || []).map((r: any) => r.user_id).filter(Boolean)
         );
 
         // Fetch profiles for bestowers
@@ -310,6 +326,23 @@ const ChatApp = () => {
             bestowerProfiles = bestowerProfilesData.map((p: any) => ({
               ...p,
               is_bestower: true,
+            }));
+          }
+        }
+
+        // Fetch profiles for gosat users
+        let gosatProfiles: any[] = [];
+        if (gosatIds.size > 0) {
+          const { data: gosatProfilesData, error: gosatProfilesError } = await supabase
+            .from('profiles')
+            .select('id, user_id, display_name, avatar_url, first_name, last_name')
+            .in('user_id', Array.from(gosatIds))
+            .neq('user_id', user.id);
+
+          if (!gosatProfilesError && gosatProfilesData) {
+            gosatProfiles = gosatProfilesData.map((p: any) => ({
+              ...p,
+              is_gosat: true,
             }));
           }
         }
@@ -330,6 +363,7 @@ const ChatApp = () => {
               last_name: profile.last_name,
               is_sower: true,
               is_bestower: bestowerIds.has(sower.user_id),
+              is_gosat: gosatIds.has(sower.user_id),
             });
           }
         });
@@ -341,12 +375,32 @@ const ChatApp = () => {
               ...profile,
               is_bestower: true,
               is_sower: false,
+              is_gosat: gosatIds.has(profile.user_id),
             });
           } else {
             // Update existing profile to mark as bestower too
             const existing = allUsersMap.get(profile.user_id);
             if (existing) {
               existing.is_bestower = true;
+              existing.is_gosat = gosatIds.has(profile.user_id) || existing.is_gosat;
+            }
+          }
+        });
+
+        // Add gosat users (if not already added)
+        gosatProfiles.forEach((profile: any) => {
+          if (!allUsersMap.has(profile.user_id)) {
+            allUsersMap.set(profile.user_id, {
+              ...profile,
+              is_gosat: true,
+              is_sower: false,
+              is_bestower: bestowerIds.has(profile.user_id),
+            });
+          } else {
+            // Update existing profile to mark as gosat too
+            const existing = allUsersMap.get(profile.user_id);
+            if (existing) {
+              existing.is_gosat = true;
             }
           }
         });
@@ -720,6 +774,11 @@ const ChatApp = () => {
                                     B
                                   </Badge>
                                 )}
+                                {userData?.is_gosat && (
+                                  <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-700 dark:text-purple-400 px-1">
+                                    G
+                                  </Badge>
+                                )}
                                 <button
                                   onClick={() => handleUserToggle(userId)}
                                   className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
@@ -767,7 +826,7 @@ const ChatApp = () => {
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2">
                                     <div className="text-sm font-medium truncate">
                                       {getUserDisplayName(userData)}
                                     </div>
@@ -780,6 +839,11 @@ const ChatApp = () => {
                                       {userData.is_bestower && (
                                         <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400">
                                           Bestower
+                                        </Badge>
+                                      )}
+                                      {userData.is_gosat && (
+                                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-700 dark:text-purple-400">
+                                          Gosat
                                         </Badge>
                                       )}
                                     </div>
