@@ -215,8 +215,6 @@ export function GlassmorphismDashboard({
   const { user } = useAuth();
   const { toast } = useToast();
   const [hueRotation, setHueRotation] = useState(0);
-  const [scrollY, setScrollY] = useState(0);
-  const [activeMode, setActiveMode] = useState<'chat' | 'community' | 'classroom' | 'radio' | 'training'>('chat');
   const [liveUpdates, setLiveUpdates] = useState<ActivityUpdate[]>([]);
   const [communityEngagement, setCommunityEngagement] = useState({ active: 78, posts: 124, participants: 2500 });
   const [streakDays, setStreakDays] = useState(0);
@@ -236,14 +234,6 @@ export function GlassmorphismDashboard({
     return () => clearInterval(interval);
   }, []);
 
-  // Scroll tracking for floating nav
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Load live updates
   useEffect(() => {
@@ -292,12 +282,6 @@ export function GlassmorphismDashboard({
     loadUpdates();
   }, []);
 
-  const navigationModes = [
-    { id: 'chat', label: '1-on-1 Chat', icon: MessageSquare, color: 'from-amber-500/20 to-coral-500/20' },
-    { id: 'community', label: 'Community Forums', icon: Users, color: 'from-coral-500/20 to-amber-500/20' },
-    { id: 'classroom', label: 'Classroom Modules', icon: GraduationCap, color: 'from-amber-500/20 to-orange-500/20' },
-    { id: 'radio', label: 'Live Broadcasts', icon: Radio, color: 'from-coral-500/20 to-red-500/20' },
-  ];
 
   const getActivityIcon = (type: ActivityUpdate['type']) => {
     switch (type) {
