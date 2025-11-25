@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Activity,
   Zap,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CirclesBubbleRail, Circle } from './CirclesBubbleRail';
 import { SwipeDeck } from './SwipeDeck';
 import { CircleMembersList } from './CircleMembersList';
@@ -499,19 +506,66 @@ export function GlassmorphismDashboard({
         </div>
       </div>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button - Quick Actions Menu */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.5, type: 'spring' }}
         className="fixed bottom-8 right-8 z-50"
       >
-        <Button
-          size="lg"
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-amber-500 to-coral-500 shadow-2xl shadow-amber-500/50 hover:shadow-amber-500/70"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="lg"
+              className="h-14 w-14 rounded-full bg-gradient-to-r from-amber-500 to-coral-500 shadow-2xl shadow-amber-500/50 hover:shadow-amber-500/70 hover:scale-110 transition-transform"
+              title="Quick Actions"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end" 
+            className="w-56 bg-background/95 backdrop-blur-xl border-2 border-primary/50 shadow-2xl"
+          >
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+              Quick Actions
+            </div>
+            {onAddPeople && (
+              <DropdownMenuItem onClick={onAddPeople} className="cursor-pointer">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add People to Circles
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem 
+              onClick={() => onNavigate?.('chat')} 
+              className="cursor-pointer"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Start 1-on-1 Chat
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onNavigate?.('community')} 
+              className="cursor-pointer"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Create Community Post
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onNavigate?.('classroom')} 
+              className="cursor-pointer"
+            >
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Open Classroom
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onNavigate?.('radio')} 
+              className="cursor-pointer"
+            >
+              <Radio className="h-4 w-4 mr-2" />
+              Start Radio Broadcast
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </motion.div>
 
     </div>
