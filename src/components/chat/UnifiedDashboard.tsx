@@ -95,12 +95,18 @@ export const UnifiedDashboard: React.FC = () => {
                   onClick={() => handleModeChange(mode.id)}
                   className={cn(
                     'relative flex items-center gap-2 px-4 py-2.5 rounded-full',
-                    'transition-all duration-300',
-                    'glass-button',
-                    activeMode === mode.id
-                      ? 'bg-primary/30 border-primary text-primary-foreground teal-glow'
-                      : 'hover:bg-primary/10 text-foreground'
+                    'transition-all duration-300 border-2 font-medium text-xs',
+                    'hover:scale-105 active:scale-95'
                   )}
+                  style={{
+                    backgroundColor: activeMode === mode.id ? '#9bf6ff' : 'hsl(212, 49%, 24%)',
+                    borderColor: activeMode === mode.id ? '#9bf6ff' : 'hsl(188, 78%, 41%)',
+                    color: activeMode === mode.id ? '#1e293b' : '#ffffff',
+                    borderRadius: '21px',
+                    boxShadow: activeMode === mode.id
+                      ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
+                      : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                  }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                 >
