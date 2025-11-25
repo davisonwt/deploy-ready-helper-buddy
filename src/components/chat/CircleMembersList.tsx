@@ -400,16 +400,17 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               transform: 'translateX(-50%)',
               width: '220px',
               maxWidth: 'calc(100vw - 2rem)',
-              maxHeight: 'calc(85% - 240px - 2rem)',
+              maxHeight: 'calc(100vh - 15% - 240px - 2rem)',
+              height: 'auto',
             }}
           >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col h-full">
-                  <CardContent className="p-4 flex flex-col h-full overflow-hidden gap-3">
-                    <h4 className="text-sm font-semibold text-white text-center flex-shrink-0">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100vh - 15% - 240px - 4rem)', height: 'auto' }}>
+                  <CardContent className="p-4 flex flex-col" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100%' }}>
+                    <h4 className="text-sm font-semibold text-white text-center flex-shrink-0 mb-3">
                       What do you want to do?
                     </h4>
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
-                      <div className="space-y-1">
+                    <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(100% - 60px)', minHeight: '150px', overflowY: 'auto', overflowX: 'hidden' }}>
+                      <div className="space-y-1 pr-2">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
                           
