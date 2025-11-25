@@ -8,11 +8,8 @@ import { BestowalCoin } from './BestowalCoin';
 import { GlassmorphismDashboard } from './GlassmorphismDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, UserPlus, Users, ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface RelationshipLayerChatAppProps {
   onCompleteOnboarding?: () => void;
@@ -40,6 +37,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
   const [circleMembers, setCircleMembers] = useState<CircleMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [swipeDeckRefreshKey, setSwipeDeckRefreshKey] = useState(0);
   const backgroundRef = useRef<HTMLDivElement>(null);
 
   // Animated gradient background
@@ -51,9 +49,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     return () => clearInterval(interval);
   }, []);
 
-  // Check if user needs onboarding
+  // Load circles and check streak (skip onboarding check)
   useEffect(() => {
-    checkOnboardingStatus();
     loadCircles();
     checkStreak();
   }, [user]);
@@ -290,36 +287,12 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircleMembers(circleId);
   };
 
-  // Onboarding flow
-  if (showOnboarding) {
-    return (
-      <div className="min-h-screen flex items-start justify-center p-4 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <Card className="w-full max-w-5xl mt-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Button
-                variant="ghost"
-                onClick={() => setShowOnboarding(false)}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowOnboarding(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2">Welcome to Your Circles</h2>
-              <p className="text-muted-foreground">
-                Add people to your circles to get started
-              </p>
-            </div>
+  const handleMemberRemoved = () => {
+    setSwipeDeckRefreshKey(prev => prev + 1);
+    loadCircles();
+  };
 
+<<<<<<< HEAD
             <SwipeDeck
               onSwipeRight={handleSwipeRight}
               onComplete={handleOnboardingComplete}
@@ -350,107 +323,62 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     );
   }
 
-  // Main chat interface
+  // Main Circles Interface
   return (
-    <div
-      ref={backgroundRef}
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        background: `linear-gradient(${hueRotation}deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))`,
-        transition: 'background 30s ease',
-      }}
-    >
-      {/* Animated gradient overlay */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={{
-          background: [
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%)',
-            'radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
-          ],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      />
-
-      <div className="relative z-10 flex flex-col h-screen">
-        {/* Header with streak badge */}
-        <div className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold">ChatApp</h1>
-            {streakDays > 0 && (
-              <Badge variant="secondary" className="gap-1">
-                <Flame className="h-3 w-3 text-orange-500" />
-                {streakDays} day{streakDays !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowOnboarding(true)}
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add People
-          </Button>
-        </div>
-
+    <div className="w-full">
+      <div className="p-4 md:p-6">
         {/* Circles Bubble Rail */}
-        <div className="p-4 bg-background/80 backdrop-blur-sm border-b">
+        <div className="mb-6">
           <CirclesBubbleRail
             circles={circles}
             activeCircleId={activeCircleId || undefined}
             onCircleSelect={handleCircleSelect}
-            onCircleReorder={(newCircles) => setCircles(newCircles)}
-            onCircleHide={(circleId) => {
-              setCircles(circles.filter(c => c.id !== circleId));
-            }}
+            onCircleReorder={() => {}}
+            onCircleHide={() => {}}
           />
         </div>
 
-        {/* Chat Room or Circle Members View */}
-        <div className="flex-1 overflow-hidden">
-          {selectedRoomId ? (
-            <GroupChatRoomEnhanced
-              roomId={selectedRoomId}
-              roomName="Room Name"
-              participants={[]}
-              onBack={() => setSelectedRoomId(null)}
-            />
-          ) : activeCircleId ? (
-            <ScrollArea className="h-full p-6">
-              <div className="max-w-6xl mx-auto">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-2">
-                    {circles.find(c => c.id === activeCircleId)?.name || 'Circle'}
-                  </h2>
-                </div>
-
-                <CircleMembersList
-                  circleId={activeCircleId}
-                  onStartChat={(userId) => {
-                    // TODO: Implement chat functionality
-                    console.log('Start chat with:', userId);
-                  }}
-                  circles={circles}
-                />
-              </div>
-            </ScrollArea>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
-                  Select a circle to see members
-                </p>
-              </div>
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto">
+          {activeCircleId ? (
+            <div className="space-y-6">
+              {/* Circle Members List */}
+              <Card className="glass-card border border-primary/20 bg-transparent">
+                <CardContent className="p-6">
+                  <CircleMembersList
+                    circleId={activeCircleId}
+                    circles={circles}
+                    onMemberRemoved={handleMemberRemoved}
+                  />
+                </CardContent>
+              </Card>
             </div>
+          ) : (
+            <Card className="glass-card border border-primary/20 bg-transparent">
+              <CardContent className="p-6 text-center">
+                <p className="text-foreground/80">
+                  Select a circle above to view members or add new people
+                </p>
+              </CardContent>
+            </Card>
           )}
+
+          {/* Swipe Deck - Always Available */}
+          <Card className="mt-6 glass-card border border-primary/20 bg-transparent">
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Add People to Circles
+              </h2>
+              <SwipeDeck
+                onSwipeRight={handleSwipeRight}
+                onComplete={() => {
+                  loadCircles();
+                }}
+                initialCircleId={activeCircleId || undefined}
+                refreshKey={swipeDeckRefreshKey}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -20,17 +20,19 @@ interface Profile {
   is_sower?: boolean;
   is_bestower?: boolean;
   is_gosat?: boolean;
+  in_circles?: string[];
 }
 
 interface SwipeDeckProps {
   onSwipeRight: (profile: Profile, circleId: string) => void;
   onComplete: () => void;
   initialCircleId?: string;
+  refreshKey?: number;
 }
 
 const BATCH_SIZE = 8; // Load 8 profiles at a time
 
-export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDeckProps) {
+export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKey }: SwipeDeckProps) {
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [currentBatch, setCurrentBatch] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -51,7 +53,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   useEffect(() => {
     loadCircles();
     loadProfiles();
-  }, []);
+  }, [refreshKey, selectedCircle]);
 
   useEffect(() => {
     // Load next batch when needed
@@ -106,21 +108,22 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
 
       console.log('🔍 Loading ALL registered users except current user');
 
-      // Fetch existing circle members to exclude them
+      // Fetch existing members in the SELECTED circle only
       const { data: existingMembers } = await supabase
         .from('circle_members')
-        .select('user_id');
+        .select('user_id')
+        .eq('circle_id', selectedCircle);
       
       const existingMemberIds = new Set(
         (existingMembers || []).map((m: any) => m.user_id)
       );
 
-      console.log('📋 Users already in circles:', existingMemberIds.size);
+      console.log('📋 Users already in THIS circle:', existingMemberIds.size);
 
       // Fetch ALL profiles except current user
       const { data: allProfilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_id, username, full_name, avatar_url, bio, display_name, first_name, last_name')
+        .select('id, user_id, username, avatar_url, bio, display_name, first_name, last_name')
         .neq('user_id', user.id);
 
       if (profilesError) {
@@ -165,7 +168,19 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         }
       });
 
-      // Process all profiles and filter out those already in circles
+      // Fetch ALL circle memberships to show which circles each person is in
+      const { data: allCircleMemberships } = await supabase
+        .from('circle_members')
+        .select('user_id, circle_id');
+
+      const userCirclesMap = new Map<string, string[]>();
+      (allCircleMemberships || []).forEach((membership: any) => {
+        const existing = userCirclesMap.get(membership.user_id) || [];
+        existing.push(membership.circle_id);
+        userCirclesMap.set(membership.user_id, existing);
+      });
+
+      // Process all profiles and filter out those already in THIS circle
       const profilesWithTags = (allProfilesData || [])
         .filter((profile: any) => !existingMemberIds.has(profile.user_id))
         .map((profile: any) => {
@@ -175,6 +190,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
           if (sowerIds.has(profile.user_id)) tags.push('Sower');
           if (bestowerIds.has(profile.user_id)) tags.push('Bestower');
           if (gosatIds.has(profile.user_id)) tags.push('Gosat');
+
+          // Add info about which circles they're already in
+          const inCircles = userCirclesMap.get(profile.user_id) || [];
 
           return {
             id: profile.id,
@@ -190,10 +208,11 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
             is_bestower: bestowerIds.has(profile.user_id),
             is_gosat: gosatIds.has(profile.user_id),
             tags: tags.length > 0 ? tags : ['Member'],
+            in_circles: inCircles,
           };
         });
 
-      console.log('✅ Available profiles (excluding circle members):', profilesWithTags.length);
+      console.log('✅ Available profiles (excluding THIS circle members):', profilesWithTags.length);
 
       setAllProfiles(profilesWithTags);
       setLoading(false);
@@ -232,14 +251,17 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     
     await onSwipeRight(profileToAdd, selectedCircle);
     
-    // Remove from available profiles
-    setAllProfiles(prev => prev.filter(p => (p.user_id || p.id) !== profileId));
+    // Don't remove from allProfiles since they can be in multiple circles
+    // Just remove from current batch and reload to update circle membership
     setCurrentBatch(prev => prev.filter(p => (p.user_id || p.id) !== profileId));
 
     toast({
       title: 'Added!',
       description: `${profile.full_name || profile.username} added to ${circles.find(c => c.id === selectedCircle)?.name}`,
     });
+
+    // Reload profiles to update circle membership info
+    loadProfiles();
 
     // Move to next profile
     if (currentIndex >= currentBatch.length - 1) {
@@ -282,9 +304,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       <Card className="p-8 text-center">
         <CardContent>
           <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h3 className="text-xl font-semibold mb-2">No users found</h3>
+          <h3 className="text-xl font-semibold mb-2">All set!</h3>
           <p className="text-muted-foreground mb-4">
-            There are no registered sowers, bestowers, or gosat users to add yet.
+            All registered users have been added to circles.
           </p>
           <Button onClick={onComplete}>Done</Button>
         </CardContent>
@@ -327,14 +349,14 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       </div>
 
       {/* Circle Selector - More Prominent */}
-      <div className="mb-8 bg-primary/5 border-2 border-primary/20 rounded-2xl p-6">
+      <div className="mb-8 glass-panel border-2 border-primary/30 rounded-2xl p-6">
         <div className="text-center mb-6">
-          <h3 className="text-lg font-bold text-primary mb-2">
+          <h3 className="text-2xl font-bold text-white drop-shadow-lg mb-2">
             Choose a Circle
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground/90">
             Click a circle below to select where you want to place{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-white">
               {currentProfile?.full_name || 'this person'}
             </span>
           </p>
@@ -347,7 +369,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
               onClick={() => setSelectedCircle(circle.id)}
               className={`
                 relative flex flex-col items-center justify-center gap-2
-                w-24 h-24 rounded-full border-4 transition-all cursor-pointer
+                w-28 h-28 rounded-full border-4 transition-all cursor-pointer
                 ${selectedCircle === circle.id 
                   ? `${circle.color} border-white shadow-[0_0_30px_rgba(255,255,255,0.5)] scale-110` 
                   : 'bg-muted/50 border-border hover:border-primary/50 hover:scale-105 hover:shadow-lg'
@@ -366,13 +388,13 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
               </span>
               
               <span className={`
-                text-xs relative z-10 font-bold px-2 py-1 rounded-full
+                text-xs relative z-10 font-bold px-2 py-1 rounded-full text-center leading-tight
                 ${selectedCircle === circle.id 
                   ? 'text-white bg-white/20' 
-                  : 'text-muted-foreground'
+                  : 'text-foreground bg-black/20'
                 }
               `}>
-                {circle.name.split('-')[0]}
+                {circle.name}
               </span>
               
               {selectedCircle === circle.id && (
@@ -411,39 +433,58 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
         transition={{ duration: 0.3 }}
         className="mb-6"
       >
-        <Card className="max-w-md mx-auto overflow-hidden border-2 hover:border-primary/50 transition-all">
+        <Card className="max-w-md mx-auto overflow-hidden glass-card border-2 border-primary/30 hover:border-primary/50 transition-all bg-transparent">
           <CardContent className="p-8 flex flex-col items-center">
             {/* Avatar with glow */}
             <div className="relative mb-6">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
-              <Avatar className="h-32 w-32 border-4 border-primary/20 relative z-10">
+              <Avatar className="h-24 w-24 border-4 border-primary/20 relative z-10">
                 <AvatarImage src={currentProfile.avatar_url} />
-                <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/50">
+                <AvatarFallback className="text-3xl bg-gradient-to-br from-primary to-primary/50">
                   {(currentProfile.full_name || currentProfile.username || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </div>
 
             {/* Name with gradient */}
-            <h3 className="text-2xl font-bold text-center mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold text-center mb-2 text-white drop-shadow-lg">
               {currentProfile.full_name || currentProfile.username || 'User'}
             </h3>
 
             {/* Bio */}
             {currentProfile.bio && (
-              <p className="text-sm text-muted-foreground text-center mb-4 line-clamp-3">
+              <p className="text-sm text-foreground/90 text-center mb-4 line-clamp-3">
                 {currentProfile.bio}
               </p>
             )}
 
             {/* Tags/Roles */}
             {currentProfile.tags && currentProfile.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center mb-6">
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
                 {currentProfile.tags.map((tag, idx) => (
                   <Badge key={idx} variant="secondary" className="text-sm px-3 py-1">
                     {tag}
                   </Badge>
                 ))}
+              </div>
+            )}
+
+            {/* Already in circles */}
+            {currentProfile.in_circles && currentProfile.in_circles.length > 0 && (
+              <div className="mb-4 p-3 glass-panel border border-primary/20 rounded-lg w-full">
+                <p className="text-xs text-foreground/80 text-center mb-2">
+                  Already in circles:
+                </p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {currentProfile.in_circles.map((circleId) => {
+                    const circle = circles.find(c => c.id === circleId);
+                    return circle ? (
+                      <Badge key={circleId} variant="outline" className="text-xs">
+                        {circle.emoji} {circle.name}
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
 
