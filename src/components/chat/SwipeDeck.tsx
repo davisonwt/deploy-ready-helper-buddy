@@ -11,11 +11,14 @@ import Confetti from 'react-confetti';
 
 interface Profile {
   id: string;
+  user_id?: string;
   username?: string;
   full_name?: string;
   avatar_url?: string;
   bio?: string;
   tags?: string[];
+  is_sower?: boolean;
+  is_bestower?: boolean;
 }
 
 interface SwipeDeckProps {
@@ -50,19 +53,109 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url, bio')
-        .neq('user_id', user.id)
-        .limit(50);
+      // Fetch all registered sowers
+      const { data: sowersData, error: sowersError } = await supabase
+        .from('sowers')
+        .select(`
+          user_id,
+          display_name,
+          logo_url,
+          bio,
+          profiles!inner (
+            id,
+            user_id,
+            username,
+            full_name,
+            avatar_url,
+            bio
+          )
+        `)
+        .neq('user_id', user.id);
 
-      if (error) throw error;
+      if (sowersError) {
+        console.error('Error loading sowers:', sowersError);
+      }
 
-      // Add mock tags for now (you can add tags column to profiles table)
-      const profilesWithTags = (data || []).map(profile => ({
-        ...profile,
-        tags: ['Creator', 'Musician', 'Artist'].slice(0, Math.floor(Math.random() * 3) + 1),
-      }));
+      // Fetch all registered bestowers (users who have made bestowals)
+      const { data: bestowalsData, error: bestowalsError } = await supabase
+        .from('product_bestowals')
+        .select('bestower_id')
+        .neq('bestower_id', user.id);
+
+      if (bestowalsError) {
+        console.error('Error loading bestowals:', bestowalsError);
+      }
+
+      // Get unique bestower IDs
+      const bestowerIds = new Set(
+        (bestowalsData || []).map((b: any) => b.bestower_id).filter(Boolean)
+      );
+
+      // Fetch profiles for bestowers
+      let bestowerProfiles: any[] = [];
+      if (bestowerIds.size > 0) {
+        const { data: bestowerProfilesData, error: bestowerProfilesError } = await supabase
+          .from('profiles')
+          .select('id, user_id, username, full_name, avatar_url, bio')
+          .in('user_id', Array.from(bestowerIds))
+          .neq('user_id', user.id);
+
+        if (!bestowerProfilesError && bestowerProfilesData) {
+          bestowerProfiles = bestowerProfilesData.map((p: any) => ({
+            ...p,
+            is_bestower: true,
+          }));
+        }
+      }
+
+      // Combine sowers and bestowers, deduplicate by user_id
+      const allProfilesMap = new Map<string, any>();
+
+      // Add sowers
+      (sowersData || []).forEach((sower: any) => {
+        if (sower.profiles && sower.user_id) {
+          const profile = sower.profiles;
+          allProfilesMap.set(sower.user_id, {
+            id: profile.id,
+            user_id: profile.user_id || sower.user_id,
+            username: profile.username,
+            full_name: profile.full_name || sower.display_name,
+            avatar_url: profile.avatar_url || sower.logo_url,
+            bio: profile.bio || sower.bio,
+            is_sower: true,
+            is_bestower: bestowerIds.has(sower.user_id),
+          });
+        }
+      });
+
+      // Add bestowers (if not already added as sowers)
+      bestowerProfiles.forEach((profile: any) => {
+        if (!allProfilesMap.has(profile.user_id)) {
+          allProfilesMap.set(profile.user_id, {
+            ...profile,
+            is_bestower: true,
+            is_sower: false,
+          });
+        } else {
+          // Update existing profile to mark as bestower too
+          const existing = allProfilesMap.get(profile.user_id);
+          if (existing) {
+            existing.is_bestower = true;
+          }
+        }
+      });
+
+      // Convert map to array and add tags
+      const profilesWithTags = Array.from(allProfilesMap.values()).map(profile => {
+        const tags: string[] = [];
+        if (profile.is_sower) tags.push('Sower');
+        if (profile.is_bestower) tags.push('Bestower');
+        
+        return {
+          ...profile,
+          tags: tags.length > 0 ? tags : ['Member'],
+        };
+      });
 
       setProfiles(profilesWithTags);
       setLoading(false);
@@ -87,8 +180,12 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 2000);
 
-      // Add to circle
-      onSwipeRight(currentProfile, selectedCircle);
+      // Add to circle - use user_id if available, otherwise use id
+      const profileToAdd = {
+        ...currentProfile,
+        id: currentProfile.user_id || currentProfile.id,
+      };
+      onSwipeRight(profileToAdd, selectedCircle);
       setSwipeCount(prev => prev + 1);
 
       toast({
