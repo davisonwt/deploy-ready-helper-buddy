@@ -126,7 +126,7 @@ export const ActivityFeed: React.FC = () => {
       <ScrollArea className="flex-1 -mx-2 px-2">
         <div className="space-y-3">
           {activities.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-white/80">
               <p>No recent activity</p>
               <p className="text-sm mt-1">Start chatting to see updates here</p>
             </div>
@@ -158,11 +158,11 @@ export const ActivityFeed: React.FC = () => {
                       </p>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm text-white/90 line-clamp-2">
                       {activity.content}
                     </p>
                     
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-white/70 mt-1">
                       {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
                     </p>
                   </div>
