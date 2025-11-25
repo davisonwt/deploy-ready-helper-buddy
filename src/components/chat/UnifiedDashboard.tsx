@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft, Home } from 'lucide-react';
+import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft, Home, CircleDot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicationModes';
 import { AuroraBackground } from './AuroraBackground';
@@ -23,6 +23,7 @@ interface ModeConfig {
 }
 
 const modes: ModeConfig[] = [
+  { id: 'circles', icon: <CircleDot className="w-5 h-5" />, label: 'Circles', color: 'from-purple-500/20 to-purple-500/5' },
   { id: 'chat', icon: <MessageCircle className="w-5 h-5" />, label: '1-on-1 Chats', color: 'from-primary/20 to-primary/5' },
   { id: 'community', icon: <Users className="w-5 h-5" />, label: 'Community', color: 'from-cyan-500/20 to-cyan-500/5' },
   { id: 'classroom', icon: <BookOpen className="w-5 h-5" />, label: 'Classrooms', color: 'from-success/20 to-success/5' },
@@ -43,6 +44,8 @@ export const UnifiedDashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeMode) {
+      case 'circles':
+        return <RelationshipLayerChatApp />;
       case 'chat':
         return <ChatListView />;
       case 'community':
