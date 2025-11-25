@@ -249,7 +249,7 @@ const ChatApp = () => {
     setShowJitsi(true);
   };
 
-  // Fetch users when search term changes
+  // Fetch users when search term changes - prioritize sowers and bestowers
   useEffect(() => {
     if (!isCreateDialogOpen) return;
 
@@ -259,22 +259,116 @@ const ChatApp = () => {
       try {
         setLoadingUsers(true);
 
-        let query = supabase
-          .from('profiles')
-          .select('id, user_id, display_name, avatar_url, first_name, last_name')
-          .neq('user_id', user.id)
-          .limit(20);
+        // Fetch all registered sowers
+        const { data: sowersData, error: sowersError } = await supabase
+          .from('sowers')
+          .select(`
+            user_id,
+            display_name,
+            logo_url,
+            bio,
+            profiles!inner (
+              id,
+              user_id,
+              display_name,
+              avatar_url,
+              first_name,
+              last_name
+            )
+          `)
+          .neq('user_id', user.id);
 
-        if (userSearchTerm.trim()) {
-          query = query.or(
-            `display_name.ilike.%${userSearchTerm}%,first_name.ilike.%${userSearchTerm}%,last_name.ilike.%${userSearchTerm}%`
-          );
+        if (sowersError) {
+          console.error('Error loading sowers:', sowersError);
         }
 
-        const { data, error } = await query.abortSignal(controller.signal);
+        // Fetch all registered bestowers (users who have made bestowals)
+        const { data: bestowalsData, error: bestowalsError } = await supabase
+          .from('product_bestowals')
+          .select('bestower_id')
+          .neq('bestower_id', user.id);
 
-        if (error) throw error;
-        setAvailableUsers(data || []);
+        if (bestowalsError) {
+          console.error('Error loading bestowals:', bestowalsError);
+        }
+
+        // Get unique bestower IDs
+        const bestowerIds = new Set(
+          (bestowalsData || []).map((b: any) => b.bestower_id).filter(Boolean)
+        );
+
+        // Fetch profiles for bestowers
+        let bestowerProfiles: any[] = [];
+        if (bestowerIds.size > 0) {
+          const { data: bestowerProfilesData, error: bestowerProfilesError } = await supabase
+            .from('profiles')
+            .select('id, user_id, display_name, avatar_url, first_name, last_name')
+            .in('user_id', Array.from(bestowerIds))
+            .neq('user_id', user.id);
+
+          if (!bestowerProfilesError && bestowerProfilesData) {
+            bestowerProfiles = bestowerProfilesData.map((p: any) => ({
+              ...p,
+              is_bestower: true,
+            }));
+          }
+        }
+
+        // Combine sowers and bestowers, deduplicate by user_id
+        const allUsersMap = new Map<string, any>();
+
+        // Add sowers
+        (sowersData || []).forEach((sower: any) => {
+          if (sower.profiles && sower.user_id) {
+            const profile = sower.profiles;
+            allUsersMap.set(sower.user_id, {
+              id: profile.id,
+              user_id: profile.user_id || sower.user_id,
+              display_name: profile.display_name || sower.display_name,
+              avatar_url: profile.avatar_url || sower.logo_url,
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+              is_sower: true,
+              is_bestower: bestowerIds.has(sower.user_id),
+            });
+          }
+        });
+
+        // Add bestowers (if not already added as sowers)
+        bestowerProfiles.forEach((profile: any) => {
+          if (!allUsersMap.has(profile.user_id)) {
+            allUsersMap.set(profile.user_id, {
+              ...profile,
+              is_bestower: true,
+              is_sower: false,
+            });
+          } else {
+            // Update existing profile to mark as bestower too
+            const existing = allUsersMap.get(profile.user_id);
+            if (existing) {
+              existing.is_bestower = true;
+            }
+          }
+        });
+
+        // Convert map to array
+        let allUsers = Array.from(allUsersMap.values());
+
+        // Apply search filter if provided
+        if (userSearchTerm.trim()) {
+          const searchLower = userSearchTerm.toLowerCase();
+          allUsers = allUsers.filter((u: any) => {
+            const displayName = (u.display_name || '').toLowerCase();
+            const firstName = (u.first_name || '').toLowerCase();
+            const lastName = (u.last_name || '').toLowerCase();
+            return displayName.includes(searchLower) || 
+                   firstName.includes(searchLower) || 
+                   lastName.includes(searchLower);
+          });
+        }
+
+        // Limit to 50 results (prioritizing sowers and bestowers)
+        setAvailableUsers(allUsers.slice(0, 50));
       } catch (e) {
         if (e.name !== 'AbortError') console.error('Error fetching users:', e);
       } finally {
@@ -616,6 +710,16 @@ const ChatApp = () => {
                             return (
                               <Badge key={userId} variant="secondary" className="flex items-center gap-1">
                                 {userData ? getUserDisplayName(userData) : 'User'}
+                                {userData?.is_sower && (
+                                  <Badge variant="outline" className="text-xs bg-red-500/10 text-red-700 dark:text-red-400 px-1">
+                                    S
+                                  </Badge>
+                                )}
+                                {userData?.is_bestower && (
+                                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400 px-1">
+                                    B
+                                  </Badge>
+                                )}
                                 <button
                                   onClick={() => handleUserToggle(userId)}
                                   className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
@@ -663,8 +767,22 @@ const ChatApp = () => {
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium truncate">
-                                    {getUserDisplayName(userData)}
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-sm font-medium truncate">
+                                      {getUserDisplayName(userData)}
+                                    </div>
+                                    <div className="flex gap-1">
+                                      {userData.is_sower && (
+                                        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-700 dark:text-red-400">
+                                          Sower
+                                        </Badge>
+                                      )}
+                                      {userData.is_bestower && (
+                                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-400">
+                                          Bestower
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
