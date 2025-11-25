@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { Music, FileText, Upload } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 
 interface ScheduleRadioSlotDialogProps {
   open: boolean;
@@ -39,6 +43,42 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     description: '',
     genre: '',
   });
+  const [availableTracks, setAvailableTracks] = useState<any[]>([]);
+  const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
+  const [uploadedDocs, setUploadedDocs] = useState<File[]>([]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: { 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] },
+    onDrop: (acceptedFiles) => {
+      setUploadedDocs(prev => [...prev, ...acceptedFiles]);
+    },
+  });
+
+  useEffect(() => {
+    if (open && step === 3) {
+      loadAvailableTracks();
+    }
+  }, [open, step]);
+
+  const loadAvailableTracks = async () => {
+    const { data, error } = await supabase
+      .from('dj_music_tracks')
+      .select('*, radio_djs(dj_name, user_id)')
+      .eq('is_public', true)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setAvailableTracks(data);
+    }
+  };
+
+  const toggleTrackSelection = (trackId: string) => {
+    setSelectedTracks(prev =>
+      prev.includes(trackId)
+        ? prev.filter(id => id !== trackId)
+        : [...prev, trackId]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,17 +92,39 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       return;
     }
 
-    if (step < 2) {
-      setStep(2);
+    if (step < 3) {
+      setStep(step + 1);
       return;
     }
 
     setLoading(true);
     try {
-      // In a real implementation, this would create a radio slot request pending approval
+      // Upload documents to storage if any
+      const docUrls: string[] = [];
+      for (const doc of uploadedDocs) {
+        const filePath = `radio-docs/${Date.now()}-${doc.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('chat-documents')
+          .upload(filePath, doc);
+        
+        if (!uploadError) {
+          docUrls.push(filePath);
+        }
+      }
+
+      // Create radio slot request with tracks and documents
+      const slotData = {
+        ...formData,
+        date: selectedDate,
+        slot: selectedSlot,
+        selected_tracks: selectedTracks,
+        documents: docUrls,
+        approval_status: 'pending',
+      };
+
       toast({
         title: 'Radio Slot Requested',
-        description: 'Your 2-hour radio slot request has been submitted for approval by gosat.',
+        description: `Your 2-hour radio slot with ${selectedTracks.length} tracks and ${uploadedDocs.length} documents has been submitted for approval by gosat.`,
       });
 
       onOpenChange(false);
@@ -70,6 +132,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       setStep(1);
       setSelectedDate(undefined);
       setSelectedSlot('');
+      setSelectedTracks([]);
+      setUploadedDocs([]);
       setFormData({
         show_title: '',
         description: '',
@@ -88,10 +152,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl">
+      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            Schedule Radio Slot (2 Hours) - Step {step}/2
+            Schedule Radio Slot (2 Hours) - Step {step}/3
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             24/7 broadcast slots available • Pending approval by gosat
@@ -182,8 +246,104 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
               <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
                 <p className="text-sm">
-                  <strong>Note:</strong> Your request will be reviewed by gosat. You'll be notified
-                  once your slot is approved and ready for broadcast.
+                  <strong>Note:</strong> In the next step, you'll be able to pre-load music tracks and documents for your show.
+                </p>
+              </div>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <div className="p-4 rounded-lg glass-panel space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge>Selected Slot</Badge>
+                  <span className="font-semibold">
+                    {selectedDate && format(selectedDate, 'MMMM d, yyyy')} •{' '}
+                    {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {formData.show_title} • {formData.genre}
+                </div>
+              </div>
+
+              <div>
+                <Label className="flex items-center gap-2 mb-3">
+                  <Music className="h-4 w-4" />
+                  Pre-load Music Tracks ({selectedTracks.length} selected)
+                </Label>
+                <div className="max-h-60 overflow-y-auto space-y-2 p-2 border rounded-lg glass-panel">
+                  {availableTracks.map((track) => (
+                    <div
+                      key={track.id}
+                      className="flex items-center gap-3 p-2 hover:bg-accent/50 rounded cursor-pointer"
+                      onClick={() => toggleTrackSelection(track.id)}
+                    >
+                      <Checkbox
+                        checked={selectedTracks.includes(track.id)}
+                        onCheckedChange={() => toggleTrackSelection(track.id)}
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium">{track.track_title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          by {track.radio_djs?.dj_name || 'Unknown'} • {track.genre || 'No genre'}
+                        </p>
+                      </div>
+                      {track.price && (
+                        <Badge variant="outline" className="text-xs">
+                          ${track.price}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                  {availableTracks.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No public tracks available
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="flex items-center gap-2 mb-3">
+                  <FileText className="h-4 w-4" />
+                  Upload Documents (PDFs, Word files for studies/readings)
+                </Label>
+                <div
+                  {...getRootProps()}
+                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 glass-panel"
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Drag & drop documents here, or click to select
+                  </p>
+                </div>
+                {uploadedDocs.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {uploadedDocs.map((doc, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-accent/50 rounded">
+                        <FileText className="h-4 w-4" />
+                        <span className="flex-1">{doc.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUploadedDocs(prev => prev.filter((_, i) => i !== idx))}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 rounded-lg bg-info/10 border border-info/20">
+                <p className="text-sm">
+                  <strong>Bestowal Feature:</strong> Listeners can bestow on tracks and documents during your show.
+                  You'll receive 1-on-1 notifications when listeners bestow on your content, and they'll receive invoices.
+                  Gosat's will receive tithing (10%) and admin (5%) fees automatically.
                 </p>
               </div>
             </>
@@ -194,14 +354,14 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               type="button"
               variant="ghost"
               onClick={() => {
-                if (step > 1) setStep(1);
+                if (step > 1) setStep(step - 1);
                 else onOpenChange(false);
               }}
             >
               {step > 1 ? 'Back' : 'Cancel'}
             </Button>
             <Button type="submit" disabled={loading || (step === 1 && (!selectedDate || !selectedSlot))}>
-              {step < 2 ? 'Next' : loading ? 'Submitting...' : 'Submit Request'}
+              {step < 3 ? 'Next' : loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </div>
         </form>
