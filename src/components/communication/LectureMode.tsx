@@ -92,7 +92,7 @@ export const LectureMode: React.FC = () => {
         <Button 
           className="gap-2" 
           onClick={() => setScheduleDialogOpen(true)}
-          style={{ backgroundColor: '#17A2B8', color: 'white' }}
+          style={{ backgroundColor: '#17A2B8', color: 'white', border: '2px solid #0A1931' }}
         >
           <Plus className="w-4 h-4" />
           Schedule Lecture
