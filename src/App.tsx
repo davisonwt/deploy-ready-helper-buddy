@@ -338,11 +338,9 @@ const App = () => (
               {/* Communications Hub - Unified Interface */}
               <Route path="/communications-hub" element={
                 <ProtectedRoute>
-                  <Layout>
-                    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading Communications Hub...</div></div>}>
-                      <CommunicationsHub />
-                    </Suspense>
-                  </Layout>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading Communications Hub...</div></div>}>
+                    <CommunicationsHub />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               
