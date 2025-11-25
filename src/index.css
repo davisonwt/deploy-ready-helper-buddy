@@ -738,3 +738,13 @@ input::placeholder, textarea::placeholder, select::placeholder {
   }
 }
 
+/* Aurora animation for Glassmorphism Dashboard */
+@keyframes aurora {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.1);
+  }
+}
+
