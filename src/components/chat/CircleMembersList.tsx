@@ -400,7 +400,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
               transform: 'translateX(-50%)',
               width: '220px',
               maxWidth: 'calc(100vw - 2rem)',
-              maxHeight: 'calc(100vh - 15% - 240px - 2rem)',
+              maxHeight: 'calc(100vh - 15% - 240px - 4rem)',
+              minHeight: '300px',
               height: 'auto',
             }}
           >
