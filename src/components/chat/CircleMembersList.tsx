@@ -39,6 +39,7 @@ interface Member {
 export function CircleMembersList({ circleId, onStartChat, onStartCall, onNavigateToTraining, onNavigateToRadio, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -208,6 +209,59 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
     );
   }
 
+  // Collect all available actions
+  const getAvailableActions = (member: Member) => {
+    const actions = [];
+    if (onStartChat) actions.push({ 
+      label: 'Send Message', 
+      icon: MessageCircle, 
+      onClick: () => onStartChat(member.user_id),
+      color: 'text-blue-500'
+    });
+    if (onStartCall) {
+      actions.push({ 
+        label: 'Voice Call', 
+        icon: Phone, 
+        onClick: () => onStartCall(member.user_id, 'audio'),
+        color: 'text-green-500'
+      });
+      actions.push({ 
+        label: 'Video Call', 
+        icon: Video, 
+        onClick: () => onStartCall(member.user_id, 'video'),
+        color: 'text-purple-500'
+      });
+    }
+    if (onNavigateToTraining) actions.push({ 
+      label: 'Training', 
+      icon: GraduationCap, 
+      onClick: () => onNavigateToTraining(member.user_id),
+      color: 'text-amber-500'
+    });
+    if (onNavigateToRadio) actions.push({ 
+      label: 'Radio', 
+      icon: Radio, 
+      onClick: () => onNavigateToRadio(member.user_id),
+      color: 'text-orange-500'
+    });
+    if (circles.length > 1) {
+      actions.push({ 
+        label: 'Add to Another Circle', 
+        icon: UserPlus, 
+        onClick: null, // Handled by dropdown
+        isDropdown: true,
+        color: 'text-indigo-500'
+      });
+    }
+    actions.push({ 
+      label: 'Remove from Circle', 
+      icon: X, 
+      onClick: () => handleRemoveMember(member.user_id, member.full_name || 'User'),
+      color: 'text-red-500'
+    });
+    return actions;
+  };
+
   return (
     <div className="flex flex-wrap gap-6 justify-center">
       {members.map((member) => {
@@ -216,12 +270,22 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
         if (member.is_bestower) tags.push('Bestower');
         if (member.is_gosat) tags.push('Gosat');
 
+        const isHovered = hoveredMemberId === member.user_id;
+        const actions = getAvailableActions(member);
+
         return (
           <motion.div
             key={member.user_id}
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2 }}
+            animate={{ 
+              opacity: isHovered ? 1 : hoveredMemberId ? 0.3 : 1,
+              scale: isHovered ? 1.15 : hoveredMemberId ? 0.9 : 1,
+              zIndex: isHovered ? 50 : 1
+            }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            onMouseEnter={() => setHoveredMemberId(member.user_id)}
+            onMouseLeave={() => setHoveredMemberId(null)}
+            className="relative"
           >
             <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent relative">
               <CardContent className="p-4 flex flex-col items-center justify-center h-full relative">
@@ -251,125 +315,80 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                   </div>
                 )}
 
-                {/* Actions - Positioned around the circle edge */}
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Helper function to calculate button position */}
-                  {(() => {
-                    const radius = 68; // Distance from center to edge (96px center - 28px button offset)
-                    const centerX = 96; // Half of 192px (w-48)
-                    const centerY = 96;
-                    
-                    // Collect all buttons that should be displayed
-                    const buttons = [];
-                    
-                    if (onStartChat) buttons.push({ type: 'chat', onClick: () => onStartChat(member.user_id) });
-                    if (onStartCall) {
-                      buttons.push({ type: 'voice', onClick: () => onStartCall(member.user_id, 'audio') });
-                      buttons.push({ type: 'video', onClick: () => onStartCall(member.user_id, 'video') });
-                    }
-                    if (onNavigateToTraining) buttons.push({ type: 'training', onClick: () => onNavigateToTraining(member.user_id) });
-                    if (onNavigateToRadio) buttons.push({ type: 'radio', onClick: () => onNavigateToRadio(member.user_id) });
-                    if (circles.length > 1) buttons.push({ type: 'add', isDropdown: true });
-                    buttons.push({ type: 'remove', onClick: () => handleRemoveMember(member.user_id, member.full_name || 'User') });
-                    
-                    const totalButtons = buttons.length;
-                    const angleStep = (2 * Math.PI) / totalButtons;
-                    
-                    return buttons.map((btn, idx) => {
-                      const angle = idx * angleStep - Math.PI / 2; // Start from top (-90 degrees)
-                      const x = centerX + radius * Math.cos(angle) - 16; // -16 to center the 32px button
-                      const y = centerY + radius * Math.sin(angle) - 16;
-                      
-                      const buttonStyle = {
-                        position: 'absolute' as const,
-                        left: `${x}px`,
-                        top: `${y}px`,
-                        backgroundColor: 'white',
-                        color: '#0A1931',
-                        border: '2px solid #0A1931',
-                        pointerEvents: 'auto' as const,
-                      };
-                      
-                      if (btn.isDropdown) {
-                        return (
-                          <DropdownMenu key={`btn-${idx}`}>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                size="sm" 
-                                style={buttonStyle}
-                                className="h-8 w-8 p-0 rounded-full hover:opacity-90 pointer-events-auto"
-                                title="Also add to another circle"
-                              >
-                                <UserPlus className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-background z-50">
-                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                Also add to:
-                              </div>
-                              {circles
-                                .filter(c => c.id !== circleId)
-                                .map(circle => (
-                                  <DropdownMenuItem
-                                    key={circle.id}
-                                    onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
-                                  >
-                                    {circle.emoji} {circle.name}
-                                  </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        );
-                      }
-                      
-                      let icon;
-                      let title;
-                      switch (btn.type) {
-                        case 'chat':
-                          icon = <MessageCircle className="h-4 w-4" />;
-                          title = 'Send message';
-                          break;
-                        case 'voice':
-                          icon = <Phone className="h-4 w-4" />;
-                          title = 'Voice call';
-                          break;
-                        case 'video':
-                          icon = <Video className="h-4 w-4" />;
-                          title = 'Video call';
-                          break;
-                        case 'training':
-                          icon = <GraduationCap className="h-4 w-4" />;
-                          title = 'Training';
-                          break;
-                        case 'radio':
-                          icon = <Radio className="h-4 w-4" />;
-                          title = 'Radio';
-                          break;
-                        case 'remove':
-                          icon = <X className="h-4 w-4" />;
-                          title = 'Remove from circle';
-                          break;
-                        default:
-                          return null;
-                      }
-                      
-                      return (
-                        <Button
-                          key={`btn-${idx}`}
-                          size="sm"
-                          onClick={btn.onClick}
-                          style={buttonStyle}
-                          className="h-8 w-8 p-0 rounded-full hover:opacity-90 pointer-events-auto"
-                          title={title}
-                        >
-                          {icon}
-                        </Button>
-                      );
-                    });
-                  })()}
-                </div>
               </CardContent>
             </Card>
+
+            {/* Action Menu - Appears on hover */}
+            {isHovered && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 z-50 w-64"
+              >
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl">
+                  <CardContent className="p-4">
+                    <h4 className="text-sm font-semibold text-white mb-3 text-center">
+                      What do you want to do?
+                    </h4>
+                    <div className="space-y-1">
+                      {actions.map((action, idx) => {
+                        const Icon = action.icon;
+                        
+                        if (action.isDropdown) {
+                          return (
+                            <DropdownMenu key={`action-${idx}`}>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start hover:bg-primary/20 text-white"
+                                  style={{ backgroundColor: 'transparent' }}
+                                >
+                                  <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
+                                  {action.label}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-background z-50">
+                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                  Also add to:
+                                </div>
+                                {circles
+                                  .filter(c => c.id !== circleId)
+                                  .map(circle => (
+                                    <DropdownMenuItem
+                                      key={circle.id}
+                                      onClick={() => handleAddToCircle(member.user_id, member.full_name || 'User', circle.id)}
+                                    >
+                                      {circle.emoji} {circle.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          );
+                        }
+                        
+                        return (
+                          <Button
+                            key={`action-${idx}`}
+                            variant="ghost"
+                            onClick={() => {
+                              action.onClick?.();
+                              setHoveredMemberId(null);
+                            }}
+                            className="w-full justify-start hover:bg-primary/20 text-white"
+                            style={{ backgroundColor: 'transparent' }}
+                          >
+                            <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
+                            {action.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </motion.div>
         );
       })}
