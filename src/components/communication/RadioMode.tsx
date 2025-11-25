@@ -118,7 +118,7 @@ export const RadioMode: React.FC = () => {
         <Button 
           className="gap-2" 
           onClick={() => setScheduleDialogOpen(true)}
-          style={{ backgroundColor: '#0A1931', color: 'white' }}
+          style={{ backgroundColor: '#17A2B8', color: 'white' }}
         >
           <Plus className="w-4 h-4" />
           Request Radio Slot
