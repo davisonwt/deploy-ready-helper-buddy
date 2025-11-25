@@ -292,17 +292,6 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircles();
   };
 
-<<<<<<< HEAD
-            <SwipeDeck
-              onSwipeRight={handleSwipeRight}
-              onComplete={handleOnboardingComplete}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // Show glassmorphism dashboard
   if (showDashboard && !showOnboarding) {
     return (

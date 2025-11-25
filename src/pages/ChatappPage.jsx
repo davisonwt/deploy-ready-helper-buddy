@@ -347,8 +347,8 @@ const ChatappPage = () => {
               </p>
               <Button 
                 onClick={() => window.location.href = '/login'}
-                style={{ backgroundColor: '#1E40AF', borderColor: '#1E40AF' }}
-                className="text-white hover:shadow-lg transition-all duration-300"
+                style={{ backgroundColor: 'white', borderColor: '#0A1931', color: '#0A1931' }}
+                className="hover:shadow-lg transition-all duration-300"
               >
                 Log In to Continue
               </Button>
@@ -448,7 +448,7 @@ const ChatappPage = () => {
                 </Button>
                 <Button 
                   onClick={() => setShowCreateModal(true)} 
-                  style={{ backgroundColor: '#1D4ED8', color: 'white' }}
+                  style={{ backgroundColor: 'white', color: '#0A1931', borderColor: '#0A1931' }}
                   className="gap-2 hover:shadow-lg transition-all duration-300"
                 >
                   <Plus className="h-4 w-4" />
@@ -596,8 +596,8 @@ const ChatappPage = () => {
                                 </p>
                                 <Button 
                                   onClick={() => setShowCreateModal(true)}
-                                  style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
-                                  className="mt-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                                  style={{ backgroundColor: 'white', color: '#0A1931', borderColor: '#0A1931' }}
+                                  className="mt-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                                 >
                                   <Plus className="h-4 w-4 mr-2" />
                                   {activeTab === 'group' ? 'Create your first Grove Circle' : 'Create your first room'}
@@ -680,8 +680,8 @@ const ChatappPage = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => setShowInviteModal(true)}
-                        style={{ borderColor: '#93C5FD', color: '#1D4ED8', backgroundColor: 'transparent' }}
-                        className="gap-2 hover:bg-blue-50"
+                        style={{ borderColor: '#0A1931', color: '#0A1931', backgroundColor: 'white' }}
+                        className="gap-2 hover:bg-[#0A1931]/5"
                       >
                         <UserPlus className="h-4 w-4" />
                         Invite
@@ -689,16 +689,16 @@ const ChatappPage = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        style={{ borderColor: '#60A5FA', color: '#2563EB', backgroundColor: 'transparent' }}
-                        className="hover:bg-blue-50"
+                        style={{ borderColor: '#0A1931', color: '#0A1931', backgroundColor: 'white' }}
+                        className="hover:bg-[#0A1931]/5"
                       >
                         <Phone className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        style={{ borderColor: '#3B82F6', color: '#1E40AF', backgroundColor: 'transparent' }}
-                        className="hover:bg-blue-50"
+                        style={{ borderColor: '#0A1931', color: '#0A1931', backgroundColor: 'white' }}
+                        className="hover:bg-[#0A1931]/5"
                       >
                         <VideoIcon className="h-4 w-4" />
                       </Button>
@@ -838,8 +838,8 @@ const ChatappPage = () => {
                     </p>
                     <Button 
                       onClick={() => setShowCreateModal(true)}
-                      style={{ background: 'linear-gradient(to right, #3B82F6, #1D4ED8)', borderColor: '#3B82F6' }}
-                      className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                      style={{ backgroundColor: 'white', color: '#0A1931', borderColor: '#0A1931' }}
+                      className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Room

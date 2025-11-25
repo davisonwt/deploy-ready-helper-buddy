@@ -254,8 +254,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                     <Button
                       size="sm"
                       onClick={() => onStartChat(member.user_id)}
-                      style={{ backgroundColor: 'white', color: '#0A1931' }}
-                      className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
+                      style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                      className="h-8 w-8 p-0 rounded-full hover:opacity-90"
                     >
                       <MessageCircle className="h-4 w-4" />
                     </Button>
@@ -303,8 +303,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   <Button
                     size="sm"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
-                    style={{ backgroundColor: '#0A1931', color: 'white' }}
-                    className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
+                    style={{ backgroundColor: 'white', color: '#0A1931', border: '2px solid #0A1931' }}
+                    className="h-8 w-8 p-0 rounded-full hover:opacity-90"
                   >
                     <X className="h-4 w-4" />
                   </Button>
