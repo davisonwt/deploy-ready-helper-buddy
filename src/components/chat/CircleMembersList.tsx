@@ -294,8 +294,8 @@ export function CircleMembersList({ circleId, onStartChat, circles = [], onMembe
                   <Button
                     size="sm"
                     onClick={() => handleRemoveMember(member.user_id, member.full_name || 'User')}
-                    style={{ backgroundColor: 'white', color: '#0A1931' }}
-                    className="h-8 w-8 p-0 rounded-full hover:opacity-90 hover:bg-destructive hover:text-white border-0"
+                    style={{ backgroundColor: '#0A1931', color: 'white' }}
+                    className="h-8 w-8 p-0 rounded-full hover:opacity-90 border-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>
