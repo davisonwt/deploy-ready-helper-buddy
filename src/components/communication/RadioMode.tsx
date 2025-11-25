@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2 } from 'lucide-react';
+import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ScheduleRadioSlotDialog } from './ScheduleRadioSlotDialog';
 
 interface Track {
   id: string;
@@ -39,6 +40,7 @@ export const RadioMode: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [volume, setVolume] = useState([75]);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -108,9 +110,15 @@ export const RadioMode: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold text-white mb-2">Radio Broadcasts</h2>
-        <p className="text-white/80">Listen to live audio streams and curated playlists</p>
+      <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Radio Broadcasts</h2>
+          <p className="text-white/80">24/7 live streams • 2-hour slots available</p>
+        </div>
+        <Button className="gap-2" onClick={() => setScheduleDialogOpen(true)}>
+          <Plus className="w-4 h-4" />
+          Request Radio Slot
+        </Button>
       </div>
 
       {/* Now Playing Card */}
@@ -258,6 +266,12 @@ export const RadioMode: React.FC = () => {
           )}
         </div>
       </div>
+
+      <ScheduleRadioSlotDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        onSuccess={loadContent}
+      />
     </div>
   );
 };

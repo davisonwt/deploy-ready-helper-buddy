@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { ScheduleLectureDialog } from './ScheduleLectureDialog';
 
 interface LectureHall {
   id: string;
@@ -29,6 +30,7 @@ export const LectureMode: React.FC = () => {
   const { toast } = useToast();
   const [lectures, setLectures] = useState<LectureHall[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
   useEffect(() => {
     loadLectures();
@@ -87,7 +89,7 @@ export const LectureMode: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-2">Lecture Halls</h2>
           <p className="text-white/80">Attend presentations and participate in Q&A sessions</p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setScheduleDialogOpen(true)}>
           <Plus className="w-4 h-4" />
           Schedule Lecture
         </Button>
@@ -101,7 +103,7 @@ export const LectureMode: React.FC = () => {
               <GraduationCap className="w-16 h-16 mx-auto mb-4 text-primary/50" />
               <h3 className="text-xl font-semibold text-white mb-2">No Scheduled Lectures</h3>
               <p className="text-white/70 mb-4">Be the first to schedule a presentation</p>
-              <Button>
+              <Button onClick={() => setScheduleDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Schedule Lecture
               </Button>
@@ -176,6 +178,12 @@ export const LectureMode: React.FC = () => {
           ))
         )}
       </div>
+
+      <ScheduleLectureDialog
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        onSuccess={loadLectures}
+      />
     </div>
   );
 };
