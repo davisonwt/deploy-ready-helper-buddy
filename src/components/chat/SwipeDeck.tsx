@@ -121,7 +121,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
       // Fetch ALL profiles except current user
       const { data: allProfilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_id, username, full_name, avatar_url, bio, display_name, first_name, last_name')
+        .select('id, user_id, username, avatar_url, bio, display_name, first_name, last_name')
         .neq('user_id', user.id);
 
       if (profilesError) {
@@ -283,9 +283,9 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
       <Card className="p-8 text-center">
         <CardContent>
           <Sparkles className="h-16 w-16 mx-auto mb-4 text-primary" />
-          <h3 className="text-xl font-semibold mb-2">No users found</h3>
+          <h3 className="text-xl font-semibold mb-2">All set!</h3>
           <p className="text-muted-foreground mb-4">
-            There are no registered sowers, bestowers, or gosat users to add yet.
+            All registered users have been added to circles.
           </p>
           <Button onClick={onComplete}>Done</Button>
         </CardContent>
