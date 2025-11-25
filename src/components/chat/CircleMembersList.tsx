@@ -424,11 +424,11 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                                 <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
-                                    className="w-full justify-start hover:bg-primary/20 text-white"
-                                    style={{ backgroundColor: 'transparent' }}
+                                    className="w-full justify-start hover:bg-primary/20 text-white text-xs"
+                                    style={{ backgroundColor: 'transparent', fontSize: '0.75rem', padding: '0.5rem 0.75rem' }}
                                   >
-                                    <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
-                                    {action.label}
+                                    <Icon className={`h-3 w-3 mr-2 flex-shrink-0 ${action.color}`} />
+                                    <span className="truncate">{action.label}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="bg-background z-[1001]">
@@ -458,11 +458,11 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                               action.onClick?.();
                               setHoveredMemberId(null);
                             }}
-                              className="w-full justify-start hover:bg-primary/20 text-white"
-                              style={{ backgroundColor: 'transparent' }}
+                              className="w-full justify-start hover:bg-primary/20 text-white text-xs"
+                              style={{ backgroundColor: 'transparent', fontSize: '0.75rem', padding: '0.5rem 0.75rem' }}
                             >
-                              <Icon className={`h-4 w-4 mr-2 ${action.color}`} />
-                              {action.label}
+                              <Icon className={`h-3 w-3 mr-2 flex-shrink-0 ${action.color}`} />
+                              <span className="truncate">{action.label}</span>
                             </Button>
                           );
                           })}
