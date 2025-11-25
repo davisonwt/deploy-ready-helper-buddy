@@ -349,14 +349,14 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
       </div>
 
       {/* Circle Selector - More Prominent */}
-      <div className="mb-8 bg-primary/5 border-2 border-primary/20 rounded-2xl p-6">
+      <div className="mb-8 glass-panel border-2 border-primary/30 rounded-2xl p-6">
         <div className="text-center mb-6">
-          <h3 className="text-lg font-bold text-primary mb-2">
+          <h3 className="text-2xl font-bold text-white drop-shadow-lg mb-2">
             Choose a Circle
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground/90">
             Click a circle below to select where you want to place{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-white">
               {currentProfile?.full_name || 'this person'}
             </span>
           </p>
@@ -369,7 +369,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
               onClick={() => setSelectedCircle(circle.id)}
               className={`
                 relative flex flex-col items-center justify-center gap-2
-                w-24 h-24 rounded-full border-4 transition-all cursor-pointer
+                w-28 h-28 rounded-full border-4 transition-all cursor-pointer
                 ${selectedCircle === circle.id 
                   ? `${circle.color} border-white shadow-[0_0_30px_rgba(255,255,255,0.5)] scale-110` 
                   : 'bg-muted/50 border-border hover:border-primary/50 hover:scale-105 hover:shadow-lg'
@@ -388,13 +388,13 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
               </span>
               
               <span className={`
-                text-xs relative z-10 font-bold px-2 py-1 rounded-full
+                text-xs relative z-10 font-bold px-2 py-1 rounded-full text-center leading-tight
                 ${selectedCircle === circle.id 
                   ? 'text-white bg-white/20' 
-                  : 'text-muted-foreground'
+                  : 'text-foreground bg-black/20'
                 }
               `}>
-                {circle.name.split('-')[0]}
+                {circle.name}
               </span>
               
               {selectedCircle === circle.id && (
@@ -480,7 +480,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKe
                     const circle = circles.find(c => c.id === circleId);
                     return circle ? (
                       <Badge key={circleId} variant="outline" className="text-xs">
-                        {circle.emoji} {circle.name.split('-')[0]}
+                        {circle.emoji} {circle.name}
                       </Badge>
                     ) : null;
                   })}
