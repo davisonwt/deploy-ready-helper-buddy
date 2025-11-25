@@ -346,6 +346,14 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
     );
   }
 
+  if (!currentProfile) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full max-w-4xl mx-auto">
       {showConfetti && (
