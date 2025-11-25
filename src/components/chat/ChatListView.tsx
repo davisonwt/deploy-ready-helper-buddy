@@ -405,7 +405,12 @@ export const ChatListView: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-1">Messages</h2>
           <p className="text-white/70 text-sm">Your recent conversations</p>
         </div>
-        <Button size="sm" className="gap-2" onClick={() => setShowNewChatDialog(true)}>
+        <Button 
+          size="sm" 
+          className="gap-2" 
+          onClick={() => setShowNewChatDialog(true)}
+          style={{ backgroundColor: '#0A1931', color: 'white' }}
+        >
           <MessageCircle className="w-4 h-4" />
           New Chat
         </Button>

@@ -92,7 +92,11 @@ export const ClassroomMode: React.FC = () => {
           <h2 className="text-3xl font-bold text-white mb-2">Interactive Classrooms</h2>
           <p className="text-white/80">Join live learning sessions with whiteboards and collaboration</p>
         </div>
-        <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+        <Button 
+          className="gap-2" 
+          onClick={() => setCreateDialogOpen(true)}
+          style={{ backgroundColor: '#0A1931', color: 'white' }}
+        >
           <Plus className="w-4 h-4" />
           Create Session
         </Button>
