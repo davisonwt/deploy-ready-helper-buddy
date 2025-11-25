@@ -46,9 +46,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     return () => clearInterval(interval);
   }, []);
 
-  // Check if user needs onboarding
+  // Load circles and check streak (skip onboarding check)
   useEffect(() => {
-    checkOnboardingStatus();
     loadCircles();
     checkStreak();
   }, [user]);
@@ -290,48 +289,9 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircles();
   };
 
-  // Onboarding flow
-  if (showOnboarding) {
-    return (
-      <div className="min-h-screen flex items-start justify-center p-4 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <Card className="w-full max-w-5xl mt-8">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Button
-                variant="ghost"
-                onClick={() => setShowOnboarding(false)}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowOnboarding(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2">Welcome to Your Circles</h2>
-              <p className="text-muted-foreground">
-                Add people to your circles to get started
-              </p>
-            </div>
+  // Skip onboarding - go straight to UnifiedDashboard
 
-            <SwipeDeck
-              onSwipeRight={handleSwipeRight}
-              onComplete={handleOnboardingComplete}
-              refreshKey={swipeDeckRefreshKey}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Main chat interface - Now using UnifiedDashboard
+  // Main chat interface - Always show UnifiedDashboard (skip onboarding)
   return <UnifiedDashboard />;
 }
 
