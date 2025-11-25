@@ -44,10 +44,13 @@ export const CommunityForums: React.FC = () => {
   const [selectedCircles, setSelectedCircles] = useState<string[]>([]);
   const [postToNonCircle, setPostToNonCircle] = useState(false);
   const [userCircles, setUserCircles] = useState<any[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [allMembers, setAllMembers] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserCircles();
+    fetchAllMembers();
     fetchPosts();
   }, []);
 
@@ -77,6 +80,32 @@ export const CommunityForums: React.FC = () => {
         ? prev.filter(id => id !== circleId)
         : [...prev, circleId]
     );
+  };
+
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedMembers(prev => 
+      prev.includes(memberId) 
+        ? prev.filter(id => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  const fetchAllMembers = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, first_name, last_name, avatar_url')
+        .neq('user_id', user.id)
+        .order('display_name');
+
+      if (error) throw error;
+      setAllMembers(profiles || []);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
   };
 
   const fetchPosts = async () => {
@@ -142,10 +171,10 @@ export const CommunityForums: React.FC = () => {
       return;
     }
 
-    if (selectedCircles.length === 0 && !postToNonCircle) {
+    if (selectedCircles.length === 0 && !postToNonCircle && selectedMembers.length === 0) {
       toast({
         title: 'No audience selected',
-        description: 'Please select at least one circle or "Not in any circles"',
+        description: 'Please select at least one circle, members, or "Not in any circles"',
         variant: 'destructive',
       });
       return;
@@ -161,39 +190,86 @@ export const CommunityForums: React.FC = () => {
         .eq('user_id', user.id)
         .single();
 
-      // If posting to "Not in any circles", create a special circle or handle differently
-      // For now, we'll post to all selected circles
-      const circlesToPost = postToNonCircle ? [...selectedCircles, 'non-circle'] : selectedCircles;
-      
-      // Create a post for each selected circle
-      const postPromises = selectedCircles.map(circleId => 
-        supabase
-          .from('community_posts')
+      // Handle custom group creation if members are selected
+      if (selectedMembers.length > 0) {
+        // Create a group chat room for custom members
+        const { data: groupRoom, error: roomError } = await supabase
+          .from('chat_rooms')
           .insert({
-            title: newPostTitle,
-            content: newPostContent,
-            circle_id: circleId,
-            author_id: user.id,
-            author_profile_id: profile?.id,
+            name: `${newPostTitle} - Custom Group`,
+            room_type: 'group',
+            created_by: user.id,
+            is_active: true,
           })
-      );
+          .select()
+          .single();
 
-      const results = await Promise.all(postPromises);
-      const errors = results.filter(r => r.error);
+        if (roomError) throw roomError;
 
-      if (errors.length > 0) {
-        throw new Error('Some posts failed to create');
+        // Add creator and selected members to the group
+        const participantsToAdd = [user.id, ...selectedMembers];
+        const participantInserts = participantsToAdd.map(userId => ({
+          room_id: groupRoom.id,
+          user_id: userId,
+          is_active: true,
+        }));
+
+        const { error: participantError } = await supabase
+          .from('chat_participants')
+          .insert(participantInserts);
+
+        if (participantError) throw participantError;
+
+        // Post the content as a message in the group
+        const { error: messageError } = await supabase
+          .from('chat_messages')
+          .insert({
+            room_id: groupRoom.id,
+            sender_id: user.id,
+            content: `**${newPostTitle}**\n\n${newPostContent}`,
+            message_type: 'text',
+          });
+
+        if (messageError) throw messageError;
+
+        toast({
+          title: 'Custom group created!',
+          description: `Your post has been shared with ${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''}`,
+        });
       }
 
-      toast({
-        title: 'Post created!',
-        description: `Your post has been shared with ${selectedCircles.length} circle${selectedCircles.length > 1 ? 's' : ''}`,
-      });
+      // Create posts for selected circles
+      if (selectedCircles.length > 0) {
+        const postPromises = selectedCircles.map(circleId => 
+          supabase
+            .from('community_posts')
+            .insert({
+              title: newPostTitle,
+              content: newPostContent,
+              circle_id: circleId,
+              author_id: user.id,
+              author_profile_id: profile?.id,
+            })
+        );
+
+        const results = await Promise.all(postPromises);
+        const errors = results.filter(r => r.error);
+
+        if (errors.length > 0) {
+          throw new Error('Some posts failed to create');
+        }
+
+        toast({
+          title: 'Post created!',
+          description: `Your post has been shared with ${selectedCircles.length} circle${selectedCircles.length > 1 ? 's' : ''}`,
+        });
+      }
 
       setNewPostOpen(false);
       setNewPostTitle('');
       setNewPostContent('');
       setSelectedCircles([]);
+      setSelectedMembers([]);
       setPostToNonCircle(false);
       fetchPosts();
     } catch (error) {
@@ -319,15 +395,55 @@ export const CommunityForums: React.FC = () => {
                       >
                         🌐 Not in any circles
                       </label>
-                    </div>
-                  </div>
-                  {selectedCircles.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {selectedCircles.length} circle{selectedCircles.length > 1 ? 's' : ''} selected
-                    </p>
-                  )}
-                </div>
-                <div>
+                     </div>
+                   </div>
+                   {selectedCircles.length > 0 && (
+                     <p className="text-xs text-muted-foreground mt-2">
+                       {selectedCircles.length} circle{selectedCircles.length > 1 ? 's' : ''} selected
+                     </p>
+                   )}
+                 </div>
+
+                 {/* Custom Group Selection */}
+                 <div>
+                   <label className="text-sm font-medium mb-3 block">Or Select Individual Members for Custom Group</label>
+                   <div className="space-y-2 max-h-60 overflow-y-auto glass-card p-4 rounded-lg">
+                     {allMembers.map((member) => (
+                       <div key={member.id} className="flex items-center space-x-3 hover:bg-primary/5 p-2 rounded transition-colors">
+                         <Checkbox
+                           id={`member-${member.id}`}
+                           checked={selectedMembers.includes(member.user_id)}
+                           onCheckedChange={() => toggleMemberSelection(member.user_id)}
+                           className="border-primary/30"
+                         />
+                         <Avatar className="h-8 w-8">
+                           <AvatarImage src={member.avatar_url} />
+                           <AvatarFallback>
+                             {(member.display_name || member.first_name || 'U')[0]}
+                           </AvatarFallback>
+                         </Avatar>
+                         <label
+                           htmlFor={`member-${member.id}`}
+                           className="flex-1 text-sm font-medium cursor-pointer"
+                         >
+                           {member.display_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || 'Unknown User'}
+                         </label>
+                       </div>
+                     ))}
+                     {allMembers.length === 0 && (
+                       <p className="text-sm text-muted-foreground text-center py-4">
+                         No members available
+                       </p>
+                     )}
+                   </div>
+                   {selectedMembers.length > 0 && (
+                     <p className="text-xs text-muted-foreground mt-2">
+                       {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected for custom group
+                     </p>
+                   )}
+                 </div>
+
+                 <div>
                   <label className="text-sm font-medium mb-2 block">Title</label>
                   <Input
                     value={newPostTitle}
