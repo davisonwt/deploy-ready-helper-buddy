@@ -18,6 +18,7 @@ interface CircleMembersListProps {
   circleId: string;
   onStartChat?: (userId: string) => void;
   circles?: Array<{ id: string; name: string; emoji: string }>;
+  onMemberRemoved?: () => void;
 }
 
 interface Member {
@@ -32,7 +33,7 @@ interface Member {
   is_gosat?: boolean;
 }
 
-export function CircleMembersList({ circleId, onStartChat, circles = [] }: CircleMembersListProps) {
+export function CircleMembersList({ circleId, onStartChat, circles = [], onMemberRemoved }: CircleMembersListProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -137,6 +138,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
 
       // Refresh the list
       loadMembers();
+      onMemberRemoved?.();
 
       const newCircleName = circles.find(c => c.id === newCircleId)?.name || 'circle';
       toast({
@@ -169,6 +171,7 @@ export function CircleMembersList({ circleId, onStartChat, circles = [] }: Circl
       });
 
       loadMembers();
+      onMemberRemoved?.();
     } catch (error) {
       console.error('Error removing member:', error);
       toast({

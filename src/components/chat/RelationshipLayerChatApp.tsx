@@ -39,6 +39,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
   const [hueRotation, setHueRotation] = useState(0);
   const [circleMembers, setCircleMembers] = useState<CircleMember[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [swipeDeckRefreshKey, setSwipeDeckRefreshKey] = useState(0);
   const backgroundRef = useRef<HTMLDivElement>(null);
 
   // Animated gradient background
@@ -289,6 +290,11 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     loadCircleMembers(circleId);
   };
 
+  const handleMemberRemoved = () => {
+    setSwipeDeckRefreshKey(prev => prev + 1);
+    loadCircles();
+  };
+
   // Onboarding flow
   if (showOnboarding) {
     return (
@@ -322,6 +328,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
             <SwipeDeck
               onSwipeRight={handleSwipeRight}
               onComplete={handleOnboardingComplete}
+              refreshKey={swipeDeckRefreshKey}
             />
           </CardContent>
         </Card>
@@ -417,6 +424,7 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
                     console.log('Start chat with:', userId);
                   }}
                   circles={circles}
+                  onMemberRemoved={handleMemberRemoved}
                 />
               </div>
             </ScrollArea>

@@ -26,11 +26,12 @@ interface SwipeDeckProps {
   onSwipeRight: (profile: Profile, circleId: string) => void;
   onComplete: () => void;
   initialCircleId?: string;
+  refreshKey?: number;
 }
 
 const BATCH_SIZE = 8; // Load 8 profiles at a time
 
-export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDeckProps) {
+export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId, refreshKey }: SwipeDeckProps) {
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [currentBatch, setCurrentBatch] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -51,7 +52,7 @@ export function SwipeDeck({ onSwipeRight, onComplete, initialCircleId }: SwipeDe
   useEffect(() => {
     loadCircles();
     loadProfiles();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     // Load next batch when needed
