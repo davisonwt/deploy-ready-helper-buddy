@@ -545,16 +545,43 @@ export function GlassmorphismDashboard({
             circles={circles}
             onAddToCircle={async (userId, userName, circleId) => {
               try {
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+                if (!currentUser) {
+                  throw new Error('You must be logged in to add members to circles');
+                }
+
+                // First, ensure the current user has a user_circles record for this circle
+                // This is required by the RLS policy
+                const { error: userCircleError } = await supabase
+                  .from('user_circles')
+                  .upsert(
+                    { user_id: currentUser.id, circle_id: circleId },
+                    { onConflict: 'user_id,circle_id' }
+                  );
+                
+                if (userCircleError) {
+                  console.error('Error ensuring user_circles record:', userCircleError);
+                  // Continue anyway - might already exist
+                }
+
+                // Now add the member to the circle
                 const { error } = await supabase
                   .from('circle_members')
-                  .insert({ circle_id: circleId, user_id: userId });
+                  .insert({ 
+                    circle_id: circleId, 
+                    user_id: userId,
+                    added_by: currentUser.id
+                  });
+                
                 if (error) throw error;
+                
                 toast({
                   title: 'Added to circle',
                   description: `${userName} added to ${circles.find(c => c.id === circleId)?.name || 'circle'}`,
                 });
                 onMemberRemoved?.();
               } catch (error: any) {
+                console.error('Error adding user to circle:', error);
                 toast({
                   title: 'Error',
                   description: error.message || 'Failed to add user to circle',
