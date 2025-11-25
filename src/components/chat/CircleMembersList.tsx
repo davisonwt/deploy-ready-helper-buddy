@@ -306,6 +306,8 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
         if (member.is_gosat) tags.push('Gosat');
 
         const isHovered = hoveredMemberId === member.user_id;
+        const actions = getAvailableActions(member);
+        const hasMenu = isHovered && actions.length > 0;
 
         return (
           <motion.div
@@ -322,9 +324,9 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             className="relative cursor-pointer"
             style={isHovered ? {
               position: 'fixed',
-              top: '20%',
+              top: '50%',
               left: '50%',
-              transform: 'translate(-50%, 0)',
+              transform: hasMenu ? 'translate(-50%, calc(-50% - 200px))' : 'translate(-50%, -50%)',
               zIndex: 1000,
               pointerEvents: 'auto'
             } : {
@@ -390,24 +392,25 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             onMouseLeave={handleMouseLeave}
             className="fixed z-[1001] pointer-events-auto"
             style={{
-              // Position menu below the hovered card
-              // Card is at top: 20%, card height is 192px (w-48), so bottom is at 20% + 192px
-              // Menu starts 20px below card bottom
-              top: 'calc(20% + 212px)',
+              // Position menu below the centered card
+              // Card center is at 50vh, card is scaled to 1.15x (192px * 1.15 = 220.8px), so half is ~110px
+              // Card bottom is at 50vh + 110px, menu starts 20px below
+              top: 'calc(50vh + 130px)',
               left: '50%',
               transform: 'translateX(-50%)',
-              width: '256px',
-              maxWidth: 'min(calc(100vw - 2rem), 256px)',
-              maxHeight: 'min(calc(100vh - 20% - 212px - 1rem), 350px)',
+              width: '220px',
+              maxWidth: 'min(calc(100vw - 2rem), 220px)',
+              maxHeight: 'min(calc(50vh - 130px - 1rem), 400px)',
               minHeight: '200px',
+              height: 'auto',
             }}
           >
-                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '350px', minHeight: '200px' }}>
-                  <CardContent className="p-4 flex flex-col flex-1 min-h-0 overflow-hidden">
+                <Card className="glass-card border-2 border-primary/50 bg-background/95 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '400px', minHeight: '200px', height: '100%' }}>
+                  <CardContent className="p-4 flex flex-col h-full overflow-hidden">
                     <h4 className="text-sm font-semibold text-white mb-3 text-center flex-shrink-0">
                       What do you want to do?
                     </h4>
-                    <ScrollArea className="flex-1 min-h-0" style={{ maxHeight: '300px', minHeight: '150px' }}>
+                    <ScrollArea className="flex-1" style={{ maxHeight: 'calc(100% - 60px)', overflowY: 'auto' }}>
                       <div className="space-y-1 pr-4">
                           {actions.map((action, idx) => {
                           const Icon = action.icon;
