@@ -83,11 +83,6 @@ function AvailableUsersSection({ circles, onAddToCircle }: { circles: Circle[], 
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadAvailableUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [circles.length]);
-
   const loadAvailableUsers = async () => {
     try {
       setLoading(true);
@@ -117,6 +112,11 @@ function AvailableUsersSection({ circles, onAddToCircle }: { circles: Circle[], 
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadAvailableUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [circles.length]); // Only re-run when number of circles changes
 
   if (loading) {
     return (
