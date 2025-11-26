@@ -65,106 +65,156 @@ export default function MyProductsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background/95 to-background">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      <div className='min-h-screen flex items-center justify-center' style={{
+        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 25%, #b45309 50%, #92400e 75%, #78350f 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradient 15s ease infinite'
+      }}>
+        <Loader2 className='w-12 h-12 animate-spin text-white' />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden border-b border-border/50">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 animate-gradient" />
-        <div className="relative container mx-auto px-4 py-12">
+    <div className='min-h-screen relative overflow-hidden'>
+      {/* Creative Animated Background */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute inset-0' style={{
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 25%, #b45309 50%, #92400e 75%, #78350f 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient 20s ease infinite'
+        }} />
+        <div className='absolute inset-0 bg-black/20' />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Package className="w-12 h-12 text-primary" />
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                My Products
-              </h1>
-            </div>
-            <p className="text-muted-foreground text-lg mb-6">
-              Manage your uploaded products, music, and digital content
-            </p>
-            <Link to="/products/upload">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
-                <Upload className="w-5 h-5 mr-2" />
-                Upload New Product
-              </Button>
-            </Link>
-          </motion.div>
+            key={i}
+            className='absolute rounded-full blur-3xl opacity-30'
+            style={{
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(${245 - i * 5}, ${158 - i * 3}, ${11 - i * 1}, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
+            }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10 + i * 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className='relative z-10'>
+        {/* Hero Header */}
+        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
+          <div className='relative container mx-auto px-4 py-16'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='text-center max-w-4xl mx-auto'
+            >
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
+                  <Package className='w-16 h-16 text-white' />
+                </div>
+                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
+                  My S2G Products
+                </h1>
+              </div>
+              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+                Manage your uploaded products, music, and digital content. Share your creativity with the community.
+              </p>
+              <Link to="/products/upload">
+                <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                  <Upload className="w-5 h-5 mr-2" />
+                  Upload New Product
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+
+        <div className='container mx-auto px-4 py-8'>
+          {products && products.length > 0 ? (
+            <>
+              {/* Category Filter */}
+              <CategoryFilter
+                selectedCategory={selectedCategory}
+                selectedType={selectedType}
+                onCategoryChange={setSelectedCategory}
+                onTypeChange={setSelectedType}
+              />
+
+              {/* Products Grid */}
+              <section className='mb-16'>
+                <h2 className='text-3xl font-bold mb-6 text-white'>
+                  {selectedCategory === 'all' ? 'All Your Products' : `Your ${selectedCategory} Products`}
+                </h2>
+                {filteredProducts.length === 0 ? (
+                  <div className='text-center py-12'>
+                    <p className='text-white/80 text-lg'>No products found in this category</p>
+                  </div>
+                ) : (
+                  <div className='relative px-12'>
+                    <Carousel
+                      opts={{
+                        align: "start",
+                        loop: true,
+                      }}
+                      className='w-full'
+                    >
+                      <CarouselContent className='-ml-2 md:-ml-4'>
+                        {filteredProducts.map((product) => (
+                          <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
+                            <ProductCard 
+                              product={product} 
+                              showActions={true} 
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                      <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                    </Carousel>
+                  </div>
+                )}
+              </section>
+            </>
+          ) : (
+            <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardContent className='p-12 text-center'>
+                <Package className='w-20 h-20 mx-auto text-white/70 mb-4' />
+                <h3 className='text-2xl font-bold mb-2 text-white'>No Products Yet</h3>
+                <p className='text-white/70 mb-6'>
+                  Start sharing your creativity by uploading your first product
+                </p>
+                <Link to="/products/upload">
+                  <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                    <Plus className="w-5 h-5 mr-2" />
+                    Upload Your First Product
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {products && products.length > 0 ? (
-          <>
-            {/* Category Filter */}
-            <CategoryFilter
-              selectedCategory={selectedCategory}
-              selectedType={selectedType}
-              onCategoryChange={setSelectedCategory}
-              onTypeChange={setSelectedType}
-            />
-
-            {/* Products Grid */}
-            <section className="mb-16">
-              <h2 className="text-3xl font-bold mb-6 text-foreground">
-                {selectedCategory === 'all' ? 'All Your Products' : `Your ${selectedCategory} Products`}
-              </h2>
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground text-lg">No products found in this category</p>
-                </div>
-              ) : (
-                <div className="relative px-12">
-                  <Carousel
-                    opts={{
-                      align: "start",
-                      loop: true,
-                    }}
-                    className="w-full"
-                  >
-                    <CarouselContent className="-ml-2 md:-ml-4">
-                      {filteredProducts.map((product) => (
-                        <CarouselItem key={product.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                          <ProductCard 
-                            product={product} 
-                            showActions={true} 
-                          />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
-                    <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
-                  </Carousel>
-                </div>
-              )}
-            </section>
-          </>
-        ) : (
-          <Card className="max-w-2xl mx-auto mt-12">
-            <CardContent className="p-12 text-center">
-              <Package className="w-20 h-20 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No Products Yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Start sharing your creativity by uploading your first product
-              </p>
-              <Link to="/products/upload">
-                <Button size="lg" className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Upload Your First Product
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   );
 }

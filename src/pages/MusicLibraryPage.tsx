@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MusicLibraryTable } from '@/components/music/MusicLibraryTable';
@@ -8,7 +9,7 @@ import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
 import { LiveSessionPlaylistCart } from '@/components/music/LiveSessionPlaylistCart';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
-import { Music, Users, Radio, Disc, Podcast } from 'lucide-react';
+import { Music, Users, Radio, Disc, Podcast, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PlaylistBrowser } from '@/components/music/PlaylistBrowser';
 
@@ -173,167 +174,226 @@ export default function MusicLibraryPage() {
   });
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-heading-primary">Music Library</h1>
-          <p className="text-muted-foreground mt-1">
-            Browse and bestow on music tracks. Preview 30 seconds or download after bestowal.
-          </p>
-        </div>
+    <div className='min-h-screen relative overflow-hidden'>
+      {/* Creative Animated Background */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute inset-0' style={{
+          background: 'linear-gradient(135deg, #ec4899 0%, #db2777 25%, #be185d 50%, #9f1239 75%, #831843 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient 20s ease infinite'
+        }} />
+        <div className='absolute inset-0 bg-black/20' />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className='absolute rounded-full blur-3xl opacity-30'
+            style={{
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(${236 - i * 3}, ${72 - i * 2}, ${153 - i * 1}, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
+            }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10 + i * 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-card">
-          <TabsTrigger value="my-music" className="gap-2">
-            <Music className="h-4 w-4" />
-            My Music
-          </TabsTrigger>
-          <TabsTrigger value="community" className="gap-2">
-            <Users className="h-4 w-4" />
-            Build Album
-          </TabsTrigger>
-          <TabsTrigger value="albums" className="gap-2">
-            <Disc className="h-4 w-4" />
-            Albums
-          </TabsTrigger>
-          <TabsTrigger value="chatcast" className="gap-2">
-            <Podcast className="h-4 w-4" />
-            Chatcast
-          </TabsTrigger>
-          <TabsTrigger value="live-sessions" className="gap-2">
-            <Radio className="h-4 w-4" />
-            Live Sessions
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="my-music" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                My Music Uploads
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingMy ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      {/* Content */}
+      <div className='relative z-10 container mx-auto py-6 space-y-6'>
+        {/* Hero Header */}
+        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10 rounded-2xl mb-8'>
+          <div className='relative container mx-auto px-4 py-12'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='text-center max-w-4xl mx-auto'
+            >
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
+                  <Music className='w-16 h-16 text-white' />
                 </div>
-              ) : (
-                <MusicLibraryTable 
-                  tracks={myMusic} 
-                  showBestowalButton={false}
-                  showEditButton={true}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="community" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    S2G Community Music Library
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Select 10 tracks to build your custom album for $20
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {loadingCommunity ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <MusicLibraryTable 
-                      tracks={communityMusic} 
-                      showBestowalButton={true}
-                      allowSelection={true}
-                      onTrackSelect={handleAlbumTrackSelect}
-                      selectedTracks={albumBuilder.selectedTracks.map(t => t.id)}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            <div>
-              <AlbumBuilderCart />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="albums" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Disc className="h-5 w-5" />
-                S2G Community Albums
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlaylistBrowser playlistType="album" emptyMessage="No albums available yet." />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="chatcast" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Podcast className="h-5 w-5" />
-                Chatcast
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Listen to community podcasts and audio content
+                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
+                  My S2G Music Library
+                </h1>
+              </div>
+              <p className='text-white/90 text-xl backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+                Browse and bestow on music tracks. Preview 30 seconds or download after bestowal. Build albums and create playlists.
               </p>
-            </CardHeader>
-            <CardContent>
-              <PlaylistBrowser playlistType="podcast" emptyMessage="No chatcasts available yet." />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="live-sessions" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Radio className="h-5 w-5" />
-                    S2G Community Music for Live Sessions
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Select tracks to create playlists for your radio shows, rooms, and live streams
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {loadingCommunity ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  ) : (
-                    <MusicLibraryTable 
-                      tracks={communityMusic} 
-                      showBestowalButton={false}
-                      allowSelection={true}
-                      onTrackSelect={handleLiveTrackSelect}
-                      selectedTracks={livePlaylist.selectedTracks.map(t => t.id)}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-            <div>
-              <LiveSessionPlaylistCart />
-            </div>
+            </motion.div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
+          <TabsList className='backdrop-blur-md bg-white/20 border-white/30'>
+            <TabsTrigger value='my-music' className='gap-2 text-white data-[state=active]:bg-white/30'>
+              <Music className='h-4 w-4' />
+              My Music
+            </TabsTrigger>
+            <TabsTrigger value='community' className='gap-2 text-white data-[state=active]:bg-white/30'>
+              <Users className='h-4 w-4' />
+              Build Album
+            </TabsTrigger>
+            <TabsTrigger value='albums' className='gap-2 text-white data-[state=active]:bg-white/30'>
+              <Disc className='h-4 w-4' />
+              Albums
+            </TabsTrigger>
+            <TabsTrigger value='chatcast' className='gap-2 text-white data-[state=active]:bg-white/30'>
+              <Podcast className='h-4 w-4' />
+              Chatcast
+            </TabsTrigger>
+            <TabsTrigger value='live-sessions' className='gap-2 text-white data-[state=active]:bg-white/30'>
+              <Radio className='h-4 w-4' />
+              Live Sessions
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value='my-music' className='space-y-4'>
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2 text-white'>
+                  <Music className='h-5 w-5' />
+                  My Music Uploads
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingMy ? (
+                  <div className='flex items-center justify-center py-12'>
+                    <Loader2 className='w-8 h-8 animate-spin text-white' />
+                  </div>
+                ) : (
+                  <MusicLibraryTable 
+                    tracks={myMusic} 
+                    showBestowalButton={false}
+                    showEditButton={true}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='community' className='space-y-4'>
+            <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+              <div className='lg:col-span-2'>
+                <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2 text-white'>
+                      <Users className='h-5 w-5' />
+                      S2G Community Music Library
+                    </CardTitle>
+                    <p className='text-sm text-white/80'>
+                      Select 10 tracks to build your custom album for $20
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCommunity ? (
+                      <div className='flex items-center justify-center py-12'>
+                        <Loader2 className='w-8 h-8 animate-spin text-white' />
+                      </div>
+                    ) : (
+                      <MusicLibraryTable 
+                        tracks={communityMusic} 
+                        showBestowalButton={true}
+                        allowSelection={true}
+                        onTrackSelect={handleAlbumTrackSelect}
+                        selectedTracks={albumBuilder.selectedTracks.map(t => t.id)}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              <div>
+                <AlbumBuilderCart />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value='albums' className='space-y-4'>
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2 text-white'>
+                  <Disc className='h-5 w-5' />
+                  S2G Community Albums
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PlaylistBrowser playlistType='album' emptyMessage='No albums available yet.' />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='chatcast' className='space-y-4'>
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2 text-white'>
+                  <Podcast className='h-5 w-5' />
+                  Chatcast
+                </CardTitle>
+                <p className='text-sm text-white/80 mt-1'>
+                  Listen to community podcasts and audio content
+                </p>
+              </CardHeader>
+              <CardContent>
+                <PlaylistBrowser playlistType='podcast' emptyMessage='No chatcasts available yet.' />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='live-sessions' className='space-y-4'>
+            <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+              <div className='lg:col-span-2'>
+                <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2 text-white'>
+                      <Radio className='h-5 w-5' />
+                      S2G Community Music for Live Sessions
+                    </CardTitle>
+                    <p className='text-sm text-white/80'>
+                      Select tracks to create playlists for your radio shows, rooms, and live streams
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCommunity ? (
+                      <div className='flex items-center justify-center py-12'>
+                        <Loader2 className='w-8 h-8 animate-spin text-white' />
+                      </div>
+                    ) : (
+                      <MusicLibraryTable 
+                        tracks={communityMusic} 
+                        showBestowalButton={false}
+                        allowSelection={true}
+                        onTrackSelect={handleLiveTrackSelect}
+                        selectedTracks={livePlaylist.selectedTracks.map(t => t.id)}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              <div>
+                <LiveSessionPlaylistCart />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   );
 }
