@@ -108,7 +108,12 @@ export function MusicLibraryTable({
     setPlayingTrack(track.id);
   };
 
-  const handleBestowal = async (track: MusicTrack) => {
+  const handleBestowal = async (track: MusicTrack, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!user) {
       toast.error('Please sign in to make a bestowal');
       return;
@@ -121,10 +126,15 @@ export function MusicLibraryTable({
     }
 
     try {
-      await purchaseTrack(track.id, 2); // Bestowal of 2 USDC
+      setProcessing(true);
+      const price = track.price && track.price >= 2.00 ? track.price : 2.00;
+      await purchaseTrack(track.id, price);
       toast.success('Bestowal completed! You can now download the track.');
-    } catch (error) {
-      toast.error('Bestowal failed. Please try again.');
+    } catch (error: any) {
+      console.error('Bestowal error:', error);
+      toast.error(error?.message || 'Bestowal failed. Please try again.');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -344,8 +354,9 @@ export function MusicLibraryTable({
                     size="sm"
                     variant="ghost"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      handleShare(track);
+                      handleShare(track, e);
                     }}
                     className="h-8 w-8 p-0 text-white hover:bg-white/20"
                   >
