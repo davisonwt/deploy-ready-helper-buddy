@@ -173,7 +173,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
       whileHover={{ y: -8 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={`group overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-300 ${featured ? 'border-primary/30' : ''}`}>
+      <Card className={`group overflow-hidden border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300 ${featured ? 'border-white/30' : ''}`}>
         <CardContent className="p-0">
           {/* Cover Image */}
           <div className="relative aspect-square overflow-hidden">
