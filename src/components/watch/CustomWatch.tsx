@@ -379,8 +379,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   <div className="flex justify-between text-xs text-white/70 font-mono max-w-md mx-auto gap-4">
                     <div className="text-left">
                       <div className="font-semibold text-white/90 mb-1">Creator's Time</div>
-                      <div>Part {creatorTime.raw.part}, Minute {creatorTime.raw.minute}</div>
-                      <div className="mt-1">Day {customDate.weekDay}</div>
+                      <div>part {creatorTime.raw.part} mins {creatorTime.raw.minute}</div>
+                      <div className="mt-1">{customDate.weekDay === 7 ? 'Sabbath' : `day ${customDate.weekDay}`}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-white/90 mb-1">Gregorian Time</div>
