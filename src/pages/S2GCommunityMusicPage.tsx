@@ -20,12 +20,28 @@ export default function S2GCommunityMusicPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('s2g_library_items')
-        .select('*, profiles:user_id(display_name, avatar_url)')
+        .select('*')
         .eq('is_public', true)
         .eq('type', 'music')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Fetch profiles separately if needed
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(item => item.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+        return data.map(item => ({
+          ...item,
+          profile: profileMap.get(item.user_id)
+        }));
+      }
+      
       return data || [];
     }
   });
@@ -78,18 +94,26 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    // Create bestowal via edge function after payment
-    const result = await supabase.functions.invoke('complete-library-bestowal', {
-      body: {
-        libraryItemId: item.id,
-        amount: item.price,
-        sowerId: item.user_id
+    if (!item.price || item.price <= 0) {
+      toast.error('This item is free. Access granted automatically.');
+      // Grant free access
+      const result = await supabase.functions.invoke('complete-library-bestowal', {
+        body: {
+          libraryItemId: item.id,
+          amount: 0,
+          sowerId: item.user_id
+        }
+      });
+      if (result.data?.success) {
+        toast.success('Access granted!');
+        window.location.reload();
       }
-    });
-
-    if (result.data?.paymentUrl) {
-      window.open(result.data.paymentUrl, '_blank');
+      return;
     }
+
+    // For paid items, we need to integrate with payment flow
+    // For now, show a message
+    toast.info('Payment integration coming soon. Please contact support for access.');
   };
 
   if (isLoading) {
@@ -233,9 +257,9 @@ ote-}
                         )}
                       </div>
                       <CardTitle className='text-white line-clamp-2'>{item.title}</CardTitle>
-                      {item.profiles && (
+                      {item.profile && (
                         <p className='text-white/70 text-sm mt-1'>
-                          by {item.profiles.display_name || 'Anonymous'}
+                          by {item.profile.display_name || 'Anonymous'}
                         </p>
                       )}
                     </CardHeader>
