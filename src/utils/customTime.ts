@@ -65,7 +65,7 @@ export function getTimeOfDayColor(timeOfDay: TimeOfDay): string {
  * Format custom time display
  */
 export function formatCustomTime(customTime: CustomTime): string {
-  return `Part ${customTime.part}:${customTime.minutes.toString().padStart(2, '0')}`;
+  return `Part ${customTime.part}, minute ${customTime.minutes}`;
 }
 
 /**
