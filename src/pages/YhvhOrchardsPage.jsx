@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,9 @@ import {
   TreePine,
   Heart,
   Settings,
-  Trash2
+  Trash2,
+  Loader2,
+  Sprout
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
@@ -203,83 +206,114 @@ export default function YhvhOrchardsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-s2g-green/20 via-background to-s2g-green/10 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-success"></div>
+      <div className='min-h-screen flex items-center justify-center' style={{
+        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 25%, #6d28d9 50%, #5b21b6 75%, #4c1d95 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradient 15s ease infinite'
+      }}>
+        <Loader2 className='w-12 h-12 animate-spin text-white' />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative">
-      {/* Navy Blue Background */}
-      <div 
-        className="fixed top-0 left-0 w-full h-full z-0"
-        style={{ backgroundColor: '#001f3f' }}
-      />
+    <div className='min-h-screen relative overflow-hidden'>
+      {/* Creative Animated Background */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute inset-0' style={{
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 25%, #6d28d9 50%, #5b21b6 75%, #4c1d95 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient 20s ease infinite'
+        }} />
+        <div className='absolute inset-0 bg-black/20' />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className='absolute rounded-full blur-3xl opacity-30'
+            style={{
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(${139 - i * 5}, ${92 - i * 3}, ${246 - i * 2}, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
+            }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10 + i * 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
+      </div>
       
-      {/* Overlay for better text readability */}
-      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
-      
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-          <div className="flex items-center space-x-6">
-            <div className="p-4 bg-success/20 rounded-full">
-              <TreePine className="h-12 w-12 text-success" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-                color: '#e9d5ff', 
-                textShadow: '2px 2px 4px #7c3aed'
-              }}>364yhvh Community Orchards</h1>
-              <p className="text-lg" style={{ color: '#663399' }}>
-                Fully processed projects ready for community support and bestowals.
+      <div className='relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        {/* Hero Header */}
+        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10 rounded-2xl mb-8 mt-4'>
+          <div className='relative container mx-auto px-4 py-16'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='text-center max-w-4xl mx-auto'
+            >
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
+                  <Sprout className='w-16 h-16 text-white' />
+                </div>
+                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
+                  S2G Community Orchards
+                </h1>
+              </div>
+              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+                Fully processed projects ready for community support and bestowals. Each orchard represents a completed project ready for community funding.
               </p>
-              <p className="text-sm mt-1" style={{ color: '#663399' }}>
-                Each orchard represents a completed project ready for community funding.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-4 items-center">
-            <Badge variant="outline" className="px-4 py-2 text-sm">
-              {filteredOrchards.length} Active Orchards
-            </Badge>
-            <Badge variant="outline" className="px-4 py-2 text-sm">
-              Community Funded
-            </Badge>
-            <Badge variant="outline" className="px-4 py-2 text-sm">
-              Growing Together
-            </Badge>
-            <div className="min-w-[200px] ml-auto">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="border-purple-400/30 focus:border-purple-500 bg-white">
-                  <SelectValue placeholder="Filter by Category" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-purple-400/30 z-50">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className='mt-6 flex flex-wrap gap-4 items-center justify-center'>
+                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
+                  {filteredOrchards.length} Active Orchards
+                </Badge>
+                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
+                  Community Funded
+                </Badge>
+                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
+                  Growing Together
+                </Badge>
+                <div className='min-w-[200px]'>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
+                      <SelectValue placeholder='Filter by Category' />
+                    </SelectTrigger>
+                    <SelectContent className='bg-white border border-border z-50'>
+                      <SelectItem value='all'>All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Gosat Management Info */}
         {isAdminOrGosat && (
-          <div className="mb-8 p-6 bg-white/90 rounded-2xl border border-white/50 shadow-lg backdrop-blur-sm">
-            <div className="flex items-center space-x-3 mb-4">
-              <Settings className="h-6 w-6 text-blue-600" />
-              <h3 className="text-lg font-semibold text-blue-800">Gosat's Management Zone</h3>
+          <div className='mb-8 p-6 backdrop-blur-md bg-white/20 border-white/30 rounded-2xl shadow-2xl'>
+            <div className='flex items-center space-x-3 mb-4'>
+              <Settings className='h-6 w-6 text-white' />
+              <h3 className='text-lg font-semibold text-white'>Gosat's Management Zone</h3>
             </div>
-            <p className="text-blue-700 text-sm mb-2">
+            <p className='text-white/90 text-sm mb-2'>
               <strong>Community Orchards:</strong> These are fully processed projects ready for community support. 
               You can edit pocket prices, amounts, and manage orchard settings.
             </p>
-            <p className="text-blue-700 text-sm">
+            <p className='text-white/90 text-sm'>
               <strong>Note:</strong> Seeds from Free-Will Gifting are managed on the Gosat's Dashboard where you can convert them into orchards.
             </p>
           </div>
@@ -418,12 +452,20 @@ export default function YhvhOrchardsPage() {
           </section>
         ) : (
           <div className="text-center py-16">
-            <TreePine className="h-24 w-24 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No orchards available yet</h3>
-            <p className="text-muted-foreground">Gosats will convert seeds into orchards that will appear here for community support.</p>
+            <TreePine className='h-24 w-24 mx-auto text-white/70 mb-4' />
+            <h3 className='text-xl font-semibold text-white mb-2'>No orchards available yet</h3>
+            <p className='text-white/70'>Gosats will convert seeds into orchards that will appear here for community support.</p>
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   )
 }
