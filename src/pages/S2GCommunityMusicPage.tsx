@@ -45,12 +45,13 @@ export default function S2GCommunityMusicPage() {
         const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
         
         libraryMusic.forEach(item => {
+          const metadata = (item as any).metadata;
           allTracks.push({
             id: item.id,
             source: 'library',
             title: item.title,
             artist: item.description || 'Unknown Artist',
-            duration_seconds: item.metadata?.duration_seconds || 0,
+            duration_seconds: metadata?.duration_seconds || 0,
             file_url: item.file_url,
             preview_url: item.preview_url || item.file_url,
             cover_image_url: item.cover_image_url,
@@ -66,16 +67,16 @@ export default function S2GCommunityMusicPage() {
               const itemPrice = item.price || 0;
               return isAlbum ? itemPrice : (itemPrice >= 2.00 ? itemPrice : 2.00);
             })(),
-            is_giveaway: item.is_giveaway || false,
-            giveaway_limit: item.giveaway_limit,
-            giveaway_count: item.giveaway_count || 0,
+            is_giveaway: false,
+            giveaway_limit: null,
+            giveaway_count: 0,
             bestowal_count: item.bestowal_count || 0,
             download_count: item.download_count || 0,
             profile: profileMap.get(item.user_id),
             user_id: item.user_id,
             created_at: item.created_at,
             tags: item.tags || [],
-            whisperer_percentage: item.whisperer_percentage || 0
+            whisperer_percentage: 0
           });
         });
       }
