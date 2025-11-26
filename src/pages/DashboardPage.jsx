@@ -41,6 +41,7 @@ import { CoHostInvites } from '@/components/radio/CoHostInvites'
 import { MyPremiumRooms } from '@/components/dashboard/MyPremiumRooms'
 import TrafficOverview from '@/components/analytics/TrafficOverview'
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
+import { CustomWatch } from '@/components/watch/CustomWatch'
 
 
 export default function DashboardPage() {
@@ -337,32 +338,38 @@ export default function DashboardPage() {
       
       {/* Content wrapper */}
       <div className="relative z-10">
-        {/* Welcome Section with Profile Picture - Mobile Responsive */}
+        {/* Welcome Section with Profile Picture and Custom Watch - Mobile Responsive */}
         <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 bg-card">
-        <div className="flex items-center gap-3 sm:gap-4 md:space-x-6">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-nav-dashboard shadow-md sm:shadow-lg flex-shrink-0">
-            {user?.avatar_url ? (
-              <img 
-                src={user.avatar_url} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
-                <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-heading-primary" />
-              </div>
-            )}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4 md:space-x-6 flex-1 min-w-0">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-nav-dashboard shadow-md sm:shadow-lg flex-shrink-0">
+              {user?.avatar_url ? (
+                <img 
+                  src={user.avatar_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
+                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-heading-primary" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-heading-primary truncate">
+                Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg text-heading-primary">
+                Ready to grow your orchard today?
+              </p>
+              <p className="text-xs sm:text-sm mt-1 text-heading-primary">
+                Payment Method: USDC (USD Coin)
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-heading-primary truncate">
-              Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-heading-primary">
-              Ready to grow your orchard today?
-            </p>
-            <p className="text-xs sm:text-sm mt-1 text-heading-primary">
-              Payment Method: USDC (USD Coin)
-            </p>
+          {/* Custom Watch */}
+          <div className="flex-shrink-0">
+            <CustomWatch compact={true} />
           </div>
         </div>
       </div>
