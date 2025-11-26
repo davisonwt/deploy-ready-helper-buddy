@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Loader2, Book, FileText, GraduationCap, Image, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LibraryUploadForm() {
   const { user } = useAuth();
@@ -21,7 +22,11 @@ export default function LibraryUploadForm() {
     type: 'ebook',
     category: '',
     price: 0,
-    tags: ''
+    tags: '',
+    is_giveaway: false,
+    giveaway_limit: null as number | null,
+    whisperer_percentage: 0,
+    preview_duration_seconds: 30
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
@@ -36,6 +41,36 @@ export default function LibraryUploadForm() {
 
     if (!mainFile) {
       toast.error('Please select a file to upload');
+      return;
+    }
+
+    // Validate: Must have either price OR giveaway
+    if (!formData.is_giveaway && (!formData.price || formData.price <= 0)) {
+      toast.error('Please set a bestowal price OR enable giveaway option');
+      return;
+    }
+
+    // Validate: If giveaway, must have limit
+    if (formData.is_giveaway && (!formData.giveaway_limit || formData.giveaway_limit <= 0)) {
+      toast.error('Please set giveaway limit (number of free downloads)');
+      return;
+    }
+
+    // Validate: Preview file required for music/courses (30sec preview)
+    if ((formData.type === 'music' || formData.type === 'training_course') && !previewFile) {
+      toast.error('Preview file is required for music and training courses (30-second preview)');
+      return;
+    }
+
+    // Validate: Preview file required for e-books (preview only)
+    if (formData.type === 'ebook' && !previewFile) {
+      toast.error('Preview file is required for e-books (preview pages)');
+      return;
+    }
+
+    // Validate whisperer percentage
+    if (formData.whisperer_percentage < 0 || formData.whisperer_percentage > 30) {
+      toast.error('Whisperer percentage must be between 0% and 30%');
       return;
     }
 
@@ -101,13 +136,18 @@ export default function LibraryUploadForm() {
           description: formData.description,
           type: formData.type,
           category: formData.category,
-          price: formData.price,
+          price: formData.is_giveaway ? 0 : formData.price,
           file_url: fileUrl.publicUrl,
           preview_url: previewUrl,
           cover_image_url: coverUrl,
           file_size: mainFile.size,
           tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-          is_public: true
+          is_public: true,
+          is_giveaway: formData.is_giveaway,
+          giveaway_limit: formData.is_giveaway ? formData.giveaway_limit : null,
+          giveaway_count: 0,
+          whisperer_percentage: formData.whisperer_percentage,
+          preview_duration_seconds: (formData.type === 'music' || formData.type === 'training_course') ? 30 : null
         });
 
       if (insertError) throw insertError;
@@ -191,21 +231,81 @@ export default function LibraryUploadForm() {
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor='price' className='text-white'>Price (USDC)</Label>
+              {/* Bestowal or Giveaway Section */}
+              <div className='space-y-4 p-4 bg-white/10 rounded-lg border border-white/20'>
+                <div className='flex items-center gap-2'>
+                  <Checkbox
+                    id='is_giveaway'
+                    checked={formData.is_giveaway}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_giveaway: !!checked, price: checked ? 0 : formData.price })}
+                    className='border-white/30'
+                  />
+                  <Label htmlFor='is_giveaway' className='text-white cursor-pointer'>
+                    Enable Giveaway (Free Downloads)
+                  </Label>
+                </div>
+
+                {formData.is_giveaway ? (
+                  <div>
+                    <Label htmlFor='giveaway_limit' className='text-white'>Giveaway Limit (Number of Free Downloads) *</Label>
+                    <Input
+                      id='giveaway_limit'
+                      type='number'
+                      min='1'
+                      required={formData.is_giveaway}
+                      value={formData.giveaway_limit || ''}
+                      onChange={(e) => setFormData({ ...formData, giveaway_limit: parseInt(e.target.value) || null })}
+                      className='bg-white/20 border-white/30 text-white'
+                      placeholder='e.g., 100'
+                    />
+                    <p className='text-white/70 text-xs mt-1'>
+                      Set how many free downloads are available for this giveaway
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor='price' className='text-white'>Bestowal Price (USDC) *</Label>
+                    <Input
+                      id='price'
+                      type='number'
+                      step='0.01'
+                      min='0.01'
+                      required={!formData.is_giveaway}
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      className='bg-white/20 border-white/30 text-white'
+                      placeholder='0.00'
+                    />
+                    <p className='text-white/70 text-xs mt-1'>
+                      Amount growers must bestow to access this item. Minimum $0.01 USDC required.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* S2G Whisperer Option */}
+              <div className='space-y-2 p-4 bg-white/10 rounded-lg border border-white/20'>
+                <Label htmlFor='whisperer_percentage' className='text-white'>
+                  S2G Whisperer Percentage (Content Marketers) - Optional
+                </Label>
                 <Input
-                  id='price'
+                  id='whisperer_percentage'
                   type='number'
-                  step='0.01'
+                  step='0.1'
                   min='0'
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                  max='30'
+                  value={formData.whisperer_percentage}
+                  onChange={(e) => setFormData({ ...formData, whisperer_percentage: parseFloat(e.target.value) || 0 })}
                   className='bg-white/20 border-white/30 text-white'
+                  placeholder='0'
                 />
+                <p className='text-white/70 text-xs'>
+                  Allocate 2.5% to 30% of bestowals to S2G whisperers (content marketers) who promote your item. Set to 0 to disable.
+                </p>
               </div>
 
               <div>
-                <Label htmlFor='mainFile' className='text-white'>Main File *</Label>
+                <Label htmlFor='mainFile' className='text-white'>Main File (Full Content) *</Label>
                 <Input
                   id='mainFile'
                   type='file'
@@ -213,16 +313,31 @@ export default function LibraryUploadForm() {
                   onChange={(e) => setMainFile(e.target.files?.[0] || null)}
                   className='bg-white/20 border-white/30 text-white'
                 />
+                <p className='text-white/70 text-xs mt-1'>
+                  Full content file. Only accessible after bestowal or giveaway claim.
+                </p>
               </div>
 
               <div>
-                <Label htmlFor='previewFile' className='text-white'>Preview File (Optional)</Label>
+                <Label htmlFor='previewFile' className='text-white'>
+                  Preview File *
+                  {(formData.type === 'music' || formData.type === 'training_course') && ' (30-second preview required)'}
+                  {formData.type === 'ebook' && ' (Preview pages required)'}
+                </Label>
                 <Input
                   id='previewFile'
                   type='file'
+                  required={formData.type === 'music' || formData.type === 'training_course' || formData.type === 'ebook'}
                   onChange={(e) => setPreviewFile(e.target.files?.[0] || null)}
                   className='bg-white/20 border-white/30 text-white'
                 />
+                <p className='text-white/70 text-xs mt-1'>
+                  {formData.type === 'music' || formData.type === 'training_course' 
+                    ? '30-second preview clip (required for music and courses)'
+                    : formData.type === 'ebook'
+                    ? 'Preview pages/chapters (required for e-books)'
+                    : 'Preview file shown before bestowal (optional for other types)'}
+                </p>
               </div>
 
               <div>
