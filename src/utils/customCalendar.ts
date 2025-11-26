@@ -30,16 +30,16 @@ export function getDaysInMonth(month: number): number {
  * This is a simplified conversion - you may need to adjust based on your specific epoch
  */
 export function toCustomDate(standardDate: Date, startYear: number = 6028): CustomDate {
-  // For now, use a simple conversion based on current date
-  // You can adjust the epoch date based on your actual calendar system
-  const epoch = new Date('2024-01-01'); // Example epoch - adjust as needed
+  // Convert Gregorian date (2025-11-26) to custom calendar date (Y6028 M9 D10)
+  // Epoch: Gregorian 2025-11-26 = Custom Y6028 M9 D10
+  const epoch = new Date('2025-11-26T00:00:00Z');
   const diffTime = standardDate.getTime() - epoch.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   
   let year = startYear;
-  let month = 1;
-  let day = 1;
-  let remainingDays = Math.abs(diffDays); // Use absolute value
+  let month = 9; // Start at month 9
+  let day = 10; // Start at day 10
+  let remainingDays = diffDays;
   
   // Calculate year
   const daysPerYear = DAYS_PER_MONTH.reduce((sum, days) => sum + days, 0);
@@ -47,18 +47,41 @@ export function toCustomDate(standardDate: Date, startYear: number = 6028): Cust
   year += yearsToAdd;
   remainingDays -= yearsToAdd * daysPerYear;
   
-  // Calculate month and day
-  for (let m = 0; m < DAYS_PER_MONTH.length; m++) {
-    const daysInMonth = DAYS_PER_MONTH[m];
-    if (remainingDays < daysInMonth) {
-      month = m + 1;
-      day = remainingDays + 1;
-      break;
+  // Calculate month and day (starting from month 9, day 10)
+  let currentMonth = month;
+  let currentDay = day;
+  
+  // Move forward or backward based on remainingDays
+  while (remainingDays !== 0) {
+    const daysInCurrentMonth = getDaysInMonth(currentMonth);
+    
+    if (remainingDays > 0) {
+      // Moving forward
+      const daysToEndOfMonth = daysInCurrentMonth - currentDay + 1;
+      if (remainingDays >= daysToEndOfMonth) {
+        remainingDays -= daysToEndOfMonth;
+        currentDay = 1;
+        currentMonth = (currentMonth % 12) + 1;
+        if (currentMonth === 1) year++;
+      } else {
+        currentDay += remainingDays;
+        remainingDays = 0;
+      }
+    } else {
+      // Moving backward
+      if (currentDay + remainingDays >= 1) {
+        currentDay += remainingDays;
+        remainingDays = 0;
+      } else {
+        remainingDays += currentDay;
+        currentMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        if (currentMonth === 12) year--;
+        currentDay = getDaysInMonth(currentMonth);
+      }
     }
-    remainingDays -= daysInMonth;
   }
   
-  return { year, month, day };
+  return { year, month: currentMonth, day: currentDay };
 }
 
 /**

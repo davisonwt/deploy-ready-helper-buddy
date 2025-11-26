@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toCustomTime, getTimeOfDay, getTimeOfDayColor, formatCustomTime, getAntiClockwiseAngle, type TimeOfDay, toStandardMinutes } from '@/utils/customTime';
-import { toCustomDate, formatCustomDate, type CustomDate } from '@/utils/customCalendar';
+import { toCustomDate, formatCustomDate, getDayOfWeek, type CustomDate } from '@/utils/customCalendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -38,7 +38,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const [customTime, setCustomTime] = useState(toCustomTime(0));
   const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 9, day: 10 });
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
-  const [userOffset, setUserOffset] = useState(0); // User's local time offset in minutes
+  const [userTimezone, setUserTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [timezoneOffset, setTimezoneOffset] = useState(0); // Offset in minutes
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [timers, setTimers] = useState<Timer[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -57,6 +58,13 @@ export function CustomWatch({ className, compact = false, showControls = false }
     // Initialize with user's local time
     const now = new Date();
     setCustomDate(toCustomDate(now));
+    
+    // Calculate timezone offset
+    const localTime = now.getTime();
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const targetTime = new Date(utcTime + (timezoneOffset * 60000));
+    const offset = (targetTime.getTime() - localTime) / 60000;
+    setTimezoneOffset(offset);
   }, []);
 
   useEffect(() => {
@@ -64,18 +72,23 @@ export function CustomWatch({ className, compact = false, showControls = false }
       const now = new Date();
       setCurrentTime(now);
       
-      // Calculate custom time
-      const standardMinutes = (now.getHours() * 60 + now.getMinutes() + userOffset) % 1440;
-      const custom = toCustomTime(standardMinutes);
+      // Calculate custom time with timezone offset
+      const localMinutes = now.getHours() * 60 + now.getMinutes();
+      const seconds = now.getSeconds();
+      const adjustedMinutes = (localMinutes + timezoneOffset) % 1440;
+      const custom = toCustomTime(adjustedMinutes);
       setCustomTime(custom);
       
       // Update time of day
-      const hours = (standardMinutes / 60) % 24;
+      const hours = (adjustedMinutes / 60) % 24;
       setTimeOfDay(getTimeOfDay(hours));
+      
+      // Update custom date periodically
+      setCustomDate(toCustomDate(now));
       
       // Check alarms
       alarms.forEach(alarm => {
-        if (alarm.enabled && standardMinutes === alarm.time) {
+        if (alarm.enabled && Math.floor(adjustedMinutes) === alarm.time) {
           toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
           if (audioRef.current) {
             audioRef.current.play().catch(() => {});
@@ -100,10 +113,15 @@ export function CustomWatch({ className, compact = false, showControls = false }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [userOffset, alarms]);
+  }, [timezoneOffset, alarms]);
 
-  const angle = getAntiClockwiseAngle(customTime);
+  // Calculate angles for three hands (anti-clockwise)
+  const partAngle = getAntiClockwiseAngle({ part: customTime.part, minutes: 0 }); // Hour hand (part indicator)
+  const minuteAngle = getAntiClockwiseAngle(customTime); // Minute hand (within part)
+  const secondAngle = (360 - ((currentTime.getSeconds() / 60) * 360)) % 360; // Second hand (anti-clockwise)
+  
   const bgColor = getTimeOfDayColor(timeOfDay);
+  const dayOfWeek = getDayOfWeek(customDate);
 
   const handleAddAlarm = () => {
     const alarmTime = toStandardMinutes({ part: newAlarmPart, minutes: newAlarmMinutes });
@@ -151,85 +169,206 @@ export function CustomWatch({ className, compact = false, showControls = false }
     return `${s}s`;
   };
 
+  const watchSize = compact ? 80 : 200;
+  const centerX = 50;
+  const centerY = 50;
+
   return (
     <>
-      <Card className={cn('backdrop-blur-md bg-white/10 border-white/20', className)}>
+      <Card className={cn('backdrop-blur-md bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 border-white/20 shadow-2xl', className)}>
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="flex items-center gap-4">
-            {/* Watch Face */}
-            <div className="relative flex-shrink-0" style={{ width: compact ? '80px' : '120px', height: compact ? '80px' : '120px' }}>
-              <div
-                className="rounded-full border-4 border-white/30 shadow-lg relative overflow-hidden"
+            {/* Luxury Watch Face */}
+            <div className="relative flex-shrink-0" style={{ width: `${watchSize}px`, height: `${watchSize}px` }}>
+              {/* Outer Rose Gold Bezel */}
+              <div 
+                className="absolute inset-0 rounded-full"
                 style={{
-                  width: '100%',
-                  height: '100%',
+                  background: 'linear-gradient(135deg, #d4af37 0%, #f4e4bc 30%, #d4af37 60%, #b8860b 100%)',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 4px 8px rgba(212,175,55,0.4)',
+                  border: '2px solid rgba(212,175,55,0.6)',
+                }}
+              />
+              
+              {/* Main Dial - Celestial Theme */}
+              <div
+                className="absolute rounded-full overflow-hidden"
+                style={{
+                  width: `${watchSize * 0.85}px`,
+                  height: `${watchSize * 0.85}px`,
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
                   background: bgColor,
+                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
                 }}
               >
-                {/* 18 Part Markers */}
+                {/* Starry Sky Effect */}
+                <div className="absolute inset-0" style={{
+                  backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1px, transparent 1px), radial-gradient(circle at 60% 70%, rgba(255,255,255,0.6) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.7) 1px, transparent 1px), radial-gradient(circle at 40% 80%, rgba(255,255,255,0.5) 1px, transparent 1px)',
+                  backgroundSize: '30% 30%, 25% 25%, 35% 35%, 28% 28%',
+                  backgroundPosition: '0% 0%, 100% 100%, 50% 50%, 0% 100%',
+                  opacity: 0.6,
+                }} />
+                
+                {/* 18 Part Markers - Anti-clockwise */}
                 {Array.from({ length: 18 }).map((_, i) => {
+                  const partNum = i + 1;
                   const markerAngle = (i * 20) - 90; // Start at top, anti-clockwise
                   const radian = (markerAngle * Math.PI) / 180;
-                  const radius = compact ? 35 : 50;
-                  const x = 50 + Math.cos(radian) * radius;
-                  const y = 50 + Math.sin(radian) * radius;
+                  const radius = watchSize * 0.35;
+                  const x = centerX + Math.cos(radian) * radius;
+                  const y = centerY + Math.sin(radian) * radius;
                   
                   return (
-                    <div
-                      key={i}
-                      className="absolute w-1 h-1 bg-white/60 rounded-full"
-                      style={{
-                        left: `${x}%`,
-                        top: `${y}%`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    />
+                    <div key={i}>
+                      {/* Part Number */}
+                      <div
+                        className="absolute text-white font-bold"
+                        style={{
+                          left: `${x}%`,
+                          top: `${y}%`,
+                          transform: 'translate(-50%, -50%)',
+                          fontSize: watchSize * 0.06,
+                          textShadow: '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(255,255,255,0.3)',
+                          fontWeight: customTime.part === partNum ? '900' : '600',
+                          color: customTime.part === partNum ? '#ffd700' : 'rgba(255,255,255,0.9)',
+                        }}
+                      >
+                        {partNum}
+                      </div>
+                      {/* Marker Dot */}
+                      <div
+                        className="absolute rounded-full bg-white/80"
+                        style={{
+                          width: watchSize * 0.015,
+                          height: watchSize * 0.015,
+                          left: `${x}%`,
+                          top: `${y}%`,
+                          transform: 'translate(-50%, -50%)',
+                          boxShadow: '0 0 4px rgba(255,255,255,0.8)',
+                        }}
+                      />
+                    </div>
                   );
                 })}
                 
-                {/* Hour Hand (Current Part) */}
+                {/* Hour Hand (Part Indicator) - Thick, Rose Gold */}
                 <motion.div
-                  className="absolute w-1 bg-white rounded-full origin-bottom"
+                  className="absolute origin-bottom"
                   style={{
-                    height: compact ? '30%' : '35%',
-                    left: '50%',
-                    top: '50%',
+                    width: watchSize * 0.008,
+                    height: watchSize * 0.25,
+                    left: `${centerX}%`,
+                    top: `${centerY}%`,
                     transformOrigin: 'bottom center',
-                    boxShadow: '0 0 4px rgba(255,255,255,0.8)',
+                    background: 'linear-gradient(to top, #d4af37 0%, #f4e4bc 50%, #d4af37 100%)',
+                    borderRadius: '2px',
+                    boxShadow: '0 0 8px rgba(212,175,55,0.6), inset 0 0 4px rgba(255,255,255,0.3)',
                   }}
                   animate={{
-                    rotate: angle,
+                    rotate: partAngle,
                   }}
                   transition={{
                     type: 'spring',
-                    stiffness: 100,
-                    damping: 15,
+                    stiffness: 200,
+                    damping: 20,
                   }}
                 />
                 
-                {/* Center Dot */}
-                <div
-                  className="absolute w-3 h-3 bg-white rounded-full border-2 border-white/50"
+                {/* Minute Hand (Within Part) - Medium, Silver */}
+                <motion.div
+                  className="absolute origin-bottom"
                   style={{
+                    width: watchSize * 0.005,
+                    height: watchSize * 0.35,
+                    left: `${centerX}%`,
+                    top: `${centerY}%`,
+                    transformOrigin: 'bottom center',
+                    background: 'linear-gradient(to top, #c0c0c0 0%, #e8e8e8 50%, #c0c0c0 100%)',
+                    borderRadius: '1px',
+                    boxShadow: '0 0 6px rgba(192,192,192,0.5)',
+                  }}
+                  animate={{
+                    rotate: minuteAngle,
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 25,
+                  }}
+                />
+                
+                {/* Second Hand - Thin, Red */}
+                <motion.div
+                  className="absolute origin-bottom"
+                  style={{
+                    width: watchSize * 0.003,
+                    height: watchSize * 0.4,
+                    left: `${centerX}%`,
+                    top: `${centerY}%`,
+                    transformOrigin: 'bottom center',
+                    background: '#ff4444',
+                    borderRadius: '0.5px',
+                    boxShadow: '0 0 4px rgba(255,68,68,0.8)',
+                  }}
+                  animate={{
+                    rotate: secondAngle,
+                  }}
+                  transition={{
+                    type: 'tween',
+                    duration: 0.1,
+                    ease: 'linear',
+                  }}
+                />
+                
+                {/* Center Dot - Rose Gold with Gem Effect */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    width: watchSize * 0.04,
+                    height: watchSize * 0.04,
+                    left: `${centerX}%`,
+                    top: `${centerY}%`,
+                    transform: 'translate(-50%, -50%)',
+                    background: 'radial-gradient(circle at 30% 30%, #f4e4bc, #d4af37, #b8860b)',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 0 12px rgba(212,175,55,0.8), inset 0 0 8px rgba(255,255,255,0.4)',
+                  }}
+                />
+                
+                {/* Calendar Ring - Inner Black Ring */}
+                <div
+                  className="absolute rounded-full border-2 border-white/20"
+                  style={{
+                    width: `${watchSize * 0.7}px`,
+                    height: `${watchSize * 0.7}px`,
                     left: '50%',
                     top: '50%',
                     transform: 'translate(-50%, -50%)',
-                    boxShadow: '0 0 8px rgba(255,255,255,0.6)',
+                    background: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(4px)',
                   }}
                 />
               </div>
               
-              {/* Time Display */}
+              {/* Date Display - Below Watch */}
               {!compact && (
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-center">
-                  <div className="text-xs text-white/90 font-mono">
-                    {formatCustomTime(customTime)}
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-center whitespace-nowrap">
+                  <div className="text-xs text-white/90 font-mono font-bold mb-1">
+                    {formatCustomDate(customDate)}
+                  </div>
+                  <div className="text-xs text-white/70 font-mono">
+                    Day {dayOfWeek} • {formatCustomTime(customTime)}
+                  </div>
+                  <div className="text-xs text-white/60 font-mono mt-1">
+                    {currentTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                   </div>
                 </div>
               )}
             </div>
             
-            {/* Date and Info */}
+            {/* Date and Info Panel */}
             <div className="flex-1 min-w-0">
               {!compact && (
                 <>
@@ -239,11 +378,14 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   <Badge className="bg-white/20 text-white border-white/30 text-xs mb-2 capitalize">
                     {timeOfDay}
                   </Badge>
-                  <div className="text-xs text-white/70">
-                    {formatCustomTime(customTime)}
+                  <div className="text-xs text-white/70 font-mono mb-1">
+                    Part {customTime.part}:{customTime.minutes.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-white/60 font-mono">
+                    Day {dayOfWeek}
                   </div>
                   {showControls && (
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-3">
                       <Dialog open={alarmDialogOpen} onOpenChange={setAlarmDialogOpen}>
                         <DialogTrigger asChild>
                           <Button size="sm" variant="outline" className="h-7 text-xs border-white/30 text-white hover:bg-white/20">
@@ -361,13 +503,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
-                              <Label>Time Offset (minutes)</Label>
-                              <Input
-                                type="number"
-                                value={userOffset}
-                                onChange={(e) => setUserOffset(parseInt(e.target.value) || 0)}
-                                placeholder="0"
-                              />
+                              <Label>Timezone</Label>
+                              <Select value={userTimezone} onValueChange={setUserTimezone}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Intl.supportedValuesOf('timeZone').slice(0, 50).map(tz => (
+                                    <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <p className="text-xs text-muted-foreground mt-1">
                                 Adjust to sync with your local time
                               </p>
