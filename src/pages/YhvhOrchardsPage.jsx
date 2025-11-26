@@ -313,7 +313,7 @@ export default function YhvhOrchardsPage() {
             </div>
             <p className='text-white/90 text-sm mb-2'>
               <strong>Community Orchards:</strong> These are fully processed projects ready for community support. 
-              You can edit pocket prices, amounts, and manage orchard settings.
+              You can edit pocket bestow values, amounts, and manage orchard settings.
             </p>
             <p className='text-white/90 text-sm'>
               <strong>Note:</strong> Seeds from Free-Will Gifting are managed on the Gosat's Dashboard where you can convert them into orchards.
@@ -388,13 +388,13 @@ export default function YhvhOrchardsPage() {
                           <p className="text-sm text-white/80 line-clamp-2 mb-3">
                             {orchard.description}
                           </p>
-                          {/* Pocket Price Display */}
-                          {orchard.pocket_price && (
+                          {/* Pocket Bestow Display */}
+                          {orchard.pocket_bestow && (
                             <div className="mb-3 p-2 bg-purple-500/20 border border-purple-400/50 rounded-lg">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs text-white/70">Pocket Price</span>
+                                <span className="text-xs text-white/70">Pocket Bestow</span>
                                 <Badge className="bg-purple-500/30 text-white border-purple-400/50">
-                                  {formatCurrency(orchard.pocket_price)}
+                                  {formatCurrency(orchard.pocket_bestow)}
                                 </Badge>
                               </div>
                             </div>

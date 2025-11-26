@@ -21,7 +21,7 @@ export default function LibraryUploadForm() {
     description: '',
     type: 'ebook',
     category: '',
-    price: 0,
+    bestow: 0,
     tags: '',
     is_giveaway: false,
     giveaway_limit: null as number | null,
@@ -35,14 +35,14 @@ export default function LibraryUploadForm() {
      !formData.tags.toLowerCase().includes('lp') &&
      !formData.tags.toLowerCase().includes('ep'));
 
-  // Update price when type changes to music (single tracks default to 2 USDC, but sowers can set higher)
+  // Update bestow when type changes to music (single tracks default to 2 USDC, but sowers can set higher)
   useEffect(() => {
-    if (isSingleMusic && formData.price === 0 && !formData.is_giveaway) {
-      setFormData(prev => ({ ...prev, price: 2.00 }));
+    if (isSingleMusic && formData.bestow === 0 && !formData.is_giveaway) {
+      setFormData(prev => ({ ...prev, bestow: 2.00 }));
     }
-    // Ensure minimum 2 USDC for single music tracks if price is set but below minimum
-    if (isSingleMusic && formData.price > 0 && formData.price < 2.00 && !formData.is_giveaway) {
-      setFormData(prev => ({ ...prev, price: 2.00 }));
+    // Ensure minimum 2 USDC for single music tracks if bestow is set but below minimum
+    if (isSingleMusic && formData.bestow > 0 && formData.bestow < 2.00 && !formData.is_giveaway) {
+      setFormData(prev => ({ ...prev, bestow: 2.00 }));
     }
   }, [formData.type, formData.tags, formData.is_giveaway]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -61,17 +61,17 @@ export default function LibraryUploadForm() {
       return;
     }
 
-    // Validate: Must have either price OR giveaway
-    if (!formData.is_giveaway && (!formData.price || formData.price <= 0)) {
-      toast.error('Please set a bestowal price OR enable giveaway option');
+    // Validate: Must have either bestow OR giveaway
+    if (!formData.is_giveaway && (!formData.bestow || formData.bestow <= 0)) {
+      toast.error('Please set a bestowal value OR enable giveaway option');
       return;
     }
 
     // Validate: Single music tracks must have minimum 2 USDC
-    if (!formData.is_giveaway && formData.type === 'music' && formData.price > 0) {
+    if (!formData.is_giveaway && formData.type === 'music' && formData.bestow > 0) {
       const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
       const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
-      if (!isAlbum && formData.price < 2.00) {
+      if (!isAlbum && formData.bestow < 2.00) {
         toast.error('Single music tracks require a minimum bestowal value of 2 USDC');
         return;
       }
@@ -170,11 +170,11 @@ export default function LibraryUploadForm() {
               const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
               const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
               if (!isAlbum) {
-                // Default to 2 USDC if not set, otherwise use sower's price (must be >= 2)
-                return formData.price >= 2.00 ? formData.price : 2.00;
+                // Default to 2 USDC if not set, otherwise use sower's bestow (must be >= 2)
+                return formData.bestow >= 2.00 ? formData.bestow : 2.00;
               }
             }
-            return formData.price;
+            return formData.bestow;
           })(),
           file_url: fileUrl.publicUrl,
           preview_url: previewUrl,
@@ -276,7 +276,7 @@ export default function LibraryUploadForm() {
                   <Checkbox
                     id='is_giveaway'
                     checked={formData.is_giveaway}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_giveaway: !!checked, price: checked ? 0 : formData.price })}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_giveaway: !!checked, bestow: checked ? 0 : formData.bestow })}
                     className='border-white/30'
                   />
                   <Label htmlFor='is_giveaway' className='text-white cursor-pointer'>
@@ -303,27 +303,27 @@ export default function LibraryUploadForm() {
                   </div>
                 ) : (
                   <div>
-                    <Label htmlFor='price' className='text-white'>
-                      Bestowal Price (USDC) *
+                    <Label htmlFor='bestow' className='text-white'>
+                      Bestowal Value (USDC) *
                       {isSingleMusic && (
                         <span className='text-yellow-400 ml-2'>(Minimum: 2 USDC for single tracks)</span>
                       )}
                     </Label>
                     <Input
-                      id='price'
+                      id='bestow'
                       type='number'
                       step='0.01'
                       min={isSingleMusic ? '2.00' : '0.01'}
                       required={!formData.is_giveaway}
-                      value={formData.price}
+                      value={formData.bestow}
                       onChange={(e) => {
-                        const newPrice = parseFloat(e.target.value) || 0;
+                        const newBestow = parseFloat(e.target.value) || 0;
                         // Enforce minimum 2 USDC for single music tracks
-                        if (isSingleMusic && newPrice > 0 && newPrice < 2.00) {
+                        if (isSingleMusic && newBestow > 0 && newBestow < 2.00) {
                           toast.error('Single music tracks require minimum 2 USDC');
-                          setFormData({ ...formData, price: 2.00 });
+                          setFormData({ ...formData, bestow: 2.00 });
                         } else {
-                          setFormData({ ...formData, price: newPrice });
+                          setFormData({ ...formData, bestow: newBestow });
                         }
                       }}
                       className='bg-white/20 border-white/30 text-white'

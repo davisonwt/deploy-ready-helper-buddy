@@ -271,7 +271,7 @@ export function MusicLibraryTable({
                   {formatDuration(track.duration_seconds)}
                 </div>
 
-                {/* Price */}
+                {/* Bestow */}
                 <div className="col-span-1 text-center">
                   <Badge className="bg-purple-500/30 text-white border-purple-400/50">
                     {formatAmount(2)}

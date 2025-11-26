@@ -176,7 +176,7 @@ export default function MyOrchardsPage() {
 
   const getTotalRaised = () => {
     return userOrchards.reduce((sum, orchard) => 
-      sum + ((orchard.filled_pockets || 0) * (orchard.pocket_price || 0)), 0
+      sum + ((orchard.filled_pockets || 0) * (orchard.pocket_bestow || 0)), 0
     )
   }
 
@@ -502,13 +502,13 @@ export default function MyOrchardsPage() {
                         {orchard.description}
                       </p>
                       
-                      {/* Pocket Price Display */}
-                      {orchard.pocket_price && (
+                      {/* Pocket Bestow Display */}
+                      {orchard.pocket_bestow && (
                         <div className="mb-3 p-2 bg-purple-500/20 border border-purple-400/50 rounded-lg">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-white/70">Pocket Price</span>
+                            <span className="text-xs text-white/70">Pocket Bestow</span>
                             <Badge className="bg-purple-500/30 text-white border-purple-400/50">
-                              {formatCurrency(orchard.pocket_price)}
+                              {formatCurrency(orchard.pocket_bestow)}
                             </Badge>
                           </div>
                         </div>
@@ -530,14 +530,14 @@ export default function MyOrchardsPage() {
                       <div className='flex items-center justify-between text-sm'>
                         <span className='text-white/80'>Raised:</span>
                         <span className='font-medium text-white'>
-                          {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
+                          {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_bestow || 0))}
                         </span>
                       </div>
                       
                        <div className='flex items-center justify-between text-sm'>
                          <span className='text-white/80'>Goal:</span>
                          <span className='font-medium text-white'>
-                           {formatCurrency(((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
+                           {formatCurrency(((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) * (orchard.pocket_bestow || 0))}
                          </span>
                        </div>
                       

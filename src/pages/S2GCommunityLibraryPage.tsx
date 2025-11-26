@@ -87,7 +87,7 @@ export default function S2GCommunityLibraryPage() {
     }
 
     if (!item.price || item.price <= 0) {
-      toast.error('This item requires bestowal but has no price set');
+      toast.error('This item requires bestowal but has no bestow value set');
       return;
     }
 
