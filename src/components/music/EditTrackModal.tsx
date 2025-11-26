@@ -24,7 +24,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     artist_name: track?.artist_name || '',
     genre: track?.genre || '',
     wallet_address: track?.wallet_address || '',
-    price: track?.price || 2.0,
+    bestow: track?.price || 2.0,
   });
   const [artistImage, setArtistImage] = useState<string>(track?.profiles?.avatar_url || '');
 
@@ -75,7 +75,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
       ) || false;
 
       // Validate: Single tracks must have minimum 2 USDC
-      if (!isAlbum && formData.price < 2.00) {
+      if (!isAlbum && formData.bestow < 2.00) {
         toast.error('Single music tracks require minimum 2 USDC');
         setSaving(false);
         return;
@@ -89,7 +89,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
           artist_name: formData.artist_name,
           genre: formData.genre,
           wallet_address: formData.wallet_address,
-          price: formData.price,
+          price: formData.bestow,
         })
         .eq('id', track.id);
 
