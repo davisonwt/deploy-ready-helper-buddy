@@ -50,8 +50,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [customTime, setCustomTime] = useState<CustomTime>({ part: 1, minute: 1 });
   const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 9, day: 10, weekDay: 3 });
-  const [userLat, setUserLat] = useState<number>(30); // Default: ~30N (global average)
-  const [userLon, setUserLon] = useState<number>(0); // Default longitude
+  const [userLat, setUserLat] = useState<number>(-26.2); // Default: South Africa (Johannesburg)
+  const [userLon, setUserLon] = useState<number>(28.0); // Default: South Africa (Johannesburg)
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [timers, setTimers] = useState<Timer[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -76,7 +76,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
         },
         () => {
           // Fallback to default if geolocation fails
-          console.log('Using default location (30°N, 0°E)');
+          console.log('Using default location (South Africa: -26.2°N, 28.0°E)');
         }
       );
     }
