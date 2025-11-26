@@ -30,6 +30,7 @@ import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import { formatCurrency } from '../utils/formatters';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { processOrchardsUrls } from '../utils/urlUtils';
 import {
   Carousel,
@@ -449,9 +450,12 @@ export default function MyOrchardsPage() {
                         className="w-full h-48 object-cover rounded-t-lg"
                       />
                     ) : (
-                      <div className="w-full h-48 bg-gradient-to-br from-nav-my/30 to-nav-my/50 rounded-t-lg flex items-center justify-center">
-                        <TreePine className="h-12 w-12 text-orange-600" />
-                      </div>
+                      <GradientPlaceholder 
+                        type="orchard" 
+                        title={orchard.title}
+                        className="w-full h-48 rounded-t-lg"
+                        size="lg"
+                      />
                     )}
                     <div className="absolute top-4 right-4">
                       <Badge 
@@ -494,9 +498,21 @@ export default function MyOrchardsPage() {
                   
                   <CardContent className="flex-1 flex flex-col">
                     <div className="space-y-4 flex-1">
-                      <p className='text-white/80 text-sm line-clamp-2'>
+                      <p className='text-white/80 text-sm line-clamp-2 mb-3'>
                         {orchard.description}
                       </p>
+                      
+                      {/* Pocket Price Display */}
+                      {orchard.pocket_price && (
+                        <div className="mb-3 p-2 bg-purple-500/20 border border-purple-400/50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-white/70">Pocket Price</span>
+                            <Badge className="bg-purple-500/30 text-white border-purple-400/50">
+                              {formatCurrency(orchard.pocket_price)}
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
                       
                       <div>
                         <div className='flex items-center justify-between mb-2'>
