@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-
+import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,8 @@ import {
   MapPin,
   Heart,
   Trash2,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
@@ -221,186 +222,213 @@ export default function MyOrchardsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      <div className='min-h-screen flex items-center justify-center' style={{
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradient 15s ease infinite'
+      }}>
+        <Loader2 className='w-12 h-12 animate-spin text-white' />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
+    <div className='min-h-screen relative overflow-hidden'>
+      {/* Creative Animated Background */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute inset-0' style={{
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient 20s ease infinite'
+        }} />
+        <div className='absolute inset-0 bg-black/20' />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className='absolute rounded-full blur-3xl opacity-30'
+            style={{
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(${16 + i * 10}, ${185 - i * 5}, ${129 - i * 3}, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
+            }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10 + i * 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
+      </div>
       
       {/* Content */}
-      <div className="relative z-10">
-      {/* Hero Section */}
-      <div className="max-w-4xl mx-auto text-center py-12 px-4 mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <TreePine className="h-12 w-12 text-green-600" />
-          <h1 className="text-4xl md:text-5xl font-bold">
-            <span className="text-green-600">My</span>{" "}
-            <span className="text-lime-500">Orchards</span>
-          </h1>
-        </div>
-        <p className="text-lg text-muted-foreground mb-6">
-          Manage and track your growing orchards
-        </p>
-        <p className="text-sm text-muted-foreground mb-8">
-          Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link to="/create-orchard">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-green-500 to-lime-400 hover:from-green-600 hover:to-lime-500 text-white font-semibold shadow-lg"
+      <div className='relative z-10'>
+        {/* Hero Section */}
+        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
+          <div className='relative container mx-auto px-4 py-16'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='text-center max-w-4xl mx-auto'
             >
-              <Plus className="h-5 w-5 mr-2" />
-              Sow New Seed
-            </Button>
-          </Link>
-          <Link to="/community-offering">
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-2 border-purple-500 text-purple-700 hover:bg-purple-50 font-semibold shadow-lg"
-            >
-              <Sparkles className="h-5 w-5 mr-2" />
-              AI Offering Generator
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-600">Total Orchards</p>
-                  <p className="text-2xl font-bold text-orange-700">{userOrchards.length}</p>
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
+                  <TreePine className='w-16 h-16 text-white' />
                 </div>
-                <TreePine className="h-8 w-8 text-orange-600" />
+                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
+                  My S2G Orchards
+                </h1>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-600">Total Raised</p>
-                  <p className="text-2xl font-bold text-orange-700">{formatCurrency(getTotalRaised())}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-orange-600" />
+              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+                Manage and track your growing orchards. Watch your seeds blossom into thriving community projects.
+              </p>
+              <p className='text-white/70 text-sm mb-6'>
+                Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
+              </p>
+              <div className='flex flex-wrap items-center justify-center gap-4'>
+                <Link to="/create-orchard">
+                  <Button 
+                    size="lg" 
+                    className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Sow New Seed
+                  </Button>
+                </Link>
+                <Link to="/community-offering">
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    AI Offering Generator
+                  </Button>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-600">Active Orchards</p>
-                  <p className="text-2xl font-bold text-orange-700">
-                    {userOrchards.filter(o => o.status === 'active').length}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-
-        {/* Filters */}
-        <div className="mb-8">
-          <div className="space-y-4">
-            {/* Category Filter Row */}
-            <div className="flex justify-center">
-              <div className="min-w-[200px]">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="border-nav-my/30 focus:border-nav-my bg-white">
-                    <SelectValue placeholder="Filter by Category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-nav-my/30 z-50">
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            {/* Status Filter Buttons Row */}
-            <div className="flex justify-center">
-              <div className="flex gap-2">
-                {['all', 'active', 'completed', 'paused'].map((status) => {
-                  const getStatusStyle = (status, isSelected) => {
-                    const styles = {
-                      all: isSelected 
-                        ? { backgroundColor: '#DBEAFE', color: '#1E40AF', borderColor: '#93C5FD' }
-                        : { backgroundColor: '#EFF6FF', color: '#1D4ED8', borderColor: '#DBEAFE' },
-                      active: isSelected 
-                        ? { backgroundColor: '#DCFCE7', color: '#166534', borderColor: '#86EFAC' }
-                        : { backgroundColor: '#F0FDF4', color: '#15803D', borderColor: '#DCFCE7' },
-                      completed: isSelected 
-                        ? { backgroundColor: '#E9D5FF', color: '#7C2D12', borderColor: '#C4B5FD' }
-                        : { backgroundColor: '#FAF5FF', color: '#8B5CF6', borderColor: '#E9D5FF' },
-                      paused: isSelected 
-                        ? { backgroundColor: '#FED7AA', color: '#C2410C', borderColor: '#FDBA74' }
-                        : { backgroundColor: '#FFF7ED', color: '#EA580C', borderColor: '#FED7AA' }
-                    };
-                    return styles[status];
-                  };
-                  
-                  return (
-                    <Button
-                      key={status}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStatusFilter(status)}
-                      style={getStatusStyle(status, statusFilter === status)}
-                      className="border-2"
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
+            </motion.div>
           </div>
         </div>
 
-        {/* Orchards Grid */}
-        <div className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl rounded-2xl p-6 md:p-8">
-          {userOrchards.length === 0 ? (
-            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-              <CardContent className="p-12 text-center">
-                <TreePine className="h-16 w-16 mx-auto text-orange-400 mb-4" />
-                <h3 className="text-xl font-semibold text-orange-700 mb-2">
-                  {searchTerm || statusFilter !== 'all' ? 'No orchards found' : 'No orchards yet'}
-                </h3>
-                <p className="text-orange-600 mb-6">
-                  {searchTerm || statusFilter !== 'all' 
-                    ? 'Try adjusting your search or filters'
-                    : 'Start your journey by planting your first seed'
-                  }
-                </p>
-                {!searchTerm && statusFilter === 'all' && (
-                  <Link to="/create-orchard">
-                    <Button className="bg-nav-my hover:bg-nav-my/90 text-orange-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Plant Your First Seed
-                    </Button>
-                  </Link>
-                )}
+        <div className='container mx-auto px-4 py-8'>
+          {/* Stats Section */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm font-medium text-white/80'>Total Orchards</p>
+                    <p className='text-2xl font-bold text-white'>{userOrchards.length}</p>
+                  </div>
+                  <TreePine className='h-8 w-8 text-white' />
+                </div>
               </CardContent>
             </Card>
-          ) : (
+
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm font-medium text-white/80'>Total Raised</p>
+                    <p className='text-2xl font-bold text-white'>{formatCurrency(getTotalRaised())}</p>
+                  </div>
+                  <DollarSign className='h-8 w-8 text-white' />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <CardContent className='p-6'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <p className='text-sm font-medium text-white/80'>Active Orchards</p>
+                    <p className='text-2xl font-bold text-white'>
+                      {userOrchards.filter(o => o.status === 'active').length}
+                    </p>
+                  </div>
+                  <TrendingUp className='h-8 w-8 text-white' />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+
+          {/* Filters */}
+          <div className='mb-8'>
+            <div className='space-y-4'>
+              {/* Category Filter Row */}
+              <div className='flex justify-center'>
+                <div className='min-w-[200px]'>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
+                      <SelectValue placeholder='Filter by Category' />
+                    </SelectTrigger>
+                    <SelectContent className='bg-white border border-border z-50'>
+                      <SelectItem value='all'>All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {/* Status Filter Buttons Row */}
+              <div className='flex justify-center'>
+                <div className='flex gap-2'>
+                  {['all', 'active', 'completed', 'paused'].map((status) => (
+                    <Button
+                      key={status}
+                      variant={statusFilter === status ? 'default' : 'outline'}
+                      size='sm'
+                      onClick={() => setStatusFilter(status)}
+                      className={statusFilter === status 
+                        ? 'backdrop-blur-md bg-white/30 border-white/40 text-white hover:bg-white/40' 
+                        : 'backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'}
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Orchards Grid */}
+          <div className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl rounded-2xl p-6 md:p-8'>
+            {userOrchards.length === 0 ? (
+              <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+                <CardContent className='p-12 text-center'>
+                  <TreePine className='h-16 w-16 mx-auto text-white/70 mb-4' />
+                  <h3 className='text-xl font-semibold text-white mb-2'>
+                    {searchTerm || statusFilter !== 'all' ? 'No orchards found' : 'No orchards yet'}
+                  </h3>
+                  <p className='text-white/70 mb-6'>
+                    {searchTerm || statusFilter !== 'all' 
+                      ? 'Try adjusting your search or filters'
+                      : 'Start your journey by planting your first seed'
+                    }
+                  </p>
+                  {!searchTerm && statusFilter === 'all' && (
+                    <Link to="/create-orchard">
+                      <Button className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Plant Your First Seed
+                      </Button>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
             <div className="relative px-12">
               <Carousel
                 opts={{
@@ -412,7 +440,7 @@ export default function MyOrchardsPage() {
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {userOrchards.map((orchard) => (
                     <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">{" "}
-                <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl hover:shadow-2xl transition-all flex flex-col">
+                <Card key={orchard.id} className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl hover:shadow-3xl transition-all flex flex-col'>
                   <div className="relative">
                     {orchard.images?.[0] ? (
                       <img 
@@ -443,8 +471,8 @@ export default function MyOrchardsPage() {
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg text-orange-700 mb-2 line-clamp-2">{orchard.title}</CardTitle>
-                        <div className="flex items-center space-x-4 text-sm text-orange-600">
+                        <CardTitle className='text-lg text-white mb-2 line-clamp-2'>{orchard.title}</CardTitle>
+                        <div className='flex items-center space-x-4 text-sm text-white/80'>
                           <span className="flex items-center">
                             <Eye className="h-4 w-4 mr-1" />
                             {orchard.views || 0}
@@ -466,39 +494,39 @@ export default function MyOrchardsPage() {
                   
                   <CardContent className="flex-1 flex flex-col">
                     <div className="space-y-4 flex-1">
-                      <p className="text-orange-600 text-sm line-clamp-2">
+                      <p className='text-white/80 text-sm line-clamp-2'>
                         {orchard.description}
                       </p>
                       
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-orange-600">Progress</span>
-                          <span className="text-sm font-medium text-orange-700">
+                        <div className='flex items-center justify-between mb-2'>
+                          <span className='text-sm text-white/80'>Progress</span>
+                          <span className='text-sm font-medium text-white'>
                             {getCompletionPercentage(orchard)}%
                           </span>
                         </div>
                         <Progress 
                           value={getCompletionPercentage(orchard)} 
-                          className="h-2"
+                          className='h-2'
                         />
                       </div>
                       
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-orange-600">Raised:</span>
-                        <span className="font-medium text-orange-700">
+                      <div className='flex items-center justify-between text-sm'>
+                        <span className='text-white/80'>Raised:</span>
+                        <span className='font-medium text-white'>
                           {formatCurrency((orchard.filled_pockets || 0) * (orchard.pocket_price || 0))}
                         </span>
                       </div>
                       
-                       <div className="flex items-center justify-between text-sm">
-                         <span className="text-orange-600">Goal:</span>
-                         <span className="font-medium text-orange-700">
+                       <div className='flex items-center justify-between text-sm'>
+                         <span className='text-white/80'>Goal:</span>
+                         <span className='font-medium text-white'>
                            {formatCurrency(((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 0) * (orchard.pocket_price || 0))}
                          </span>
                        </div>
                       
-                      <div className="flex items-center text-sm text-orange-500">
-                        <Calendar className="h-4 w-4 mr-1" />
+                      <div className='flex items-center text-sm text-white/70'>
+                        <Calendar className='h-4 w-4 mr-1' />
                         Created {new Date(orchard.created_at).toLocaleDateString()}
                       </div>
                       
@@ -533,37 +561,37 @@ export default function MyOrchardsPage() {
                       )}
                       
                       <div className="flex flex-wrap gap-2 pt-2 mt-auto">
-                        <Link to={`/orchards/${orchard.id}`} className="flex-1 min-w-[100px]">
-                          <Button variant="outline" size="sm" className="w-full border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600">
-                            <Eye className="h-4 w-4 mr-1" />
+                        <Link to={`/orchards/${orchard.id}`} className='flex-1 min-w-[100px]'>
+                          <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                            <Eye className='h-4 w-4 mr-1' />
                             View
                           </Button>
                         </Link>
-                        <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
-                          <Button variant="outline" size="sm" className="w-full border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600">
-                            <Edit className="h-4 w-4 mr-1" />
+                        <Link to={`/edit-orchard/${orchard.id}`} className='flex-1 min-w-[100px]'>
+                          <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                            <Edit className='h-4 w-4 mr-1' />
                             Edit
                           </Button>
                         </Link>
                           <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex-1 min-w-[100px] border-orange-500/50 text-orange-700 hover:bg-orange-50 hover:border-orange-600"
+                          variant='outline' 
+                          size='sm'
+                          className='flex-1 min-w-[100px] backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
                           onClick={() => {
                             const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                             navigator.clipboard.writeText(url)
                             toast.success('Orchard link copied to clipboard!')
                           }}
                         >
-                          <Share2 className="h-4 w-4" />
+                          <Share2 className='h-4 w-4' />
                         </Button>
                         <Button 
-                          variant="outline" 
-                          size="sm"
+                          variant='outline' 
+                          size='sm'
                           onClick={() => handleDeleteOrchard(orchard.id)}
-                          className="border-red-300/50 text-red-700 hover:bg-red-500/20"
+                          className='backdrop-blur-md bg-red-500/20 border-red-300/50 text-red-200 hover:bg-red-500/30'
                         >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className='h-4 w-4' />
                       </Button>
                     </div>
                   </div>
@@ -572,15 +600,21 @@ export default function MyOrchardsPage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
-                <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background border-2 border-primary" />
+                <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
               </Carousel>
             </div>
           )}
         </div>
+      </div>
 
-      </div>
-      </div>
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   )
 }

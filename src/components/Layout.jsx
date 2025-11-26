@@ -128,7 +128,7 @@ function Layout({ children }) {
         { name: "S2G Community Music", href: "/s2g-community-music", icon: Music },
         { name: "My S2G Library", href: "/my-s2g-library", icon: Book },
         { name: "S2G Community Library", href: "/s2g-community-library", icon: Library },
-        { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
+        { name: "S2G Marketing Video Gallery", href: "/marketing-videos", icon: Video }
       ]
     },
     {

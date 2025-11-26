@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +14,7 @@ import VideoCommentsSection from '@/components/community/VideoCommentsSection'
 import VideoSocialShare from '@/components/community/VideoSocialShare'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
+import { motion } from 'framer-motion'
 
 
 export default function MarketingVideosGallery() {
@@ -69,16 +70,10 @@ export default function MarketingVideosGallery() {
   useEffect(() => {
     if (!videos) return
     
-    console.log('🎬 MarketingVideos: All videos:', videos.length)
-    console.log('🎬 MarketingVideos: Sample videos:', videos.slice(0, 3).map(v => ({ title: v.title, status: v.status, orchard_id: v.orchard_id })))
-    
     let filtered = videos.filter(video => 
       video.status === 'approved' && 
-      video.orchard_id !== null // Only show videos connected to an orchard
+      video.orchard_id !== null
     )
-
-    console.log('🎬 MarketingVideos: Approved videos with orchards:', filtered.length)
-    console.log('🎬 MarketingVideos: Filtered videos:', filtered.map(v => ({ title: v.title, orchard_id: v.orchard_id })))
 
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(video =>
@@ -109,7 +104,6 @@ export default function MarketingVideosGallery() {
       navigate(`/orchard/${video.orchard_id}`)
       toast.success('Taking you to the orchard - bestow to support this sower!')
     } else {
-      // Fallback: search orchards by category/tags
       if (video.tags && video.tags.length > 0) {
         const searchTerm = video.tags.find(tag => tag !== 'marketing' && tag !== 'orchard') || video.tags[0]
         navigate(`/browse-orchards?search=${encodeURIComponent(searchTerm)}`)
@@ -138,13 +132,11 @@ export default function MarketingVideosGallery() {
         await navigator.share(shareData)
         toast.success('Video shared successfully!')
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`)
         toast.success('Link copied to clipboard!')
       }
     } catch (error) {
       console.error('Error sharing:', error)
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(`${shareData.text} ${shareUrl}`)
         toast.success('Link copied to clipboard!')
@@ -178,40 +170,91 @@ export default function MarketingVideosGallery() {
 
   const getVideoThumbnail = (video) => {
     if (video.thumbnail_url) return video.thumbnail_url
-    // Fallback thumbnail based on category
     return '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'
   }
 
+  if (loading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center' style={{
+        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 25%, #c44569 50%, #a55eea 75%, #8854d0 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradient 15s ease infinite'
+      }}>
+        <Loader2 className='w-12 h-12 animate-spin text-white' />
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className='min-h-screen relative overflow-hidden'>
+      {/* Creative Animated Background */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute inset-0' style={{
+          background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 25%, #c44569 50%, #a55eea 75%, #8854d0 100%)',
+          backgroundSize: '400% 400%',
+          animation: 'gradient 20s ease infinite'
+        }} />
+        <div className='absolute inset-0 bg-black/20' />
+        {/* Floating orbs */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className='absolute rounded-full blur-3xl opacity-30'
+            style={{
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(${255 - i * 20}, ${107 - i * 10}, ${107 - i * 5}, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
+            }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 10 + i * 2,
+              repeat: Infinity,
+              ease: 'easeInOut'
+            }}
+          />
+        ))}
+      </div>
+
       {/* Content */}
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="bg-background border-b">
-          <div className="max-w-6xl mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-900" style={{textShadow: '2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white'}}>
-                  <Video className="h-8 w-8 text-primary" style={{filter: 'drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white) drop-shadow(-1px 1px 0 white)'}} />
-                  Marketing Videos Gallery
+      <div className='relative z-10'>
+        {/* Hero Header */}
+        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
+          <div className='relative container mx-auto px-4 py-16'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className='text-center max-w-4xl mx-auto'
+            >
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
+                  <Video className='w-16 h-16 text-white' />
+                </div>
+                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
+                  S2G Marketing Video Gallery
                 </h1>
-                <p className="text-lg text-slate-800 font-medium" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>
-                  Discover inspiring marketing content from fellow sowers - watch videos with autoplay and send free-will gifts!
-                </p>
               </div>
-            </div>
+              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+                Discover inspiring marketing content from fellow sowers - watch videos with autoplay and send free-will gifts!
+              </p>
+            </motion.div>
 
             {/* Filter Section */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-white" />
-                <span className="text-sm font-medium text-white">Filter by category:</span>
+            <div className='mt-8 flex flex-col sm:flex-row gap-4 items-center justify-center'>
+              <div className='flex items-center gap-2'>
+                <Filter className='h-5 w-5 text-white' />
+                <span className='text-sm font-medium text-white'>Filter by category:</span>
               </div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-64 bg-white">
-                  <SelectValue placeholder="Select category" />
+                <SelectTrigger className='w-full sm:w-64 backdrop-blur-md bg-white/20 border-white/30 text-white'>
+                  <SelectValue placeholder='Select category' />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-border shadow-lg z-50">
+                <SelectContent className='bg-white border border-border shadow-lg z-50'>
                   {categories.map(category => (
                     <SelectItem key={category.value} value={category.value}>
                       {category.label}
@@ -219,39 +262,26 @@ export default function MarketingVideosGallery() {
                   ))}
                 </SelectContent>
               </Select>
-              <Badge variant="outline" className="ml-auto bg-white">
+              <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
                 {filteredVideos.length} videos
               </Badge>
             </div>
           </div>
         </div>
 
-
         {/* Videos Grid */}
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <div className="aspect-video bg-muted rounded-t-lg" />
-                  <CardContent className="p-4">
-                    <div className="h-4 bg-muted rounded mb-2" />
-                    <div className="h-3 bg-muted rounded w-2/3" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredVideos.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No marketing videos found</h3>
-                <p className="text-muted-foreground mb-4">
+        <div className='container mx-auto px-4 py-8'>
+          {filteredVideos.length === 0 ? (
+            <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30'>
+              <CardContent className='p-12 text-center'>
+                <Video className='w-20 h-20 mx-auto text-white/70 mb-4' />
+                <h3 className='text-2xl font-bold mb-2 text-white'>No marketing videos found</h3>
+                <p className='text-white/70 mb-6'>
                   {selectedCategory === 'all' 
                     ? 'No marketing videos have been uploaded yet.' 
                     : `No videos found in the ${categories.find(c => c.value === selectedCategory)?.label} category.`}
                 </p>
-                <Button onClick={() => setSelectedCategory('all')}>
+                <Button onClick={() => setSelectedCategory('all')} className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                   View All Categories
                 </Button>
               </CardContent>
@@ -265,177 +295,175 @@ export default function MarketingVideosGallery() {
                 dragFree: true,
               }}
               plugins={[autoplayPlugin.current]}
-              className="w-full"
+              className='w-full'
             >
-              <CarouselContent className="-ml-4">
+              <CarouselContent className='-ml-4'>
                 {filteredVideos.map((video) => (
-                  <CarouselItem key={video.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
-                    <div className="h-full">
-                      <Card className="overflow-hidden flex flex-col h-full">
-                  {/* Video Player Section */}
-                  <div className="aspect-video relative bg-black">
-                     <VideoPlayer
-                      src={video.video_url}
-                      className="w-full h-full"
-                      autoPlay={true}
-                      muted={true}
-                      loop={true}
-                      playsInline={true}
-                      fallbackImage={getVideoThumbnail(video)}
-                      onError={(error) => {
-                        console.error('Video playbook error:', error)
-                      }}
-                      onPlay={() => {
-                        // Increment view count when video starts playing
-                        incrementViews(video.id)
-                      }}
-                    />
-                    
-                    {/* Category Badge */}
-                    {video.tags && video.tags.length > 0 && (
-                      <Badge 
-                        variant="default"
-                        className="absolute top-2 left-2 bg-primary/90 text-white"
-                      >
-                        {video.tags[0]}
-                      </Badge>
-                    )}
+                  <CarouselItem key={video.id} className='pl-4 md:basis-1/2 lg:basis-1/2'>
+                    <div className='h-full'>
+                      <Card className='overflow-hidden flex flex-col h-full backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+                        {/* Video Player Section */}
+                        <div className='aspect-video relative bg-black'>
+                          <VideoPlayer
+                            src={video.video_url}
+                            className='w-full h-full'
+                            autoPlay={true}
+                            muted={true}
+                            loop={true}
+                            playsInline={true}
+                            fallbackImage={getVideoThumbnail(video)}
+                            onError={(error) => {
+                              console.error('Video playbook error:', error)
+                            }}
+                            onPlay={() => {
+                              incrementViews(video.id)
+                            }}
+                          />
+                          
+                          {/* Category Badge */}
+                          {video.tags && video.tags.length > 0 && (
+                            <Badge 
+                              variant='default'
+                              className='absolute top-2 left-2 bg-primary/90 text-white backdrop-blur-md'
+                            >
+                              {video.tags[0]}
+                            </Badge>
+                          )}
 
-                    {/* Duration Badge */}
-                    {video.duration_seconds && (
-                      <Badge 
-                        variant="secondary" 
-                        className="absolute bottom-2 right-2 bg-black/70 text-white border-none"
-                      >
-                        {formatDuration(video.duration_seconds)}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Video Info Section */}
-                  <CardContent className="p-6 pb-8 space-y-4 flex-1 flex flex-col">
-                    {/* Title and Description */}
-                    <div>
-                      <h3 className="font-semibold text-xl mb-2 line-clamp-2">
-                        {video.title}
-                      </h3>
-                      {video.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-3">
-                          {video.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Creator Info */}
-                    <div className="flex items-center gap-3">
-                      {video.profiles?.avatar_url ? (
-                        <img 
-                          src={video.profiles.avatar_url} 
-                          alt="Creator"
-                          className="w-8 h-8 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
-                            {(video.profiles?.display_name || video.profiles?.first_name || 'U')[0]}
-                          </span>
+                          {/* Duration Badge */}
+                          {video.duration_seconds && (
+                            <Badge 
+                              variant='secondary' 
+                              className='absolute bottom-2 right-2 bg-black/70 text-white border-none backdrop-blur-md'
+                            >
+                              {formatDuration(video.duration_seconds)}
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">
-                          {video.profiles?.display_name || 
-                           `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
-                           'Anonymous Sower'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Creator</p>
-                      </div>
-                    </div>
 
-                    {/* Stats */}
-                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-4 w-4" />
-                        {video.view_count || 0} views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <ThumbsUp className="h-4 w-4" />
-                        {video.like_count || 0} likes
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="h-4 w-4" />
-                        {video.comment_count || 0} comments
-                      </span>
-                    </div>
+                        {/* Video Info Section */}
+                        <CardContent className='p-6 pb-8 space-y-4 flex-1 flex flex-col'>
+                          {/* Title and Description */}
+                          <div>
+                            <h3 className='font-semibold text-xl mb-2 line-clamp-2 text-white'>
+                              {video.title}
+                            </h3>
+                            {video.description && (
+                              <p className='text-sm text-white/80 line-clamp-3'>
+                                {video.description}
+                              </p>
+                            )}
+                          </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 mt-auto border-t">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* Like Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleLike(video.id, e)
-                          }}
-                        >
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          Like
-                        </Button>
-                        
-                        {/* Comments Button */}
-                        <VideoCommentsSection video={video} />
-                        
-                        {/* Share Button */}
-                        <VideoSocialShare video={video} />
-                        
-                        {/* Visit Orchard Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={(e) => handleOrchardVisit(video, e)}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
-                        </Button>
-                      </div>
+                          {/* Creator Info */}
+                          <div className='flex items-center gap-3'>
+                            {video.profiles?.avatar_url ? (
+                              <img 
+                                src={video.profiles.avatar_url} 
+                                alt='Creator'
+                                className='w-8 h-8 rounded-full'
+                              />
+                            ) : (
+                              <div className='w-8 h-8 rounded-full bg-white/20 flex items-center justify-center'>
+                                <span className='text-sm font-medium text-white'>
+                                  {(video.profiles?.display_name || video.profiles?.first_name || 'U')[0]}
+                                </span>
+                              </div>
+                            )}
+                            <div className='flex-1'>
+                              <p className='font-medium text-sm text-white'>
+                                {video.profiles?.display_name || 
+                                 `${video.profiles?.first_name || ''} ${video.profiles?.last_name || ''}`.trim() || 
+                                 'Anonymous Sower'}
+                              </p>
+                              <p className='text-xs text-white/70'>Creator</p>
+                            </div>
+                          </div>
 
-                      {/* Free-Will Gift Button - Prominent */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">send free-will gift:</span>
-                        <VideoGifting
-                          video={video}
-                          onGiftSent={() => {
-                            // Refresh video data to show updated stats
-                            fetchVideos()
-                            toast.success('Gift sent to creator! 💝')
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
+                          {/* Stats */}
+                          <div className='flex items-center gap-6 text-sm text-white/80'>
+                            <span className='flex items-center gap-1'>
+                              <Eye className='h-4 w-4' />
+                              {video.view_count || 0} views
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <ThumbsUp className='h-4 w-4' />
+                              {video.like_count || 0} likes
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <MessageCircle className='h-4 w-4' />
+                              {video.comment_count || 0} comments
+                            </span>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 mt-auto border-t border-white/20'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              {/* Like Button */}
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                className='text-white hover:text-white hover:bg-white/20'
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  handleLike(video.id, e)
+                                }}
+                              >
+                                <ThumbsUp className='h-4 w-4 mr-1' />
+                                Like
+                              </Button>
+                              
+                              {/* Comments Button */}
+                              <VideoCommentsSection video={video} />
+                              
+                              {/* Share Button */}
+                              <VideoSocialShare video={video} />
+                              
+                              {/* Visit Orchard Button */}
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                className='text-white hover:text-white hover:bg-white/20'
+                                onClick={(e) => handleOrchardVisit(video, e)}
+                              >
+                                <ExternalLink className='h-4 w-4 mr-1' />
+                                {video.orchard_id ? 'Visit Orchard' : 'Find Orchard'}
+                              </Button>
+                            </div>
+
+                            {/* Free-Will Gift Button - Prominent */}
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <span className='text-xs text-white/80 whitespace-nowrap'>send free-will gift:</span>
+                              <VideoGifting
+                                video={video}
+                                onGiftSent={() => {
+                                  fetchVideos()
+                                  toast.success('Gift sent to creator! 💝')
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
                       </Card>
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="absolute -left-12 top-1/2 -translate-y-1/2" />
-              <CarouselNext className="absolute -right-12 top-1/2 -translate-y-1/2" />
+              <CarouselPrevious className='absolute -left-12 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+              <CarouselNext className='absolute -right-12 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
             </Carousel>
           )}
 
           {/* Call to Action */}
           {!user && filteredVideos.length > 0 && (
-            <Card className="mt-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-              <CardContent className="p-6 text-center">
-                <Video className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Join the Community</h3>
-                <p className="text-muted-foreground mb-4">
+            <Card className='mt-8 backdrop-blur-md bg-white/20 border-white/30'>
+              <CardContent className='p-6 text-center'>
+                <Video className='h-12 w-12 text-white mx-auto mb-4' />
+                <h3 className='text-xl font-semibold mb-2 text-white'>Join the Community</h3>
+                <p className='text-white/80 mb-4'>
                   Log in to like videos, leave comments, and upload your own marketing content!
                 </p>
-                <Button onClick={() => navigate('/login')}>
+                <Button onClick={() => navigate('/login')} className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                   Sign In to Participate
                 </Button>
               </CardContent>
@@ -444,6 +472,13 @@ export default function MarketingVideosGallery() {
         </div>
       </div>
 
+      <style>{`
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+      `}</style>
     </div>
   )
 }
