@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { toast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
 
 const docs = [
@@ -210,7 +211,20 @@ const HelpModal = () => {
                         </Badge>
                       </div>
                       <p className="text-muted-foreground mb-3">{doc.content}</p>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Expand to show full content or navigate to detailed page
+                          toast({
+                            title: doc.title,
+                            description: `Full documentation for "${doc.title}" is coming soon. For now, you can contact support for detailed information.`,
+                          });
+                        }}
+                      >
                         <ExternalLink className="h-4 w-4" />
                         Read More
                       </Button>

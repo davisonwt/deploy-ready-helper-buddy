@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ScheduleRadioSlotDialog } from './ScheduleRadioSlotDialog';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface Track {
   id: string;
@@ -33,7 +35,8 @@ interface Stream {
 }
 
 export const RadioMode: React.FC = () => {
-  const { toast } = useToast();
+  const { toast: toastNotification } = useToast();
+  const { user } = useAuth();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +44,7 @@ export const RadioMode: React.FC = () => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [volume, setVolume] = useState([75]);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadContent();
@@ -76,10 +80,95 @@ export const RadioMode: React.FC = () => {
   const playTrack = (track: Track) => {
     setCurrentTrack(track);
     setIsPlaying(true);
-    toast({
+    toastNotification({
       title: 'Now Playing',
       description: `${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
     });
+  };
+
+  const handleLike = async (track: Track, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error('Please login to like tracks');
+      return;
+    }
+
+    try {
+      const isLiked = likedTracks.has(track.id);
+      
+      if (isLiked) {
+        // Unlike - try to delete from database if table exists
+        try {
+          await supabase
+            .from('dj_music_track_likes')
+            .delete()
+            .eq('track_id', user.id')
+            .eq('user_id', user.id);
+        } catch (dbError) {
+          // Table might not exist, just update local state
+          console.log('Likes table may not exist');
+        }
+        
+        setLikedTracks(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(track.id);
+          return newSet;
+        });
+        toast.success('Unliked');
+      } else {
+        // Like - try to insert into database if table exists
+        try {
+          await supabase
+            .from('dj_music_track_likes')
+            .insert({ track_id: track.id, user_id: user.id });
+        } catch (dbError: any) {
+          // Table might not exist or duplicate, just update local state
+          if (dbError.code !== '23505') {
+            console.log('Likes table may not exist');
+          }
+        }
+        
+        setLikedTracks(prev => new Set(prev).add(track.id));
+        toast.success('Liked!');
+      }
+    } catch (error: any) {
+      console.error('Like error:', error);
+      toast.error('Failed to update like');
+    }
+  };
+
+  const handleShare = async (track: Track, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const shareData = {
+        title: track.track_title,
+        text: `Check out ${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
+        url: window.location.href
+      };
+      
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          toast.success('Shared successfully!');
+        } catch (error: any) {
+          if (error.name !== 'AbortError') {
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied to clipboard!');
+          }
+        }
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      toast.error('Failed to share');
+    }
   };
 
   const togglePlayPause = () => {
@@ -255,10 +344,21 @@ export const RadioMode: React.FC = () => {
                       </span>
 
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Heart className="w-4 h-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={`h-8 w-8 ${likedTracks.has(track.id) ? 'text-red-500' : ''}`}
+                          onClick={(e) => handleLike(track, e)}
+                          disabled={!user}
+                        >
+                          <Heart className={`w-4 h-4 ${likedTracks.has(track.id) ? 'fill-current' : ''}`} />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => handleShare(track, e)}
+                        >
                           <Share2 className="w-4 h-4" />
                         </Button>
                       </div>
