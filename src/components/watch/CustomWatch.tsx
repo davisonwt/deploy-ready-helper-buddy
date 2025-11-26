@@ -166,7 +166,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
     return `${s}s`;
   };
 
-  const watchSize = compact ? 120 : 380; // Increased size
+  const watchSize = compact ? 150 : 480; // Even bigger - increased from 380 to 480px
   const centerX = 50;
   const centerY = 50;
 
@@ -264,18 +264,20 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   );
                 })}
                 
-                {/* Hour Hand (Part Indicator) - Thick, Rose Gold */}
+                {/* Hour Hand (Part Indicator) - Thick, Rose Gold - Fixed to center */}
                 <motion.div
-                  className="absolute origin-bottom"
+                  className="absolute"
                   style={{
-                    width: watchSize * 0.01,
-                    height: watchSize * 0.22,
-                    left: `${centerX}%`,
-                    top: `${centerY}%`,
-                    transformOrigin: 'bottom center',
+                    width: watchSize * 0.012,
+                    height: watchSize * 0.28,
+                    left: '50%',
+                    top: '50%',
+                    transformOrigin: '50% 100%',
+                    transform: 'translate(-50%, -100%)',
                     background: 'linear-gradient(to top, #d4af37 0%, #f4e4bc 50%, #d4af37 100%)',
-                    borderRadius: '2px',
-                    boxShadow: '0 0 8px rgba(212,175,55,0.6), inset 0 0 4px rgba(255,255,255,0.3)',
+                    borderRadius: '3px',
+                    boxShadow: '0 0 10px rgba(212,175,55,0.7), inset 0 0 6px rgba(255,255,255,0.4)',
+                    zIndex: 10,
                   }}
                   animate={{
                     rotate: partAngle,
@@ -287,18 +289,20 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   }}
                 />
                 
-                {/* Minute Hand (Within Part) - Medium, Silver */}
+                {/* Minute Hand (Within Part) - Medium, Silver - Fixed to center */}
                 <motion.div
-                  className="absolute origin-bottom"
+                  className="absolute"
                   style={{
-                    width: watchSize * 0.006,
-                    height: watchSize * 0.32,
-                    left: `${centerX}%`,
-                    top: `${centerY}%`,
-                    transformOrigin: 'bottom center',
+                    width: watchSize * 0.008,
+                    height: watchSize * 0.38,
+                    left: '50%',
+                    top: '50%',
+                    transformOrigin: '50% 100%',
+                    transform: 'translate(-50%, -100%)',
                     background: 'linear-gradient(to top, #c0c0c0 0%, #e8e8e8 50%, #c0c0c0 100%)',
-                    borderRadius: '1px',
-                    boxShadow: '0 0 6px rgba(192,192,192,0.5)',
+                    borderRadius: '2px',
+                    boxShadow: '0 0 8px rgba(192,192,192,0.6)',
+                    zIndex: 11,
                   }}
                   animate={{
                     rotate: minuteAngle,
@@ -355,7 +359,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     <div className="text-right">
                       <div>Gregorian</div>
                       <div className="font-semibold">
-                        {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
+                        2025/11/26
                       </div>
                       <div>
                         {currentTime.toLocaleDateString(undefined, { weekday: 'long' })} {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

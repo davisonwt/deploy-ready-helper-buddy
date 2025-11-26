@@ -5,6 +5,7 @@
  * - 18 parts, each representing 80 minutes
  * - Time progresses anti-clockwise
  * - Total day = 18 × 80 = 1440 minutes = 24 hours
+ * - IMPORTANT: Day starts at sunrise, not midnight!
  */
 
 export interface CustomTime {
@@ -15,14 +16,36 @@ export interface CustomTime {
 export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' | 'night';
 
 /**
+ * Calculate sunrise time for a given date (simplified - adjust based on location)
+ * Returns hours since midnight (e.g., 6.5 = 6:30 AM)
+ */
+function getSunriseTime(date: Date): number {
+  // Simplified sunrise calculation - approximately 6:00 AM
+  // For more accuracy, use a library like suncalc or calculate based on latitude/longitude
+  // For MVP, using a fixed 6:00 AM sunrise
+  return 6.0;
+}
+
+/**
  * Convert standard JavaScript Date to custom time system
+ * Day starts at sunrise, not midnight!
  */
 export function getCreatorTime(date: Date = new Date()): CustomTime & { display: string; raw: CustomTime } {
-  // Minutes since midnight (0 to 1439.999...)
-  const totalMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
-
-  // Convert to Creator system
-  const totalParts = totalMinutes / 80;              // 0 to 17.999...
+  // Get sunrise time (hours since midnight)
+  const sunriseHours = getSunriseTime(date);
+  const sunriseMinutes = sunriseHours * 60;
+  
+  // Calculate minutes since midnight
+  const totalMinutesSinceMidnight = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
+  
+  // Adjust for sunrise start: subtract sunrise time, add 1440 if negative (previous day)
+  let minutesSinceSunrise = totalMinutesSinceMidnight - sunriseMinutes;
+  if (minutesSinceSunrise < 0) {
+    minutesSinceSunrise += 1440; // Previous day's time
+  }
+  
+  // Convert to Creator system (18 parts of 80 minutes each)
+  const totalParts = minutesSinceSunrise / 80;              // 0 to 17.999...
   const part = Math.floor(totalParts) + 1;           // 1 to 18
   const minutesIntoPart = Math.round((totalParts % 1) * 80); // 0–79 → display 1–80
 
