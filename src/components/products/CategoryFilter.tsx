@@ -1,19 +1,23 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, FileText, Palette, Grid3x3 } from 'lucide-react';
+import { Music, FileText, Palette, Grid3x3, Disc, Disc3 } from 'lucide-react';
 
 interface CategoryFilterProps {
   selectedCategory: string;
   selectedType: string;
+  selectedFormat?: string; // 'all', 'single', 'album'
   onCategoryChange: (category: string) => void;
   onTypeChange: (type: string) => void;
+  onFormatChange?: (format: string) => void;
 }
 
 export default function CategoryFilter({
   selectedCategory,
   selectedType,
+  selectedFormat = 'all',
   onCategoryChange,
-  onTypeChange
+  onTypeChange,
+  onFormatChange
 }: CategoryFilterProps) {
   const types = [
     { value: 'all', label: 'All', icon: Grid3x3 },
@@ -33,17 +37,23 @@ export default function CategoryFilter({
     'spiritual'
   ];
 
+  const formats = [
+    { value: 'all', label: 'All', icon: Grid3x3 },
+    { value: 'single', label: 'Singles', icon: Disc },
+    { value: 'album', label: 'Albums', icon: Disc3 }
+  ];
+
   return (
     <div className="mb-12 space-y-6">
       {/* Type Filter */}
       <div className="flex justify-center">
         <Tabs value={selectedType} onValueChange={onTypeChange} className="w-full max-w-2xl">
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-4 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
             {types.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80"
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {label}
@@ -53,6 +63,26 @@ export default function CategoryFilter({
         </Tabs>
       </div>
 
+      {/* Format Filter (Singles/Albums) - Only show for music type */}
+      {selectedType === 'music' && onFormatChange && (
+        <div className="flex justify-center">
+          <Tabs value={selectedFormat} onValueChange={onFormatChange} className="w-full max-w-xl">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
+              {formats.map(({ value, label, icon: Icon }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80"
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+
       {/* Category Filter */}
       <div className="flex flex-wrap gap-2 justify-center">
         {categories.map((category) => (
@@ -60,7 +90,7 @@ export default function CategoryFilter({
             key={category}
             variant={selectedCategory === category ? 'default' : 'outline'}
             onClick={() => onCategoryChange(category)}
-            className="capitalize"
+            className="capitalize backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30"
           >
             {category}
           </Button>

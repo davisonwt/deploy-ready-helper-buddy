@@ -15,9 +15,31 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 
+// Helper function to check if a product is an album
+function isAlbum(product: any): boolean {
+  // Check metadata field
+  if (product.metadata?.is_album === true) return true;
+  
+  // Check tags array
+  if (product.tags && Array.isArray(product.tags)) {
+    const tagStr = product.tags.join(' ').toLowerCase();
+    if (tagStr.includes('album') || tagStr.includes('lp') || tagStr.includes('ep')) {
+      return true;
+    }
+  }
+  
+  // Check if file_url points to a manifest.json (album manifest)
+  if (product.file_url && product.file_url.includes('manifest.json')) {
+    return true;
+  }
+  
+  return false;
+}
+
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedFormat, setSelectedFormat] = useState<string>('all'); // 'all', 'single', 'album'
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -43,7 +65,8 @@ export default function ProductsPage() {
   const filteredProducts = products?.filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesType = selectedType === 'all' || product.type === selectedType;
-    return matchesCategory && matchesType;
+    const matchesFormat = selectedFormat === 'all' || (selectedFormat === 'single' && !isAlbum(product)) || (selectedFormat === 'album' && isAlbum(product));
+    return matchesCategory && matchesType && matchesFormat;
   }) || [];
 
   const quickPicks = filteredProducts; // Show all products
@@ -173,8 +196,10 @@ export default function ProductsPage() {
           <CategoryFilter
             selectedCategory={selectedCategory}
             selectedType={selectedType}
+            selectedFormat={selectedFormat}
             onCategoryChange={setSelectedCategory}
             onTypeChange={setSelectedType}
+            onFormatChange={setSelectedFormat}
           />
 
           {/* Top Category Section */}
