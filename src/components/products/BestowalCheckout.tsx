@@ -105,7 +105,7 @@ export default function BestowalCheckout() {
                 />
               ) : (
                 <GradientPlaceholder 
-                  type={item.type || 'product'} 
+                  type={'product' as any} 
                   title={item.title}
                   className="w-16 h-16 rounded"
                   size="sm"

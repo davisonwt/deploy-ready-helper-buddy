@@ -225,24 +225,12 @@ export default function MyS2GLibraryPage() {
                   
                   {/* Bestowal Value - Prominently Displayed */}
                   <div className="mt-3">
-                    {item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity) ? (
-                      <div className="bg-green-500/20 border border-green-400 rounded-lg p-2">
-                        <Badge className="bg-green-500 text-white mb-1 text-xs">FREE GIVEAWAY</Badge>
-                        <p className="text-xs text-white/90">
-                          {item.giveaway_limit ? `${item.giveaway_limit - (item.giveaway_count || 0)} left` : 'Unlimited'}
-                        </p>
-                      </div>
-                    ) : item.price > 0 ? (
+                    {item.price > 0 ? (
                       <div className="bg-purple-500/20 border border-purple-400 rounded-lg p-2">
                         <p className="text-lg font-bold text-white">
                           {formatCurrency(item.price)}
                         </p>
                         <p className="text-xs text-white/70">to bestow</p>
-                        {item.whisperer_percentage > 0 && (
-                          <p className="text-xs text-white/60 mt-1">
-                            {item.whisperer_percentage}% whisperer
-                          </p>
-                        )}
                       </div>
                     ) : (
                       <Badge className="bg-blue-500 text-white">Free</Badge>
@@ -262,7 +250,7 @@ export default function MyS2GLibraryPage() {
                   ) : (
                     <div className="mb-4">
                       <GradientPlaceholder 
-                        type={item.type || 'default'} 
+                        type={item.type as any} 
                         title={item.title}
                         className="w-full h-48"
                         size="lg"
