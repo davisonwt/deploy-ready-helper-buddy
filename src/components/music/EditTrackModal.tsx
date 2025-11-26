@@ -210,9 +210,9 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
               type="number"
               step="0.01"
               min="2.00"
-              value={formData.price}
+              value={formData.bestow}
               onChange={(e) => {
-                const newPrice = parseFloat(e.target.value) || 0;
+                const newBestow = parseFloat(e.target.value) || 0;
                 // Check if it's a single track (not album)
                 const isAlbum = formData.tags?.some((tag: string) => 
                   tag.toLowerCase().includes('album') || 
@@ -220,11 +220,11 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
                   tag.toLowerCase().includes('ep')
                 ) || false;
                 
-                if (!isAlbum && newPrice > 0 && newPrice < 2.00) {
+                if (!isAlbum && newBestow > 0 && newBestow < 2.00) {
                   toast.error('Single music tracks require minimum 2 USDC');
-                  setFormData({ ...formData, price: 2.00 });
+                  setFormData({ ...formData, bestow: 2.00 });
                 } else {
-                  setFormData({ ...formData, price: newPrice });
+                  setFormData({ ...formData, bestow: newBestow });
                 }
               }}
             />
