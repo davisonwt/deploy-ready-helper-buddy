@@ -66,42 +66,34 @@ export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon:
  * Day starts at sunrise, not midnight!
  */
 export function getCreatorTime(date: Date = new Date(), userLat: number = 30, userLon: number = 0): CustomTime & { display: string; raw: CustomTime; sunriseMinutes: number } {
-  const sunriseMinutes = calculateSunrise(new Date(date), userLat, userLon);  // Use fresh date for sunrise
+  // 1. Calculate today's sunrise in LOCAL minutes since midnight
+  const sunriseMinutes = calculateSunrise(new Date(date), userLat, userLon);
+
+  // 2. Current time in LOCAL minutes since midnight
   const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
+  // 3. Minutes elapsed since this morning's sunrise
   let minutesSinceSunrise = nowMinutes - sunriseMinutes;
-  if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Overnight wrap
-  if (minutesSinceSunrise >= 1440) minutesSinceSunrise -= 1440;  // Handle next day
+  if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;   // overnight wrap
 
-  const totalParts = minutesSinceSunrise / 80;
-  const part = (Math.floor(totalParts) % 18) + 1;  // 1-18 (ensures wrap)
-  let minutesIntoPart = Math.round((totalParts % 1) * 80);
+  // 4. Convert to parts and minutes (this is the ONLY correct way)
+  const totalPartsPassed = minutesSinceSunrise / 80;           // e.g. 10.55
+  const currentPart = Math.floor(totalPartsPassed) + 1;        // 1 to 18
+  const minutesIntoPart = Math.round((totalPartsPassed % 1) * 80);
   const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
-  
-  // Debug logging for South Africa
-  if (userLat === -26.2 && userLon === 28.0) {
-    console.log('SA Debug:', {
-      nowMinutes,
-      sunriseMinutes,
-      minutesSinceSunrise,
-      totalParts,
-      part,
-      displayMinute
-    });
-  }
 
-  // Ordinal suffixes
+  // Ordinal suffix
   const ordinal = (n: number): string => {
     if (n >= 11 && n <= 13) return "th";
-    const last = n % 10;
-    return last === 1 ? "st" : last === 2 ? "nd" : last === 3 ? "rd" : "th";
+    const s = n % 10;
+    return s === 1 ? "st" : s === 2 ? "nd" : s === 3 ? "rd" : "th";
   };
 
   return {
-    part,
+    part: currentPart,
     minute: displayMinute,
-    display: `${part}<sup>${ordinal(part)}</sup> hour  ${displayMinute}<sup>${ordinal(displayMinute)}</sup> min`,
-    raw: { part, minute: displayMinute },
+    display: `${currentPart}<sup>${ordinal(currentPart)}</sup> part ${displayMinute}<sup>${ordinal(displayMinute)}</sup> min`,
+    raw: { part: currentPart, minute: displayMinute },
     sunriseMinutes
   };
 }
