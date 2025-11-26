@@ -18,11 +18,12 @@ export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' |
 /**
  * Calculate sunrise time using full Meeus algorithm (accurate astronomical calculation)
  * Returns minutes since midnight (0-1439) in local time
- * Based on Meeus Astronomical Algorithms
+ * EXACT copy from user's working implementation
  */
 export function calculateSunrise(date: Date = new Date(), lat: number = -26.2, lon: number = 28.0): number {
   // Input: Local date/time object; outputs minutes since midnight in local TZ
-  
+  // Full Meeus algorithm for sunrise (zenith -0.833° for refraction)
+
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -90,10 +91,15 @@ export function calculateSunrise(date: Date = new Date(), lat: number = -26.2, l
   let sunriseUtc = solarNoonUtc - hourAngle;
   if (sunriseUtc < 0) sunriseUtc += 24;
 
-  // Convert to local time using timezone offset (dynamic, not hardcoded)
-  const tzOffset = -date.getTimezoneOffset() / 60;  // Convert minutes to hours (negative because offset is opposite)
-  let localSunriseHours = (sunriseUtc + tzOffset) % 24;
+  // Convert to local time
+  // getTimezoneOffset() returns minutes WEST of UTC (negative for UTC+)
+  // For UTC+2 (SAST), it returns -120
+  // To convert UTC to local: local = UTC - (offset/60)
+  // So: local = UTC - (-120/60) = UTC + 2 ✓
+  const tzOffsetHours = -date.getTimezoneOffset() / 60;
+  let localSunriseHours = sunriseUtc + tzOffsetHours;
   if (localSunriseHours < 0) localSunriseHours += 24;
+  if (localSunriseHours >= 24) localSunriseHours -= 24;
 
   return localSunriseHours * 60;
 }
