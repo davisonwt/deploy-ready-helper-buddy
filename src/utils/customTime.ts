@@ -17,15 +17,30 @@ export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' |
 /**
  * Convert standard JavaScript Date to custom time system
  */
-export function getCreatorTime(realDate: Date = new Date()): CustomTime {
-  const msPerPart = 80 * 60 * 1000; // 80 minutes in ms
-  const msInDay = 24 * 60 * 60 * 1000;
-  const msSinceMidnight = realDate.getTime() - new Date(realDate).setHours(0, 0, 0, 0);
-  const totalParts = msSinceMidnight / msPerPart;
-  const currentPart = Math.floor(totalParts) + 1; // 1–18
-  const minutesInPart = Math.floor((totalParts % 1) * 80) + 1; // 1–80
-  
-  return { part: currentPart, minute: minutesInPart };
+export function getCreatorTime(date: Date = new Date()): CustomTime & { display: string; raw: CustomTime } {
+  // Minutes since midnight (0 to 1439.999...)
+  const totalMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
+
+  // Convert to Creator system
+  const totalParts = totalMinutes / 80;              // 0 to 17.999...
+  const part = Math.floor(totalParts) + 1;           // 1 to 18
+  const minutesIntoPart = Math.round((totalParts % 1) * 80); // 0–79 → display 1–80
+
+  const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
+
+  // Ordinal suffixes
+  const ordinal = (n: number): string => {
+    if (n >= 11 && n <= 13) return "th";
+    const last = n % 10;
+    return last === 1 ? "st" : last === 2 ? "nd" : last === 3 ? "rd" : "th";
+  };
+
+  return {
+    part,
+    minute: displayMinute,
+    display: `${part}<sup>${ordinal(part)}</sup> hour   ${displayMinute}<sup>${ordinal(displayMinute)}</sup> min`,
+    raw: { part, minute: displayMinute }
+  };
 }
 
 /**
