@@ -277,7 +277,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     transformOrigin: 'center bottom',
                     background: 'linear-gradient(to top, #d4af37 0%, #f4e4bc 50%, #d4af37 100%)',
                     borderRadius: '3px',
-                    boxShadow: '0 0 10px rgba(212,175,55,0.7), inset 0.7), inset 0 0 6px rgba(255,255,255,0.4)',
+                    boxShadow: '0 0 10px rgba(212,175,55,0.7), inset 0 0 6px rgba(255,255,255,0.4)',
                     zIndex: 10,
                   }}
                   animate={{
