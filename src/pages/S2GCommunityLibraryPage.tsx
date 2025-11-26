@@ -2,30 +2,44 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Library, Loader2, FileText, GraduationCap, Image, Music, Book, Eye, Lock, Download, Heart } from 'lucide-react';
+import { Library, Loader2, FileText, GraduationCap, Image, Music, Book, Eye, Download, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
-import { useBinancePay } from '@/hooks/useBinancePay';
 import { toast } from 'sonner';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
-  const { initiateBinancePayment } = useBinancePay();
 
   const { data: libraryItems, isLoading } = useQuery({
     queryKey: ['s2g-community-library'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('s2g_library_items')
-        .select('*, profiles:user_id(display_name, avatar_url)')
+        .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Fetch profiles separately if needed
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(item => item.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+        return data.map(item => ({
+          ...item,
+          profile: profileMap.get(item.user_id)
+        }));
+      }
+      
       return data || [];
     }
   });
@@ -53,18 +67,26 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Create bestowal via edge function after payment
-    const result = await supabase.functions.invoke('complete-library-bestowal', {
-      body: {
-        libraryItemId: item.id,
-        amount: item.price,
-        sowerId: item.user_id
+    if (!item.price || item.price <= 0) {
+      toast.error('This item is free. Access granted automatically.');
+      // Grant free access
+      const result = await supabase.functions.invoke('complete-library-bestowal', {
+        body: {
+          libraryItemId: item.id,
+          amount: 0,
+          sowerId: item.user_id
+        }
+      });
+      if (result.data?.success) {
+        toast.success('Access granted!');
+        window.location.reload();
       }
-    });
-
-    if (result.data?.paymentUrl) {
-      window.open(result.data.paymentUrl, '_blank');
+      return;
     }
+
+    // For paid items, we need to integrate with payment flow
+    // For now, show a message
+    toast.info('Payment integration coming soon. Please contact support for access.');
   };
 
   const filteredItems = libraryItems?.filter(item => {
@@ -161,10 +183,10 @@ adial-gradient(circle, rgba(, , , 0.6), transparent),
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
-                Grow further, together. This is our community'\''s vault of resourcesa place to find and share training materials, e-books, templates, and creative documents.
+                Grow further, together. This is our community's vault of resources—a place to find and share training materials, e-books, templates, and creative documents.
               </p>
               <p className='text-white/70 text-sm'>
-                Preview available  Full access after bestowal
+                Preview available • Full access after bestowal
               </p>
             </motion.div>
           </div>
@@ -233,9 +255,9 @@ adial-gradient(circle, rgba(, , , 0.6), transparent),
                         )}
                       </div>
                       <CardTitle className='text-white line-clamp-2'>{item.title}</CardTitle>
-                      {item.profiles && (
+                      {item.profile && (
                         <p className='text-white/70 text-sm mt-1'>
-                          by {item.profiles.display_name || 'Anonymous'}
+                          by {item.profile.display_name || 'Anonymous'}
                         </p>
                       )}
                     </CardHeader>
