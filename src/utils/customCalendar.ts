@@ -3,7 +3,7 @@
  * 
  * Calendar has 12 months with varying days: 30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31
  * Year starts on the 4th day of the week (announced by Tequvah in the 7th month)
- * Epoch: Autumnal equinox 2024-09-22 ≈ Creator Year 6027 Month 7 Day 1
+ * Epoch: Gregorian 2025-11-26 = Creator Y6028 M9 D10 Weekday 3
  */
 
 export interface CustomDate {
@@ -19,8 +19,9 @@ const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 // Day names (assuming 7-day week)
 const DAY_NAMES = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
 
-// Epoch: Autumnal equinox 2024-09-22 (Creator Year 6027 Month 7 Day 1)
-const CREATOR_EPOCH = new Date('2024-09-22T00:00:00Z');
+// Epoch: Gregorian 2025-11-26 = Creator Y6028 M9 D10 Weekday 3
+const CREATOR_EPOCH = new Date('2025-11-26T00:00:00Z');
+const EPOCH_CREATOR_DATE = { year: 6028, month: 9, day: 10, weekDay: 3 };
 
 /**
  * Check if a year is a long Sabbath year (simplified - adjust based on actual rules)
@@ -44,39 +45,50 @@ export function getDaysInMonth(month: number): number {
  */
 export function getCreatorDate(gregorianDate: Date = new Date()): CustomDate {
   const msDiff = gregorianDate.getTime() - CREATOR_EPOCH.getTime();
-  const creatorDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+  const diffDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
   
-  const monthLengths = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-  let year = 6027;
-  let dayOfYear = creatorDays;
+  let year = EPOCH_CREATOR_DATE.year;
+  let month = EPOCH_CREATOR_DATE.month;
+  let day = EPOCH_CREATOR_DATE.day;
+  let weekDay = EPOCH_CREATOR_DATE.weekDay;
   
-  // Calculate year
-  while (dayOfYear >= 365 + (isLongSabbathYear(year) ? 1 : 0)) {
-    dayOfYear -= 365 + (isLongSabbathYear(year) ? 1 : 0);
-    year++;
-  }
+  let remainingDays = diffDays;
   
-  // Calculate month and day
-  let month = 0;
-  while (dayOfYear >= monthLengths[month]) {
-    dayOfYear -= monthLengths[month];
-    month++;
-    if (month >= 12) {
-      month = 0;
-      year++;
-      dayOfYear -= 365 + (isLongSabbathYear(year) ? 1 : 0);
+  // Move forward or backward based on remainingDays
+  while (remainingDays !== 0) {
+    const daysInCurrentMonth = getDaysInMonth(month);
+    
+    if (remainingDays > 0) {
+      // Moving forward
+      const daysToEndOfMonth = daysInCurrentMonth - day + 1;
+      if (remainingDays >= daysToEndOfMonth) {
+        remainingDays -= daysToEndOfMonth;
+        day = 1;
+        month = (month % 12) + 1;
+        if (month === 1) year++;
+        weekDay = ((weekDay - 1 + daysToEndOfMonth) % 7) + 1;
+      } else {
+        day += remainingDays;
+        weekDay = ((weekDay - 1 + remainingDays) % 7) + 1;
+        remainingDays = 0;
+      }
+    } else {
+      // Moving backward
+      if (day + remainingDays >= 1) {
+        day += remainingDays;
+        weekDay = ((weekDay - 1 + remainingDays + 7) % 7) + 1;
+        remainingDays = 0;
+      } else {
+        remainingDays += day;
+        month = month === 1 ? 12 : month - 1;
+        if (month === 12) year--;
+        day = getDaysInMonth(month);
+        weekDay = ((weekDay - 1 + remainingDays + 7) % 7) + 1;
+      }
     }
   }
   
-  // Calculate weekday (Day 4 = week day 4, year starts on Day 4)
-  const weekDay = ((creatorDays % 7) + 4) % 7 || 7;
-  
-  return {
-    year: year + 1, // because epoch is start of 6027
-    month: month + 1,
-    day: dayOfYear + 1,
-    weekDay,
-  };
+  return { year, month, day, weekDay };
 }
 
 /**
