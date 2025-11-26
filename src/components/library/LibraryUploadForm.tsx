@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,19 @@ export default function LibraryUploadForm() {
     whisperer_percentage: 0,
     preview_duration_seconds: 30
   });
+
+  // Check if current type is music and if it's a single track (not album)
+  const isSingleMusic = formData.type === 'music' && 
+    (!formData.tags.toLowerCase().includes('album') && 
+     !formData.tags.toLowerCase().includes('lp') &&
+     !formData.tags.toLowerCase().includes('ep'));
+
+  // Update price when type changes to music (single tracks default to 2 USDC)
+  useEffect(() => {
+    if (isSingleMusic && formData.price === 0 && !formData.is_giveaway) {
+      setFormData(prev => ({ ...prev, price: 2.00 }));
+    }
+  }, [formData.type, formData.tags, formData.is_giveaway]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -136,7 +149,16 @@ export default function LibraryUploadForm() {
           description: formData.description,
           type: formData.type,
           category: formData.category,
-          price: formData.is_giveaway ? 0 : formData.price,
+          price: (() => {
+            if (formData.is_giveaway) return 0;
+            // Single music tracks default to 2 USDC
+            if (formData.type === 'music' && formData.price === 0) {
+              const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+              const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
+              if (!isAlbum) return 2.00;
+            }
+            return formData.price;
+          })(),
           file_url: fileUrl.publicUrl,
           preview_url: previewUrl,
           cover_image_url: coverUrl,
@@ -264,20 +286,27 @@ export default function LibraryUploadForm() {
                   </div>
                 ) : (
                   <div>
-                    <Label htmlFor='price' className='text-white'>Bestowal Price (USDC) *</Label>
+                    <Label htmlFor='price' className='text-white'>
+                      Bestowal Price (USDC) *
+                      {isSingleMusic && (
+                        <span className='text-yellow-400 ml-2'>(Default: 2 USDC for single tracks)</span>
+                      )}
+                    </Label>
                     <Input
                       id='price'
                       type='number'
                       step='0.01'
-                      min='0.01'
+                      min={isSingleMusic ? '2.00' : '0.01'}
                       required={!formData.is_giveaway}
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                       className='bg-white/20 border-white/30 text-white'
-                      placeholder='0.00'
+                      placeholder={isSingleMusic ? '2.00' : '0.00'}
                     />
                     <p className='text-white/70 text-xs mt-1'>
-                      Amount growers must bestow to access this item. Minimum $0.01 USDC required.
+                      {isSingleMusic 
+                        ? 'Single music tracks default to 2 USDC. Albums can have custom prices set by sowers.'
+                        : 'Amount growers must bestow to access this item. Minimum $0.01 USDC required.'}
                     </p>
                   </div>
                 )}
