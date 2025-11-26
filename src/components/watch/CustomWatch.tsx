@@ -128,7 +128,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
     const newAlarm: Alarm = {
       id: Date.now().toString(),
       time: alarmTime,
-      label: newAlarmLabel || `Alarm Part ${newAlarmPart}:${newAlarmMinutes.toString().padStart(2, '0')}`,
+      label: newAlarmLabel || `Alarm Part ${newAlarmPart}, minute ${newAlarmMinutes}`,
       enabled: true,
     };
     setAlarms([...alarms, newAlarm]);
