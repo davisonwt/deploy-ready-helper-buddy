@@ -68,7 +68,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
   useEffect(() => {
     // Initialize
     const now = new Date();
-    setCustomTime(getCreatorTime(now));
+    const creatorTime = getCreatorTime(now);
+    setCustomTime(creatorTime.raw);
     setCustomDate(getCreatorDate(now));
   }, []);
 
@@ -78,8 +79,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
       setCurrentTime(now);
       
       // Calculate custom time
-      const custom = getCreatorTime(now);
-      setCustomTime(custom);
+      const creatorTime = getCreatorTime(now);
+      setCustomTime(creatorTime.raw);
       
       setCustomDate(getCreatorDate(now));
       
@@ -328,14 +329,16 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 
                 {/* Center Time Display */}
                 {!compact && (
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none" style={{ marginTop: watchSize * 0.15 }}>
-                    <div className="text-white font-black" style={{ fontSize: watchSize * 0.12, textShadow: '0 0 8px rgba(0,0,0,0.9)', lineHeight: 1.2 }}>
-                      {timeDisplay.part.split(' ')[0]}<sup style={{ fontSize: '0.6em' }}>{timeDisplay.part.split(' ')[1]}</sup> {timeDisplay.part.split(' ')[2]}
-                    </div>
-                    <div className="text-white font-bold mt-1" style={{ fontSize: watchSize * 0.1, textShadow: '0 0 6px rgba(0,0,0,0.9)', lineHeight: 1.2 }}>
-                      {timeDisplay.minute.split(' ')[0]}<sup style={{ fontSize: '0.6em' }}>{timeDisplay.minute.split(' ')[1]}</sup> {timeDisplay.minute.split(' ')[2]}
-                    </div>
-                  </div>
+                  <div 
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none text-white font-black" 
+                    style={{ 
+                      marginTop: watchSize * 0.15,
+                      fontSize: watchSize * 0.1,
+                      textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                      lineHeight: 1.2
+                    }}
+                    dangerouslySetInnerHTML={{ __html: getCreatorTime(currentTime).display }}
+                  />
                 )}
               </div>
               
