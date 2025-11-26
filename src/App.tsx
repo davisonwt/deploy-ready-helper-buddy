@@ -31,7 +31,27 @@ import RegisterPage from "./pages/RegisterPage";
 // DEFERRED LOADING: All other pages lazy loaded
 const ChatApp = lazy(() => import("./pages/ChatApp"));
 const GroveFeedPage = lazy(() => import("./pages/GroveFeedPage"));
-const CommunicationsHub = lazy(() => import("./pages/CommunicationsHub"));
+const CommunicationsHub = lazy(() => 
+  import("./pages/CommunicationsHub").catch((error) => {
+    console.error('Failed to load CommunicationsHub:', error);
+    return {
+      default: () => (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Error Loading Communications Hub</h1>
+            <p className="text-muted-foreground mb-4">Failed to load the Communications Hub module.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    };
+  })
+);
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
