@@ -18,14 +18,13 @@ export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' |
 /**
  * Calculate sunrise time using astronomical formula (accurate to ~5 min)
  * Returns minutes since midnight (0-1439) in local time
- * Based on working HTML implementation
+ * EXACT copy from working HTML implementation
  */
 export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon: number = 0): number {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-
   // Julian Day Number (JDN)
+  let year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
   let a = Math.floor((14 - month) / 12);
   let y = year + 4800 - a;
   let m = month + 12 * a - 3;
