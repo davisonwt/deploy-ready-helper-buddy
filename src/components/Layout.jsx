@@ -125,7 +125,7 @@ function Layout({ children }) {
         { name: "My S2G Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "My S2G Music Library", href: "/music-library", icon: Mic },
-        { name: "S2G Community Music", href: "/s2g-community-music", icon: Music },
+            { name: "S2G Community Music Library", href: "/s2g-community-music", icon: Music },
         { name: "My S2G Library", href: "/my-s2g-library", icon: Book },
         { name: "S2G Community Library", href: "/s2g-community-library", icon: Library },
         { name: "S2G Marketing Video Gallery", href: "/marketing-videos", icon: Video }
