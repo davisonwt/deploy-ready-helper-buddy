@@ -214,9 +214,10 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 {/* 18 Part Markers - Anti-clockwise (1-18) */}
                 {Array.from({ length: 18 }).map((_, i) => {
                   const partNum = i + 1;
-                  // Anti-clockwise: Start at top (12 o'clock) with Part 1, move counter-clockwise
-                  // Each part is 20 degrees (360/18), moving anti-clockwise means subtracting
-                  const markerAngle = 90 - (i * 20); // Start at 90° (top), subtract 20° for each part
+                  // Anti-clockwise: Start at top (12 o'clock) with Part 1, move counter-clockwise (left)
+                  // Each part is 20 degrees (360/18)
+                  // For anti-clockwise: start at 90° (top), add 20° for each part (moving left)
+                  const markerAngle = 90 + (i * 20); // Start at 90° (top), add 20° for each part (anti-clockwise)
                   const radian = (markerAngle * Math.PI) / 180;
                   const radius = watchSize * 0.38; // Slightly further out for better visibility
                   const x = centerX + Math.cos(radian) * radius;
