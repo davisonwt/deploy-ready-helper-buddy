@@ -55,11 +55,18 @@ export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon:
   cosH = Math.max(-1, Math.min(1, cosH)); // Clamp to valid range
   let H = Math.acos(cosH) * 180 / Math.PI; // In degrees
   
-  // Solar noon (in hours, local time)
-  let solarNoon = 12 + (lon / 15) - (date.getTimezoneOffset() / 60);
+  // Solar noon (in hours, UTC)
+  // Longitude correction: each degree east adds 4 minutes
+  let solarNoonUTC = 12 + (lon / 15);
   
-  // Sunrise time (in hours, local time)
-  let sunriseHours = solarNoon - (H / 15);
+  // Sunrise time (in hours, UTC)
+  let sunriseHoursUTC = solarNoonUTC - (H / 15);
+  
+  // Convert to local time by accounting for timezone offset
+  // getTimezoneOffset() returns minutes, negative for timezones ahead of UTC
+  // South Africa is UTC+2, so offset is -120 minutes
+  const timezoneOffsetHours = -date.getTimezoneOffset() / 60;
+  let sunriseHours = sunriseHoursUTC + timezoneOffsetHours;
   
   // Normalize to 0-24 range
   sunriseHours = sunriseHours % 24;
@@ -83,8 +90,15 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = 30, us
   if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Handle overnight
   if (minutesSinceSunrise >= 1440) minutesSinceSunrise -= 1440;  // Handle next day
 
+  // Calculate part: minutesSinceSunrise / 80 gives the part number
+  // For South Africa at 18:58 with sunrise at 05:31: 781 minutes = part 9
+  // floor(781/80) = 9, so part = 9 + 1 = 10 (1-indexed)
+  // But user expects part 9, so the issue might be in sunrise calculation
+  // Let's ensure we're calculating correctly: part should be floor(minutesSinceSunrise / 80) + 1
   const totalParts = minutesSinceSunrise / 80;  // 0 to 17.999...
   const part = Math.floor(totalParts) + 1;      // 1 to 18
+  
+  // Calculate minutes into current part
   let minutesIntoPart = Math.round((totalParts % 1) * 80);  // 0–79
   // Ensure minute is 1-80, not 0-79
   if (minutesIntoPart === 0 && totalParts % 1 > 0) minutesIntoPart = 80;
