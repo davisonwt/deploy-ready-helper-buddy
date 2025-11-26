@@ -24,32 +24,49 @@ export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon:
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  // Julian Day Number
+  // Julian Day Number (at noon)
   let a = Math.floor((14 - month) / 12);
   let y = year + 4800 - a;
   let m = month + 12 * a - 3;
   let jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 
-  let jde = jdn + (date.getHours() - lon / 15) / 24;
-  let Jstar = jde - 2451545.0;
-  let M = 357.5291 + 0.98560028 * Jstar;
-  let L = 280.4665 + 0.98564736 * Jstar;
+  // Days since J2000.0
+  let Jstar = jdn - 2451545.0;
+  
+  // Mean solar anomaly
+  let M = (357.5291 + 0.98560028 * Jstar) % 360;
+  if (M < 0) M += 360;
+  
+  // Mean solar longitude
+  let L = (280.4665 + 0.98564736 * Jstar) % 360;
+  if (L < 0) L += 360;
+  
+  // Solar declination
   let lambda = L + 1.915 * Math.sin(M * Math.PI / 180) + 0.020 * Math.sin(2 * M * Math.PI / 180);
   let epsilon = 23.439 - 0.0000004 * Jstar;
-
-  // Hour angle for sunrise
-  let cosH = (Math.cos(lat * Math.PI / 180) * Math.cos(epsilon * Math.PI / 180) * Math.cos(lambda * Math.PI / 180) +
-              Math.sin(lat * Math.PI / 180) * Math.sin(epsilon * Math.PI / 180)) /
-             (Math.cos(lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180));
-  let H = Math.acos(Math.max(-1, Math.min(1, cosH))) * 180 / Math.PI / 15;  // In hours
-
-  let solarNoon = 12 + lon / 15;
-  let sunriseHours = solarNoon - H;
+  
+  // Declination in radians
+  let delta = Math.asin(Math.sin(epsilon * Math.PI / 180) * Math.sin(lambda * Math.PI / 180)) * 180 / Math.PI;
+  
+  // Hour angle for sunrise (in degrees)
+  let latRad = lat * Math.PI / 180;
+  let deltaRad = delta * Math.PI / 180;
+  let cosH = -Math.tan(latRad) * Math.tan(deltaRad);
+  cosH = Math.max(-1, Math.min(1, cosH)); // Clamp to valid range
+  let H = Math.acos(cosH) * 180 / Math.PI; // In degrees
+  
+  // Solar noon (in hours, local time)
+  let solarNoon = 12 + (lon / 15) - (date.getTimezoneOffset() / 60);
+  
+  // Sunrise time (in hours, local time)
+  let sunriseHours = solarNoon - (H / 15);
+  
+  // Normalize to 0-24 range
+  sunriseHours = sunriseHours % 24;
   if (sunriseHours < 0) sunriseHours += 24;
-  if (sunriseHours >= 24) sunriseHours -= 24;
 
-  // Return minutes since midnight
-  return (sunriseHours * 60) % 1440;
+  // Return minutes since midnight (local time)
+  return Math.round(sunriseHours * 60) % 1440;
 }
 
 /**
@@ -58,14 +75,19 @@ export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon:
  */
 export function getCreatorTime(date: Date = new Date(), userLat: number = 30, userLon: number = 0): CustomTime & { display: string; raw: CustomTime; sunriseMinutes: number } {
   const sunriseMinutes = calculateSunrise(date, userLat, userLon);
+  
+  // Use local time components (already in user's timezone)
   const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
   let minutesSinceSunrise = nowMinutes - sunriseMinutes;
   if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Handle overnight
+  if (minutesSinceSunrise >= 1440) minutesSinceSunrise -= 1440;  // Handle next day
 
   const totalParts = minutesSinceSunrise / 80;  // 0 to 17.999...
   const part = Math.floor(totalParts) + 1;      // 1 to 18
   let minutesIntoPart = Math.round((totalParts % 1) * 80);  // 0–79
+  // Ensure minute is 1-80, not 0-79
+  if (minutesIntoPart === 0 && totalParts % 1 > 0) minutesIntoPart = 80;
   const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
 
   // Ordinal suffixes
