@@ -274,7 +274,7 @@ export function MusicLibraryTable({
                 {/* Price */}
                 <div className="col-span-1 text-center">
                   <Badge className="bg-purple-500/30 text-white border-purple-400/50">
-                    {formatAmount(2)} USDC
+                    {formatAmount(2)}
                   </Badge>
                 </div>
 
