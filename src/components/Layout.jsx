@@ -28,7 +28,10 @@ import {
   Sparkles,
   Mic,
   Radio,
-  Crown
+  Crown,
+  Book,
+  Library,
+  Music
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -122,7 +125,10 @@ function Layout({ children }) {
         { name: "My Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
         { name: "Music Library", href: "/music-library", icon: Mic },
-        { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
+        { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video },
+        { name: "My S2G Library", href: "/my-s2g-library", icon: Book },
+        { name: "S2G Community Library", href: "/s2g-community-library", icon: Library },
+        { name: "S2G Community Music", href: "/s2g-community-music", icon: Music }
       ]
     },
     {
