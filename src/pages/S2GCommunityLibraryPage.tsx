@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
-import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
@@ -288,24 +287,12 @@ export default function S2GCommunityLibraryPage() {
                       
                       {/* Bestowal Value - Prominently Displayed */}
                       <div className='mt-3'>
-                        {item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity) ? (
-                          <div className='bg-green-500/20 border border-green-400 rounded-lg p-3'>
-                            <Badge className='bg-green-500 text-white mb-1'>FREE GIVEAWAY</Badge>
-                            <p className='text-white text-sm'>
-                              {item.giveaway_limit ? `${item.giveaway_limit - (item.giveaway_count || 0)} free downloads left` : 'Unlimited free downloads'}
-                            </p>
-                          </div>
-                        ) : item.price > 0 ? (
+                        {item.price > 0 ? (
                           <div className='bg-purple-500/20 border border-purple-400 rounded-lg p-3'>
                             <p className='text-2xl font-bold text-white mb-1'>
                               {formatCurrency(item.price)}
                             </p>
                             <p className='text-white/70 text-xs'>to bestow</p>
-                            {item.whisperer_percentage > 0 && (
-                              <p className='text-white/60 text-xs mt-1'>
-                                {item.whisperer_percentage}% whisperer share
-                              </p>
-                            )}
                           </div>
                         ) : (
                           <Badge className='bg-blue-500 text-white'>Free</Badge>
@@ -334,7 +321,7 @@ export default function S2GCommunityLibraryPage() {
                           </>
                         ) : (
                           <GradientPlaceholder 
-                            type={item.type || 'default'} 
+                            type={item.type as any} 
                             title={item.title}
                             className="w-full h-48"
                             size="lg"
@@ -389,7 +376,7 @@ export default function S2GCommunityLibraryPage() {
                           onClick={() => handleBestow(item)}
                         >
                           <Heart className='w-4 h-4 mr-2' />
-                          {item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity) ? 'Claim Free' : 'Bestow to Access'}
+                          Bestow to Access
                         </Button>
                       )}
                     </CardContent>

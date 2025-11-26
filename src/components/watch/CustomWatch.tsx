@@ -85,7 +85,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
       
       // Check alarms
       alarms.forEach(alarm => {
-        if (alarm.enabled && custom.raw.part === alarm.part && custom.raw.minute === alarm.minute) {
+        if (alarm.enabled && creatorTime.raw.part === alarm.part && creatorTime.raw.minute === alarm.minute) {
           toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
           if (audioRef.current) {
             audioRef.current.play().catch(() => {});
@@ -335,7 +335,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                       textShadow: '0 0 8px rgba(0,0,0,0.9)',
                       lineHeight: 1.2
                     }}
-                    dangerouslySetInnerHTML={{ __html: creatorTime.display }}
+                    dangerouslySetInnerHTML={{ __html: getCreatorTime(currentTime).display }}
                   />
                 )}
               </div>
