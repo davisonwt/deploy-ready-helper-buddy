@@ -120,15 +120,15 @@ function Layout({ children }) {
       color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'browse-orchards-tour',
       items: [
-        { name: "My Orchards", href: "/my-orchards", icon: User },
+        { name: "My S2G Orchards", href: "/my-orchards", icon: User },
         { name: "S2G Community Orchards", href: "/364yhvh-orchards", icon: Sprout },
-        { name: "My Products", href: "/my-products", icon: ShoppingCart },
+        { name: "My S2G Products", href: "/my-products", icon: ShoppingCart },
         { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
-        { name: "Music Library", href: "/music-library", icon: Mic },
-        { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video },
+        { name: "My S2G Music Library", href: "/music-library", icon: Mic },
+        { name: "S2G Community Music", href: "/s2g-community-music", icon: Music },
         { name: "My S2G Library", href: "/my-s2g-library", icon: Book },
         { name: "S2G Community Library", href: "/s2g-community-library", icon: Library },
-        { name: "S2G Community Music", href: "/s2g-community-music", icon: Music }
+        { name: "Marketing Videos Gallery", href: "/marketing-videos", icon: Video }
       ]
     },
     {
