@@ -169,7 +169,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
     return `${s}s`;
   };
 
-  const watchSize = compact ? 80 : 200;
+  const watchSize = compact ? 120 : 280; // Increased by ~1cm (38px) per side: 200 -> 280, 80 -> 120
   const centerX = 50;
   const centerY = 50;
 
@@ -211,42 +211,45 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   opacity: 0.6,
                 }} />
                 
-                {/* 18 Part Markers - Anti-clockwise */}
+                {/* 18 Part Markers - Anti-clockwise (1-18) */}
                 {Array.from({ length: 18 }).map((_, i) => {
                   const partNum = i + 1;
-                  const markerAngle = (i * 20) - 90; // Start at top, anti-clockwise
+                  // Anti-clockwise: Start at top (12 o'clock) with Part 1, move counter-clockwise
+                  // Each part is 20 degrees (360/18), moving anti-clockwise means subtracting
+                  const markerAngle = 90 - (i * 20); // Start at 90° (top), subtract 20° for each part
                   const radian = (markerAngle * Math.PI) / 180;
-                  const radius = watchSize * 0.35;
+                  const radius = watchSize * 0.38; // Slightly further out for better visibility
                   const x = centerX + Math.cos(radian) * radius;
-                  const y = centerY + Math.sin(radian) * radius;
+                  const y = centerY - Math.sin(radian) * radius; // Negative because screen Y is inverted
                   
                   return (
                     <div key={i}>
-                      {/* Part Number */}
+                      {/* Part Number - Larger and more prominent */}
                       <div
                         className="absolute text-white font-bold"
                         style={{
                           left: `${x}%`,
                           top: `${y}%`,
                           transform: 'translate(-50%, -50%)',
-                          fontSize: watchSize * 0.06,
-                          textShadow: '0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(255,255,255,0.3)',
-                          fontWeight: customTime.part === partNum ? '900' : '600',
-                          color: customTime.part === partNum ? '#ffd700' : 'rgba(255,255,255,0.9)',
+                          fontSize: watchSize * 0.08,
+                          textShadow: '0 0 6px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4), 2px 2px 4px rgba(0,0,0,0.8)',
+                          fontWeight: customTime.part === partNum ? '900' : '700',
+                          color: customTime.part === partNum ? '#ffd700' : 'rgba(255,255,255,0.95)',
+                          letterSpacing: '0.5px',
                         }}
                       >
                         {partNum}
                       </div>
-                      {/* Marker Dot */}
+                      {/* Marker Dot - Larger */}
                       <div
-                        className="absolute rounded-full bg-white/80"
+                        className="absolute rounded-full bg-white/90"
                         style={{
-                          width: watchSize * 0.015,
-                          height: watchSize * 0.015,
+                          width: watchSize * 0.02,
+                          height: watchSize * 0.02,
                           left: `${x}%`,
                           top: `${y}%`,
                           transform: 'translate(-50%, -50%)',
-                          boxShadow: '0 0 4px rgba(255,255,255,0.8)',
+                          boxShadow: '0 0 6px rgba(255,255,255,0.9), 0 0 12px rgba(255,255,255,0.5)',
                         }}
                       />
                     </div>
