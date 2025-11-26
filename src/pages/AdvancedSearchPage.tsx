@@ -166,9 +166,12 @@ const AdvancedSearchPage = () => {
                           className="w-full h-48 object-cover"
                         />
                       ) : (
-                        <div className="w-full h-48 bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
-                          <span className="text-4xl">🌱</span>
-                        </div>
+                        <GradientPlaceholder 
+                          type="orchard" 
+                          title={orchard.title}
+                          className="w-full h-48"
+                          size="lg"
+                        />
                       )}
                       <div className="absolute top-4 right-4">
                         <Badge variant={isCompleted ? "default" : "secondary"}>
