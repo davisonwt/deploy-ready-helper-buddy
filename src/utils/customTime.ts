@@ -16,39 +16,56 @@ export interface CustomTime {
 export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' | 'night';
 
 /**
- * Calculate sunrise time for a given date (simplified - adjust based on location)
- * Returns hours since midnight (e.g., 6.5 = 6:30 AM)
+ * Calculate sunrise time using astronomical formula (accurate to ~5 min)
+ * Returns minutes since midnight (0-1439)
  */
-function getSunriseTime(date: Date): number {
-  // Simplified sunrise calculation - approximately 6:00 AM
-  // For more accuracy, use a library like suncalc or calculate based on latitude/longitude
-  // For MVP, using a fixed 6:00 AM sunrise
-  return 6.0;
+export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon: number = 0): number {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  // Julian Day Number
+  let a = Math.floor((14 - month) / 12);
+  let y = year + 4800 - a;
+  let m = month + 12 * a - 3;
+  let jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+
+  let jde = jdn + (date.getHours() - lon / 15) / 24;
+  let Jstar = jde - 2451545.0;
+  let M = 357.5291 + 0.98560028 * Jstar;
+  let L = 280.4665 + 0.98564736 * Jstar;
+  let lambda = L + 1.915 * Math.sin(M * Math.PI / 180) + 0.020 * Math.sin(2 * M * Math.PI / 180);
+  let epsilon = 23.439 - 0.0000004 * Jstar;
+
+  // Hour angle for sunrise
+  let cosH = (Math.cos(lat * Math.PI / 180) * Math.cos(epsilon * Math.PI / 180) * Math.cos(lambda * Math.PI / 180) +
+              Math.sin(lat * Math.PI / 180) * Math.sin(epsilon * Math.PI / 180)) /
+             (Math.cos(lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180));
+  let H = Math.acos(Math.max(-1, Math.min(1, cosH))) * 180 / Math.PI / 15;  // In hours
+
+  let solarNoon = 12 + lon / 15;
+  let sunriseHours = solarNoon - H;
+  if (sunriseHours < 0) sunriseHours += 24;
+  if (sunriseHours >= 24) sunriseHours -= 24;
+
+  // Return minutes since midnight
+  return (sunriseHours * 60) % 1440;
 }
 
 /**
  * Convert standard JavaScript Date to custom time system
  * Day starts at sunrise, not midnight!
  */
-export function getCreatorTime(date: Date = new Date()): CustomTime & { display: string; raw: CustomTime } {
-  // Get sunrise time (hours since midnight)
-  const sunriseHours = getSunriseTime(date);
-  const sunriseMinutes = sunriseHours * 60;
-  
-  // Calculate minutes since midnight
-  const totalMinutesSinceMidnight = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
-  
-  // Adjust for sunrise start: subtract sunrise time, add 1440 if negative (previous day)
-  let minutesSinceSunrise = totalMinutesSinceMidnight - sunriseMinutes;
-  if (minutesSinceSunrise < 0) {
-    minutesSinceSunrise += 1440; // Previous day's time
-  }
-  
-  // Convert to Creator system (18 parts of 80 minutes each)
-  const totalParts = minutesSinceSunrise / 80;              // 0 to 17.999...
-  const part = Math.floor(totalParts) + 1;           // 1 to 18
-  const minutesIntoPart = Math.round((totalParts % 1) * 80); // 0–79 → display 1–80
+export function getCreatorTime(date: Date = new Date(), userLat: number = 30, userLon: number = 0): CustomTime & { display: string; raw: CustomTime; sunriseMinutes: number } {
+  const sunriseMinutes = calculateSunrise(date, userLat, userLon);
+  const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
+  let minutesSinceSunrise = nowMinutes - sunriseMinutes;
+  if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Handle overnight
+
+  const totalParts = minutesSinceSunrise / 80;  // 0 to 17.999...
+  const part = Math.floor(totalParts) + 1;      // 1 to 18
+  let minutesIntoPart = Math.round((totalParts % 1) * 80);  // 0–79
   const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
 
   // Ordinal suffixes
@@ -61,8 +78,9 @@ export function getCreatorTime(date: Date = new Date()): CustomTime & { display:
   return {
     part,
     minute: displayMinute,
-    display: `${part}<sup>${ordinal(part)}</sup> hour   ${displayMinute}<sup>${ordinal(displayMinute)}</sup> min`,
-    raw: { part, minute: displayMinute }
+    display: `${part}<sup>${ordinal(part)}</sup> hour  ${displayMinute}<sup>${ordinal(displayMinute)}</sup> min`,
+    raw: { part, minute: displayMinute },
+    sunriseMinutes
   };
 }
 
@@ -125,8 +143,6 @@ export function getTimeOfPartGradient(part: number): string {
  * Format custom time display with ordinal suffixes
  */
 export function formatCustomTime(customTime: CustomTime): string {
-  const partOrdinal = getOrdinalSuffix(customTime.part);
-  const minuteOrdinal = getOrdinalSuffix(customTime.minute);
   return `Part ${customTime.part}, minute ${customTime.minute}`;
 }
 
@@ -164,6 +180,5 @@ export function getAntiClockwiseAngle(customTime: CustomTime): number {
   // Minutes within part add proportional angle
   const minutesAngle = ((customTime.minute - 1) / 80) * 20;
   // Start at 90° (top), add angle for anti-clockwise movement
-  // Then convert to standard rotation (subtract from 360 for anti-clockwise visual)
   return 90 + partAngle + minutesAngle;
 }

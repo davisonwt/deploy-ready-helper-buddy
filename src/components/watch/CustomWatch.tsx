@@ -49,7 +49,9 @@ interface Timer {
 export function CustomWatch({ className, compact = false, showControls = false }: CustomWatchProps) {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [customTime, setCustomTime] = useState<CustomTime>({ part: 1, minute: 1 });
-  const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 2, day: 10, weekDay: 3 });
+  const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 9, day: 10, weekDay: 3 });
+  const [userLat, setUserLat] = useState<number>(30); // Default: ~30N (global average)
+  const [userLon, setUserLon] = useState<number>(0); // Default longitude
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [timers, setTimers] = useState<Timer[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -65,9 +67,23 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Try to get user's location from browser
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLat(position.coords.latitude);
+          setUserLon(position.coords.longitude);
+        },
+        () => {
+          // Fallback to default if geolocation fails
+          console.log('Using default location (30°N, 0°E)');
+        }
+      );
+    }
+    
     // Initialize
     const now = new Date();
-    const creatorTime = getCreatorTime(now);
+    const creatorTime = getCreatorTime(now, userLat, userLon);
     setCustomTime(creatorTime.raw);
     setCustomDate(getCreatorDate(now));
   }, []);
@@ -77,8 +93,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
       const now = new Date();
       setCurrentTime(now);
       
-      // Calculate custom time
-      const creatorTime = getCreatorTime(now);
+      // Calculate custom time with user's location
+      const creatorTime = getCreatorTime(now, userLat, userLon);
       setCustomTime(creatorTime.raw);
       
       setCustomDate(getCreatorDate(now));
@@ -110,7 +126,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [alarms]);
+  }, [alarms, userLat, userLon]);
 
   // Calculate angles for hands (anti-clockwise)
   const partAngle = getAntiClockwiseAngle({ part: customTime.part, minute: 1 }); // Hour hand (part indicator)
@@ -341,7 +357,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                       textShadow: '0 0 8px rgba(0,0,0,0.9)',
                       lineHeight: 1.2
                     }}
-                    dangerouslySetInnerHTML={{ __html: getCreatorTime(currentTime).display }}
+                    dangerouslySetInnerHTML={{ __html: getCreatorTime(currentTime, userLat, userLon).display }}
                   />
                 )}
               </div>
@@ -361,7 +377,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     <div className="text-right">
                       <div>Gregorian</div>
                       <div className="font-semibold">
-                        2025/11/26
+                        {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
                       </div>
                       <div>
                         {currentTime.toLocaleDateString(undefined, { weekday: 'long' })} {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

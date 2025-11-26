@@ -3,14 +3,14 @@
  * 
  * Calendar has 12 months with varying days: 30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31
  * Year starts on the 4th day of the week (announced by Tequvah in the 7th month)
- * Epoch: Gregorian 2025-11-26 = Creator Y6028 M9 D10 Weekday 3
+ * Epoch: Tequvah (Vernal Equinox) March 20, 2025 = Creator Year 6028, Month 1, Day 1
  */
 
 export interface CustomDate {
   year: number;
   month: number; // 1-12
   day: number;
-  weekDay: number; // 1-7
+  weekDay: number; // 1-7 (1-6 work days, 7 = Sabbath)
 }
 
 // Days per month: [Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
@@ -19,17 +19,17 @@ const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 // Day names (assuming 7-day week)
 const DAY_NAMES = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
 
-// Epoch: Gregorian 2025-11-26 = Creator Y6028 M9 D10 Weekday 3
-const CREATOR_EPOCH = new Date('2025-11-26T00:00:00Z');
-const EPOCH_CREATOR_DATE = { year: 6028, month: 9, day: 10, weekDay: 3 };
+// Epoch: Tequvah (Vernal Equinox) March 20, 2025 = Year 6028, Month 1, Day 1
+const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
 
 /**
  * Check if a year is a long Sabbath year (simplified - adjust based on actual rules)
+ * Placeholder: Set true for years needing 1-2 extra days post-52nd Sabbath
  */
-function isLongSabbathYear(year: number): boolean {
-  // Simplified: every 7th year is a long Sabbath year
-  // Adjust this based on your actual calendar rules
-  return year % 7 === 0;
+function isLongYear(year: number): boolean {
+  // Based on tequvah observation—update annually
+  // Example: 6028 is common year
+  return false;
 }
 
 /**
@@ -42,53 +42,43 @@ export function getDaysInMonth(month: number): number {
 
 /**
  * Convert Gregorian date to Creator's calendar date
+ * Epoch: March 20, 2025 = Year 6028, Month 1, Day 1
  */
 export function getCreatorDate(gregorianDate: Date = new Date()): CustomDate {
   const msDiff = gregorianDate.getTime() - CREATOR_EPOCH.getTime();
-  const diffDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
-  
-  let year = EPOCH_CREATOR_DATE.year;
-  let month = EPOCH_CREATOR_DATE.month;
-  let day = EPOCH_CREATOR_DATE.day;
-  let weekDay = EPOCH_CREATOR_DATE.weekDay;
-  
-  let remainingDays = diffDays;
-  
-  // Move forward or backward based on remainingDays
-  while (remainingDays !== 0) {
-    const daysInCurrentMonth = getDaysInMonth(month);
-    
-    if (remainingDays > 0) {
-      // Moving forward
-      const daysToEndOfMonth = daysInCurrentMonth - day + 1;
-      if (remainingDays >= daysToEndOfMonth) {
-        remainingDays -= daysToEndOfMonth;
-        day = 1;
-        month = (month % 12) + 1;
-        if (month === 1) year++;
-        weekDay = ((weekDay - 1 + daysToEndOfMonth) % 7) + 1;
-      } else {
-        day += remainingDays;
-        weekDay = ((weekDay - 1 + remainingDays) % 7) + 1;
-        remainingDays = 0;
-      }
-    } else {
-      // Moving backward
-      if (day + remainingDays >= 1) {
-        day += remainingDays;
-        weekDay = ((weekDay - 1 + remainingDays + 7) % 7) + 1;
-        remainingDays = 0;
-      } else {
-        remainingDays += day;
-        month = month === 1 ? 12 : month - 1;
-        if (month === 12) year--;
-        day = getDaysInMonth(month);
-        weekDay = ((weekDay - 1 + remainingDays + 7) % 7) + 1;
-      }
+  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+
+  let year = 6028;
+  let remainingDays = totalDays;
+
+  // Calculate year
+  while (remainingDays >= (365 + (isLongYear(year) ? 1 : 0))) {
+    remainingDays -= 365 + (isLongYear(year) ? 1 : 0);
+    year++;
+  }
+
+  // Calculate month and day
+  let month = 1;
+  let day = remainingDays + 1;  // Day 1-based
+
+  while (day > getDaysInMonth(month)) {
+    day -= getDaysInMonth(month);
+    month++;
+    if (month > 12) {
+      month = 1;
+      year++;
     }
   }
-  
-  return { year, month, day, weekDay };
+
+  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
+  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+
+  return {
+    year,
+    month,
+    day,
+    weekDay,  // 1-7
+  };
 }
 
 /**
@@ -99,7 +89,7 @@ export function toCustomDate(standardDate: Date, startYear: number = 6028): Cust
 }
 
 /**
- * Format custom date as "Y6028 M9 D10"
+ * Format custom date as "Year 6028 Month 9 Day 10"
  */
 export function formatCustomDate(date: CustomDate): string {
   return `Year ${date.year} Month ${date.month} Day ${date.day}`;
@@ -116,6 +106,7 @@ export function formatCustomDateCompact(date: CustomDate): string {
  * Get day of week for a custom date
  */
 export function getDayOfWeek(date: CustomDate): string {
+  if (date.weekDay === 7) return 'Sabbath';
   return DAY_NAMES[date.weekDay - 1] || `Day ${date.weekDay}`;
 }
 
