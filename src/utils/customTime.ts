@@ -76,7 +76,7 @@ export function getTimeOfDayFromPart(part: number): TimeOfDay {
 /**
  * Get color scheme for part of day
  */
-export function getPartColor(part: number: number): { background: string; accent: string } {
+export function getTimeOfPartColor(part: number): { background: string; accent: string } {
   const colors = {
     'deep-night': { background: '#0b0e17', accent: '#232940' },
     'dawn': { background: '#2b1b3d', accent: '#d96b66' },
