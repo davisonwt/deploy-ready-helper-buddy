@@ -12,7 +12,6 @@ import {
   getCreatorTime, 
   getTimeOfPartGradient, 
   getTimeOfPartColor,
-  formatCustomTimeCenter,
   getAntiClockwiseAngle,
   type CustomTime 
 } from '@/utils/customTime';
@@ -119,7 +118,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
-  const timeDisplay = formatCustomTimeCenter(customTime);
   const dayOfWeek = getDayOfWeek(customDate);
 
   const handleAddAlarm = () => {
