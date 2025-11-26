@@ -93,7 +93,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
       const now = new Date();
       setCurrentTime(now);
       
-      // Calculate custom time with user's location
+      // Calculate custom time with user's location - use EXACT same calculation as HTML
       const creatorTime = getCreatorTime(now, userLat, userLon);
       setCustomTime(creatorTime.raw);
       
