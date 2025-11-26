@@ -347,46 +347,33 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   }}
                 />
                 
-                {/* Center Time Display */}
-                {!compact && (
-                  <div 
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none text-white font-black" 
-                    style={{ 
-                      marginTop: watchSize * 0.15,
-                      fontSize: watchSize * 0.1,
-                      textShadow: '0 0 8px rgba(0,0,0,0.9)',
-                      lineHeight: 1.2
-                    }}
-                    dangerouslySetInnerHTML={{ __html: getCreatorTime(currentTime, userLat, userLon).display }}
-                  />
-                )}
               </div>
               
               {/* Date Display - Below Watch */}
               {!compact && (
-                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full px-4">
-                  {/* Custom Date */}
-                  <div className="text-sm text-white/90 font-mono font-bold mb-1">
-                    {formatCustomDateCompact(customDate)} WD {customDate.weekDay}
+                <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 text-center w-full px-4">
+                  {/* Big Center Time */}
+                  <div 
+                    className="text-white font-black mb-4 pointer-events-none" 
+                    style={{ 
+                      fontSize: watchSize * 0.12,
+                      textShadow: '0 0 8px rgba(0,0,0,0.9)',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {getCreatorTime(currentTime, userLat, userLon).displayText}
                   </div>
                   
-                  {/* Gregorian Date */}
-                  <div className="text-xs text-white/70 font-mono mb-2">
-                    {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
+                  {/* Creator's Calendar Line */}
+                  <div className="text-sm text-white/90 font-mono font-semibold mb-3">
+                    Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
                   </div>
                   
-                  {/* Times and Weekdays */}
-                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-lg mx-auto gap-6">
-                    <div className="text-left flex-1">
-                      <div className="font-semibold text-white/90 mb-1">Creator's Time</div>
-                      <div className="text-white/80">part {customTime.part} mins {customTime.minute}</div>
-                      <div className="mt-1 text-white/70">{customDate.weekDay === 7 ? 'Sabbath' : `day ${customDate.weekDay}`}</div>
-                    </div>
-                    <div className="text-right flex-1">
-                      <div className="font-semibold text-white/90 mb-1">Gregorian Time</div>
-                      <div className="text-white/80">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
-                      <div className="mt-1 text-white/70">{currentTime.toLocaleDateString(undefined, { weekday: 'long' })}</div>
-                    </div>
+                  {/* Gregorian Line */}
+                  <div className="text-sm text-white/80 font-mono flex items-center justify-center gap-3">
+                    <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
+                    <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                    <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                   </div>
                 </div>
               )}
