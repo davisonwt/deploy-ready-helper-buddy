@@ -61,7 +61,7 @@ export function getTimeOfDayFromPart(part: number): TimeOfDay {
 /**
  * Get color scheme for part of day
  */
-export function getPartColor(part: number: number): { background: string; accent: string } {
+export function getPartColor(part: number): { background: string; accent: string } {
   const colors = {
     'deep-night': { background: '#0b0e17', accent: '#232940' },
     'dawn': { background: '#2b1b3d', accent: '#d96b66' },
@@ -71,7 +71,7 @@ export function getPartColor(part: number: number): { background: string; accent
     'night': { background: '#0f1423', accent: '#00d4ff' },
   };
   
-  const timeOfDay = getTimeOfDayFromPart(number);
+  const timeOfDay = getTimeOfDayFromPart(part);
   return colors[timeOfDay];
 }
 
@@ -79,7 +79,7 @@ export function getPartColor(part: number: number): { background: string; accent
  * Get background gradient for part
  */
 export function getTimeOfPartGradient(part: number): string {
-  const { background, accent } = getTimeOfPartColor(part);
+  const { background, accent } = getPartColor(part);
   return `linear-gradient(135deg, ${background} 0%, ${accent} 100%)`;
 }
 
