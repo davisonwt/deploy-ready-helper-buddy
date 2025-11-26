@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   getCreatorTime, 
   getTimeOfPartGradient, 
-  getTimeOfPartColor,
+  getPartColor,
   formatCustomTimeCenter,
   getAntiClockwiseAngle,
   type CustomTime 
