@@ -105,28 +105,29 @@ const HelpModal = () => {
     mutationFn: async (feedback: string) => {
       if (!user || !feedback.trim()) return;
       
-      const { error } = await supabase
-        .from('user_feedback')
-        .insert({
+      // Call edge function to handle feedback forwarding to gosats
+      const { data, error } = await supabase.functions.invoke('submit-feedback', {
+        body: {
+          feedback: feedback.trim(),
           user_id: user.id,
-          feedback_type: 'help_feedback',
-          message: feedback,
-          created_at: new Date().toISOString(),
-        });
+        },
+      });
       
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       setFeedback('');
       toast({
         title: 'Feedback sent!',
-        description: 'Thank you for helping us improve. We\'ll review your feedback soon.',
+        description: 'Thank you for your feedback! You will receive a confirmation message from our team shortly.',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Feedback submission error:', error);
       toast({
         title: 'Error sending feedback',
-        description: 'Please try again later or contact support.',
+        description: error?.message || 'Please try again later or contact support.',
         variant: 'destructive',
       });
     },
