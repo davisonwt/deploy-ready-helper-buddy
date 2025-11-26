@@ -17,63 +17,49 @@ export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' |
 
 /**
  * Calculate sunrise time using astronomical formula (accurate to ~5 min)
- * Returns minutes since midnight (0-1439)
+ * Returns minutes since midnight (0-1439) in local time
+ * Based on working HTML implementation
  */
 export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon: number = 0): number {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  // Julian Day Number (at noon)
+  // Julian Day Number (JDN)
   let a = Math.floor((14 - month) / 12);
   let y = year + 4800 - a;
   let m = month + 12 * a - 3;
   let jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 
-  // Days since J2000.0
-  let Jstar = jdn - 2451545.0;
-  
-  // Mean solar anomaly
-  let M = (357.5291 + 0.98560028 * Jstar) % 360;
-  if (M < 0) M += 360;
-  
-  // Mean solar longitude
-  let L = (280.4665 + 0.98564736 * Jstar) % 360;
-  if (L < 0) L += 360;
-  
-  // Solar declination
-  let lambda = L + 1.915 * Math.sin(M * Math.PI / 180) + 0.020 * Math.sin(2 * M * Math.PI / 180);
-  let epsilon = 23.439 - 0.0000004 * Jstar;
-  
-  // Declination in radians
-  let delta = Math.asin(Math.sin(epsilon * Math.PI / 180) * Math.sin(lambda * Math.PI / 180)) * 180 / Math.PI;
-  
-  // Hour angle for sunrise (in degrees)
-  let latRad = lat * Math.PI / 180;
-  let deltaRad = delta * Math.PI / 180;
-  let cosH = -Math.tan(latRad) * Math.tan(deltaRad);
-  cosH = Math.max(-1, Math.min(1, cosH)); // Clamp to valid range
-  let H = Math.acos(cosH) * 180 / Math.PI; // In degrees
-  
-  // Solar noon (in hours, UTC)
-  // Longitude correction: each degree east adds 4 minutes
-  let solarNoonUTC = 12 + (lon / 15);
-  
-  // Sunrise time (in hours, UTC)
-  let sunriseHoursUTC = solarNoonUTC - (H / 15);
-  
-  // Convert to local time by accounting for timezone offset
-  // getTimezoneOffset() returns minutes, negative for timezones ahead of UTC
-  // South Africa is UTC+2, so offset is -120 minutes
-  const timezoneOffsetHours = -date.getTimezoneOffset() / 60;
-  let sunriseHours = sunriseHoursUTC + timezoneOffsetHours;
-  
-  // Normalize to 0-24 range
-  sunriseHours = sunriseHours % 24;
-  if (sunriseHours < 0) sunriseHours += 24;
+  // Julian Ephemeris Day (JDE) approx
+  let jde = jdn + 0.5;  // Noon
+  let t = (jde - 2451545.0) / 36525;  // Centuries since J2000
 
-  // Return minutes since midnight (local time)
-  return Math.round(sunriseHours * 60) % 1440;
+  // Mean anomaly of sun, ecliptic longitude, obliquity
+  let meanAnomaly = (357.5291 + 0.98560028 * (jde - 2451545)) * Math.PI / 180;
+  let eqCenter = (1.9148 * Math.sin(meanAnomaly) + 0.020 * Math.sin(2 * meanAnomaly) + 0.0003 * Math.sin(3 * meanAnomaly)) * Math.PI / 180;
+  let eclipticLong = (280.4665 + 0.98564736 * (jde - 2451545) + eqCenter * 180 / Math.PI) * Math.PI / 180;
+  let obliquity = (23.439 - 0.0000004 * (jde - 2451545)) * Math.PI / 180;
+
+  // Right ascension & declination (approx)
+  let ra = Math.atan2(Math.sin(eclipticLong) * Math.cos(obliquity) + Math.tan(obliquity) * Math.sin(eclipticLong), Math.cos(eclipticLong)) * 180 / Math.PI;
+  let sinDec = Math.sin(eclipticLong) * Math.sin(obliquity);
+  let dec = Math.asin(sinDec) * 180 / Math.PI;
+
+  // Hour angle for sunrise (zenith -0.833° for refraction)
+  let zenith = -0.833 * Math.PI / 180;
+  let cosHourAngle = (Math.cos(zenith) - Math.sin(lat * Math.PI / 180) * Math.sin(dec * Math.PI / 180)) /
+                     (Math.cos(lat * Math.PI / 180) * Math.cos(dec * Math.PI / 180));
+  let hourAngle = Math.acos(Math.max(-1, Math.min(1, cosHourAngle))) * 180 / Math.PI;
+
+  // Local solar noon (UTC hours)
+  let solarNoonUtc = (ra + lon + 360) % 360 / 15;  // Adjust for longitude
+  let sunriseUtc = solarNoonUtc - hourAngle / 15;
+
+  // Convert to local time minutes (assumes date is local; adjust if UTC)
+  let localSunriseHours = (sunriseUtc + date.getTimezoneOffset() / 60) % 24;
+  if (localSunriseHours < 0) localSunriseHours += 24;
+  return localSunriseHours * 60;
 }
 
 /**
@@ -81,27 +67,15 @@ export function calculateSunrise(date: Date = new Date(), lat: number = 30, lon:
  * Day starts at sunrise, not midnight!
  */
 export function getCreatorTime(date: Date = new Date(), userLat: number = 30, userLon: number = 0): CustomTime & { display: string; raw: CustomTime; sunriseMinutes: number } {
-  const sunriseMinutes = calculateSunrise(date, userLat, userLon);
-  
-  // Use local time components (already in user's timezone)
+  const sunriseMinutes = calculateSunrise(new Date(date), userLat, userLon);  // Use fresh date for sunrise
   const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
   let minutesSinceSunrise = nowMinutes - sunriseMinutes;
-  if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Handle overnight
-  if (minutesSinceSunrise >= 1440) minutesSinceSunrise -= 1440;  // Handle next day
+  if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Overnight wrap
 
-  // Calculate part: minutesSinceSunrise / 80 gives the part number
-  // For South Africa at 18:58 with sunrise at 05:31: 781 minutes = part 9
-  // floor(781/80) = 9, so part = 9 + 1 = 10 (1-indexed)
-  // But user expects part 9, so the issue might be in sunrise calculation
-  // Let's ensure we're calculating correctly: part should be floor(minutesSinceSunrise / 80) + 1
-  const totalParts = minutesSinceSunrise / 80;  // 0 to 17.999...
-  const part = Math.floor(totalParts) + 1;      // 1 to 18
-  
-  // Calculate minutes into current part
-  let minutesIntoPart = Math.round((totalParts % 1) * 80);  // 0–79
-  // Ensure minute is 1-80, not 0-79
-  if (minutesIntoPart === 0 && totalParts % 1 > 0) minutesIntoPart = 80;
+  const totalParts = minutesSinceSunrise / 80;
+  const part = (Math.floor(totalParts) % 18) + 1;  // 1-18 (ensures wrap)
+  let minutesIntoPart = Math.round((totalParts % 1) * 80);
   const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
 
   // Ordinal suffixes
