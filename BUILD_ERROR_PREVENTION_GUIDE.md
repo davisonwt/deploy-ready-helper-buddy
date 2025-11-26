@@ -103,15 +103,77 @@ Add this to your `package.json` scripts:
 
 Then run `npm run pre-push` before every git push.
 
+## Common Build Error #2: Unclosed HTML/JSX Tags
+
+**Problem:** Missing closing tags cause build failures.
+
+**Root Cause:** Every opening tag (`<div>`, `<span>`, `<Card>`, etc.) must have a matching closing tag (`</div>`, `</span>`, `</Card>`, etc.).
+
+### ❌ **WRONG** - Missing Closing Tag
+```tsx
+<div className='container mx-auto px-4 py-8'>
+  {/* Content */}
+  {/* Missing </div> here! */}
+</div>
+```
+
+### ✅ **CORRECT** - All Tags Properly Closed
+```tsx
+<div className='container mx-auto px-4 py-8'>
+  {/* Content */}
+</div> {/* ✅ Properly closed */}
+```
+
+### How to Prevent Unclosed Tags:
+
+1. **Use a Code Formatter:**
+   ```bash
+   npm install -D prettier
+   npx prettier --write "src/**/*.{js,jsx,ts,tsx}"
+   ```
+
+2. **Use VS Code Extensions:**
+   - "Auto Rename Tag" - automatically closes tags
+   - "Bracket Pair Colorizer" - visual tag matching
+   - "HTML End Tag Labels" - shows which tag you're closing
+
+3. **Check Before Pushing:**
+   ```bash
+   # Count opening vs closing divs
+   grep -c "<div" src/pages/MyOrchardsPage.jsx
+   grep -c "</div" src/pages/MyOrchardsPage.jsx
+   # These should match!
+   ```
+
+4. **Use ESLint:**
+   ```json
+   {
+     "rules": {
+       "react/jsx-closing-tag-location": "error",
+       "react/jsx-closing-bracket-location": "error"
+     }
+   }
+   ```
+
 ## Summary
 
-**The Golden Rule:** 
-> If you use it in your code, you MUST import it at the top of the file.
+**The Two Golden Rules:** 
+1. **If you use it in your code, you MUST import it at the top of the file.**
+2. **Every opening tag MUST have a matching closing tag.**
 
-**Quick Fix Pattern:**
+**Quick Fix Patterns:**
+
+### Missing Import:
 1. See build error → "Cannot find name 'Package'"
 2. Search file for `<Package` or `Package`
 3. Check imports → Missing `Package` from lucide-react
 4. Add `Package` to import statement
+5. Rebuild → Should work!
+
+### Unclosed Tag:
+1. See build error → "Expected corresponding JSX closing tag"
+2. Find the opening tag mentioned in error
+3. Count opening vs closing tags in that section
+4. Add missing closing tag
 5. Rebuild → Should work!
 
