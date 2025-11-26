@@ -117,7 +117,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const minuteAngle = getAntiClockwiseAngle(customTime); // Minute hand (within part)
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
-  const { accent } = getTimeOfPartColor(customTime.part);
+  const { accent } = getPartColor(customTime.part);
   const timeDisplay = formatCustomTimeCenter(customTime);
   const dayOfWeek = getDayOfWeek(customDate);
 
