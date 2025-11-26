@@ -362,7 +362,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     Day {dayOfWeek} • {formatCustomTime(customTime)}
                   </div>
                   <div className="text-xs text-white/60 font-mono mt-1">
-                    {currentTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
                   </div>
                 </div>
               )}
@@ -379,7 +379,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     {timeOfDay}
                   </Badge>
                   <div className="text-xs text-white/70 font-mono mb-1">
-                    Part {customTime.part}:{customTime.minutes.toString().padStart(2, '0')}
+                    {formatCustomTime(customTime)}
                   </div>
                   <div className="text-xs text-white/60 font-mono">
                     Day {dayOfWeek}
