@@ -355,15 +355,22 @@ export default function YhvhOrchardsPage() {
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0 flex-1 flex flex-col">
-                          {orchard.images && orchard.images.length > 0 && (
-                            <div className="mb-3 relative overflow-hidden rounded-lg">
+                          <div className="mb-3 relative overflow-hidden rounded-lg">
+                            {orchard.images && orchard.images.length > 0 ? (
                               <img
                                 src={orchard.images[0]}
                                 alt={orchard.title}
                                 className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
                               />
-                            </div>
-                          )}
+                            ) : (
+                              <GradientPlaceholder 
+                                type="orchard" 
+                                title={orchard.title}
+                                className="w-full h-32"
+                                size="md"
+                              />
+                            )}
+                          </div>
                           <div className="mb-3">
                             <div className="flex justify-between text-xs text-muted-foreground mb-1">
                               <span>Progress</span>
