@@ -18,6 +18,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
 import { SocialActionButtons } from '@/components/social/SocialActionButtons'
+import { formatCurrency } from '@/lib/utils'
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -384,9 +385,20 @@ export default function YhvhOrchardsPage() {
                               />
                             </div>
                           </div>
-                          <p className="text-sm text-white/80 line-clamp-2 mb-4">
+                          <p className="text-sm text-white/80 line-clamp-2 mb-3">
                             {orchard.description}
                           </p>
+                          {/* Pocket Price Display */}
+                          {orchard.pocket_price && (
+                            <div className="mb-3 p-2 bg-purple-500/20 border border-purple-400/50 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-white/70">Pocket Price</span>
+                                <Badge className="bg-purple-500/30 text-white border-purple-400/50">
+                                  {formatCurrency(orchard.pocket_price)}
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
                           <Button 
                             variant="default" 
                             size="sm" 
