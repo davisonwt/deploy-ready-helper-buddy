@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
 import { SocialActionButtons } from '@/components/social/SocialActionButtons'
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
