@@ -214,7 +214,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
               onChange={(e) => {
                 const newBestow = parseFloat(e.target.value) || 0;
                 // Check if it's a single track (not album)
-                const isAlbum = formData.tags?.some((tag: string) => 
+                const isAlbum = track?.tags?.some((tag: string) => 
                   tag.toLowerCase().includes('album') || 
                   tag.toLowerCase().includes('lp') || 
                   tag.toLowerCase().includes('ep')
