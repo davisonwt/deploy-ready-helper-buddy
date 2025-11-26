@@ -364,24 +364,28 @@ export function CustomWatch({ className, compact = false, showControls = false }
               
               {/* Date Display - Below Watch */}
               {!compact && (
-                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full">
-                  <div className="text-sm text-white/90 font-mono font-bold mb-2">
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full">
+                  {/* Custom Date */}
+                  <div className="text-sm text-white/90 font-mono font-bold mb-1">
                     {formatCustomDateCompact(customDate)}
                   </div>
-                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-xs mx-auto">
+                  
+                  {/* Gregorian Date */}
+                  <div className="text-xs text-white/70 font-mono mb-2">
+                    {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
+                  </div>
+                  
+                  {/* Times and Weekdays */}
+                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-md mx-auto gap-4">
                     <div className="text-left">
-                      <div>Creator's Calendar</div>
-                      <div className="font-semibold">{formatCustomDate(customDate)}</div>
-                      <div>Week Day {customDate.weekDay}</div>
+                      <div className="font-semibold text-white/90 mb-1">Creator's Time</div>
+                      <div>Part {creatorTime.raw.part}, Minute {creatorTime.raw.minute}</div>
+                      <div className="mt-1">Day {customDate.weekDay}</div>
                     </div>
                     <div className="text-right">
-                      <div>Gregorian</div>
-                      <div className="font-semibold">
-                        {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
-                      </div>
-                      <div>
-                        {currentTime.toLocaleDateString(undefined, { weekday: 'long' })} {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                      <div className="font-semibold text-white/90 mb-1">Gregorian Time</div>
+                      <div>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div className="mt-1">{currentTime.toLocaleDateString(undefined, { weekday: 'long' })}</div>
                     </div>
                   </div>
                 </div>
