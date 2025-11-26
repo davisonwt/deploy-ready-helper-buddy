@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DonateModal } from '@/components/chat/DonateModal';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface SocialActionButtonsProps {
   type: 'product' | 'orchard';
@@ -81,19 +82,30 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
   }, [user, itemId, ownerId, type]);
 
   const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    if (!user) return;
+    if (!user) {
+      toast.error('Please login to like');
+      return;
+    }
 
-    const result = type === 'product' 
-      ? await likeProduct(itemId)
-      : await likeOrchard(itemId);
+    try {
+      const result = type === 'product' 
+        ? await likeProduct(itemId)
+        : await likeOrchard(itemId);
 
-    if (result.success) {
-      setIsLiked(true);
-      setLocalLikeCount(prev => prev + 1);
-    } else {
-      setIsLiked(false);
-      setLocalLikeCount(prev => Math.max(0, prev - 1));
+      // Toggle like state based on result
+      setIsLiked(result.success);
+      if (result.success) {
+        setLocalLikeCount(prev => prev + 1);
+      } else {
+        // Check if it was an unlike (result.success = false but was previously liked)
+        if (isLiked) {
+          setLocalLikeCount(prev => Math.max(0, prev - 1));
+        }
+      }
+    } catch (error) {
+      console.error('Like error:', error);
     }
   };
 
@@ -111,8 +123,13 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
   };
 
   const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    await shareContent(type, itemId, title);
+    try {
+      await shareContent(type, itemId, title);
+    } catch (error) {
+      console.error('Share error:', error);
+    }
   };
 
   const handleDonate = (e: React.MouseEvent) => {

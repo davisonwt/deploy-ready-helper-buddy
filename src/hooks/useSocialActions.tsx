@@ -68,22 +68,41 @@ export function useSocialActions() {
     }
 
     try {
-      const { error } = await supabase
+      setLoading(true);
+      // Check if already liked
+      const { data: existingLike } = await supabase
         .from('product_likes')
-        .insert({ product_id: productId, user_id: user.id });
+        .select('id')
+        .eq('product_id', productId)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
-      return { success: true };
-    } catch (error: any) {
-      if (error.code === '23505') {
-        // Already liked, unlike
-        await supabase
+      if (existingLike) {
+        // Unlike
+        const { error } = await supabase
           .from('product_likes')
           .delete()
-          .eq('product_id', productId)
-          .eq('user_id', user.id);
+          .eq('id', existingLike.id);
+        
+        if (error) throw error;
+        toast.success('Unliked');
+        return { success: false }; // false means unliked
+      } else {
+        // Like
+        const { error } = await supabase
+          .from('product_likes')
+          .insert({ product_id: productId, user_id: user.id });
+
+        if (error) throw error;
+        toast.success('Liked!');
+        return { success: true };
       }
+    } catch (error: any) {
+      console.error('Like product error:', error);
+      toast.error('Failed to update like');
       return { success: false };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,41 +113,79 @@ export function useSocialActions() {
     }
 
     try {
-      const { error } = await supabase
+      setLoading(true);
+      // Check if already liked
+      const { data: existingLike } = await supabase
         .from('orchard_likes')
-        .insert({ orchard_id: orchardId, user_id: user.id });
+        .select('id')
+        .eq('orchard_id', orchardId)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
-      return { success: true };
-    } catch (error: any) {
-      if (error.code === '23505') {
-        // Already liked, unlike
-        await supabase
+      if (existingLike) {
+        // Unlike
+        const { error } = await supabase
           .from('orchard_likes')
           .delete()
-          .eq('orchard_id', orchardId)
-          .eq('user_id', user.id);
+          .eq('id', existingLike.id);
+        
+        if (error) throw error;
+        toast.success('Unliked');
+        return { success: false }; // false means unliked
+      } else {
+        // Like
+        const { error } = await supabase
+          .from('orchard_likes')
+          .insert({ orchard_id: orchardId, user_id: user.id });
+
+        if (error) throw error;
+        toast.success('Liked!');
+        return { success: true };
       }
+    } catch (error: any) {
+      console.error('Like orchard error:', error);
+      toast.error('Failed to update like');
       return { success: false };
+    } finally {
+      setLoading(false);
     }
   };
 
   const shareContent = async (type: 'product' | 'orchard', id: string, title: string) => {
-    const url = `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${id}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-        return { success: true };
-      } catch (error) {
-        // User cancelled
-        return { success: false };
+    try {
+      const url = `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${id}`;
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+          toast.success('Shared successfully!');
+          return { success: true };
+        } catch (error: any) {
+          // User cancelled or error occurred
+          if (error.name !== 'AbortError') {
+            console.error('Share error:', error);
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(url);
+            toast.success('Link copied to clipboard!');
+          }
+          return { success: false };
+        }
+      } else {
+        // Fallback: copy to clipboard
+        try {
+          await navigator.clipboard.writeText(url);
+          toast.success('Link copied to clipboard!');
+          return { success: true };
+        } catch (clipboardError) {
+          console.error('Clipboard error:', clipboardError);
+          toast.error('Failed to copy link. Please copy manually: ' + url);
+          return { success: false };
+        }
       }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard!');
-      return { success: true };
+    } catch (error) {
+      console.error('Share content error:', error);
+      toast.error('Failed to share content');
+      return { success: false };
     }
   };
 

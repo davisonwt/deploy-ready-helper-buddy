@@ -128,17 +128,30 @@ export default function ProductCard({ product, featured, showActions = false }: 
     }
   };
 
-  const handleBestow = () => {
-    console.log('ProductCard: handleBestow called', product);
-    addToBasket(product);
-    toast.success('Added to basket!', {
-      action: {
-        label: 'View Basket',
-        onClick: () => navigate('/products/basket')
+  const handleBestow = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      console.log('ProductCard: handleBestow called', product);
+      if (!product.id) {
+        toast.error('Invalid product');
+        return;
       }
-    });
-    // Navigate to basket after adding
-    navigate('/products/basket');
+      addToBasket(product);
+      toast.success('Added to basket!', {
+        action: {
+          label: 'View Basket',
+          onClick: () => navigate('/products/basket')
+        }
+      });
+      // Navigate to basket after adding
+      navigate('/products/basket');
+    } catch (error) {
+      console.error('Bestow error:', error);
+      toast.error('Failed to add to basket');
+    }
   };
 
   const handleDelete = async () => {
