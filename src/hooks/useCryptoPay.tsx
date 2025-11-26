@@ -94,7 +94,7 @@ export function useCryptoPay() {
         artistAddress: track.wallet_address,
         artistAmount,
         platformAddress: platformWallet.wallet_address,
-        platformAmount: platformFee,
+        platformAmount: tithingAmount,
         adminAddress: platformWallet.wallet_address, // Reuse for now
         adminAmount: adminFee,
       },
