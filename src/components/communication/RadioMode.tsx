@@ -99,18 +99,7 @@ export const RadioMode: React.FC = () => {
       const isLiked = likedTracks.has(track.id);
       
       if (isLiked) {
-        // Unlike - try to delete from database if table exists
-        try {
-          await supabase
-            .from('dj_music_track_likes')
-            .delete()
-            .eq('track_id', user.id')
-            .eq('user_id', user.id);
-        } catch (dbError) {
-          // Table might not exist, just update local state
-          console.log('Likes table may not exist');
-        }
-        
+        // Unlike - update local state
         setLikedTracks(prev => {
           const newSet = new Set(prev);
           newSet.delete(track.id);
@@ -118,18 +107,7 @@ export const RadioMode: React.FC = () => {
         });
         toast.success('Unliked');
       } else {
-        // Like - try to insert into database if table exists
-        try {
-          await supabase
-            .from('dj_music_track_likes')
-            .insert({ track_id: track.id, user_id: user.id });
-        } catch (dbError: any) {
-          // Table might not exist or duplicate, just update local state
-          if (dbError.code !== '23505') {
-            console.log('Likes table may not exist');
-          }
-        }
-        
+        // Like - update local state
         setLikedTracks(prev => new Set(prev).add(track.id));
         toast.success('Liked!');
       }
