@@ -246,9 +246,16 @@ export default function ProductCard({ product, featured, showActions = false }: 
 
             {/* Title & Description */}
             <div>
-              <h3 className="font-semibold text-lg mb-1 truncate text-white">
-                {product.title}
-              </h3>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <h3 className="font-semibold text-lg truncate text-white flex-1">
+                  {product.title}
+                </h3>
+                {product.price > 0 && (
+                  <Badge className="bg-purple-500/30 text-white border-purple-400/50 whitespace-nowrap">
+                    {formatCurrency(product.price)}
+                  </Badge>
+                )}
+              </div>
               {product.description && (
                 <p className="text-sm text-white/80 line-clamp-2">
                   {product.description}
