@@ -13,6 +13,15 @@ serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization header required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { feedback, user_id } = await req.json();
 
     if (!feedback || !user_id) {
@@ -185,4 +194,3 @@ serve(async (req) => {
     );
   }
 });
-

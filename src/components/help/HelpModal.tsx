@@ -105,16 +105,33 @@ const HelpModal = () => {
     mutationFn: async (feedback: string) => {
       if (!user || !feedback.trim()) return;
       
+      // Get session for authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to submit feedback');
+      }
+      
       // Call edge function to handle feedback forwarding to gosats
       const { data, error } = await supabase.functions.invoke('submit-feedback', {
         body: {
           feedback: feedback.trim(),
           user_id: user.id,
         },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
     },
     onSuccess: () => {
       setFeedback('');
