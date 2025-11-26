@@ -84,6 +84,10 @@ const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
 const MusicLibraryPage = lazy(() => import("./pages/MusicLibraryPage"));
+const MyS2GLibraryPage = lazy(() => import("./pages/MyS2GLibraryPage"));
+const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPage"));
+const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
+const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -730,6 +734,40 @@ const App = () => (
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>
+              } />
+              
+              {/* S2G Library Routes */}
+              <Route path="/my-s2g-library" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyS2GLibraryPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/my-s2g-library/upload" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LibraryUploadForm />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/s2g-community-library" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <S2GCommunityLibraryPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/s2g-community-music" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <S2GCommunityMusicPage />
+                  </Suspense>
+                </Layout>
               } />
               
               {/* Catch-all route - MUST BE LAST */}

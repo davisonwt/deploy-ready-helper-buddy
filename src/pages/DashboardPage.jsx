@@ -129,15 +129,27 @@ export default function DashboardPage() {
             .maybeSingle()
           
           if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
-            console.error('❌ Dashboard: Error fetching profile:', error)
-            setError('Failed to load profile')
+            const errorMessage = error.message || error.details || error.hint || JSON.stringify(error) || 'Unknown error'
+            console.error('❌ Dashboard: Error fetching profile:', {
+              message: errorMessage,
+              code: error.code,
+              details: error.details,
+              hint: error.hint,
+              fullError: error
+            })
+            setError(`Failed to load profile: ${errorMessage}`)
           } else {
             setProfile(data)
-            console.log('✅ Dashboard: Profile loaded')
+            console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found')
           }
         } catch (error) {
-          console.error('❌ Dashboard: Error fetching profile:', error)
-          setError('Failed to load profile')
+          const errorMessage = error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error'
+          console.error('❌ Dashboard: Error fetching profile:', {
+            message: errorMessage,
+            error: error,
+            stack: error?.stack
+          })
+          setError(`Failed to load profile: ${errorMessage}`)
         }
       }
       
