@@ -132,16 +132,37 @@ export function MusicLibraryTable({
     toast.info('Follow feature coming soon!');
   };
 
-  const handleShare = (track: MusicTrack) => {
-    if (navigator.share) {
-      navigator.share({
+  const handleShare = async (track: MusicTrack, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    try {
+      const shareData = {
         title: track.track_title,
         text: `Check out ${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
         url: window.location.href
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      };
+      
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          toast.success('Shared successfully!');
+        } catch (error: any) {
+          if (error.name !== 'AbortError') {
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied to clipboard!');
+          }
+        }
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      toast.error('Failed to share');
     }
   };
 
@@ -348,8 +369,9 @@ export function MusicLibraryTable({
                     <Button
                       size="sm"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        handleBestowal(track);
+                        handleBestowal(track, e);
                       }}
                       disabled={processing}
                       className="h-8 gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
