@@ -49,7 +49,7 @@ export default function LibraryUploadForm() {
     try {
       // Upload main file
       const fileExt = mainFile.name.split('.').pop();
-      const filePath = library//.;
+      const filePath = `library/${user.id}/${Date.now()}.${fileExt}`;
       const { error: fileError } = await supabase.storage
         .from('premium-room')
         .upload(filePath, mainFile);
@@ -64,7 +64,7 @@ export default function LibraryUploadForm() {
       let previewUrl = null;
       if (previewFile) {
         const previewExt = previewFile.name.split('.').pop();
-        const previewPath = library//preview-.;
+        const previewPath = `library/${user.id}/preview-${Date.now()}.${previewExt}`;
         const { error: previewError } = await supabase.storage
           .from('premium-room')
           .upload(previewPath, previewFile);
@@ -80,7 +80,7 @@ export default function LibraryUploadForm() {
       let coverUrl = null;
       if (coverImage) {
         const coverExt = coverImage.name.split('.').pop();
-        const coverPath = library//cover-.;
+        const coverPath = `library/${user.id}/cover-${Date.now()}.${coverExt}`;
         const { error: coverError } = await supabase.storage
           .from('premium-room')
           .upload(coverPath, coverImage);
@@ -258,13 +258,13 @@ export default function LibraryUploadForm() {
         </Card>
       </div>
 
-      <style>{
+      <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
-      }</style>
+      `}</style>
     </div>
   );
 }

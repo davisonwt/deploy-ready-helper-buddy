@@ -295,7 +295,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
       onMouseLeave={(e) => {
         // Only clear hover if mouse leaves the entire container
         if (e.target === e.currentTarget) {
-          handleMouseLeave(e);
+          handleMouseLeave();
         }
       }}
     >

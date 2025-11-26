@@ -4478,6 +4478,98 @@ export type Database = {
         }
         Relationships: []
       }
+      s2g_library_item_access: {
+        Row: {
+          access_type: string | null
+          accessed_at: string | null
+          id: string
+          library_item_id: string
+          user_id: string
+        }
+        Insert: {
+          access_type?: string | null
+          accessed_at?: string | null
+          id?: string
+          library_item_id: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string | null
+          accessed_at?: string | null
+          id?: string
+          library_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "s2g_library_item_access_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "s2g_library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      s2g_library_items: {
+        Row: {
+          bestowal_count: number | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          download_count: number | null
+          file_size: number | null
+          file_url: string
+          id: string
+          is_public: boolean | null
+          preview_url: string | null
+          price: number | null
+          tags: string[] | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bestowal_count?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_public?: boolean | null
+          preview_url?: string | null
+          price?: number | null
+          tags?: string[] | null
+          title: string
+          type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bestowal_count?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_public?: boolean | null
+          preview_url?: string | null
+          price?: number | null
+          tags?: string[] | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       seed_submissions: {
         Row: {
           admin_notes: string | null
