@@ -53,7 +53,7 @@ export default function S2GCommunityMusicPage() {
             file_url: item.file_url,
             preview_url: item.preview_url || item.file_url,
             cover_image_url: item.cover_image_url,
-            price: item.price || 0,
+            price: item.price || 0, // Use actual price from s2g_library_items
             is_giveaway: item.is_giveaway || false,
             giveaway_limit: item.giveaway_limit,
             giveaway_count: item.giveaway_count || 0,
@@ -62,7 +62,8 @@ export default function S2GCommunityMusicPage() {
             profile: profileMap.get(item.user_id),
             user_id: item.user_id,
             created_at: item.created_at,
-            tags: item.tags || []
+            tags: item.tags || [],
+            whisperer_percentage: item.whisperer_percentage || 0
           });
         });
       }
@@ -97,6 +98,10 @@ export default function S2GCommunityMusicPage() {
           const dj = track.radio_djs;
           const profile = dj?.user_id ? djProfileMap.get(dj.user_id) : null;
           
+          // Get price from dj_music_tracks - use actual price set by sower
+          // Single music tracks should have minimum 2 USDC, but use actual price from DB
+          const trackPrice = track.price || 0;
+          
           allTracks.push({
             id: track.id,
             source: 'dj',
@@ -104,10 +109,10 @@ export default function S2GCommunityMusicPage() {
             artist: track.artist_name || dj?.dj_name || 'Unknown Artist',
             duration_seconds: track.duration_seconds || 0,
             file_url: track.file_url,
-            preview_url: track.file_url, // Use same URL for preview
+            preview_url: track.preview_url || track.file_url, // Use preview_url if available
             cover_image_url: null, // DJ tracks might not have cover images
-            price: 0, // DJ tracks are typically free or need pricing added
-            is_giveaway: false,
+            price: trackPrice, // Use actual price set by sower from dj_music_tracks
+            is_giveaway: false, // dj_music_tracks doesn't have giveaway fields yet
             giveaway_limit: null,
             giveaway_count: 0,
             bestowal_count: 0,
@@ -117,7 +122,8 @@ export default function S2GCommunityMusicPage() {
             created_at: track.created_at,
             tags: track.tags || [],
             genre: track.genre,
-            bpm: track.bpm
+            bpm: track.bpm,
+            whisperer_percentage: 0 // dj_music_tracks doesn't have this field yet
           });
         });
       }
