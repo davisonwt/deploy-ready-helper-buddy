@@ -273,7 +273,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
                         <Button
                           onClick={handleEdit}
                           variant="outline"
-                          className="flex-1"
+                          className="flex-1 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
                         >
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
@@ -281,8 +281,8 @@ export default function ProductCard({ product, featured, showActions = false }: 
                         <Button
                           onClick={handleDelete}
                           disabled={deleting}
-                          variant="destructive"
-                          className="flex-1"
+                          variant="outline"
+                          className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/20 backdrop-blur-sm"
                         >
                           {deleting ? (
                             <>

@@ -335,17 +335,17 @@ export default function YhvhOrchardsPage() {
                   {filteredOrchards.map((orchard, index) => (
                     <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                       <Card 
-                        className="group hover:shadow-lg transition-all duration-300 border-border bg-card/90 backdrop-blur-sm overflow-hidden animate-fade-in h-full"
+                        className="group hover:shadow-lg transition-all duration-300 border-white/20 bg-white/10 backdrop-blur-md overflow-hidden animate-fade-in h-full"
                         style={{ animationDelay: `${index * 100}ms` }}
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <CardTitle className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                              <CardTitle className="text-lg font-semibold text-white line-clamp-2 group-hover:text-white/90 transition-colors">
                                 {orchard.title}
                               </CardTitle>
                               <div className="flex items-center space-x-2 mt-2">
-                                <Badge className={`text-xs ${getCategoryColor(orchard.category)}`}>
+                                <Badge className={`text-xs bg-white/20 border-white/30 text-white ${getCategoryColor(orchard.category)}`}>
                                   {orchard.category}
                                 </Badge>
                               </div>
@@ -373,28 +373,24 @@ export default function YhvhOrchardsPage() {
                             )}
                           </div>
                           <div className="mb-3">
-                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                            <div className="flex justify-between text-xs text-white/70 mb-1">
                               <span>Progress</span>
                               <span>{orchard.filled_pockets}/{(orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets}</span>
                             </div>
-                            <div className="w-full bg-secondary rounded-full h-2">
+                            <div className="w-full bg-white/20 rounded-full h-2">
                               <div 
-                                className="bg-success h-2 rounded-full transition-all duration-300" 
+                                className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300" 
                                 style={{ width: `${(orchard.filled_pockets / ((orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1)) * 100}%` }}
                               />
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                          <p className="text-sm text-white/80 line-clamp-2 mb-4">
                             {orchard.description}
                           </p>
                           <Button 
                             variant="default" 
                             size="sm" 
-                            className="w-full mb-2 text-white shadow-lg"
-                            style={{ 
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)',
-                              border: '2px solid #1e40af'
-                            }}
+                            className="w-full mb-2 text-white shadow-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 border-0"
                             onClick={() => navigate(`/animated-orchard/${orchard.id}`)}
                           >
                             <Heart className="h-3 w-3 mr-2" />
@@ -417,12 +413,12 @@ export default function YhvhOrchardsPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <div className="flex gap-2 pt-2 border-t border-border mt-2">
+                                  <div className="flex gap-2 pt-2 border-t border-white/20 mt-2">
                                     <Link to={`/edit-orchard/${orchard.id}`} className="flex-1">
                                       <Button 
                                         variant="outline" 
                                         size="sm" 
-                                        className="w-full border-success/30 text-success hover:bg-success/10"
+                                        className="w-full border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
                                       >
                                         <Settings className="h-3 w-3 mr-1" />
                                         {orchard.user_id === user.id ? 'Edit' : 'Manage Orchard'}
@@ -432,7 +428,7 @@ export default function YhvhOrchardsPage() {
                                       variant="outline" 
                                       size="sm"
                                       onClick={() => handleDeleteOrchard(orchard.id)}
-                                      className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                                      className="border-red-500/50 text-red-400 hover:bg-red-500/20 backdrop-blur-sm"
                                     >
                                       <Trash2 className="h-3 w-3" />
                                     </Button>
