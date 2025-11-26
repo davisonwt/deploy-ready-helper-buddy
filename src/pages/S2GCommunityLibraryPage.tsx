@@ -67,26 +67,55 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    if (!item.price || item.price <= 0) {
-      toast.error('This item is free. Access granted automatically.');
-      // Grant free access
+    // Handle giveaway
+    if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
       const result = await supabase.functions.invoke('complete-library-bestowal', {
         body: {
           libraryItemId: item.id,
           amount: 0,
-          sowerId: item.user_id
+          sowerId: item.user_id,
+          isGiveaway: true
         }
       });
       if (result.data?.success) {
-        toast.success('Access granted!');
+        toast.success('Giveaway access granted!');
         window.location.reload();
       }
       return;
     }
 
-    // For paid items, we need to integrate with payment flow
-    // For now, show a message
-    toast.info('Payment integration coming soon. Please contact support for access.');
+    if (!item.price || item.price <= 0) {
+      toast.error('This item requires bestowal but has no price set');
+      return;
+    }
+
+    // Initiate Binance Pay for bestowal
+    try {
+      const { data, error } = await supabase.functions.invoke('create-binance-pay-order', {
+        body: {
+          libraryItemId: item.id,
+          amount: item.price,
+          sowerId: item.user_id,
+          type: 'library_item'
+        }
+      });
+
+      if (error) {
+        console.error('Binance Pay order creation error:', error);
+        toast.error(error.message || 'Failed to initiate bestowal payment');
+        return;
+      }
+
+      if (data?.paymentUrl) {
+        window.open(data.paymentUrl, '_blank');
+        toast.info('Redirecting to Binance Pay. Complete payment to finalize your bestowal.');
+      } else {
+        toast.error('Failed to get payment URL. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Payment initiation error:', error);
+      toast.error(`Payment initiation failed: ${error.message}`);
+    }
   };
 
   const filteredItems = libraryItems?.filter(item => {
@@ -247,18 +276,39 @@ export default function S2GCommunityLibraryPage() {
                             {getTypeLabel(item.type)}
                           </Badge>
                         </div>
-                        {item.price > 0 && (
-                          <span className='text-xl font-bold text-white'>
-                            {formatCurrency(item.price)}
-                          </span>
-                        )}
                       </div>
-                      <CardTitle className='text-white line-clamp-2'>{item.title}</CardTitle>
+                      <CardTitle className='text-white line-clamp-2 mb-2'>{item.title}</CardTitle>
                       {(item as any).profile && (
-                        <p className='text-white/70 text-sm mt-1'>
+                        <p className='text-white/70 text-sm mb-3'>
                           by {(item as any).profile.display_name || 'Anonymous'}
                         </p>
                       )}
+                      
+                      {/* Bestowal Value - Prominently Displayed */}
+                      <div className='mt-3'>
+                        {item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity) ? (
+                          <div className='bg-green-500/20 border border-green-400 rounded-lg p-3'>
+                            <Badge className='bg-green-500 text-white mb-1'>FREE GIVEAWAY</Badge>
+                            <p className='text-white text-sm'>
+                              {item.giveaway_limit ? `${item.giveaway_limit - (item.giveaway_count || 0)} free downloads left` : 'Unlimited free downloads'}
+                            </p>
+                          </div>
+                        ) : item.price > 0 ? (
+                          <div className='bg-purple-500/20 border border-purple-400 rounded-lg p-3'>
+                            <p className='text-2xl font-bold text-white mb-1'>
+                              {formatCurrency(item.price)}
+                            </p>
+                            <p className='text-white/70 text-xs'>to bestow</p>
+                            {item.whisperer_percentage > 0 && (
+                              <p className='text-white/60 text-xs mt-1'>
+                                {item.whisperer_percentage}% whisperer share
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge className='bg-blue-500 text-white'>Free</Badge>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent className='p-4 pt-0'>
                       {item.cover_image_url && (
@@ -272,7 +322,9 @@ export default function S2GCommunityLibraryPage() {
                             <div className='absolute inset-0 bg-black/60 flex items-center justify-center'>
                               <div className='text-center'>
                                 <Eye className='w-12 h-12 text-white mx-auto mb-2' />
-                                <p className='text-white text-sm'>Preview Only</p>
+                                <p className='text-white text-sm'>
+                                  {item.type === 'ebook' ? 'Preview Only' : item.type === 'music' || item.type === 'training_course' ? '30s Preview' : 'Preview Only'}
+                                </p>
                               </div>
                             </div>
                           )}
@@ -286,22 +338,47 @@ export default function S2GCommunityLibraryPage() {
                         <span>{item.download_count || 0} downloads</span>
                       </div>
                       {accessGranted ? (
-                        <Button
-                          className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
-                          asChild
-                        >
-                          <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
-                            <Download className='w-4 h-4 mr-2' />
-                            Download
-                          </a>
-                        </Button>
+                        <>
+                          {item.type === 'ebook' ? (
+                            <div className='space-y-2'>
+                              <Button
+                                className='w-full bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white'
+                                asChild
+                              >
+                                <a href={item.preview_url || item.file_url} target='_blank' rel='noopener noreferrer'>
+                                  <Eye className='w-4 h-4 mr-2' />
+                                  Read Preview
+                                </a>
+                              </Button>
+                              <Button
+                                className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
+                                asChild
+                              >
+                                <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
+                                  <Download className='w-4 h-4 mr-2' />
+                                  Download Full E-Book
+                                </a>
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
+                              asChild
+                            >
+                              <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
+                                <Download className='w-4 h-4 mr-2' />
+                                Download
+                              </a>
+                            </Button>
+                          )}
+                        </>
                       ) : (
                         <Button
                           className='w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
                           onClick={() => handleBestow(item)}
                         >
                           <Heart className='w-4 h-4 mr-2' />
-                          Bestow to Access
+                          {item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity) ? 'Claim Free' : 'Bestow to Access'}
                         </Button>
                       )}
                     </CardContent>
