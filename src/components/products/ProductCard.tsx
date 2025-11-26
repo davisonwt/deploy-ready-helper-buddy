@@ -250,9 +250,9 @@ export default function ProductCard({ product, featured, showActions = false }: 
                 <h3 className="font-semibold text-lg truncate text-white flex-1">
                   {product.title}
                 </h3>
-                {product.bestow > 0 && (
+                {(product.price > 0 || product.bestow > 0) && (
                   <Badge className="bg-purple-500/30 text-white border-purple-400/50 whitespace-nowrap">
-                    {formatCurrency(product.bestow)}
+                    {formatCurrency(product.price || product.bestow || 0)}
                   </Badge>
                 )}
               </div>
@@ -323,7 +323,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
                       className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      Bestow {formatCurrency(product.bestow)}
+                      Bestow {formatCurrency(product.price || product.bestow || 0)}
                     </Button>
                   ) : (
                     <Button
