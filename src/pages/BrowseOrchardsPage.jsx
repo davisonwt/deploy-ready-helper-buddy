@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
+import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 
 
 export default function BrowseOrchardsPage() {
@@ -499,9 +500,12 @@ export default function BrowseOrchardsPage() {
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-nav-community/30 to-nav-community/50 rounded-t-lg flex items-center justify-center">
-                      <TreePine className="h-12 w-12 text-green-600" />
-                    </div>
+                    <GradientPlaceholder 
+                      type="orchard" 
+                      title={orchard.title}
+                      className="w-full h-48 rounded-t-lg"
+                      size="lg"
+                    />
                   )}
                   <div className="absolute top-4 right-4">
                     <Badge className="bg-nav-community/90 text-green-700 border-0">

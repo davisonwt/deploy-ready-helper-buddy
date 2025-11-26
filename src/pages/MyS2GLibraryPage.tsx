@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function MyS2GLibraryPage() {
   const { user } = useAuth();
@@ -252,12 +253,21 @@ export default function MyS2GLibraryPage() {
                   <p className="text-sm text-white/80 line-clamp-3 mb-4">
                     {item.description}
                   </p>
-                  {item.cover_image_url && (
+                  {item.cover_image_url ? (
                     <img
                       src={item.cover_image_url}
                       alt={item.title}
                       className="w-full h-48 object-cover rounded-lg mb-4"
                     />
+                  ) : (
+                    <div className="mb-4">
+                      <GradientPlaceholder 
+                        type={item.type || 'default'} 
+                        title={item.title}
+                        className="w-full h-48"
+                        size="lg"
+                      />
+                    </div>
                   )}
                   <div className="flex items-center justify-between text-sm text-white/70 mb-4">
                     <span>{item.bestowal_count || 0} bestowals</span>
