@@ -182,7 +182,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
     return `${s}s`;
   };
 
-  const watchSize = compact ? 150 : 500; // Increased by 0.5cm (~19px) per side: 480 -> 500px
+  const watchSize = compact ? 150 : 250; // Half size: 500px -> 250px
   const centerX = 50;
   const centerY = 50;
 
