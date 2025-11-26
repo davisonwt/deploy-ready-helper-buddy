@@ -86,7 +86,7 @@ export function getPartColor(part: number: number): { background: string; accent
     'night': { background: '#0f1423', accent: '#00d4ff' },
   };
   
-  const timeOfDay = getTimeOfDayFromPart(number);
+  const timeOfDay = getTimeOfDayFromPart(part);
   return colors[timeOfDay];
 }
 
