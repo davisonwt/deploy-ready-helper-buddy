@@ -21,10 +21,11 @@ export function useMusicPurchase() {
     try {
       setLoading(true);
 
-      // Pricing: 1.25 USDC to artist + 10.5% to Sow2Grow (total ≈ 1.38 USDC)
-      const baseAmount = 1.25;
-      const sow2growFee = baseAmount * 0.105;
-      const totalAmount = baseAmount + sow2growFee;
+      // Pricing: Minimum 2.00 USDC (includes 10% tithing + 5% admin fee)
+      // Use track price if set and >= 2.00, otherwise default to 2.00 USDC minimum
+      const baseAmount = track.price && track.price >= 2.00 ? track.price : 2.00;
+      // Note: 2 USDC already includes 10% tithing + 5% admin fee, so total is just baseAmount
+      const totalAmount = baseAmount;
 
       // Check wallet balance
       if (!checkSufficientBalance(totalAmount)) {
