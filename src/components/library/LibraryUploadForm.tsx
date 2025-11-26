@@ -35,9 +35,13 @@ export default function LibraryUploadForm() {
      !formData.tags.toLowerCase().includes('lp') &&
      !formData.tags.toLowerCase().includes('ep'));
 
-  // Update price when type changes to music (single tracks default to 2 USDC)
+  // Update price when type changes to music (single tracks default to 2 USDC, but sowers can set higher)
   useEffect(() => {
     if (isSingleMusic && formData.price === 0 && !formData.is_giveaway) {
+      setFormData(prev => ({ ...prev, price: 2.00 }));
+    }
+    // Ensure minimum 2 USDC for single music tracks if price is set but below minimum
+    if (isSingleMusic && formData.price > 0 && formData.price < 2.00 && !formData.is_giveaway) {
       setFormData(prev => ({ ...prev, price: 2.00 }));
     }
   }, [formData.type, formData.tags, formData.is_giveaway]);
@@ -61,6 +65,16 @@ export default function LibraryUploadForm() {
     if (!formData.is_giveaway && (!formData.price || formData.price <= 0)) {
       toast.error('Please set a bestowal price OR enable giveaway option');
       return;
+    }
+
+    // Validate: Single music tracks must have minimum 2 USDC
+    if (!formData.is_giveaway && formData.type === 'music' && formData.price > 0) {
+      const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+      const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
+      if (!isAlbum && formData.price < 2.00) {
+        toast.error('Single music tracks require a minimum bestowal value of 2 USDC');
+        return;
+      }
     }
 
     // Validate: If giveaway, must have limit
@@ -151,11 +165,14 @@ export default function LibraryUploadForm() {
           category: formData.category,
           price: (() => {
             if (formData.is_giveaway) return 0;
-            // Single music tracks default to 2 USDC
-            if (formData.type === 'music' && formData.price === 0) {
+            // Single music tracks: ensure minimum 2 USDC, but allow sowers to set higher
+            if (formData.type === 'music') {
               const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
               const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
-              if (!isAlbum) return 2.00;
+              if (!isAlbum) {
+                // Default to 2 USDC if not set, otherwise use sower's price (must be >= 2)
+                return formData.price >= 2.00 ? formData.price : 2.00;
+              }
             }
             return formData.price;
           })(),
@@ -289,7 +306,7 @@ export default function LibraryUploadForm() {
                     <Label htmlFor='price' className='text-white'>
                       Bestowal Price (USDC) *
                       {isSingleMusic && (
-                        <span className='text-yellow-400 ml-2'>(Default: 2 USDC for single tracks)</span>
+                        <span className='text-yellow-400 ml-2'>(Minimum: 2 USDC for single tracks)</span>
                       )}
                     </Label>
                     <Input
@@ -299,13 +316,22 @@ export default function LibraryUploadForm() {
                       min={isSingleMusic ? '2.00' : '0.01'}
                       required={!formData.is_giveaway}
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const newPrice = parseFloat(e.target.value) || 0;
+                        // Enforce minimum 2 USDC for single music tracks
+                        if (isSingleMusic && newPrice > 0 && newPrice < 2.00) {
+                          toast.error('Single music tracks require minimum 2 USDC');
+                          setFormData({ ...formData, price: 2.00 });
+                        } else {
+                          setFormData({ ...formData, price: newPrice });
+                        }
+                      }}
                       className='bg-white/20 border-white/30 text-white'
-                      placeholder={isSingleMusic ? '2.00' : '0.00'}
+                      placeholder={isSingleMusic ? '2.00 (minimum)' : '0.00'}
                     />
                     <p className='text-white/70 text-xs mt-1'>
                       {isSingleMusic 
-                        ? 'Single music tracks default to 2 USDC. Albums can have custom prices set by sowers.'
+                        ? 'Single music tracks require minimum 2 USDC. You can set a higher bestowal value if desired. Albums can have custom prices.'
                         : 'Amount growers must bestow to access this item. Minimum $0.01 USDC required.'}
                     </p>
                   </div>
