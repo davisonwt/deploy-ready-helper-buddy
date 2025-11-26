@@ -14,6 +14,7 @@ import { SocialActionButtons } from '@/components/social/SocialActionButtons';
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import { formatCurrency } from '@/lib/utils';
 
 interface ProductCardProps {
   product: any;
@@ -315,7 +316,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
                       className="flex-1 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      Bestow ${product.price}
+                      Bestow {formatCurrency(product.price)}
                     </Button>
                   ) : (
                     <Button
