@@ -369,7 +369,7 @@ export default function DashboardPage() {
           </div>
           {/* Custom Watch */}
           <div className="flex-shrink-0">
-            <CustomWatch compact={true} />
+            <CustomWatch compact={false} />
           </div>
         </div>
       </div>

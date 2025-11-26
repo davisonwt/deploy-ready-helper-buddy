@@ -364,7 +364,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
               
               {/* Date Display - Below Watch */}
               {!compact && (
-                <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full">
+                <div className="absolute -bottom-24 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full px-4">
                   {/* Custom Date */}
                   <div className="text-sm text-white/90 font-mono font-bold mb-1">
                     {formatCustomDateCompact(customDate)} WD {customDate.weekDay}
@@ -376,16 +376,16 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   </div>
                   
                   {/* Times and Weekdays */}
-                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-md mx-auto gap-4">
-                    <div className="text-left">
+                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-lg mx-auto gap-6">
+                    <div className="text-left flex-1">
                       <div className="font-semibold text-white/90 mb-1">Creator's Time</div>
-                      <div>part {customTime.part} mins {customTime.minute}</div>
-                      <div className="mt-1">{customDate.weekDay === 7 ? 'Sabbath' : `day ${customDate.weekDay}`}</div>
+                      <div className="text-white/80">part {customTime.part} mins {customTime.minute}</div>
+                      <div className="mt-1 text-white/70">{customDate.weekDay === 7 ? 'Sabbath' : `day ${customDate.weekDay}`}</div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-1">
                       <div className="font-semibold text-white/90 mb-1">Gregorian Time</div>
-                      <div>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
-                      <div className="mt-1">{currentTime.toLocaleDateString(undefined, { weekday: 'long' })}</div>
+                      <div className="text-white/80">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
+                      <div className="mt-1 text-white/70">{currentTime.toLocaleDateString(undefined, { weekday: 'long' })}</div>
                     </div>
                   </div>
                 </div>
