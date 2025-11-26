@@ -53,7 +53,18 @@ export default function S2GCommunityMusicPage() {
             file_url: item.file_url,
             preview_url: item.preview_url || item.file_url,
             cover_image_url: item.cover_image_url,
-            price: item.price || 0, // Use actual price from s2g_library_items
+            price: (() => {
+              // Check if it's an album
+              const isAlbum = item.tags?.some((tag: string) => 
+                tag.toLowerCase().includes('album') || 
+                tag.toLowerCase().includes('lp') || 
+                tag.toLowerCase().includes('ep')
+              ) || false;
+              
+              // Single tracks: enforce minimum 2 USDC, albums use actual price
+              const itemPrice = item.price || 0;
+              return isAlbum ? itemPrice : (itemPrice >= 2.00 ? itemPrice : 2.00);
+            })(),
             is_giveaway: item.is_giveaway || false,
             giveaway_limit: item.giveaway_limit,
             giveaway_count: item.giveaway_count || 0,
@@ -98,9 +109,18 @@ export default function S2GCommunityMusicPage() {
           const dj = track.radio_djs;
           const profile = dj?.user_id ? djProfileMap.get(dj.user_id) : null;
           
-          // Get price from dj_music_tracks - use actual price set by sower
-          // Single music tracks should have minimum 2 USDC, but use actual price from DB
-          const trackPrice = track.price || 0;
+          // Get price from dj_music_tracks - enforce minimum 2 USDC for single tracks
+          // Check if it's an album
+          const isAlbum = track.tags?.some((tag: string) => 
+            tag.toLowerCase().includes('album') || 
+            tag.toLowerCase().includes('lp') || 
+            tag.toLowerCase().includes('ep')
+          ) || false;
+          
+          // Single tracks: enforce minimum 2 USDC, albums use actual price
+          const trackPrice = isAlbum 
+            ? (track.price || 0) 
+            : (track.price && track.price >= 2.00 ? track.price : 2.00);
           
           allTracks.push({
             id: track.id,

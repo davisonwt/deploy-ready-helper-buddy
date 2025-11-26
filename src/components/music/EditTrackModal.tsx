@@ -67,6 +67,20 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     try {
       setSaving(true);
 
+      // Check if it's an album (from track.tags)
+      const isAlbum = track.tags?.some((tag: string) => 
+        tag.toLowerCase().includes('album') || 
+        tag.toLowerCase().includes('lp') || 
+        tag.toLowerCase().includes('ep')
+      ) || false;
+
+      // Validate: Single tracks must have minimum 2 USDC
+      if (!isAlbum && formData.price < 2.00) {
+        toast.error('Single music tracks require minimum 2 USDC');
+        setSaving(false);
+        return;
+      }
+
       // Update the track
       const { error: trackError } = await supabase
         .from('dj_music_tracks')
@@ -187,16 +201,35 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
 
           {/* Price */}
           <div className="space-y-2">
-            <Label htmlFor="price">Price (USD)</Label>
+            <Label htmlFor="price">
+              Price (USDC) *
+              <span className="text-yellow-500 ml-2">(Minimum: 2 USDC for single tracks)</span>
+            </Label>
             <Input
               id="price"
               type="number"
               step="0.01"
+              min="2.00"
               value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+              onChange={(e) => {
+                const newPrice = parseFloat(e.target.value) || 0;
+                // Check if it's a single track (not album)
+                const isAlbum = formData.tags?.some((tag: string) => 
+                  tag.toLowerCase().includes('album') || 
+                  tag.toLowerCase().includes('lp') || 
+                  tag.toLowerCase().includes('ep')
+                ) || false;
+                
+                if (!isAlbum && newPrice > 0 && newPrice < 2.00) {
+                  toast.error('Single music tracks require minimum 2 USDC');
+                  setFormData({ ...formData, price: 2.00 });
+                } else {
+                  setFormData({ ...formData, price: newPrice });
+                }
+              }}
             />
             <p className="text-xs text-muted-foreground">
-              Includes 10% tithing + 5% admin fee
+              Single tracks: Minimum 2 USDC (includes 10% tithing + 5% admin fee). Albums can have custom prices.
             </p>
           </div>
 

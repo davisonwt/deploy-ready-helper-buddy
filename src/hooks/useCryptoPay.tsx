@@ -69,10 +69,14 @@ export function useCryptoPay() {
   };
 
   const buySong = async (track: any) => {
-    const baseAmount = track.price || 1.25;
-    const platformFee = baseAmount * 0.10;
-    const adminFee = baseAmount * 0.005;
-    const artistAmount = baseAmount * 0.895;
+    // Minimum 2.00 USDC for single music tracks (includes 10% tithing + 5% admin fee)
+    // The 2 USDC is the TOTAL amount - fees are already included
+    const totalAmount = track.price && track.price >= 2.00 ? track.price : 2.00;
+    
+    // Calculate distribution from total (fees already included in the 2 USDC)
+    const tithingAmount = totalAmount * 0.10; // 10% tithing
+    const adminFee = totalAmount * 0.05; // 5% admin fee
+    const artistAmount = totalAmount - tithingAmount - adminFee; // Remaining to artist
 
     // Get platform wallet
     const { data: platformWallet } = await supabase
@@ -85,7 +89,7 @@ export function useCryptoPay() {
     }
 
     await processPayment(
-      baseAmount + platformFee + adminFee,
+      totalAmount,
       {
         artistAddress: track.wallet_address,
         artistAmount,
@@ -99,11 +103,11 @@ export function useCryptoPay() {
         await supabase.from('music_purchases').insert({
           track_id: track.id,
           buyer_id: (await supabase.auth.getUser()).data.user?.id,
-          amount: baseAmount,
-          platform_fee: platformFee,
+          amount: totalAmount,
+          platform_fee: tithingAmount,
           sow2grow_fee: adminFee,
           artist_amount: artistAmount,
-          total_amount: baseAmount + platformFee + adminFee,
+          total_amount: totalAmount,
           payment_reference: txHash,
           payment_status: 'completed',
         });
