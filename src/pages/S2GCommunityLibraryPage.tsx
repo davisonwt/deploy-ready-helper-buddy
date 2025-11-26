@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
@@ -311,25 +313,34 @@ export default function S2GCommunityLibraryPage() {
                       </div>
                     </CardHeader>
                     <CardContent className='p-4 pt-0'>
-                      {item.cover_image_url && (
-                        <div className='relative mb-4 rounded-lg overflow-hidden'>
-                          <img
-                            src={item.cover_image_url}
-                            alt={item.title}
-                            className='w-full h-48 object-cover'
-                          />
-                          {!accessGranted && (
-                            <div className='absolute inset-0 bg-black/60 flex items-center justify-center'>
-                              <div className='text-center'>
-                                <Eye className='w-12 h-12 text-white mx-auto mb-2' />
-                                <p className='text-white text-sm'>
-                                  {item.type === 'ebook' ? 'Preview Only' : item.type === 'music' || item.type === 'training_course' ? '30s Preview' : 'Preview Only'}
-                                </p>
+                      <div className='relative mb-4 rounded-lg overflow-hidden'>
+                        {item.cover_image_url ? (
+                          <>
+                            <img
+                              src={item.cover_image_url}
+                              alt={item.title}
+                              className='w-full h-48 object-cover'
+                            />
+                            {!accessGranted && (
+                              <div className='absolute inset-0 bg-black/60 flex items-center justify-center'>
+                                <div className='text-center'>
+                                  <Eye className='w-12 h-12 text-white mx-auto mb-2' />
+                                  <p className='text-white text-sm'>
+                                    {item.type === 'ebook' ? 'Preview Only' : item.type === 'music' || item.type === 'training_course' ? '30s Preview' : 'Preview Only'}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </>
+                        ) : (
+                          <GradientPlaceholder 
+                            type={item.type || 'default'} 
+                            title={item.title}
+                            className="w-full h-48"
+                            size="lg"
+                          />
+                        )}
+                      </div>
                       <p className='text-white/80 text-sm line-clamp-3 mb-4'>
                         {item.description}
                       </p>

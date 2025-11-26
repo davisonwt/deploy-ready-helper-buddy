@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
@@ -450,9 +451,12 @@ export default function S2GCommunityMusicPage() {
                             className='w-40 h-40 object-cover rounded-lg'
                           />
                         ) : (
-                          <div className='w-40 h-40 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center'>
-                            <Music className='w-16 h-16 text-white' />
-                          </div>
+                          <GradientPlaceholder 
+                            type="music" 
+                            title={item.title}
+                            className="w-40 h-40"
+                            size="lg"
+                          />
                         )}
                         {/* Play Button Overlay */}
                         <div className='absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg opacity-0 hover:opacity-100 transition-opacity'>

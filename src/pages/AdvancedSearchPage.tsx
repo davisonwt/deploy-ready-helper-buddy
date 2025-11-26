@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, DollarSign, Eye, Users } from "lucide-react"
 import { Link } from "react-router-dom"
+import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 
 interface SearchFilters {
   query: string

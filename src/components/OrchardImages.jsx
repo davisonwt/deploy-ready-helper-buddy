@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Sprout } from 'lucide-react'
+import { GradientPlaceholder } from './ui/GradientPlaceholder'
 
 export function OrchardImages({ orchard }) {
   if (!orchard.images || !Array.isArray(orchard.images) || orchard.images.length === 0) {
@@ -26,15 +27,12 @@ export function OrchardImages({ orchard }) {
                   e.target.nextSibling.style.display = 'flex'
                 }}
               />
-              <div 
-                className="w-full h-48 bg-green-100 rounded-lg border border-gray-200 shadow-md flex items-center justify-center text-green-600"
-                style={{ display: 'none' }}
-              >
-                <div className="text-center">
-                  <Sprout className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-sm">Image not available</p>
-                </div>
-              </div>
+              <GradientPlaceholder 
+                type="orchard" 
+                title={orchard.title}
+                className="w-full h-48"
+                size="lg"
+              />
             </div>
           ))}
         </div>

@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, clearBasket, totalAmount } = useProductBasket();
@@ -96,11 +97,20 @@ export default function BestowalCheckout() {
               exit={{ opacity: 0, x: 20 }}
               className="flex items-center gap-4 p-3 rounded-lg bg-muted/50"
             >
-              <img
-                src={item.cover_image_url || '/placeholder.svg'}
-                alt={item.title}
-                className="w-16 h-16 object-cover rounded"
-              />
+              {item.cover_image_url ? (
+                <img
+                  src={item.cover_image_url}
+                  alt={item.title}
+                  className="w-16 h-16 object-cover rounded"
+                />
+              ) : (
+                <GradientPlaceholder 
+                  type={item.type || 'product'} 
+                  title={item.title}
+                  className="w-16 h-16 rounded"
+                  size="sm"
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <h4 className="font-semibold truncate">{item.title}</h4>
                 <p className="text-sm text-muted-foreground">
