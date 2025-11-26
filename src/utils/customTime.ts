@@ -71,11 +71,24 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = 30, us
 
   let minutesSinceSunrise = nowMinutes - sunriseMinutes;
   if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;  // Overnight wrap
+  if (minutesSinceSunrise >= 1440) minutesSinceSunrise -= 1440;  // Handle next day
 
   const totalParts = minutesSinceSunrise / 80;
   const part = (Math.floor(totalParts) % 18) + 1;  // 1-18 (ensures wrap)
   let minutesIntoPart = Math.round((totalParts % 1) * 80);
   const displayMinute = minutesIntoPart === 0 ? 80 : minutesIntoPart;
+  
+  // Debug logging for South Africa
+  if (userLat === -26.2 && userLon === 28.0) {
+    console.log('SA Debug:', {
+      nowMinutes,
+      sunriseMinutes,
+      minutesSinceSunrise,
+      totalParts,
+      part,
+      displayMinute
+    });
+  }
 
   // Ordinal suffixes
   const ordinal = (n: number): string => {
