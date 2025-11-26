@@ -75,10 +75,14 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
     return last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th';
   };
 
+  const partText = `${partNumber}${ordinal(partNumber)} part`;
+  const minuteText = `${displayMinute}${ordinal(displayMinute)} min`;
+  const displayText = `${partText} ${minuteText}`;
+
   return {
     part: partNumber,
     minute: displayMinute,
-    displayText: `${partNumber}${ordinal(partNumber)} part ${displayMinute}${ordinal(displayMinute)} min`,
+    displayText: displayText,
     raw: { part: partNumber, minute: displayMinute },
     sunriseMinutes
   };
