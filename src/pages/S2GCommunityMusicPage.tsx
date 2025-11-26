@@ -145,14 +145,14 @@ export default function S2GCommunityMusicPage() {
             className='absolute'
             style={{
               width: '4px',
-              height: ${40 + Math.random() * 60}px,
-              background: linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1)),
-              left: ${5 + i * 12}%,
+              height: `${40 + Math.random() * 60}px`,
+              background: `linear-gradient(to top, rgba(255,255,255,0.4), rgba(255,255,255,0.1))`,
+              left: `${5 + i * 12}%`,
               bottom: '0',
               borderRadius: '2px',
             }}
             animate={{
-              height: [${40 + Math.random() * 60}px, ${60 + Math.random() * 80}px, ${40 + Math.random() * 60}px],
+              height: [`${40 + Math.random() * 60}px`, `${60 + Math.random() * 80}px`, `${40 + Math.random() * 60}px`],
             }}
             transition={{
               duration: 1 + Math.random(),
@@ -165,12 +165,11 @@ export default function S2GCommunityMusicPage() {
         {/* Floating music notes */}
         {[...Array(5)].map((_, i) => (
           <motion.div
-            key={
-ote-}
+            key={`note-${i}`}
             className='absolute text-white/20 text-6xl'
             style={{
-              left: ${20 + i * 15}%,
-              top: ${10 + i * 15}%,
+              left: `${20 + i * 15}%`,
+              top: `${10 + i * 15}%`,
             }}
             animate={{
               y: [0, -30, 0],
@@ -182,7 +181,7 @@ ote-}
               ease: 'easeInOut'
             }}
           >
-            
+            ♪
           </motion.div>
         ))}
       </div>
@@ -257,9 +256,9 @@ ote-}
                         )}
                       </div>
                       <CardTitle className='text-white line-clamp-2'>{item.title}</CardTitle>
-                      {item.profile && (
+                      {(item as any).profile && (
                         <p className='text-white/70 text-sm mt-1'>
-                          by {item.profile.display_name || 'Anonymous'}
+                          by {(item as any).profile.display_name || 'Anonymous'}
                         </p>
                       )}
                     </CardHeader>
@@ -336,13 +335,13 @@ ote-}
         </div>
       </div>
 
-      <style>{
+      <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
-      }</style>
+      `}</style>
     </div>
   );
 }
