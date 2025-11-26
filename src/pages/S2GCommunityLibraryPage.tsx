@@ -143,12 +143,11 @@ export default function S2GCommunityLibraryPage() {
             key={i}
             className='absolute rounded-full blur-3xl opacity-30'
             style={{
-              width: ${200 + i * 100}px,
-              height: ${200 + i * 100}px,
-              background: 
-adial-gradient(circle, rgba(, , , 0.6), transparent),
-              left: ${10 + i * 15}%,
-              top: ${10 + i * 12}%,
+              width: `${200 + i * 100}px`,
+              height: `${200 + i * 100}px`,
+              background: `radial-gradient(circle, rgba(102, 126, 234, 0.6), transparent)`,
+              left: `${10 + i * 15}%`,
+              top: `${10 + i * 12}%`,
             }}
             animate={{
               x: [0, 100, 0],
@@ -255,9 +254,9 @@ adial-gradient(circle, rgba(, , , 0.6), transparent),
                         )}
                       </div>
                       <CardTitle className='text-white line-clamp-2'>{item.title}</CardTitle>
-                      {item.profile && (
+                      {(item as any).profile && (
                         <p className='text-white/70 text-sm mt-1'>
-                          by {item.profile.display_name || 'Anonymous'}
+                          by {(item as any).profile.display_name || 'Anonymous'}
                         </p>
                       )}
                     </CardHeader>
@@ -314,13 +313,13 @@ adial-gradient(circle, rgba(, , , 0.6), transparent),
         </div>
       </div>
 
-      <style>{
+      <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
-      }</style>
+      `}</style>
     </div>
   );
 }
