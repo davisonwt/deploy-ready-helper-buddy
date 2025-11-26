@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Bell, Timer, Settings, X, Plus } from 'lucide-react';
+import { Clock, Bell, Timer, Settings, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,8 +8,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toCustomTime, getTimeOfDay, getTimeOfDayColor, formatCustomTime, getAntiClockwiseAngle, type TimeOfDay, toStandardMinutes } from '@/utils/customTime';
-import { toCustomDate, formatCustomDate, getDayOfWeek, type CustomDate } from '@/utils/customCalendar';
+import { 
+  getCreatorTime, 
+  getTimeOfPartGradient, 
+  getTimeOfPartColor,
+  formatCustomTimeCenter,
+  getAntiClockwiseAngle,
+  type CustomTime 
+} from '@/utils/customTime';
+import { 
+  getCreatorDate, 
+  formatCustomDate, 
+  formatCustomDateCompact,
+  getDayOfWeek,
+  type CustomDate 
+} from '@/utils/customCalendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -21,7 +34,8 @@ interface CustomWatchProps {
 
 interface Alarm {
   id: string;
-  time: number; // minutes from midnight (0-1439)
+  part: number;
+  minute: number;
   label: string;
   enabled: boolean;
 }
@@ -35,18 +49,15 @@ interface Timer {
 
 export function CustomWatch({ className, compact = false, showControls = false }: CustomWatchProps) {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [customTime, setCustomTime] = useState(toCustomTime(0));
-  const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 9, day: 10 });
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('midday');
-  const [userTimezone, setUserTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  const [timezoneOffset, setTimezoneOffset] = useState(0); // Offset in minutes
+  const [customTime, setCustomTime] = useState<CustomTime>({ part: 1, minute: 1 });
+  const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 2, day: 10, weekDay: 3 });
   const [alarms, setAlarms] = useState<Alarm[]>([]);
   const [timers, setTimers] = useState<Timer[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [alarmDialogOpen, setAlarmDialogOpen] = useState(false);
   const [timerDialogOpen, setTimerDialogOpen] = useState(false);
-  const [newAlarmPart, setNewAlarmPart] = useState(1);
-  const [newAlarmMinutes, setNewAlarmMinutes] = useState(0);
+  const [newAlarmPart, setNewAlarmPart] = useState(10);
+  const [newAlarmMinute, setNewAlarmMinute] = useState(1);
   const [newAlarmLabel, setNewAlarmLabel] = useState('');
   const [newTimerHours, setNewTimerHours] = useState(0);
   const [newTimerMinutes, setNewTimerMinutes] = useState(0);
@@ -55,16 +66,10 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Initialize with user's local time
+    // Initialize
     const now = new Date();
-    setCustomDate(toCustomDate(now));
-    
-    // Calculate timezone offset
-    const localTime = now.getTime();
-    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const targetTime = new Date(utcTime + (timezoneOffset * 60000));
-    const offset = (targetTime.getTime() - localTime) / 60000;
-    setTimezoneOffset(offset);
+    setCustomTime(getCreatorTime(now));
+    setCustomDate(getCreatorDate(now));
   }, []);
 
   useEffect(() => {
@@ -72,23 +77,15 @@ export function CustomWatch({ className, compact = false, showControls = false }
       const now = new Date();
       setCurrentTime(now);
       
-      // Calculate custom time with timezone offset
-      const localMinutes = now.getHours() * 60 + now.getMinutes();
-      const seconds = now.getSeconds();
-      const adjustedMinutes = (localMinutes + timezoneOffset) % 1440;
-      const custom = toCustomTime(adjustedMinutes);
+      // Calculate custom time
+      const custom = getCreatorTime(now);
       setCustomTime(custom);
       
-      // Update time of day
-      const hours = (adjustedMinutes / 60) % 24;
-      setTimeOfDay(getTimeOfDay(hours));
-      
-      // Update custom date periodically
-      setCustomDate(toCustomDate(now));
+      setCustomDate(getCreatorDate(now));
       
       // Check alarms
       alarms.forEach(alarm => {
-        if (alarm.enabled && Math.floor(adjustedMinutes) === alarm.time) {
+        if (alarm.enabled && custom.part === alarm.part && custom.minute === alarm.minute) {
           toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
           if (audioRef.current) {
             audioRef.current.play().catch(() => {});
@@ -113,27 +110,28 @@ export function CustomWatch({ className, compact = false, showControls = false }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timezoneOffset, alarms]);
+  }, [alarms]);
 
-  // Calculate angles for three hands (anti-clockwise)
-  const partAngle = getAntiClockwiseAngle({ part: customTime.part, minutes: 0 }); // Hour hand (part indicator)
+  // Calculate angles for hands (anti-clockwise)
+  const partAngle = getAntiClockwiseAngle({ part: customTime.part, minute: 1 }); // Hour hand (part indicator)
   const minuteAngle = getAntiClockwiseAngle(customTime); // Minute hand (within part)
-  const secondAngle = (360 - ((currentTime.getSeconds() / 60) * 360)) % 360; // Second hand (anti-clockwise)
   
-  const bgColor = getTimeOfDayColor(timeOfDay);
+  const bgGradient = getTimeOfPartGradient(customTime.part);
+  const { accent } = getTimeOfPartColor(customTime.part);
+  const timeDisplay = formatCustomTimeCenter(customTime);
   const dayOfWeek = getDayOfWeek(customDate);
 
   const handleAddAlarm = () => {
-    const alarmTime = toStandardMinutes({ part: newAlarmPart, minutes: newAlarmMinutes });
     const newAlarm: Alarm = {
       id: Date.now().toString(),
-      time: alarmTime,
-      label: newAlarmLabel || `Alarm Part ${newAlarmPart}, minute ${newAlarmMinutes}`,
+      part: newAlarmPart,
+      minute: newAlarmMinute,
+      label: newAlarmLabel || `Alarm Part ${newAlarmPart}, minute ${newAlarmMinute}`,
       enabled: true,
     };
     setAlarms([...alarms, newAlarm]);
-    setNewAlarmPart(1);
-    setNewAlarmMinutes(0);
+    setNewAlarmPart(10);
+    setNewAlarmMinute(1);
     setNewAlarmLabel('');
     setAlarmDialogOpen(false);
     toast.success('Alarm added');
@@ -169,13 +167,24 @@ export function CustomWatch({ className, compact = false, showControls = false }
     return `${s}s`;
   };
 
-  const watchSize = compact ? 120 : 280; // Increased by ~1cm (38px) per side: 200 -> 280, 80 -> 120
+  const watchSize = compact ? 120 : 380; // Increased size
   const centerX = 50;
   const centerY = 50;
 
+  // Calculate positions for numbers 1-18 anti-clockwise
+  const getNumberPosition = (partNum: number) => {
+    // Start at top (90°), move anti-clockwise (add degrees)
+    const angle = 90 + ((partNum - 1) * 20); // Each part is 20 degrees
+    const radian = (angle * Math.PI) / 180;
+    const radius = 38; // Percentage from center
+    const x = centerX + Math.cos(radian) * radius;
+    const y = centerY - Math.sin(radian) * radius; // Negative because screen Y is inverted
+    return { x, y, angle };
+  };
+
   return (
     <>
-      <Card className={cn('backdrop-blur-md bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 border-white/20 shadow-2xl', className)}>
+      <Card className={cn('backdrop-blur-md border-white/20 shadow-2xl transition-all duration-2000', className)} style={{ background: bgGradient }}>
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="flex items-center gap-4">
             {/* Luxury Watch Face */}
@@ -190,17 +199,18 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 }}
               />
               
-              {/* Main Dial - Celestial Theme */}
+              {/* Main Dial */}
               <div
-                className="absolute rounded-full overflow-hidden"
+                className="absolute rounded-full overflow-hidden border-4 border-white/15"
                 style={{
                   width: `${watchSize * 0.85}px`,
                   height: `${watchSize * 0.85}px`,
                   left: '50%',
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
-                  background: bgColor,
+                  background: bgGradient,
                   boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
+                  transition: 'background 2s ease',
                 }}
               >
                 {/* Starry Sky Effect */}
@@ -208,49 +218,47 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1px, transparent 1px), radial-gradient(circle at 60% 70%, rgba(255,255,255,0.6) 1px, transparent 1px), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.7) 1px, transparent 1px), radial-gradient(circle at 40% 80%, rgba(255,255,255,0.5) 1px, transparent 1px)',
                   backgroundSize: '30% 30%, 25% 25%, 35% 35%, 28% 28%',
                   backgroundPosition: '0% 0%, 100% 100%, 50% 50%, 0% 100%',
-                  opacity: 0.6,
+                  opacity: customTime.part >= 1 && customTime.part <= 3 || customTime.part >= 17 ? 0.6 : 0.2,
                 }} />
                 
                 {/* 18 Part Markers - Anti-clockwise (1-18) */}
                 {Array.from({ length: 18 }).map((_, i) => {
                   const partNum = i + 1;
-                  // Anti-clockwise: Start at top (12 o'clock) with Part 1, move counter-clockwise (left)
-                  // Each part is 20 degrees (360/18)
-                  // For anti-clockwise: start at 90° (top), add 20° for each part (moving left)
-                  const markerAngle = 90 + (i * 20); // Start at 90° (top), add 20° for each part (anti-clockwise)
-                  const radian = (markerAngle * Math.PI) / 180;
-                  const radius = watchSize * 0.38; // Slightly further out for better visibility
-                  const x = centerX + Math.cos(radian) * radius;
-                  const y = centerY - Math.sin(radian) * radius; // Negative because screen Y is inverted
+                  const { x, y } = getNumberPosition(partNum);
+                  const isCurrentPart = customTime.part === partNum;
                   
                   return (
                     <div key={i}>
-                      {/* Part Number - Larger and more prominent */}
+                      {/* Part Number */}
                       <div
-                        className="absolute text-white font-bold"
+                        className="absolute font-bold transition-all duration-300"
                         style={{
                           left: `${x}%`,
                           top: `${y}%`,
                           transform: 'translate(-50%, -50%)',
-                          fontSize: watchSize * 0.08,
+                          fontSize: watchSize * 0.07,
                           textShadow: '0 0 6px rgba(0,0,0,0.9), 0 0 12px rgba(255,255,255,0.4), 2px 2px 4px rgba(0,0,0,0.8)',
-                          fontWeight: customTime.part === partNum ? '900' : '700',
-                          color: customTime.part === partNum ? '#ffd700' : 'rgba(255,255,255,0.95)',
+                          fontWeight: isCurrentPart ? '900' : '700',
+                          color: isCurrentPart ? '#ffd700' : accent,
                           letterSpacing: '0.5px',
+                          opacity: isCurrentPart ? 1 : 0.85,
                         }}
                       >
                         {partNum}
                       </div>
-                      {/* Marker Dot - Larger */}
+                      {/* Marker Dot */}
                       <div
-                        className="absolute rounded-full bg-white/90"
+                        className="absolute rounded-full transition-all duration-300"
                         style={{
-                          width: watchSize * 0.02,
-                          height: watchSize * 0.02,
+                          width: watchSize * 0.018,
+                          height: watchSize * 0.018,
                           left: `${x}%`,
                           top: `${y}%`,
                           transform: 'translate(-50%, -50%)',
-                          boxShadow: '0 0 6px rgba(255,255,255,0.9), 0 0 12px rgba(255,255,255,0.5)',
+                          background: isCurrentPart ? '#ffd700' : 'rgba(255,255,255,0.9)',
+                          boxShadow: isCurrentPart 
+                            ? '0 0 8px rgba(255,215,0,0.9), 0 0 16px rgba(255,215,0,0.5)'
+                            : '0 0 6px rgba(255,255,255,0.9), 0 0 12px rgba(255,255,255,0.5)',
                         }}
                       />
                     </div>
@@ -261,8 +269,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 <motion.div
                   className="absolute origin-bottom"
                   style={{
-                    width: watchSize * 0.008,
-                    height: watchSize * 0.25,
+                    width: watchSize * 0.01,
+                    height: watchSize * 0.22,
                     left: `${centerX}%`,
                     top: `${centerY}%`,
                     transformOrigin: 'bottom center',
@@ -284,8 +292,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 <motion.div
                   className="absolute origin-bottom"
                   style={{
-                    width: watchSize * 0.005,
-                    height: watchSize * 0.35,
+                    width: watchSize * 0.006,
+                    height: watchSize * 0.32,
                     left: `${centerX}%`,
                     top: `${centerY}%`,
                     transformOrigin: 'bottom center',
@@ -303,35 +311,12 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   }}
                 />
                 
-                {/* Second Hand - Thin, Red */}
-                <motion.div
-                  className="absolute origin-bottom"
-                  style={{
-                    width: watchSize * 0.003,
-                    height: watchSize * 0.4,
-                    left: `${centerX}%`,
-                    top: `${centerY}%`,
-                    transformOrigin: 'bottom center',
-                    background: '#ff4444',
-                    borderRadius: '0.5px',
-                    boxShadow: '0 0 4px rgba(255,68,68,0.8)',
-                  }}
-                  animate={{
-                    rotate: secondAngle,
-                  }}
-                  transition={{
-                    type: 'tween',
-                    duration: 0.1,
-                    ease: 'linear',
-                  }}
-                />
-                
                 {/* Center Dot - Rose Gold with Gem Effect */}
                 <div
                   className="absolute rounded-full"
                   style={{
-                    width: watchSize * 0.04,
-                    height: watchSize * 0.04,
+                    width: watchSize * 0.045,
+                    height: watchSize * 0.045,
                     left: `${centerX}%`,
                     top: `${centerY}%`,
                     transform: 'translate(-50%, -50%)',
@@ -341,244 +326,53 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   }}
                 />
                 
-                {/* Calendar Ring - Inner Black Ring */}
-                <div
-                  className="absolute rounded-full border-2 border-white/20"
-                  style={{
-                    width: `${watchSize * 0.7}px`,
-                    height: `${watchSize * 0.7}px`,
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                  }}
-                />
+                {/* Center Time Display */}
+                {!compact && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none" style={{ marginTop: watchSize * 0.15 }}>
+                    <div className="text-white font-black" style={{ fontSize: watchSize * 0.12, textShadow: '0 0 0 8px rgba(0,0,0,0.9), lineHeight: 1.2 }}>
+                      {timeDisplay.part.split(' ')[0]}<sup style={{ fontSize: '0.6em' }}>{timeDisplay.part.split(' ')[1]}</sup> {timeDisplay.part.split(' ')[2]}
+                    </div>
+                    <div className="text-white font-bold mt-1" style={{ fontSize: watchSize * 0.1, textShadow: '0 0 6px rgba(0,0,0,0.9)', lineHeight: 1.2 }}>
+                      {timeDisplay.minute.split(' ')[0]}<sup style={{ fontSize: '0.6em' }}>{timeDisplay.minute.split(' ')[1]}</sup> {timeDisplay.minute.split(' ')[2]}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Date Display - Below Watch */}
               {!compact && (
-                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-center whitespace-nowrap">
-                  <div className="text-xs text-white/90 font-mono font-bold mb-1">
-                    {formatCustomDate(customDate)}
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-center whitespace-nowrap w-full">
+                  <div className="text-sm text-white/90 font-mono font-bold mb-2">
+                    {formatCustomDateCompact(customDate)}
                   </div>
-                  <div className="text-xs text-white/70 font-mono">
-                    Day {dayOfWeek} • {formatCustomTime(customTime)}
-                  </div>
-                  <div className="text-xs text-white/60 font-mono mt-1">
-                    {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
+                  <div className="flex justify-between text-xs text-white/70 font-mono max-w-xs mx-auto">
+                    <div className="text-left">
+                      <div>Creator's Calendar</div>
+                      <div className="font-semibold">{formatCustomDate(customDate)}</div>
+                      <div>Week Day {customDate.weekDay}</div>
+                    </div>
+                    <div className="text-right">
+                      <div>Gregorian</div>
+                      <div className="font-semibold">
+                        {currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}
+                      </div>
+                      <div>
+                        {currentTime.toLocaleDateString(undefined, { weekday: 'long' })} {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
             
             {/* Date and Info Panel */}
-            <div className="flex-1 min-w-0">
-              {!compact && (
-                <>
-                  <div className="text-lg font-bold text-white mb-1 font-mono">
-                    {formatCustomDate(customDate)}
-                  </div>
-                  <Badge className="bg-white/20 text-white border-white/30 text-xs mb-2 capitalize">
-                    {timeOfDay}
-                  </Badge>
-                  <div className="text-xs text-white/70 font-mono mb-1">
-                    {formatCustomTime(customTime)}
-                  </div>
-                  <div className="text-xs text-white/60 font-mono">
-                    Day {dayOfWeek}
-                  </div>
-                  {showControls && (
-                    <div className="flex gap-2 mt-3">
-                      <Dialog open={alarmDialogOpen} onOpenChange={setAlarmDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="h-7 text-xs border-white/30 text-white hover:bg-white/20">
-                            <Bell className="w-3 h-3 mr-1" />
-                            Alarm
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-white/95 backdrop-blur-md">
-                          <DialogHeader>
-                            <DialogTitle>Add Alarm</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label>Part (1-18)</Label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  max="18"
-                                  value={newAlarmPart}
-                                  onChange={(e) => setNewAlarmPart(parseInt(e.target.value) || 1)}
-                                />
-                              </div>
-                              <div>
-                                <Label>Minutes (0-79)</Label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="79"
-                                  value={newAlarmMinutes}
-                                  onChange={(e) => setNewAlarmMinutes(parseInt(e.target.value) || 0)}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Label (optional)</Label>
-                              <Input
-                                value={newAlarmLabel}
-                                onChange={(e) => setNewAlarmLabel(e.target.value)}
-                                placeholder="Wake up"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button onClick={handleAddAlarm}>Add Alarm</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog open={timerDialogOpen} onOpenChange={setTimerDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="h-7 text-xs border-white/30 text-white hover:bg-white/20">
-                            <Timer className="w-3 h-3 mr-1" />
-                            Timer
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-white/95 backdrop-blur-md">
-                          <DialogHeader>
-                            <DialogTitle>Add Timer</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <Label>Hours</Label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={newTimerHours}
-                                  onChange={(e) => setNewTimerHours(parseInt(e.target.value) || 0)}
-                                />
-                              </div>
-                              <div>
-                                <Label>Minutes</Label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="59"
-                                  value={newTimerMinutes}
-                                  onChange={(e) => setNewTimerMinutes(parseInt(e.target.value) || 0)}
-                                />
-                              </div>
-                              <div>
-                                <Label>Seconds</Label>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="59"
-                                  value={newTimerSeconds}
-                                  onChange={(e) => setNewTimerSeconds(parseInt(e.target.value) || 0)}
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Label (optional)</Label>
-                              <Input
-                                value={newTimerLabel}
-                                onChange={(e) => setNewTimerLabel(e.target.value)}
-                                placeholder="Pomodoro"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button onClick={handleAddTimer}>Start Timer</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="outline" className="h-7 text-xs border-white/30 text-white hover:bg-white/20">
-                            <Settings className="w-3 h-3" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="bg-white/95 backdrop-blur-md">
-                          <DialogHeader>
-                            <DialogTitle>Watch Settings</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Timezone</Label>
-                              <Select value={userTimezone} onValueChange={setUserTimezone}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Intl.supportedValuesOf('timeZone').slice(0, 50).map(tz => (
-                                    <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Adjust to sync with your local time
-                              </p>
-                            </div>
-                            <div>
-                              <Label>Active Alarms ({alarms.filter(a => a.enabled).length})</Label>
-                              <div className="space-y-2 mt-2">
-                                {alarms.map(alarm => (
-                                  <div key={alarm.id} className="flex items-center justify-between p-2 bg-white/50 rounded">
-                                    <div>
-                                      <div className="text-sm font-medium">{alarm.label}</div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {formatCustomTime(toCustomTime(alarm.time))}
-                                      </div>
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => setAlarms(alarms.filter(a => a.id !== alarm.id))}
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Active Timers ({timers.length})</Label>
-                              <div className="space-y-2 mt-2">
-                                {timers.map(timer => (
-                                  <div key={timer.id} className="flex items-center justify-between p-2 bg-white/50 rounded">
-                                    <div>
-                                      <div className="text-sm font-medium">{timer.label}</div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {formatTimer(timer.remaining)}
-                                      </div>
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => setTimers(timers.filter(t => t.id !== timer.id))}
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  )}
-                </>
-              )}
-              {compact && (
+            {compact && (
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-bold text-white font-mono">
-                  {formatCustomDate(customDate)}
+                  {formatCustomDateCompact(customDate)}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
