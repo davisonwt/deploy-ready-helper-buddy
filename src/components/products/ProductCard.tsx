@@ -231,35 +231,35 @@ export default function ProductCard({ product, featured, showActions = false }: 
             <div className="flex items-center gap-2">
               <Avatar className="w-6 h-6">
                 <AvatarImage src={product.sowers?.logo_url} />
-                <AvatarFallback>{product.sowers?.display_name?.[0]}</AvatarFallback>
+                <AvatarFallback className="bg-white/20 text-white">{product.sowers?.display_name?.[0]}</AvatarFallback>
               </Avatar>
               <div className="flex items-center gap-1 flex-1 min-w-0">
-                <span className="text-sm text-muted-foreground truncate">
+                <span className="text-sm text-white/70 truncate">
                   {product.sowers?.display_name}
                 </span>
                 {product.sowers?.is_verified && (
-                  <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
                 )}
               </div>
             </div>
 
             {/* Title & Description */}
             <div>
-              <h3 className="font-semibold text-lg mb-1 truncate text-foreground">
+              <h3 className="font-semibold text-lg mb-1 truncate text-white">
                 {product.title}
               </h3>
               {product.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-white/80 line-clamp-2">
                   {product.description}
                 </p>
               )}
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-white/70">
               <span>{formatCount(product.play_count)} plays</span>
               {product.bestowal_count > 0 && (
-                <span className="text-primary">{formatCount(product.bestowal_count)} bestowals</span>
+                <span className="text-white">{formatCount(product.bestowal_count)} bestowals</span>
               )}
             </div>
 
