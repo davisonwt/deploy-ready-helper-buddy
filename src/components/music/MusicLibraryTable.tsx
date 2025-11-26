@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
+import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 
 interface MusicTrack {
@@ -158,8 +159,8 @@ export function MusicLibraryTable({
 
   if (tracks.length === 0) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-muted-foreground">No music tracks available yet.</p>
+      <Card className="p-8 text-center backdrop-blur-md bg-white/10 border-white/20">
+        <p className="text-white/70">No music tracks available yet.</p>
       </Card>
     );
   }
@@ -180,7 +181,7 @@ export function MusicLibraryTable({
       )}
 
       {/* Header Row */}
-      <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
+      <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-white/80 border-b border-white/20">
         <div className="col-span-4">Track / Artist</div>
         <div className="col-span-2">Genre</div>
         <div className="col-span-1">Duration</div>
@@ -198,7 +199,7 @@ export function MusicLibraryTable({
           return (
             <Card 
               key={track.id} 
-              className={`p-4 hover:shadow-md transition-shadow ${allowSelection ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-primary' : ''}`}
+              className={`p-4 backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20 transition-all ${allowSelection ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-white/50' : ''}`}
               onClick={() => allowSelection && onTrackSelect?.(track)}
             >
               <div className="grid grid-cols-12 gap-4 items-center">
@@ -225,38 +226,55 @@ export function MusicLibraryTable({
 
                 {/* Track Info */}
                 <div className={`${allowSelection ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={track.profiles?.avatar_url || ''} />
-                    <AvatarFallback className="bg-primary/10">
-                      {track.artist_name?.charAt(0) || 'M'}
-                    </AvatarFallback>
-                  </Avatar>
+                  {/* Cover Image / Album Art */}
+                  <div className="relative h-12 w-12 flex-shrink-0 rounded overflow-hidden">
+                    {(track as any).cover_image_url ? (
+                      <img
+                        src={(track as any).cover_image_url}
+                        alt={track.track_title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Replace with placeholder on error
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    {!(track as any).cover_image_url && (
+                      <GradientPlaceholder 
+                        type="music" 
+                        title={track.track_title}
+                        className="w-full h-full"
+                        size="sm"
+                      />
+                    )}
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate text-foreground">
+                    <p className="font-medium truncate text-white">
                       {track.track_title}
                     </p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {track.artist_name || track.profiles?.username || 'Unknown Artist'}
+                    <p className="text-sm text-white/70 truncate">
+                      lyrist: {track.artist_name || track.profiles?.username || 'Unknown Artist'}
                     </p>
                   </div>
                 </div>
 
                 {/* Genre */}
                 <div className="col-span-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs bg-white/20 border-white/30 text-white">
                     {track.genre || 'Unspecified'}
                   </Badge>
                 </div>
 
                 {/* Duration */}
-                <div className="col-span-1 text-sm text-foreground">
+                <div className="col-span-1 text-sm text-white">
                   {formatDuration(track.duration_seconds)}
                 </div>
 
                 {/* Price */}
                 <div className="col-span-1 text-center">
-                  <Badge className="bg-primary/10 text-primary border-primary/20">
-                    {formatAmount(2)}
+                  <Badge className="bg-purple-500/30 text-white border-purple-400/50">
+                    {formatAmount(2)} USDC
                   </Badge>
                 </div>
 
@@ -270,7 +288,7 @@ export function MusicLibraryTable({
                         e.stopPropagation();
                         setEditingTrack(track);
                       }}
-                      className="h-8 gap-1"
+                      className="h-8 gap-1 border-white/30 text-white hover:bg-white/20"
                     >
                       <Edit className="h-3 w-3" />
                       Edit
@@ -284,7 +302,7 @@ export function MusicLibraryTable({
                       e.stopPropagation();
                       handlePreview(track);
                     }}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
                   >
                     {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
@@ -296,7 +314,7 @@ export function MusicLibraryTable({
                       e.stopPropagation();
                       handleFollow(track.dj_id);
                     }}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
                   >
                     <Heart className="h-4 w-4" />
                   </Button>
@@ -308,7 +326,7 @@ export function MusicLibraryTable({
                       e.stopPropagation();
                       handleShare(track);
                     }}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
@@ -320,7 +338,7 @@ export function MusicLibraryTable({
                       e.stopPropagation();
                       handleDownload(track);
                     }}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
                     disabled={!isPurchased && track.price && track.price > 0}
                   >
                     <Download className="h-4 w-4" />
@@ -334,7 +352,7 @@ export function MusicLibraryTable({
                         handleBestowal(track);
                       }}
                       disabled={processing}
-                      className="h-8 gap-1"
+                      className="h-8 gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <DollarSign className="h-3 w-3" />
                       Bestow
@@ -342,7 +360,7 @@ export function MusicLibraryTable({
                   )}
 
                   {isPurchased && (
-                    <Badge variant="secondary" className="h-8 px-2">
+                    <Badge variant="secondary" className="h-8 px-2 bg-green-500/30 text-white border-green-400/50">
                       Owned
                     </Badge>
                   )}
