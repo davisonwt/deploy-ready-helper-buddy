@@ -1,70 +1,87 @@
 'use client';
 
-import { useState } from 'react';
-import { ThroneCenter } from './ThroneCenter';
+import { motion } from 'framer-motion';
+import { useSacredTime } from './hooks/useSacredTime';
 import { BreathWheel } from './wheels/BreathWheel';
-import { SolarMinuteWheel } from './wheels/SolarMinuteWheel';
 import { SacredDayWheel } from './wheels/SacredDayWheel';
 import { YearWheel } from './wheels/YearWheel';
-import { useSacredTime } from './hooks/useSacredTime';
+import { SolarMinuteWheel as MinuteWheel } from './wheels/SolarMinuteWheel';
 import { useUserLocation } from './hooks/useUserLocation';
 import { PartDetailModal } from './modals/PartDetailModal';
+import { useState } from 'react';
 
 /**
  * Ezekiel Clock - Sacred Time Visualization
  * 
- * A multi-layered clock representing:
- * - Year Wheel: Enochian calendar (364 days, 4 seasons/creatures)
- * - Sacred Day Wheel: 18 parts (12 tribes + 6 night watches)
- * - Solar Minute Wheel: 1440 minutes per day
- * - Breath Wheel: 86400 seconds per day
+ * Updated with TRUE ROTATION SPEEDS:
+ * - Year Wheel: 0.986° per day (364-day cycle)
+ * - Sacred Day Wheel: 18 parts (jumps on part change)
+ * - Minute Wheel: Smooth 24h rotation (1440 minutes)
+ * - Breath Wheel: 86,400-second rotation
  */
 export const EzekielClock = () => {
   const { lat, lon } = useUserLocation();
   const sacred = useSacredTime(lat, lon);
   const [selectedPart, setSelectedPart] = useState<number | null>(null);
 
-  if (!sacred) {
-    return (
-      <div className="relative pointer-events-auto">
-        <div className="relative w-80 h-80 bg-black/30 backdrop-blur-xl rounded-full shadow-2xl border border-white/20 flex items-center justify-center">
-          <div className="text-white/60 text-sm">Loading sacred time...</div>
-        </div>
-      </div>
-    );
-  }
+  if (!sacred) return null;
+
+  const secondsAngle = (sacred.secondsToday / 86400) * 360;
+  const minutesAngle = (sacred.minutesToday / 1440) * 360;
+  const dayProgress = (sacred.dayOfYear - 1) / 364;
 
   return (
     <>
       <div className="relative pointer-events-auto">
-        <div className="relative w-80 h-80 bg-black/30 backdrop-blur-xl rounded-full shadow-2xl border border-white/20 overflow-hidden">
-          {/* Layer 4 – Year Wheel (outermost) */}
-          <YearWheel dayOfYear={sacred.dayOfYear} creature={sacred.creature} />
+        <div className="relative w-96 h-96">
+          {/* Outermost: 364-day Year Wheel – turns 0.986° per day */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: dayProgress * 360 }}
+            transition={{ duration: 86400, ease: 'linear', repeat: Infinity }}
+          >
+            <YearWheel creature={sacred.creature} dayOfYear={sacred.dayOfYear} />
+          </motion.div>
 
-          {/* Layer 3 – Sacred Day Wheel (18 parts) */}
-          <SacredDayWheel
-            sacredPart={sacred.sacredPart}
+          {/* 18-Part Sacred Day Wheel – jumps on part change */}
+          <SacredDayWheel 
+            sacredPart={sacred.sacredPart} 
             isDaytime={sacred.isDaytime}
             onPartClick={setSelectedPart}
           />
 
-          {/* Layer 2 – Solar Minute Wheel (1440 minutes) */}
-          <SolarMinuteWheel minutesToday={sacred.minutesToday} isDaytime={sacred.isDaytime} />
+          {/* 1440-Minute Solar Wheel – smooth 24h rotation */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: minutesAngle }}
+            transition={{ duration: 60, ease: 'linear', repeat: Infinity }}
+          >
+            <MinuteWheel isDaytime={sacred.isDaytime} minutesToday={sacred.minutesToday} />
+          </motion.div>
 
-          {/* Layer 1 – Breath Wheel (innermost, seconds) */}
-          <BreathWheel secondsToday={sacred.secondsToday} />
+          {/* Innermost Breath Wheel – 86,400-second rotation */}
+          <motion.div
+            className="absolute inset-0"
+            animate={{ rotate: secondsAngle }}
+            transition={{ duration: 1, ease: 'linear', repeat: Infinity }}
+          >
+            <BreathWheel secondsToday={sacred.secondsToday} />
+          </motion.div>
 
           {/* Central Throne */}
-          <ThroneCenter sacred={sacred} />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <div className="text-5xl font-bold text-amber-400 drop-shadow-2xl">
+                {sacred.sacredPart}
+              </div>
+              <div className="text-amber-300 text-lg mt-2">{sacred.creature}</div>
+            </div>
+          </div>
         </div>
 
         {/* Info text below clock */}
-        <div className="text-center mt-3 text-white/80 font-light text-sm max-w-[320px]">
-          <div className="font-semibold text-amber-300">Ezekiel&apos;s Wheels</div>
-          <div className="text-xs mt-1">{sacred.formatted}</div>
-          <div className="text-xs mt-1 text-amber-400/70">
-            {sacred.season} • {sacred.creature}
-          </div>
+        <div className="text-center mt-4 text-amber-200 font-light text-sm">
+          Year {sacred.year} • Day {sacred.dayOfYear} • Part {sacred.sacredPart}
         </div>
       </div>
 
@@ -77,4 +94,3 @@ export const EzekielClock = () => {
     </>
   );
 };
-
