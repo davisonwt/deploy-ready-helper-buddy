@@ -42,6 +42,8 @@ import { MyPremiumRooms } from '@/components/dashboard/MyPremiumRooms'
 import TrafficOverview from '@/components/analytics/TrafficOverview'
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
 import { CustomWatch } from '@/components/watch/CustomWatch'
+import { getCreatorTime } from '@/utils/customTime'
+import { getCreatorDate } from '@/utils/customCalendar'
 
 
 export default function DashboardPage() {
@@ -89,6 +91,12 @@ export default function DashboardPage() {
   const [userRoles, setUserRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(false)
   const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
+  
+  // Custom time state for display
+  const [currentTime, setCurrentTime] = useState(new Date())
+  const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
+  const [userLon, setUserLon] = useState(28.0) // Default: South Africa
+  const [customDate, setCustomDate] = useState(null)
 
   // Binance Pay - no wallet state needed
 
@@ -114,6 +122,38 @@ export default function DashboardPage() {
     loadRoles()
     return () => { mounted = false }
   }, [user?.id])
+
+  // Get user location and update custom time
+  useEffect(() => {
+    // Try to get user's location from browser
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLat(position.coords.latitude)
+          setUserLon(position.coords.longitude)
+        },
+        () => {
+          // Fallback to default if geolocation fails
+          console.log('Using default location (South Africa: -26.2°N, 28.0°E)')
+        }
+      )
+    }
+    
+    // Initialize custom date
+    const now = new Date()
+    setCustomDate(getCreatorDate(now))
+  }, [])
+
+  // Update time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date()
+      setCurrentTime(now)
+      setCustomDate(getCreatorDate(now))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -372,6 +412,23 @@ export default function DashboardPage() {
             <CustomWatch compact={false} />
           </div>
         </div>
+        {/* Custom Time Display - Bottom of welcome section */}
+        {customDate && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="text-center">
+              {/* Custom Time - Larger font */}
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
+                {getCreatorTime(currentTime, userLat, userLon).displayText}
+              </div>
+              {/* Gregorian Time - Smaller font */}
+              <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
+                <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
+                <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+                <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
         {/* Real Traffic Overview (Lovable Analytics) */}
