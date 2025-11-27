@@ -71,34 +71,38 @@ export const YearWheel = ({ dayOfYear, creature }: YearWheelProps) => {
       })}
 
       {/* Year indicator - centered at (160, 160) */}
-      <motion.g
-        transform={`rotate(${rotationAngle} 160 160)`}
-        animate={{ 
-          transform: `rotate(${rotationAngle} 160 160)`
-        }}
-        transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
-      >
-        <line
+      <g>
+        <motion.line
           x1="160"
           y1="160"
-          x2="160"
-          y2={160 - radius}
+          x2={160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180)}
+          y2={160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180)}
           stroke={CREATURE_COLORS[creature]}
           strokeWidth="3"
           strokeLinecap="round"
+          animate={{
+            x2: 160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180),
+            y2: 160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180),
+          }}
+          transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
         />
         {/* Creature emoji at indicator tip */}
-        <text
-          x="160"
-          y={160 - radius}
+        <motion.text
+          x={160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180)}
+          y={160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180)}
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize="24"
           className="pointer-events-none select-none"
+          animate={{
+            x: 160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180),
+            y: 160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180),
+          }}
+          transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
         >
           {CREATURE_EMOJIS[creature]}
-        </text>
-      </motion.g>
+        </motion.text>
+      </g>
     </svg>
   );
 };
