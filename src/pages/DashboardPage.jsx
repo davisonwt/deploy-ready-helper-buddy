@@ -96,7 +96,7 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
-  const [customDate, setCustomDate] = useState(null)
+  const [customDate, setCustomDate] = useState(getCreatorDate(new Date()))
 
   // Binance Pay - no wallet state needed
 
@@ -413,26 +413,26 @@ export default function DashboardPage() {
           </div>
         </div>
         {/* Custom Time Display - Bottom of welcome section */}
-        {customDate && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="text-center">
-              {/* Custom Date - Above custom time */}
+        <div className="mt-4 pt-4 border-t border-border">
+          <div className="text-center">
+            {/* Custom Date - Above custom time */}
+            {customDate && (
               <div className="text-base sm:text-lg md:text-xl font-semibold text-heading-primary mb-1">
                 Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
               </div>
-              {/* Custom Time - Larger font */}
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
-                {getCreatorTime(currentTime, userLat, userLon).displayText}
-              </div>
-              {/* Gregorian Time - Smaller font */}
-              <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
-                <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
-                <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-                <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-              </div>
+            )}
+            {/* Custom Time - Larger font */}
+            <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
+              {getCreatorTime(currentTime, userLat, userLon).displayText}
+            </div>
+            {/* Gregorian Time - Smaller font */}
+            <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
+              <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
+              <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
+              <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
         {/* Real Traffic Overview (Lovable Analytics) */}
