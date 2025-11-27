@@ -150,16 +150,19 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – 80 MIN = 360° ANTI-CLOCKWISE, PHASE-LOCKED, NO WRAP  -------- */
-  // use the SAME elapsed minutes counter that drives the part hand
-  let minsSinceSunrise = elapsed; // already calculated above (0-1440)
-  if (minsSinceSunrise < 0) minsSinceSunrise += 1440;
-
-  // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (NEGATIVE = ANTI-CLOCKWISE)
-  // NEVER MODULO – angle grows forever
-  // 0 min = -20° (leading edge), 80 min = 0° (trailing edge)  ANTI-CLOCKWISE
-  const minuteDeg = -20 + (minsSinceSunrise * 60) * 0.05625; // -20° → 0°
-  const minuteAngle = 450 - (110 - (secondsInMinuteFloat / 80) * 20); // 110° → 90° anti-clockwise, 0-80 min
+  /* --------  MINUTE HAND – STEEL-HARD FORMULA, NO 60, NO SUNRISE, NO RESET  -------- */
+  // Steel rules baked into the code:
+  //   secondsInMinuteFloat → 0–79.99 (already millisecond-smooth)
+  //   / 80 → normalises to 0–1 (80-second cycle, not 60)
+  //   * 20 → maps to 0–20° wedge
+  //   - (110 - …) → anti-clockwise slope (110° → 90°)
+  //   No modulo, no sunrise, no drift
+  // Locked outcomes:
+  //   0 min 0 s → 110° (trailing edge, Part 2 side)
+  //   40 min 0 s → 100° (dead centre)
+  //   80 min 0 s → 90° (leading edge, Part 18 side)
+  //   Moves left forever at 0.25° per second – anti-clockwise infinity
+  const minuteAngle = 450 - (110 - (secondsInMinuteFloat / 80) * 20);
   
   /* --------  SECONDS HAND – 80 SECONDS = 360° ANTI-CLOCKWISE  -------- */
   // 360° per 80 seconds → 4.5°/s ANTI-CLOCKWISE (negative in CSS)
