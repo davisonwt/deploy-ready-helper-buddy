@@ -1,11 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { getCreatorTime } from '@/utils/customTime';
 import { useEffect, useState } from 'react';
-
-const LAT = -26.2;
-const LON = 28.0;
 
 export function SecondsHand({ watchSize }: { watchSize: number }) {
   const [angle, setAngle] = useState(90);
@@ -13,17 +9,11 @@ export function SecondsHand({ watchSize }: { watchSize: number }) {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const { sunriseMinutes } = getCreatorTime(now, LAT, LON);
-
-      const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() + now.getMilliseconds() / 1000;
-      const sunriseSec = sunriseMinutes * 60;
-
-      let secsSinceSunrise = nowSec - sunriseSec;
-      if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
-
-      const realSeconds = secsSinceSunrise % 60;
-      const degrees = (realSeconds / 60) * 360;
-      setAngle(90 - degrees); // normal 60-second anti-clockwise
+      // Use real-world seconds (0-59.999) - independent of custom time system
+      const currentSecond = now.getSeconds() + now.getMilliseconds() / 1000;
+      // 360° rotation over 60 seconds, anti-clockwise from Part 1 (90°)
+      const degrees = (currentSecond / 60) * 360;
+      setAngle(90 - degrees); // Start at 90° (Part 1), rotate anti-clockwise
     };
 
     update();
