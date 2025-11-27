@@ -29,6 +29,7 @@ export const EzekielClock = () => {
   const secondsAngle = (sacred.secondsToday / 86400) * 360;
   const minutesAngle = (sacred.minutesToday / 1440) * 360;
   const dayProgress = (sacred.dayOfYear - 1) / 364;
+  const yearAngle = dayProgress * 360;
 
   return (
     <>
@@ -37,8 +38,9 @@ export const EzekielClock = () => {
           {/* Outermost: 364-day Year Wheel – turns 0.986° per day */}
           <motion.div
             className="absolute inset-0"
-            animate={{ rotate: dayProgress * 360 }}
-            transition={{ duration: 86400, ease: 'linear', repeat: Infinity }}
+            style={{ transformOrigin: '50% 50%' }}
+            animate={{ rotate: yearAngle }}
+            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <YearWheel creature={sacred.creature} dayOfYear={sacred.dayOfYear} />
           </motion.div>
@@ -53,8 +55,9 @@ export const EzekielClock = () => {
           {/* 1440-Minute Solar Wheel – smooth 24h rotation */}
           <motion.div
             className="absolute inset-0"
+            style={{ transformOrigin: '50% 50%' }}
             animate={{ rotate: minutesAngle }}
-            transition={{ duration: 60, ease: 'linear', repeat: Infinity }}
+            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <MinuteWheel isDaytime={sacred.isDaytime} minutesToday={sacred.minutesToday} />
           </motion.div>
@@ -62,8 +65,9 @@ export const EzekielClock = () => {
           {/* Innermost Breath Wheel – 86,400-second rotation */}
           <motion.div
             className="absolute inset-0"
+            style={{ transformOrigin: '50% 50%' }}
             animate={{ rotate: secondsAngle }}
-            transition={{ duration: 1, ease: 'linear', repeat: Infinity }}
+            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <BreathWheel secondsToday={sacred.secondsToday} />
           </motion.div>
