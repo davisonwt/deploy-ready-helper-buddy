@@ -349,10 +349,10 @@ export default function DashboardPage() {
   if (authLoading || orchardsLoading || bestowalsLoading) {
     console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-success/10 via-background to-warning/10">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
+          <p className="text-card-foreground">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -361,25 +361,24 @@ export default function DashboardPage() {
   // Show error state if there's an error
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-success/10 via-background to-warning/10">
+        <Card className="bg-card/90 backdrop-blur-sm border-border shadow-xl p-8">
+          <div className="text-center">
+            <p className="text-destructive mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
-      
-      {/* Solid dark overlay for better readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+    <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-warning/10">
       
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture and Custom Watch - Mobile Responsive */}
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 bg-card">
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 bg-card/90 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4 md:space-x-6 flex-1 min-w-0">
             <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-nav-dashboard shadow-md sm:shadow-lg flex-shrink-0">
@@ -391,18 +390,18 @@ export default function DashboardPage() {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
-                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-heading-primary" />
+                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-card-foreground" />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-heading-primary truncate">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-card-foreground truncate">
                 Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
               </h1>
-              <p className="text-sm sm:text-base md:text-lg text-heading-primary">
+              <p className="text-sm sm:text-base md:text-lg text-card-foreground">
                 Ready to grow your orchard today?
               </p>
-              <p className="text-xs sm:text-sm mt-1 text-heading-primary">
+              <p className="text-xs sm:text-sm mt-1 text-muted-foreground">
                 Payment Method: USDC (USD Coin)
               </p>
             </div>
@@ -417,16 +416,16 @@ export default function DashboardPage() {
           <div className="text-center">
             {/* Custom Date - Above custom time */}
             {customDate && (
-              <div className="text-base sm:text-lg md:text-xl font-semibold text-heading-primary mb-1">
+              <div className="text-base sm:text-lg md:text-xl font-semibold text-card-foreground mb-1">
                 Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
               </div>
             )}
             {/* Custom Time - Larger font */}
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold text-card-foreground mb-2">
               {getCreatorTime(currentTime, userLat, userLon).displayText}
             </div>
             {/* Gregorian Time - Smaller font */}
-            <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
+            <div className="text-xs sm:text-sm text-muted-foreground font-mono flex items-center justify-center gap-2 flex-wrap">
               <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
               <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
               <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
@@ -442,78 +441,78 @@ export default function DashboardPage() {
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           {/* Stats Grid - Mobile Responsive */}
-          <div className="w-full p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 bg-card stats-tour">
+          <div className="w-full p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 bg-card/90 backdrop-blur-sm stats-tour">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-3 w-full">
-              <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
+              <Card className="bg-card/80 backdrop-blur-sm border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Orchards</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalOrchards}</p>
+                    <p className="text-xs sm:text-sm font-medium text-card-foreground">My Orchards</p>
+                    <p className="text-xl sm:text-2xl font-bold text-card-foreground">{stats.totalOrchards}</p>
                   </div>
-                  <TreePine className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <TreePine className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="bg-card/80 backdrop-blur-sm border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">Total Raised</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalRaised)}</p>
+                    <p className="text-xs sm:text-sm font-medium text-card-foreground">Total Raised</p>
+                    <p className="text-xl sm:text-2xl font-bold text-card-foreground">{formatCurrency(stats.totalRaised)}</p>
                   </div>
-                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="flex-1 bg-card/80 backdrop-blur-sm border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-heading-primary">Active Users</p>
-                    <p className="text-2xl font-bold text-heading-primary">{activeUsers}</p>
-                    <p className="text-xs text-heading-primary mt-1">Last 30 days</p>
+                    <p className="text-sm font-medium text-card-foreground">Active Users</p>
+                    <p className="text-2xl font-bold text-card-foreground">{activeUsers}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Last 30 days</p>
                   </div>
-                  <Users className="h-8 w-8 text-heading-primary" />
+                  <Users className="h-8 w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="bg-card/80 backdrop-blur-sm border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Bestowals</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalBestowals}</p>
+                    <p className="text-xs sm:text-sm font-medium text-card-foreground">My Bestowals</p>
+                    <p className="text-xl sm:text-2xl font-bold text-card-foreground">{stats.totalBestowals}</p>
                   </div>
-                  <Heart className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <Heart className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="bg-card/80 backdrop-blur-sm border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">Total Supported</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalSupported)}</p>
+                    <p className="text-xs sm:text-sm font-medium text-card-foreground">Total Supported</p>
+                    <p className="text-xl sm:text-2xl font-bold text-card-foreground">{formatCurrency(stats.totalSupported)}</p>
                   </div>
-                  <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card className="bg-card/80 backdrop-blur-sm border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Followers</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalFollowers}</p>
-                    <p className="text-[10px] sm:text-xs text-heading-primary mt-1">+{stats.newFollowers} this week</p>
+                    <p className="text-xs sm:text-sm font-medium text-card-foreground">My Followers</p>
+                    <p className="text-xl sm:text-2xl font-bold text-card-foreground">{stats.totalFollowers}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">+{stats.newFollowers} this week</p>
                   </div>
-                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
@@ -521,24 +520,24 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-            <BinanceWalletManager className="lg:col-span-1 bg-card border-border shadow-xl wallet-tour" />
+            <BinanceWalletManager className="lg:col-span-1 bg-card/90 backdrop-blur-sm border-border shadow-xl wallet-tour" />
 
             {/* Global Timezone Support */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl timezone-tour">
+            <Card className="lg:col-span-1 bg-card/90 backdrop-blur-sm border-border shadow-xl timezone-tour">
               <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="flex items-center text-heading-primary text-base sm:text-lg">
-                  <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                <CardTitle className="flex items-center text-card-foreground text-base sm:text-lg">
+                  <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary" />
                   Global Time Zones
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                 <LiveTimezoneDisplay />
-                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-200">
+                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border">
                   <Link to="/grove-station">
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="w-full text-sm sm:text-base text-blue-600 border-blue-200 hover:bg-blue-100"
+                      className="w-full text-sm sm:text-base border-primary hover:bg-primary hover:text-primary-foreground"
                     >
                       <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       View Radio Schedule
@@ -572,14 +571,11 @@ export default function DashboardPage() {
           {/* My Orchards and Recent Bestowals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mt-4 sm:mt-6 md:mt-8">
             {/* My Orchards */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl my-orchards-section-tour">
+            <Card className="lg:col-span-1 bg-card/90 backdrop-blur-sm border-border shadow-xl my-orchards-section-tour">
             <CardHeader className="p-4 sm:p-5 md:p-6">
               <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-                <span className="flex items-center" style={{ 
-                  color: 'hsl(120, 100%, 40%)', 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                }}>
-                  <Sprout className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+                <span className="flex items-center text-card-foreground">
+                  <Sprout className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary" />
                   My Orchards
                 </span>
                 <Link to="/my-orchards">
@@ -589,17 +585,13 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
               {userOrchards.length === 0 ? (
-                <div className="bg-card rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-card/60 backdrop-blur-sm rounded-lg p-4 sm:p-6 md:p-8">
                   <div className="text-center">
-                    <TreePine className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-3 sm:mb-4" />
-                    <p className="mb-4 sm:mb-6 font-medium text-heading-primary text-sm sm:text-base">You haven't planted any seeds yet</p>
+                    <TreePine className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                    <p className="mb-4 sm:mb-6 font-medium text-card-foreground text-sm sm:text-base">You haven't planted any seeds yet</p>
                     <Link to="/create-orchard">
                       <Button 
-                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10"
-                        style={{
-                          backgroundColor: '#fdffb6',
-                          color: '#a16207'
-                        }}
+                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10 bg-primary hover:bg-primary/90"
                       >
                         Plant Your First Seed
                       </Button>
@@ -609,10 +601,10 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {userOrchards.slice(0, 3).map((orchard) => (
-                    <div key={orchard.id} className="flex items-center justify-between p-3 sm:p-4 bg-card/60 rounded-lg">
+                    <div key={orchard.id} className="flex items-center justify-between p-3 sm:p-4 bg-card/60 backdrop-blur-sm rounded-lg border border-border/50">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-heading-primary mb-1 text-sm sm:text-base truncate">{orchard.title}</h3>
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-heading-primary flex-wrap">
+                        <h3 className="font-medium text-card-foreground mb-1 text-sm sm:text-base truncate">{orchard.title}</h3>
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                           <span className="flex items-center">
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {orchard.views || 0} views
@@ -624,8 +616,8 @@ export default function DashboardPage() {
                         </div>
                         <div className="mt-2">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs sm:text-sm text-heading-primary">Progress</span>
-                            <span className="text-xs sm:text-sm font-medium text-heading-primary">{getCompletionPercentage(orchard)}%</span>
+                            <span className="text-xs sm:text-sm text-card-foreground">Progress</span>
+                            <span className="text-xs sm:text-sm font-medium text-card-foreground">{getCompletionPercentage(orchard)}%</span>
                           </div>
                           <Progress value={getCompletionPercentage(orchard)} className="h-1.5 sm:h-2" />
                         </div>
@@ -643,11 +635,11 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl bestowals-tour">
+            <Card className="lg:col-span-1 bg-card/90 backdrop-blur-sm border-border shadow-xl bestowals-tour">
             <CardHeader className="p-4 sm:p-5 md:p-6">
               <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-                <span className="flex items-center text-heading-primary">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-500" />
+                <span className="flex items-center text-card-foreground">
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary" />
                   Recent Bestowals
                 </span>
                 <Link to="/browse-orchards">
@@ -657,17 +649,13 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
               {userBestowals.length === 0 ? (
-                <div className="bg-card rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-card/60 backdrop-blur-sm rounded-lg p-4 sm:p-6 md:p-8">
                   <div className="text-center">
-                    <Heart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-3 sm:mb-4" />
-                    <p className="mb-4 sm:mb-6 font-medium text-heading-primary text-sm sm:text-base">You haven't made any bestowals yet</p>
+                    <Heart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+                    <p className="mb-4 sm:mb-6 font-medium text-card-foreground text-sm sm:text-base">You haven't made any bestowals yet</p>
                     <Link to="/browse-orchards">
                       <Button 
-                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10"
-                        style={{
-                          backgroundColor: '#caffbf',
-                          color: '#166534'
-                        }}
+                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10 bg-primary hover:bg-primary/90"
                       >
                         Discover Orchards
                       </Button>
@@ -677,12 +665,12 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {userBestowals.slice(0, 3).map((bestowal) => (
-                    <div key={bestowal.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
+                    <div key={bestowal.id} className="flex items-center justify-between p-3 sm:p-4 bg-card/60 backdrop-blur-sm rounded-lg border border-border/50">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 mb-1 text-sm sm:text-base truncate">
+                        <h3 className="font-medium text-card-foreground mb-1 text-sm sm:text-base truncate">
                           {bestowal.orchards?.title || 'Unknown Orchard'}
                         </h3>
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                           <span className="flex items-center">
                             <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {new Date(bestowal.created_at).toLocaleDateString()}
@@ -710,15 +698,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="mt-4 sm:mt-6 md:mt-8 bg-card border-border shadow-xl quick-actions-tour">
+          <Card className="mt-4 sm:mt-6 md:mt-8 bg-card/90 backdrop-blur-sm border-border shadow-xl quick-actions-tour">
           <CardHeader className="p-4 sm:p-5 md:p-6">
-            <CardTitle className="text-heading-primary text-base sm:text-lg">Quick Actions</CardTitle>
+            <CardTitle className="text-card-foreground text-base sm:text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Link to="/create-orchard">
                 <Button 
-                  className="w-full h-16 sm:h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
+                  className="w-full h-16 sm:h-20 bg-card/80 backdrop-blur-sm border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-card-foreground"
                 >
                   <div className="text-center">
                     <Plus className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
@@ -728,25 +716,25 @@ export default function DashboardPage() {
               </Link>
               
               <div
-                className="w-full bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible"
+                className="w-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible"
               >
                 <div className="text-center mb-2 sm:mb-3">
-                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-heading-primary" />
-                  <span className="font-medium text-heading-primary text-sm sm:text-base">Browse Orchards</span>
+                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-card-foreground" />
+                  <span className="font-medium text-card-foreground text-sm sm:text-base">Browse Orchards</span>
                 </div>
                 	<div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
                   	<Link to="/browse-orchards">
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card/80 backdrop-blur-sm flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
                     	>
-                      	<Users className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<Users className="h-4 w-4 sm:h-5 sm:w-5 text-card-foreground group-hover:text-primary-foreground transition-colors" />
                     	</div>
                   	</Link>
                   	<Link to="/my-orchards">
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card/80 backdrop-blur-sm flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
                     	>
-                      	<User className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<User className="h-4 w-4 sm:h-5 sm:w-5 text-card-foreground group-hover:text-primary-foreground transition-colors" />
                     	</div>
                   	</Link>
                   	<Link 
@@ -756,9 +744,9 @@ export default function DashboardPage() {
                     }}
                   	>
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300 cursor-pointer"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card/80 backdrop-blur-sm flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300 cursor-pointer"
                     	>
-                      	<Heart className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<Heart className="h-4 w-4 sm:h-5 sm:w-5 text-card-foreground group-hover:text-primary-foreground transition-colors" />
                     	</div>
                   	</Link>
                 	</div>
@@ -766,15 +754,14 @@ export default function DashboardPage() {
               
               <Link to="/profile">
                 <Button 
-                  className="w-full h-16 sm:h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
+                  className="w-full h-16 sm:h-20 bg-card/80 backdrop-blur-sm border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-card-foreground"
                 >
                   <div className="text-center">
                     {user?.avatar_url ? (
                       <img 
                         src={user.avatar_url} 
                         alt="Profile" 
-                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mx-auto mb-1 sm:mb-2 border-2"
-                        style={{ borderColor: '#9a3412' }}
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mx-auto mb-1 sm:mb-2 border-2 border-primary"
                       />
                     ) : (
                       <User className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
