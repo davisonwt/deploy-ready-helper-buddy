@@ -150,16 +150,15 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – SWEEPS 20° WEDGE ONLY  -------- */
-  // seconds elapsed since the CURRENT part began (0 – 6 399)
+  /* --------  MINUTE HAND – CONTINUOUS FOREVER  -------- */
   const partStartMin = (customTime.part - 1) * 80; // minute index where this part starts
-  const secsInPart = ((elapsed - partStartMin) * 60 + currentTime.getSeconds()) % 6400; // 0-6399
+  const secsSinceEpoch = (elapsed * 60) + currentTime.getSeconds(); // never wraps
+  const secsInPart = secsSinceEpoch - partStartMin * 60; // seconds since THIS part began (can exceed 6400)
 
-  // 20° per part, but SUBTRACT because dial runs ANTI-CLOCKWISE
-  const minuteProgress = - (secsInPart / 6400) * 20; // -20° to 0°
+  // anti-clockwise sweep: −20° per 6400 s, unlimited
+  const minuteProgress = - (secsInPart / 6400) * 20; // grows past −20°
 
-  // MINUTE HAND: starts at 0° of the wedge, NO part offset
-  const mathMinuteAngle = 90 + minuteProgress; // 90° = top of wedge
+  const mathMinuteAngle = 90 + minuteProgress;
   const minuteAngle = 450 - mathMinuteAngle;
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
