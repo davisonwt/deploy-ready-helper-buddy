@@ -14,9 +14,11 @@ import {
   Heart,
   DollarSign,
   Flame,
-  Calendar
+  Calendar,
+  ArrowLeft
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function StatsPage() {
   const { user } = useAuth();
