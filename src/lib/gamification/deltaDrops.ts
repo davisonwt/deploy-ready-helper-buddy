@@ -1,6 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import confetti from 'canvas-confetti';
 
+// Ensure confetti is available
+if (typeof window !== 'undefined' && !window.confetti) {
+  (window as any).confetti = confetti;
+}
+
 export interface DeltaDropResult {
   success: boolean;
   usdcAmount?: number;

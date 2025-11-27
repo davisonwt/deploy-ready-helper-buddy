@@ -36,22 +36,53 @@ export default function StatsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-950 via-orange-950 to-yellow-900 dark:from-black dark:via-amber-950 dark:to-orange-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400"></div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-950 via-orange-950 to-yellow-900 dark:from-black dark:via-amber-950 dark:to-orange-950 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mx-auto mb-4"></div>
+          <p className="text-amber-300">Loading your stats...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-950 via-orange-950 to-yellow-900 dark:from-black dark:via-amber-950 dark:to-orange-950 flex items-center justify-center p-4">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20">
+          <CardContent className="p-8 text-center">
+            <p className="text-amber-300 mb-4">Unable to load stats</p>
+            <Button onClick={() => window.location.reload()} className="bg-amber-500 hover:bg-amber-600">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-950 via-orange-950 to-yellow-900 dark:from-black dark:via-amber-950 dark:to-orange-950 p-4 sm:p-6 lg:p-8">
-      {/* Header with close button */}
+      {/* Header with navigation */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-white">My S2G Stats</h1>
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-amber-300 hover:text-white hover:bg-amber-500/20"
+              aria-label="Back to Dashboard"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-white">My S2G Stats</h1>
+        </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate('/dashboard')}
           className="text-amber-300 hover:text-white hover:bg-amber-500/20"
+          aria-label="Close"
         >
           <X className="h-6 w-6" />
         </Button>
@@ -256,14 +287,23 @@ export default function StatsPage() {
               <h3 className="text-xl font-bold text-white mb-1">Share Your Stats</h3>
               <p className="text-amber-300/80">Generate an image and share to double XP for 24h!</p>
             </div>
-            <Button
-              onClick={handleShare}
-              disabled={isSharing}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              {isSharing ? 'Sharing...' : 'Share Stats'}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleShare}
+                    disabled={isSharing}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    {isSharing ? 'Sharing...' : 'Share Stats'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-amber-900/95 border-amber-500 text-amber-100">
+                  <p>Share to double XP for 24 hours!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardContent>
       </Card>
