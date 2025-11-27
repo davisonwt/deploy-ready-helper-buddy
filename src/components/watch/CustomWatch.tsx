@@ -152,9 +152,13 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  // Minute hand: only accounts for minutes within the current part (relative to part start)
+  // Minute hand: accounts for minutes within the current part AND seconds within the current minute
+  // Each part is 20 degrees, each minute within a part is 20/80 = 0.25 degrees
+  // Each second within a minute moves the hand by 0.25/80 = 0.003125 degrees
   const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
-  const mathMinuteAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part (mathematical)
+  const minutesProgress = ((customTime.minute - 1) / 80) * 20; // Progress through minutes within part
+  const secondsProgress = (secondsInMinute / 80) * (20 / 80); // Progress through seconds within current minute (0.25 degrees per minute)
+  const mathMinuteAngle = mathPartStartAngle + minutesProgress + secondsProgress; // Full minute hand position including seconds
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
@@ -360,9 +364,9 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     rotate: minuteAngle,
                   }}
                   transition={{
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 25,
+                    type: 'tween',
+                    duration: 0.1, // Smooth continuous movement matching update interval
+                    ease: 'linear',
                   }}
                 />
                 
