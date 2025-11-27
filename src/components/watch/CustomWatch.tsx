@@ -79,6 +79,13 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   // Seconds hand: normal 60-second anti-clockwise cycle
   // ──────────────────────────────────────────────────────────────
   
+  // Get sunrise-based elapsed time for seconds hand
+  const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
+  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
+  let elapsed = nowMinutes - sunriseMinutes;
+  if (elapsed < 0) elapsed += 1440; // Overnight wrap
+  const realSecondsSinceSunrise = elapsed * 60;
+  
   // Part (hour) hand – your existing utility is already perfect
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
