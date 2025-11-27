@@ -108,6 +108,7 @@ const MyS2GLibraryPage = lazy(() => import("./pages/MyS2GLibraryPage"));
 const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPage"));
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
 const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
+const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -174,11 +175,13 @@ const App = () => (
                       <AccessibilityChecker />
                       <ResponsiveLayout>
             <Routes>
+<｜tool▁sep｜>new_string
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/start-your-journey" element={<RegisterPage />} />
+              <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
               
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
