@@ -14,10 +14,10 @@ export function StatsFloatingButton() {
       <Tooltip open={showTooltip} onOpenChange={setShowTooltip}>
         <TooltipTrigger asChild>
           <motion.div
-            initial={{ scale: 0}}
+            initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 300 }}
-            className="fixed top-32 right-6 z-50"
+            className="fixed top-36 right-6 z-50"
           >
             <motion.div
               animate={{
