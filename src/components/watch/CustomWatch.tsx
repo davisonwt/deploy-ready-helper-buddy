@@ -1,23 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   getCreatorTime,
   getTimeOfPartGradient,
   getTimeOfPartColor,
-  getAntiClockwiseAngle,
   type CustomTime
 } from '@/utils/customTime';
 import {
   getCreatorDate,
-  getDayOfWeek,
   type CustomDate
 } from '@/utils/customCalendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PartHand } from './PartHand';
-import { MinuteHand } from './MinuteHand';
-import { SecondsHand } from './SecondsHand';
+import { PartHand } from './clock/PartHand';
+import { MinuteHand } from './clock/MinuteHand';
+import { SecondsHand } from './clock/SecondsHand';
 
 interface CustomWatchProps {
   className?: string;
@@ -50,34 +47,6 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
     }, 100);
     return () => clearInterval(interval);
   }, [userLat, userLon]);
-
-  // ──────────────────────────────────────────────────────────────
-  // THE ONE AND ONLY ETERNAL TRUTH — 86 400 seconds per day
-  // 18 parts × 4 800 s = 86 400 s → 80 Creator minutes per part
-  // 1 Creator minute = 60 real seconds
-  // All hands anti-clockwise from sunrise
-  // ──────────────────────────────────────────────────────────────
-
-  const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
-
-  // Real seconds since midnight (precise)
-  const nowSec = 
-    currentTime.getHours() * 3600 +
-    currentTime.getMinutes() * 60 +
-    currentTime.getSeconds() +
-    currentTime.getMilliseconds() / 1000;
-
-  const sunriseSec = sunriseMinutes * 60;
-
-  let secsSinceSunrise = nowSec - sunriseSec;
-  if (secsSinceSunrise < 0) secsSinceSunrise += 86400;  // Overnight wrap
-
-  // Part hand — already perfect (now using PartHand component)
-
-  // SECONDS HAND — normal 60-second anti-clockwise
-  const realSeconds = secsSinceSunrise % 60;
-  const secondsDegrees = (realSeconds / 60) * 360;
-  const secondsAngle = 90 - secondsDegrees;
 
   // Visuals
   const bgGradient = getTimeOfPartGradient(customTime.part);
@@ -155,13 +124,9 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                 );
               })}
 
-              {/* PART HAND */}
+              {/* Clock Hands - All logic in separate components */}
               <PartHand watchSize={watchSize} />
-
-              {/* MINUTE HAND — FINAL ETERNAL TRUTH */}
               <MinuteHand watchSize={watchSize} />
-
-              {/* SECONDS HAND */}
               <SecondsHand watchSize={watchSize} />
 
               {/* Center gem */}
