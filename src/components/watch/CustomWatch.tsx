@@ -132,14 +132,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
   // Convert from mathematical angle (90° = top) to CSS rotate angle (0° = top, clockwise)
   // Formula: CSS_angle = 450 - math_angle (converts to CSS convention and accounts for clockwise rotation)
   
-  // Calculate seconds within current minute (0-79, since each minute has 80 seconds)
-  const sunriseMinutes = getCreatorTime(currentTime, userLat, userLon).sunriseMinutes;
-  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60;
-  let elapsed = nowMinutes - sunriseMinutes;
-  if (elapsed < 0) elapsed += 1440;
-  // Calculate seconds within current minute: fractional part of elapsed minutes * 80
-  const secondsInMinute = Math.floor((elapsed % 1) * 80); // 0-79 seconds
-  
   // Hour hand (part indicator): accounts for both part and minutes within part (like a real clock hour hand)
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
@@ -148,11 +140,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
   const mathMinuteAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part (mathematical)
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
-  
-  // Seconds hand: sweeps the minute's 20/80 degree segment in 80 seconds
-  // Each second = (20/80) / 80 = 0.003125 degrees per second
-  const mathSecondsAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20 + (secondsInMinute / 80) * (20 / 80);
-  const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
@@ -354,32 +341,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     type: 'spring',
                     stiffness: 300,
                     damping: 25,
-                  }}
-                />
-                
-                {/* Seconds Hand - Thin, Red - Properly centered, completes rotation in 80 seconds */}
-                <motion.div
-                  className="absolute"
-                  style={{
-                    width: watchSize * 0.004,
-                    height: watchSize * 0.42,
-                    left: '50%',
-                    top: '50%',
-                    marginLeft: `-${watchSize * 0.002}px`, // Half width to center horizontally
-                    marginTop: `-${watchSize * 0.42}px`, // Full height to position bottom at center
-                    transformOrigin: 'center bottom',
-                    background: 'linear-gradient(to top, #dc2626 0%, #ef4444 50%, #dc2626 100%)',
-                    borderRadius: '1px',
-                    boxShadow: '0 0 4px rgba(220,38,38,0.8)',
-                    zIndex: 12, // Above minute hand
-                  }}
-                  animate={{
-                    rotate: secondsAngle,
-                  }}
-                  transition={{
-                    type: 'tween',
-                    duration: 0.1, // Smooth tick animation
-                    ease: 'linear',
                   }}
                 />
                 
