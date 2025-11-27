@@ -42,6 +42,7 @@ import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
 import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
+import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser'
 
 
 export default function DashboardPage() {
@@ -474,6 +475,11 @@ export default function DashboardPage() {
           {/* Addictive Stats Cards */}
           <div className="mb-6">
             <StatsCards />
+          </div>
+
+          {/* Top Sowers Teaser */}
+          <div className="mb-6">
+            <TopSowersTeaser />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
