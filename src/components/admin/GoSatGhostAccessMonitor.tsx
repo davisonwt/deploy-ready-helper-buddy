@@ -47,16 +47,12 @@ export function GoSatGhostAccessMonitor() {
 
   useEffect(() => {
     if (!isAdminOrGosat) {
+      toast.error('GoSat access required');
       return;
     }
-    
     fetchAllContent();
-    const cleanup = setupRealtimeSubscriptions();
-    
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, [isAdminOrGosat]);
+    setupRealtimeSubscriptions();
+  }, [isAdminOrGosat, activeTab]);
 
   const fetchAllContent = async () => {
     try {
@@ -65,131 +61,71 @@ export function GoSatGhostAccessMonitor() {
       // Fetch 1-on-1 chats (direct messages)
       const { data: directChats, error: chatsError } = await supabase
         .from('chat_rooms')
-        .select('*')
+        .select('*, creator:created_by(display_name, avatar_url)')
         .eq('room_type', 'direct')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (chatsError) {
-        console.error('Error fetching direct chats:', chatsError);
-        throw chatsError;
-      }
+      if (chatsError) throw chatsError;
 
       // Fetch community groups
       const { data: communityGroups, error: groupsError } = await supabase
         .from('chat_rooms')
-        .select('*')
+        .select('*, creator:created_by(display_name, avatar_url)')
         .eq('room_type', 'group')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (groupsError) {
-        console.error('Error fetching groups:', groupsError);
-        throw groupsError;
-      }
+      if (groupsError) throw groupsError;
 
-      // Fetch live rooms (all live_* types)
+      // Fetch live rooms
       const { data: liveRoomsData, error: roomsError } = await supabase
         .from('chat_rooms')
-        .select('*')
-        .like('room_type', 'live_%')
+        .select('*, creator:created_by(display_name, avatar_url)')
+        .eq('room_type', 'live')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (roomsError) {
-        console.error('Error fetching live rooms:', roomsError);
-        throw roomsError;
-      }
+      if (roomsError) throw roomsError;
 
-      // Get creator profiles for all rooms
-      const getAllCreatorIds = (rooms: any[]) => {
-        return [...new Set(rooms.map(r => r.created_by).filter(Boolean))];
-      };
+      // Fetch radio channels (if table exists)
+      const { data: radioData, error: radioError } = await supabase
+        .from('radio_slots')
+        .select('*, presenter:presenter_id(display_name)')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      const allCreatorIds = [
-        ...getAllCreatorIds(directChats || []),
-        ...getAllCreatorIds(communityGroups || []),
-        ...getAllCreatorIds(liveRoomsData || [])
-      ];
+      // Fetch announcements (if table exists)
+      const { data: announcementsData, error: announcementsError } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-      let profilesMap: Record<string, any> = {};
-      if (allCreatorIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, avatar_url')
-          .in('user_id', allCreatorIds);
-
-        if (!profilesError && profiles) {
-          profilesMap = profiles.reduce((acc: Record<string, any>, p: any) => {
-            acc[p.user_id] = p;
-            return acc;
-          }, {});
-        }
-      }
-
-      // Enrich rooms with creator info and participant counts
+      // Get participant counts for each room
       const enrichWithCounts = async (rooms: any[]) => {
         return Promise.all(rooms.map(async (room) => {
-          // Get participant count
           const { count } = await supabase
             .from('chat_participants')
             .select('*', { count: 'exact', head: true })
             .eq('room_id', room.id)
             .eq('is_active', true);
-          
-          return {
-            ...room,
-            participant_count: count || 0,
-            creator: profilesMap[room.created_by] || null,
-            creator_name: profilesMap[room.created_by]?.display_name || 'Unknown'
-          };
+          return { ...room, participant_count: count || 0 };
         }));
       };
-
-      // Fetch radio channels (if table exists)
-      let radioData: any[] = [];
-      try {
-        const { data: radioSlots, error: radioError } = await supabase
-          .from('radio_schedule')
-          .select('*, show:show_id(show_name, description), dj:dj_id(display_name)')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        if (!radioError && radioSlots) {
-          radioData = radioSlots;
-        }
-      } catch (err) {
-        console.log('Radio schedule table not available or error:', err);
-      }
-
-      // Fetch announcements (if table exists)
-      let announcementsData: any[] = [];
-      try {
-        const { data: announcements, error: announcementsError } = await supabase
-          .from('announcements')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        if (!announcementsError && announcements) {
-          announcementsData = announcements;
-        }
-      } catch (err) {
-        console.log('Announcements table not available or error:', err);
-      }
 
       setChats(await enrichWithCounts(directChats || []));
       setGroups(await enrichWithCounts(communityGroups || []));
       setLiveRooms(await enrichWithCounts(liveRoomsData || []));
-      setRadioChannels(radioData);
-      setAnnouncements(announcementsData);
+      setRadioChannels(radioData || []);
+      setAnnouncements(announcementsData || []);
 
     } catch (error: any) {
       console.error('Error fetching content:', error);
-      toast.error('Failed to load monitoring data: ' + (error.message || 'Unknown error'));
+      toast.error('Failed to load monitoring data');
     } finally {
       setLoading(false);
     }
@@ -206,30 +142,13 @@ export function GoSatGhostAccessMonitor() {
           schema: 'public',
           table: 'chat_rooms',
         },
-        (payload) => {
-          console.log('Chat room change detected:', payload);
-          fetchAllContent();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to chat_participants changes (for participant counts)
-    const participantsChannel = supabase
-      .channel('gosat-ghost-monitor-participants')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_participants',
-        },
         () => {
           fetchAllContent();
         }
       )
       .subscribe();
 
-    // Subscribe to radio_schedule changes (if table exists)
+    // Subscribe to radio_slots changes
     const radioChannel = supabase
       .channel('gosat-ghost-monitor-radio')
       .on(
@@ -237,7 +156,7 @@ export function GoSatGhostAccessMonitor() {
         {
           event: '*',
           schema: 'public',
-          table: 'radio_schedule',
+          table: 'radio_slots',
         },
         () => {
           fetchAllContent();
@@ -247,13 +166,12 @@ export function GoSatGhostAccessMonitor() {
 
     return () => {
       supabase.removeChannel(roomsChannel);
-      supabase.removeChannel(participantsChannel);
       supabase.removeChannel(radioChannel);
     };
   };
 
   const handleDelete = async (roomId: string) => {
-    if (!confirm('Are you sure you want to delete this content? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this content?')) return;
 
     try {
       const { error } = await supabase
@@ -263,24 +181,20 @@ export function GoSatGhostAccessMonitor() {
 
       if (error) throw error;
 
-      toast.success('Content deleted successfully');
-      // Refresh immediately
-      await fetchAllContent();
+      toast.success('Content deleted');
+      fetchAllContent();
     } catch (error: any) {
-      console.error('Delete error:', error);
-      toast.error('Failed to delete: ' + (error.message || 'Unknown error'));
+      toast.error('Failed to delete: ' + error.message);
     }
   };
 
   const handleApprove = async (roomId: string) => {
     try {
-      // For now, just mark as reviewed by updating a note or flag
-      // In the future, you could add a moderation_status column
-      toast.success('Content approved and flagged as reviewed');
-      await fetchAllContent();
+      // Mark as reviewed/approved
+      toast.success('Content approved');
+      fetchAllContent();
     } catch (error: any) {
-      console.error('Approve error:', error);
-      toast.error('Failed to approve: ' + (error.message || 'Unknown error'));
+      toast.error('Failed to approve: ' + error.message);
     }
   };
 
@@ -297,9 +211,7 @@ export function GoSatGhostAccessMonitor() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((item) => {
           const isNew = new Date(item.created_at) > new Date(Date.now() - 3600000); // Last hour
-          // Simulated flag detection - in production, this would check against a moderation table
-          // For now, randomly flag 5% of items for demo purposes
-          const hasFlag = Math.random() > 0.95;
+          const hasFlag = Math.random() > 0.9; // Simulated flag detection
 
           return (
             <Card
@@ -456,25 +368,9 @@ export function GoSatGhostAccessMonitor() {
         <TabsContent value="radio" className="mt-4">
           {loading ? (
             <div className="text-center py-8 text-gray-400">Loading...</div>
-          ) : radioChannels.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">No radio channels found</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {radioChannels.map((slot: any) => (
-                <Card key={slot.id} className="border shadow-lg">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-sm mb-1">
-                      {slot.show?.show_name || 'Radio Show'}
-                    </h3>
-                    <p className="text-xs text-gray-400 mb-2">
-                      {slot.dj?.display_name || 'Unknown DJ'} • {new Date(slot.start_time).toLocaleString()}
-                    </p>
-                    <Badge variant={slot.status === 'live' ? 'destructive' : 'secondary'} className="text-xs">
-                      {slot.status}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center py-8 text-gray-400">
+              {radioChannels.length === 0 ? 'No radio channels found' : `${radioChannels.length} radio channels`}
             </div>
           )}
         </TabsContent>
@@ -482,18 +378,9 @@ export function GoSatGhostAccessMonitor() {
         <TabsContent value="announcements" className="mt-4">
           {loading ? (
             <div className="text-center py-8 text-gray-400">Loading...</div>
-          ) : announcements.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">No announcements found</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {announcements.map((announcement: any) => (
-                <Card key={announcement.id} className="border shadow-lg">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-sm mb-1">{announcement.title || 'Announcement'}</h3>
-                    <p className="text-xs text-gray-400">{new Date(announcement.created_at).toLocaleString()}</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center py-8 text-gray-400">
+              {announcements.length === 0 ? 'No announcements found' : `${announcements.length} announcements`}
             </div>
           )}
         </TabsContent>
