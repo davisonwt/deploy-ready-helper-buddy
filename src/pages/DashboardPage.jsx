@@ -422,7 +422,16 @@ export default function DashboardPage() {
               </div>
               {/* Custom Time - Larger font */}
               <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
-                {getCreatorTime(currentTime, userLat, userLon).displayText}
+                {(() => {
+                  const creatorTime = getCreatorTime(currentTime, userLat, userLon);
+                  // Calculate seconds within current custom minute (0-79)
+                  const sunriseMinutes = creatorTime.sunriseMinutes;
+                  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
+                  let elapsed = nowMinutes - sunriseMinutes;
+                  if (elapsed < 0) elapsed += 1440;
+                  const secondsInMinute = Math.floor((elapsed % 1) * 80);
+                  return `${creatorTime.displayText} ${secondsInMinute}${secondsInMinute === 1 ? 'st' : secondsInMinute === 2 ? 'nd' : secondsInMinute === 3 ? 'rd' : 'th'} sec`;
+                })()}
               </div>
               {/* Gregorian Time - Smaller font */}
               <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
