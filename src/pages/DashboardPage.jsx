@@ -33,7 +33,6 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
 import { CustomWatch } from '@/components/watch/CustomWatch'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
@@ -536,11 +535,6 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-
-          {/* Leaderboard Widget */}
-          <div className="mt-4 sm:mt-6 md:mt-8">
-            <LeaderboardWidget />
-          </div>
 
           {/* Marketing Thumbnails Section */}
           <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
