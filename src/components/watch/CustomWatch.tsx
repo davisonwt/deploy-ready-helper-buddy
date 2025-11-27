@@ -150,21 +150,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – ANTI-CLOCKWISE, 80 MINUTES PER PART  -------- */
-  // Calculate seconds since sunrise (creator day start)
+  /* --------  MINUTE HAND – 80 MINUTES = 360° ANTI-CLOCKWISE  -------- */
+  // seconds since TODAY'S SUNRISE (0 – 86 400)
   const dayStart = new Date(currentTime);
-  dayStart.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
+  dayStart.setHours(0, 0, 0, 0);
+  dayStart.setMinutes(sunriseMinutes);
   let secsSinceSunrise = (currentTime.getTime() - dayStart.getTime()) / 1000;
-  if (secsSinceSunrise < 0) secsSinceSunrise += 86400; // overnight wrap
+  if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
 
-  // Minute hand: 20° per 80 minutes (4800 seconds) = 0.0041667°/s
-  // Over 24 hours (86400 seconds): 20° × 18 parts = 360° total
-  // Anti-clockwise: negative angle
-  const minutesAngle = - (secsSinceSunrise / 4800) * 20; // -20° per 80 minutes, continuous
-  
-  // Start at top (90°) and move anti-clockwise
-  const mathMinuteAngle = 90 + minutesAngle;
-  const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS convention
+  // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (ANTI-CLOCKWISE = negative)
+  const minuteDeg = - (secsSinceSunrise % 4800) * 0.05625; // 0 → -360° every 80 min
+  const minuteAngle = 450 - (90 + minuteDeg); // CSS convention
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
