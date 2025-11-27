@@ -77,8 +77,8 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
   if (elapsed < 0) elapsed += 1440;  // Overnight
 
   const partNumber = Math.floor(elapsed / 80) + 1;
-  let minuteInPart = Math.round(elapsed % 80);
-  const displayMinute = minuteInPart === 0 ? 80 : minuteInPart;
+  let minuteInPart = Math.floor(elapsed % 80) + 1; // 1-80, not 0-79
+  const displayMinute = minuteInPart;
 
   const ordinal = (n: number): string => {
     if (n >= 11 && n <= 13) return 'th';
