@@ -144,33 +144,27 @@ export function CustomWatch({ className, compact = false, showControls = false }
   // Calculate which second we're at within the current custom minute (including fractional for smooth animation)
   // elapsed is in minutes, so elapsed % 1 gives fractional part of current minute
   // Multiply by 80 to get seconds (0-79.99) within the custom minute
-  const secondsInMinute = (elapsed % 1) * 80;
+  const secondsInMinuteFloat = (elapsed % 1) * 80;
   
   // Hour hand (part indicator): accounts for both part and minutes within part (like a real clock hour hand)
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  // Minute hand: calculate directly from elapsed time for accuracy
-  // At minute 40 within part 6, should be at 180° CSS
-  // elapsed is in minutes, so we can calculate the exact angle
-  const totalElapsedMinutes = elapsed; // Total minutes since sunrise
-  const minutesInPart = totalElapsedMinutes % 80; // Minutes within current part (0-79.99)
-  const partNumber = Math.floor(totalElapsedMinutes / 80) + 1; // Current part (1-18)
-  
-  // Calculate minute hand angle: part start + progress through part
-  // Part start angle (mathematical, where 90° = top)
-  const mathPartStartAngle = 90 + (partNumber - 1) * 20;
-  // Progress through current part: minutesInPart / 80 * 20 degrees
-  const minuteProgress = (minutesInPart / 80) * 20;
-  // Total minute hand angle
+  // Minute hand: calculate using laps and seconds
+  // 0-79 seconds into the part
+  const secondsInMinute = Math.floor((elapsed % 1) * 80);
+  // how many full 80-sec laps have happened since part start
+  const laps = Math.floor(elapsed / 80); // 0,1,2...
+  // 4.5° per lap → 0.25° per second
+  const minuteProgress = laps * 4.5 + (secondsInMinute * 0.25);
+  const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part
   const mathMinuteAngle = mathPartStartAngle + minuteProgress;
-  // Convert to CSS rotate convention (CSS 0° = top, rotates clockwise)
-  const minuteAngle = 450 - mathMinuteAngle;
+  const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
   // Starts at top (90° math = 0° CSS) and rotates clockwise
-  const mathSecondsAngle = 90 + (secondsInMinute / 80) * 360; // Full rotation in 80 seconds
+  const mathSecondsAngle = 90 + (secondsInMinuteFloat / 80) * 360; // Full rotation in 80 seconds (use smooth float)
   const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
