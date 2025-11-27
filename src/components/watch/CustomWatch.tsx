@@ -155,8 +155,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const partStartMin = (customTime.part - 1) * 80; // minute index where this part starts
   const secsInPart = ((elapsed - partStartMin) * 60 + currentTime.getSeconds()) % 6400; // 0-6399
 
-  // 20° per part → 0.003125° per second
-  const minuteProgress = (secsInPart / 6400) * 20; // 0-20° exactly
+  // 20° per part, but SUBTRACT because dial runs ANTI-CLOCKWISE
+  const minuteProgress = - (secsInPart / 6400) * 20; // -20° to 0°
 
   // MINUTE HAND: starts at 0° of the wedge, NO part offset
   const mathMinuteAngle = 90 + minuteProgress; // 90° = top of wedge
