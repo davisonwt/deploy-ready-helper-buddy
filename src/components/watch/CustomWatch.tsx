@@ -344,6 +344,32 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   }}
                 />
                 
+                {/* Seconds Hand - Thin, Red - Properly centered, completes rotation in 80 seconds */}
+                <motion.div
+                  className="absolute"
+                  style={{
+                    width: watchSize * 0.006, // Slightly thicker for better visibility
+                    height: watchSize * 0.42,
+                    left: '50%',
+                    top: '50%',
+                    marginLeft: `-${watchSize * 0.003}px`, // Half width to center horizontally
+                    marginTop: `-${watchSize * 0.42}px`, // Full height to position bottom at center
+                    transformOrigin: 'center bottom',
+                    background: 'linear-gradient(to top, #dc2626 0%, #ef4444 50%, #dc2626 100%)',
+                    borderRadius: '2px',
+                    boxShadow: '0 0 6px rgba(220,38,38,1), 0 0 12px rgba(220,38,38,0.6)', // Enhanced shadow for visibility
+                    zIndex: 12, // Above minute hand
+                  }}
+                  animate={{
+                    rotate: secondsAngle,
+                  }}
+                  transition={{
+                    type: 'tween',
+                    duration: 0.1, // Smooth tick animation
+                    ease: 'linear',
+                  }}
+                />
+                
                 {/* Center Dot - Rose Gold with Gem Effect */}
                 <div
                   className="absolute rounded-full"
@@ -356,6 +382,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                     background: 'radial-gradient(circle at 30% 30%, #f4e4bc, #d4af37, #b8860b)',
                     border: '2px solid rgba(255,255,255,0.3)',
                     boxShadow: '0 0 12px rgba(212,175,55,0.8), inset 0 0 8px rgba(255,255,255,0.4)',
+                    zIndex: 9, // Below all hands
                   }}
                 />
                 
