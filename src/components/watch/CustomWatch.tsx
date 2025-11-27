@@ -17,8 +17,6 @@ import {
 } from '@/utils/customTime';
 import { 
   getCreatorDate, 
-  formatCustomDate, 
-  formatCustomDateCompact,
   getDayOfWeek,
   type CustomDate 
 } from '@/utils/customCalendar';
@@ -413,29 +411,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
               </div>
             </div>
             
-            {/* Date and Info Panel */}
-            {compact && (
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-white font-mono">
-                  {formatCustomDateCompact(customDate)}
-                </div>
-                <div className="text-xs font-semibold text-white/90 font-mono mt-1">
-                  Part {customTime.part} • Minute {customTime.minute}:{Math.floor(secondsInMinute).toString().padStart(2, '0')}
-                </div>
-              </div>
-            )}
-            
-            {/* Custom Time Display - Non-compact mode */}
-            {!compact && (
-              <div className="flex-1 min-w-0 ml-4">
-                <div className="text-lg font-bold text-white font-mono mb-1">
-                  Part {customTime.part} • Minute {customTime.minute}:{Math.floor(secondsInMinute).toString().padStart(2, '0')}
-                </div>
-                <div className="text-sm text-white/80 font-mono">
-                  {formatCustomDateCompact(customDate)}
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
