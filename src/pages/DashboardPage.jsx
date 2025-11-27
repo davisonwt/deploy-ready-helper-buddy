@@ -389,8 +389,18 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
-      {/* Ezekiel Clock - Fixed top-right */}
-      <EzekielClock />
+      {/* Clocks Section - Top of page, side by side */}
+      <div className="w-full pt-8 pb-4 px-4 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 z-50">
+        {/* Custom Watch */}
+        <div className="flex-shrink-0">
+          <CustomWatch compact={false} />
+        </div>
+        
+        {/* Ezekiel Clock */}
+        <div className="flex-shrink-0">
+          <EzekielClock />
+        </div>
+      </div>
       
       {/* Content wrapper */}
       <div className="relative z-10">
@@ -436,10 +446,7 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          {/* Custom Watch */}
-          <div className="flex-shrink-0">
-            <CustomWatch compact={false} />
-          </div>
+          {/* Custom Watch - moved to top with Ezekiel Clock */}
         </div>
         {/* Custom Time Display - Bottom of welcome section */}
         {customDate && (
