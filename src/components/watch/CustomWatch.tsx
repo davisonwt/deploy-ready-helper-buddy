@@ -150,17 +150,16 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – TRUE INFINITY, NO PART RESET  -------- */
-  // total seconds since CREATOR EPOCH (never resets)
-  const epochMin = (sunriseMinutes * 60); // seconds from midnight to sunrise
-  const secsSinceEpoch = (currentTime.getHours() * 3600) + (currentTime.getMinutes() * 60) + currentTime.getSeconds();
+  /* --------  MINUTE HAND – INFINITE ANTI-CLOCKWISE CRAWL  -------- */
+  // absolute seconds since CREATOR DAY START (sunrise)
+  const dayStart = new Date(currentTime);
+  dayStart.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
+  let secsToday = (currentTime.getTime() - dayStart.getTime()) / 1000;
+  if (secsToday < 0) secsToday += 86400; // overnight wrap
 
-  // seconds since the very first part-1 began (can be > 115 200)
-  let totalSecs = secsSinceEpoch - epochMin;
-  if (totalSecs < 0) totalSecs += 86400;
-
-  // anti-clockwise crawl: 360° per 115 200 s → 0.003125°/s
-  const minuteAngle = 450 - (90 + (totalSecs / 115200) * 360); // grows forever
+  // 360° per 86 400 s → 0.003125°/s, negative for anti-clockwise
+  const infiniteAngle = - (secsToday / 86400) * 360; // -0° → -360°
+  const minuteAngle = 450 - (90 + infiniteAngle); // CSS convention
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
