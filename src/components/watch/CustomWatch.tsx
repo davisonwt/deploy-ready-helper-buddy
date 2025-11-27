@@ -87,8 +87,10 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // Minute hand – 20° over exactly 4 800 real seconds (80 real minutes)
+  // Calculate minutes into current part (0-79.999)
   const secondsIntoCurrentPart = realSecondsToday % 4800;
-  const secondsInMinuteFloat = (secondsIntoCurrentPart % 80);
+  const minutesIntoPart = secondsIntoCurrentPart / 80; // 0-79.999 minutes
+  const secondsInMinuteFloat = (minutesIntoPart % 1) * 80; // seconds within current Creator minute (0-79.999)
   const minuteAngle = 450 - (110 - (secondsInMinuteFloat / 80) * 20);
 
   // Seconds hand – normal 60-second anti-clockwise cycle
