@@ -55,10 +55,9 @@ export const SolarMinuteWheel = ({ minutesToday, isDaytime }: SolarMinuteWheelPr
       {/* Minute indicator - centered at (160, 160) */}
       <motion.g
         transform={`rotate(${rotationAngle} 160 160)`}
-        style={{
-          transformOrigin: '50% 50%',
+        animate={{ 
+          transform: `rotate(${rotationAngle} 160 160)`
         }}
-        animate={{ rotate: rotationAngle }}
         transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
       >
         <line
