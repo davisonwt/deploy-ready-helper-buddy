@@ -14,7 +14,10 @@ export function PartHand({ watchSize }: { watchSize: number }) {
     const update = () => {
       const now = new Date();
       const ct = getCreatorTime(now, LAT, LON);
-      setAngle(450 - getAntiClockwiseAngle(ct.raw));
+      // getAntiClockwiseAngle returns mathematical angle (90° = top, increases anti-clockwise)
+      // CSS rotate: 270° = top, so convert: 270 - (mathAngle - 90) = 360 - mathAngle
+      const mathAngle = getAntiClockwiseAngle(ct.raw);
+      setAngle(360 - mathAngle + 90); // Convert to CSS: Part 1 (90° math) = 270° CSS
     };
     update();
     const id = setInterval(update, 1000);
