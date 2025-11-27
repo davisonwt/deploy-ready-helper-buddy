@@ -174,12 +174,14 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* PART HAND (thick gold) */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.012, height: watchSize * 0.28,
-                  left: '50%', top: '50%',
-                  marginLeft: `-${watchSize * 0.006}px`,
-                  marginTop: `-${watchSize * 0.28}px`,
-                  transformOrigin: 'center bottom',
+                  width: watchSize * 0.012, 
+                  height: watchSize * 0.28,
+                  left: '50%', 
+                  top: '50%',
+                  transform: 'translate(-50%, -100%)',
+                  transformOrigin: '50% 100%',
                   background: 'linear-gradient(to top, #d4af37, #f4e4bc, #d4af37)',
                   borderRadius: '3px',
                   boxShadow: '0 0 10px gold',
@@ -191,12 +193,14 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* MINUTE HAND – NOW PERFECT */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.008, height: watchSize * 0.38,
-                  left: '50%', top: '50%',
-                  marginLeft: `-${watchSize * 0.004}px`,
-                  marginTop: `-${watchSize * 0.38}px`,
-                  transformOrigin: 'center bottom',
+                  width: watchSize * 0.008, 
+                  height: watchSize * 0.38,
+                  left: '50%', 
+                  top: '50%',
+                  transform: 'translate(-50%, -100%)',
+                  transformOrigin: '50% 100%',
                   background: 'linear-gradient(to top, #c0c0c0, #e8e8e8, #c0c0c0)',
                   borderRadius: '2px',
                   boxShadow: '0 0 8px silver',
@@ -208,12 +212,14 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* SECONDS HAND – 60-second anti-clockwise */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.006, height: watchSize * 0.42,
-                  left: '50%', top: '50%',
-                  marginLeft: `-${watchSize * 0.003}px`,
-                  marginTop: `-${watchSize * 0.42}px`,
-                  transformOrigin: 'center bottom',
+                  width: watchSize * 0.006, 
+                  height: watchSize * 0.42,
+                  left: '50%', 
+                  top: '50%',
+                  transform: 'translate(-50%, -100%)',
+                  transformOrigin: '50% 100%',
                   background: 'linear-gradient(to top, #dc2626, #ef4444, #dc2626)',
                   borderRadius: '2px',
                   boxShadow: '0 0 10px #dc2626',
