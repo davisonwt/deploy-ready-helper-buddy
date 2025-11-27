@@ -35,10 +35,8 @@ export function MinuteHand({ watchSize }: { watchSize: number }) {
       if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
 
       const secondsIntoPart = secsSinceSunrise % 4800;
-      // 20° rotation over 4800 seconds (80 minutes), anti-clockwise from Part 1 (top)
-      // CSS rotate: 270° = top (12 o'clock), so we start at 270° and subtract degrees
       const degrees = (secondsIntoPart / 4800) * 20;
-      setAngle(270 - degrees); // Start at 270° (Part 1 at top), rotate anti-clockwise
+      setAngle(90 - degrees); // pure anti-clockwise — eternal
     };
 
     update();

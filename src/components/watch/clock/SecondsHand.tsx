@@ -11,10 +11,9 @@ export function SecondsHand({ watchSize }: { watchSize: number }) {
       const now = new Date();
       // Use real-world seconds (0-59.999) - independent of custom time system
       const currentSecond = now.getSeconds() + now.getMilliseconds() / 1000;
-      // 360° rotation over 60 seconds, anti-clockwise from Part 1 (top)
-      // CSS rotate: 270° = top (12 o'clock), so we start at 270° and subtract degrees
+      // 360° rotation over 60 seconds, anti-clockwise from Part 1 (90°)
       const degrees = (currentSecond / 60) * 360;
-      setAngle(270 - degrees); // Start at 270° (Part 1 at top), rotate anti-clockwise
+      setAngle(90 - degrees); // Start at 90° (Part 1), rotate anti-clockwise
     };
 
     update();
