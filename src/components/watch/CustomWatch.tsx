@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { PartHand } from './clock/PartHand';
 import { MinuteHand } from './clock/MinuteHand';
 import { SecondsHand } from './clock/SecondsHand';
+import { HashMarks } from './HashMarks';
 
 interface CustomWatchProps {
   className?: string;
@@ -68,6 +69,30 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
             style={{ background: bgGradient }}>
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="relative" style={{ width: `${watchSize}px`, height: `${watchSize}px` }}>
+            {/* SVG overlay for hash marks */}
+            <svg
+              className="absolute inset-0"
+              width={watchSize}
+              height={watchSize}
+              style={{ overflow: 'visible' }}
+              aria-hidden="true"
+            >
+              {/* Gradient definitions */}
+              <defs>
+                <linearGradient id="partTickGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ffed4e" />
+                  <stop offset="50%" stopColor="#ffd700" />
+                  <stop offset="100%" stopColor="#ffd700" />
+                </linearGradient>
+              </defs>
+              
+              {/* Hash marks on bezel */}
+              <HashMarks
+                watchSize={watchSize}
+                innerRadius={42} // Dial edge radius (%)
+                outerRadius={48} // Bezel outer edge radius (%)
+              />
+            </svg>
 
             {/* Bezel */}
             <div className="absolute inset-0 rounded-full"
