@@ -456,7 +456,7 @@ export default function DashboardPage() {
                   let elapsed = nowMinutes - sunriseMinutes;
                   if (elapsed < 0) elapsed += 1440;
                   const realSecondsSinceSunrise = elapsed * 60;
-                  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800; // 0-4799 seconds into current part
+                  const secondsIntoCurrentPart = realSecondsSinceSunrise % 3600; // 0-3599 seconds into current part (60 minutes × 60 seconds)
                   const customSeconds = Math.floor(secondsIntoCurrentPart % 60); // 0-59 seconds within current custom minute
                   return `${creatorTime.displayText} ${customSeconds}${customSeconds === 1 ? 'st' : customSeconds === 2 ? 'nd' : customSeconds === 3 ? 'rd' : 'th'} sec`;
                 })()}
