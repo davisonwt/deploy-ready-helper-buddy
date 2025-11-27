@@ -97,7 +97,12 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const realSecondsSinceSunrise = elapsedMinutes * 60;
   const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800;
   const minuteDegrees = (secondsIntoCurrentPart / 4800) * 20;  // 0 → 20° smooth
-  const cssMinuteAngle = 90 - minuteDegrees;                  // anti-clockwise from 12
+  
+  // Get the starting angle of the current part (where the part marker is)
+  const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
+  // Minute hand starts at part marker and moves anti-clockwise
+  const mathMinuteAngle = partStartAngle - minuteDegrees; // Anti-clockwise from part marker
+  const cssMinuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
 
   // Seconds hand – normal 60-second anti-clockwise cycle (from sunrise)
   const realSeconds = realSecondsSinceSunrise % 60;
