@@ -129,11 +129,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
   }, [alarms, userLat, userLon]);
 
   // Calculate angles for hands (anti-clockwise)
+  // Convert from mathematical angle (90° = top) to CSS rotate angle (0° = top, clockwise)
+  // Formula: CSS_angle = 450 - math_angle (converts to CSS convention and accounts for clockwise rotation)
+  
   // Hour hand (part indicator): accounts for both part and minutes within part (like a real clock hour hand)
-  const partAngle = getAntiClockwiseAngle(customTime);
+  const mathPartAngle = getAntiClockwiseAngle(customTime);
+  const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
+  
   // Minute hand: only accounts for minutes within the current part (relative to part start)
-  const partStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part
-  const minuteAngle = partStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part
+  const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
+  const mathMinuteAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part (mathematical)
+  const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
