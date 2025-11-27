@@ -39,6 +39,7 @@ import { ContentModerationDashboard } from '@/components/admin/ContentModeration
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
 import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
+import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -352,7 +353,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
@@ -376,6 +377,13 @@ export default function AdminDashboardPage() {
                 className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Moderation
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ghost-access" 
+                className="border-2 border-amber-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Ghost Access
               </TabsTrigger>
               <TabsTrigger 
                 value="wallet" 
@@ -408,6 +416,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="moderation">
             <ContentModerationDashboard />
+          </TabsContent>
+
+          <TabsContent value="ghost-access" className="space-y-6">
+            <GoSatGhostAccessMonitor />
           </TabsContent>
 
           <TabsContent value="wallet" className="space-y-6">
