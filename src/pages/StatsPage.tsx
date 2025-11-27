@@ -24,7 +24,9 @@ export default function StatsPage() {
   const { user } = useAuth();
   const { stats, loading } = useMyStats();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSharing, setIsSharing] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
 
   const handleShare = async () => {
     setIsSharing(true);
@@ -257,26 +259,56 @@ export default function StatsPage() {
           </CardContent>
         </Card>
 
-        {/* Leaderboard Rank */}
+        {/* Leaderboard */}
         <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-amber-300 flex items-center gap-2">
               <Trophy className="h-5 w-5" />
-              Leaderboard Rank
+              Leaderboard
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-4xl font-bold text-white mb-2">#{stats?.rank || 1}</div>
-                <div className="text-amber-300/80">Your current rank</div>
-              </div>
-              <div className="text-right">
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-400 text-lg px-4 py-2">
-                  +2 to next rank
-                </Badge>
-              </div>
-            </div>
+            <Tabs value={activeTab} onValueChange={(v) => {
+              setActiveTab(v);
+              setSearchParams({ tab: v });
+            }}>
+              <TabsList className="grid w-full grid-cols-4 bg-amber-900/30 border border-amber-500/20 mb-4">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="leaderboard" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  Leaderboard
+                </TabsTrigger>
+                <TabsTrigger value="growth" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  Growth
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  Activity
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-4xl font-bold text-white mb-2">#{stats?.rank || 1}</div>
+                    <div className="text-amber-300/80">Your current rank</div>
+                  </div>
+                  <div className="text-right">
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-400 text-lg px-4 py-2">
+                      +2 to next rank
+                    </Badge>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="leaderboard">
+                <LeaderboardTable virtualised />
+              </TabsContent>
+              <TabsContent value="growth">
+                <div className="text-center py-8 text-amber-300/60">Growth charts coming soon...</div>
+              </TabsContent>
+              <TabsContent value="activity">
+                <div className="text-center py-8 text-amber-300/60">Activity stats coming soon...</div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
