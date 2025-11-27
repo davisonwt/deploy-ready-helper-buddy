@@ -150,16 +150,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – CONTINUOUS FOREVER  -------- */
-  const partStartMin = (customTime.part - 1) * 80; // minute index where this part starts
-  const secsSinceEpoch = (elapsed * 60) + currentTime.getSeconds(); // never wraps
-  const secsInPart = secsSinceEpoch - partStartMin * 60; // seconds since THIS part began (can exceed 6400)
+  /* --------  MINUTE HAND – TRUE INFINITY, NO PART RESET  -------- */
+  // total seconds since CREATOR EPOCH (never resets)
+  const epochMin = (sunriseMinutes * 60); // seconds from midnight to sunrise
+  const secsSinceEpoch = (currentTime.getHours() * 3600) + (currentTime.getMinutes() * 60) + currentTime.getSeconds();
 
-  // anti-clockwise sweep: −20° per 6400 s, unlimited
-  const minuteProgress = - (secsInPart / 6400) * 20; // grows past −20°
+  // seconds since the very first part-1 began (can be > 115 200)
+  let totalSecs = secsSinceEpoch - epochMin;
+  if (totalSecs < 0) totalSecs += 86400;
 
-  const mathMinuteAngle = 90 + minuteProgress;
-  const minuteAngle = 450 - mathMinuteAngle;
+  // anti-clockwise crawl: 360° per 115 200 s → 0.003125°/s
+  const minuteAngle = 450 - (90 + (totalSecs / 115200) * 360); // grows forever
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
