@@ -150,11 +150,12 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  // Minute hand: moves at 0.25° per real-world second (20° in 80 seconds)
-  // Angular speed: 0.25°/s = 20° / 80s
+  // Minute hand: shows current minute within part + seconds progress
+  // Each part = 20°, each minute = 20/80 = 0.25°, each second = 0.25/80 = 0.003125°
   const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
-  const minuteProgress = (secondsInMinute / 80) * 20; // 0-20° as secondsInMinute goes from 0 to 80
-  const mathMinuteAngle = mathPartStartAngle + minuteProgress; // Minute hand position within current 20° segment
+  const minutesProgress = ((customTime.minute - 1) / 80) * 20; // Progress through minutes within part (0-19.75°)
+  const secondsProgress = (secondsInMinute / 80) * (20 / 80); // Progress through seconds within current minute (0-0.25°)
+  const mathMinuteAngle = mathPartStartAngle + minutesProgress + secondsProgress; // Full minute hand position
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
@@ -237,7 +238,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="flex items-center gap-4">
             {/* Luxury Watch Face */}
-            <div className="relative flex-shrink-0" style={{ width: `${watchSize}px`, height: `${watchSize}px` }}>
+            <div className="relative flex-shrink-0 overflow-visible" style={{ width: `${watchSize}px`, height: `${watchSize}px` }}>
               {/* Outer Rose Gold Bezel */}
               <div 
                 className="absolute inset-0 rounded-full"
@@ -250,7 +251,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
               
               {/* Main Dial */}
               <div
-                className="absolute rounded-full overflow-hidden border-4 border-white/15"
+                className="absolute rounded-full border-4 border-white/15"
                 style={{
                   width: `${watchSize * 0.85}px`,
                   height: `${watchSize * 0.85}px`,
@@ -260,6 +261,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
                   background: bgGradient,
                   boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
                   transition: 'background 2s ease',
+                  overflow: 'visible', // Allow hands to extend beyond dial
                 }}
               >
                 {/* Starry Sky Effect */}
