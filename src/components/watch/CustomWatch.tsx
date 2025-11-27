@@ -158,15 +158,14 @@ export function CustomWatch({ className, compact = false, showControls = false }
   let secsSinceSunrise = (currentTime.getTime() - dayStart.getTime()) / 1000;
   if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
 
-  // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (ANTI-CLOCKWISE = negative)
-  const minuteDeg = - (secsSinceSunrise % 4800) * 0.05625; // 0 → -360° every 80 min
-  const minuteAngle = 450 - (90 + minuteDeg); // CSS convention
+  // 360° per 80 min → 0.05625°/s ANTI-CLOCKWISE (negative in CSS)
+  const minuteDeg = (secsSinceSunrise % 4800) * 0.05625; // 0 → 360° every 80 min
+  const minuteAngle = -minuteDeg; // CSS: negative = anti-clockwise, starts at 0° (top)
   
-  // Seconds hand: completes full 360-degree rotation in 80 seconds
-  // Each second = 360/80 = 4.5 degrees
-  // Starts at top (90° math = 0° CSS) and rotates clockwise
-  const mathSecondsAngle = 90 + (secondsInMinuteFloat / 80) * 360; // Full rotation in 80 seconds (use smooth float)
-  const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
+  /* --------  SECONDS HAND – 80 SECONDS = 360° ANTI-CLOCKWISE  -------- */
+  // 360° per 80 seconds → 4.5°/s ANTI-CLOCKWISE (negative in CSS)
+  const secondsDeg = secondsInMinuteFloat * 4.5; // 0 → 360° every 80 seconds
+  const secondsAngle = -secondsDeg; // CSS: negative = anti-clockwise, starts at 0° (top)
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
