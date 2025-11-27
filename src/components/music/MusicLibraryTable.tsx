@@ -61,7 +61,9 @@ export function MusicLibraryTable({
   // Safely extract functions with fallbacks
   const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
   const hasPurchased = musicPurchase?.hasPurchased || (() => false);
-  const processing = musicPurchase?.processing || false;
+  const hookProcessing = musicPurchase?.processing || false;
+  const [localProcessing, setLocalProcessing] = useState(false);
+  const processing = hookProcessing || localProcessing;
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return 'N/A';
@@ -126,7 +128,7 @@ export function MusicLibraryTable({
     }
 
     try {
-      setProcessing(true);
+      setLocalProcessing(true);
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
       toast.success('Bestowal completed! You can now download the track.');
@@ -134,7 +136,7 @@ export function MusicLibraryTable({
       console.error('Bestowal error:', error);
       toast.error(error?.message || 'Bestowal failed. Please try again.');
     } finally {
-      setProcessing(false);
+      setLocalProcessing(false);
     }
   };
 
