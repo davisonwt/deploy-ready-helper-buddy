@@ -150,13 +150,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – 20° per part (6 400 s)  -------- */
-  const partStartMinute = (customTime.part - 1) * 80;          // minute index where this part begins
-  const minsSincePartStart = (elapsed - partStartMinute);      // 0.0.0 – 79.999
-  const secsSincePartStart = minsSincePartStart * 60;          // 0 – 6 399
-  const minuteProgress = (secsSincePartStart / 6400) * 20;     // 0 – 20° exactly
+  /* --------  MINUTE HAND – NO PART-BASED RESET  -------- */
+  // seconds elapsed since the CURRENT part began (0 – 6 399)
+  const partStartMin = (customTime.part - 1) * 80; // minute index where this part starts
+  const secsInPart = ((elapsed - partStartMin) * 60 + currentTime.getSeconds()) % 6400; // 0-6399
+
+  // 20° per part → 0.003125° per second
+  const minuteProgress = (secsInPart / 6400) * 20; // 0-20° exactly
+
+  // angle inside the 20° wedge (never jumps backward)
   const mathMinuteAngle = 90 + (customTime.part - 1) * 20 + minuteProgress;
-  const minuteAngle = 450 - mathMinuteAngle;                   // CSS convention
+  const minuteAngle = 450 - mathMinuteAngle;
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
