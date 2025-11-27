@@ -15,6 +15,7 @@ import {
 } from '@/utils/customCalendar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PartHand } from './PartHand';
 
 interface CustomWatchProps {
   className?: string;
@@ -163,24 +164,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
               })}
 
               {/* PART HAND */}
-              <motion.div
-                className="absolute"
-                style={{
-                  width: watchSize * 0.012, 
-                  height: watchSize * 0.28,
-                  left: '50%', 
-                  top: '50%',
-                  marginLeft: `-${watchSize * 0.006}px`,
-                  marginTop: `-${watchSize * 0.28}px`,
-                  transformOrigin: `${watchSize * 0.006}px ${watchSize * 0.28}px`,
-                  background: 'linear-gradient(to top, #d4af37, #f4e4bc, #d4af37)',
-                  borderRadius: '3px',
-                  boxShadow: '0 0 10px gold',
-                  zIndex: 10,
-                }}
-                animate={{ rotate: partHandAngle }}
-                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              />
+              <PartHand watchSize={watchSize} />
 
               {/* MINUTE HAND — YOUR FINAL TRUTH */}
               <motion.div
