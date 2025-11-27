@@ -109,6 +109,7 @@ const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPa
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
 const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
 const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
+const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -181,6 +182,7 @@ const App = () => (
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/start-your-journey" element={<RegisterPage />} />
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
+              <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
