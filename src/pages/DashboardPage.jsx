@@ -5,7 +5,6 @@ import { useBestowals } from '../hooks/useBestowals.jsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Link } from 'react-router-dom'
 import { 
   Sprout, 
@@ -15,7 +14,6 @@ import {
   Users, 
   DollarSign,
   Plus,
-  Eye,
   Calendar,
   User,
   Globe,
