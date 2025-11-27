@@ -21,6 +21,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LeaderboardTable } from '@/components/stats/LeaderboardTable';
+import { MarketingAnalyticsTab } from '@/components/stats/MarketingAnalyticsTab';
 
 export default function StatsPage() {
   const { user } = useAuth();
@@ -274,12 +275,15 @@ export default function StatsPage() {
               setActiveTab(v);
               setSearchParams({ tab: v });
             }}>
-              <TabsList className="grid w-full grid-cols-4 bg-amber-900/30 border border-amber-500/20 mb-4">
+              <TabsList className="grid w-full grid-cols-5 bg-amber-900/30 border border-amber-500/20 mb-4">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
                   Overview
                 </TabsTrigger>
                 <TabsTrigger value="leaderboard" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
                   Leaderboard
+                </TabsTrigger>
+                <TabsTrigger value="marketing" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                  📈 Marketing
                 </TabsTrigger>
                 <TabsTrigger value="growth" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
                   Growth
@@ -303,6 +307,9 @@ export default function StatsPage() {
               </TabsContent>
               <TabsContent value="leaderboard">
                 <LeaderboardTable virtualised />
+              </TabsContent>
+              <TabsContent value="marketing">
+                <MarketingAnalyticsTab />
               </TabsContent>
               <TabsContent value="growth">
                 <div className="text-center py-8 text-amber-300/60">Growth charts coming soon...</div>
