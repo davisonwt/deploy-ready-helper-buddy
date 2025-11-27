@@ -26,7 +26,7 @@ export const EzekielClock = () => {
 
   if (!sacred) {
     return (
-      <div className="fixed top-4 right-4 z-50 pointer-events-auto">
+      <div className="relative pointer-events-auto">
         <div className="relative w-80 h-80 bg-black/30 backdrop-blur-xl rounded-full shadow-2xl border border-white/20 flex items-center justify-center">
           <div className="text-white/60 text-sm">Loading sacred time...</div>
         </div>
