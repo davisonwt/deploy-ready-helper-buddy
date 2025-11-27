@@ -44,6 +44,7 @@ import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
 import { CustomWatch } from '@/components/watch/CustomWatch'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
+import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 
 export default function DashboardPage() {
@@ -97,6 +98,19 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
+  
+  // Theme system - rotates every 2 hours
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+  
+  // Update theme every hour to check for 2-hour rotation
+  useEffect(() => {
+    const updateTheme = () => {
+      setCurrentTheme(getCurrentTheme())
+    }
+    updateTheme() // Initial set
+    const interval = setInterval(updateTheme, 60 * 60 * 1000) // Check every hour
+    return () => clearInterval(interval)
+  }, [])
 
   // Binance Pay - no wallet state needed
 
@@ -348,11 +362,12 @@ export default function DashboardPage() {
   // Show loading screen while auth is loading or data is loading
   if (authLoading || orchardsLoading || bestowalsLoading) {
     console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
+    const theme = getCurrentTheme()
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
+        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: theme.accent }}></div>
+          <p style={{ color: theme.textPrimary }}>Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -360,29 +375,45 @@ export default function DashboardPage() {
 
   // Show error state if there's an error
   if (error) {
+    const theme = getCurrentTheme()
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-50">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
+        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <p className="mb-4" style={{ color: theme.textPrimary }}>{error}</p>
+          <Button 
+            onClick={() => window.location.reload()}
+            style={{
+              background: theme.primaryButton,
+              color: theme.textPrimary,
+            }}
+          >
+            Retry
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
-      
-      {/* Solid dark overlay for better readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+    <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
       
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture and Custom Watch - Mobile Responsive */}
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 bg-card">
+        <div 
+          className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl"
+          style={{
+            backgroundColor: currentTheme.cardBg,
+            borderColor: currentTheme.cardBorder,
+            boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+          }}
+        >
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-3 sm:gap-4 md:space-x-6 flex-1 min-w-0">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-nav-dashboard shadow-md sm:shadow-lg flex-shrink-0">
+            <div 
+              className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
+              style={{ borderColor: currentTheme.accent }}
+            >
               {user?.avatar_url ? (
                 <img 
                   src={user.avatar_url} 
@@ -390,19 +421,22 @@ export default function DashboardPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
-                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-heading-primary" />
+                <div 
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ background: currentTheme.primaryButton }}
+                >
+                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{ color: currentTheme.textPrimary }} />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-heading-primary truncate">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
                 Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
               </h1>
-              <p className="text-sm sm:text-base md:text-lg text-heading-primary">
+              <p className="text-sm sm:text-base md:text-lg" style={{ color: currentTheme.textSecondary }}>
                 Ready to grow your orchard today?
               </p>
-              <p className="text-xs sm:text-sm mt-1 text-heading-primary">
+              <p className="text-xs sm:text-sm mt-1" style={{ color: currentTheme.textSecondary }}>
                 Payment Method: USDC (USD Coin)
               </p>
             </div>
@@ -414,14 +448,14 @@ export default function DashboardPage() {
         </div>
         {/* Custom Time Display - Bottom of welcome section */}
         {customDate && (
-          <div className="mt-4 pt-4 border-t border-border">
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: currentTheme.cardBorder }}>
             <div className="text-center">
               {/* Custom Date - Above custom time */}
-              <div className="text-base sm:text-lg md:text-xl font-semibold text-heading-primary mb-1">
+              <div className="text-base sm:text-lg md:text-xl font-semibold mb-1" style={{ color: currentTheme.textPrimary }}>
                 Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
               </div>
               {/* Custom Time - Larger font */}
-              <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: currentTheme.textPrimary }}>
                 {(() => {
                   const creatorTime = getCreatorTime(currentTime, userLat, userLon);
                   // Calculate seconds within current custom minute (0-79)
@@ -434,7 +468,7 @@ export default function DashboardPage() {
                 })()}
               </div>
               {/* Gregorian Time - Smaller font */}
-              <div className="text-xs sm:text-sm text-heading-primary/80 font-mono flex items-center justify-center gap-2 flex-wrap">
+              <div className="text-xs sm:text-sm font-mono flex items-center justify-center gap-2 flex-wrap" style={{ color: currentTheme.textSecondary }}>
                 <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
                 <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
                 <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
@@ -451,78 +485,121 @@ export default function DashboardPage() {
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           {/* Stats Grid - Mobile Responsive */}
-          <div className="w-full p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 bg-card stats-tour">
+          <div 
+            className="w-full p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 backdrop-blur-xl stats-tour"
+            style={{
+              backgroundColor: currentTheme.cardBg,
+              borderColor: currentTheme.cardBorder,
+              boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+            }}
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-3 w-full">
-              <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour">
+              <Card 
+                className="border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 my-orchards-stat-tour backdrop-blur-md"
+                style={{
+                  backgroundColor: currentTheme.cardBg,
+                  borderColor: currentTheme.cardBorder,
+                }}
+              >
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Orchards</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalOrchards}</p>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textSecondary }}>My Orchards</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{stats.totalOrchards}</p>
                   </div>
-                  <TreePine className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <TreePine className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card 
+              className="border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-md"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">Total Raised</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalRaised)}</p>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textSecondary }}>Total Raised</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{formatCurrency(stats.totalRaised)}</p>
                   </div>
-                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="flex-1 bg-card border-border hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card 
+              className="flex-1 border hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-md"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-heading-primary">Active Users</p>
-                    <p className="text-2xl font-bold text-heading-primary">{activeUsers}</p>
-                    <p className="text-xs text-heading-primary mt-1">Last 30 days</p>
+                    <p className="text-sm font-medium" style={{ color: currentTheme.textSecondary }}>Active Users</p>
+                    <p className="text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{activeUsers}</p>
+                    <p className="text-xs mt-1" style={{ color: currentTheme.textSecondary }}>Last 30 days</p>
                   </div>
-                  <Users className="h-8 w-8 text-heading-primary" />
+                  <Users className="h-8 w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card 
+              className="border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-md"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Bestowals</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalBestowals}</p>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textSecondary }}>My Bestowals</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{stats.totalBestowals}</p>
                   </div>
-                  <Heart className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <Heart className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card 
+              className="border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-md"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">Total Supported</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{formatCurrency(stats.totalSupported)}</p>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textSecondary }}>Total Supported</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{formatCurrency(stats.totalSupported)}</p>
                   </div>
-                  <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <Card 
+              className="border hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-md"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardContent className="p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-heading-primary">My Followers</p>
-                    <p className="text-xl sm:text-2xl font-bold text-heading-primary">{stats.totalFollowers}</p>
-                    <p className="text-[10px] sm:text-xs text-heading-primary mt-1">+{stats.newFollowers} this week</p>
+                    <p className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textSecondary }}>My Followers</p>
+                    <p className="text-xl sm:text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>{stats.totalFollowers}</p>
+                    <p className="text-[10px] sm:text-xs mt-1" style={{ color: currentTheme.textSecondary }}>+{stats.newFollowers} this week</p>
                   </div>
-                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-heading-primary" />
+                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" style={{ color: currentTheme.accent }} />
                 </div>
               </CardContent>
             </Card>
@@ -530,24 +607,49 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-            <BinanceWalletManager className="lg:col-span-1 bg-card border-border shadow-xl wallet-tour" />
+            <div className="lg:col-span-1 wallet-tour">
+              <BinanceWalletManager 
+                className="shadow-xl backdrop-blur-xl"
+                style={{
+                  backgroundColor: currentTheme.cardBg,
+                  borderColor: currentTheme.cardBorder,
+                }}
+              />
+            </div>
 
             {/* Global Timezone Support */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl timezone-tour">
+            <Card 
+              className="lg:col-span-1 border shadow-xl timezone-tour backdrop-blur-xl"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="flex items-center text-heading-primary text-base sm:text-lg">
-                  <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
+                <CardTitle className="flex items-center text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
+                  <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
                   Global Time Zones
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                 <LiveTimezoneDisplay />
-                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-200">
+                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
                   <Link to="/grove-station">
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="w-full text-sm sm:text-base text-blue-600 border-blue-200 hover:bg-blue-100"
+                      className="w-full text-sm sm:text-base transition-all hover:scale-105"
+                      style={{
+                        color: currentTheme.accent,
+                        borderColor: currentTheme.accent,
+                        backgroundColor: 'transparent',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
                     >
                       <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       View Radio Schedule
@@ -581,33 +683,56 @@ export default function DashboardPage() {
           {/* My Orchards and Recent Bestowals */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mt-4 sm:mt-6 md:mt-8">
             {/* My Orchards */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl my-orchards-section-tour">
+            <Card 
+              className="lg:col-span-1 border shadow-xl my-orchards-section-tour backdrop-blur-xl"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
             <CardHeader className="p-4 sm:p-5 md:p-6">
               <CardTitle className="flex items-center justify-between text-base sm:text-lg">
                 <span className="flex items-center" style={{ 
-                  color: 'hsl(120, 100%, 40%)', 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+                  color: currentTheme.accent, 
+                  textShadow: `1px 1px 2px ${currentTheme.shadow}` 
                 }}>
-                  <Sprout className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600" />
+                  <Sprout className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
                   My Orchards
                 </span>
                 <Link to="/my-orchards">
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">View All</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 transition-all hover:scale-105"
+                    style={{
+                      color: currentTheme.accent,
+                      borderColor: currentTheme.accent,
+                      backgroundColor: 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    View All
+                  </Button>
                 </Link>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
               {userOrchards.length === 0 ? (
-                <div className="bg-card rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="rounded-lg p-4 sm:p-6 md:p-8 backdrop-blur-md" style={{ backgroundColor: currentTheme.cardBg }}>
                   <div className="text-center">
-                    <TreePine className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-3 sm:mb-4" />
-                    <p className="mb-4 sm:mb-6 font-medium text-heading-primary text-sm sm:text-base">You haven't planted any seeds yet</p>
+                    <TreePine className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4" style={{ color: currentTheme.textSecondary }} />
+                    <p className="mb-4 sm:mb-6 font-medium text-sm sm:text-base" style={{ color: currentTheme.textPrimary }}>You haven't planted any seeds yet</p>
                     <Link to="/create-orchard">
                       <Button 
-                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10"
+                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10 hover:scale-105"
                         style={{
-                          backgroundColor: '#fdffb6',
-                          color: '#a16207'
+                          background: currentTheme.primaryButton,
+                          color: currentTheme.textPrimary
                         }}
                       >
                         Plant Your First Seed
@@ -618,23 +743,27 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {userOrchards.slice(0, 3).map((orchard) => (
-                    <div key={orchard.id} className="flex items-center justify-between p-3 sm:p-4 bg-card/60 rounded-lg">
+                    <div 
+                      key={orchard.id} 
+                      className="flex items-center justify-between p-3 sm:p-4 rounded-lg backdrop-blur-md"
+                      style={{ backgroundColor: currentTheme.cardBg }}
+                    >
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-heading-primary mb-1 text-sm sm:text-base truncate">{orchard.title}</h3>
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-heading-primary flex-wrap">
-                          <span className="flex items-center">
+                        <h3 className="font-medium mb-1 text-sm sm:text-base truncate" style={{ color: currentTheme.textPrimary }}>{orchard.title}</h3>
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm flex-wrap">
+                          <span className="flex items-center" style={{ color: currentTheme.textSecondary }}>
                             <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {orchard.views || 0} views
                           </span>
-                          <span className="flex items-center">
+                          <span className="flex items-center" style={{ color: currentTheme.textSecondary }}>
                             <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {orchard.supporters || 0} supporters
                           </span>
                         </div>
                         <div className="mt-2">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs sm:text-sm text-heading-primary">Progress</span>
-                            <span className="text-xs sm:text-sm font-medium text-heading-primary">{getCompletionPercentage(orchard)}%</span>
+                            <span className="text-xs sm:text-sm" style={{ color: currentTheme.textSecondary }}>Progress</span>
+                            <span className="text-xs sm:text-sm font-medium" style={{ color: currentTheme.textPrimary }}>{getCompletionPercentage(orchard)}%</span>
                           </div>
                           <Progress value={getCompletionPercentage(orchard)} className="h-1.5 sm:h-2" />
                         </div>
@@ -652,30 +781,53 @@ export default function DashboardPage() {
           </Card>
 
             {/* Recent Bestowals */}
-            <Card className="lg:col-span-1 bg-card border-border shadow-xl bestowals-tour">
+            <Card 
+              className="lg:col-span-1 border shadow-xl bestowals-tour backdrop-blur-xl"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
             <CardHeader className="p-4 sm:p-5 md:p-6">
               <CardTitle className="flex items-center justify-between text-base sm:text-lg">
-                <span className="flex items-center text-heading-primary">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-500" />
+                <span className="flex items-center" style={{ color: currentTheme.textPrimary }}>
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
                   Recent Bestowals
                 </span>
                 <Link to="/browse-orchards">
-                  <Button variant="outline" size="sm" className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3">Explore More</Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3 transition-all hover:scale-105"
+                    style={{
+                      color: currentTheme.accent,
+                      borderColor: currentTheme.accent,
+                      backgroundColor: 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    Explore More
+                  </Button>
                 </Link>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
               {userBestowals.length === 0 ? (
-                <div className="bg-card rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="rounded-lg p-4 sm:p-6 md:p-8 backdrop-blur-md" style={{ backgroundColor: currentTheme.cardBg }}>
                   <div className="text-center">
-                    <Heart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-3 sm:mb-4" />
-                    <p className="mb-4 sm:mb-6 font-medium text-heading-primary text-sm sm:text-base">You haven't made any bestowals yet</p>
+                    <Heart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4" style={{ color: currentTheme.textSecondary }} />
+                    <p className="mb-4 sm:mb-6 font-medium text-sm sm:text-base" style={{ color: currentTheme.textPrimary }}>You haven't made any bestowals yet</p>
                     <Link to="/browse-orchards">
                       <Button 
-                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10"
+                        className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium mb-4 text-sm sm:text-base h-9 sm:h-10 hover:scale-105"
                         style={{
-                          backgroundColor: '#caffbf',
-                          color: '#166534'
+                          background: currentTheme.primaryButton,
+                          color: currentTheme.textPrimary
                         }}
                       >
                         Discover Orchards
@@ -686,17 +838,21 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   {userBestowals.slice(0, 3).map((bestowal) => (
-                    <div key={bestowal.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg">
+                    <div 
+                      key={bestowal.id} 
+                      className="flex items-center justify-between p-3 sm:p-4 rounded-lg backdrop-blur-md"
+                      style={{ backgroundColor: currentTheme.cardBg }}
+                    >
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 mb-1 text-sm sm:text-base truncate">
+                        <h3 className="font-medium mb-1 text-sm sm:text-base truncate" style={{ color: currentTheme.textPrimary }}>
                           {bestowal.orchards?.title || 'Unknown Orchard'}
                         </h3>
-                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 flex-wrap">
-                          <span className="flex items-center">
+                        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm flex-wrap">
+                          <span className="flex items-center" style={{ color: currentTheme.textSecondary }}>
                             <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {new Date(bestowal.created_at).toLocaleDateString()}
                           </span>
-                          <span className="flex items-center">
+                          <span className="flex items-center" style={{ color: currentTheme.textSecondary }}>
                             <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                             {formatCurrency(bestowal.amount)}
                           </span>
@@ -719,15 +875,26 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="mt-4 sm:mt-6 md:mt-8 bg-card border-border shadow-xl quick-actions-tour">
+          <Card 
+            className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl"
+            style={{
+              backgroundColor: currentTheme.cardBg,
+              borderColor: currentTheme.cardBorder,
+            }}
+          >
           <CardHeader className="p-4 sm:p-5 md:p-6">
-            <CardTitle className="text-heading-primary text-base sm:text-lg">Quick Actions</CardTitle>
+            <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Link to="/create-orchard">
                 <Button 
-                  className="w-full h-16 sm:h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: currentTheme.primaryButton,
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.accent,
+                  }}
                 >
                   <div className="text-center">
                     <Plus className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
@@ -737,25 +904,53 @@ export default function DashboardPage() {
               </Link>
               
               <div
-                className="w-full bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible"
+                className="w-full border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible backdrop-blur-md"
+                style={{
+                  backgroundColor: currentTheme.cardBg,
+                  borderColor: currentTheme.cardBorder,
+                }}
               >
                 <div className="text-center mb-2 sm:mb-3">
-                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-heading-primary" />
-                  <span className="font-medium text-heading-primary text-sm sm:text-base">Browse Orchards</span>
+                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" style={{ color: currentTheme.textPrimary }} />
+                  <span className="font-medium text-sm sm:text-base" style={{ color: currentTheme.textPrimary }}>Browse Orchards</span>
                 </div>
                 	<div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
                   	<Link to="/browse-orchards">
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
+                      style={{
+                        borderColor: currentTheme.accent,
+                        backgroundColor: currentTheme.cardBg,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
                     	>
-                      	<Users className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<Users className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
                     	</div>
                   	</Link>
                   	<Link to="/my-orchards">
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
+                      style={{
+                        borderColor: currentTheme.accent,
+                        backgroundColor: currentTheme.cardBg,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
                     	>
-                      	<User className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<User className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
                     	</div>
                   	</Link>
                   	<Link 
@@ -765,9 +960,21 @@ export default function DashboardPage() {
                     }}
                   	>
                     	<div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-border bg-card flex items-center justify-center hover:scale-110 hover:-translate-y-1 hover:bg-primary hover:border-primary transition-all duration-300 cursor-pointer"
+                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                      style={{
+                        borderColor: currentTheme.accent,
+                        backgroundColor: currentTheme.cardBg,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }}
                     	>
-                      	<Heart className="h-4 w-4 sm:h-5 sm:w-5 text-heading-primary group-hover:text-primary-foreground transition-colors" />
+                      	<Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
                     	</div>
                   	</Link>
                 	</div>
@@ -775,7 +982,12 @@ export default function DashboardPage() {
               
               <Link to="/profile">
                 <Button 
-                  className="w-full h-16 sm:h-20 bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-heading-primary"
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: currentTheme.primaryButton,
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.accent,
+                  }}
                 >
                   <div className="text-center">
                     {user?.avatar_url ? (
@@ -783,7 +995,7 @@ export default function DashboardPage() {
                         src={user.avatar_url} 
                         alt="Profile" 
                         className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mx-auto mb-1 sm:mb-2 border-2"
-                        style={{ borderColor: '#9a3412' }}
+                        style={{ borderColor: currentTheme.accent }}
                       />
                     ) : (
                       <User className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
