@@ -14,9 +14,10 @@ import { supabase } from '@/integrations/supabase/client';
 export interface BinanceWalletManagerProps {
   className?: string;
   showTopUpActions?: boolean;
+  onTopUp?: () => void;
 }
 
-export function BinanceWalletManager({ className, showTopUpActions = true }: BinanceWalletManagerProps) {
+export function BinanceWalletManager({ className, showTopUpActions = true, onTopUp }: BinanceWalletManagerProps) {
   const {
     wallet,
     balance,
@@ -88,6 +89,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
     }
     await createTopUpOrder(topUpAmount);
     setTopUpDialogOpen(false);
+    onTopUp?.();
   };
 
   const handleManualBalanceUpdate = async () => {
