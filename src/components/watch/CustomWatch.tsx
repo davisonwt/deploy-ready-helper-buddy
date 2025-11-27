@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PartHand } from './PartHand';
 import { MinuteHand } from './MinuteHand';
+import { SecondsHand } from './SecondsHand';
 
 interface CustomWatchProps {
   className?: string;
@@ -161,24 +162,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
               <MinuteHand watchSize={watchSize} />
 
               {/* SECONDS HAND */}
-              <motion.div
-                className="absolute"
-                style={{
-                  width: watchSize * 0.006, 
-                  height: watchSize * 0.42,
-                  left: '50%', 
-                  top: '50%',
-                  marginLeft: `-${watchSize * 0.003}px`,
-                  marginTop: `-${watchSize * 0.42}px`,
-                  transformOrigin: `${watchSize * 0.003}px ${watchSize * 0.42}px`,
-                  background: 'linear-gradient(to top, #dc2626, #ef4444, #dc2626)',
-                  borderRadius: '2px',
-                  boxShadow: '0 0 10px #dc2626',
-                  zIndex: 12,
-                }}
-                animate={{ rotate: secondsAngle }}
-                transition={{ type: 'tween', ease: 'linear', duration: 0.05 }}
-              />
+              <SecondsHand watchSize={watchSize} />
 
               {/* Center gem */}
               <div className="absolute rounded-full"
