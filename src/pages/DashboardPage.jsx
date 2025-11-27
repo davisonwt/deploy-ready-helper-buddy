@@ -450,9 +450,11 @@ export default function DashboardPage() {
               <div className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: currentTheme.textPrimary }}>
                 {(() => {
                   const creatorTime = getCreatorTime(currentTime, userLat, userLon);
+                  // Use actual current time minutes (0-59) to sync with clock's minute hand
+                  const currentMinutes = currentTime.getMinutes(); // 0-59
                   // Use actual current time seconds (0-59) to sync with clock's seconds hand
                   const currentSeconds = currentTime.getSeconds(); // 0-59
-                  return `${creatorTime.displayText} ${currentSeconds}${currentSeconds === 1 ? 'st' : currentSeconds === 2 ? 'nd' : currentSeconds === 3 ? 'rd' : 'th'} sec`;
+                  return `Part ${creatorTime.part} ${currentMinutes}${currentMinutes === 1 ? 'st' : currentMinutes === 2 ? 'nd' : currentMinutes === 3 ? 'rd' : 'th'} min ${currentSeconds}${currentSeconds === 1 ? 'st' : currentSeconds === 2 ? 'nd' : currentSeconds === 3 ? 'rd' : 'th'} sec`;
                 })()}
               </div>
               {/* Gregorian Time - Smaller font */}
