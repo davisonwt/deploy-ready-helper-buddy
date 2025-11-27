@@ -34,6 +34,7 @@ import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 import { CustomWatch } from '@/components/watch/CustomWatch'
+import { EzekielClock } from '@/components/ezekiel-clock/EzekielClock'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
@@ -388,6 +389,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
+      {/* Ezekiel Clock - Fixed top-right */}
+      <EzekielClock />
       
       {/* Content wrapper */}
       <div className="relative z-10">
