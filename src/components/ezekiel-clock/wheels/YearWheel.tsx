@@ -70,38 +70,28 @@ export const YearWheel = ({ dayOfYear, creature }: YearWheelProps) => {
         );
       })}
 
-      {/* Year indicator - centered at (160, 160) */}
+      {/* Year indicator - static, pointing up (0°), wrapper will rotate entire wheel */}
       <g>
-        <motion.line
+        <line
           x1="160"
           y1="160"
-          x2={160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180)}
-          y2={160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180)}
+          x2="160"
+          y2={160 - radius}
           stroke={CREATURE_COLORS[creature]}
           strokeWidth="3"
           strokeLinecap="round"
-          animate={{
-            x2: 160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180),
-            y2: 160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180),
-          }}
-          transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
         />
         {/* Creature emoji at indicator tip */}
-        <motion.text
-          x={160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180)}
-          y={160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180)}
+        <text
+          x="160"
+          y={160 - radius}
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize="24"
           className="pointer-events-none select-none"
-          animate={{
-            x: 160 + radius * Math.cos((rotationAngle - 90) * Math.PI / 180),
-            y: 160 + radius * Math.sin((rotationAngle - 90) * Math.PI / 180),
-          }}
-          transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
         >
           {CREATURE_EMOJIS[creature]}
-        </motion.text>
+        </text>
       </g>
     </svg>
   );
