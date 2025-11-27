@@ -96,10 +96,11 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const part10MarkerAngle = 90 + (10 - 1) * 20; // 270°
   const cssMinuteAngle = 450 - part10MarkerAngle; // 180° for CSS rotation
 
-  // Seconds hand – normal 60-second anti-clockwise cycle (from sunrise)
-  const realSeconds = realSecondsSinceSunrise % 60;
-  const secondsDegrees = (realSeconds / 60) * 360;
-  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12
+  // Seconds hand – 60 real seconds = one full 360° anti-clockwise rotation
+  // Uses actual current time seconds (0-59), not seconds since sunrise
+  const currentSeconds = currentTime.getSeconds() + currentTime.getMilliseconds() / 1000; // 0.0 - 59.999
+  const secondsDegrees = (currentSeconds / 60) * 360; // 0 → 360°
+  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12 (top)
 
   // Visuals
   const bgGradient = getTimeOfPartGradient(customTime.part);
