@@ -133,9 +133,10 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // MINUTE HAND – 20° anti-clockwise per 80-minute part → 0.25° per Creator minute
+  // Starts at 110° (Part 2 side) and moves anti-clockwise to 90° (Part 18 side)
   const creatorMinutesIntoPart = (realSecondsToday / 80) % 80; // 0–79.999
   const minuteHandDegrees = creatorMinutesIntoPart * 0.25;     // 0 → 19.999°
-  const cssMinuteAngle = 90 - minuteHandDegrees;              // anti-clockwise from 12
+  const cssMinuteAngle = 450 - (110 - minuteHandDegrees);      // 110° → 90° anti-clockwise
 
   // SECONDS HAND – 80 real seconds = 360° anti-clockwise → 4.5° per second
   const creatorSeconds = realSecondsToday % 80;               // 0–79.999
