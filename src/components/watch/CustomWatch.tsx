@@ -72,11 +72,11 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   // Part hand — already perfect
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
-  // MINUTE HAND — Positioned based on customTime.minute (1-80) within current part
+  // MINUTE HAND — Positioned based on customTime.minute (1-60) within current part
   // Get the starting angle of the current part (where the part marker is)
   const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
-  // Calculate minute progress: (minute - 1) / 80 gives 0.0 to 0.9875, then * 20 for degrees
-  const minuteProgress = ((customTime.minute - 1) / 80) * 20; // 0 → 19.75° progress
+  // Calculate minute progress: (minute - 1) / 60 gives 0.0 to 0.9833, then * 20 for degrees
+  const minuteProgress = ((customTime.minute - 1) / 60) * 20; // 0 → 19.67° progress (60 minutes per part)
   // Minute hand starts at part marker and moves anti-clockwise
   const mathMinuteAngle = partStartAngle - minuteProgress; // Anti-clockwise from part marker
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
