@@ -150,14 +150,13 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  // Minute hand: calculate using laps and seconds
-  // 0-79 seconds into the part
-  const secondsInMinute = Math.floor((elapsed % 1) * 80);
-  // how many full 80-sec laps have happened since part start
-  const laps = Math.floor(elapsed / 80); // 0,1,2...
-  // 4.5° per lap → 0.25° per second
-  const minuteProgress = laps * 4.5 + (secondsInMinute * 0.25);
+  // Minute hand: calculate using elapsed seconds since part start
+  // total elapsed seconds since part START (0-6399)
   const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part
+  const partStartMinute = (customTime.part - 1) * 80; // minute at which this part begins
+  const elapsedMin = (elapsed - partStartMinute) * 60 + currentTime.getSeconds(); // 0-6399 s
+  // 20° per part → 0.003125° per second
+  const minuteProgress = (elapsedMin / 6400) * 20; // 0-20°
   const mathMinuteAngle = mathPartStartAngle + minuteProgress;
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
