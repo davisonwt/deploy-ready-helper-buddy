@@ -59,22 +59,25 @@ export const BreathWheel = ({ secondsToday }: BreathWheelProps) => {
         );
       })}
 
-      {/* Breath indicator line */}
-      <motion.line
-        x1="160"
-        y1="160"
-        x2="160"
-        y2={160 - radius * 0.7}
-        stroke="#ffd700"
-        strokeWidth="2"
-        strokeLinecap="round"
+      {/* Breath indicator line - centered at (160, 160) */}
+      <motion.g
+        transform={`rotate(${rotationAngle} 160 160)`}
         style={{
-          transformOrigin: '160px 160px',
-          transform: `rotate(${rotationAngle}deg)`,
+          transformOrigin: '50% 50%',
         }}
         animate={{ rotate: rotationAngle }}
         transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
-      />
+      >
+        <line
+          x1="160"
+          y1="160"
+          x2="160"
+          y2={160 - radius * 0.7}
+          stroke="#ffd700"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </motion.g>
     </svg>
   );
 };

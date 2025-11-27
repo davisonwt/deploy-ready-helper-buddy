@@ -70,32 +70,25 @@ export const YearWheel = ({ dayOfYear, creature }: YearWheelProps) => {
         );
       })}
 
-      {/* Year indicator */}
-      <motion.line
-        x1="160"
-        y1="160"
-        x2="160"
-        y2={160 - radius}
-        stroke={CREATURE_COLORS[creature]}
-        strokeWidth="3"
-        strokeLinecap="round"
-        style={{
-          transformOrigin: '160px 160px',
-          transform: `rotate(${rotationAngle}deg)`,
-        }}
-        animate={{ rotate: rotationAngle }}
-        transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
-      />
-
-      {/* Creature emoji at indicator tip */}
+      {/* Year indicator - centered at (160, 160) */}
       <motion.g
+        transform={`rotate(${rotationAngle} 160 160)`}
         style={{
-          transformOrigin: '160px 160px',
-          transform: `rotate(${rotationAngle}deg) translate(0, -${radius}px)`,
+          transformOrigin: '50% 50%',
         }}
         animate={{ rotate: rotationAngle }}
         transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
       >
+        <line
+          x1="160"
+          y1="160"
+          x2="160"
+          y2={160 - radius}
+          stroke={CREATURE_COLORS[creature]}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        {/* Creature emoji at indicator tip */}
         <text
           x="160"
           y={160 - radius}
