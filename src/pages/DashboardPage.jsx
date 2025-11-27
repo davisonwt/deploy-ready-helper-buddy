@@ -450,11 +450,15 @@ export default function DashboardPage() {
               <div className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: currentTheme.textPrimary }}>
                 {(() => {
                   const creatorTime = getCreatorTime(currentTime, userLat, userLon);
-                  // Use actual current time minutes (0-59) to sync with clock's minute hand
-                  const currentMinutes = currentTime.getMinutes(); // 0-59
-                  // Use actual current time seconds (0-59) to sync with clock's seconds hand
-                  const currentSeconds = currentTime.getSeconds(); // 0-59
-                  return `Part ${creatorTime.part} ${currentMinutes}${currentMinutes === 1 ? 'st' : currentMinutes === 2 ? 'nd' : currentMinutes === 3 ? 'rd' : 'th'} min ${currentSeconds}${currentSeconds === 1 ? 'st' : currentSeconds === 2 ? 'nd' : currentSeconds === 3 ? 'rd' : 'th'} sec`;
+                  // Calculate custom seconds within current custom minute (0-59)
+                  const sunriseMinutes = creatorTime.sunriseMinutes;
+                  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
+                  let elapsed = nowMinutes - sunriseMinutes;
+                  if (elapsed < 0) elapsed += 1440;
+                  const realSecondsSinceSunrise = elapsed * 60;
+                  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800; // 0-4799 seconds into current part
+                  const customSeconds = Math.floor(secondsIntoCurrentPart % 60); // 0-59 seconds within current custom minute
+                  return `${creatorTime.displayText} ${customSeconds}${customSeconds === 1 ? 'st' : customSeconds === 2 ? 'nd' : customSeconds === 3 ? 'rd' : 'th'} sec`;
                 })()}
               </div>
               {/* Gregorian Time - Smaller font */}
