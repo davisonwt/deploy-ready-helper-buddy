@@ -36,7 +36,7 @@ export const EzekielClock = () => {
 
   return (
     <>
-      <div className="fixed top-4 right-4 z-50 pointer-events-auto">
+      <div className="relative pointer-events-auto">
         <div className="relative w-80 h-80 bg-black/30 backdrop-blur-xl rounded-full shadow-2xl border border-white/20 overflow-hidden">
           {/* Layer 4 – Year Wheel (outermost) */}
           <YearWheel dayOfYear={sacred.dayOfYear} creature={sacred.creature} />
