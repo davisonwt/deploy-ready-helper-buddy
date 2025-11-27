@@ -150,13 +150,22 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  // Minute hand: shows current minute within part + seconds progress
-  // Each part = 20°, each minute = 20/80 = 0.25°, each second = 0.25/80 = 0.003125°
-  const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
-  const minutesProgress = ((customTime.minute - 1) / 80) * 20; // Progress through minutes within part (0-19.75°)
-  const secondsProgress = (secondsInMinute / 80) * (20 / 80); // Progress through seconds within current minute (0-0.25°)
-  const mathMinuteAngle = mathPartStartAngle + minutesProgress + secondsProgress; // Full minute hand position
-  const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
+  // Minute hand: calculate directly from elapsed time for accuracy
+  // At minute 40 within part 6, should be at 180° CSS
+  // elapsed is in minutes, so we can calculate the exact angle
+  const totalElapsedMinutes = elapsed; // Total minutes since sunrise
+  const minutesInPart = totalElapsedMinutes % 80; // Minutes within current part (0-79.99)
+  const partNumber = Math.floor(totalElapsedMinutes / 80) + 1; // Current part (1-18)
+  
+  // Calculate minute hand angle: part start + progress through part
+  // Part start angle (mathematical, where 90° = top)
+  const mathPartStartAngle = 90 + (partNumber - 1) * 20;
+  // Progress through current part: minutesInPart / 80 * 20 degrees
+  const minuteProgress = (minutesInPart / 80) * 20;
+  // Total minute hand angle
+  const mathMinuteAngle = mathPartStartAngle + minuteProgress;
+  // Convert to CSS rotate convention (CSS 0° = top, rotates clockwise)
+  const minuteAngle = 450 - mathMinuteAngle;
   
   // Seconds hand: completes full 360-degree rotation in 80 seconds
   // Each second = 360/80 = 4.5 degrees
