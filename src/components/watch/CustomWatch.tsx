@@ -360,35 +360,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
                 />
                 
               </div>
-              
-              {/* Date Display - Below Watch */}
-              {!compact && (
-                <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 text-center w-full px-4">
-                  {/* Big Center Time */}
-                  <div 
-                    className="text-white font-black mb-4 pointer-events-none" 
-                    style={{ 
-                      fontSize: watchSize * 0.12,
-                      textShadow: '0 0 8px rgba(0,0,0,0.9)',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {getCreatorTime(currentTime, userLat, userLon).displayText}
-                  </div>
-                  
-                  {/* Creator's Calendar Line */}
-                  <div className="text-sm text-white/90 font-mono font-semibold mb-3">
-                    Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
-                  </div>
-                  
-                  {/* Gregorian Line */}
-                  <div className="text-sm text-white/80 font-mono flex items-center justify-center gap-3">
-                    <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
-                    <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-                    <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                  </div>
-                </div>
-              )}
             </div>
             
             {/* Date and Info Panel */}
