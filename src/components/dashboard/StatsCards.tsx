@@ -271,11 +271,22 @@ export function StatsCards() {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs text-amber-300">
-                  {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)} USDC
-                </span>
+                <div className="text-center">
+                  <span className="text-xs text-amber-300 block">
+                    {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)} USDC
+                  </span>
+                  <span className="text-[10px] text-amber-300/60 block mt-0.5">
+                    Next milestone
+                  </span>
+                </div>
               </div>
             </div>
+            <p className="text-xs text-amber-300/60 mt-2 text-center">
+              {stats.monthlyBestowals < 5 
+                ? `${(5 - stats.monthlyBestowals).toFixed(2)} USDC to next tier`
+                : 'Keep it up!'
+              }
+            </p>
           </CardContent>
         </Card>
       </motion.div>
