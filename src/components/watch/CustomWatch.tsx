@@ -157,7 +157,8 @@ export function CustomWatch({ className, compact = false, showControls = false }
 
   // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (NEGATIVE = ANTI-CLOCKWISE)
   // NEVER MODULO – angle grows forever
-  const minuteDeg = - (minsSinceSunrise * 60) * 0.05625; // -∞ → 0
+  // 0 min = -20° (leading edge), 80 min = 0° (trailing edge)  ANTI-CLOCKWISE
+  const minuteDeg = -20 + (minsSinceSunrise * 60) * 0.05625; // -20° → 0°
   const minuteAngle = 450 - (90 + minuteDeg); // CSS convention
   
   /* --------  SECONDS HAND – 80 SECONDS = 360° ANTI-CLOCKWISE  -------- */
