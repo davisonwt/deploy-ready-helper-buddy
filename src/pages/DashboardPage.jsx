@@ -33,7 +33,6 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import TrafficOverview from '@/components/analytics/TrafficOverview'
 import { LeaderboardWidget } from '@/components/dashboard/LeaderboardWidget'
 import { CustomWatch } from '@/components/watch/CustomWatch'
 import { getCreatorTime } from '@/utils/customTime'
@@ -470,11 +469,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-
-        {/* Real Traffic Overview (Lovable Analytics) */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
-          <TrafficOverview />
-        </div>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           {/* Addictive Stats Cards */}
