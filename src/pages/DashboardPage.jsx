@@ -416,6 +416,10 @@ export default function DashboardPage() {
         {customDate && (
           <div className="mt-4 pt-4 border-t border-border">
             <div className="text-center">
+              {/* Custom Date - Above custom time */}
+              <div className="text-base sm:text-lg md:text-xl font-semibold text-heading-primary mb-1">
+                Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
+              </div>
               {/* Custom Time - Larger font */}
               <div className="text-lg sm:text-xl md:text-2xl font-bold text-heading-primary mb-2">
                 {getCreatorTime(currentTime, userLat, userLon).displayText}
