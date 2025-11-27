@@ -119,14 +119,21 @@ export function toStandardMinutes(customTime: CustomTime): number {
 
 /**
  * Get time of day category based on part number
+ * Day starts at sunrise, so:
+ * - Parts 1-2: Dawn (early morning right after sunrise)
+ * - Parts 3-5: Morning/Day (brightening)
+ * - Parts 6-11: Day (full daylight)
+ * - Parts 12-14: Golden hour (late afternoon)
+ * - Parts 15-16: Dusk (evening)
+ * - Parts 17-18: Night (late night before next sunrise)
  */
 export function getTimeOfDayFromPart(part: number): TimeOfDay {
-  if (part >= 1 && part <= 3) return 'deep-night';
-  if (part >= 4 && part <= 5) return 'dawn';
-  if (part >= 6 && part <= 11) return 'day';
-  if (part >= 12 && part <= 14) return 'golden-hour';
-  if (part >= 15 && part <= 16) return 'dusk';
-  return 'night'; // 17-18
+  if (part >= 1 && part <= 2) return 'dawn'; // Early morning after sunrise
+  if (part >= 3 && part <= 5) return 'day'; // Morning/daytime
+  if (part >= 6 && part <= 11) return 'day'; // Full daylight
+  if (part >= 12 && part <= 14) return 'golden-hour'; // Late afternoon
+  if (part >= 15 && part <= 16) return 'dusk'; // Evening
+  return 'night'; // 17-18: Late night before sunrise
 }
 
 /**
