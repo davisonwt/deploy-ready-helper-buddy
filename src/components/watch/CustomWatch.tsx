@@ -81,7 +81,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
       );
     }
     
-    // Initialize
+    // Initialize with current time in user's timezone
     const now = new Date();
     const creatorTime = getCreatorTime(now, userLat, userLon);
     setCustomTime(creatorTime.raw);
@@ -208,7 +208,10 @@ export function CustomWatch({ className, compact = false, showControls = false }
 
   return (
     <>
-      <Card className={cn('backdrop-blur-md border-white/20 shadow-2xl transition-all duration-2000', className)} style={{ background: bgGradient }}>
+      <Card 
+        className={cn('backdrop-blur-md border-white/20 shadow-2xl transition-all duration-2000', className)} 
+        style={{ background: bgGradient }}
+      >
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="flex items-center gap-4">
             {/* Luxury Watch Face */}
