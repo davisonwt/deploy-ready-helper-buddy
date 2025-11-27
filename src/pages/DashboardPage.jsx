@@ -41,6 +41,8 @@ import { getCreatorDate } from '@/utils/customCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
 import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
+import { StatsCards } from '@/components/dashboard/StatsCards'
+import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
 
 
 export default function DashboardPage() {
@@ -475,7 +477,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-          {/* Stats Grid - Mobile Responsive */}
+          {/* Addictive Stats Cards */}
+          <div className="mb-6">
+            <StatsCards />
+          </div>
+          
+          {/* Legacy Stats Grid - Keep for now */}
           <div 
             className="w-full p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 backdrop-blur-xl stats-tour"
             style={{
@@ -834,6 +841,9 @@ export default function DashboardPage() {
         </Card>
         </div>
       </div>
+      
+      {/* Floating Stats Button */}
+      <StatsFloatingButton />
     </div>
   )
 }

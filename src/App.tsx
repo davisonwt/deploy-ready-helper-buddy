@@ -53,6 +53,7 @@ const CommunicationsHub = lazy(() =>
   })
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
 const OrchardPage = lazy(() => import("./pages/OrchardPage"));
@@ -198,6 +199,14 @@ const App = () => (
                     <Layout>
                       <DashboardPage />
                     </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/stats" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <StatsPage />
                   </RequireVerification>
                 </ProtectedRoute>
               } />
