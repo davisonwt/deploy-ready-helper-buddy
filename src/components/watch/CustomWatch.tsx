@@ -90,11 +90,15 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // ──────────────────────────────────────────────────────────────
-  // MINUTE HAND — TEMPORARILY SET TO PART 10 MARKER FOR TESTING
-  // ──────────────────────────────────────────────────────────────
-  // Part 10 marker is at: 90 + (10 - 1) * 20 = 270°
-  const part10MarkerAngle = 90 + (10 - 1) * 20; // 270°
-  const cssMinuteAngle = 450 - part10MarkerAngle; // 180° for CSS rotation
+  // MINUTE HAND — 60 real minutes = one full 360° anti-clockwise rotation
+  // Uses actual current time minutes (0-59) to sync with dashboard display
+  // Dashboard shows: customTime.minute (1-80) but we want 60-minute cycle
+  // Clock uses: currentTime.getMinutes() + seconds for smooth animation
+  const currentMinutes = currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000; // 0.0 - 59.999
+  const minutesDegrees = (currentMinutes / 60) * 360; // 0 → 360° (full rotation in 60 minutes)
+  // For anti-clockwise: subtract degrees from starting position (90° = 12 o'clock)
+  // CSS rotate: positive = clockwise, negative = anti-clockwise
+  const cssMinuteAngle = 90 - minutesDegrees; // anti-clockwise from 12 (top)
 
   // Seconds hand – 60 real seconds = one full 360° anti-clockwise rotation
   // Uses actual current time seconds (0-59) to sync with dashboard display
