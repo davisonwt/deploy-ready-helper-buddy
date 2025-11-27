@@ -175,7 +175,6 @@ const App = () => (
                       <AccessibilityChecker />
                       <ResponsiveLayout>
             <Routes>
-<｜tool▁sep｜>new_string
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
