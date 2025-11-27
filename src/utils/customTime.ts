@@ -38,8 +38,9 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
   let elapsed = nowMinutes - sunriseMinutes;
   if (elapsed < 0) elapsed += 1440;  // Overnight
 
-  const partNumber = Math.floor(elapsed / 60) + 1; // 60 minutes per part instead of 80
-  let minuteInPart = Math.floor(elapsed % 60) + 1; // 1-60, not 0-59
+  // 18 parts × 80 minutes = 1440 minutes = 24 hours (full day)
+  const partNumber = Math.floor(elapsed / 80) + 1; // 80 minutes per part (1-18)
+  let minuteInPart = Math.floor(elapsed % 80) + 1; // 1-80, not 0-79
   const displayMinute = minuteInPart;
 
   const ordinal = (n: number): string => {
@@ -76,7 +77,7 @@ export function toCustomTime(standardMinutes: number): CustomTime {
  * Convert custom time to standard minutes (0-1439)
  */
 export function toStandardMinutes(customTime: CustomTime): number {
-  return (customTime.part - 1) * 60 + (customTime.minute - 1); // 60 minutes per part
+  return (customTime.part - 1) * 80 + (customTime.minute - 1); // 80 minutes per part
 }
 
 /**
