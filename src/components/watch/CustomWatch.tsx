@@ -90,13 +90,13 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // ──────────────────────────────────────────────────────────────
-  // MINUTE HAND — Custom time system: 80 custom minutes per part
-  // Each custom minute = 60 real seconds, so 80 custom minutes = 4800 real seconds
-  // Minute hand moves 20° anti-clockwise over 80 custom minutes (4800 real seconds)
+  // MINUTE HAND — Custom time system: 60 custom minutes per part
+  // Each custom minute = 60 real seconds, so 60 custom minutes = 3600 real seconds
+  // Minute hand moves 20° anti-clockwise over 60 custom minutes (3600 real seconds)
   // ──────────────────────────────────────────────────────────────
-  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800; // 0-4799 seconds into current part
-  const customMinutesIntoPart = secondsIntoCurrentPart / 60; // 0-79.983 custom minutes into part
-  const minuteProgress = (customMinutesIntoPart / 80) * 20; // 0 → 20° progress through part's wedge
+  const secondsIntoCurrentPart = realSecondsSinceSunrise % 3600; // 0-3599 seconds into current part
+  const customMinutesIntoPart = secondsIntoCurrentPart / 60; // 0-59.983 custom minutes into part
+  const minuteProgress = (customMinutesIntoPart / 60) * 20; // 0 → 20° progress through part's wedge
   // Get the starting angle of the current part (where the part marker is)
   const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
   // Minute hand starts at part marker and moves anti-clockwise
