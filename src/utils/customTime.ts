@@ -76,7 +76,7 @@ export function toCustomTime(standardMinutes: number): CustomTime {
  * Convert custom time to standard minutes (0-1439)
  */
 export function toStandardMinutes(customTime: CustomTime): number {
-  return (customTime.part - 1) * 80 + (customTime.minute - 1);
+  return (customTime.part - 1) * 60 + (customTime.minute - 1); // 60 minutes per part
 }
 
 /**
@@ -161,8 +161,8 @@ function getOrdinalSuffix(num: number): string {
 export function getAntiClockwiseAngle(customTime: CustomTime): number {
   // Each part is 20 degrees (360 / 18)
   const partAngle = (customTime.part - 1) * 20;
-  // Minutes within part add proportional angle
-  const minutesAngle = ((customTime.minute - 1) / 80) * 20;
+  // Minutes within part add proportional angle (60 minutes per part instead of 80)
+  const minutesAngle = ((customTime.minute - 1) / 60) * 20;
   // Start at 90° (top), add angle for anti-clockwise movement
   return 90 + partAngle + minutesAngle;
 }
