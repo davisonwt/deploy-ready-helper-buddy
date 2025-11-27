@@ -1,235 +1,498 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { 
+  Wallet, 
+  Eye, 
+  Users, 
+  Heart, 
+  Plus, 
+  TreePine, 
+  Droplets,
+  Calendar,
+  DollarSign,
+  Radio,
   User
-} from 'lucide-react'
-import { supabase } from "@/integrations/supabase/client"
-import { DashboardStats } from '@/components/dashboard/DashboardStats'
-import { CustomWatch } from '@/components/watch/CustomWatch'
-import { getCreatorTime } from '@/utils/customTime'
-import { getCreatorDate } from '@/utils/customCalendar'
-
+} from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager';
+import LiveActivityWidget from '@/components/LiveActivityWidget';
+import { useRealAnalytics } from '@/hooks/useRealAnalytics';
+import { useBestowals } from '@/hooks/useBestowals';
+import { formatCurrency } from '@/utils/formatters';
+import CountUp from 'react-countup';
+import confetti from 'canvas-confetti';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth()
-  const [profile, setProfile] = useState(null)
-  const [error, setError] = useState(null)
-  const [userRoles, setUserRoles] = useState([])
-  const [rolesLoading, setRolesLoading] = useState(false)
-  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
+  const { user, loading: authLoading } = useAuth();
+  const { getUserBestowals } = useBestowals();
+  const { data: analyticsData } = useRealAnalytics(30);
   
-  // Custom time state for display
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
-  const [userLon, setUserLon] = useState(28.0) // Default: South Africa
-  const [customDate, setCustomDate] = useState(getCreatorDate(new Date()))
+  const [profile, setProfile] = useState(null);
+  const [activeSowers, setActiveSowers] = useState(0);
+  const [followers, setFollowers] = useState(0);
+  const [recentBestowals, setRecentBestowals] = useState([]);
+  const [error, setError] = useState(null);
 
-  // Binance Pay - no wallet state needed
-
-  useEffect(() => {
-    let mounted = true
-    const loadRoles = async () => {
-      if (!user?.id) { setUserRoles([]); return }
-      try {
-        setRolesLoading(true)
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-        if (error) throw error
-        if (!mounted) return
-        setUserRoles((data || []).map(r => r.role))
-      } catch (e) {
-        if (mounted) setUserRoles([])
-      } finally {
-        if (mounted) setRolesLoading(false)
-      }
-    }
-    loadRoles()
-    return () => { mounted = false }
-  }, [user?.id])
-
-  // Get user location and update custom time
-  useEffect(() => {
-    // Try to get user's location from browser
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLat(position.coords.latitude)
-          setUserLon(position.coords.longitude)
-        },
-        () => {
-          // Fallback to default if geolocation fails
-          console.log('Using default location (South Africa: -26.2°N, 28.0°E)')
-        }
-      )
-    }
-    
-    // Initialize custom date
-    const now = new Date()
-    setCustomDate(getCreatorDate(now))
-  }, [])
-
-  // Update time every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date()
-      setCurrentTime(now)
-      setCustomDate(getCreatorDate(now))
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   useEffect(() => {
     if (user && !authLoading) {
-      console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
-      setError(null)
+      setError(null);
       
-      // Fetch user profile
       const fetchProfile = async () => {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('*') // User can see their own complete profile
+            .select('*')
             .eq('user_id', user.id)
-            .maybeSingle()
+            .maybeSingle();
           
-          if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
-            const errorMessage = error.message || error.details || error.hint || JSON.stringify(error) || 'Unknown error'
-            console.error('❌ Dashboard: Error fetching profile:', {
-              message: errorMessage,
-              code: error.code,
-              details: error.details,
-              hint: error.hint,
-              fullError: error
-            })
-            setError(`Failed to load profile: ${errorMessage}`)
+          if (error && error.code !== 'PGRST116') {
+            setError(`Failed to load profile: ${error.message}`);
           } else {
-            setProfile(data)
-            console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found')
+            setProfile(data);
           }
         } catch (error) {
-          const errorMessage = error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error'
-          console.error('❌ Dashboard: Error fetching profile:', {
-            message: errorMessage,
-            error: error,
-            stack: error?.stack
-          })
-          setError(`Failed to load profile: ${errorMessage}`)
+          setError(`Failed to load profile: ${error?.message}`);
         }
-      }
-      
-      // Execute all data fetching
-      Promise.all([
-        fetchProfile()
-      ]).catch(err => {
-        console.error('❌ Dashboard: Error in data fetching:', err)
-        setError('Failed to load dashboard data')
-      })
+      };
+
+      const fetchStats = async () => {
+        try {
+          // Fetch active sowers (users who created orchards in last 30 days)
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const { data: sowerData } = await supabase
+            .from('orchards')
+            .select('user_id')
+            .gte('created_at', thirtyDaysAgo.toISOString());
+          
+          const uniqueSowers = new Set(sowerData?.map(s => s.user_id) || []);
+          setActiveSowers(uniqueSowers.size);
+
+          // Fetch followers
+          const { data: followersData } = await supabase
+            .from('followers')
+            .select('id')
+            .eq('following_id', user.id);
+          
+          setFollowers(followersData?.length || 0);
+
+          // Fetch recent bestowals
+          const bestowalsResult = await getUserBestowals();
+          if (bestowalsResult.success) {
+            setRecentBestowals(bestowalsResult.data.slice(0, 3));
+          }
+        } catch (error) {
+          console.error('Error fetching stats:', error);
+        }
+      };
+
+      Promise.all([fetchProfile(), fetchStats()]).catch(err => {
+        console.error('Error in data fetching:', err);
+        setError('Failed to load dashboard data');
+      });
     }
-  }, [user, authLoading])
+  }, [user, authLoading, getUserBestowals]);
 
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      ticks: 50,
+      gravity: 1.2,
+      origin: { y: 0.6 }
+    });
+  };
 
-  // Show loading screen while auth is loading
+  const handleTopUp = () => {
+    triggerConfetti();
+  };
+
+  const handleLetItRain = () => {
+    triggerConfetti();
+  };
+
+  // Show loading screen
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-orange-950 dark:to-amber-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-amber-100 via-orange-100 to-yellow-50 dark:from-gray-900 dark:via-orange-950 dark:to-amber-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-foreground">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700 dark:border-amber-300 mx-auto mb-4"></div>
+          <p className="text-base text-gray-800 dark:text-gray-200">Loading your dashboard...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  // Show error state if there's an error
+  // Show error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-orange-950 dark:to-amber-900">
-        <Card className="rounded-2xl bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 shadow-lg shadow-amber-500/10 p-8">
-        <div className="text-center">
-            <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-amber-100 via-orange-100 to-yellow-50 dark:from-gray-900 dark:via-orange-950 dark:to-amber-950">
+        <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30 p-8">
+          <div className="text-center">
+            <p className="text-base text-gray-800 dark:text-gray-200 mb-4">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-6 py-3 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+            >
+              Retry
+            </Button>
+          </div>
         </Card>
       </div>
-    )
+    );
   }
 
+  const staggerDelay = (index) => index * 0.1;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-orange-950 dark:to-amber-900">
-      
-      {/* Content wrapper */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Welcome Section with Profile Picture and Custom Watch - Mobile Responsive */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
+    <div className="min-h-screen bg-gradient-to-b from-amber-100 via-orange-100 to-yellow-50 dark:from-gray-900 dark:via-orange-950 dark:to-amber-950 pb-24 md:pb-6">
+      <main className="min-h-screen w-full mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-max">
+        
+        {/* a. Welcome Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-2xl bg-white/70 dark:bg-black/30 backdrop-blur-md border border-white/20 shadow-lg shadow-amber-500/10 mb-6"
+          transition={{ duration: 0.5, delay: staggerDelay(0) }}
+          className="col-span-1 sm:col-span-2 lg:col-span-3"
         >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3 sm:gap-4 md:space-x-6 flex-1 min-w-0">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-nav-dashboard shadow-md sm:shadow-lg flex-shrink-0">
-              {user?.avatar_url ? (
-                <img 
-                  src={user.avatar_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-dashboard to-nav-dashboard/80 flex items-center justify-center">
-                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-card-foreground" />
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-600/30 dark:border-orange-500/30 shadow-lg flex-shrink-0">
+                  {user?.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center">
+                      <User className="h-8 w-8 text-white" />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg text-card-foreground truncate">
-                Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg text-card-foreground">
-                Ready to grow your orchard today?
-              </p>
-              <p className="text-xs sm:text-sm mt-1 text-muted-foreground">
-                Payment Method: USDC (USD Coin)
-              </p>
-            </div>
-          </div>
-          {/* Custom Watch */}
-          <div className="flex-shrink-0">
-            <CustomWatch compact={false} />
-          </div>
-        </div>
-        {/* Custom Time Display - Bottom of welcome section */}
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="text-center">
-            {/* Custom Date - Above custom time */}
-            {customDate && (
-              <div className="text-base sm:text-lg md:text-xl font-semibold text-card-foreground mb-1">
-                Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-200">
+                    {getGreeting()}, {profile?.first_name || profile?.display_name || 'Friend'}!
+                  </h1>
+                  <p className="text-sm text-amber-800/90 dark:text-amber-300/80 mt-1">
+                    Ready to grow your orchard today?
+                  </p>
+                </div>
               </div>
-            )}
-            {/* Custom Time - Larger font */}
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-card-foreground mb-2">
-              {getCreatorTime(currentTime, userLat, userLon).displayText}
-            </div>
-            {/* Gregorian Time - Smaller font */}
-            <div className="text-xs sm:text-sm text-muted-foreground font-mono flex items-center justify-center gap-2 flex-wrap">
-              <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
-              <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-              <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Dashboard Stats - New isolated component */}
-        <DashboardStats />
-      </div>
+        {/* b. Wallet Balance & Top-up (Primary CTA) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(1) }}
+          className="col-span-1 sm:col-span-2"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-200">
+                <Wallet className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                Wallet Balance & Top-up
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BinanceWalletManager showTopUpActions={true} onTopUp={handleTopUp} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* c. Site Visitors */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(2) }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="transition-transform hover:-translate-y-0.5"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30 h-full">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                    <p className="text-sm text-amber-800/90 dark:text-amber-300/80">
+                      Site Visitors
+                    </p>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-amber-100">
+                    <CountUp 
+                      start={0} 
+                      end={analyticsData?.visitors?.total || 0} 
+                      duration={1.2} 
+                      separator=","
+                    />
+                  </p>
+                  <p className="text-sm text-amber-800/90 dark:text-amber-300/80 mt-1">
+                    Last 30 days of real platform traffic
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* d. Active Sowers */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(3) }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="transition-transform hover:-translate-y-0.5"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30 h-full">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                    <p className="text-sm text-amber-800/90 dark:text-amber-300/80">
+                      Active Sowers
+                    </p>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-amber-100">
+                    <CountUp 
+                      start={0} 
+                      end={activeSowers} 
+                      duration={1.2} 
+                      separator=","
+                    />
+                  </p>
+                  <p className="text-sm text-amber-800/90 dark:text-amber-300/80 mt-1">
+                    Creators actively growing orchards
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* e. My Followers */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(4) }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="transition-transform hover:-translate-y-0.5"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30 h-full">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Heart className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                    <p className="text-sm text-amber-800/90 dark:text-amber-300/80">
+                      My Followers
+                    </p>
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-amber-100">
+                    <CountUp 
+                      start={0} 
+                      end={followers} 
+                      duration={1.2} 
+                      separator=","
+                    />
+                  </p>
+                  <p className="text-sm text-amber-800/90 dark:text-amber-300/80 mt-1">
+                    Community members following you
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* f. Live Activities */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(5) }}
+          className="col-span-1 sm:col-span-2 lg:col-span-3"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-200">
+                <Radio className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                Live Activities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LiveActivityWidget />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* g. Recent Bestowals */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(6) }}
+          className="col-span-1 sm:col-span-2 lg:col-span-3"
+        >
+          <Card className="rounded-3xl bg-amber-50/80 dark:bg-gray-900/60 backdrop-blur-xl border border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-200">
+                <Heart className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                Recent Bestowals
+              </CardTitle>
+              <Link to="/browse-orchards">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="border-2 border-amber-600 text-amber-700 dark:text-amber-300 rounded-2xl px-5 py-2.5 hover:bg-amber-600/10 min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+                >
+                  See all
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {recentBestowals.length === 0 ? (
+                <div className="text-center py-8">
+                  <Heart className="h-12 w-12 mx-auto text-amber-700/80 dark:text-amber-400/70 mb-3" />
+                  <p className="text-base text-gray-800 dark:text-gray-200">No bestowals yet</p>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-1">
+                    Start supporting orchards to see them here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentBestowals.map((bestowal) => (
+                    <motion.div
+                      key={bestowal.id}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-amber-50/50 dark:bg-gray-800/50 border border-amber-200/30 dark:border-orange-900/30 transition-transform hover:-translate-y-0.5"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">
+                          {bestowal.orchards?.title || 'Unknown Orchard'}
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-amber-700/80 dark:text-amber-400/70 mt-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(bestowal.created_at).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4" />
+                            {formatCurrency(bestowal.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* h. Quick Actions - Desktop */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: staggerDelay(7) }}
+          className="hidden md:flex col-span-1 sm:col-span-2 lg:col-span-3 gap-4"
+        >
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+            <Link to="/create-orchard">
+              <Button
+                className="w-full h-16 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-6 py-3 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Plant New Seed
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+            <Link to="/browse-orchards">
+              <Button
+                className="w-full h-16 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-6 py-3 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <TreePine className="h-5 w-5 mr-2" />
+                Browse Orchards
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="flex-1">
+            <Link to="/tithing" onClick={handleLetItRain}>
+              <Button
+                className="w-full h-16 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-6 py-3 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <Droplets className="h-5 w-5 mr-2" />
+                Let It Rain
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </main>
+
+      {/* Quick Actions - Mobile Sticky Bottom Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: staggerDelay(7) }}
+        className="md:hidden fixed bottom-0 left-0 right-0 pb-safe bg-amber-50/90 dark:bg-gray-900/90 backdrop-blur-xl border-t border-amber-200/30 dark:border-orange-900/30 shadow-2xl shadow-amber-900/10 dark:shadow-black/30 z-50"
+      >
+        <div className="max-w-7xl mx-auto px-4 py-3 grid grid-cols-3 gap-2">
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Link to="/create-orchard">
+              <Button
+                className="w-full h-14 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-3 py-2 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all text-xs sm:text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <Plus className="h-5 w-5 mb-1" />
+                <span>Plant Seed</span>
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Link to="/browse-orchards">
+              <Button
+                className="w-full h-14 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-3 py-2 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all text-xs sm:text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <TreePine className="h-5 w-5 mb-1" />
+                <span>Browse</span>
+              </Button>
+            </Link>
+          </motion.div>
+
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Link to="/tithing" onClick={handleLetItRain}>
+              <Button
+                className="w-full h-14 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-2xl px-3 py-2 shadow-lg hover:shadow-orange-600/40 active:scale-95 transition-all text-xs sm:text-sm min-h-[44px] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-amber-50 dark:focus:ring-offset-gray-900 focus:ring-orange-500"
+              >
+                <Droplets className="h-5 w-5 mb-1" />
+                <span>Let It Rain</span>
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
-  )
+  );
 }
