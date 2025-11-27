@@ -29,40 +29,32 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [customTime, setCustomTime] = useState<CustomTime>({ part: 1, minute: 1 });
   const [customDate, setCustomDate] = useState<CustomDate>({ year: 6028, month: 9, day: 10, weekDay: 3 });
-  const [userLat] = useState<number>(-26.2);
+  const [userLat] = useState<number>(-26.2);  // Johannesburg
   const [userLon] = useState<number>(28.0);
   const [alarms] = useState<Alarm[]>([]);
-  const [timers] = useState<Timer[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initial load + geolocation
+  // Initial load
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => { /* could update lat/lon here if you ever want */ },
-        () => console.log('Using default location')
-      );
-    }
-
     const now = new Date();
     setCustomTime(getCreatorTime(now, userLat, userLon).raw);
     setCustomDate(getCreatorDate(now));
   }, []);
 
-  // Main clock tick – 100 ms for silky smoothness
+  // Main tick — 100 ms for silky smooth hands
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
-      setCustomTime(getCreatorTime(now, userLat, userLon).raw);
+      const ct = getCreatorTime(now, userLat, userLon);
+      setCustomTime(ct.raw);
       setCustomDate(getCreatorDate(now));
 
-      // Alarm / timer checks
+      // Alarm check
       if (now.getMilliseconds() < 100) {
         alarms.forEach(alarm => {
-          if (alarm.enabled && getCreatorTime(now, userLat, userLon).raw.part === alarm.part &&
-              getCreatorTime(now, userLat, userLon).raw.minute === alarm.minute) {
-            toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
+          if (alarm.enabled && ct.raw.part === alarm.part && ct.raw.minute === alarm.minute) {
+            toast.success(`Alarm: ${alarm.label || 'Time!'}`);
             audioRef.current?.play().catch(() => {});
           }
         });
@@ -72,48 +64,37 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   }, [alarms, userLat, userLon]);
 
   // ──────────────────────────────────────────────────────────────
-  // THE ONE AND ONLY TRUTH — 86 400 seconds per day FROM SUNRISE
+  // THE ONE AND ONLY ETERNAL TRUTH — 86 400 seconds per day
   // 18 parts × 4 800 s = 86 400 s → 80 Creator minutes per part
-  // Each Creator minute = 60 real seconds
-  // Minute hand: 20° anti-clockwise over 4 800 real seconds (80 Creator minutes)
-  // Seconds hand: normal 60-second anti-clockwise cycle
+  // 1 Creator minute = 60 real seconds → perfect alignment
+  // All hands anti-clockwise from sunrise
   // ──────────────────────────────────────────────────────────────
-  
-  // Get sunrise-based elapsed time for seconds hand
+
   const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
-  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
-  let elapsed = nowMinutes - sunriseMinutes;
-  if (elapsed < 0) elapsed += 1440; // Overnight wrap
-  const realSecondsSinceSunrise = elapsed * 60;
-  
-  // Part (hour) hand – your existing utility is already perfect
+
+  const nowMinutesFloat =
+    currentTime.getHours() * 60 +
+    currentTime.getMinutes() +
+    currentTime.getSeconds() / 60 +
+    currentTime.getMilliseconds() / 60000;
+
+  let elapsedMinutes = nowMinutesFloat - sunriseMinutes;
+  if (elapsedMinutes < 0) elapsedMinutes += 1440;
+
+  const realSecondsSinceSunrise = elapsedMinutes * 60;
+
+  // Part (hour) hand — already perfect via utility
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
-  // ──────────────────────────────────────────────────────────────
-  // MINUTE HAND — Custom time system: 60 custom minutes per part
-  // Each custom minute = 60 real seconds, so 60 custom minutes = 3600 real seconds
-  // Minute hand moves 20° anti-clockwise over 60 custom minutes (3600 real seconds)
-  // ──────────────────────────────────────────────────────────────
-  const secondsIntoCurrentPart = realSecondsSinceSunrise % 3600; // 0-3599 seconds into current part
-  const customMinutesIntoPart = secondsIntoCurrentPart / 60; // 0-59.983 custom minutes into part
-  const minuteProgress = (customMinutesIntoPart / 60) * 20; // 0 → 20° progress through part's wedge
-  // Get the starting angle of the current part (where the part marker is)
-  const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
-  // Minute hand starts at part marker and moves anti-clockwise
-  const mathMinuteAngle = partStartAngle - minuteProgress; // Anti-clockwise from part marker
-  const cssMinuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
+  // Minute hand — 20° anti-clockwise over exactly 4 800 real seconds
+  const secondsIntoPart = realSecondsSinceSunrise % 4800;
+  const minuteDegrees = (secondsIntoPart / 4800) * 20;
+  const cssMinuteAngle = 90 - minuteDegrees;   // pure anti-clockwise
 
-  // Seconds hand – Custom time system: 60 real seconds per custom minute
-  // Seconds within current custom minute (0-59 real seconds)
-  const customSeconds = secondsIntoCurrentPart % 60; // 0-59 seconds within current custom minute
-  const secondsDegrees = (customSeconds / 60) * 360; // 0 → 360° (full rotation in 60 seconds)
-  // For anti-clockwise: subtract degrees from starting position (90° = 12 o'clock)
-  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12 (top)
-  
-  // Debug: verify seconds calculation matches dashboard
-  // At 0 seconds: cssSecondsAngle = 90° (pointing at 12/Part 1)
-  // At 30 seconds: cssSecondsAngle = -90° (pointing at 6/Part 10)
-  // At 60 seconds: cssSecondsAngle = -270° = 90° (back to 12/Part 1)
+  // Seconds hand — normal 60-second anti-clockwise cycle
+  const realSeconds = realSecondsSinceSunrise % 60;
+  const secondsDegrees = (realSeconds / 60) * 360;
+  const cssSecondsAngle = 90 - secondsDegrees;
 
   // Visuals
   const bgGradient = getTimeOfPartGradient(customTime.part);
@@ -137,6 +118,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
             style={{ background: bgGradient }}>
         <CardContent className={cn('p-4', compact && 'p-2')}>
           <div className="relative" style={{ width: `${watchSize}px`, height: `${watchSize}px` }}>
+
             {/* Bezel */}
             <div className="absolute inset-0 rounded-full"
                  style={{
@@ -156,6 +138,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                    boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)',
                    overflow: 'visible',
                  }}>
+
               {/* Starry sky */}
               <div className="absolute inset-0 opacity-50"
                    style={{
@@ -181,7 +164,8 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                          }}>{n}</div>
                     <div className="absolute rounded-full"
                          style={{
-                           width: watchSize * 0.018, height: watchSize * 0.018,
+                           width: watchSize * 0.018,
+                           height: watchSize * 0.018,
                            left: `${x}%`, top: `${y}%`,
                            transform: 'translate(-50%, -50%)',
                            background: isCurrent ? '#ffd700' : 'white',
@@ -193,11 +177,10 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* PART HAND (thick gold) */}
               <motion.div
-                className="absolute"
                 style={{
-                  width: watchSize * 0.012, 
+                  width: watchSize * 0.012,
                   height: watchSize * 0.28,
-                  left: '50%', 
+                  left: '50%',
                   bottom: '50%',
                   marginLeft: `-${watchSize * 0.006}px`,
                   transformOrigin: '50% 100%',
@@ -210,13 +193,12 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                 transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               />
 
-              {/* MINUTE HAND – NOW PERFECT */}
+              {/* MINUTE HAND — PURE AND ETERNAL */}
               <motion.div
-                className="absolute"
                 style={{
-                  width: watchSize * 0.008, 
+                  width: watchSize * 0.008,
                   height: watchSize * 0.38,
-                  left: '50%', 
+                  left: '50%',
                   bottom: '50%',
                   marginLeft: `-${watchSize * 0.004}px`,
                   transformOrigin: '50% 100%',
@@ -229,13 +211,12 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                 transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
               />
 
-              {/* SECONDS HAND – 60-second anti-clockwise */}
+              {/* SECONDS HAND — 60-second anti-clockwise */}
               <motion.div
-                className="absolute"
                 style={{
-                  width: watchSize * 0.006, 
+                  width: watchSize * 0.006,
                   height: watchSize * 0.42,
-                  left: '50%', 
+                  left: '50%',
                   bottom: '50%',
                   marginLeft: `-${watchSize * 0.003}px`,
                   transformOrigin: '50% 100%',
@@ -251,7 +232,8 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
               {/* Center gem */}
               <div className="absolute rounded-full"
                    style={{
-                     width: watchSize * 0.045, height: watchSize * 0.045,
+                     width: watchSize * 0.045,
+                     height: watchSize * 0.045,
                      left: '50%', top: '50%',
                      transform: 'translate(-50%, -50%)',
                      background: 'radial-gradient(circle at 30% 30%, #f4e4bc, #d4af37)',
