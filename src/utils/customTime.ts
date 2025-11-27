@@ -38,8 +38,8 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
   let elapsed = nowMinutes - sunriseMinutes;
   if (elapsed < 0) elapsed += 1440;  // Overnight
 
-  const partNumber = Math.floor(elapsed / 80) + 1;
-  let minuteInPart = Math.floor(elapsed % 80) + 1; // 1-80, not 0-79
+  const partNumber = Math.floor(elapsed / 60) + 1; // 60 minutes per part instead of 80
+  let minuteInPart = Math.floor(elapsed % 60) + 1; // 1-60, not 0-59
   const displayMinute = minuteInPart;
 
   const ordinal = (n: number): string => {
@@ -66,8 +66,8 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
  */
 export function toCustomTime(standardMinutes: number): CustomTime {
   const totalMinutes = standardMinutes % 1440; // Ensure within 24 hours
-  const part = Math.floor(totalMinutes / 80) + 1; // 1-18
-  const minute = (totalMinutes % 80) + 1; // 1-80 (was 0-79)
+  const part = Math.floor(totalMinutes / 60) + 1; // 1-24 (60 minutes per part)
+  const minute = (totalMinutes % 60) + 1; // 1-60
   
   return { part, minute };
 }
