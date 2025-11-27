@@ -129,8 +129,11 @@ export function CustomWatch({ className, compact = false, showControls = false }
   }, [alarms, userLat, userLon]);
 
   // Calculate angles for hands (anti-clockwise)
-  const partAngle = getAntiClockwiseAngle({ part: customTime.part, minute: 1 }); // Hour hand (part indicator)
-  const minuteAngle = getAntiClockwiseAngle(customTime); // Minute hand (within part)
+  // Hour hand (part indicator): accounts for both part and minutes within part (like a real clock hour hand)
+  const partAngle = getAntiClockwiseAngle(customTime);
+  // Minute hand: only accounts for minutes within the current part (relative to part start)
+  const partStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part
+  const minuteAngle = partStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
