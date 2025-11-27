@@ -160,11 +160,15 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* PART HAND */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.012, height: watchSize * 0.28,
-                  left: '50%', bottom: '50%',
+                  width: watchSize * 0.012, 
+                  height: watchSize * 0.28,
+                  left: '50%', 
+                  top: '50%',
                   marginLeft: `-${watchSize * 0.006}px`,
-                  transformOrigin: '50% 100%',
+                  marginTop: `-${watchSize * 0.28}px`,
+                  transformOrigin: `${watchSize * 0.006}px ${watchSize * 0.28}px`,
                   background: 'linear-gradient(to top, #d4af37, #f4e4bc, #d4af37)',
                   borderRadius: '3px',
                   boxShadow: '0 0 10px gold',
@@ -176,11 +180,15 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* MINUTE HAND — YOUR FINAL TRUTH */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.008, height: watchSize * 0.38,
-                  left: '50%', bottom: '50%',
+                  width: watchSize * 0.008, 
+                  height: watchSize * 0.38,
+                  left: '50%', 
+                  top: '50%',
                   marginLeft: `-${watchSize * 0.004}px`,
-                  transformOrigin: '50% 100%',
+                  marginTop: `-${watchSize * 0.38}px`,
+                  transformOrigin: `${watchSize * 0.004}px ${watchSize * 0.38}px`,
                   background: 'linear-gradient(to top, #c0c0c0, #e8e8e8, #c0c0c0)',
                   borderRadius: '2px',
                   boxShadow: '0 0 8px silver',
@@ -192,11 +200,15 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
               {/* SECONDS HAND */}
               <motion.div
+                className="absolute"
                 style={{
-                  width: watchSize * 0.006, height: watchSize * 0.42,
-                  left: '50%', bottom: '50%',
+                  width: watchSize * 0.006, 
+                  height: watchSize * 0.42,
+                  left: '50%', 
+                  top: '50%',
                   marginLeft: `-${watchSize * 0.003}px`,
-                  transformOrigin: '50% 100%',
+                  marginTop: `-${watchSize * 0.42}px`,
+                  transformOrigin: `${watchSize * 0.003}px ${watchSize * 0.42}px`,
                   background: 'linear-gradient(to top, #dc2626, #ef4444, #dc2626)',
                   borderRadius: '2px',
                   boxShadow: '0 0 10px #dc2626',
