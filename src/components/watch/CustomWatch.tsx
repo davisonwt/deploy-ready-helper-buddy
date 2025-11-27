@@ -98,9 +98,12 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
   // Seconds hand – 60 real seconds = one full 360° anti-clockwise rotation
   // Uses actual current time seconds (0-59) to sync with dashboard display
+  // Dashboard shows: currentTime.getSeconds() (0-59)
   const currentSeconds = currentTime.getSeconds() + currentTime.getMilliseconds() / 1000; // 0.0 - 59.999
   const secondsDegrees = (currentSeconds / 60) * 360; // 0 → 360° (full rotation in 60 seconds)
-  const cssSecondsAngle = 90 + secondsDegrees; // ANTI-CLOCKWISE from 12 (top) - positive = anti-clockwise
+  // For anti-clockwise: subtract degrees from starting position (90° = 12 o'clock)
+  // CSS rotate: positive = clockwise, negative = anti-clockwise
+  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12 (top)
   
   // Debug: verify seconds calculation matches dashboard
   // At 0 seconds: cssSecondsAngle = 90° (pointing at 12/Part 1)
