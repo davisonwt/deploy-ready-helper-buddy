@@ -88,8 +88,8 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
 
   // Minute hand – 20° over exactly 4 800 real seconds (80 real minutes)
   const secondsIntoCurrentPart = realSecondsToday % 4800;
-  const minuteDegrees = (secondsIntoCurrentPart / 4800) * 20;   // 0 → 20°
-  const cssMinuteAngle = 90 - minuteDegrees;                   // anti-clockwise from 12
+  const secondsInMinuteFloat = (secondsIntoCurrentPart % 80);
+  const minuteAngle = 450 - (110 - (secondsInMinuteFloat / 80) * 20);
 
   // Seconds hand – normal 60-second anti-clockwise cycle
   const realSeconds = realSecondsToday % 60;
@@ -206,7 +206,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
                   boxShadow: '0 0 8px silver',
                   zIndex: 11,
                 }}
-                animate={{ rotate: cssMinuteAngle }}
+                animate={{ rotate: minuteAngle }}
                 transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
               />
 
