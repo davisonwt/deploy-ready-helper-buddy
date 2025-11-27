@@ -72,23 +72,28 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   }, [alarms, userLat, userLon]);
 
   // ──────────────────────────────────────────────────────────────
-  // THE ONE AND ONLY TRUTH — 86 400 seconds per day
-  // 18 parts × 4 800 s = 86 400 s → 80 real minutes per part
-  // Minute hand: 20° anti-clockwise over 4 800 real seconds
+  // THE ONE AND ONLY TRUTH — 86 400 seconds per day FROM SUNRISE
+  // 18 parts × 4 800 s = 86 400 s → 80 Creator minutes per part
+  // Each Creator minute = 60 real seconds
+  // Minute hand: 20° anti-clockwise over 4 800 real seconds (80 Creator minutes)
   // Seconds hand: normal 60-second anti-clockwise cycle
   // ──────────────────────────────────────────────────────────────
-  const realSecondsToday =
-    currentTime.getHours() * 3600 +
-    currentTime.getMinutes() * 60 +
-    currentTime.getSeconds() +
-    currentTime.getMilliseconds() / 1000;
-
+  
+  // Get sunrise-based elapsed time (same as getCreatorTime uses)
+  const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
+  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
+  let elapsed = nowMinutes - sunriseMinutes;
+  if (elapsed < 0) elapsed += 1440; // Overnight wrap
+  
+  // Convert to seconds since sunrise
+  const realSecondsSinceSunrise = elapsed * 60;
+  
   // Part (hour) hand – your existing utility is already perfect
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // Minute hand – starts at current part marker, moves 20° anti-clockwise over 80 Creator minutes
   // Each Creator minute = 60 real seconds, so 80 Creator minutes = 4800 real seconds
-  const secondsIntoCurrentPart = realSecondsToday % 4800;
+  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800;
   const minuteDegrees = (secondsIntoCurrentPart / 4800) * 20; // 0 → 20° anti-clockwise
   // Get the starting angle of the current part (where the part marker is)
   const partStartAngle = getAntiClockwiseAngle(customTime);
@@ -96,10 +101,10 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const mathMinuteAngle = partStartAngle - minuteDegrees; // Anti-clockwise from part marker
   const cssMinuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
 
-  // Seconds hand – normal 60-second anti-clockwise cycle
-  const realSeconds = realSecondsToday % 60;
+  // Seconds hand – normal 60-second anti-clockwise cycle (from sunrise)
+  const realSeconds = realSecondsSinceSunrise % 60;
   const secondsDegrees = (realSeconds / 60) * 360;
-  const cssSecondsAngle = 90 - secondsDegrees;                 // anti-clockwise from 12
+  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12
 
   // Visuals
   const bgGradient = getTimeOfPartGradient(customTime.part);
