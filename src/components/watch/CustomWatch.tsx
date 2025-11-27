@@ -90,23 +90,24 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
   // ──────────────────────────────────────────────────────────────
-  // MINUTE HAND — 60 real minutes = one full 360° anti-clockwise rotation
-  // Uses actual current time minutes (0-59) to sync with dashboard display
-  // Dashboard shows: customTime.minute (1-80) but we want 60-minute cycle
-  // Clock uses: currentTime.getMinutes() + seconds for smooth animation
-  const currentMinutes = currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000; // 0.0 - 59.999
-  const minutesDegrees = (currentMinutes / 60) * 360; // 0 → 360° (full rotation in 60 minutes)
-  // For anti-clockwise: subtract degrees from starting position (90° = 12 o'clock)
-  // CSS rotate: positive = clockwise, negative = anti-clockwise
-  const cssMinuteAngle = 90 - minutesDegrees; // anti-clockwise from 12 (top)
+  // MINUTE HAND — Custom time system: 80 custom minutes per part
+  // Each custom minute = 60 real seconds, so 80 custom minutes = 4800 real seconds
+  // Minute hand moves 20° anti-clockwise over 80 custom minutes (4800 real seconds)
+  // ──────────────────────────────────────────────────────────────
+  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800; // 0-4799 seconds into current part
+  const customMinutesIntoPart = secondsIntoCurrentPart / 60; // 0-79.983 custom minutes into part
+  const minuteProgress = (customMinutesIntoPart / 80) * 20; // 0 → 20° progress through part's wedge
+  // Get the starting angle of the current part (where the part marker is)
+  const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
+  // Minute hand starts at part marker and moves anti-clockwise
+  const mathMinuteAngle = partStartAngle - minuteProgress; // Anti-clockwise from part marker
+  const cssMinuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
 
-  // Seconds hand – 60 real seconds = one full 360° anti-clockwise rotation
-  // Uses actual current time seconds (0-59) to sync with dashboard display
-  // Dashboard shows: currentTime.getSeconds() (0-59)
-  const currentSeconds = currentTime.getSeconds() + currentTime.getMilliseconds() / 1000; // 0.0 - 59.999
-  const secondsDegrees = (currentSeconds / 60) * 360; // 0 → 360° (full rotation in 60 seconds)
+  // Seconds hand – Custom time system: 60 real seconds per custom minute
+  // Seconds within current custom minute (0-59 real seconds)
+  const customSeconds = secondsIntoCurrentPart % 60; // 0-59 seconds within current custom minute
+  const secondsDegrees = (customSeconds / 60) * 360; // 0 → 360° (full rotation in 60 seconds)
   // For anti-clockwise: subtract degrees from starting position (90° = 12 o'clock)
-  // CSS rotate: positive = clockwise, negative = anti-clockwise
   const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12 (top)
   
   // Debug: verify seconds calculation matches dashboard
