@@ -45,6 +45,8 @@ import { CustomWatch } from '@/components/watch/CustomWatch'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
+import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
+import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
 
 
 export default function DashboardPage() {
@@ -872,6 +874,47 @@ export default function DashboardPage() {
           {/* Leaderboard Widget */}
           <div className="mt-4 sm:mt-6 md:mt-8">
             <LeaderboardWidget />
+          </div>
+
+          {/* Marketing Thumbnails Section */}
+          <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
+            <Card 
+              className="border shadow-xl backdrop-blur-xl overflow-hidden"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
+              <CardHeader className="p-4 sm:p-5 md:p-6">
+                <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
+                  Become a 2SG Ambassador
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="aspect-video w-full">
+                  <AmbassadorThumbnail />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="border shadow-xl backdrop-blur-xl overflow-hidden"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
+              <CardHeader className="p-4 sm:p-5 md:p-6">
+                <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
+                  GoSat's Ghost Access – Real-Time Community Oversight
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="aspect-video w-full">
+                  <GoSatGhostAccessThumbnail />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Actions */}
