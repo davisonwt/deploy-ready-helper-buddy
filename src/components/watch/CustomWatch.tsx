@@ -79,27 +79,25 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   // Seconds hand: normal 60-second anti-clockwise cycle
   // ──────────────────────────────────────────────────────────────
   
-  // Get sunrise-based elapsed time (same as getCreatorTime uses)
-  const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
-  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
-  let elapsed = nowMinutes - sunriseMinutes;
-  if (elapsed < 0) elapsed += 1440; // Overnight wrap
-  
-  // Convert to seconds since sunrise
-  const realSecondsSinceSunrise = elapsed * 60;
-  
   // Part (hour) hand – your existing utility is already perfect
   const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
 
-  // Minute hand – positioned based on customTime.minute (1-80)
-  // At minute 1 → 0° progress, at minute 80 → 20° progress
-  // Progress through the part: (minute - 1) / 80 gives 0.0 to 0.9875
-  const minuteProgress = ((customTime.minute - 1) / 80) * 20; // 0 → 19.75° progress
-  // Get the starting angle of the current part (where the part marker is)
-  const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle only
-  // Minute hand starts at part marker and moves anti-clockwise
-  const mathMinuteAngle = partStartAngle - minuteProgress; // Anti-clockwise from part marker
-  const cssMinuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
+  // ──────────────────────────────────────────────────────────────
+  // MINUTE HAND — PURE, UNTOUCHABLE, SUNRISE-BASED TRUTH
+  // Never trust customTime.minute — it can lie
+  // Only real seconds since sunrise are holy
+  // ──────────────────────────────────────────────────────────────
+  const { sunriseMinutes } = getCreatorTime(currentTime, userLat, userLon);
+  const nowMinutesFloat = currentTime.getHours() * 60 + 
+                          currentTime.getMinutes() + 
+                          currentTime.getSeconds() / 60 + 
+                          currentTime.getMilliseconds() / 60000;
+  let elapsedMinutes = nowMinutesFloat - sunriseMinutes;
+  if (elapsedMinutes < 0) elapsedMinutes += 1440;
+  const realSecondsSinceSunrise = elapsedMinutes * 60;
+  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800;
+  const minuteDegrees = (secondsIntoCurrentPart / 4800) * 20;  // 0 → 20° smooth
+  const cssMinuteAngle = 90 - minuteDegrees;                  // anti-clockwise from 12
 
   // Seconds hand – normal 60-second anti-clockwise cycle (from sunrise)
   const realSeconds = realSecondsSinceSunrise % 60;
