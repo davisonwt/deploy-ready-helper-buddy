@@ -89,6 +89,7 @@ export function CustomWatch({ className, compact = false, showControls = false }
   }, []);
 
   useEffect(() => {
+    // Update more frequently (every 100ms) for smooth seconds hand animation
     const interval = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
@@ -99,31 +100,35 @@ export function CustomWatch({ className, compact = false, showControls = false }
       
       setCustomDate(getCreatorDate(now));
       
-      // Check alarms
-      alarms.forEach(alarm => {
-        if (alarm.enabled && creatorTime.raw.part === alarm.part && creatorTime.raw.minute === alarm.minute) {
-          toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
-          if (audioRef.current) {
-            audioRef.current.play().catch(() => {});
-          }
-        }
-      });
-      
-      // Update timers
-      setTimers(prev => prev.map(timer => {
-        if (timer.remaining > 0) {
-          const newRemaining = timer.remaining - 1;
-          if (newRemaining === 0) {
-            toast.success(`Timer: ${timer.label || 'Timer'}`);
+      // Check alarms (only check on full seconds to avoid spam)
+      if (now.getMilliseconds() < 100) {
+        alarms.forEach(alarm => {
+          if (alarm.enabled && creatorTime.raw.part === alarm.part && creatorTime.raw.minute === alarm.minute) {
+            toast.success(`Alarm: ${alarm.label || 'Alarm'}`);
             if (audioRef.current) {
               audioRef.current.play().catch(() => {});
             }
           }
-          return { ...timer, remaining: newRemaining };
-        }
-        return timer;
-      }).filter(timer => timer.remaining > 0));
-    }, 1000);
+        });
+      }
+      
+      // Update timers (only decrement on full seconds)
+      if (now.getMilliseconds() < 100) {
+        setTimers(prev => prev.map(timer => {
+          if (timer.remaining > 0) {
+            const newRemaining = timer.remaining - 1;
+            if (newRemaining === 0) {
+              toast.success(`Timer: ${timer.label || 'Timer'}`);
+              if (audioRef.current) {
+                audioRef.current.play().catch(() => {});
+              }
+            }
+            return { ...timer, remaining: newRemaining };
+          }
+          return timer;
+        }).filter(timer => timer.remaining > 0));
+      }
+    }, 100); // Update every 100ms for smooth animation
 
     return () => clearInterval(interval);
   }, [alarms, userLat, userLon]);
@@ -131,6 +136,17 @@ export function CustomWatch({ className, compact = false, showControls = false }
   // Calculate angles for hands (anti-clockwise)
   // Convert from mathematical angle (90° = top) to CSS rotate angle (0° = top, clockwise)
   // Formula: CSS_angle = 450 - math_angle (converts to CSS convention and accounts for clockwise rotation)
+  
+  // Calculate seconds within current custom minute (0-79, since each minute has 80 seconds)
+  const sunriseMinutes = getCreatorTime(currentTime, userLat, userLon).sunriseMinutes;
+  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
+  let elapsed = nowMinutes - sunriseMinutes;
+  if (elapsed < 0) elapsed += 1440;
+  
+  // Calculate which second we're at within the current custom minute (including fractional for smooth animation)
+  // elapsed is in minutes, so elapsed % 1 gives fractional part of current minute
+  // Multiply by 80 to get seconds (0-79.99) within the custom minute
+  const secondsInMinute = (elapsed % 1) * 80;
   
   // Hour hand (part indicator): accounts for both part and minutes within part (like a real clock hour hand)
   const mathPartAngle = getAntiClockwiseAngle(customTime);
@@ -140,6 +156,12 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartStartAngle = 90 + (customTime.part - 1) * 20; // Start angle of current part (mathematical)
   const mathMinuteAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20; // Minutes within part (mathematical)
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
+  
+  // Seconds hand: completes full 360-degree rotation in 80 seconds
+  // Each second = 360/80 = 4.5 degrees
+  // Starts at top (90° math = 0° CSS) and rotates clockwise
+  const mathSecondsAngle = 90 + (secondsInMinute / 80) * 360; // Full rotation in 80 seconds
+  const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
   
   const bgGradient = getTimeOfPartGradient(customTime.part);
   const { accent } = getTimeOfPartColor(customTime.part);
