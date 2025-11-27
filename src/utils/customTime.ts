@@ -67,8 +67,8 @@ export function getCreatorTime(date: Date = new Date(), userLat: number = -26.2,
  */
 export function toCustomTime(standardMinutes: number): CustomTime {
   const totalMinutes = standardMinutes % 1440; // Ensure within 24 hours
-  const part = Math.floor(totalMinutes / 60) + 1; // 1-24 (60 minutes per part)
-  const minute = (totalMinutes % 60) + 1; // 1-60
+  const part = Math.floor(totalMinutes / 80) + 1; // 1-18 (80 minutes per part)
+  const minute = (totalMinutes % 80) + 1; // 1-80
   
   return { part, minute };
 }
@@ -162,8 +162,8 @@ function getOrdinalSuffix(num: number): string {
 export function getAntiClockwiseAngle(customTime: CustomTime): number {
   // Each part is 20 degrees (360 / 18)
   const partAngle = (customTime.part - 1) * 20;
-  // Minutes within part add proportional angle (60 minutes per part instead of 80)
-  const minutesAngle = ((customTime.minute - 1) / 60) * 20;
+  // Minutes within part add proportional angle (80 minutes per part)
+  const minutesAngle = ((customTime.minute - 1) / 80) * 20;
   // Start at 90° (top), add angle for anti-clockwise movement
   return 90 + partAngle + minutesAngle;
 }
