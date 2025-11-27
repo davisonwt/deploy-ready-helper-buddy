@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PartHand } from './PartHand';
+import { MinuteHand } from './MinuteHand';
 
 interface CustomWatchProps {
   className?: string;
@@ -70,17 +71,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   let secsSinceSunrise = nowSec - sunriseSec;
   if (secsSinceSunrise < 0) secsSinceSunrise += 86400;  // Overnight wrap
 
-  // Part hand — already perfect
-  const partHandAngle = 450 - getAntiClockwiseAngle(customTime);
-
-  // MINUTE HAND — Positioned based on customTime.minute (1-80) within current part
-  // Get the starting angle of the current part (where the part marker is)
-  const partStartAngle = 90 + (customTime.part - 1) * 20; // Part marker angle (clockwise from 12)
-  // Calculate minute progress: (minute - 1) / 80 gives 0.0 to 0.9875, then * 20 for degrees
-  const minuteProgress = ((customTime.minute - 1) / 80) * 20; // 0 → 19.75° progress (80 minutes per part)
-  // Minute hand starts at part marker and moves anti-clockwise
-  const mathMinuteAngle = partStartAngle - minuteProgress; // Anti-clockwise from part marker
-  const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotation
+  // Part hand — already perfect (now using PartHand component)
 
   // SECONDS HAND — normal 60-second anti-clockwise
   const realSeconds = secsSinceSunrise % 60;
@@ -166,25 +157,8 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
               {/* PART HAND */}
               <PartHand watchSize={watchSize} />
 
-              {/* MINUTE HAND — YOUR FINAL TRUTH */}
-              <motion.div
-                className="absolute"
-                style={{
-                  width: watchSize * 0.008, 
-                  height: watchSize * 0.38,
-                  left: '50%', 
-                  top: '50%',
-                  marginLeft: `-${watchSize * 0.004}px`,
-                  marginTop: `-${watchSize * 0.38}px`,
-                  transformOrigin: `${watchSize * 0.004}px ${watchSize * 0.38}px`,
-                  background: 'linear-gradient(to top, #c0c0c0, #e8e8e8, #c0c0c0)',
-                  borderRadius: '2px',
-                  boxShadow: '0 0 8px silver',
-                  zIndex: 11,
-                }}
-                animate={{ rotate: minuteAngle }}
-                transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
-              />
+              {/* MINUTE HAND — FINAL ETERNAL TRUTH */}
+              <MinuteHand watchSize={watchSize} />
 
               {/* SECONDS HAND */}
               <motion.div
