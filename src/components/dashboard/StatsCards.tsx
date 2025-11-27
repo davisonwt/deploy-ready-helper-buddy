@@ -60,13 +60,23 @@ export function StatsCards() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="animate-pulse bg-amber-900/30 border-amber-500/20 h-32" />
+          <Card key={i} className="animate-pulse rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 border border-amber-500/20 h-32" />
         ))}
       </div>
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+          <CardContent className="p-6 text-center text-amber-300/60">
+            <p className="text-sm">Loading stats...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const cardVariants = {
     hidden: { scale: 0.9, opacity: 0 },
@@ -102,13 +112,13 @@ export function StatsCards() {
                 </motion.div>
               )}
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
                 {stats.registeredSowers.toLocaleString()}
               </span>
-              {stats.registeredSowersDelta > 0 && (
-                <Badge className={`bg-transparent border ${stats.registeredSowersDelta >= 10 ? 'text-emerald-400 border-emerald-400' : 'text-amber-400 border-amber-400'}`}>
-                  +{stats.registeredSowersDelta} today
+              {stats.registeredSowersDelta !== 0 && (
+                <Badge className={`bg-transparent border text-xs ${stats.registeredSowersDelta >= 10 ? 'text-emerald-400 border-emerald-400' : stats.registeredSowersDelta > 0 ? 'text-amber-400 border-amber-400' : 'text-red-400 border-red-400'}`}>
+                  {stats.registeredSowersDelta > 0 ? '+' : ''}{stats.registeredSowersDelta} today
                 </Badge>
               )}
             </div>
@@ -134,12 +144,12 @@ export function StatsCards() {
               </motion.div>
               <span className="text-sm text-amber-300/80">My Followers</span>
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
                 {stats.followers.toLocaleString()}
               </span>
               {stats.followersDelta !== 0 && (
-                <Badge className={`bg-transparent border ${stats.followersDelta > 0 ? 'text-emerald-400 border-emerald-400' : 'text-red-400 border-red-400'}`}>
+                <Badge className={`bg-transparent border text-xs ${stats.followersDelta > 0 ? 'text-emerald-400 border-emerald-400' : 'text-red-400 border-red-400'}`}>
                   {stats.followersDelta > 0 ? '+' : ''}{stats.followersDelta} today
                 </Badge>
               )}
@@ -161,19 +171,24 @@ export function StatsCards() {
               <Sparkles className="h-5 w-5 text-amber-400" />
               <span className="text-sm text-amber-300/80">Daily New Followers</span>
             </div>
-            <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white block">
-              {stats.dailyNewFollowers}
-            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+                {stats.dailyNewFollowers}
+              </span>
+            </div>
             {stats.dailyNewFollowers >= 5 && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-2"
               >
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-400">
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-400 text-xs">
                   🎉 Milestone!
                 </Badge>
               </motion.div>
+            )}
+            {stats.dailyNewFollowers === 0 && (
+              <p className="text-xs text-amber-300/60 mt-2">Start growing your community!</p>
             )}
           </CardContent>
         </Card>
@@ -197,14 +212,16 @@ export function StatsCards() {
                 {formatCurrency(stats.dailyBestowals)}
               </span>
             </div>
-            {stats.dailyBestowalsProducts && stats.dailyBestowalsProducts.length > 0 && (
-              <div className="flex gap-1 mt-2">
+            {stats.dailyBestowalsProducts && stats.dailyBestowalsProducts.length > 0 ? (
+              <div className="flex gap-1 mt-2 flex-wrap">
                 {stats.dailyBestowalsProducts.slice(0, 3).map((product, i) => (
-                  <Badge key={i} className="bg-amber-500/20 text-amber-300 border-amber-400 text-xs">
+                  <Badge key={i} className="bg-amber-500/20 text-amber-300 border-amber-400 text-xs truncate max-w-full">
                     {product.name}
                   </Badge>
                 ))}
               </div>
+            ) : stats.dailyBestowals === 0 && (
+              <p className="text-xs text-amber-300/60 mt-2">Make your first bestowal today!</p>
             )}
           </CardContent>
         </Card>
