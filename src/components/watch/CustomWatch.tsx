@@ -150,17 +150,15 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const mathPartAngle = getAntiClockwiseAngle(customTime);
   const partAngle = 450 - mathPartAngle; // Convert to CSS rotate convention
   
-  /* --------  MINUTE HAND – 80 MIN = 360° ANTI-CLOCKWISE, NO RESET  -------- */
-  // seconds since TODAY'S SUNRISE (0 – 86 400)
-  const sunriseSec = sunriseMinutes * 60;
-  const secsToday = (currentTime.getHours() * 3600) + (currentTime.getMinutes() * 60) + currentTime.getSeconds();
-  let secsSinceSunrise = secsToday - sunriseSec;
-  if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
+  /* --------  MINUTE HAND – PHASE-LOCKED TO PART CYCLE  -------- */
+  // minutes elapsed since TODAY'S SUNRISE (0 – 1 440)
+  let minsSinceSunrise = elapsed; // already calculated above
+  if (minsSinceSunrise < 0) minsSinceSunrise += 1440;
 
-  // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (NEGATIVE = anti-clockwise)
-  // NO MODULO – let it grow past -360°
-  const minuteDeg = - secsSinceSunrise * 0.05625; // -∞ → 0
-  const minuteAngle = 450 - (90 + minuteDeg); // CSS convention
+  // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (ANTI-CLOCKWISE = negative)
+  // NO MODULO – let angle grow past -360°
+  const minuteDeg = - (minsSinceSunrise * 60) * 0.05625; // -∞ → 0
+  const minuteAngle = 450 - (90 + minuteDeg);
   
   /* --------  SECONDS HAND – 80 SECONDS = 360° ANTI-CLOCKWISE  -------- */
   // 360° per 80 seconds → 4.5°/s ANTI-CLOCKWISE (negative in CSS)
