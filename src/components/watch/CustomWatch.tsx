@@ -100,7 +100,7 @@ export function CustomWatch({ className, compact = false }: CustomWatchProps) {
   // Uses actual current time seconds (0-59) to sync with dashboard display
   const currentSeconds = currentTime.getSeconds() + currentTime.getMilliseconds() / 1000; // 0.0 - 59.999
   const secondsDegrees = (currentSeconds / 60) * 360; // 0 → 360° (full rotation in 60 seconds)
-  const cssSecondsAngle = 90 - secondsDegrees; // anti-clockwise from 12 (top)
+  const cssSecondsAngle = 90 + secondsDegrees; // ANTI-CLOCKWISE from 12 (top) - positive = anti-clockwise
   
   // Debug: verify seconds calculation matches dashboard
   // At 0 seconds: cssSecondsAngle = 90° (pointing at 12/Part 1)
