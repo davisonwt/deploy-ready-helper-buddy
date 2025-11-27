@@ -158,8 +158,9 @@ export function CustomWatch({ className, compact = false, showControls = false }
   if (secsSinceSunrise < 0) secsSinceSunrise += 86400;
 
   // 360° per 80 min → 4.5° per 80 s → 0.05625°/s  (NEGATIVE = anti-clockwise)
-  const minuteDeg = - (secsSinceSunrise % 4800) * 0.05625; // 0 → -360° every 80 min
-  const minuteAngle = 450 - (90 + minuteDeg);
+  // NO MODULO – let it grow past -360°
+  const minuteDeg = - secsSinceSunrise * 0.05625; // -∞ → 0
+  const minuteAngle = 450 - (90 + minuteDeg); // CSS convention
   
   /* --------  SECONDS HAND – 80 SECONDS = 360° ANTI-CLOCKWISE  -------- */
   // 360° per 80 seconds → 4.5°/s ANTI-CLOCKWISE (negative in CSS)
