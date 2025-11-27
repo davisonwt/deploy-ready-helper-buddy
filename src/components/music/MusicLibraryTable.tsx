@@ -57,6 +57,7 @@ export function MusicLibraryTable({
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Safely extract functions with fallbacks
   const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
@@ -126,7 +127,7 @@ export function MusicLibraryTable({
     }
 
     try {
-      setProcessing(true);
+      setIsProcessing(true);
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
       toast.success('Bestowal completed! You can now download the track.');
@@ -134,7 +135,7 @@ export function MusicLibraryTable({
       console.error('Bestowal error:', error);
       toast.error(error?.message || 'Bestowal failed. Please try again.');
     } finally {
-      setProcessing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -384,7 +385,7 @@ export function MusicLibraryTable({
                         e.stopPropagation();
                         handleBestowal(track, e);
                       }}
-                      disabled={processing}
+                      disabled={isProcessing || processing}
                       className="h-8 gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                     >
                       <DollarSign className="h-3 w-3" />

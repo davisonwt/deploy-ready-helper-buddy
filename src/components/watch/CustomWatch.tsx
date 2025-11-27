@@ -150,11 +150,6 @@ export function CustomWatch({ className, compact = false, showControls = false }
   const minuteAngle = 450 - mathMinuteAngle; // Convert to CSS rotate convention
   
   // Seconds hand: sweeps the minute's 20/80 degree segment in 80 seconds
-  // Each minute segment is 20/80 = 0.25 degrees, divided into 80 seconds = 0.003125 degrees per second
-  const mathSecondsAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20 + (secondsInMinute / 80) * (20 / 80);
-  const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
-  
-  // Seconds hand: sweeps the minute's 20/80 degree segment in 80 seconds
   // Each second = (20/80) / 80 = 0.003125 degrees per second
   const mathSecondsAngle = mathPartStartAngle + ((customTime.minute - 1) / 80) * 20 + (secondsInMinute / 80) * (20 / 80);
   const secondsAngle = 450 - mathSecondsAngle; // Convert to CSS rotate convention
