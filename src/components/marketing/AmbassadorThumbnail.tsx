@@ -94,12 +94,14 @@ export function AmbassadorThumbnail() {
       </div>
 
       {/* Center Card */}
-      <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
-        <div className="backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-4xl w-full border" style={{
+      <div className="absolute inset-0 flex items-center justify-center z-10 px-8 py-8">
+        <div className="backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-4xl w-full border overflow-y-auto" style={{
           backgroundColor: currentTheme.cardBg,
           borderColor: currentTheme.cardBorder,
           boxShadow: `0 25px 50px -12px ${currentTheme.shadow}, 0 0 0 1px ${currentTheme.cardBorder}`,
-          paddingTop: '2rem'
+          paddingTop: '2rem',
+          paddingBottom: '2rem',
+          maxHeight: '90%'
         }}>
           {/* Title */}
           <h1 className="text-4xl font-bold mb-2 text-center pt-8" style={{
@@ -271,7 +273,7 @@ export function AmbassadorThumbnail() {
 
             {/* Submit Button */}
             <button 
-              className="w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] mb-4"
+              className="w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] mb-6"
               style={{
                 background: currentTheme.primaryButton,
                 color: currentTheme.textPrimary,
@@ -280,6 +282,10 @@ export function AmbassadorThumbnail() {
                 paddingBottom: '1rem',
                 paddingLeft: '1.5rem',
                 paddingRight: '1.5rem',
+                minHeight: '3.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = currentTheme.primaryButtonHover;
@@ -295,7 +301,7 @@ export function AmbassadorThumbnail() {
       </div>
 
       {/* Bottom Text */}
-      <div className="absolute bottom-8 left-6 right-6 z-20">
+      <div className="absolute bottom-4 left-6 right-6 z-20">
         <p className="text-xs text-center font-light leading-relaxed" style={{
           color: currentTheme.textPrimary,
           textShadow: `0 0 10px ${currentTheme.shadow}`

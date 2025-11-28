@@ -573,8 +573,6 @@ export default function DashboardPage() {
                 borderColor: currentTheme.cardBorder,
               }}
             >
-              <CardHeader className="p-4 sm:p-5 md:p-6">
-              </CardHeader>
               <CardContent className="p-0">
                 <div className="aspect-video w-full">
                   <GoSatGhostAccessThumbnail />
