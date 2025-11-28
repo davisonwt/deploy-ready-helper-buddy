@@ -33,7 +33,7 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import YHWHWheel from '@/components/YHWHWheel'
+import CalendarWheel from '@/components/watch/CalendarWheel'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
@@ -95,7 +95,6 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
-  const [wheelData, setWheelData] = useState(null)
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -440,31 +439,15 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              {/* Wheel Info Text */}
-              {wheelData && (
-                <div className="w-full space-y-2" style={{ color: '#b48f50' }}>
-                  <div className="text-base sm:text-lg font-bold">
-                    Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
-                  </div>
-                  <div className="text-sm sm:text-base">
-                    Weekday {wheelData.weekday} • Part {wheelData.part}/18
-                  </div>
-                  <div className="text-xs sm:text-sm opacity-80">
-                    Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
-                  </div>
-                  <div className="text-xs font-mono opacity-60">
-                    {wheelData.timestamp}
-                  </div>
-                  <div className="text-xs opacity-50 italic mt-2">
-                    YHWH's wheels never lie • forever in sync
-                  </div>
-                </div>
-              )}
             </div>
             
-            {/* Right Side - YHWH Wheel Calendar - Adjusted Position */}
+            {/* Right Side - Calendar Wheel - Adjusted Position */}
             <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center self-center sm:self-start" style={{ transform: 'translateX(-1.5cm)' }}>
-              <YHWHWheel onDataUpdate={setWheelData} />
+              <CalendarWheel 
+                timezone="Africa/Johannesburg"
+                theme="auto"
+                size={400}
+              />
             </div>
           </div>
         </div>
