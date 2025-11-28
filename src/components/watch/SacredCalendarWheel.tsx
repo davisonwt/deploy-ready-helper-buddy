@@ -40,20 +40,24 @@ export default function SacredCalendarWheel({
   dayOfYear += creatorDate.day;
 
   // Ring radii (from outer to inner)
-  const r1 = maxRadius; // Outermost orange ring (366 sun 365)
-  const r2 = maxRadius * 0.92; // Cyan separator
-  const r3 = maxRadius * 0.88; // Green & Magenta week ring (52 weeks)
-  const r4 = maxRadius * 0.84; // Thin green/magenta separator
-  const r5 = maxRadius * 0.78; // Inner numbered segments (days/parts)
-  const r6 = maxRadius * 0.50; // White moon ring (354 moon 354)
-  const r7 = maxRadius * 0.20; // Center area
+  const r1 = maxRadius; // Outermost orange ring
+  const r2 = maxRadius * 0.85; // Multi-colored segments ring
+  const r3 = maxRadius * 0.70; // White moon ring
+  const r4 = maxRadius * 0.55; // Inner numbered ring
+  const r5 = maxRadius * 0.40; // Fine divisions ring
+  const r6 = maxRadius * 0.15; // Center area
 
-  // 52-week segments - alternating green and magenta
-  const weekSegments = Array.from({ length: 52 }).map((_, i) => ({
-    week: 52 - i, // Count down from 52 to 1
-    color: i % 2 === 0 ? '#22c55e' : '#ec4899', // Alternating green and magenta
-    angle: (i / 52) * 360 - 90
-  }));
+  // 52-week segments with labels
+  const weekSegments = [
+    // Green quadrant (1-13)
+    { start: 1, end: 13, color: '#22c55e', labels: ['hilu\'yaseph', 'lion 1 yehudah', 'malki\'el moshe & a\'aron', 'donkey / taurus yissaskar', 'ship / gemini 3 zebulun'] },
+    // Red quadrant (14-26)
+    { start: 14, end: 26, color: '#ef4444', labels: ['man / cancer reuben', 'kohath', 'sword / virgo 5 simeon', 'campfire / libra gad'] },
+    // Orange quadrant (27-39)
+    { start: 27, end: 39, color: '#f97316', labels: ['asfa\'el', 'ox / scorpio 7 ephraim', 'meleyal gershon', 'unicorn / sagittarius', '8 manasseh', 'wolf / capricorn 9 benyamin', '10 dan'] },
+    // Purple quadrant (40-52)
+    { start: 40, end: 52, color: '#a855f7', labels: ['nar\'el merari', 'eagle / pisces', 'olive tree / aquarius', '11 asher', '12 naphtali', 'deer / aries'] },
+  ];
 
   return (
     <div className={`sacred-calendar-wheel ${className}`} style={{ width: size, height: size }}>
@@ -81,8 +85,8 @@ export default function SacredCalendarWheel({
             r={r1}
             fill="none"
             stroke="#f97316"
-            strokeWidth={maxRadius * 0.12}
-            opacity="0.95"
+            strokeWidth={maxRadius * 0.08}
+            opacity="0.9"
           />
           {/* 366 segments */}
           {Array.from({ length: 366 }).map((_, i) => {
@@ -90,8 +94,8 @@ export default function SacredCalendarWheel({
             const rad = (angle * Math.PI) / 180;
             const x1 = centerX + r1 * Math.cos(rad);
             const y1 = centerY + r1 * Math.sin(rad);
-            const x2 = centerX + (r1 - maxRadius * 0.12) * Math.cos(rad);
-            const y2 = centerY + (r1 - maxRadius * 0.12) * Math.sin(rad);
+            const x2 = centerX + (r1 - maxRadius * 0.08) * Math.cos(rad);
+            const y2 = centerY + (r1 - maxRadius * 0.08) * Math.sin(rad);
             return (
               <line
                 key={`sun-seg-${i}`}
@@ -101,152 +105,78 @@ export default function SacredCalendarWheel({
                 y2={y2}
                 stroke="#f97316"
                 strokeWidth="0.5"
-                opacity="0.7"
+                opacity="0.6"
               />
             );
           })}
-          {/* Labels - rotated to be readable */}
-          {['366 sun 365'].map((label, idx) => {
-            const angle = (idx * 180) * Math.PI / 180;
-            const labelRadius = r1 * 0.75;
-            return (
-              <text
-                key={`label-${idx}`}
-                x={centerX + labelRadius * Math.cos(angle)}
-                y={centerY + labelRadius * Math.sin(angle)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#f97316"
-                fontSize="10"
-                fontWeight="bold"
-                transform={`rotate(${angle * 180 / Math.PI + 90} ${centerX + labelRadius * Math.cos(angle)} ${centerY + labelRadius * Math.sin(angle)})`}
-              >
-                {label}
-              </text>
-            );
-          })}
+          {/* Labels */}
+          <text x={centerX} y={r1 * 0.7} textAnchor="middle" fill="#f97316" fontSize="8" fontWeight="bold">
+            366 sun 365
+          </text>
+          <text x={centerX} y={size - r1 * 0.7} textAnchor="middle" fill="#f97316" fontSize="8" fontWeight="bold">
+            366 sun 365
+          </text>
         </g>
 
-        {/* Ring 2: Cyan Separator */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={r2}
-          fill="none"
-          stroke="#06b6d4"
-          strokeWidth="1"
-          opacity="0.6"
-        />
+        {/* Ring 2: Multi-colored segments (1-52 weeks) */}
+        {weekSegments.map((segment, segIdx) => {
+          const segmentAngle = 360 / 4; // 4 quadrants
+          const startAngle = segIdx * segmentAngle - 90;
+          const weeksInSegment = segment.end - segment.start + 1;
+          const weekAngle = segmentAngle / weeksInSegment;
 
-        {/* Ring 3: Green & Magenta Week Ring (52 weeks) - Alternating segments */}
-        {weekSegments.map((segment, i) => {
-          const segmentAngle = 360 / 52;
-          const startAngle = segment.angle;
-          const rad = (startAngle * Math.PI) / 180;
-          const nextRad = ((startAngle + segmentAngle) * Math.PI) / 180;
-          
           return (
-            <g key={`week-${segment.week}`}>
+            <g key={`segment-${segIdx}`}>
               {/* Background segment */}
               <path
-                d={`M ${centerX} ${centerY} L ${centerX + r3 * Math.cos(rad)} ${centerY + r3 * Math.sin(rad)} A ${r3} ${r3} 0 0 1 ${centerX + r3 * Math.cos(nextRad)} ${centerY + r3 * Math.sin(nextRad)} Z`}
+                d={`M ${centerX} ${centerY} L ${centerX + r2 * Math.cos((startAngle * Math.PI) / 180)} ${centerY + r2 * Math.sin((startAngle * Math.PI) / 180)} A ${r2} ${r2} 0 0 1 ${centerX + r2 * Math.cos(((startAngle + segmentAngle) * Math.PI) / 180)} ${centerY + r2 * Math.sin(((startAngle + segmentAngle) * Math.PI) / 180)} Z`}
                 fill={segment.color}
-                opacity="0.4"
+                opacity="0.3"
               />
-              {/* Week number - rotated to be readable */}
-              <text
-                x={centerX + r3 * 0.7 * Math.cos(rad + segmentAngle / 2 * Math.PI / 180)}
-                y={centerY + r3 * 0.7 * Math.sin(rad + segmentAngle / 2 * Math.PI / 180)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#ffffff"
-                fontSize="8"
-                fontWeight="bold"
-                transform={`rotate(${startAngle + segmentAngle / 2 + 90} ${centerX + r3 * 0.7 * Math.cos(rad + segmentAngle / 2 * Math.PI / 180)} ${centerY + r3 * 0.7 * Math.sin(rad + segmentAngle / 2 * Math.PI / 180)})`}
-              >
-                {segment.week}
-              </text>
+              {/* Week numbers */}
+              {Array.from({ length: weeksInSegment }).map((_, weekIdx) => {
+                const weekNum = segment.start + weekIdx;
+                const angle = startAngle + (weekIdx + 0.5) * weekAngle;
+                const rad = (angle * Math.PI) / 180;
+                const radius = r2 * 0.7;
+                return (
+                  <text
+                    key={`week-${weekNum}`}
+                    x={centerX + radius * Math.cos(rad)}
+                    y={centerY + radius * Math.sin(rad)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill="#ffffff"
+                    fontSize="6"
+                    fontWeight="bold"
+                  >
+                    {weekNum}
+                  </text>
+                );
+              })}
             </g>
           );
         })}
 
-        {/* Ring 4: Thin Green & Magenta Separator */}
-        {weekSegments.map((segment, i) => {
-          if (i % 2 === 0) return null; // Only draw for alternating segments
-          const segmentAngle = 360 / 52;
-          const startAngle = segment.angle;
-          const rad = (startAngle * Math.PI) / 180;
-          const nextRad = ((startAngle + segmentAngle) * Math.PI) / 180;
-          
-          return (
-            <path
-              key={`sep-${i}`}
-              d={`M ${centerX + r4 * Math.cos(rad)} ${centerY + r4 * Math.sin(rad)} A ${r4} ${r4} 0 0 1 ${centerX + r4 * Math.cos(nextRad)} ${centerY + r4 * Math.sin(nextRad)}`}
-              fill="none"
-              stroke={segment.color}
-              strokeWidth="1"
-              opacity="0.5"
-            />
-          );
-        })}
-
-        {/* Ring 5: Inner Numbered Segments (Days/Parts) - White tick marks with orange numbers */}
-        <g>
-          {/* White tick marks */}
-          {Array.from({ length: 31 }).map((_, i) => {
-            const dayNum = 31 - i; // Count down from 31 to 1
-            const angle = (i / 31) * 360 - 90;
-            const rad = (angle * Math.PI) / 180;
-            const tickLength = maxRadius * 0.03;
-            return (
-              <g key={`day-${dayNum}`}>
-                {/* White tick mark */}
-                <line
-                  x1={centerX + r5 * Math.cos(rad)}
-                  y1={centerY + r5 * Math.sin(rad)}
-                  x2={centerX + (r5 + tickLength) * Math.cos(rad)}
-                  y2={centerY + (r5 + tickLength) * Math.sin(rad)}
-                  stroke="#ffffff"
-                  strokeWidth="1"
-                  opacity="0.8"
-                />
-                {/* Orange number - rotated to be readable */}
-                <text
-                  x={centerX + (r5 + tickLength * 1.5) * Math.cos(rad)}
-                  y={centerY + (r5 + tickLength * 1.5) * Math.sin(rad)}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill="#f97316"
-                  fontSize="6"
-                  fontWeight="bold"
-                  transform={`rotate(${angle * 180 / Math.PI + 90} ${centerX + (r5 + tickLength * 1.5) * Math.cos(rad)} ${centerY + (r5 + tickLength * 1.5) * Math.sin(rad)})`}
-                >
-                  {dayNum}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-
-        {/* Ring 6: White Moon Ring - 354 moon 354 */}
+        {/* Ring 3: White Moon Ring - 354 moon 354 */}
         <g>
           <circle
             cx={centerX}
             cy={centerY}
-            r={r6}
+            r={r3}
             fill="none"
             stroke="#ffffff"
-            strokeWidth={maxRadius * 0.10}
-            opacity="0.9"
+            strokeWidth={maxRadius * 0.06}
+            opacity="0.8"
           />
           {/* 354 segments */}
           {Array.from({ length: 354 }).map((_, i) => {
             const angle = (i / 354) * 360 - 90;
             const rad = (angle * Math.PI) / 180;
-            const x1 = centerX + r6 * Math.cos(rad);
-            const y1 = centerY + r6 * Math.sin(rad);
-            const x2 = centerX + (r6 - maxRadius * 0.10) * Math.cos(rad);
-            const y2 = centerY + (r6 - maxRadius * 0.10) * Math.sin(rad);
+            const x1 = centerX + r3 * Math.cos(rad);
+            const y1 = centerY + r3 * Math.sin(rad);
+            const x2 = centerX + (r3 - maxRadius * 0.06) * Math.cos(rad);
+            const y2 = centerY + (r3 - maxRadius * 0.06) * Math.sin(rad);
             return (
               <line
                 key={`moon-seg-${i}`}
@@ -255,40 +185,78 @@ export default function SacredCalendarWheel({
                 x2={x2}
                 y2={y2}
                 stroke="#ffffff"
-                strokeWidth="0.4"
-                opacity="0.6"
+                strokeWidth="0.3"
+                opacity="0.5"
               />
             );
           })}
-          {/* Labels - rotated to be readable */}
-          {['354 moon 354'].map((label, idx) => {
-            const angle = (idx * 180) * Math.PI / 180;
-            const labelRadius = r6 * 0.75;
+          {/* Labels */}
+          <text x={centerX} y={r3 * 0.85} textAnchor="middle" fill="#ffffff" fontSize="7" fontWeight="bold">
+            354 moon 354
+          </text>
+        </g>
+
+        {/* Ring 4: Inner numbered ring */}
+        <g>
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={r4}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1"
+            opacity="0.4"
+          />
+          {/* Fine divisions */}
+          {Array.from({ length: 72 }).map((_, i) => {
+            const angle = (i / 72) * 360;
+            const rad = (angle * Math.PI) / 180;
+            const x1 = centerX + r4 * Math.cos(rad);
+            const y1 = centerY + r4 * Math.sin(rad);
+            const x2 = centerX + r5 * Math.cos(rad);
+            const y2 = centerY + r5 * Math.sin(rad);
             return (
-              <text
-                key={`moon-label-${idx}`}
-                x={centerX + labelRadius * Math.cos(angle)}
-                y={centerY + labelRadius * Math.sin(angle)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="#ffffff"
-                fontSize="9"
-                fontWeight="bold"
-                transform={`rotate(${angle * 180 / Math.PI + 90} ${centerX + labelRadius * Math.cos(angle)} ${centerY + labelRadius * Math.sin(angle)})`}
-              >
-                {label}
-              </text>
+              <line
+                key={`div-${i}`}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="#ffffff"
+                strokeWidth="0.2"
+                opacity="0.3"
+              />
             );
           })}
         </g>
 
-        {/* Center area */}
+        {/* Center area with solstice lines */}
         <g>
+          {/* Purple solstice line */}
+          <line
+            x1={centerX}
+            y1={centerY - r6}
+            x2={centerX}
+            y2={centerY + r6}
+            stroke="#a855f7"
+            strokeWidth="1"
+            opacity="0.6"
+          />
+          {/* Red solstice line */}
+          <line
+            x1={centerX - r6}
+            y1={centerY}
+            x2={centerX + r6}
+            y2={centerY}
+            stroke="#ef4444"
+            strokeWidth="1"
+            opacity="0.6"
+          />
           {/* Center circle */}
           <circle
             cx={centerX}
             cy={centerY}
-            r={r7}
+            r={r6}
             fill="url(#center-glow)"
             stroke="#ffffff"
             strokeWidth="1"
@@ -298,10 +266,23 @@ export default function SacredCalendarWheel({
           <circle
             cx={centerX}
             cy={centerY}
-            r={r7 * 0.4}
+            r={r6 * 0.3}
             fill="#f97316"
             opacity="0.8"
           />
+          {/* Labels */}
+          <text x={centerX} y={centerY - r6 * 1.5} textAnchor="middle" fill="#a855f7" fontSize="5" opacity="0.7">
+            solstice end 6th & beginning 7th month
+          </text>
+          <text x={centerX + r6 * 1.5} y={centerY} textAnchor="middle" fill="#ef4444" fontSize="5" opacity="0.7">
+            solstice end 12th & beginning 1st month
+          </text>
+          <text x={centerX} y={centerY + r6 * 1.5} textAnchor="middle" fill="#ffffff" fontSize="4" opacity="0.6">
+            explanation of the will
+          </text>
+          <text x={centerX} y={centerY + r6 * 2} textAnchor="middle" fill="#ffffff" fontSize="4" opacity="0.6">
+            4th day of the new year
+          </text>
         </g>
 
         {/* Current position indicators */}
@@ -341,4 +322,3 @@ export default function SacredCalendarWheel({
     </div>
   );
 }
-
