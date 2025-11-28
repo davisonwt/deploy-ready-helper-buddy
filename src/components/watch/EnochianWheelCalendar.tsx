@@ -164,6 +164,73 @@ const EnochianWheelCalendar = () => {
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
+                  
+                  {/* Depth and shadow filters */}
+                  <filter id="dropShadowOuter" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                    <feOffset dx="2" dy="2" result="offsetblur"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.3"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  
+                  <filter id="dropShadowMiddle" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                    <feOffset dx="1.5" dy="1.5" result="offsetblur"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.4"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  
+                  <filter id="dropShadowInner" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                    <feOffset dx="1" dy="1" result="offsetblur"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.5"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  
+                  {/* Radial gradients for 3D depth effect */}
+                  <radialGradient id="ringGradientOuter" cx="50%" cy="50%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.2"/>
+                    <stop offset="50%" stopColor="#d97706" stopOpacity="0.8"/>
+                    <stop offset="100%" stopColor="#78350f" stopOpacity="0.9"/>
+                  </radialGradient>
+                  
+                  <radialGradient id="ringGradientMiddle" cx="50%" cy="50%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.15"/>
+                    <stop offset="50%" stopColor="#475569" stopOpacity="0.7"/>
+                    <stop offset="100%" stopColor="#1e293b" stopOpacity="0.9"/>
+                  </radialGradient>
+                  
+                  <radialGradient id="ringGradientInner" cx="50%" cy="50%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1"/>
+                    <stop offset="50%" stopColor="#334155" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="#0f172a" stopOpacity="0.9"/>
+                  </radialGradient>
+                  
+                  {/* Linear gradients for elevated ring edges */}
+                  <linearGradient id="ringEdgeTop" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="#d97706" stopOpacity="0.3"/>
+                  </linearGradient>
+                  
+                  <linearGradient id="ringEdgeBottom" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#78350f" stopOpacity="0.5"/>
+                    <stop offset="100%" stopColor="#d97706" stopOpacity="0.2"/>
+                  </linearGradient>
                 </defs>
 
                 {/* Outer 366-dot ring (dragging) */}
@@ -188,14 +255,33 @@ const EnochianWheelCalendar = () => {
                   })}
                 </g>
 
-                {/* Year ring background */}
-                <circle cx="350" cy="350" r="310" fill="none" stroke="#334155" strokeWidth="2"/>
+                {/* Year ring background - deepest layer */}
+                <circle cx="350" cy="350" r="310" fill="none" stroke="#1e293b" strokeWidth="2" opacity="0.5"/>
 
-                {/* Main calendar circle */}
-                <circle cx="350" cy="350" r="295" fill="#0f172a" stroke="#d97706" strokeWidth="4"/>
+                {/* Main calendar circle - elevated outer ring with depth */}
+                <circle 
+                  cx="350" 
+                  cy="350" 
+                  r="295" 
+                  fill="url(#ringGradientOuter)" 
+                  stroke="url(#ringEdgeTop)" 
+                  strokeWidth="4"
+                  filter="url(#dropShadowOuter)"
+                  opacity="0.95"
+                />
+                {/* Additional shadow layer for more depth */}
+                <circle 
+                  cx="352" 
+                  cy="352" 
+                  r="295" 
+                  fill="none" 
+                  stroke="#78350f" 
+                  strokeWidth="4"
+                  opacity="0.3"
+                />
                 
-                {/* Constellation Season Ring with Intercalary Gates */}
-                <g>
+                {/* Constellation Season Ring with Intercalary Gates - elevated layer */}
+                <g filter="url(#dropShadowMiddle)">
                   {Object.entries(constellations).map(([season, data], i) => {
                     const angle = (i * 90 - 90) * Math.PI / 180;
                     const x = 350 + 265 * Math.cos(angle);
@@ -205,17 +291,27 @@ const EnochianWheelCalendar = () => {
                     
                     return (
                       <g key={season}>
-                        {/* Season arc */}
+                        {/* Season arc with depth */}
                         <path
                           d={`M 350 350 L ${350 + 250 * Math.cos(angle - Math.PI/4)} ${350 + 250 * Math.sin(angle - Math.PI/4)} 
                              A 250 250 0 0 1 ${350 + 250 * Math.cos(angle + Math.PI/4)} ${350 + 250 * Math.sin(angle + Math.PI/4)} Z`}
                           fill={data.color}
-                          opacity="0.15"
+                          opacity="0.2"
+                        />
+                        {/* Shadow layer for season arc */}
+                        <path
+                          d={`M 350 350 L ${350 + 250 * Math.cos(angle - Math.PI/4)} ${350 + 250 * Math.sin(angle - Math.PI/4)} 
+                             A 250 250 0 0 1 ${350 + 250 * Math.cos(angle + Math.PI/4)} ${350 + 250 * Math.sin(angle + Math.PI/4)} Z`}
+                          fill="#000000"
+                          opacity="0.1"
+                          transform="translate(1, 1)"
                         />
                         
-                        {/* Constellation gate */}
-                        <g transform={`translate(${x}, ${y})`}>
-                          <circle r="35" fill={data.color} opacity="0.3" stroke={data.color} strokeWidth="2"/>
+                        {/* Constellation gate - elevated */}
+                        <g transform={`translate(${x}, ${y})`} filter="url(#dropShadowInner)">
+                          <circle r="35" fill={data.color} opacity="0.4" stroke={data.color} strokeWidth="2.5"/>
+                          {/* Highlight for 3D effect */}
+                          <circle r="35" fill="url(#ringGradientMiddle)" opacity="0.3"/>
                           {isCurrentGate && (
                             <circle r="38" fill="none" stroke="#fbbf24" strokeWidth="3">
                               <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
@@ -236,8 +332,8 @@ const EnochianWheelCalendar = () => {
                   })}
                 </g>
 
-                {/* Month Ring (12 divisions) - counter-clockwise */}
-                <g transform={`rotate(${rotation.months} 350 350)`}>
+                {/* Month Ring (12 divisions) - counter-clockwise - elevated */}
+                <g transform={`rotate(${rotation.months} 350 350)`} filter="url(#dropShadowMiddle)">
                   {monthStructure.map((month, i) => {
                     const startAngle = (i * 30 - 90) * Math.PI / 180;
                     const midAngle = ((i * 30 + 15) - 90) * Math.PI / 180;
@@ -247,6 +343,17 @@ const EnochianWheelCalendar = () => {
                     
                     return (
                       <g key={i}>
+                        {/* Shadow line */}
+                        <line 
+                          x1={350 + 210 * Math.cos(startAngle) + 1} 
+                          y1={350 + 210 * Math.sin(startAngle) + 1}
+                          x2={350 + 240 * Math.cos(startAngle) + 1} 
+                          y2={350 + 240 * Math.sin(startAngle) + 1}
+                          stroke="#000000" 
+                          strokeWidth="2"
+                          opacity="0.3"
+                        />
+                        {/* Main line */}
                         <line 
                           x1={350 + 210 * Math.cos(startAngle)} 
                           y1={350 + 210 * Math.sin(startAngle)}
@@ -255,7 +362,10 @@ const EnochianWheelCalendar = () => {
                           stroke="#475569" 
                           strokeWidth="2"
                         />
-                        <circle cx={x} cy={y} r="12" fill={isCurrentMonth ? "#fbbf24" : "#1e293b"} opacity="0.8"/>
+                        {/* Shadow circle */}
+                        <circle cx={x + 1} cy={y + 1} r="12" fill="#000000" opacity="0.2"/>
+                        {/* Main circle with gradient */}
+                        <circle cx={x} cy={y} r="12" fill={isCurrentMonth ? "url(#ringGradientOuter)" : "url(#ringGradientMiddle)"} opacity="0.9"/>
                         <text 
                           x={x} y={y} dy="4"
                           textAnchor="middle" 
@@ -268,28 +378,40 @@ const EnochianWheelCalendar = () => {
                   })}
                 </g>
 
-                {/* 52-Week Ring (rotating clockwise) */}
-                <g transform={`rotate(${rotation.weeks} 350 350)`}>
+                {/* 52-Week Ring (rotating clockwise) - elevated */}
+                <g transform={`rotate(${rotation.weeks} 350 350)`} filter="url(#dropShadowInner)">
                   {Array.from({ length: 52 }, (_, i) => {
                     const angle = (i * (360/52) - 90) * Math.PI / 180;
                     const isCurrentWeek = enochianDate.sabbathWeek === i + 1;
                     
                     return (
-                      <line 
-                        key={i}
-                        x1={350 + 190 * Math.cos(angle)} 
-                        y1={350 + 190 * Math.sin(angle)}
-                        x2={350 + 210 * Math.cos(angle)} 
-                        y2={350 + 210 * Math.sin(angle)}
-                        stroke={isCurrentWeek ? "#fbbf24" : "#334155"} 
-                        strokeWidth={isCurrentWeek ? "3" : "1"}
-                      />
+                      <g key={i}>
+                        {/* Shadow line */}
+                        <line 
+                          x1={350 + 190 * Math.cos(angle) + 0.5} 
+                          y1={350 + 190 * Math.sin(angle) + 0.5}
+                          x2={350 + 210 * Math.cos(angle) + 0.5} 
+                          y2={350 + 210 * Math.sin(angle) + 0.5}
+                          stroke="#000000" 
+                          strokeWidth={isCurrentWeek ? "3" : "1"}
+                          opacity="0.2"
+                        />
+                        {/* Main line */}
+                        <line 
+                          x1={350 + 190 * Math.cos(angle)} 
+                          y1={350 + 190 * Math.sin(angle)}
+                          x2={350 + 210 * Math.cos(angle)} 
+                          y2={350 + 210 * Math.sin(angle)}
+                          stroke={isCurrentWeek ? "#fbbf24" : "#334155"} 
+                          strokeWidth={isCurrentWeek ? "3" : "1"}
+                        />
+                      </g>
                     );
                   })}
                 </g>
 
-                {/* 18-Part Day Wheel (anti-clockwise) */}
-                <g transform={`rotate(${-rotation.dayWheel} 350 350)`}>
+                {/* 18-Part Day Wheel (anti-clockwise) - most elevated */}
+                <g transform={`rotate(${-rotation.dayWheel} 350 350)`} filter="url(#dropShadowInner)">
                   {Array.from({ length: 18 }).map((_, i) => {
                     const angle = (i * 20 - 90) * Math.PI / 180;
                     let partColor = '#1e40af';
@@ -299,6 +421,17 @@ const EnochianWheelCalendar = () => {
                     
                     return (
                       <g key={i}>
+                        {/* Shadow line */}
+                        <line
+                          x1={350 + 150 * Math.cos(angle) + 0.5}
+                          y1={350 + 150 * Math.sin(angle) + 0.5}
+                          x2={350 + 175 * Math.cos(angle) + 0.5}
+                          y2={350 + 175 * Math.sin(angle) + 0.5}
+                          stroke="#000000"
+                          strokeWidth="2"
+                          opacity="0.3"
+                        />
+                        {/* Main line */}
                         <line
                           x1={350 + 150 * Math.cos(angle)}
                           y1={350 + 150 * Math.sin(angle)}
@@ -306,7 +439,7 @@ const EnochianWheelCalendar = () => {
                           y2={350 + 175 * Math.sin(angle)}
                           stroke={partColor}
                           strokeWidth="2"
-                          opacity="0.6"
+                          opacity="0.7"
                         />
                       </g>
                     );
@@ -332,9 +465,12 @@ const EnochianWheelCalendar = () => {
                   })}
                 </g>
 
-                {/* Center Display */}
+                {/* Center Display - most elevated */}
+                <circle cx="352" cy="352" r="130" fill="#000000" opacity="0.3"/>
                 <circle cx="350" cy="350" r="130" fill="url(#centerGlow)"/>
-                <circle cx="350" cy="350" r="125" fill="#0f172a" stroke="#d97706" strokeWidth="4"/>
+                <circle cx="350" cy="350" r="125" fill="url(#ringGradientInner)" stroke="url(#ringEdgeTop)" strokeWidth="4" filter="url(#dropShadowInner)"/>
+                {/* Inner highlight for 3D effect */}
+                <circle cx="348" cy="348" r="125" fill="none" stroke="#fbbf24" strokeWidth="1" opacity="0.2"/>
                 
                 {/* Sabbath indicator */}
                 {enochianDate.weekDay === 7 && (
