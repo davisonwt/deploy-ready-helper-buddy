@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Public endpoint - no authentication required
-  // Accept requests with or without authorization header
+  // Public endpoint - works with or without authorization header
+  // NOTE: You must disable "Verify JWT" in Supabase Dashboard Settings
+  // for this function to work without authentication
   try {
     const now = new Date();
     
