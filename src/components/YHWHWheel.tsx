@@ -1,7 +1,9 @@
-// YHWH Eternal Wheel — Canvas-based calendar visualization
+// YHWH Eternal Wheel — Beautiful Canvas Calendar Visualization
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import SunCalc from 'suncalc';
+import { getDayInfo, getAllDays } from '@/utils/sacredCalendar';
 
 const brass = '#b48f50';
 const wood = '#3c2a1a';
@@ -9,12 +11,30 @@ const glow = '#ffddaa';
 const crimson = '#c41e3a';
 const silver = '#e5e5ff';
 const shabbat = '#f0f0ff';
+const dayColor = '#ffd700'; // Golden for day
+const eveningColor = '#ff8c42'; // Orange for evening
+const nightColor = '#1a1a2e'; // Dark blue for night
+const morningColor = '#ff6b9d'; // Pink for morning
 
 export default function YHWHWheel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ w: 600, h: 600 });
   const t0Ref = useRef(Date.now());
+  const [lat, setLat] = useState(31.7683); // Jerusalem default
+  const [lon, setLon] = useState(35.2137);
+
+  useEffect(() => {
+    // Get user location
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setLat(pos.coords.latitude);
+        setLon(pos.coords.longitude);
+      },
+      () => {}, // Keep default if fails
+      { timeout: 5000 }
+    );
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -36,21 +56,56 @@ export default function YHWHWheel() {
     resize();
     window.addEventListener('resize', resize);
     
-    // Use ResizeObserver for better container size tracking
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(container);
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(container);
+    }
 
-    function drawRing(x: number, y: number, r1: number, r2: number, segments: number, rot: number, color: string) {
+    // Draw perfect circle segment
+    function drawCircleSegment(
+      cx: number, cy: number, 
+      innerRadius: number, outerRadius: number,
+      startAngle: number, endAngle: number,
+      color: string, lineWidth: number = 1
+    ) {
+      ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = r2 - r1;
+      ctx.lineWidth = lineWidth;
       ctx.beginPath();
-      for (let i = 0; i <= segments; i++) {
-        const a = rot + i * Math.PI * 2 / segments;
-        const x0 = x + Math.cos(a) * ((r1 + r2) / 2);
-        const y0 = y + Math.sin(a) * ((r1 + r2) / 2);
-        i === 0 ? ctx.moveTo(x0, y0) : ctx.lineTo(x0, y0);
-      }
+      ctx.arc(cx, cy, (innerRadius + outerRadius) / 2, startAngle, endAngle);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw filled circle segment
+    function drawFilledSegment(
+      cx: number, cy: number,
+      innerRadius: number, outerRadius: number,
+      startAngle: number, endAngle: number,
+      fillColor: string, strokeColor?: string, strokeWidth: number = 1
+    ) {
+      ctx.save();
+      ctx.fillStyle = fillColor;
+      ctx.beginPath();
+      ctx.moveTo(
+        cx + Math.cos(startAngle) * innerRadius,
+        cy + Math.sin(startAngle) * innerRadius
+      );
+      ctx.arc(cx, cy, innerRadius, startAngle, endAngle);
+      ctx.lineTo(
+        cx + Math.cos(endAngle) * outerRadius,
+        cy + Math.sin(endAngle) * outerRadius
+      );
+      ctx.arc(cx, cy, outerRadius, endAngle, startAngle, true);
+      ctx.closePath();
+      ctx.fill();
+      if (strokeColor) {
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     let animationId: number;
@@ -58,105 +113,207 @@ export default function YHWHWheel() {
     function animate() {
       animationId = requestAnimationFrame(animate);
 
-      ctx.fillStyle = 'rgba(11,14,23,0.96)';
-      ctx.fillRect(0, 0, dimensions.w, dimensions.h);
-
       const now = Date.now();
       const secs = (now - t0Ref.current) / 1000;
       const cx = dimensions.w / 2;
       const cy = dimensions.h / 2;
-      const big = Math.min(dimensions.w, dimensions.h) * 0.42;
+      const maxRadius = Math.min(dimensions.w, dimensions.h) * 0.45;
+      
+      // Clear canvas
+      ctx.fillStyle = '#0b0e17';
+      ctx.fillRect(0, 0, dimensions.w, dimensions.h);
 
-      // 1. Fixed 364-day ring + golden sunrise line
-      drawRing(cx, cy, big * 0.95, big * 1.00, 364, 0, brass);
-      const yearAngle = -secs / (86400 * 364) * Math.PI * 2;
-      ctx.strokeStyle = glow;
-      ctx.lineWidth = 5;
+      // Calculate current day and time
+      const SPRING_TEQUFAH_2025 = new Date('2025-03-20T09:37:00Z');
+      const msSinceSpring = now - SPRING_TEQUFAH_2025.getTime();
+      const totalDays = Math.floor(msSinceSpring / 86400000);
+      const creatorDay = (totalDays % 364) + 1;
+      const isInDaysOutOfTime = (totalDays % 365) > 363; // Days 364-365 are out of time
+      
+      // Get sunrise/sunset for current part of day
+      const times = SunCalc.getTimes(new Date(now), lat, lon);
+      const currentTime = now;
+      const sunrise = times.sunrise.getTime();
+      const sunset = times.sunset.getTime();
+      const nextSunrise = times.sunrise.getTime() + 86400000;
+      
+      let partOfDay: 'Day' | 'Evening' | 'Night' | 'Morning' = 'Day';
+      if (currentTime >= sunrise && currentTime < sunset) {
+        partOfDay = 'Day';
+      } else if (currentTime >= sunset && currentTime < sunset + (nextSunrise - sunset) * 0.25) {
+        partOfDay = 'Evening';
+      } else if (currentTime >= sunset + (nextSunrise - sunset) * 0.25 && currentTime < sunrise) {
+        partOfDay = 'Night';
+      } else {
+        partOfDay = 'Morning';
+      }
+
+      const dayInfo = getDayInfo(creatorDay);
+      const allDays = getAllDays(2); // Assuming Tequfah on day 2
+
+      // OUTER CIRCLE: 366 solar day parts (364 Creator days + 2 days out of time)
+      const outerRadius = maxRadius;
+      const outerInnerRadius = maxRadius * 0.92;
+      const solarDays = 366;
+      const anglePerDay = (Math.PI * 2) / solarDays;
+
+      // Draw each solar day with 4 parts - PERFECT CIRCLES
+      for (let i = 0; i < solarDays; i++) {
+        const dayIndex = i;
+        const dayData = allDays[dayIndex] || allDays[Math.min(dayIndex, allDays.length - 1)];
+        const startAngle = -Math.PI / 2 + i * anglePerDay;
+        const endAngle = startAngle + anglePerDay;
+        
+        // Each day has 4 parts: Day, Evening, Night, Morning
+        const partAngle = anglePerDay / 4;
+        
+        // Determine colors based on day type
+        let dayPartColor = dayColor;
+        let eveningPartColor = eveningColor;
+        let nightPartColor = nightColor;
+        let morningPartColor = morningColor;
+        
+        // Highlight current day
+        const isCurrentDay = (dayIndex === creatorDay - 1 && !isInDaysOutOfTime) || 
+                           (isInDaysOutOfTime && dayIndex >= 364);
+        const strokeWidth = isCurrentDay ? 2 : 0.5;
+        
+        // Color adjustments for special days
+        if (dayData.isSabbath || dayData.isHighSabbath) {
+          dayPartColor = shabbat;
+          eveningPartColor = shabbat;
+          nightPartColor = shabbat;
+          morningPartColor = shabbat;
+        } else if (dayData.isFeast) {
+          dayPartColor = '#ff6b6b';
+          eveningPartColor = '#ff6b6b';
+          nightPartColor = '#ff6b6b';
+          morningPartColor = '#ff6b6b';
+        } else if (dayData.isTequfah) {
+          dayPartColor = '#00ff00';
+          eveningPartColor = '#00ff00';
+          nightPartColor = '#00ff00';
+          morningPartColor = '#00ff00';
+        } else if (dayData.isIntercalary || dayData.isDayOutOfTime) {
+          dayPartColor = '#9b59b6';
+          eveningPartColor = '#9b59b6';
+          nightPartColor = '#9b59b6';
+          morningPartColor = '#9b59b6';
+        }
+
+        // Draw 4 parts of the day - using perfect arc segments
+        drawFilledSegment(cx, cy, outerInnerRadius, outerRadius, startAngle, startAngle + partAngle, dayPartColor, brass, strokeWidth);
+        drawFilledSegment(cx, cy, outerInnerRadius, outerRadius, startAngle + partAngle, startAngle + partAngle * 2, eveningPartColor, brass, strokeWidth);
+        drawFilledSegment(cx, cy, outerInnerRadius, outerRadius, startAngle + partAngle * 2, startAngle + partAngle * 3, nightPartColor, brass, strokeWidth);
+        drawFilledSegment(cx, cy, outerInnerRadius, outerRadius, startAngle + partAngle * 3, endAngle, morningPartColor, brass, strokeWidth);
+      }
+      
+      // Draw outer circle border for perfect circle appearance
+      ctx.strokeStyle = brass;
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(yearAngle) * big * 0.97, cy + Math.sin(yearAngle) * big * 0.97);
+      ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Draw inner circle border
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerInnerRadius, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 2. 24 priestly courses + visible 10-day drift
+      // Golden sunrise line indicator
+      const yearProgress = (creatorDay - 1) / 364;
+      const yearAngle = -Math.PI / 2 + yearProgress * Math.PI * 2;
+      ctx.strokeStyle = glow;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(yearAngle) * outerRadius * 1.05, cy + Math.sin(yearAngle) * outerRadius * 1.05);
+      ctx.stroke();
+
+      // INNER RINGS (keeping existing functionality)
+      const innerRadius1 = maxRadius * 0.75;
+      const innerRadius2 = maxRadius * 0.70;
+      
+      // 24 priestly courses ring
       const lunarAngle = -secs / (86400 * 354) * Math.PI * 2;
-      drawRing(cx, cy, big * 0.82, big * 0.88, 24, 0, wood);
       const course = Math.floor(secs / (86400 * 7)) % 24;
+      drawCircleSegment(cx, cy, innerRadius1, innerRadius1 + 8, 0, Math.PI * 2, wood, 6);
       ctx.strokeStyle = crimson;
       ctx.globalAlpha = 0.75;
-      ctx.lineWidth = big * 0.07;
+      ctx.lineWidth = innerRadius1 * 0.08;
       ctx.beginPath();
-      ctx.arc(cx, cy, big * 0.85, lunarAngle + course * Math.PI * 2 / 24, lunarAngle + (course + 1) * Math.PI * 2 / 24);
+      ctx.arc(cx, cy, innerRadius1 + 4, lunarAngle + course * Math.PI * 2 / 24, lunarAngle + (course + 1) * Math.PI * 2 / 24);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Silver moon pointer (shows the drift clearly)
+      // Silver moon pointer
       ctx.strokeStyle = silver;
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(lunarAngle) * big * 0.85, cy + Math.sin(lunarAngle) * big * 0.85);
+      ctx.lineTo(cx + Math.cos(lunarAngle) * (innerRadius1 + 4), cy + Math.sin(lunarAngle) * (innerRadius1 + 4));
       ctx.stroke();
 
-      // 3. 18-part yowm (80-minute parts)
+      // 18-part yowm ring
       const yowmAngle = -secs / (80 * 60) * Math.PI * 2;
       const part = (secs / (80 * 60)) % 18;
       ctx.strokeStyle = `hsl(${part * 20},100%,65%)`;
-      ctx.lineWidth = big * 0.09;
+      ctx.lineWidth = innerRadius2 * 0.1;
       ctx.beginPath();
-      ctx.arc(cx, cy, big * 0.70, yowmAngle, yowmAngle + Math.PI * 2 / 18);
+      ctx.arc(cx, cy, innerRadius2, yowmAngle, yowmAngle + Math.PI * 2 / 18);
       ctx.stroke();
 
-      // 4. 7-day week + Shabbat pulse
+      // 7-day week ring
       const weekAngle = -secs / 86400 * Math.PI * 2 / 7;
-      drawRing(cx, cy, big * 0.55, big * 0.61, 7, weekAngle, brass);
+      const weekRadius = maxRadius * 0.55;
+      drawCircleSegment(cx, cy, weekRadius, weekRadius + 6, 0, Math.PI * 2, brass, 5);
       if (Math.floor(secs / 86400 % 7) === 6) {
         ctx.strokeStyle = shabbat;
         ctx.globalAlpha = 0.4 + 0.3 * Math.sin(secs * 4);
-        ctx.lineWidth = 12;
+        ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(cx, cy, big * 0.58, weekAngle, weekAngle + Math.PI * 2 / 7);
+        ctx.arc(cx, cy, weekRadius + 3, weekAngle, weekAngle + Math.PI * 2 / 7);
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
 
-      // 5. 4 watches hand
+      // 4 watches hand
       const watch = Math.floor((secs % 86400) / 21600);
       ctx.strokeStyle = glow;
-      ctx.lineWidth = 10;
+      ctx.lineWidth = 8;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(
-        cx + Math.cos(-Math.PI / 2 + watch * Math.PI / 2) * big * 0.38,
-        cy + Math.sin(-Math.PI / 2 + watch * Math.PI / 2) * big * 0.38
+        cx + Math.cos(-Math.PI / 2 + watch * Math.PI / 2) * maxRadius * 0.35,
+        cy + Math.sin(-Math.PI / 2 + watch * Math.PI / 2) * maxRadius * 0.35
       );
       ctx.stroke();
 
-      // Text – warm, clear, instant understanding
+      // Text display
       ctx.fillStyle = brass;
-      ctx.font = 'bold 26px Georgia';
+      ctx.font = 'bold 20px Georgia';
       ctx.textAlign = 'center';
-      const dayOfYear = Math.floor(secs / 86400 % 364) + 1;
-      const month = Math.floor((dayOfYear - 1) / 30) + 1;
-      const day = (dayOfYear - 1) % 30 + 1;
+      const month = Math.floor((creatorDay - 1) / 30) + 1;
+      const day = ((creatorDay - 1) % 30) + 1;
       const drift = ((secs / 86400 / 364) * 10 % 10).toFixed(1);
 
-      ctx.fillText(`Year 6028 • Month ${month} • Day ${day}`, cx, cy - big * 0.15);
+      ctx.fillText(`Year 6028 • Month ${month} • Day ${day}`, cx, cy - maxRadius * 0.12);
       ctx.fillText(
-        `Weekday ${(Math.floor(secs / 86400) % 7) || 7} • Part ${Math.floor(part) + 1}/18 • ${['Day', 'Evening', 'Night', 'Morning'][watch]}`,
+        `Weekday ${dayInfo.weekDay} • Part ${Math.floor(part) + 1}/18 • ${['Day', 'Evening', 'Night', 'Morning'][watch]}`,
         cx,
-        cy + big * 0.15
+        cy + maxRadius * 0.12
       );
       ctx.fillText(
         `Priestly courses drift ~10 days/year • now −${drift} days behind the sun`,
         cx,
-        cy + big * 0.28
+        cy + maxRadius * 0.24
       );
-      ctx.font = '18px Georgia';
+      ctx.font = '16px Georgia';
       ctx.fillStyle = '#888';
-      ctx.fillText(`${new Date().toISOString().slice(0, 19).replace('T', ' ')}`, cx, cy + big * 0.40);
+      ctx.fillText(`${new Date().toISOString().slice(0, 19).replace('T', ' ')}`, cx, cy + maxRadius * 0.36);
       ctx.fillStyle = '#333';
-      ctx.font = '14px Georgia';
-      ctx.fillText('YHWH\'s wheels never lie • forever in sync', cx, dimensions.h - 40);
+      ctx.font = '12px Georgia';
+      ctx.fillText('YHWH\'s wheels never lie • forever in sync', cx, dimensions.h - 30);
     }
 
     animate();
@@ -166,12 +323,11 @@ export default function YHWHWheel() {
       window.removeEventListener('resize', resize);
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [dimensions]);
+  }, [dimensions, lat, lon]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '600px', height: '600px', minWidth: '600px', minHeight: '600px' }}>
+    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '400px', maxWidth: '600px', maxHeight: '600px', aspectRatio: '1 / 1' }}>
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
   );
 }
-

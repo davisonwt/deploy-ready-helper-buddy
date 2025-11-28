@@ -401,7 +401,7 @@ export default function DashboardPage() {
         >
         <div className="flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-6">
           {/* YHWH Wheel - Eternal Calendar (Left Side) */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
             <YHWHWheel />
           </div>
           
