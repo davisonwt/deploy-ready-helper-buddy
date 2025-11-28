@@ -293,10 +293,10 @@ export function AmbassadorThumbnail() {
       {/* Bottom Text */}
       <div className="absolute bottom-6 left-6 right-6 z-20">
         <p className="text-xs text-center font-light leading-relaxed" style={{
-          color: currentTheme.accentLight,
+          color: currentTheme.textPrimary,
           textShadow: `0 0 10px ${currentTheme.shadow}`
         }}>
-          After GoSat approval you will receive official logos, banners & brand kit • Every post must include a Share button that leads to s2gapp.com
+          After GoSat approval you will receive official logos, banners & brand kit • Every seed sown will automatically include a Share button that leads to s2gapp.com
         </p>
       </div>
 
