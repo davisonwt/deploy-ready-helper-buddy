@@ -460,7 +460,7 @@ export default function UploadForm() {
                           <input
                             id="zip-file"
                             type="file"
-                            accept=".zip"
+                            accept=".zip,application/zip,application/x-zip-compressed"
                             className="hidden"
                             disabled={extractingZip || albumFiles.length > 0}
                             onChange={(e) => {
@@ -505,7 +505,7 @@ export default function UploadForm() {
                         id="file"
                         type="file"
                         className="hidden"
-                        accept={formData.type === 'music' ? 'audio/*' : undefined}
+                        accept={formData.type === 'music' ? 'audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg,.wma,.mp4,.mpeg' : undefined}
                         multiple={releaseType === 'album'}
                         disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
