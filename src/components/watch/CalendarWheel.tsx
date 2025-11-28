@@ -18,6 +18,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCreatorTime } from '@/utils/customTime';
 import { getCreatorDate } from '@/utils/customCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
+import { supabase } from '@/integrations/supabase/client';
 import './CalendarWheel.css';
 
 interface CalendarData {
@@ -71,38 +72,66 @@ export default function CalendarWheel({
     }
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      // Use Supabase client's invoke method which handles auth automatically
+      const { data, error: invokeError } = await supabase.functions.invoke('calendar-now', {
+        body: {}
+      });
       
-      const url = supabaseUrl 
-        ? `${supabaseUrl}/functions/v1/calendar-now`
-        : API_ENDPOINT;
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Include apikey for Supabase Edge Functions (required even for public functions)
-      // Authorization header is optional but helps if function requires it
-      if (supabaseAnonKey) {
-        headers['apikey'] = supabaseAnonKey;
-        // Try with auth first, fallback to no auth if 401
-        headers['Authorization'] = `Bearer ${supabaseAnonKey}`;
+      if (invokeError) {
+        // If invoke fails, try direct fetch as fallback
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        if (supabaseUrl && supabaseAnonKey) {
+          const url = `${supabaseUrl}/functions/v1/calendar-now`;
+          const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+            'apikey': supabaseAnonKey,
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          };
+          
+          const response = await fetch(url, { headers });
+          if (!response.ok) throw new Error('Failed to fetch server time');
+          const fetchData = await response.json();
+          
+          setServerTimestamp(new Date(fetchData.timestamp).getTime());
+          lastFetchRef.current = now;
+          
+          // Calculate calendar data from server timestamp
+          const serverDate = new Date(fetchData.timestamp);
+          const customTime = getCreatorTime(serverDate);
+          const creatorDate = getCreatorDate(serverDate);
+          
+          // Calculate creatorDay (day of year) from month and day
+          const MONTHS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+          let creatorDay = 0;
+          for (let m = 0; m < creatorDate.month - 1; m++) {
+            creatorDay += MONTHS[m];
+          }
+          creatorDay += creatorDate.day;
+          
+          const dayInfo = getDayInfo(creatorDay);
+          
+          setCalendarData({
+            timestamp: fetchData.timestamp,
+            year: creatorDate.year,
+            dayOfYear: creatorDay,
+            month: creatorDate.month,
+            dayOfMonth: creatorDate.day,
+            weekday: creatorDate.weekDay,
+            part: customTime.part,
+            quadrant: Math.ceil(customTime.part / 4.5),
+            season: getSeason(creatorDate.month)
+          });
+          
+          setIsLoading(false);
+          setError(null);
+          return;
+        }
+        throw invokeError;
       }
       
-      let response = await fetch(url, { headers });
-      
-      // If 401, try without Authorization header (public function)
-      if (response.status === 401 && supabaseAnonKey) {
-        const publicHeaders: HeadersInit = {
-          'Content-Type': 'application/json',
-          'apikey': supabaseAnonKey,
-        };
-        response = await fetch(url, { headers: publicHeaders });
-      }
-      if (!response.ok) throw new Error('Failed to fetch server time');
-      
-      const data = await response.json();
+      if (!data) throw new Error('No data received from server');
       setServerTimestamp(new Date(data.timestamp).getTime());
       lastFetchRef.current = now;
       
