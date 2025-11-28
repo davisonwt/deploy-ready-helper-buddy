@@ -74,7 +74,7 @@ export default function SacredCalendarWheel({
         <rect width={size} height={size} fill="#000000" />
 
         {/* Crosshair */}
-        <line x1={centerX} y1={0} x2={centerX} y3={size} stroke="#ffffff" strokeWidth="0.5" opacity="0.3" />
+        <line x1={centerX} y1={0} x2={centerX} y2={size} stroke="#ffffff" strokeWidth="0.5" opacity="0.3" />
         <line x1={0} y1={centerY} x2={size} y2={centerY} stroke="#ffffff" strokeWidth="0.5" opacity="0.3" />
 
         {/* Ring 1: Outermost Orange Ring - 366 sun 365 */}
