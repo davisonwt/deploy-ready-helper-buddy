@@ -40,7 +40,10 @@ export const EzekielClock = () => {
           <motion.div
             key="year-wheel"
             className="absolute inset-0"
-            style={{ transformOrigin: '50% 50%' }}
+            style={{ 
+              transformOrigin: '50% 50%',
+              rotate: `${yearAngle}deg`
+            }}
             animate={{ rotate: `${yearAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
@@ -58,7 +61,10 @@ export const EzekielClock = () => {
           <motion.div
             key="minute-wheel"
             className="absolute inset-0"
-            style={{ transformOrigin: '50% 50%' }}
+            style={{ 
+              transformOrigin: '50% 50%',
+              rotate: `${minutesAngle}deg`
+            }}
             animate={{ rotate: `${minutesAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
@@ -69,7 +75,10 @@ export const EzekielClock = () => {
           <motion.div
             key="breath-wheel"
             className="absolute inset-0"
-            style={{ transformOrigin: '50% 50%' }}
+            style={{ 
+              transformOrigin: '50% 50%',
+              rotate: `${secondsAngle}deg`
+            }}
             animate={{ rotate: `${secondsAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
