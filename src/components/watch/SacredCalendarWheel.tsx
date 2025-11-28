@@ -219,10 +219,15 @@ export default function SacredCalendarWheel({
             const angle = -((i / 366) * 360) - 90;
             const rad = (angle * Math.PI) / 180;
             
-            // Weekday: 1-6, then s (Sabbath) repeating
-            // Day 1 = weekday 1, Day 2 = weekday 2, ..., Day 7 = s (Sabbath), Day 8 = weekday 1, etc.
-            const weekdayIndex = i % 7;
-            const weekdayDisplay = weekdayIndex === 6 ? 's' : (weekdayIndex + 1).toString();
+            // Calculate weekday using the same logic as getCreatorDate
+            // Year starts on weekday 4 (Day 4), so day 1 = weekday 4
+            // Formula: weekday = ((dayNumber - 1) % 7 + 4) % 7 || 7
+            const dayNumber = i + 1; // Day 1-366
+            const daysFromStart = dayNumber - 1; // Days since day 1
+            const weekdayValue = ((daysFromStart % 7) + 4) % 7 || 7; // 1-7, where 7 = Sabbath
+            
+            // Display: 1-6 as numbers, 7 as 's' (Sabbath)
+            const weekdayDisplay = weekdayValue === 7 ? 's' : weekdayValue.toString();
             
             // Position number at the center of the weekday ring
             const textRadius = (r1Weekday + r1WeekdayInner) / 2;
