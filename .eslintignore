@@ -1,0 +1,4 @@
+# Supabase Edge Functions (Deno runtime, not Node.js)
+supabase/functions/**
+supabase/**
+
