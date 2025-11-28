@@ -404,7 +404,12 @@ export default function DashboardPage() {
         >
         <div className="relative">
           {/* User Icon, Text, and Wheel Info */}
-          <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4 relative">
+            {/* YHWH Wheel - Eternal Calendar positioned on container */}
+            <div className="absolute top-0 right-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96" style={{ zIndex: 10 }}>
+              <YHWHWheel onDataUpdate={setWheelData} />
+            </div>
+            
             {/* User Icon */}
             <div 
               className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
@@ -459,11 +464,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-          </div>
-          
-          {/* YHWH Wheel - Eternal Calendar positioned on container */}
-          <div className="absolute top-0 right-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96" style={{ zIndex: 10 }}>
-            <YHWHWheel onDataUpdate={setWheelData} />
           </div>
         </div>
       </div>
