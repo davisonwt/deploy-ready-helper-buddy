@@ -434,6 +434,31 @@ const EnochianWheelCalendar = () => {
                     );
                   })}
                   
+                  {/* Day numbers 1-30 between month 1 and month 2 */}
+                  {Array.from({ length: 30 }, (_, i) => {
+                    // Month 1 starts at -90 degrees (top), month 2 is at -60 degrees
+                    // So we need to place numbers between -90 and -60 degrees
+                    // Each day gets 1 degree (30 days / 30 degrees)
+                    const dayAngle = (-90 + (i + 1) * (30 / 30)) * Math.PI / 180;
+                    const dayRadius = 210; // Slightly inside the month ring
+                    const dayX = 350 + dayRadius * Math.cos(dayAngle);
+                    const dayY = 350 + dayRadius * Math.sin(dayAngle);
+                    
+                    return (
+                      <text
+                        key={`day-${i + 1}`}
+                        x={dayX}
+                        y={dayY}
+                        textAnchor="middle"
+                        dy="3"
+                        className="text-[8px] fill-white font-bold"
+                        filter="url(#glowWhite)"
+                      >
+                        {i + 1}
+                      </text>
+                    );
+                  })}
+                  
                   {/* Sound wave icon and label */}
                   <g transform="translate(350, 140)">
                     <path d="M -15 0 Q -10 -5 -5 0 T 5 0 T 15 0" stroke="#ffffff" strokeWidth="2" fill="none" filter="url(#glowWhite)"/>
