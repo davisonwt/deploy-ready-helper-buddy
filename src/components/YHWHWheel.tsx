@@ -12,19 +12,22 @@ const shabbat = '#f0f0ff';
 
 export default function YHWHWheel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [dimensions, setDimensions] = useState({ w: 800, h: 800 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ w: 600, h: 600 });
   const t0Ref = useRef(Date.now());
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const resize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const rect = container.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
       canvas.width = w;
       canvas.height = h;
       setDimensions({ w, h });
@@ -32,6 +35,10 @@ export default function YHWHWheel() {
 
     resize();
     window.addEventListener('resize', resize);
+    
+    // Use ResizeObserver for better container size tracking
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(container);
 
     function drawRing(x: number, y: number, r1: number, r2: number, segments: number, rot: number, color: string) {
       ctx.strokeStyle = color;
@@ -157,11 +164,12 @@ export default function YHWHWheel() {
     return () => {
       if (animationId) cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
+      if (resizeObserver) resizeObserver.disconnect();
     };
   }, [dimensions]);
 
   return (
-    <div className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '600px', height: '600px', minWidth: '600px', minHeight: '600px' }}>
+    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '600px', height: '600px', minWidth: '600px', minHeight: '600px' }}>
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
   );
