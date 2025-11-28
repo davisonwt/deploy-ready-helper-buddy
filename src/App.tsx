@@ -114,6 +114,7 @@ const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAcces
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const CalendarComparisonPage = lazy(() => import("./pages/CalendarComparisonPage"));
+const CalendarWheelDesignPage = lazy(() => import("./pages/CalendarWheelDesignPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -193,6 +194,13 @@ const App = () => (
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalendarComparisonPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/calendar-wheel-design" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <CalendarWheelDesignPage />
                   </Suspense>
                 </Layout>
               } />

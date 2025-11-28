@@ -36,7 +36,6 @@ import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
 import { getDayInfo } from '@/utils/sacredCalendar'
-import SacredCalendarWheel from '@/components/watch/SacredCalendarWheel'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
 import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
@@ -506,11 +505,6 @@ export default function DashboardPage() {
                 </div>
               )}
 
-            </div>
-
-            {/* Right Side - Sacred Calendar Wheel */}
-            <div className="flex-shrink-0 flex items-center justify-center">
-              <SacredCalendarWheel size={280} />
             </div>
           </div>
         </div>
