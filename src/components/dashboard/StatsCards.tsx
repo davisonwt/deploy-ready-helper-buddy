@@ -96,8 +96,8 @@ export function StatsCards() {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+          <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-amber-400" />
@@ -133,8 +133,8 @@ export function StatsCards() {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+          <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <motion.div
                 animate={stats.followersDelta > 0 ? { scale: [1, 1.1, 1] } : {}}
@@ -165,8 +165,8 @@ export function StatsCards() {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+          <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-5 w-5 text-amber-400" />
               <span className="text-sm text-amber-300/80">Daily New Followers</span>
@@ -201,8 +201,8 @@ export function StatsCards() {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+          <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-5 w-5 text-amber-400" />
               <span className="text-sm text-amber-300/80">Daily Bestowals</span>
@@ -234,8 +234,8 @@ export function StatsCards() {
         whileInView="visible"
         viewport={{ once: true }}
       >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6">
+        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+          <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5 text-amber-400" />
               <span className="text-sm text-amber-300/80">Monthly Bestowals</span>
@@ -246,12 +246,12 @@ export function StatsCards() {
               </span>
             </div>
             {/* Progress ring to next milestone */}
-            <div className="relative w-16 h-16">
-              <svg className="transform -rotate-90 w-16 h-16">
+            <div className="relative w-16 h-16 mx-auto flex-shrink-0">
+              <svg className="transform -rotate-90 w-16 h-16" viewBox="0 0 64 64">
                 <circle
                   cx="32"
                   cy="32"
-                  r="28"
+                  r="26"
                   stroke="rgba(251, 191, 36, 0.2)"
                   strokeWidth="4"
                   fill="none"
@@ -259,24 +259,24 @@ export function StatsCards() {
                 <motion.circle
                   cx="32"
                   cy="32"
-                  r="28"
+                  r="26"
                   stroke="#f59e0b"
                   strokeWidth="4"
                   fill="none"
-                  strokeDasharray={`${2 * Math.PI * 28}`}
-                  strokeDashoffset={`${2 * Math.PI * 28 * (1 - Math.min(stats.monthlyBestowals / 10, 1))}`}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 28 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 28 * (1 - Math.min(stats.monthlyBestowals / 10, 1)) }}
+                  strokeDasharray={`${2 * Math.PI * 26}`}
+                  strokeDashoffset={`${2 * Math.PI * 26 * (1 - Math.min(stats.monthlyBestowals / 10, 1))}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 26 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 26 * (1 - Math.min(stats.monthlyBestowals / 10, 1)) }}
                   transition={{ duration: 1 }}
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-xs text-amber-300 block">
-                    {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)} USDC
+                <div className="text-center px-1">
+                  <span className="text-[10px] text-amber-300 block leading-tight">
+                    {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)}
                   </span>
-                  <span className="text-[10px] text-amber-300/60 block mt-0.5">
-                    Next milestone
+                  <span className="text-[8px] text-amber-300/60 block mt-0.5 leading-tight">
+                    USDC
                   </span>
                 </div>
               </div>
