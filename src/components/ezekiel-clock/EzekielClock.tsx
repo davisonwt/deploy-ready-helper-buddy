@@ -38,18 +38,15 @@ export const EzekielClock = () => {
       <div className="relative pointer-events-auto">
         <div className="relative w-96 h-96">
           {/* Outermost: 364-day Year Wheel – turns 0.986° per day */}
-          <motion.div
-            key="year-wheel"
-            className="absolute inset-0"
+          <div
+            className="absolute inset-0 transition-transform duration-100 ease-linear"
             style={{ 
               transformOrigin: '50% 50%',
-              rotate: `${yearAngle}deg`
+              transform: `rotate(${yearAngle}deg)`
             }}
-            animate={{ rotate: `${yearAngle}deg` }}
-            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <YearWheel creature={sacred.creature} dayOfYear={sacred.dayOfYear} />
-          </motion.div>
+          </div>
 
           {/* 18-Part Sacred Day Wheel – jumps on part change */}
           <SacredDayWheel 
@@ -59,32 +56,26 @@ export const EzekielClock = () => {
           />
 
           {/* 1440-Minute Solar Wheel – smooth 24h rotation */}
-          <motion.div
-            key="minute-wheel"
-            className="absolute inset-0"
+          <div
+            className="absolute inset-0 transition-transform duration-100 ease-linear"
             style={{ 
               transformOrigin: '50% 50%',
-              rotate: `${minutesAngle}deg`
+              transform: `rotate(${minutesAngle}deg)`
             }}
-            animate={{ rotate: `${minutesAngle}deg` }}
-            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <MinuteWheel isDaytime={sacred.isDaytime} minutesToday={sacred.minutesToday} />
-          </motion.div>
+          </div>
 
           {/* Innermost Breath Wheel – 86,400-second rotation */}
-          <motion.div
-            key="breath-wheel"
-            className="absolute inset-0"
+          <div
+            className="absolute inset-0 transition-transform duration-100 ease-linear"
             style={{ 
               transformOrigin: '50% 50%',
-              rotate: `${secondsAngle}deg`
+              transform: `rotate(${secondsAngle}deg)`
             }}
-            animate={{ rotate: `${secondsAngle}deg` }}
-            transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <BreathWheel secondsToday={sacred.secondsToday} />
-          </motion.div>
+          </div>
 
           {/* Central Throne */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
