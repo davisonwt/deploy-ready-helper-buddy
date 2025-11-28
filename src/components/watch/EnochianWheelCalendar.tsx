@@ -434,36 +434,6 @@ const EnochianWheelCalendar = () => {
                     );
                   })}
                   
-                  {/* Day numbers for each month segment - positioned on the wheel line between month numbers */}
-                  {monthStructure.map((month, monthIdx) => {
-                    const startAngle = (monthIdx * 30 - 90) * Math.PI / 180;
-                    const endAngle = ((monthIdx + 1) * 30 - 90) * Math.PI / 180;
-                    const daysInMonth = month.days;
-                    const anglePerDay = (30 / daysInMonth) * Math.PI / 180;
-                    
-                    return Array.from({ length: daysInMonth }, (_, dayIdx) => {
-                      const dayAngle = startAngle + (dayIdx + 1) * anglePerDay;
-                      // Position on the same radius as month numbers (225) but between them
-                      const dayRadius = 225; // Same radius as month numbers
-                      const dayX = 350 + dayRadius * Math.cos(dayAngle);
-                      const dayY = 350 + dayRadius * Math.sin(dayAngle);
-                      
-                      return (
-                        <text
-                          key={`month-${monthIdx}-day-${dayIdx + 1}`}
-                          x={dayX}
-                          y={dayY}
-                          textAnchor="middle"
-                          dy="3"
-                          className="text-[8px] fill-white font-bold"
-                          filter="url(#glowWhite)"
-                        >
-                          {dayIdx + 1}
-                        </text>
-                      );
-                    });
-                  })}
-                  
                   {/* Sound wave icon and label */}
                   <g transform="translate(350, 140)">
                     <path d="M -15 0 Q -10 -5 -5 0 T 5 0 T 15 0" stroke="#ffffff" strokeWidth="2" fill="none" filter="url(#glowWhite)"/>
