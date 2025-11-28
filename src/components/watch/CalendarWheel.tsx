@@ -82,13 +82,24 @@ export default function CalendarWheel({
         'Content-Type': 'application/json',
       };
       
-      // Always include apikey for Supabase Edge Functions
+      // Include apikey for Supabase Edge Functions (required even for public functions)
+      // Authorization header is optional but helps if function requires it
       if (supabaseAnonKey) {
         headers['apikey'] = supabaseAnonKey;
+        // Try with auth first, fallback to no auth if 401
         headers['Authorization'] = `Bearer ${supabaseAnonKey}`;
       }
       
-      const response = await fetch(url, { headers });
+      let response = await fetch(url, { headers });
+      
+      // If 401, try without Authorization header (public function)
+      if (response.status === 401 && supabaseAnonKey) {
+        const publicHeaders: HeadersInit = {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+        };
+        response = await fetch(url, { headers: publicHeaders });
+      }
       if (!response.ok) throw new Error('Failed to fetch server time');
       
       const data = await response.json();

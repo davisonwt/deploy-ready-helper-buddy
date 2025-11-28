@@ -18,7 +18,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Allow public access - no authentication required
+  // Public endpoint - no authentication required
+  // Accept requests with or without authorization header
   try {
     const now = new Date();
     
