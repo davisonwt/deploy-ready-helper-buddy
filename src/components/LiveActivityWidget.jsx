@@ -321,39 +321,54 @@ export default function LiveActivityWidget() {
           
           // Get unread messages (messages created after user joined, or use a read tracking system)
           // For now, we'll get recent messages from the last 24 hours
+          // Fetch without FK joins to avoid 400 errors
           const { data: recentMessages } = await supabase
             .from('chat_messages')
-            .select(`
-              *,
-              chat_rooms!inner (
-                id,
-                name,
-                room_type
-              ),
-              profiles!chat_messages_sender_id_fkey (
-                display_name,
-                avatar_url
-              )
-            `)
+            .select('*')
             .in('room_id', roomIds)
-            .eq('chat_rooms.room_type', 'group')
             .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false })
             .limit(10)
 
+          // Fetch rooms separately to filter group rooms
+          const { data: rooms } = await supabase
+            .from('chat_rooms')
+            .select('id, name, room_type')
+            .in('id', roomIds)
+            .eq('room_type', 'group')
+          
+          const groupRoomIds = new Set((rooms || []).map(r => r.id))
+          const groupMessages = (recentMessages || []).filter(m => groupRoomIds.has(m.room_id))
+          
+          // Fetch sender profiles separately
+          const senderIds = [...new Set(groupMessages.map(m => m.sender_id).filter(Boolean))]
+          let profileMap = new Map()
+          if (senderIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('user_id, display_name, avatar_url')
+              .in('user_id', senderIds)
+            profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+          }
+          
+          const roomMap = new Map((rooms || []).map(r => [r.id, r]))
+          
           // Group by room and get latest message per room
           const messagesByRoom = new Map()
-          recentMessages?.forEach(msg => {
+          groupMessages.forEach(msg => {
+            const room = roomMap.get(msg.room_id)
+            const profile = profileMap.get(msg.sender_id)
+            
             if (!messagesByRoom.has(msg.room_id)) {
               messagesByRoom.set(msg.room_id, {
                 roomId: msg.room_id,
-                roomName: msg.chat_rooms?.name || 'Forum',
-                roomType: msg.chat_rooms?.room_type,
+                roomName: room?.name || 'Forum',
+                roomType: room?.room_type,
                 latestMessage: {
                   id: msg.id,
                   content: msg.content,
-                  senderName: msg.profiles?.display_name || 'Unknown',
-                  senderAvatar: msg.profiles?.avatar_url,
+                  senderName: profile?.display_name || 'Unknown',
+                  senderAvatar: profile?.avatar_url,
                   createdAt: msg.created_at,
                   unreadCount: 1 // TODO: Implement proper unread tracking
                 }
@@ -371,35 +386,46 @@ export default function LiveActivityWidget() {
       // Fetch forum invitations
       let forumInvitations = []
       if (user) {
+        // Fetch without FK joins to avoid 400 errors
         const { data: invitations } = await supabase
           .from('chat_join_requests')
-          .select(`
-            *,
-            chat_rooms!inner (
-              id,
-              name,
-              description,
-              room_type,
-              created_by
-            ),
-            profiles!chat_join_requests_user_id_fkey (
-              display_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .eq('user_id', user.id)
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(5)
 
-        forumInvitations = (enrichedInvitations || []).map(inv => ({
-          id: inv.id,
-          roomId: inv.room_id,
-          roomName: inv.chat_rooms?.name || 'Forum',
-          roomDescription: inv.chat_rooms?.description,
-          roomType: inv.chat_rooms?.room_type,
-          inviterName: inv.profiles?.display_name || 'Unknown',
-          inviterAvatar: inv.profiles?.avatar_url,
+        // Fetch related data separately
+        if (invitations && invitations.length > 0) {
+          const roomIds = [...new Set(invitations.map(i => i.room_id).filter(Boolean))]
+          const requesterIds = [...new Set(invitations.map(i => i.user_id).filter(Boolean))]
+          
+          // Fetch rooms separately
+          const { data: rooms } = await supabase
+            .from('chat_rooms')
+            .select('id, name, description, room_type, created_by')
+            .in('id', roomIds)
+          
+          // Fetch profiles separately
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', requesterIds)
+          
+          const roomMap = new Map((rooms || []).map(r => [r.id, r]))
+          const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
+          
+          forumInvitations = invitations.map(inv => {
+            const room = roomMap.get(inv.room_id)
+            const profile = profileMap.get(inv.user_id)
+            return {
+              id: inv.id,
+              roomId: inv.room_id,
+              roomName: room?.name || 'Forum',
+              roomDescription: room?.description,
+              roomType: room?.room_type,
+              inviterName: profile?.display_name || 'Unknown',
+              inviterAvatar: profile?.avatar_url,
           message: inv.message,
           createdAt: inv.created_at
         }))
