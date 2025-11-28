@@ -103,7 +103,6 @@ export default function DashboardPage() {
       const now = new Date()
       const creatorDate = getCreatorDate(now)
       const creatorTime = getCreatorTime(now, userLat, userLon)
-      const dayInfo = getDayInfo(creatorDate.year, creatorDate.month, creatorDate.day)
       
       // Calculate day of year
       const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
@@ -112,6 +111,8 @@ export default function DashboardPage() {
         dayOfYear += monthDays[i]
       }
       dayOfYear += creatorDate.day
+      
+      const dayInfo = getDayInfo(dayOfYear)
       
       setCalendarData({
         year: creatorDate.year,
