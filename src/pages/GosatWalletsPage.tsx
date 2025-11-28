@@ -26,30 +26,57 @@ export default function GosatWalletsPage() {
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList 
-            style={{
-              backgroundColor: currentTheme.secondaryButton,
-              borderColor: currentTheme.cardBorder
-            }}
+            className="grid grid-cols-3 gap-4 bg-transparent p-0 border-none shadow-none h-auto"
           >
             <TabsTrigger 
               value="overview"
-              style={{ color: currentTheme.textPrimary }}
+              className="rounded-xl border px-6 py-3 text-sm font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textSecondary
+              }}
             >
               Overview & Balances
             </TabsTrigger>
             <TabsTrigger 
               value="credentials"
-              style={{ color: currentTheme.textPrimary }}
+              className="rounded-xl border px-6 py-3 text-sm font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textSecondary
+              }}
             >
               API Credentials
             </TabsTrigger>
             <TabsTrigger 
               value="distribution"
-              style={{ color: currentTheme.textPrimary }}
+              className="rounded-xl border px-6 py-3 text-sm font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textSecondary
+              }}
             >
               Distribution Queue
             </TabsTrigger>
           </TabsList>
+          
+          <style>{`
+            [data-state="active"] {
+              background: ${currentTheme.primaryButton} !important;
+              border-color: ${currentTheme.accent} !important;
+              color: ${currentTheme.textPrimary} !important;
+              box-shadow: 0 4px 6px -1px ${currentTheme.shadow}, 0 2px 4px -1px ${currentTheme.shadow} !important;
+              transform: scale(1.05) !important;
+            }
+            [data-state="inactive"]:hover {
+              background-color: ${currentTheme.accent}20 !important;
+              border-color: ${currentTheme.accent} !important;
+              color: ${currentTheme.textPrimary} !important;
+            }
+          `}</style>
 
           <TabsContent value="overview">
             <OrganizationWalletSetup />
