@@ -42,6 +42,7 @@ import { GamificationHUD } from "./gamification/GamificationHUD"
 import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { useAppContext } from "../contexts/AppContext"
+import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -86,6 +87,15 @@ function Layout({ children }) {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+  
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
   
   const shouldShowAdminButton = useMemo(
     () => isAdminOrGosat && !rolesLoading,
@@ -106,18 +116,17 @@ function Layout({ children }) {
   }
   
   
-  // Primary navigation (direct buttons)
+  // Primary navigation (direct buttons) - colors will be set dynamically
   const primaryNavigation = [
-    { name: "dashboard", href: "/dashboard", icon: Home, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'dashboard-tour' },
-    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' }, className: 'chatapp-tour' }
+    { name: "dashboard", href: "/dashboard", icon: Home, className: 'dashboard-tour' },
+    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' }
   ]
 
-  // Grouped navigation (dropdowns)
+  // Grouped navigation (dropdowns) - colors will be set dynamically
   const groupedNavigation = [
     {
       name: "My Content",
       icon: User,
-      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'browse-orchards-tour',
       items: [
         { name: "My S2G Orchards", href: "/my-orchards", icon: User },
@@ -134,7 +143,6 @@ function Layout({ children }) {
     {
       name: "Let It Rain",
       icon: "🌧️", // Using emoji instead of Lucide icon
-      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'tithing-tour',
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
@@ -144,7 +152,6 @@ function Layout({ children }) {
     {
       name: "Support",
       icon: Heart,
-      color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
       className: 'support-tour',
       items: [
         { name: "Support Us", href: "/support-us", icon: Heart }
@@ -153,7 +160,6 @@ function Layout({ children }) {
       ...(shouldShowAdminButton ? [{
         name: "gosat's",
         icon: Settings,
-        color: { bg: 'hsl(212, 49%, 24%)', border: 'hsl(188, 78%, 41%)', text: '#ffffff' },
         items: [
           { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
           { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
@@ -171,14 +177,23 @@ function Layout({ children }) {
   const isActive = (href) => location.pathname === href
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-success/10 via-background to-warning/10">
+    <div className="min-h-screen" style={{ background: currentTheme.background }}>
       {/* Navigation Header */}
-      <header className="bg-card/90 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+      <header 
+        className="backdrop-blur-sm border-b sticky top-0 z-50"
+        style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center space-x-3 group dashboard-tour">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
+              <div 
+                className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg"
+                style={{ borderColor: currentTheme.accent }}
+              >
                 <img 
                   src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
                   alt="sow2grow logo" 
@@ -186,10 +201,10 @@ function Layout({ children }) {
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-brand-navy font-playfair">
+                <h1 className="text-xl font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
                   sow2grow
                 </h1>
-                <p className="text-xs text-brand-navy">364yhvh community farm</p>
+                <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
               </div>
             </Link>
             
@@ -198,36 +213,36 @@ function Layout({ children }) {
               {/* Primary Navigation Buttons */}
               {primaryNavigation.map((item) => {
                 const Icon = item.icon
+                const isItemActive = isActive(item.href)
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
                     className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
                       hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                      ${isActive(item.href) ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                      ${isItemActive ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                       ${item.className || ''}
                     `}
                     style={{
-                      backgroundColor: isActive(item.href) ? '#9bf6ff' : item.color.bg,
-                      borderColor: isActive(item.href) ? '#9bf6ff' : item.color.border,
-                      color: isActive(item.href) ? '#1e293b' : item.color.text,
+                      backgroundColor: isItemActive ? currentTheme.accent : currentTheme.secondaryButton,
+                      borderColor: isItemActive ? currentTheme.accent : currentTheme.cardBorder,
+                      color: isItemActive ? currentTheme.textPrimary : currentTheme.textPrimary,
                       borderRadius: '21px',
-                      boxShadow: isActive(item.href)
-                        ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                        : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                      boxShadow: isItemActive
+                        ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                      ringColor: currentTheme.accent,
                     }}
                     onMouseEnter={(e) => {
-                      if (!isActive(item.href)) {
-                        e.currentTarget.style.backgroundColor = '#9bf6ff';
-                        e.currentTarget.style.borderColor = '#9bf6ff';
-                        e.currentTarget.style.color = '#1e293b';
+                      if (!isItemActive) {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isActive(item.href)) {
-                        e.currentTarget.style.backgroundColor = item.color.bg;
-                        e.currentTarget.style.borderColor = item.color.border;
-                        e.currentTarget.style.color = item.color.text;
+                      if (!isItemActive) {
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.borderColor = currentTheme.cardBorder;
                       }
                     }}
                     onClick={() => {
@@ -252,30 +267,29 @@ function Layout({ children }) {
                       <button
                         className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
                           hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                          ${isGroupHighlighted ? 'ring-2 ring-offset-1 ring-blue-500 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                          ${isGroupHighlighted ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
                           ${group.className || ''}
                         `}
                     style={{
-                      backgroundColor: isGroupHighlighted ? '#9bf6ff' : group.color.bg,
-                      borderColor: isGroupHighlighted ? '#9bf6ff' : group.color.border,
-                      color: isGroupHighlighted ? '#1e293b' : group.color.text,
+                      backgroundColor: isGroupHighlighted ? currentTheme.accent : currentTheme.secondaryButton,
+                      borderColor: isGroupHighlighted ? currentTheme.accent : currentTheme.cardBorder,
+                      color: currentTheme.textPrimary,
                       borderRadius: '21px',
                       boxShadow: isGroupHighlighted
-                        ? '0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)' 
-                        : 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                        ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                      ringColor: currentTheme.accent,
                     }}
                     onMouseEnter={(e) => {
                       if (!isGroupHighlighted) {
-                        e.currentTarget.style.backgroundColor = '#9bf6ff';
-                        e.currentTarget.style.borderColor = '#9bf6ff';
-                        e.currentTarget.style.color = '#1e293b';
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isGroupHighlighted) {
-                        e.currentTarget.style.backgroundColor = group.color.bg;
-                        e.currentTarget.style.borderColor = group.color.border;
-                        e.currentTarget.style.color = group.color.text;
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.borderColor = currentTheme.cardBorder;
                       }
                     }}
                       >
@@ -289,28 +303,41 @@ function Layout({ children }) {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
-                      className="w-56 bg-white border border-border shadow-lg z-[100]"
+                      className="w-56 border shadow-lg z-[100]"
                       align="start"
                       sideOffset={4}
+                      style={{
+                        backgroundColor: currentTheme.cardBg,
+                        borderColor: currentTheme.cardBorder,
+                      }}
                     >
                       {group.items.map((item) => {
                         const ItemIcon = item.icon
                         return (
                           <DropdownMenuItem 
                             key={item.name}
-                            className={`flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer
-                                ${isActive(item.href) 
-                                  ? 'bg-accent text-accent-foreground font-medium' 
-                                  : 'hover:bg-accent hover:text-accent-foreground'
-                                }
-                              `}
+                            className="flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer"
+                            style={{
+                              backgroundColor: isActive(item.href) ? currentTheme.accent : 'transparent',
+                              color: currentTheme.textPrimary,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isActive(item.href)) {
+                                e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive(item.href)) {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }
+                            }}
                             onSelect={(e) => {
                               e.preventDefault();
                               console.log('🧭 [NAV_SELECT]', { to: item.href, from: location.pathname });
                               navigate(item.href);
                             }}
                           >
-                            <ItemIcon className="h-4 w-4" />
+                            <ItemIcon className="h-4 w-4" style={{ color: currentTheme.accent }} />
                             <span>{item.name}</span>
                           </DropdownMenuItem>
                         )
@@ -328,8 +355,19 @@ function Layout({ children }) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowVoiceCommands(true)}
-                  className="hover-scale text-muted-foreground hover:text-primary"
+                  className="hover-scale"
                   title="Voice Commands"
+                  style={{
+                    color: currentTheme.textSecondary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = currentTheme.accent;
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <Mic className="h-5 w-5" />
                 </Button>
@@ -337,11 +375,28 @@ function Layout({ children }) {
                 {/* Basket Icon */}
                 <Link
                   to="/basket"
-                  className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-accent"
+                  className="relative p-2 transition-colors rounded-lg"
+                  style={{
+                    color: currentTheme.textSecondary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = currentTheme.accent;
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {basketTotal > 0 && (
-                    <Badge className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                    <Badge 
+                      className="absolute -top-1 -right-1 text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full"
+                      style={{
+                        backgroundColor: currentTheme.accent,
+                        color: currentTheme.textPrimary,
+                      }}
+                    >
                       {basketTotal}
                     </Badge>
                   )}
@@ -349,9 +404,23 @@ function Layout({ children }) {
                 
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-3 text-sm text-muted-foreground hover:text-primary transition-colors p-2 rounded-lg hover:bg-accent profile-tour"
+                  className="flex items-center space-x-3 text-sm transition-colors p-2 rounded-lg profile-tour"
+                  style={{
+                    color: currentTheme.textSecondary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = currentTheme.accent;
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-border">
+                  <div 
+                    className="w-8 h-8 rounded-full overflow-hidden border-2"
+                    style={{ borderColor: currentTheme.cardBorder }}
+                  >
                     {user?.avatar_url ? (
                       <img 
                         src={user.avatar_url} 
@@ -359,8 +428,11 @@ function Layout({ children }) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary-foreground" />
+                      <div 
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ background: currentTheme.primaryButton }}
+                      >
+                        <User className="h-4 w-4" style={{ color: currentTheme.textPrimary }} />
                       </div>
                     )}
                   </div>
@@ -370,6 +442,19 @@ function Layout({ children }) {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
+                  style={{
+                    borderColor: currentTheme.cardBorder,
+                    backgroundColor: currentTheme.secondaryButton,
+                    color: currentTheme.textPrimary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                  }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -392,19 +477,36 @@ function Layout({ children }) {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-card border-t border-border">
+            <div 
+              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t"
+              style={{
+                backgroundColor: currentTheme.cardBg,
+                borderColor: currentTheme.cardBorder,
+              }}
+            >
               {/* Primary Navigation */}
               {primaryNavigation.map((item) => {
                 const Icon = item.icon
+                const isItemActive = isActive(item.href)
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
-                      isActive(item.href)
-                        ? "bg-accent text-accent-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-primary hover:bg-accent"
-                    }`}
+                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200"
+                    style={{
+                      backgroundColor: isItemActive ? currentTheme.accent : 'transparent',
+                      color: currentTheme.textPrimary,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isItemActive) {
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isItemActive) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
                     onClick={() => { 
                       console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname, mobile: true });
                       setIsMobileMenuOpen(false);
@@ -420,15 +522,26 @@ function Layout({ children }) {
               {groupedNavigation.map((group) => (
                 group.items.map((item) => {
                   const Icon = item.icon
+                  const isItemActive = isActive(item.href)
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
-                        isActive(item.href)
-                          ? "bg-accent text-accent-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-primary hover:bg-accent"
-                      }`}
+                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200"
+                      style={{
+                        backgroundColor: isItemActive ? currentTheme.accent : 'transparent',
+                        color: currentTheme.textPrimary,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isItemActive) {
+                          e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isItemActive) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <Icon className="h-5 w-5" />
@@ -438,13 +551,25 @@ function Layout({ children }) {
                 })
               ))}
               
-              <div className="pt-4 mt-4 border-t border-border">
+              <div className="pt-4 mt-4 border-t" style={{ borderColor: currentTheme.cardBorder }}>
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium"
+                  style={{ color: currentTheme.textSecondary }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = currentTheme.accent;
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-border">
+                  <div 
+                    className="w-6 h-6 rounded-full overflow-hidden border-2"
+                    style={{ borderColor: currentTheme.cardBorder }}
+                  >
                     {user?.avatar_url ? (
                       <img 
                         src={user.avatar_url} 
@@ -452,8 +577,11 @@ function Layout({ children }) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-                        <User className="h-3 w-3 text-primary-foreground" />
+                      <div 
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ background: currentTheme.primaryButton }}
+                      >
+                        <User className="h-3 w-3" style={{ color: currentTheme.textPrimary }} />
                       </div>
                     )}
                   </div>
@@ -461,7 +589,16 @@ function Layout({ children }) {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 w-full text-left"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  style={{ color: currentTheme.textSecondary }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#ef5350';
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 83, 80, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = currentTheme.textSecondary;
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <LogOut className="h-5 w-5" />
                   <span>Logout</span>
@@ -478,12 +615,21 @@ function Layout({ children }) {
       </main>
       
       {/* Footer */}
-      <footer className="bg-card/90 backdrop-blur-sm border-t border-border mt-auto">
+      <footer 
+        className="backdrop-blur-sm border-t mt-auto"
+        style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary shadow-lg">
+              <div 
+                className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg"
+                style={{ borderColor: currentTheme.accent }}
+              >
                 <img 
                   src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
                   alt="sow2grow logo" 
@@ -491,20 +637,20 @@ function Layout({ children }) {
                 />
               </div>
                 <div>
-                  <h3 className="text-lg font-bold text-brand-navy font-playfair">
+                  <h3 className="text-lg font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
                     sow2grow
                   </h3>
-                  <p className="text-xs text-brand-navy">364yhvh community farm</p>
+                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm" style={{ color: currentTheme.textSecondary }}>
                 A scriptural community giving platform where sowers create orchards and bestowers help them grow and stand up together.
               </p>
             </div>
             
             <div>
-              <h4 className="text-sm font-semibold text-brand-navy mb-4">Community</h4>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <h4 className="text-sm font-semibold mb-4" style={{ color: currentTheme.textPrimary }}>Community</h4>
+              <div className="space-y-2 text-sm" style={{ color: currentTheme.textSecondary }}>
                 <p>• Faith-based giving</p>
                 <p>• Mutual community support</p>
                 <p>• Scriptural principles</p>
@@ -513,16 +659,22 @@ function Layout({ children }) {
             </div>
             
             <div>
-              <h4 className="text-sm font-semibold text-brand-navy mb-4">Scripture</h4>
-              <blockquote className="text-sm text-muted-foreground italic">
+              <h4 className="text-sm font-semibold mb-4" style={{ color: currentTheme.textPrimary }}>Scripture</h4>
+              <blockquote className="text-sm italic" style={{ color: currentTheme.textSecondary }}>
                 "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
                 <br />
-                <cite className="text-primary font-semibold">- Luke 6:38</cite>
+                <cite className="font-semibold" style={{ color: currentTheme.accent }}>- Luke 6:38</cite>
               </blockquote>
             </div>
           </div>
           
-          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+          <div 
+            className="mt-8 pt-8 border-t text-center text-sm"
+            style={{
+              borderColor: currentTheme.cardBorder,
+              color: currentTheme.textSecondary,
+            }}
+          >
             <p>&copy; 2024 364yhvh Community Farm. Built with love for the community.</p>
           </div>
         </div>
