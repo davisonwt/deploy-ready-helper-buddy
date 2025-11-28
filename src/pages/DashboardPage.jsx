@@ -396,12 +396,14 @@ export default function DashboardPage() {
           style={{
             backgroundColor: currentTheme.cardBg,
             borderColor: currentTheme.cardBorder,
-            boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+            boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`,
+            position: 'relative',
+            zIndex: 1
           }}
         >
         <div className="flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-6">
           {/* YHWH Wheel - Eternal Calendar (Left Side) */}
-          <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
+          <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 relative z-10" style={{ zIndex: 10 }}>
             <YHWHWheel />
           </div>
           
