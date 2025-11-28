@@ -19,7 +19,6 @@ const morningColor = '#ff6b9d'; // Pink for morning
 export default function YHWHWheel() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ w: 600, h: 600 });
   const t0Ref = useRef(Date.now());
   const [lat, setLat] = useState(31.7683); // Jerusalem default
   const [lon, setLon] = useState(35.2137);
@@ -46,11 +45,10 @@ export default function YHWHWheel() {
 
     const resize = () => {
       const rect = container.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
+      const w = Math.max(rect.width, 400); // Ensure minimum size
+      const h = Math.max(rect.height, 400);
       canvas.width = w;
       canvas.height = h;
-      setDimensions({ w, h });
     };
 
     resize();
@@ -61,6 +59,11 @@ export default function YHWHWheel() {
       resizeObserver = new ResizeObserver(resize);
       resizeObserver.observe(container);
     }
+
+    // Ensure canvas is visible immediately
+    canvas.style.display = 'block';
+    canvas.style.visibility = 'visible';
+    canvas.style.opacity = '1';
 
     // Draw perfect circle segment
     function drawCircleSegment(
@@ -115,13 +118,15 @@ export default function YHWHWheel() {
 
       const now = Date.now();
       const secs = (now - t0Ref.current) / 1000;
-      const cx = dimensions.w / 2;
-      const cy = dimensions.h / 2;
-      const maxRadius = Math.min(dimensions.w, dimensions.h) * 0.45;
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const maxRadius = Math.min(w, h) * 0.45;
       
       // Clear canvas
       ctx.fillStyle = '#0b0e17';
-      ctx.fillRect(0, 0, dimensions.w, dimensions.h);
+      ctx.fillRect(0, 0, w, h);
 
       // Calculate current day and time
       const SPRING_TEQUFAH_2025 = new Date('2025-03-20T09:37:00Z');
@@ -313,7 +318,7 @@ export default function YHWHWheel() {
       ctx.fillText(`${new Date().toISOString().slice(0, 19).replace('T', ' ')}`, cx, cy + maxRadius * 0.36);
       ctx.fillStyle = '#333';
       ctx.font = '12px Georgia';
-      ctx.fillText('YHWH\'s wheels never lie • forever in sync', cx, dimensions.h - 30);
+      ctx.fillText('YHWH\'s wheels never lie • forever in sync', cx, h - 30);
     }
 
     animate();
@@ -323,11 +328,20 @@ export default function YHWHWheel() {
       window.removeEventListener('resize', resize);
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [dimensions, lat, lon]);
+  }, [lat, lon]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '400px', maxWidth: '600px', maxHeight: '600px', aspectRatio: '1 / 1' }}>
-      <canvas ref={canvasRef} className="block w-full h-full" />
+    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '400px', maxWidth: '600px', maxHeight: '600px', aspectRatio: '1 / 1', zIndex: 10, position: 'relative' }}>
+      <canvas 
+        ref={canvasRef} 
+        className="block w-full h-full" 
+        style={{ 
+          position: 'relative', 
+          zIndex: 10, 
+          display: 'block',
+          pointerEvents: 'auto'
+        }} 
+      />
     </div>
   );
 }
