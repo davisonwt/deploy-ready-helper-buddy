@@ -13,7 +13,9 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  DollarSign
+  DollarSign,
+  Mail,
+  UserPlus
 } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
@@ -33,7 +35,9 @@ export default function LiveActivityWidget() {
     groupCalls: [],
     communityChats: [],
     lifeCourses: [],
-    aodHereticFrequencies: null
+    aodHereticFrequencies: null,
+    unreadMessages: [],
+    forumInvitations: []
   })
   const [loading, setLoading] = useState(true)
 
@@ -302,12 +306,113 @@ export default function LiveActivityWidget() {
         topic: "Live Now"
       } : null
 
+      // Fetch unread forum messages
+      let unreadMessages = []
+      if (user) {
+        // Get all forums the user participates in
+        const { data: userRooms } = await supabase
+          .from('chat_participants')
+          .select('room_id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+
+        if (userRooms && userRooms.length > 0) {
+          const roomIds = userRooms.map(r => r.room_id)
+          
+          // Get unread messages (messages created after user joined, or use a read tracking system)
+          // For now, we'll get recent messages from the last 24 hours
+          const { data: recentMessages } = await supabase
+            .from('chat_messages')
+            .select(`
+              *,
+              chat_rooms!inner (
+                id,
+                name,
+                room_type
+              ),
+              profiles!chat_messages_sender_id_fkey (
+                display_name,
+                avatar_url
+              )
+            `)
+            .in('room_id', roomIds)
+            .eq('chat_rooms.room_type', 'group')
+            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false })
+            .limit(10)
+
+          // Group by room and get latest message per room
+          const messagesByRoom = new Map()
+          recentMessages?.forEach(msg => {
+            if (!messagesByRoom.has(msg.room_id)) {
+              messagesByRoom.set(msg.room_id, {
+                roomId: msg.room_id,
+                roomName: msg.chat_rooms?.name || 'Forum',
+                roomType: msg.chat_rooms?.room_type,
+                latestMessage: {
+                  id: msg.id,
+                  content: msg.content,
+                  senderName: msg.profiles?.display_name || 'Unknown',
+                  senderAvatar: msg.profiles?.avatar_url,
+                  createdAt: msg.created_at,
+                  unreadCount: 1 // TODO: Implement proper unread tracking
+                }
+              })
+            } else {
+              const existing = messagesByRoom.get(msg.room_id)
+              existing.latestMessage.unreadCount++
+            }
+          })
+          
+          unreadMessages = Array.from(messagesByRoom.values())
+        }
+      }
+
+      // Fetch forum invitations
+      let forumInvitations = []
+      if (user) {
+        const { data: invitations } = await supabase
+          .from('chat_join_requests')
+          .select(`
+            *,
+            chat_rooms!inner (
+              id,
+              name,
+              description,
+              room_type,
+              created_by
+            ),
+            profiles!chat_join_requests_user_id_fkey (
+              display_name,
+              avatar_url
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(5)
+
+        forumInvitations = (invitations || []).map(inv => ({
+          id: inv.id,
+          roomId: inv.room_id,
+          roomName: inv.chat_rooms?.name || 'Forum',
+          roomDescription: inv.chat_rooms?.description,
+          roomType: inv.chat_rooms?.room_type,
+          inviterName: inv.profiles?.display_name || 'Unknown',
+          inviterAvatar: inv.profiles?.avatar_url,
+          message: inv.message,
+          createdAt: inv.created_at
+        }))
+      }
+
       setLiveData({
         radioHosts: allRadioSessions || [],
         groupCalls,
         communityChats: activeCommunityChats,
         lifeCourses,
-        aodHereticFrequencies
+        aodHereticFrequencies,
+        unreadMessages,
+        forumInvitations
       })
 
     } catch (err) {
