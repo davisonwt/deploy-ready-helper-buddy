@@ -27,10 +27,11 @@ export const EzekielClock = () => {
   if (!sacred) return null;
 
   // Calculate rotation angles - ensure they're always valid numbers
-  const secondsAngle = isNaN(sacred.secondsToday) ? 0 : (sacred.secondsToday / 86400) * 360;
-  const minutesAngle = isNaN(sacred.minutesToday) ? 0 : (sacred.minutesToday / 1440) * 360;
+  // Use negative values for anti-clockwise rotation (matching the clock design)
+  const secondsAngle = isNaN(sacred.secondsToday) ? 0 : -(sacred.secondsToday / 86400) * 360;
+  const minutesAngle = isNaN(sacred.minutesToday) ? 0 : -(sacred.minutesToday / 1440) * 360;
   const dayProgress = isNaN(sacred.dayOfYear) ? 0 : (sacred.dayOfYear - 1) / 364;
-  const yearAngle = dayProgress * 360;
+  const yearAngle = -dayProgress * 360; // Anti-clockwise for consistency
 
   return (
     <>
