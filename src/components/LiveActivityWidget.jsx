@@ -431,6 +431,7 @@ export default function LiveActivityWidget() {
             }
           })
         }
+      }
 
       setLiveData({
         radioHosts: allRadioSessions || [],
