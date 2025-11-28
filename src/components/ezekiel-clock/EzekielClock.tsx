@@ -26,9 +26,10 @@ export const EzekielClock = () => {
 
   if (!sacred) return null;
 
-  const secondsAngle = (sacred.secondsToday / 86400) * 360;
-  const minutesAngle = (sacred.minutesToday / 1440) * 360;
-  const dayProgress = (sacred.dayOfYear - 1) / 364;
+  // Calculate rotation angles - ensure they're always valid numbers
+  const secondsAngle = isNaN(sacred.secondsToday) ? 0 : (sacred.secondsToday / 86400) * 360;
+  const minutesAngle = isNaN(sacred.minutesToday) ? 0 : (sacred.minutesToday / 1440) * 360;
+  const dayProgress = isNaN(sacred.dayOfYear) ? 0 : (sacred.dayOfYear - 1) / 364;
   const yearAngle = dayProgress * 360;
 
   return (
@@ -37,9 +38,10 @@ export const EzekielClock = () => {
         <div className="relative w-96 h-96">
           {/* Outermost: 364-day Year Wheel – turns 0.986° per day */}
           <motion.div
+            key="year-wheel"
             className="absolute inset-0"
             style={{ transformOrigin: '50% 50%' }}
-            animate={{ rotate: yearAngle }}
+            animate={{ rotate: `${yearAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <YearWheel creature={sacred.creature} dayOfYear={sacred.dayOfYear} />
@@ -54,9 +56,10 @@ export const EzekielClock = () => {
 
           {/* 1440-Minute Solar Wheel – smooth 24h rotation */}
           <motion.div
+            key="minute-wheel"
             className="absolute inset-0"
             style={{ transformOrigin: '50% 50%' }}
-            animate={{ rotate: minutesAngle }}
+            animate={{ rotate: `${minutesAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <MinuteWheel isDaytime={sacred.isDaytime} minutesToday={sacred.minutesToday} />
@@ -64,9 +67,10 @@ export const EzekielClock = () => {
 
           {/* Innermost Breath Wheel – 86,400-second rotation */}
           <motion.div
+            key="breath-wheel"
             className="absolute inset-0"
             style={{ transformOrigin: '50% 50%' }}
-            animate={{ rotate: secondsAngle }}
+            animate={{ rotate: `${secondsAngle}deg` }}
             transition={{ type: 'tween', ease: 'linear', duration: 0.1 }}
           >
             <BreathWheel secondsToday={sacred.secondsToday} />
