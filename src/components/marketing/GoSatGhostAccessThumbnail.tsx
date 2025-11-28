@@ -43,6 +43,17 @@ export function GoSatGhostAccessThumbnail() {
           borderColor: 'rgba(255,215,0,0.3)',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,215,0,0.2), inset 0 0 30px rgba(255,215,0,0.1), 0 0 60px rgba(124,58,237,0.3)'
         }}>
+          {/* Title */}
+          <h1 className="text-3xl font-bold mb-2 text-center" style={{
+            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            textShadow: '0 0 30px rgba(255,215,0,0.5)'
+          }}>
+            GoSat's Ghost Access – Real-Time Community Oversight
+          </h1>
+          
           {/* Subtitle */}
           <p className="text-sm text-white/90 text-center mb-4 font-light">
             Silently monitor & moderate every new chat, room, radio, or community created by users
