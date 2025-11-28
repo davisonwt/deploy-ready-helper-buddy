@@ -64,7 +64,7 @@ export const BreathWheel = ({ secondsToday }: BreathWheelProps) => {
         x1="160"
         y1="160"
         x2="160"
-        y2={160 - radius * 0.7}
+        y2={String(160 - radius * 0.7)}
         stroke="#ffd700"
         strokeWidth="2"
         strokeLinecap="round"
