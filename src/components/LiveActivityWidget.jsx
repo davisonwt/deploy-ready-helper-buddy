@@ -984,6 +984,163 @@ export default function LiveActivityWidget() {
                   </div>
                 )}
 
+                {/* Unread Forum Messages */}
+                {liveData.unreadMessages.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                      <MessageCircle className="h-3 w-3" />
+                      Unread Forum Messages
+                    </h4>
+                    {liveData.unreadMessages.slice(0, 3).map((msg) => (
+                      <div 
+                        key={msg.roomId}
+                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer"
+                        style={{
+                          backgroundColor: currentTheme.secondaryButton,
+                          borderColor: currentTheme.accent,
+                          borderWidth: '2px'
+                        }}
+                        onClick={() => joinActivity('forum', msg.roomId)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        }}
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="relative">
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
+                              <MessageCircle className="h-3 w-3 text-white" />
+                            </div>
+                            {msg.latestMessage.unreadCount > 0 && (
+                              <div 
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
+                                style={{
+                                  backgroundColor: currentTheme.accent,
+                                  color: currentTheme.textPrimary
+                                }}
+                              >
+                                {msg.latestMessage.unreadCount > 9 ? '9+' : msg.latestMessage.unreadCount}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                              {msg.roomName}
+                            </div>
+                            <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
+                              {msg.latestMessage.senderName}: {msg.latestMessage.content?.substring(0, 30) || 'New message'}...
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200 ml-2"
+                          style={{
+                            borderColor: currentTheme.accent,
+                            backgroundColor: currentTheme.accent,
+                            color: currentTheme.textPrimary
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            joinActivity('forum', msg.roomId)
+                          }}
+                        >
+                          View
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Forum Invitations */}
+                {liveData.forumInvitations.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                      <Users className="h-3 w-3" />
+                      Forum Invitations ({liveData.forumInvitations.length})
+                    </h4>
+                    {liveData.forumInvitations.slice(0, 3).map((invitation) => (
+                      <div 
+                        key={invitation.id}
+                        className="flex items-center justify-between p-2 rounded-lg border"
+                        style={{
+                          backgroundColor: currentTheme.secondaryButton,
+                          borderColor: currentTheme.accent,
+                          borderWidth: '2px'
+                        }}
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="relative">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={invitation.inviterAvatar} />
+                              <AvatarFallback className="text-xs" style={{ backgroundColor: currentTheme.accent, color: currentTheme.textPrimary }}>
+                                {invitation.inviterName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accent }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                              {invitation.roomName}
+                            </div>
+                            <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
+                              Invited by {invitation.inviterName}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button 
+                            className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                            style={{
+                              borderColor: currentTheme.accent,
+                              backgroundColor: currentTheme.secondaryButton,
+                              color: currentTheme.textPrimary
+                            }}
+                            onClick={() => joinActivity('accept_invitation', invitation.id)}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = currentTheme.accent;
+                              e.currentTarget.style.borderColor = currentTheme.accent;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                              e.currentTarget.style.borderColor = currentTheme.accent;
+                            }}
+                          >
+                            Accept
+                          </button>
+                          <button 
+                            className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                            style={{
+                              borderColor: currentTheme.cardBorder,
+                              backgroundColor: 'transparent',
+                              color: currentTheme.textSecondary
+                            }}
+                            onClick={async () => {
+                              const { error } = await supabase
+                                .from('chat_join_requests')
+                                .update({ status: 'declined', reviewed_at: new Date().toISOString() })
+                                .eq('id', invitation.id)
+                              if (!error) {
+                                toast.success('Invitation declined')
+                                fetchLiveData()
+                              }
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = currentTheme.cardBorder + '40';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {totalActivities === 0 && (
                   <div className="text-center py-6">
                     <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.textSecondary }} />
