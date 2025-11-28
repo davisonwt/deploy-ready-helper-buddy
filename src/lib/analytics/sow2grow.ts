@@ -6,15 +6,15 @@
 interface AnalyticsEvent {
   event: string;
   userId?: string;
-  sessionId: string;
-  timestamp: number;
-  localTime: string;
-  timezone: string;
-  deviceModel: string;
-  osVersion: string;
-  appVersion: string;
-  screenWidth: number;
-  screenHeight: number;
+  sessionId?: string;
+  timestamp?: number;
+  localTime?: string;
+  timezone?: string;
+  deviceModel?: string;
+  osVersion?: string;
+  appVersion?: string;
+  screenWidth?: number;
+  screenHeight?: number;
   ipCountry?: string;
   ipCity?: string;
   utmSource?: string;
