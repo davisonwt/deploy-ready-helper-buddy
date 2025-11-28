@@ -355,18 +355,22 @@ function Layout({ children }) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowVoiceCommands(true)}
-                  className="hover-scale"
+                  className="hover-scale rounded-lg border"
                   title="Voice Commands"
                   style={{
-                    color: currentTheme.textSecondary,
+                    color: currentTheme.textPrimary,
+                    backgroundColor: currentTheme.secondaryButton,
+                    borderColor: currentTheme.cardBorder,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = currentTheme.accent;
-                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = currentTheme.textSecondary;
-                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
                   }}
                 >
                   <Mic className="h-5 w-5" />
@@ -442,18 +446,24 @@ function Layout({ children }) {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
+                  className="rounded-lg border"
                   style={{
                     borderColor: currentTheme.cardBorder,
                     backgroundColor: currentTheme.secondaryButton,
                     color: currentTheme.textPrimary,
+                    boxShadow: `0 2px 4px ${currentTheme.shadow}`,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = currentTheme.accent;
                     e.currentTarget.style.borderColor = currentTheme.accent;
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                    e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
                     e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                    e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
                   }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />

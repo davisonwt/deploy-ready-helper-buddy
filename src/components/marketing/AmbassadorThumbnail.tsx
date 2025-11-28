@@ -251,31 +251,33 @@ export function AmbassadorThumbnail() {
         </p>
       </div>
 
-      {/* Bottom-right Social Icons */}
-      <div className="absolute bottom-6 right-6 z-20 flex items-center space-x-3">
-        <div className="flex items-center space-x-2">
-          {/* Social Media Icons */}
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div 
-              key={i}
-              className="w-8 h-8 backdrop-blur-sm rounded-lg flex items-center justify-center border"
-              style={{
-                backgroundColor: currentTheme.secondaryButton,
-                borderColor: currentTheme.cardBorder,
-              }}
-            >
-              <svg className="w-5 h-5" style={{ color: currentTheme.accent }} fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-              </svg>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center space-x-1" style={{ color: currentTheme.accentLight }}>
+      {/* Bottom-right Social Link */}
+      <div className="absolute bottom-6 right-6 z-20">
+        <a 
+          href="https://s2gapp.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all hover:scale-105"
+          style={{
+            backgroundColor: currentTheme.secondaryButton,
+            borderColor: currentTheme.cardBorder,
+            borderWidth: '1px',
+            color: currentTheme.accentLight,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = currentTheme.accent;
+            e.currentTarget.style.color = currentTheme.textPrimary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+            e.currentTarget.style.color = currentTheme.accentLight;
+          }}
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          <span className="text-sm font-medium" style={{ textShadow: `0 0 10px ${currentTheme.accent}50` }}>s2gapp.com</span>
-        </div>
+          <span className="text-sm font-medium">s2gapp.com</span>
+        </a>
       </div>
     </div>
   );
