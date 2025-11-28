@@ -462,8 +462,8 @@ export default function DashboardPage() {
               )}
             </div>
             
-            {/* Right Side - YHWH Wheel Calendar - Moved 2cm Left */}
-            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center self-center sm:self-start" style={{ transform: 'translateX(-2cm)', marginRight: '2cm' }}>
+            {/* Right Side - YHWH Wheel Calendar - Adjusted Position */}
+            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center self-center sm:self-start" style={{ transform: 'translateX(0cm)' }}>
               <YHWHWheel onDataUpdate={setWheelData} />
             </div>
           </div>
