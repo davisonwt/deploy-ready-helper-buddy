@@ -442,13 +442,11 @@ function Layout({ children }) {
                   </div>
                   <span>{user?.first_name} {user?.last_name}</span>
                 </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={handleLogout}
-                  className="rounded-lg border"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                   style={{
-                    borderColor: currentTheme.cardBorder,
+                    borderColor: currentTheme.accent,
                     backgroundColor: currentTheme.secondaryButton,
                     color: currentTheme.textPrimary,
                     boxShadow: `0 2px 4px ${currentTheme.shadow}`,
@@ -461,14 +459,14 @@ function Layout({ children }) {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
                     e.currentTarget.style.color = currentTheme.textPrimary;
                     e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
                   }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
-                </Button>
+                </button>
               </div>
               
               {/* Mobile menu button */}
