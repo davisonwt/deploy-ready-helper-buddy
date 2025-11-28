@@ -113,9 +113,6 @@ const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPa
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
-const CalendarComparisonPage = lazy(() => import("./pages/CalendarComparisonPage"));
-const CalendarWheelDesignPage = lazy(() => import("./pages/CalendarWheelDesignPage"));
-const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -191,27 +188,6 @@ const App = () => (
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
               <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
-              <Route path="/calendar-comparison" element={
-                <Layout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <CalendarComparisonPage />
-                  </Suspense>
-                </Layout>
-              } />
-              <Route path="/calendar-wheel-design" element={
-                <Layout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <CalendarWheelDesignPage />
-                  </Suspense>
-                </Layout>
-              } />
-              <Route path="/enochian-calendar-design" element={
-                <Layout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <EnochianCalendarDesignPage />
-                  </Suspense>
-                </Layout>
-              } />
               
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
