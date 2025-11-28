@@ -5,6 +5,7 @@
  * This ensures server-side computed angles match client-side rendering for SEO.
  */
 
+// @ts-ignore - Deno runtime types
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
@@ -12,6 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// @ts-ignore - Deno runtime
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
