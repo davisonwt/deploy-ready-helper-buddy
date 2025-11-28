@@ -16,6 +16,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCreatorTime } from '@/utils/customTime';
+import { getCreatorDate } from '@/utils/customCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import './CalendarWheel.css';
 
@@ -95,20 +96,28 @@ export default function CalendarWheel({
       // Calculate calendar data from server timestamp
       const serverDate = new Date(data.timestamp);
       const customTime = getCreatorTime(serverDate);
-      // Get creatorDay from the customTime result
-      const creatorDay = (customTime as any).raw?.creatorDay || data.dayOfYear || 1;
+      const creatorDate = getCreatorDate(serverDate);
+      
+      // Calculate creatorDay (day of year) from month and day
+      const MONTHS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+      let creatorDay = 0;
+      for (let m = 0; m < creatorDate.month - 1; m++) {
+        creatorDay += MONTHS[m];
+      }
+      creatorDay += creatorDate.day;
+      
       const dayInfo = getDayInfo(creatorDay);
       
       setCalendarData({
         timestamp: data.timestamp,
-        year: data.year || 6028,
+        year: creatorDate.year,
         dayOfYear: creatorDay,
-        month: dayInfo.month,
-        dayOfMonth: dayInfo.dayOfMonth,
-        weekday: dayInfo.weekDay,
+        month: creatorDate.month,
+        dayOfMonth: creatorDate.day,
+        weekday: creatorDate.weekDay,
         part: customTime.part,
         quadrant: Math.ceil(customTime.part / 4.5), // 4 parts per quadrant
-        season: getSeason(dayInfo.month)
+        season: getSeason(creatorDate.month)
       });
       
       setIsLoading(false);
@@ -118,19 +127,26 @@ export default function CalendarWheel({
       // Fallback to client-side calculation
       const now = new Date();
       const customTime = getCreatorTime(now);
-      const creatorDay = (customTime as any).raw?.creatorDay || 1;
-      const dayInfo = getDayInfo(creatorDay);
+      const creatorDate = getCreatorDate(now);
+      
+      // Calculate creatorDay (day of year) from month and day
+      const MONTHS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+      let creatorDay = 0;
+      for (let m = 0; m < creatorDate.month - 1; m++) {
+        creatorDay += MONTHS[m];
+      }
+      creatorDay += creatorDate.day;
       
       setCalendarData({
         timestamp: now.toISOString(),
-        year: 6028,
+        year: creatorDate.year,
         dayOfYear: creatorDay,
-        month: dayInfo.month,
-        dayOfMonth: dayInfo.dayOfMonth,
-        weekday: dayInfo.weekDay,
+        month: creatorDate.month,
+        dayOfMonth: creatorDate.day,
+        weekday: creatorDate.weekDay,
         part: customTime.part,
         quadrant: Math.ceil(customTime.part / 4.5),
-        season: getSeason(dayInfo.month)
+        season: getSeason(creatorDate.month)
       });
       
       setIsLoading(false);
@@ -150,7 +166,16 @@ export default function CalendarWheel({
   const getRotations = useCallback((timestamp: number): Record<string, number> => {
     const date = new Date(timestamp);
     const customTime = getCreatorTime(date);
-    const creatorDay = (customTime as any).raw?.creatorDay || 1;
+    const creatorDate = getCreatorDate(date);
+    
+    // Calculate creatorDay (day of year) from month and day
+    const MONTHS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+    let creatorDay = 0;
+    for (let m = 0; m < creatorDate.month - 1; m++) {
+      creatorDay += MONTHS[m];
+    }
+    creatorDay += creatorDate.day;
+    
     const dayInfo = getDayInfo(creatorDay);
     
     // Year ring: 365 days per rotation (anti-clockwise)
