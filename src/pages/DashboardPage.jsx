@@ -388,14 +388,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
-      {/* Clocks Section - Top of page */}
-      <div className="w-full pt-8 pb-4 px-4 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 z-50">
-        {/* Ezekiel Clock */}
-        <div className="flex-shrink-0">
-          <EzekielClock />
-        </div>
-      </div>
-      
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture - Mobile Responsive */}
@@ -427,6 +419,10 @@ export default function DashboardPage() {
                   <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{ color: currentTheme.textPrimary }} />
                 </div>
               )}
+            </div>
+            {/* Ezekiel Clock - Circles Calendar */}
+            <div className="flex-shrink-0">
+              <EzekielClock />
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
