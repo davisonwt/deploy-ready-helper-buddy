@@ -113,6 +113,7 @@ const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPa
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
+const CalendarComparisonPage = lazy(() => import("./pages/CalendarComparisonPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
