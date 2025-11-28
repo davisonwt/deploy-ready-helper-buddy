@@ -32,9 +32,7 @@ export const EzekielClock = ({ onDataUpdate }: EzekielClockProps = {}) => {
   const sacred = useSacredTime(lat, lon);
   const [selectedPart, setSelectedPart] = useState<number | null>(null);
 
-  if (!sacred) return null;
-
-  // Call callback with clock data
+  // Call callback with clock data - must be before early return
   useEffect(() => {
     if (onDataUpdate && sacred) {
       onDataUpdate({
@@ -44,6 +42,8 @@ export const EzekielClock = ({ onDataUpdate }: EzekielClockProps = {}) => {
       });
     }
   }, [sacred, onDataUpdate]);
+
+  if (!sacred) return null;
 
   // Calculate rotation angles - ensure they're always valid numbers
   // Use negative values for anti-clockwise rotation (matching the clock design)
