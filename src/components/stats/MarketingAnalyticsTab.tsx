@@ -143,10 +143,11 @@ export function MarketingAnalyticsTab() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ source, percentage }) => `${source}: ${percentage.toFixed(1)}%`}
+                  label={({ name, value }) => `${name}: ${((value as number) / stats.attribution.bySource.reduce((a, b) => a + b.revenue, 0) * 100).toFixed(1)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="revenue"
+                  nameKey="source"
                 >
                   {stats.attribution.bySource.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -195,15 +196,16 @@ export function MarketingAnalyticsTab() {
               <h4 className="text-amber-300 mb-3">Age Distribution</h4>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie
+                <Pie
                     data={stats.audience.age}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ range, count }) => `${range}: ${count}`}
+                    label={({ name, value }) => `${name}: ${value}`}
                     outerRadius={60}
                     fill="#8884d8"
                     dataKey="count"
+                    nameKey="range"
                   >
                     {stats.audience.age.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

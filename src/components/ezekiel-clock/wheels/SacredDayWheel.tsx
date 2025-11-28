@@ -72,8 +72,10 @@ export const SacredDayWheel = ({ sacredPart, isDaytime, onPartClick }: SacredDay
             initial={{ opacity: 0.6 }}
             animate={{ opacity: isActive ? 1 : 0.7 }}
             transition={{ duration: 0.3 }}
-            title={PART_NAMES[partNum] || `Part ${partNum}`}
-          />
+            aria-label={PART_NAMES[partNum] || `Part ${partNum}`}
+          >
+            <title>{PART_NAMES[partNum] || `Part ${partNum}`}</title>
+          </motion.path>
         );
       })}
 
