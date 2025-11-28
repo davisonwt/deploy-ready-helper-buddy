@@ -43,6 +43,7 @@ interface CalendarWheelProps {
   theme?: 'light' | 'dark' | 'auto';
   size?: number;
   className?: string;
+  onDataUpdate?: (data: CalendarData | null) => void;
 }
 
 const API_ENDPOINT = '/api/calendar/now';
@@ -74,7 +75,8 @@ export default function CalendarWheel({
   timezone = 'Africa/Johannesburg',
   theme = 'auto',
   size = 400,
-  className = ''
+  className = '',
+  onDataUpdate
 }: CalendarWheelProps) {
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
   const [serverTimestamp, setServerTimestamp] = useState<number>(Date.now());
@@ -135,20 +137,25 @@ export default function CalendarWheel({
           
           const dayInfo = getDayInfo(creatorDay);
           
-          setCalendarData({
-            timestamp: fetchData.timestamp,
-            year: creatorDate.year,
-            dayOfYear: creatorDay,
-            month: creatorDate.month,
-            dayOfMonth: creatorDate.day,
-            weekday: creatorDate.weekDay,
-            part: customTime.part,
-            quadrant: Math.ceil(customTime.part / 4.5),
-            season: getSeason(creatorDate.month)
-          });
-          
-          setIsLoading(false);
-          return;
+      const calendarInfo = {
+        timestamp: fetchData.timestamp,
+        year: creatorDate.year,
+        dayOfYear: creatorDay,
+        month: creatorDate.month,
+        dayOfMonth: creatorDate.day,
+        weekday: creatorDate.weekDay,
+        part: customTime.part,
+        quadrant: Math.ceil(customTime.part / 4.5),
+        season: getSeason(creatorDate.month)
+      };
+      
+      setCalendarData(calendarInfo);
+      if (onDataUpdate) {
+        onDataUpdate(calendarInfo);
+      }
+      
+      setIsLoading(false);
+      return;
         }
         throw invokeError;
       }
@@ -173,7 +180,7 @@ export default function CalendarWheel({
       
       const dayInfo = getDayInfo(creatorDay);
       
-      setCalendarData({
+      const calendarInfo = {
         timestamp: data.timestamp,
         year: creatorDate.year,
         dayOfYear: creatorDay,
@@ -183,7 +190,12 @@ export default function CalendarWheel({
         part: customTime.part,
         quadrant: Math.ceil(customTime.part / 4.5),
         season: getSeason(creatorDate.month)
-      });
+      };
+      
+      setCalendarData(calendarInfo);
+      if (onDataUpdate) {
+        onDataUpdate(calendarInfo);
+      }
       
       setIsLoading(false);
     } catch (err) {
@@ -201,7 +213,7 @@ export default function CalendarWheel({
       }
       creatorDay += creatorDate.day;
       
-      setCalendarData({
+      const calendarInfo = {
         timestamp: now.toISOString(),
         year: creatorDate.year,
         dayOfYear: creatorDay,
@@ -211,7 +223,12 @@ export default function CalendarWheel({
         part: customTime.part,
         quadrant: Math.ceil(customTime.part / 4.5),
         season: getSeason(creatorDate.month)
-      });
+      };
+      
+      setCalendarData(calendarInfo);
+      if (onDataUpdate) {
+        onDataUpdate(calendarInfo);
+      }
       
       setIsLoading(false);
     }

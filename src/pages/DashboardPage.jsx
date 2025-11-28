@@ -447,6 +447,7 @@ export default function DashboardPage() {
                 timezone="Africa/Johannesburg"
                 theme="auto"
                 size={400}
+                onDataUpdate={setCalendarData}
               />
             </div>
           </div>
