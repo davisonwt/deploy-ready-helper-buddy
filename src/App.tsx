@@ -115,6 +115,7 @@ const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const CalendarComparisonPage = lazy(() => import("./pages/CalendarComparisonPage"));
 const CalendarWheelDesignPage = lazy(() => import("./pages/CalendarWheelDesignPage"));
+const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -201,6 +202,13 @@ const App = () => (
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalendarWheelDesignPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/enochian-calendar-design" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <EnochianCalendarDesignPage />
                   </Suspense>
                 </Layout>
               } />
