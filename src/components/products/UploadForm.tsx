@@ -378,19 +378,28 @@ export default function UploadForm() {
                         accept="image/*"
                         className="hidden"
                         onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) {
+                          const files = e.target.files;
+                          if (!files || files.length === 0) {
                             console.error('No cover image selected');
+                            return;
+                          }
+                          
+                          const file = files[0];
+                          if (!file) {
+                            console.error('No file in files array');
                             return;
                           }
                           
                           if (file.size === 0) {
                             console.error('Empty cover image detected:', file.name);
                             toast.error(`Cover image "${file.name}" is empty. Please select a valid image file.`);
+                            // Reset input
+                            e.target.value = '';
                             return;
                           }
                           
                           console.log('Cover image selected:', { name: file.name, size: file.size, type: file.type });
+                          // Store file immediately
                           setCoverImage(file);
                         }}
                       />
@@ -471,25 +480,33 @@ export default function UploadForm() {
                             return;
                           }
                           
+                          // Immediately capture files before any async operations
+                          const fileList = Array.from(files);
+                          
                           if (releaseType === 'album') {
-                            const fileArray = Array.from(files);
-                            // Validate files have content
-                            const validFiles = fileArray.filter(file => {
-                              if (!file || file.size === 0) {
-                                console.error('Empty file detected:', file?.name);
-                                toast.error(`File "${file?.name}" is empty. Please select a valid file.`);
+                            // Validate and store files immediately
+                            const validFiles = fileList.filter(file => {
+                              if (!file) {
+                                console.error('Null file in array');
                                 return false;
                               }
+                              if (file.size === 0) {
+                                console.error('Empty file detected:', file.name);
+                                toast.error(`File "${file.name}" is empty. Please select a valid file.`);
+                                return false;
+                              }
+                              console.log('Valid file:', { name: file.name, size: file.size, type: file.type });
                               return true;
                             });
                             
                             if (validFiles.length > 0) {
-                              setAlbumFiles(validFiles);
+                              // Store files immediately - don't wait for any async operations
+                              setAlbumFiles([...validFiles]); // Create new array to ensure React detects change
                               setMainFile(null);
                               setZipFile(null);
                             }
                           } else {
-                            const file = files[0];
+                            const file = fileList[0];
                             if (!file) {
                               console.error('No file selected');
                               return;
@@ -498,10 +515,13 @@ export default function UploadForm() {
                             if (file.size === 0) {
                               console.error('Empty file detected:', file.name);
                               toast.error(`File "${file.name}" is empty. Please select a valid file.`);
+                              // Reset input
+                              e.target.value = '';
                               return;
                             }
                             
                             console.log('File selected:', { name: file.name, size: file.size, type: file.type });
+                            // Store file immediately
                             setMainFile(file);
                             setAlbumFiles([]);
                           }
