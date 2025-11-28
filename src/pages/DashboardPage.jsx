@@ -33,7 +33,6 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import YHWHWheel from '@/components/YHWHWheel'
 import { EzekielClock } from '@/components/ezekiel-clock/EzekielClock'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
@@ -96,7 +95,7 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
-  const [wheelData, setWheelData] = useState(null)
+  const [clockData, setClockData] = useState(null)
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -404,48 +403,22 @@ export default function DashboardPage() {
           }}
         >
         <div className="flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-6">
-          {/* YHWH Wheel - Eternal Calendar (Left Side) with Ezekiel Clock circles within */}
-          <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 relative z-10" style={{ zIndex: 10 }}>
-            <YHWHWheel onDataUpdate={setWheelData} />
-            {/* Ezekiel Clock - Circles within circles, positioned absolutely over YHWHWheel */}
-            <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 20, pointerEvents: 'none' }}>
-              <div className="relative" style={{ width: '65%', height: '65%' }}>
-                <div style={{ 
-                  transform: 'scale(0.65)', 
-                  transformOrigin: 'center',
-                  width: '100%',
-                  height: '100%'
-                }}>
-                  <EzekielClock />
-                </div>
-              </div>
-            </div>
+          {/* Ezekiel Clock - Circles Calendar (Left Side) */}
+          <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 relative z-10 flex items-center justify-center" style={{ zIndex: 10 }}>
+            <EzekielClock onDataUpdate={setClockData} />
           </div>
           
-          {/* Wheel Info and Welcome Message (Right Side) */}
+          {/* Clock Info and Welcome Message (Right Side) */}
           <div className="flex flex-col items-start gap-3 sm:gap-4 flex-1 min-w-0">
-            {/* Wheel Info Text - Moved from canvas */}
-            {wheelData && (
-              <div className="w-full mb-4 space-y-2" style={{ color: '#b48f50' }}>
-                <div className="text-base sm:text-lg font-bold">
-                  Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
-                </div>
-                <div className="text-sm sm:text-base">
-                  Weekday {wheelData.weekday} • Part {wheelData.part}/18 • {wheelData.watch}
-                </div>
-                <div className="text-xs sm:text-sm opacity-80">
-                  Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
-                </div>
-                <div className="text-xs font-mono opacity-60">
-                  {wheelData.timestamp}
-                </div>
-                <div className="text-xs opacity-50 italic mt-2">
-                  YHWH's wheels never lie • forever in sync
+            {/* Clock Info Text - Moved from below clock */}
+            {clockData && (
+              <div className="w-full mb-4 space-y-2" style={{ color: '#fbbf24' }}>
+                <div className="text-base sm:text-lg font-semibold text-amber-200">
+                  Year {clockData.year} • Day {clockData.dayOfYear} • Part {clockData.sacredPart}
                 </div>
               </div>
             )}
             
-            {/* User Icon - Above Welcome Message */}
             {/* User Icon - Above Welcome Message */}
             <div 
               className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"

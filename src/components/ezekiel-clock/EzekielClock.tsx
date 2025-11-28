@@ -8,7 +8,15 @@ import { YearWheel } from './wheels/YearWheel';
 import { SolarMinuteWheel as MinuteWheel } from './wheels/SolarMinuteWheel';
 import { useUserLocation } from './hooks/useUserLocation';
 import { PartDetailModal } from './modals/PartDetailModal';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+interface EzekielClockProps {
+  onDataUpdate?: (data: {
+    year: number;
+    dayOfYear: number;
+    sacredPart: number;
+  }) => void;
+}
 
 /**
  * Ezekiel Clock - Sacred Time Visualization
@@ -19,12 +27,23 @@ import { useState } from 'react';
  * - Minute Wheel: Smooth 24h rotation (1440 minutes)
  * - Breath Wheel: 86,400-second rotation
  */
-export const EzekielClock = () => {
+export const EzekielClock = ({ onDataUpdate }: EzekielClockProps = {}) => {
   const { lat, lon } = useUserLocation();
   const sacred = useSacredTime(lat, lon);
   const [selectedPart, setSelectedPart] = useState<number | null>(null);
 
   if (!sacred) return null;
+
+  // Call callback with clock data
+  useEffect(() => {
+    if (onDataUpdate && sacred) {
+      onDataUpdate({
+        year: sacred.year,
+        dayOfYear: sacred.dayOfYear,
+        sacredPart: sacred.sacredPart
+      });
+    }
+  }, [sacred, onDataUpdate]);
 
   // Calculate rotation angles - ensure they're always valid numbers
   // Use negative values for anti-clockwise rotation (matching the clock design)
@@ -92,11 +111,6 @@ export const EzekielClock = () => {
               <div className="text-amber-300 text-lg mt-2">{sacred.creature}</div>
             </div>
           </div>
-        </div>
-
-        {/* Info text below clock */}
-        <div className="text-center mt-4 text-amber-200 font-light text-sm">
-          Year {sacred.year} • Day {sacred.dayOfYear} • Part {sacred.sacredPart}
         </div>
       </div>
 
