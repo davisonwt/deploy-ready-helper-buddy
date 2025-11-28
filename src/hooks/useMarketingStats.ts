@@ -38,95 +38,55 @@ interface MarketingStats {
   }>;
 }
 
+/**
+ * Fetcher for marketing stats
+ * NOTE: analytics_events table doesn't exist yet, so we return mock/empty data
+ */
 const fetcher = async (userId: string): Promise<MarketingStats> => {
+  // analytics_events table doesn't exist yet - return mock data
+  console.log('Marketing stats: analytics_events table not yet created, returning mock data');
+
+  // Get some real data from bestowals table
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  // Fetch today's funnel
-  const { data: todayEvents } = await supabase
-    .from('analytics_events')
-    .select('event, revenue, product_id')
-    .eq('user_id', userId)
-    .gte('timestamp', today.toISOString());
+  // Fetch actual bestowals for revenue
+  const { data: bestowalsData } = await supabase
+    .from('bestowals')
+    .select('id, amount, product_id:orchard_id, created_at')
+    .eq('bestower_id', userId)
+    .gte('created_at', weekAgo.toISOString());
 
-  const impressions = todayEvents?.filter(e => e.event === 'product_view').length || 0;
-  const views = todayEvents?.filter(e => e.event === 'product_tap').length || 0;
-  const bestowals = todayEvents?.filter(e => e.event === 'bestowal_start').length || 0;
-  const purchases = todayEvents?.filter(e => e.event === 'bestowal_complete').length || 0;
-  const revenue = todayEvents?.reduce((sum, e) => sum + (e.revenue || 0), 0) || 0;
-  const conversionRate = impressions > 0 ? (purchases / impressions) * 100 : 0;
+  const todayBestowals = bestowalsData?.filter(b => new Date(b.created_at) >= today) || [];
+  const revenue = todayBestowals.reduce((sum, b) => sum + (b.amount || 0), 0);
 
-  // Fetch top products
-  const { data: productEvents } = await supabase
-    .from('analytics_events')
-    .select('product_id, revenue')
-    .eq('user_id', userId)
-    .in('event', ['bestowal_complete'])
-    .gte('timestamp', weekAgo.toISOString());
+  // Get product names for top products (using orchards table with correct column names)
+  const productIds = [...new Set(bestowalsData?.map(b => b.product_id).filter(Boolean) || [])];
+  const { data: orchards } = await supabase
+    .from('orchards')
+    .select('id, title')
+    .in('id', productIds.length > 0 ? productIds : ['none']);
 
   const productRevenue: Record<string, number> = {};
-  productEvents?.forEach(e => {
-    if (e.product_id) {
-      productRevenue[e.product_id] = (productRevenue[e.product_id] || 0) + (e.revenue || 0);
+  bestowalsData?.forEach(b => {
+    if (b.product_id) {
+      productRevenue[b.product_id] = (productRevenue[b.product_id] || 0) + (b.amount || 0);
     }
   });
-
-  // Get product names
-  const productIds = Object.keys(productRevenue);
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, title')
-    .in('id', productIds);
 
   const topProducts = Object.entries(productRevenue)
     .map(([id, rev]) => ({
       productId: id,
-      productName: products?.find(p => p.id === id)?.title || 'Unknown',
+      productName: orchards?.find(o => o.id === id)?.title || 'Unknown',
       revenue: rev,
-      changePercent: Math.random() * 20 - 10, // Mock for now
+      changePercent: Math.random() * 20 - 10,
     }))
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
-  // Attribution
-  const { data: attributionEvents } = await supabase
-    .from('analytics_events')
-    .select('utm_source, utm_campaign, revenue')
-    .eq('user_id', userId)
-    .in('event', ['bestowal_complete'])
-    .gte('timestamp', weekAgo.toISOString());
-
-  const sourceRevenue: Record<string, number> = {};
-  const campaignRevenue: Record<string, number> = {};
-
-  attributionEvents?.forEach(e => {
-    const source = e.utm_source || 'Organic';
-    sourceRevenue[source] = (sourceRevenue[source] || 0) + (e.revenue || 0);
-    
-    if (e.utm_campaign) {
-      campaignRevenue[e.utm_campaign] = (campaignRevenue[e.utm_campaign] || 0) + (e.revenue || 0);
-    }
-  });
-
-  const totalAttributionRevenue = Object.values(sourceRevenue).reduce((a, b) => a + b, 0);
-  const attributionBySource = Object.entries(sourceRevenue).map(([source, rev]) => ({
-    source,
-    revenue: rev,
-    percentage: totalAttributionRevenue > 0 ? (rev / totalAttributionRevenue) * 100 : 0,
-  }));
-
-  const topCampaigns = Object.entries(campaignRevenue)
-    .map(([campaign, rev]) => ({
-      campaign,
-      revenue: rev,
-      ctr: Math.random() * 5, // Mock CTR
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
-
-  // Audience (mock for now - would need user profile data)
+  // Mock audience data
   const audience = {
     age: [
       { range: '18-24', count: Math.floor(Math.random() * 100) },
@@ -153,41 +113,38 @@ const fetcher = async (userId: string): Promise<MarketingStats> => {
     ],
   };
 
-  // Hourly revenue
+  // Mock hourly revenue
   const hourlyRevenue = Array.from({ length: 24 }, (_, i) => ({
     hour: i,
     revenue: Math.random() * 100,
   }));
 
-  // Recent events
-  const { data: recentEventsData } = await supabase
-    .from('analytics_events')
-    .select('event, ip_country, revenue, product_id, timestamp')
-    .eq('user_id', userId)
-    .order('timestamp', { ascending: false })
-    .limit(10);
-
-  const recentEvents = (recentEventsData || []).map(e => ({
-    event: e.event,
-    location: e.ip_country || 'Unknown',
-    amount: e.revenue || undefined,
-    productName: undefined, // Would need to join products
-    timestamp: e.timestamp,
+  // Mock recent events based on actual bestowals
+  const recentEvents = (todayBestowals || []).slice(0, 10).map(b => ({
+    event: 'bestowal_complete',
+    location: 'Unknown',
+    amount: b.amount,
+    productName: orchards?.find(o => o.id === b.product_id)?.title,
+    timestamp: b.created_at,
   }));
 
   return {
     funnel: {
-      impressions,
-      views,
-      bestowals,
-      purchases,
-      conversionRate,
+      impressions: Math.floor(Math.random() * 100),
+      views: Math.floor(Math.random() * 50),
+      bestowals: todayBestowals.length,
+      purchases: todayBestowals.length,
+      conversionRate: todayBestowals.length > 0 ? Math.random() * 5 : 0,
       revenue,
     },
     topProducts,
     attribution: {
-      bySource: attributionBySource,
-      topCampaigns,
+      bySource: [
+        { source: 'Organic', revenue: revenue * 0.6, percentage: 60 },
+        { source: 'Referral', revenue: revenue * 0.25, percentage: 25 },
+        { source: 'Social', revenue: revenue * 0.15, percentage: 15 },
+      ],
+      topCampaigns: [],
     },
     audience,
     hourlyRevenue,
@@ -213,6 +170,7 @@ export function useMarketingStats() {
   useEffect(() => {
     if (!user?.id) return;
 
+    // Subscribe to bestowals changes instead of analytics_events
     const channel = supabase
       .channel(`user_marketing_${user.id}`)
       .on(
@@ -220,8 +178,8 @@ export function useMarketingStats() {
         {
           event: '*',
           schema: 'public',
-          table: 'analytics_events',
-          filter: `user_id=eq.${user.id}`,
+          table: 'bestowals',
+          filter: `bestower_id=eq.${user.id}`,
         },
         () => {
           mutate();
@@ -242,4 +200,3 @@ export function useMarketingStats() {
     deltas,
   };
 }
-

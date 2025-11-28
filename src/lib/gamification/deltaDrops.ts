@@ -1,9 +1,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import confetti from 'canvas-confetti';
 
+// Extend Window interface for confetti
+declare global {
+  interface Window {
+    confetti?: typeof confetti;
+  }
+}
+
 // Ensure confetti is available
 if (typeof window !== 'undefined' && !window.confetti) {
-  (window as any).confetti = confetti;
+  window.confetti = confetti;
 }
 
 export interface DeltaDropResult {

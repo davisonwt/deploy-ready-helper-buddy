@@ -80,30 +80,22 @@ export function GoSatGhostAccessMonitor() {
 
       if (groupsError) throw groupsError;
 
-      // Fetch live rooms
+      // Fetch live rooms (using valid room types)
       const { data: liveRoomsData, error: roomsError } = await supabase
         .from('chat_rooms')
         .select('*, creator:created_by(display_name, avatar_url)')
-        .eq('room_type', 'live')
+        .in('room_type', ['live_conference', 'live_marketing', 'live_podcast', 'live_study', 'live_training'])
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (roomsError) throw roomsError;
 
-      // Fetch radio channels (if table exists)
-      const { data: radioData, error: radioError } = await supabase
-        .from('radio_slots')
-        .select('*, presenter:presenter_id(display_name)')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      // Radio channels - table doesn't exist yet, use empty array
+      const radioData: any[] = [];
 
-      // Fetch announcements (if table exists)
-      const { data: announcementsData, error: announcementsError } = await supabase
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      // Announcements - table doesn't exist yet, use empty array
+      const announcementsData: any[] = [];
 
       // Get participant counts for each room
       const enrichWithCounts = async (rooms: any[]) => {

@@ -56,11 +56,11 @@ export default function SmoothBeadClock() {
     const isPast = thisDay < dayOfYear;
     const isToday = thisDay === dayOfYear && !isInDaysOutOfTime;
 
-    if (isPast) return { y: 320, transition: { duration: 0.8, ease: "easeOut" } };
+    if (isPast) return { y: 320, transition: { duration: 0.8, ease: "easeOut" as const } };
     if (isToday) {
       return {
         y: dayFraction * 320,
-        transition: { duration: 0.4, ease: "linear", type: "tween" }
+        transition: { duration: 0.4, ease: "linear" as const, type: "tween" as const }
       };
     }
     return { y: -50, transition: { duration: 0 } };
