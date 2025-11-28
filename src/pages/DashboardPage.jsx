@@ -446,7 +446,7 @@ export default function DashboardPage() {
                   Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
                 </div>
                 <div className="text-sm sm:text-base">
-                  Weekday {wheelData.weekday} • Part {wheelData.part}/18 • {wheelData.watch}
+                  Weekday {wheelData.weekday} • Part {wheelData.part}/18
                 </div>
                 <div className="text-xs sm:text-sm opacity-80">
                   Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
