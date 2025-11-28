@@ -161,7 +161,7 @@ export default function YHWHWheel() {
   }, [dimensions]);
 
   return (
-    <div className="fixed inset-0 bg-[#0b0e17] overflow-hidden">
+    <div className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '600px', height: '600px', minWidth: '600px', minHeight: '600px' }}>
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
   );
