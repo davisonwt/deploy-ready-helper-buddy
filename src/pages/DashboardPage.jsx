@@ -393,7 +393,7 @@ export default function DashboardPage() {
       <div className="relative z-10">
         {/* Welcome Section with Profile Picture - Mobile Responsive */}
         <div 
-          className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl"
+          className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl relative overflow-hidden"
           style={{
             backgroundColor: currentTheme.cardBg,
             borderColor: currentTheme.cardBorder,
@@ -402,14 +402,13 @@ export default function DashboardPage() {
             zIndex: 1
           }}
         >
-        <div className="relative">
+          {/* YHWH Wheel - Eternal Calendar positioned on container */}
+          <div className="absolute top-0 right-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96" style={{ zIndex: 10 }}>
+            <YHWHWheel onDataUpdate={setWheelData} />
+          </div>
+          
           {/* User Icon, Text, and Wheel Info */}
           <div className="flex flex-col gap-3 sm:gap-4 relative">
-            {/* YHWH Wheel - Eternal Calendar positioned on container */}
-            <div className="absolute top-0 right-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96" style={{ zIndex: 10 }}>
-              <YHWHWheel onDataUpdate={setWheelData} />
-            </div>
-            
             {/* User Icon */}
             <div 
               className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
