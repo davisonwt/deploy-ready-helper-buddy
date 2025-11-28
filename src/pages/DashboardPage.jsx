@@ -522,10 +522,8 @@ export default function DashboardPage() {
                 <LiveTimezoneDisplay />
                 <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
                   <Link to="/grove-station">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="w-full text-sm sm:text-base rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
+                    <button 
+                      className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                       style={{
                         color: currentTheme.textPrimary,
                         borderColor: currentTheme.accent,
@@ -544,7 +542,7 @@ export default function DashboardPage() {
                     >
                       <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       View Radio Schedule
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               </CardContent>

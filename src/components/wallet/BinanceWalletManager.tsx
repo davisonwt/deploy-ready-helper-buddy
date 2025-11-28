@@ -356,10 +356,8 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                         Quick Actions
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
+                        <button
+                          className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                           onClick={refreshBalance}
                           disabled={refreshing}
                           style={{
@@ -389,12 +387,10 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                               Refresh balance
                             </>
                           )}
-                        </Button>
+                        </button>
                         {showTopUpActions && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
+                          <button
+                            className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                             onClick={() => setTopUpDialogOpen(true)}
                             style={{
                               borderColor: currentTheme.accent,
@@ -414,12 +410,10 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                           >
                             <CreditCard className="h-4 w-4 mr-2" />
                             Top up wallet
-                          </Button>
+                          </button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
+                        <button
+                          className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                           onClick={() => {
                             setManualBalanceAmount(balance?.amount?.toString() || '0');
                             setManualBalanceDialogOpen(true);
@@ -442,17 +436,15 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Set balance
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </div>
 
                   <Separator style={{ backgroundColor: currentTheme.cardBorder }} />
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
+                  <button
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => {
                       setShowLinkField(true);
                       setPayIdInput('');
@@ -475,17 +467,15 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   >
                     <LinkIcon className="h-3 w-3 mr-2" />
                     Link a different wallet
-                  </Button>
+                  </button>
 
                   <div className="text-xs space-y-2" style={{ color: currentTheme.textSecondary }}>
                     <p className="font-semibold" style={{ color: currentTheme.textPrimary }}>Need your Pay ID?</p>
                     <p>
                       Open the Binance app &gt; tap <strong>Profile</strong> &gt; <strong>Pay</strong> &gt; <strong>Receive</strong> to copy your Pay ID.
                     </p>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2 mt-2"
+                    <button
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50 mt-2"
                       onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
                       style={{
                         borderColor: currentTheme.accent,
@@ -504,7 +494,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                       }}
                     >
                       Binance Pay Help <ExternalLink className="h-4 w-4 ml-2" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               )}
