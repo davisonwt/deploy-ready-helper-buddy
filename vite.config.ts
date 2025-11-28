@@ -50,10 +50,6 @@ export default defineConfig(({ mode, command }) => ({
     outDir: 'dist',
     sourcemap: true, // For error tracking and debugging
     rollupOptions: {
-      external: ['supabase/functions/**'],
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-      },
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', '@tanstack/react-query'],
