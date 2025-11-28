@@ -369,9 +369,15 @@ const fetchOrchardById = async (oid) => {
       // Upload video if present
       let videoUrl = formData.video_url
       if (selectedVideo && selectedVideo.file) {
+        console.log('📤 UPLOAD SUBMIT DEBUG: Starting video upload');
         const videoUploadResult = await uploadFile(selectedVideo.file, 'orchard-videos', 'videos/')
         if (videoUploadResult.success) {
           videoUrl = videoUploadResult.data.url
+          console.log('✅ UPLOAD SUBMIT DEBUG: Video uploaded successfully:', videoUrl);
+        } else {
+          console.error('❌ UPLOAD SUBMIT DEBUG: Video upload failed:', videoUploadResult.error);
+          setError(`Video upload failed: ${videoUploadResult.error || 'Unknown error'}`)
+          return // Stop submission if video upload fails
         }
       }
 
@@ -597,12 +603,11 @@ const fetchOrchardById = async (oid) => {
     })
   }
 
-  const handleVideoUpload = (e) => {
-    const file = e.target.files[0]
+  const handleVideoFile = (file) => {
     if (!file) return
     
     if (!file.type.startsWith('video/')) {
-      setError("Please upload a video file")
+      setError("Please upload a video file (MP4, MOV, AVI, WebM, etc.)")
       return
     }
     
@@ -620,7 +625,27 @@ const fetchOrchardById = async (oid) => {
       })
       setError("")
     }
+    reader.onerror = () => {
+      setError("Failed to read video file. Please try again.")
+    }
     reader.readAsDataURL(file)
+  }
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0]
+    handleVideoFile(file)
+  }
+
+  const handleVideoDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const file = e.dataTransfer.files[0]
+    handleVideoFile(file)
+  }
+
+  const handleVideoDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
   }
 
   const removeImage = (index) => {
@@ -1249,18 +1274,33 @@ const fetchOrchardById = async (oid) => {
                   Video (Optional)
                 </label>
                 <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors">
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors"
+                    onDrop={handleVideoDrop}
+                    onDragOver={handleVideoDragOver}
+                    onDragEnter={handleVideoDragOver}
+                  >
                     <input
                       type="file"
                       id="video-upload"
-                      accept="video/*"
+                      accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/3gpp,video/3gp2,video/mpeg,video/ogg"
                       onChange={handleVideoUpload}
                       className="hidden"
+                      disabled={uploading}
                     />
-                    <label htmlFor="video-upload" className="cursor-pointer">
-                      <Video className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">Click to upload a video or drag and drop</p>
-                      <p className="text-xs text-gray-500">MP4, MOV, AVI up to 50MB</p>
+                    <label htmlFor="video-upload" className={`cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-8 w-8 text-green-500 mx-auto mb-2 animate-spin" />
+                          <p className="text-sm text-gray-600">Uploading video...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Video className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">Click to upload a video or drag and drop</p>
+                          <p className="text-xs text-gray-500">MP4, MOV, AVI, WebM up to 200MB (auto-compressed if larger)</p>
+                        </>
+                      )}
                     </label>
                   </div>
                   
@@ -1275,13 +1315,26 @@ const fetchOrchardById = async (oid) => {
                       <button
                         type="button"
                         onClick={removeVideo}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        disabled={uploading}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       >
                         <X className="h-4 w-4" />
                       </button>
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                         {selectedVideo.isExisting ? 'Existing' : (selectedVideo.file?.name || 'Video')}
+                        {selectedVideo.file && (
+                          <span className="ml-2">
+                            ({(selectedVideo.file.size / (1024 * 1024)).toFixed(1)}MB)
+                          </span>
+                        )}
                       </div>
+                    </div>
+                  )}
+                  
+                  {/* Error Display */}
+                  {error && error.includes('video') && (
+                    <div className="text-red-500 text-sm bg-red-50 border border-red-200 rounded p-2">
+                      {error}
                     </div>
                   )}
                 </div>
