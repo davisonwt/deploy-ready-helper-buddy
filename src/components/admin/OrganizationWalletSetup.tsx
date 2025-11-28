@@ -155,7 +155,7 @@ export function OrganizationWalletSetup() {
                   Wallet ID: <code className="bg-muted px-1 py-0.5 rounded">{wallet.wallet_name}</code>
                 </p>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <code className="px-2 py-1 bg-muted rounded text-xs flex-1 truncate">
                     {wallet.wallet_address}
                   </code>
@@ -170,7 +170,7 @@ export function OrganizationWalletSetup() {
                   </Button>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-4 pt-2">
                   <Button
                     variant="outline"
                     size="sm"
