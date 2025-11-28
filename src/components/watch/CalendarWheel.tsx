@@ -608,20 +608,6 @@ export default function CalendarWheel({
         </div>
       )}
 
-      {/* Error message */}
-      {error && (
-        <div className="calendar-wheel-error" style={{
-          position: 'absolute',
-          bottom: 10,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '10px',
-          color: 'var(--error-color, #ff6b6b)',
-          opacity: 0.7
-        }}>
-          {error}
-        </div>
-      )}
     </div>
   );
 }
