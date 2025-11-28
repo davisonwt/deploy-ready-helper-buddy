@@ -18,31 +18,35 @@ export function GoSatGhostAccessThumbnail() {
         <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-amber-500 rounded-full blur-sm animate-pulse" style={{ animationDelay: '1s', boxShadow: '0 0 10px rgba(255,215,0,0.4)' }} />
       </div>
 
-      {/* Top-left Logo */}
-      <div className="absolute top-4 left-4 z-20">
-        <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" style={{
-          textShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '2px',
-          lineHeight: '1.2'
-        }}>
-          2SG
-        </div>
-        <div className="text-xs font-medium text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 mt-0.5" style={{
-          textShadow: '0 0 15px rgba(255,215,0,0.6), 0 0 30px rgba(255,215,0,0.3)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '1px'
-        }}>
-          2SGApp
-        </div>
-      </div>
-
       {/* Center Card */}
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8 py-6">
-        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 max-w-7xl w-full border-2" style={{
+        <div className="bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 max-w-7xl w-full border-2 relative" style={{
           borderColor: 'rgba(255,215,0,0.3)',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,215,0,0.2), inset 0 0 30px rgba(255,215,0,0.1), 0 0 60px rgba(124,58,237,0.3)'
         }}>
+          {/* Logo - Top Left Corner */}
+          <div className="absolute top-4 left-4 z-20">
+            <div className="flex flex-col items-start">
+              <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" style={{
+                textShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4), 0 0 60px rgba(255,215,0,0.2)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '3px',
+                lineHeight: '1',
+                fontWeight: '800'
+              }}>
+                2SG
+              </div>
+              <div className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 mt-1" style={{
+                textShadow: '0 0 15px rgba(255,215,0,0.6), 0 0 30px rgba(255,215,0,0.3)',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '2px',
+                fontWeight: '600'
+              }}>
+                App
+              </div>
+            </div>
+          </div>
+
           {/* Title */}
           <h1 className="text-3xl font-bold mb-2 text-center" style={{
             background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
