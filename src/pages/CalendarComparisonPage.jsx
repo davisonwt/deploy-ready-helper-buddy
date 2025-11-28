@@ -31,27 +31,27 @@ export default function CalendarComparisonPage() {
           </CardHeader>
         </Card>
 
-        {/* Top Row: Two Calendars Side by Side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-6 md:mb-8">
-          {/* CalendarWheel - Left */}
+        {/* All Calendars in Separate Cards - No Overlapping */}
+        <div className="space-y-8">
+          {/* CalendarWheel - Position 1 */}
           <Card 
-            className="border shadow-xl backdrop-blur-xl"
+            className="border shadow-xl backdrop-blur-xl w-full"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
               position: 'relative',
               overflow: 'hidden',
-              zIndex: 1
+              zIndex: 10
             }}
           >
             <CardHeader>
               <CardTitle className="text-xl" style={{ color: currentTheme.textPrimary }}>
-                CalendarWheel (New)
+                1. CalendarWheel (New)
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
               <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 10, isolation: 'isolate', contain: 'layout style paint' }}>
                   <CalendarWheel 
                     timezone="Africa/Johannesburg"
                     theme="auto"
@@ -90,25 +90,25 @@ export default function CalendarComparisonPage() {
             </CardContent>
           </Card>
 
-          {/* YHWHWheel - Right */}
+          {/* YHWHWheel - Position 2 */}
           <Card 
-            className="border shadow-xl backdrop-blur-xl"
+            className="border shadow-xl backdrop-blur-xl w-full"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
               position: 'relative',
               overflow: 'hidden',
-              zIndex: 1
+              zIndex: 9
             }}
           >
             <CardHeader>
               <CardTitle className="text-xl" style={{ color: currentTheme.textPrimary }}>
-                YHWHWheel (Original)
+                2. YHWHWheel (Original)
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
               <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 9, isolation: 'isolate', contain: 'layout style paint' }}>
                   <YHWHWheel 
                     onDataUpdate={setYhwhWheelData}
                   />
@@ -133,28 +133,26 @@ export default function CalendarComparisonPage() {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Bottom Row: One Calendar Centered */}
-        <div className="flex justify-center">
+          {/* EzekielClock - Position 3 */}
           <Card 
-            className="border shadow-xl backdrop-blur-xl w-full max-w-2xl"
+            className="border shadow-xl backdrop-blur-xl w-full"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
               position: 'relative',
               overflow: 'hidden',
-              zIndex: 1
+              zIndex: 8
             }}
           >
             <CardHeader>
-              <CardTitle className="text-xl text-center" style={{ color: currentTheme.textPrimary }}>
-                EzekielClock (Circles Within Circles)
+              <CardTitle className="text-xl" style={{ color: currentTheme.textPrimary }}>
+                3. EzekielClock (Circles Within Circles)
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
               <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 1, isolation: 'isolate' }}>
+                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 8, isolation: 'isolate', contain: 'layout style paint' }}>
                   <EzekielClock 
                     onDataUpdate={setEzekielClockData}
                   />
