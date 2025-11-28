@@ -24,14 +24,23 @@ Deno.serve(async (req) => {
   try {
     const now = new Date();
     
-    // Calculate calendar data
-    // Simplified calculation - in production, use actual calendar utilities
-    // Base year: 6028 (sacred calendar year)
-    // Day 1 of Year 6028 starts on a specific date
-    const baseDate = new Date('2025-01-01T00:00:00Z'); // Adjust to actual start date
-    const daysSinceBase = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-    const year = 6028;
-    const dayOfYear = (daysSinceBase % 364) + 1; // 364-day year
+    // Calculate calendar data using sacred calendar epoch
+    // Epoch: Tequvah (Vernal Equinox) March 20, 2025 = Year 6028, Month 1, Day 1
+    const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
+    const msDiff = now.getTime() - CREATOR_EPOCH.getTime();
+    const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+    
+    // Calculate year and day of year (364-day sacred year)
+    let year = 6028;
+    let remainingDays = totalDays;
+    
+    // Calculate year (each year is 364 days, except leap years)
+    while (remainingDays >= 364) {
+      remainingDays -= 364;
+      year++;
+    }
+    
+    const dayOfYear = remainingDays + 1; // Day 1-based
     
     const response = {
       timestamp: now.toISOString(),
