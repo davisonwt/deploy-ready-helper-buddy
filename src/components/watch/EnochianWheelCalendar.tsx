@@ -434,7 +434,7 @@ const EnochianWheelCalendar = () => {
                     );
                   })}
                   
-                  {/* Day numbers for each month segment */}
+                  {/* Day numbers for each month segment - positioned on the wheel line between month numbers */}
                   {monthStructure.map((month, monthIdx) => {
                     const startAngle = (monthIdx * 30 - 90) * Math.PI / 180;
                     const endAngle = ((monthIdx + 1) * 30 - 90) * Math.PI / 180;
@@ -443,7 +443,8 @@ const EnochianWheelCalendar = () => {
                     
                     return Array.from({ length: daysInMonth }, (_, dayIdx) => {
                       const dayAngle = startAngle + (dayIdx + 1) * anglePerDay;
-                      const dayRadius = 210; // Slightly inside the month ring
+                      // Position on the same radius as month numbers (225) but between them
+                      const dayRadius = 225; // Same radius as month numbers
                       const dayX = 350 + dayRadius * Math.cos(dayAngle);
                       const dayY = 350 + dayRadius * Math.sin(dayAngle);
                       
