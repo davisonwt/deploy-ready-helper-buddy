@@ -122,7 +122,10 @@ export function getDayInfo(creatorDay: number, tequfahDay: number = 2): DayInfo 
   }
 
   // Calculate week day (Creator's count)
-  weekDay = ((creatorDay - 1) % 7) + 1;
+  // Year starts on weekday 4 (Tequfah day), so we need to offset
+  // If creatorDay 1 = weekday 4, then creatorDay 12 should be weekday 5
+  // Offset: (creatorDay - 1 + 3) % 7 + 1 to account for starting on weekday 4
+  weekDay = ((creatorDay - 1 + 3) % 7) + 1;
 
   // Calculate Man's day count
   // Man's count starts on Creator's day 4 (Tequfah day)
