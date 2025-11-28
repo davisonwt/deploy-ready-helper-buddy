@@ -392,7 +392,7 @@ export default function LiveActivityWidget() {
           .order('created_at', { ascending: false })
           .limit(5)
 
-        forumInvitations = (invitations || []).map(inv => ({
+        forumInvitations = (enrichedInvitations || []).map(inv => ({
           id: inv.id,
           roomId: inv.room_id,
           roomName: inv.chat_rooms?.name || 'Forum',
