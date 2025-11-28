@@ -271,11 +271,15 @@ export function AmbassadorThumbnail() {
 
             {/* Submit Button */}
             <button 
-              className="w-full py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+              className="w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] mb-4"
               style={{
                 background: currentTheme.primaryButton,
                 color: currentTheme.textPrimary,
-                boxShadow: `0 10px 25px -5px ${currentTheme.shadow}`
+                boxShadow: `0 10px 25px -5px ${currentTheme.shadow}`,
+                paddingTop: '1rem',
+                paddingBottom: '1rem',
+                paddingLeft: '1.5rem',
+                paddingRight: '1.5rem',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = currentTheme.primaryButtonHover;
@@ -291,7 +295,7 @@ export function AmbassadorThumbnail() {
       </div>
 
       {/* Bottom Text */}
-      <div className="absolute bottom-6 left-6 right-6 z-20">
+      <div className="absolute bottom-8 left-6 right-6 z-20">
         <p className="text-xs text-center font-light leading-relaxed" style={{
           color: currentTheme.textPrimary,
           textShadow: `0 0 10px ${currentTheme.shadow}`
