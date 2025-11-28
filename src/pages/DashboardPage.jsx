@@ -525,17 +525,21 @@ export default function DashboardPage() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="w-full text-sm sm:text-base transition-all hover:scale-105"
+                      className="w-full text-sm sm:text-base rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
                       style={{
-                        color: currentTheme.accent,
+                        color: currentTheme.textPrimary,
                         borderColor: currentTheme.accent,
-                        backgroundColor: 'transparent',
+                        backgroundColor: currentTheme.secondaryButton,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                        e.currentTarget.style.color = currentTheme.textPrimary;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                        e.currentTarget.style.color = currentTheme.textPrimary;
                       }}
                     >
                       <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
