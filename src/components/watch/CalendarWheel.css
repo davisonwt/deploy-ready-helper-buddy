@@ -1,40 +1,44 @@
 /**
- * CalendarWheel Styles
- * CSS Variables for metallic gradients, glowing Sabbath dots, and portal colors
+ * CalendarWheel Styles - Beautiful Design
+ * CSS Variables for metallic gradients, glowing effects, and portal colors
  */
 
 .calendar-wheel {
   position: relative;
   display: inline-block;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  border-radius: 50%;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 0 100px rgba(255, 215, 0, 0.1);
 }
 
 /* CSS Variables - can be overridden via Figma exports */
 .calendar-wheel {
   /* Metallic gradients */
-  --metallic-gold-light: #d4af37;
-  --metallic-gold: #b8941d;
-  --metallic-gold-dark: #8b6914;
-  --metallic-silver-light: #e8e8e8;
-  --metallic-silver: #c0c0c0;
-  --metallic-silver-dark: #808080;
+  --metallic-gold-light: #FFD700;
+  --metallic-gold: #FFA500;
+  --metallic-gold-dark: #FF8C00;
+  --metallic-silver-light: #E8E8E8;
+  --metallic-silver: #C0C0C0;
+  --metallic-silver-dark: #A0A0A0;
   
   /* Glowing Sabbath dots */
-  --sabbath-glow: #ffd700;
-  --solar-dot: #888;
+  --sabbath-glow: #FFD700;
+  --solar-dot: #FFFFFF;
   
   /* Portal colors */
-  --portal-center: #4a90e2;
-  --portal-edge: #1a1a2e;
+  --portal-center: #FFD700;
+  --portal-edge: #FF8C00;
   
   /* Part colors */
-  --current-part: #ff6b6b;
-  --current-part-glow: #ffd700;
-  --part-color: #666;
+  --current-part: #FFD700;
+  --current-part-glow: #FFD700;
+  --part-color: #FFFFFF;
   
   /* Other colors */
-  --omer-color: #8b4513;
-  --creation-day: #4a90e2;
-  --quadrant-color: #4a90e2;
+  --omer-color: #8B4513;
+  --creation-day: #4A90E2;
+  --quadrant-color: #C0C0C0;
   
   /* Tooltip */
   --tooltip-bg: rgba(0, 0, 0, 0.9);
