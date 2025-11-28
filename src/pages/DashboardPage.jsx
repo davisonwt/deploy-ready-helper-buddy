@@ -403,7 +403,7 @@ export default function DashboardPage() {
           }}
         >
           {/* User Icon, Text, Wheel Info, and Calendar - Side by Side in Same Container */}
-          <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             {/* Left Side - User Icon and Info */}
             <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
               {/* User Icon */}
@@ -462,8 +462,8 @@ export default function DashboardPage() {
               )}
             </div>
             
-            {/* Right Side - YHWH Wheel Calendar - On Same Container, To The Right */}
-            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
+            {/* Right Side - YHWH Wheel Calendar - Centered and Aligned */}
+            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center self-center sm:self-start">
               <YHWHWheel onDataUpdate={setWheelData} />
             </div>
           </div>
