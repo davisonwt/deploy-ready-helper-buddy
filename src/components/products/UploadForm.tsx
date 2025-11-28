@@ -319,7 +319,16 @@ export default function UploadForm() {
 
                 <div>
                   <Label htmlFor="type">Type *</Label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <Select value={formData.type} onValueChange={(value) => {
+                    console.log('Product type changed to:', value);
+                    setFormData({ ...formData, type: value });
+                    // Clear files when switching away from music to ensure proper file filtering
+                    if (value !== 'music') {
+                      setMainFile(null);
+                      setAlbumFiles([]);
+                      setZipFile(null);
+                    }
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -505,9 +514,9 @@ export default function UploadForm() {
                         id="file"
                         type="file"
                         className="hidden"
-                        {...(formData.type === 'music' && {
+                        {...(formData.type === 'music' ? {
                           accept: 'audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg,.wma,.mp4,.mpeg,.opus,.amr,.3gp,.3g2,.aiff,.au,.ra,.wv,.ape,.tta,.tak,.dsf,.dff,.mka,.mpc,.spx,.aa,.aax,.act,.aiff,.alac,.ape,.au,.awb,.dct,.dss,.dvf,.flac,.gsm,.iklax,.ivs,.m4a,.m4b,.mmf,.mp3,.mpc,.msv,.nmf,.ogg,.oga,.mogg,.opus,.ra,.rm,.raw,.rf64,.sln,.tta,.voc,.vox,.wav,.wma,.wv,.webm'
-                        })}
+                        } : {})}
                         multiple={releaseType === 'album'}
                         disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
