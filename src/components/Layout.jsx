@@ -351,16 +351,14 @@ function Layout({ children }) {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
                 {/* Voice Commands Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <button
                   onClick={() => setShowVoiceCommands(true)}
-                  className="hover-scale rounded-lg border"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border-2 p-2 transition-all duration-200 hover:scale-105 disabled:pointer-events-none disabled:opacity-50"
                   title="Voice Commands"
                   style={{
                     color: currentTheme.textPrimary,
                     backgroundColor: currentTheme.secondaryButton,
-                    borderColor: currentTheme.cardBorder,
+                    borderColor: currentTheme.accent,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = currentTheme.textPrimary;
@@ -370,11 +368,11 @@ function Layout({ children }) {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.color = currentTheme.textPrimary;
                     e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
                   }}
                 >
                   <Mic className="h-5 w-5" />
-                </Button>
+                </button>
                 
                 {/* Basket Icon */}
                 <Link
