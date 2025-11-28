@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast as toastFn } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Wallet, CheckCircle2, AlertCircle, Copy, RefreshCw, Loader2 } from 'lucide-react';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 
 interface OrganizationWallet {
   id: string;
@@ -22,6 +23,15 @@ export function OrganizationWalletSetup() {
   const [wallets, setWallets] = useState<OrganizationWallet[]>([]);
   const [refreshing, setRefreshing] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
 
   useEffect(() => {
     fetchWallets();
@@ -96,20 +106,31 @@ export function OrganizationWalletSetup() {
   };
 
   return (
-    <Card>
+    <Card 
+      style={{
+        backgroundColor: currentTheme.cardBg,
+        borderColor: currentTheme.cardBorder,
+        boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+      }}
+    >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2" style={{ color: currentTheme.textPrimary }}>
+          <Wallet className="h-5 w-5" style={{ color: currentTheme.accent }} />
           Organization Wallet Setup
         </CardTitle>
-        <CardDescription>
+        <CardDescription style={{ color: currentTheme.textSecondary }}>
           Binance Pay wallet addresses for receiving payments via the Bestowal Map
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Alert>
-          <Wallet className="h-4 w-4" />
-          <AlertDescription>
+        <Alert 
+          style={{
+            backgroundColor: currentTheme.secondaryButton,
+            borderColor: currentTheme.cardBorder
+          }}
+        >
+          <Wallet className="h-4 w-4" style={{ color: currentTheme.accent }} />
+          <AlertDescription style={{ color: currentTheme.textPrimary }}>
             All payments are processed through Binance Pay and distributed automatically according to the Bestowal Map:
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>All payments first go to <strong>s2gholding</strong> (holding wallet)</li>
@@ -122,61 +143,122 @@ export function OrganizationWalletSetup() {
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-sm text-muted-foreground">Loading wallets...</span>
+            <Loader2 className="h-6 w-6 animate-spin" style={{ color: currentTheme.accent }} />
+            <span className="ml-2 text-sm" style={{ color: currentTheme.textSecondary }}>Loading wallets...</span>
           </div>
         ) : wallets.length === 0 ? (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+          <Alert 
+            style={{
+              backgroundColor: currentTheme.secondaryButton,
+              borderColor: currentTheme.cardBorder
+            }}
+          >
+            <AlertCircle className="h-4 w-4" style={{ color: currentTheme.accent }} />
+            <AlertDescription style={{ color: currentTheme.textPrimary }}>
               No Binance Pay wallets configured. Please add s2gholding and s2gbestow wallet addresses in the database.
             </AlertDescription>
           </Alert>
         ) : (
           <div className="space-y-4">
             {wallets.map((wallet) => (
-              <div key={wallet.id} className="border rounded-lg p-4 space-y-3 bg-card">
+              <div 
+                key={wallet.id} 
+                className="border rounded-lg p-4 space-y-3"
+                style={{
+                  backgroundColor: currentTheme.secondaryButton,
+                  borderColor: currentTheme.cardBorder
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold">
+                    <p className="font-semibold" style={{ color: currentTheme.textPrimary }}>
                       {wallet.wallet_name === 's2gholding' && '💰 Holding Wallet'}
                       {wallet.wallet_name === 's2gbestow' && '⛪ Tithing & Admin Wallet'}
                     </p>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4" style={{ color: currentTheme.accent }} />
                   </div>
                   {wallet.balance !== undefined && (
-                    <Badge variant="secondary" className="text-lg font-bold">
+                    <Badge 
+                      variant="secondary" 
+                      className="text-lg font-bold"
+                      style={{
+                        backgroundColor: currentTheme.accent + '20',
+                        color: currentTheme.accent,
+                        borderColor: currentTheme.accent
+                      }}
+                    >
                       {wallet.balance} {wallet.currency || 'USDC'}
                     </Badge>
                   )}
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  Wallet ID: <code className="bg-muted px-1 py-0.5 rounded">{wallet.wallet_name}</code>
+                <p className="text-xs" style={{ color: currentTheme.textSecondary }}>
+                  Wallet ID: <code 
+                    className="px-1 py-0.5 rounded"
+                    style={{
+                      backgroundColor: currentTheme.cardBg,
+                      color: currentTheme.textPrimary
+                    }}
+                  >
+                    {wallet.wallet_name}
+                  </code>
                 </p>
 
                 <div className="flex items-center gap-4">
-                  <code className="px-2 py-1 bg-muted rounded text-xs flex-1 truncate">
+                  <code 
+                    className="px-2 py-1 rounded text-xs flex-1 truncate"
+                    style={{
+                      backgroundColor: currentTheme.cardBg,
+                      color: currentTheme.textPrimary,
+                      borderColor: currentTheme.cardBorder
+                    }}
+                  >
                     {wallet.wallet_address}
                   </code>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={() => handleCopyAddress(wallet.wallet_address)}
-                    className="h-8 w-8 p-0 flex-shrink-0"
+                    className="h-8 w-8 p-0 flex-shrink-0 rounded-lg border transition-all duration-200 inline-flex items-center justify-center"
+                    style={{
+                      backgroundColor: currentTheme.secondaryButton,
+                      borderColor: currentTheme.cardBorder,
+                      color: currentTheme.textPrimary
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    }}
                     title="Copy address"
                   >
                     <Copy className="h-3 w-3" />
-                  </Button>
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-4 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => refreshBalance(wallet.wallet_name)}
                     disabled={refreshing[wallet.wallet_name]}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 disabled:opacity-50"
+                    style={{
+                      backgroundColor: refreshing[wallet.wallet_name] ? currentTheme.secondaryButton : currentTheme.secondaryButton,
+                      borderColor: currentTheme.accent,
+                      color: currentTheme.textPrimary
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!refreshing[wallet.wallet_name]) {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!refreshing[wallet.wallet_name]) {
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                      }
+                    }}
                   >
                     {refreshing[wallet.wallet_name] ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -184,18 +266,30 @@ export function OrganizationWalletSetup() {
                       <RefreshCw className="h-3 w-3" />
                     )}
                     Refresh Balance
-                  </Button>
+                  </button>
                   
                   {wallet.wallet_name === 's2gholding' && wallet.balance && wallet.balance > 0 && (
-                    <Badge variant="default" className="bg-amber-500">
+                    <Badge 
+                      variant="default"
+                      style={{
+                        backgroundColor: currentTheme.accent,
+                        color: currentTheme.textPrimary
+                      }}
+                    >
                       Funds available for distribution
                     </Badge>
                   )}
                 </div>
 
                 {wallet.wallet_name === 's2gholding' && (
-                  <Alert className="mt-2">
-                    <AlertDescription className="text-xs">
+                  <Alert 
+                    className="mt-2"
+                    style={{
+                      backgroundColor: currentTheme.secondaryButton,
+                      borderColor: currentTheme.cardBorder
+                    }}
+                  >
+                    <AlertDescription className="text-xs" style={{ color: currentTheme.textPrimary }}>
                       This wallet holds funds pending distribution. Use the "Manual Distribution Queue" below to release funds to sowers after courier confirms product delivery.
                     </AlertDescription>
                   </Alert>
@@ -205,9 +299,15 @@ export function OrganizationWalletSetup() {
           </div>
         )}
 
-        <Alert variant="default">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-xs">
+        <Alert 
+          variant="default"
+          style={{
+            backgroundColor: currentTheme.secondaryButton,
+            borderColor: currentTheme.cardBorder
+          }}
+        >
+          <AlertCircle className="h-4 w-4" style={{ color: currentTheme.accent }} />
+          <AlertDescription className="text-xs" style={{ color: currentTheme.textPrimary }}>
             Important: These wallet addresses are used for Binance Pay distributions. 
             Make sure you have access to all wallets and keep your recovery phrases safe.
             All payments are processed in USDC via Binance Pay.
