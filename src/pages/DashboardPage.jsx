@@ -33,7 +33,7 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import { EzekielClock } from '@/components/ezekiel-clock/EzekielClock'
+import Sow2GrowCalendar from '@/components/Sow2GrowCalendar'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
@@ -400,9 +400,9 @@ export default function DashboardPage() {
           }}
         >
         <div className="flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-6">
-          {/* Ezekiel Clock - Circles Calendar (Left Side) */}
+          {/* Sow2Grow Calendar - Our Calendar (Left Side) */}
           <div className="flex-shrink-0">
-            <EzekielClock />
+            <Sow2GrowCalendar />
           </div>
           
           {/* User Icon and Welcome Message (Right Side) */}
