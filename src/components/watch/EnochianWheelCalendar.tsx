@@ -153,24 +153,53 @@ const EnochianWheelCalendar = () => {
             <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur rounded-2xl shadow-2xl p-8 border-4 border-amber-600/30">
               <svg width="100%" height="100%" viewBox="0 0 700 700" className="mx-auto">
                 <defs>
+                  {/* Metallic gradients for silver/gold appearance */}
+                  <linearGradient id="metallicSilver" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#e8eaf6" stopOpacity="0.9"/>
+                    <stop offset="25%" stopColor="#c5cae9" stopOpacity="0.8"/>
+                    <stop offset="50%" stopColor="#9fa8da" stopOpacity="0.7"/>
+                    <stop offset="75%" stopColor="#7986cb" stopOpacity="0.8"/>
+                    <stop offset="100%" stopColor="#5c6bc0" stopOpacity="0.9"/>
+                  </linearGradient>
+                  
+                  <linearGradient id="metallicGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fff9c4" stopOpacity="0.95"/>
+                    <stop offset="25%" stopColor="#fff59d" stopOpacity="0.9"/>
+                    <stop offset="50%" stopColor="#fdd835" stopOpacity="0.85"/>
+                    <stop offset="75%" stopColor="#fbc02d" stopOpacity="0.9"/>
+                    <stop offset="100%" stopColor="#f9a825" stopOpacity="0.95"/>
+                  </linearGradient>
+                  
                   <radialGradient id="centerGlow">
-                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.8"/>
-                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
+                    <stop offset="0%" stopColor="#fff9c4" stopOpacity="1"/>
+                    <stop offset="30%" stopColor="#fdd835" stopOpacity="0.8"/>
+                    <stop offset="60%" stopColor="#fbc02d" stopOpacity="0.4"/>
+                    <stop offset="100%" stopColor="#f9a825" stopOpacity="0"/>
                   </radialGradient>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                  
+                  {/* Glowing white effect */}
+                  <filter id="glowWhite" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
                     <feMerge>
                       <feMergeNode in="coloredBlur"/>
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
                   
-                  {/* Depth and shadow filters */}
+                  <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  
+                  {/* Depth and shadow filters - enhanced */}
                   <filter id="dropShadowOuter" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-                    <feOffset dx="2" dy="2" result="offsetblur"/>
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+                    <feOffset dx="3" dy="3" result="offsetblur"/>
                     <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.3"/>
+                      <feFuncA type="linear" slope="0.4"/>
                     </feComponentTransfer>
                     <feMerge>
                       <feMergeNode/>
@@ -180,9 +209,9 @@ const EnochianWheelCalendar = () => {
                   
                   <filter id="dropShadowMiddle" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                    <feOffset dx="1.5" dy="1.5" result="offsetblur"/>
+                    <feOffset dx="2" dy="2" result="offsetblur"/>
                     <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.4"/>
+                      <feFuncA type="linear" slope="0.5"/>
                     </feComponentTransfer>
                     <feMerge>
                       <feMergeNode/>
@@ -194,7 +223,7 @@ const EnochianWheelCalendar = () => {
                     <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
                     <feOffset dx="1" dy="1" result="offsetblur"/>
                     <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.5"/>
+                      <feFuncA type="linear" slope="0.6"/>
                     </feComponentTransfer>
                     <feMerge>
                       <feMergeNode/>
@@ -202,39 +231,67 @@ const EnochianWheelCalendar = () => {
                     </feMerge>
                   </filter>
                   
-                  {/* Radial gradients for 3D depth effect */}
-                  <radialGradient id="ringGradientOuter" cx="50%" cy="50%">
+                  {/* Radial gradients for 3D depth effect - metallic */}
+                  <radialGradient id="ringGradientOuter" cx="30%" cy="30%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4"/>
+                    <stop offset="50%" stopColor="#e8eaf6" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="#7986cb" stopOpacity="0.8"/>
+                  </radialGradient>
+                  
+                  <radialGradient id="ringGradientMiddle" cx="30%" cy="30%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3"/>
+                    <stop offset="50%" stopColor="#c5cae9" stopOpacity="0.5"/>
+                    <stop offset="100%" stopColor="#5c6bc0" stopOpacity="0.7"/>
+                  </radialGradient>
+                  
+                  <radialGradient id="ringGradientInner" cx="30%" cy="30%">
                     <stop offset="0%" stopColor="#ffffff" stopOpacity="0.2"/>
-                    <stop offset="50%" stopColor="#d97706" stopOpacity="0.8"/>
-                    <stop offset="100%" stopColor="#78350f" stopOpacity="0.9"/>
+                    <stop offset="50%" stopColor="#9fa8da" stopOpacity="0.4"/>
+                    <stop offset="100%" stopColor="#3f51b5" stopOpacity="0.6"/>
                   </radialGradient>
                   
-                  <radialGradient id="ringGradientMiddle" cx="50%" cy="50%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.15"/>
-                    <stop offset="50%" stopColor="#475569" stopOpacity="0.7"/>
-                    <stop offset="100%" stopColor="#1e293b" stopOpacity="0.9"/>
-                  </radialGradient>
-                  
-                  <radialGradient id="ringGradientInner" cx="50%" cy="50%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1"/>
-                    <stop offset="50%" stopColor="#334155" stopOpacity="0.6"/>
-                    <stop offset="100%" stopColor="#0f172a" stopOpacity="0.9"/>
-                  </radialGradient>
-                  
-                  {/* Linear gradients for elevated ring edges */}
+                  {/* Linear gradients for elevated ring edges - metallic */}
                   <linearGradient id="ringEdgeTop" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6"/>
-                    <stop offset="100%" stopColor="#d97706" stopOpacity="0.3"/>
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7"/>
+                    <stop offset="100%" stopColor="#c5cae9" stopOpacity="0.4"/>
                   </linearGradient>
                   
                   <linearGradient id="ringEdgeBottom" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="#78350f" stopOpacity="0.5"/>
-                    <stop offset="100%" stopColor="#d97706" stopOpacity="0.2"/>
+                    <stop offset="0%" stopColor="#5c6bc0" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="#9fa8da" stopOpacity="0.3"/>
                   </linearGradient>
+                  
+                  {/* Gold gradient for center */}
+                  <radialGradient id="goldCenter" cx="50%" cy="50%">
+                    <stop offset="0%" stopColor="#fff9c4" stopOpacity="1"/>
+                    <stop offset="40%" stopColor="#fdd835" stopOpacity="0.9"/>
+                    <stop offset="70%" stopColor="#fbc02d" stopOpacity="0.8"/>
+                    <stop offset="100%" stopColor="#f9a825" stopOpacity="0.7"/>
+                  </radialGradient>
                 </defs>
 
-                {/* Outer 366-dot ring (dragging) */}
+                {/* Outer 366-dot ring (dragging) - Metallic silver with glowing white dots */}
                 <g transform={`rotate(${rotation.outer} 350 350)`}>
+                  {/* Metallic ring background */}
+                  <circle cx="350" cy="350" r="335" fill="url(#metallicSilver)" opacity="0.3" filter="url(#dropShadowOuter)"/>
+                  
+                  {/* Anti-clockwise motion indicator arrows */}
+                  {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = (i * 45 - 90) * Math.PI / 180;
+                    const x = 350 + 320 * Math.cos(angle);
+                    const y = 350 + 320 * Math.sin(angle);
+                    return (
+                      <path
+                        key={`arrow-${i}`}
+                        d={`M ${x} ${y} L ${x - 8 * Math.cos(angle)} ${y - 8 * Math.sin(angle)} L ${x - 4 * Math.cos(angle) + 3 * Math.cos(angle + Math.PI/2)} ${y - 4 * Math.sin(angle) + 3 * Math.sin(angle + Math.PI/2)} L ${x - 4 * Math.cos(angle) - 3 * Math.cos(angle + Math.PI/2)} ${y - 4 * Math.sin(angle) - 3 * Math.sin(angle + Math.PI/2)} Z`}
+                        fill="#ffffff"
+                        opacity="0.6"
+                        filter="url(#glowWhite)"
+                      />
+                    );
+                  })}
+                  
+                  {/* 366 glowing white dots */}
                   {Array.from({ length: 366 }).map((_, i) => {
                     const angle = (i * (360/366) - 90) * Math.PI / 180;
                     const x = 350 + 330 * Math.cos(angle);
@@ -245,14 +302,20 @@ const EnochianWheelCalendar = () => {
                         key={i} 
                         cx={x} 
                         cy={y} 
-                        r={isSpecial ? "4" : "2"} 
-                        fill={isSpecial ? "#fbbf24" : "#64748b"}
-                        opacity={isSpecial ? "1" : "0.4"}
+                        r={isSpecial ? "3.5" : "2"} 
+                        fill="#ffffff"
+                        opacity={isSpecial ? "1" : "0.7"}
+                        filter="url(#glowWhite)"
                       >
-                        {isSpecial && <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>}
+                        {isSpecial && <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>}
                       </circle>
                     );
                   })}
+                  
+                  {/* Label */}
+                  <text x="350" y="280" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                    366-DOT RING DRAGS
+                  </text>
                 </g>
 
                 {/* Year ring background - deepest layer */}
@@ -332,8 +395,11 @@ const EnochianWheelCalendar = () => {
                   })}
                 </g>
 
-                {/* Month Ring (12 divisions) - counter-clockwise - elevated */}
+                {/* Month Ring (12 divisions) - counter-clockwise - Metallic with clicking sound wave icon */}
                 <g transform={`rotate(${rotation.months} 350 350)`} filter="url(#dropShadowMiddle)">
+                  {/* Metallic ring background */}
+                  <circle cx="350" cy="350" r="225" fill="url(#metallicSilver)" opacity="0.2" stroke="url(#ringEdgeTop)" strokeWidth="2"/>
+                  
                   {monthStructure.map((month, i) => {
                     const startAngle = (i * 30 - 90) * Math.PI / 180;
                     const midAngle = ((i * 30 + 15) - 90) * Math.PI / 180;
@@ -343,134 +409,230 @@ const EnochianWheelCalendar = () => {
                     
                     return (
                       <g key={i}>
-                        {/* Shadow line */}
-                        <line 
-                          x1={350 + 210 * Math.cos(startAngle) + 1} 
-                          y1={350 + 210 * Math.sin(startAngle) + 1}
-                          x2={350 + 240 * Math.cos(startAngle) + 1} 
-                          y2={350 + 240 * Math.sin(startAngle) + 1}
-                          stroke="#000000" 
-                          strokeWidth="2"
-                          opacity="0.3"
+                        {/* Glowing white dots for months */}
+                        <circle 
+                          cx={350 + 225 * Math.cos(startAngle)} 
+                          cy={350 + 225 * Math.sin(startAngle)}
+                          r="3"
+                          fill="#ffffff"
+                          opacity="0.8"
+                          filter="url(#glowWhite)"
                         />
-                        {/* Main line */}
-                        <line 
-                          x1={350 + 210 * Math.cos(startAngle)} 
-                          y1={350 + 210 * Math.sin(startAngle)}
-                          x2={350 + 240 * Math.cos(startAngle)} 
-                          y2={350 + 240 * Math.sin(startAngle)}
-                          stroke="#475569" 
-                          strokeWidth="2"
-                        />
-                        {/* Shadow circle */}
-                        <circle cx={x + 1} cy={y + 1} r="12" fill="#000000" opacity="0.2"/>
-                        {/* Main circle with gradient */}
-                        <circle cx={x} cy={y} r="12" fill={isCurrentMonth ? "url(#ringGradientOuter)" : "url(#ringGradientMiddle)"} opacity="0.9"/>
+                        
+                        {/* Metallic circle with gradient */}
+                        <circle cx={x} cy={y} r="12" fill={isCurrentMonth ? "url(#metallicGold)" : "url(#metallicSilver)"} opacity="0.9" filter="url(#dropShadowInner)"/>
+                        {/* Highlight for 3D effect */}
+                        <circle cx={x - 2} cy={y - 2} r="10" fill="#ffffff" opacity="0.2"/>
                         <text 
                           x={x} y={y} dy="4"
                           textAnchor="middle" 
-                          className={`text-xs font-bold ${isCurrentMonth ? 'fill-slate-900' : 'fill-gray-400'}`}
+                          className={`text-xs font-bold ${isCurrentMonth ? 'fill-slate-900' : 'fill-gray-800'}`}
                         >
                           {month.num}
                         </text>
                       </g>
                     );
                   })}
+                  
+                  {/* Sound wave icon and label */}
+                  <g transform="translate(350, 140)">
+                    <path d="M -15 0 Q -10 -5 -5 0 T 5 0 T 15 0" stroke="#ffffff" strokeWidth="2" fill="none" filter="url(#glowWhite)"/>
+                    <text x="0" y="15" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                      MONTH RING CLICKS
+                    </text>
+                  </g>
                 </g>
 
-                {/* 52-Week Ring (rotating clockwise) - elevated */}
-                <g transform={`rotate(${rotation.weeks} 350 350)`} filter="url(#dropShadowInner)">
+                {/* 52-Week Ring (rotating clockwise) - Metallic with glowing dots */}
+                <g transform={`rotate(${rotation.weeks} 350 350)`} filter="url(#dropShadowMiddle)">
+                  {/* Metallic ring background */}
+                  <circle cx="350" cy="350" r="200" fill="url(#metallicSilver)" opacity="0.15" stroke="url(#ringEdgeTop)" strokeWidth="1"/>
+                  
+                  {/* Glowing white dots for weeks */}
                   {Array.from({ length: 52 }, (_, i) => {
                     const angle = (i * (360/52) - 90) * Math.PI / 180;
+                    const x = 350 + 200 * Math.cos(angle);
+                    const y = 350 + 200 * Math.sin(angle);
                     const isCurrentWeek = enochianDate.sabbathWeek === i + 1;
                     
                     return (
-                      <g key={i}>
-                        {/* Shadow line */}
-                        <line 
-                          x1={350 + 190 * Math.cos(angle) + 0.5} 
-                          y1={350 + 190 * Math.sin(angle) + 0.5}
-                          x2={350 + 210 * Math.cos(angle) + 0.5} 
-                          y2={350 + 210 * Math.sin(angle) + 0.5}
-                          stroke="#000000" 
-                          strokeWidth={isCurrentWeek ? "3" : "1"}
-                          opacity="0.2"
-                        />
-                        {/* Main line */}
-                        <line 
-                          x1={350 + 190 * Math.cos(angle)} 
-                          y1={350 + 190 * Math.sin(angle)}
-                          x2={350 + 210 * Math.cos(angle)} 
-                          y2={350 + 210 * Math.sin(angle)}
-                          stroke={isCurrentWeek ? "#fbbf24" : "#334155"} 
-                          strokeWidth={isCurrentWeek ? "3" : "1"}
-                        />
-                      </g>
+                      <circle
+                        key={i}
+                        cx={x}
+                        cy={y}
+                        r={isCurrentWeek ? "3" : "1.5"}
+                        fill="#ffffff"
+                        opacity={isCurrentWeek ? "1" : "0.6"}
+                        filter="url(#glowWhite)"
+                      />
                     );
                   })}
+                  
+                  {/* Label */}
+                  <text x="350" y="170" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                    52-WEEK RING
+                  </text>
                 </g>
 
-                {/* 18-Part Day Wheel (anti-clockwise) - most elevated */}
+                {/* 18-Part Day Wheel (anti-clockwise) - Metallic with symbols and star-like connections */}
                 <g transform={`rotate(${-rotation.dayWheel} 350 350)`} filter="url(#dropShadowInner)">
+                  {/* Metallic ring background */}
+                  <circle cx="350" cy="350" r="162" fill="url(#metallicSilver)" opacity="0.25" stroke="url(#ringEdgeTop)" strokeWidth="2"/>
+                  
+                  {/* Star-like connecting lines to center */}
                   {Array.from({ length: 18 }).map((_, i) => {
                     const angle = (i * 20 - 90) * Math.PI / 180;
-                    let partColor = '#1e40af';
-                    if (i >= 0 && i < 12) partColor = '#fbbf24'; // Yôm (day)
-                    else if (i >= 12 && i < 14) partColor = '#f97316'; // Erev
-                    else if (i >= 14 && i < 16) partColor = '#06b6d4'; // Boqer
+                    const x = 350 + 163 * Math.cos(angle);
+                    const y = 350 + 163 * Math.sin(angle);
+                    
+                    return (
+                      <line
+                        key={`connector-${i}`}
+                        x1={x}
+                        y1={y}
+                        x2={350}
+                        y2={350}
+                        stroke="#ffffff"
+                        strokeWidth="0.5"
+                        opacity="0.3"
+                        filter="url(#glowWhite)"
+                      />
+                    );
+                  })}
+                  
+                  {/* 18 segments with symbols */}
+                  {Array.from({ length: 18 }).map((_, i) => {
+                    const angle = (i * 20 - 90) * Math.PI / 180;
+                    const midAngle = ((i * 20 + 10) - 90) * Math.PI / 180;
+                    const x = 350 + 163 * Math.cos(midAngle);
+                    const y = 350 + 163 * Math.sin(midAngle);
+                    let partColor = '#3b82f6';
+                    let symbol = '🌙';
+                    if (i >= 0 && i < 12) { partColor = '#fbbf24'; symbol = '☀️'; } // Yôm (day)
+                    else if (i >= 12 && i < 14) { partColor = '#f97316'; symbol = '🌅'; } // Erev
+                    else if (i >= 14 && i < 16) { partColor = '#06b6d4'; symbol = '🌄'; } // Boqer
                     
                     return (
                       <g key={i}>
-                        {/* Shadow line */}
-                        <line
-                          x1={350 + 150 * Math.cos(angle) + 0.5}
-                          y1={350 + 150 * Math.sin(angle) + 0.5}
-                          x2={350 + 175 * Math.cos(angle) + 0.5}
-                          y2={350 + 175 * Math.sin(angle) + 0.5}
-                          stroke="#000000"
-                          strokeWidth="2"
-                          opacity="0.3"
-                        />
-                        {/* Main line */}
+                        {/* Segment line */}
                         <line
                           x1={350 + 150 * Math.cos(angle)}
                           y1={350 + 150 * Math.sin(angle)}
                           x2={350 + 175 * Math.cos(angle)}
                           y2={350 + 175 * Math.sin(angle)}
-                          stroke={partColor}
+                          stroke="#ffffff"
                           strokeWidth="2"
-                          opacity="0.7"
+                          opacity="0.6"
+                          filter="url(#glowWhite)"
                         />
+                        
+                        {/* Segment number */}
+                        <text 
+                          x={x} 
+                          y={y - 8} 
+                          textAnchor="middle" 
+                          className="text-xs font-bold fill-white"
+                          filter="url(#glowWhite)"
+                        >
+                          {i + 1}
+                        </text>
+                        
+                        {/* Symbol */}
+                        <text 
+                          x={x} 
+                          y={y + 8} 
+                          textAnchor="middle" 
+                          className="text-sm"
+                          filter="url(#glowWhite)"
+                        >
+                          {symbol}
+                        </text>
                       </g>
                     );
                   })}
                   
-                  {/* 4 Day Parts Labels */}
-                  {[
-                    { name: 'YÔM', angle: 0, color: '#fbbf24' },
-                    { name: 'EREV', angle: 90, color: '#f97316' },
-                    { name: 'LAYLAH', angle: 180, color: '#1e40af' },
-                    { name: 'BOQER', angle: 270, color: '#06b6d4' }
-                  ].map((part, i) => {
-                    const angle = (part.angle - 90) * Math.PI / 180;
-                    const x = 350 + 163 * Math.cos(angle);
-                    const y = 350 + 163 * Math.sin(angle);
-                    
+                  {/* Label */}
+                  <text x="350" y="110" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                    18-PART DAY WHEEL TURNS DAILY
+                  </text>
+                </g>
+                
+                {/* 4-Part Micro-Wheel - Spins fastest */}
+                <g filter="url(#dropShadowInner)">
+                  <circle cx="350" cy="350" r="80" fill="url(#metallicSilver)" opacity="0.3" stroke="url(#ringEdgeTop)" strokeWidth="2"/>
+                  {[0, 90, 180, 270].map((angle, i) => {
+                    const rad = (angle - 90) * Math.PI / 180;
+                    const x = 350 + 80 * Math.cos(rad);
+                    const y = 350 + 80 * Math.sin(rad);
                     return (
-                      <text key={i} x={x} y={y} textAnchor="middle" dy="4"
-                            className="text-[10px] font-bold fill-white">
-                        {part.name}
-                      </text>
+                      <g key={i}>
+                        <line
+                          x1={350}
+                          y1={350}
+                          x2={x}
+                          y2={y}
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                          opacity="0.5"
+                          filter="url(#glowWhite)"
+                        />
+                        <circle cx={x} cy={y} r="4" fill="#ffffff" opacity="0.8" filter="url(#glowWhite)"/>
+                      </g>
                     );
                   })}
+                  <text x="350" y="60" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                    4-PART MICRO-WHEEL SPINS FASTEST
+                  </text>
                 </g>
 
-                {/* Center Display - most elevated */}
-                <circle cx="352" cy="352" r="130" fill="#000000" opacity="0.3"/>
-                <circle cx="350" cy="350" r="130" fill="url(#centerGlow)"/>
-                <circle cx="350" cy="350" r="125" fill="url(#ringGradientInner)" stroke="url(#ringEdgeTop)" strokeWidth="4" filter="url(#dropShadowInner)"/>
-                {/* Inner highlight for 3D effect */}
-                <circle cx="348" cy="348" r="125" fill="none" stroke="#fbbf24" strokeWidth="1" opacity="0.2"/>
+                {/* Center Display - Golden embossed disc with sun symbol */}
+                <circle cx="352" cy="352" r="50" fill="#000000" opacity="0.4" filter="url(#dropShadowInner)"/>
+                <circle cx="350" cy="350" r="50" fill="url(#goldCenter)" filter="url(#dropShadowInner)"/>
+                <circle cx="350" cy="350" r="48" fill="url(#metallicGold)" opacity="0.9" stroke="url(#ringEdgeTop)" strokeWidth="3"/>
+                
+                {/* Embossed sun symbol */}
+                <g transform="translate(350, 350)">
+                  {/* Sun rays */}
+                  {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = (i * 45) * Math.PI / 180;
+                    return (
+                      <line
+                        key={`ray-${i}`}
+                        x1={0}
+                        y1={0}
+                        x2={35 * Math.cos(angle)}
+                        y2={35 * Math.sin(angle)}
+                        stroke="#f9a825"
+                        strokeWidth="2"
+                        opacity="0.8"
+                        filter="url(#glowStrong)"
+                      />
+                    );
+                  })}
+                  {/* Center circle */}
+                  <circle cx="0" cy="0" r="12" fill="#fff9c4" filter="url(#glowStrong)"/>
+                </g>
+                
+                {/* Anti-clockwise motion indicator */}
+                <g transform="translate(350, 280)">
+                  <path
+                    d="M -8 0 L 0 -8 L 8 0 L 0 8 Z"
+                    fill="#ffffff"
+                    opacity="0.7"
+                    filter="url(#glowWhite)"
+                  />
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    values="0;360"
+                    dur="10s"
+                    repeatCount="indefinite"
+                  />
+                </g>
+                
+                <text x="350" y="25" textAnchor="middle" className="text-xs fill-white font-bold" filter="url(#glowWhite)">
+                  INNERMOST TIMELESS DAYS WAIT
+                </text>
                 
                 {/* Sabbath indicator */}
                 {enochianDate.weekDay === 7 && (
