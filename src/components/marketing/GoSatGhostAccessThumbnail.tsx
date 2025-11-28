@@ -63,15 +63,6 @@ export function GoSatGhostAccessThumbnail() {
             Silently monitor & moderate every new chat, room, radio, or community created by users
           </p>
 
-          {/* Top Banner */}
-          <div className="mb-4 px-4 py-2 rounded-lg text-center text-xs font-medium" style={{
-            background: 'linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(245,158,11,0.15) 100%)',
-            border: '1px solid rgba(255,215,0,0.3)',
-            color: '#fbbf24'
-          }}>
-            GoSat's has invisible ghost access to ALL new chats & rooms for instant moderation
-          </div>
-
           {/* Main Interface */}
           <div className="flex gap-4 h-96">
             {/* Left Sidebar */}
