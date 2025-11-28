@@ -102,7 +102,7 @@ export function AmbassadorThumbnail() {
           paddingTop: '2rem'
         }}>
           {/* Title */}
-          <h1 className="text-4xl font-bold mb-2 text-center pt-4" style={{
+          <h1 className="text-4xl font-bold mb-2 text-center pt-8" style={{
             color: currentTheme.textPrimary,
             textShadow: `0 2px 4px ${currentTheme.shadow}`
           }}>
