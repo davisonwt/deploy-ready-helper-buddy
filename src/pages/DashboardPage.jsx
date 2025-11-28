@@ -402,69 +402,69 @@ export default function DashboardPage() {
             zIndex: 1
           }}
         >
-          {/* User Icon, Text, Wheel Info, and Calendar - Side by Side */}
+          {/* User Icon, Text, Wheel Info, and Calendar - All in Same Container */}
           <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
-            {/* Left Side - User Icon and Info */}
+            {/* User Icon and Info */}
             <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
-            {/* User Icon */}
-            <div 
-              className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
-              style={{ borderColor: currentTheme.accent }}
-            >
-              {user?.avatar_url ? (
-                <img 
-                  src={user.avatar_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div 
-                  className="w-full h-full flex items-center justify-center"
-                  style={{ background: currentTheme.primaryButton }}
-                >
-                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{ color: currentTheme.textPrimary }} />
+              {/* User Icon */}
+              <div 
+                className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
+                style={{ borderColor: currentTheme.accent }}
+              >
+                {user?.avatar_url ? (
+                  <img 
+                    src={user.avatar_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ background: currentTheme.primaryButton }}
+                  >
+                    <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{ color: currentTheme.textPrimary }} />
+                  </div>
+                )}
+              </div>
+              
+              {/* Welcome Message */}
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
+                  Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg" style={{ color: currentTheme.textSecondary }}>
+                  Ready to grow your orchard today?
+                </p>
+                <p className="text-xs sm:text-sm mt-1" style={{ color: currentTheme.textSecondary }}>
+                  Payment Method: USDC (USD Coin)
+                </p>
+              </div>
+
+              {/* Wheel Info Text */}
+              {wheelData && (
+                <div className="w-full space-y-2" style={{ color: '#b48f50' }}>
+                  <div className="text-base sm:text-lg font-bold">
+                    Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
+                  </div>
+                  <div className="text-sm sm:text-base">
+                    Weekday {wheelData.weekday} • Part {wheelData.part}/18
+                  </div>
+                  <div className="text-xs sm:text-sm opacity-80">
+                    Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
+                  </div>
+                  <div className="text-xs font-mono opacity-60">
+                    {wheelData.timestamp}
+                  </div>
+                  <div className="text-xs opacity-50 italic mt-2">
+                    YHWH's wheels never lie • forever in sync
+                  </div>
                 </div>
               )}
-            </div>
-            
-            {/* Welcome Message */}
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
-                Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
-              </h1>
-              <p className="text-sm sm:text-base md:text-lg" style={{ color: currentTheme.textSecondary }}>
-                Ready to grow your orchard today?
-              </p>
-              <p className="text-xs sm:text-sm mt-1" style={{ color: currentTheme.textSecondary }}>
-                Payment Method: USDC (USD Coin)
-              </p>
-            </div>
 
-            {/* Wheel Info Text */}
-            {wheelData && (
-              <div className="w-full space-y-2" style={{ color: '#b48f50' }}>
-                <div className="text-base sm:text-lg font-bold">
-                  Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
-                </div>
-                <div className="text-sm sm:text-base">
-                  Weekday {wheelData.weekday} • Part {wheelData.part}/18
-                </div>
-                <div className="text-xs sm:text-sm opacity-80">
-                  Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
-                </div>
-                <div className="text-xs font-mono opacity-60">
-                  {wheelData.timestamp}
-                </div>
-                <div className="text-xs opacity-50 italic mt-2">
-                  YHWH's wheels never lie • forever in sync
-                </div>
+              {/* YHWH Wheel Calendar - Now Inside Same Container */}
+              <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 mt-4">
+                <YHWHWheel onDataUpdate={setWheelData} />
               </div>
-            )}
-            </div>
-            
-            {/* Right Side - YHWH Wheel Calendar */}
-            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
-              <YHWHWheel onDataUpdate={setWheelData} />
             </div>
           </div>
         </div>
