@@ -558,9 +558,6 @@ export default function DashboardPage() {
               }}
             >
               <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
-                  Become a 2SG Ambassador
-                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="aspect-video w-full">
