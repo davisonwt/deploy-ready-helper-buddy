@@ -426,10 +426,11 @@ export default function LiveActivityWidget() {
               roomType: room?.room_type,
               inviterName: profile?.display_name || 'Unknown',
               inviterAvatar: profile?.avatar_url,
-          message: inv.message,
-          createdAt: inv.created_at
-        }))
-      }
+              message: inv.message,
+              createdAt: inv.created_at
+            }
+          })
+        }
 
       setLiveData({
         radioHosts: allRadioSessions || [],
