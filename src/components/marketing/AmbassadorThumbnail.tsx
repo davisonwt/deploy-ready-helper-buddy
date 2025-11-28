@@ -29,29 +29,38 @@ export function AmbassadorThumbnail() {
         <div className="absolute bottom-1/3 left-1/2 w-1 h-1 bg-amber-500 rounded-full blur-sm animate-pulse" style={{ animationDelay: '1s', boxShadow: '0 0 10px rgba(255,215,0,0.4)' }} />
       </div>
 
-      {/* Top-left Logo */}
-      <div className="absolute top-6 left-6 z-20">
-        <div className="text-4xl font-bold" style={{
-          color: currentTheme.accent,
-          textShadow: `0 0 20px ${currentTheme.accent}80, 0 0 40px ${currentTheme.accent}40`,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '2px'
-        }}>
-          2SG
-        </div>
-        <div className="text-xs mt-1" style={{ 
-          color: currentTheme.accentLight,
-          textShadow: `0 0 10px ${currentTheme.accent}50` 
-        }}>2SGApp</div>
-      </div>
-
       {/* Center Card */}
       <div className="absolute inset-0 flex items-center justify-center z-10 px-8">
-        <div className="backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-4xl w-full border" style={{
+        <div className="backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-4xl w-full border relative" style={{
           backgroundColor: currentTheme.cardBg,
           borderColor: currentTheme.cardBorder,
           boxShadow: `0 25px 50px -12px ${currentTheme.shadow}, 0 0 0 1px ${currentTheme.cardBorder}`
         }}>
+          {/* Logo - Top Left Corner */}
+          <div className="absolute top-4 left-4 z-20">
+            <div className="flex flex-col items-start">
+              <div className="text-3xl font-bold" style={{
+                color: currentTheme.accent,
+                textShadow: `0 0 20px ${currentTheme.accent}80, 0 0 40px ${currentTheme.accent}40, 0 0 60px ${currentTheme.accent}20`,
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '3px',
+                lineHeight: '1',
+                fontWeight: '800'
+              }}>
+                2SG
+              </div>
+              <div className="text-sm font-semibold mt-1" style={{ 
+                color: currentTheme.accentLight,
+                textShadow: `0 0 15px ${currentTheme.accent}60, 0 0 30px ${currentTheme.accent}30`,
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                letterSpacing: '2px',
+                fontWeight: '600'
+              }}>
+                App
+              </div>
+            </div>
+          </div>
+
           {/* Title */}
           <h1 className="text-4xl font-bold mb-2 text-center" style={{
             color: currentTheme.textPrimary,
