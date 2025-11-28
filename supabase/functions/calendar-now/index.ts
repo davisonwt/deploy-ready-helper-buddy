@@ -26,21 +26,27 @@ Deno.serve(async (req) => {
     
     // Calculate calendar data using sacred calendar epoch
     // Epoch: Tequvah (Vernal Equinox) March 20, 2025 = Year 6028, Month 1, Day 1
+    // This matches the logic in customCalendar.ts getCreatorDate()
     const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
     const msDiff = now.getTime() - CREATOR_EPOCH.getTime();
     const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
     
-    // Calculate year and day of year (364-day sacred year)
+    // Calculate year and day of year
+    // Note: Year calculation uses 365 days per year (matching customCalendar.ts)
+    // but the sacred calendar has 364 days total per year
     let year = 6028;
     let remainingDays = totalDays;
     
-    // Calculate year (each year is 364 days, except leap years)
-    while (remainingDays >= 364) {
-      remainingDays -= 364;
+    // Calculate year (using 365 days per year for the loop, matching customCalendar.ts)
+    const isLongYear = (y: number) => false; // Year 6028 is not a long year
+    while (remainingDays >= (365 + (isLongYear(year) ? 1 : 0))) {
+      remainingDays -= 365 + (isLongYear(year) ? 1 : 0);
       year++;
     }
     
-    const dayOfYear = remainingDays + 1; // Day 1-based
+    // Day of year is 1-based (Day 1 = first day of the year)
+    // For Nov 28, 2025: March 20 to Nov 28 = 253 days, so dayOfYear = 254
+    const dayOfYear = remainingDays + 1;
     
     const response = {
       timestamp: now.toISOString(),
