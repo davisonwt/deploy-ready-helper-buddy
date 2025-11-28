@@ -68,8 +68,9 @@ export const useSacredTime = (lat: number | null, lon: number | null) => {
       const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'] as const;
       const creatures = ['Lion', 'Ox', 'Man', 'Eagle'] as const;
 
-      const secondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-      const minutesToday = now.getHours() * 60 + now.getMinutes();
+      // Include milliseconds for smooth rotation
+      const secondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds() + now.getMilliseconds() / 1000;
+      const minutesToday = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60 + now.getMilliseconds() / 60000;
 
       setSacred({
         year,
