@@ -50,9 +50,10 @@ export default function CalendarComparisonPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
-              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 10, isolation: 'isolate', contain: 'layout style paint' }}>
+              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative', isolation: 'isolate' }}>
+                <div key="calendar-wheel-1" style={{ width: '400px', height: '400px', position: 'relative', zIndex: 10, isolation: 'isolate', contain: 'layout style paint', pointerEvents: 'auto' }}>
                   <CalendarWheel 
+                    key="calendar-wheel-component-1"
                     timezone="Africa/Johannesburg"
                     theme="auto"
                     size={400}
@@ -107,9 +108,10 @@ export default function CalendarComparisonPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
-              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 9, isolation: 'isolate', contain: 'layout style paint' }}>
+              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative', isolation: 'isolate' }}>
+                <div key="yhwh-wheel-1" style={{ width: '400px', height: '400px', position: 'relative', zIndex: 9, isolation: 'isolate', contain: 'layout style paint', pointerEvents: 'auto' }}>
                   <YHWHWheel 
+                    key="yhwh-wheel-component-1"
                     onDataUpdate={setYhwhWheelData}
                   />
                 </div>
@@ -151,9 +153,10 @@ export default function CalendarComparisonPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 p-6">
-              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 8, isolation: 'isolate', contain: 'layout style paint' }}>
+              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden', position: 'relative', isolation: 'isolate' }}>
+                <div key="ezekiel-clock-1" style={{ width: '400px', height: '400px', position: 'relative', zIndex: 8, isolation: 'isolate', contain: 'layout style paint', pointerEvents: 'auto' }}>
                   <EzekielClock 
+                    key="ezekiel-clock-component-1"
                     onDataUpdate={setEzekielClockData}
                   />
                 </div>
