@@ -21,7 +21,7 @@ export const useSacredTime = (lat: number | null, lon: number | null) => {
   const [sacred, setSacred] = useState<SacredTime | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 100); // Update every 100ms for smooth rotation
     return () => clearInterval(timer);
   }, []);
 
