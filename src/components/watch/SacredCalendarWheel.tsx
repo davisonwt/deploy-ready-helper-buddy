@@ -88,9 +88,14 @@ export default function SacredCalendarWheel({
             strokeWidth={maxRadius * 0.08}
             opacity="0.9"
           />
-          {/* 366 dots around the outer orange circle */}
+          {/* 366 dots around the outer orange circle - black by default, white for today */}
           {Array.from({ length: 366 }).map((_, i) => {
-            const angle = (i / 366) * 360 - 90;
+            // Anti-clockwise: day 1 starts at top (angle -90), counting backwards
+            // Day 1 = index 0, Day 366 = index 365
+            // Current day is dayOfYear (1-366)
+            const isToday = (i + 1) === dayOfYear;
+            // Anti-clockwise: angle decreases as we go around
+            const angle = -((i / 366) * 360) - 90; // Negative for anti-clockwise
             const rad = (angle * Math.PI) / 180;
             const dotRadius = r1 + maxRadius * 0.02; // Position dots slightly outside the ring
             const x = centerX + dotRadius * Math.cos(rad);
@@ -100,9 +105,11 @@ export default function SacredCalendarWheel({
                 key={`sun-dot-${i}`}
                 cx={x}
                 cy={y}
-                r={1.5}
-                fill="#f97316"
-                opacity="0.9"
+                r={isToday ? 2.5 : 1.5}
+                fill={isToday ? "#ffffff" : "#000000"}
+                opacity={isToday ? "1" : "0.9"}
+                stroke={isToday ? "#f97316" : "none"}
+                strokeWidth={isToday ? "1" : "0"}
               />
             );
           })}
