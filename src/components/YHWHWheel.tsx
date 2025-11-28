@@ -137,9 +137,8 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
       const cy = h / 2;
       const maxRadius = Math.min(w, h) * 0.45;
       
-      // Clear canvas
-      ctx.fillStyle = '#0b0e17';
-      ctx.fillRect(0, 0, w, h);
+      // Clear canvas with transparent background
+      ctx.clearRect(0, 0, w, h);
 
       // Calculate current day and time
       const SPRING_TEQUFAH_2025 = new Date('2025-03-20T09:37:00Z');
@@ -352,7 +351,7 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
   }, [lat, lon]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#0b0e17] rounded-lg overflow-hidden" style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '400px', maxWidth: '600px', maxHeight: '600px', aspectRatio: '1 / 1', zIndex: 10, position: 'relative' }}>
+    <div ref={containerRef} className="relative rounded-lg overflow-hidden" style={{ width: '100%', height: '100%', minWidth: '400px', minHeight: '400px', maxWidth: '600px', maxHeight: '600px', aspectRatio: '1 / 1', zIndex: 10, position: 'relative', backgroundColor: 'transparent' }}>
       <canvas 
         ref={canvasRef} 
         className="block w-full h-full" 
