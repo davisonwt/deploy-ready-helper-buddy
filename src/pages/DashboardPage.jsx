@@ -399,8 +399,15 @@ export default function DashboardPage() {
             boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
           }}
         >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-3 sm:gap-4 md:space-x-6 flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-start gap-4 sm:gap-6">
+          {/* Ezekiel Clock - Circles Calendar (Left Side) */}
+          <div className="flex-shrink-0">
+            <EzekielClock />
+          </div>
+          
+          {/* User Icon and Welcome Message (Right Side) */}
+          <div className="flex flex-col items-start gap-3 sm:gap-4 flex-1 min-w-0">
+            {/* User Icon - Above Welcome Message */}
             <div 
               className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
               style={{ borderColor: currentTheme.accent }}
@@ -420,10 +427,8 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            {/* Ezekiel Clock - Circles Calendar */}
-            <div className="flex-shrink-0">
-              <EzekielClock />
-            </div>
+            
+            {/* Welcome Message - Below Icon */}
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
                 Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
