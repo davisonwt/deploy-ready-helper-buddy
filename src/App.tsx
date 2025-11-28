@@ -189,6 +189,13 @@ const App = () => (
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
               <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
+              <Route path="/calendar-comparison" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <CalendarComparisonPage />
+                  </Suspense>
+                </Layout>
+              } />
               
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
