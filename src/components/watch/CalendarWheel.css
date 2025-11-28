@@ -1,0 +1,100 @@
+/**
+ * CalendarWheel Styles
+ * CSS Variables for metallic gradients, glowing Sabbath dots, and portal colors
+ */
+
+.calendar-wheel {
+  position: relative;
+  display: inline-block;
+}
+
+/* CSS Variables - can be overridden via Figma exports */
+.calendar-wheel {
+  /* Metallic gradients */
+  --metallic-gold-light: #d4af37;
+  --metallic-gold: #b8941d;
+  --metallic-gold-dark: #8b6914;
+  --metallic-silver-light: #e8e8e8;
+  --metallic-silver: #c0c0c0;
+  --metallic-silver-dark: #808080;
+  
+  /* Glowing Sabbath dots */
+  --sabbath-glow: #ffd700;
+  --solar-dot: #888;
+  
+  /* Portal colors */
+  --portal-center: #4a90e2;
+  --portal-edge: #1a1a2e;
+  
+  /* Part colors */
+  --current-part: #ff6b6b;
+  --current-part-glow: #ffd700;
+  --part-color: #666;
+  
+  /* Other colors */
+  --omer-color: #8b4513;
+  --creation-day: #4a90e2;
+  --quadrant-color: #4a90e2;
+  
+  /* Tooltip */
+  --tooltip-bg: rgba(0, 0, 0, 0.9);
+  --tooltip-text: #fff;
+  --error-color: #ff6b6b;
+}
+
+/* Theme variants */
+.calendar-wheel[data-theme="light"] {
+  --solar-dot: #444;
+  --part-color: #333;
+  --tooltip-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-text: #000;
+}
+
+.calendar-wheel[data-theme="dark"] {
+  --solar-dot: #aaa;
+  --part-color: #999;
+  --tooltip-bg: rgba(0, 0, 0, 0.95);
+  --tooltip-text: #fff;
+}
+
+/* Loading spinner */
+.calendar-wheel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-wheel-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--metallic-silver);
+  border-top-color: var(--metallic-gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .calendar-wheel svg g {
+    transition: transform 0.3s ease;
+  }
+  
+  .calendar-wheel-loading .spinner {
+    animation: none;
+  }
+}
+
+/* Accessibility */
+.calendar-wheel svg {
+  focusable: true;
+}
+
+.calendar-wheel svg:focus {
+  outline: 2px solid var(--metallic-gold);
+  outline-offset: 4px;
+}
+

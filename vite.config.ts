@@ -13,6 +13,23 @@ export default defineConfig(({ mode, command }) => ({
     hmr: {
       overlay: false, // Disable error overlay to prevent blocking
     },
+    proxy: {
+      '/api/calendar/now': {
+        target: 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/calendar-now',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/calendar\/now/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            // Add Supabase headers if needed
+            const supabaseUrl = process.env.VITE_SUPABASE_URL;
+            const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+            if (supabaseAnonKey) {
+              proxyReq.setHeader('apikey', supabaseAnonKey);
+            }
+          });
+        },
+      },
+    },
   },
   plugins: [
     react(),
