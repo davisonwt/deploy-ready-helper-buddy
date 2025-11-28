@@ -150,14 +150,25 @@ export default function UploadForm() {
         sowerId = newSower.id;
       }
 
-      // Upload cover image
+      // Upload cover image - ensure file is valid before upload
+      if (!coverImage || coverImage.size === 0) {
+        throw new Error('Cover image is empty or invalid');
+      }
+      
+      console.log('📤 Uploading cover image:', { name: coverImage.name, size: coverImage.size, type: coverImage.type });
       const coverExt = coverImage.name.split('.').pop();
       const coverPath = `covers/${user.id}/${Date.now()}.${coverExt}`;
       const { error: coverUploadError } = await supabase.storage
         .from('premium-room')
-        .upload(coverPath, coverImage);
+        .upload(coverPath, coverImage, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (coverUploadError) throw coverUploadError;
+      if (coverUploadError) {
+        console.error('Cover upload error:', coverUploadError);
+        throw coverUploadError;
+      }
 
       const { data: coverUrl } = supabase.storage
         .from('premium-room')
@@ -180,14 +191,27 @@ export default function UploadForm() {
             .slice(0, 200);
 
         for (const f of albumFiles) {
+          // Validate file before upload
+          if (!f || f.size === 0) {
+            console.error('Invalid file in album:', f?.name);
+            throw new Error(`File "${f?.name}" is empty or invalid`);
+          }
+          
+          console.log('📤 Uploading track:', { name: f.name, size: f.size, type: f.type });
           const ext = f.name.includes('.') ? f.name.split('.').pop() : undefined;
           const baseName = f.name.replace(/\.[^.]+$/, '');
           const safeName = `${sanitizeFileName(baseName)}${ext ? '.' + sanitizeFileName(ext) : ''}`;
           const trackPath = `${baseDir}/${safeName}`;
           const { error: trackErr } = await supabase.storage
             .from('premium-room')
-            .upload(trackPath, f);
-          if (trackErr) throw trackErr;
+            .upload(trackPath, f, {
+              cacheControl: '3600',
+              upsert: false
+            });
+          if (trackErr) {
+            console.error('Track upload error:', trackErr);
+            throw trackErr;
+          }
           const { data: trackUrl } = supabase.storage
             .from('premium-room')
             .getPublicUrl(trackPath);
@@ -213,14 +237,25 @@ export default function UploadForm() {
           .getPublicUrl(manifestPath);
         fileUrlPublic = manifestUrl.publicUrl;
       } else {
-        // Single file upload
+        // Single file upload - validate file before upload
+        if (!mainFile || mainFile.size === 0) {
+          throw new Error('Main file is empty or invalid');
+        }
+        
+        console.log('📤 Uploading main file:', { name: mainFile.name, size: mainFile.size, type: mainFile.type });
         const uploadBlob = mainFile as File;
         const uploadExt = (mainFile as File).name.split('.').pop() || 'bin';
         const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
         const { error: fileUploadError } = await supabase.storage
           .from('premium-room')
-          .upload(filePath, uploadBlob);
-        if (fileUploadError) throw fileUploadError;
+          .upload(filePath, uploadBlob, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        if (fileUploadError) {
+          console.error('File upload error:', fileUploadError);
+          throw fileUploadError;
+        }
         const { data: fileUrl } = supabase.storage
           .from('premium-room')
           .getPublicUrl(filePath);
