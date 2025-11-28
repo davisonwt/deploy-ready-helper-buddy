@@ -424,21 +424,6 @@ export default function SacredCalendarWheel({
 
         {/* Current position indicators */}
         <g>
-          {/* Day of year indicator on outer ring */}
-          {(() => {
-            const dayAngle = ((dayOfYear - 1) / 366) * 360 - 90;
-            const rad = (dayAngle * Math.PI) / 180;
-            return (
-              <circle
-                cx={centerX + r1 * 0.95 * Math.cos(rad)}
-                cy={centerY + r1 * 0.95 * Math.sin(rad)}
-                r={3}
-                fill="#ffd700"
-                stroke="#ffffff"
-                strokeWidth="1"
-              />
-            );
-          })()}
           {/* Part indicator on inner ring */}
           {(() => {
             const partAngle = ((creatorTime.part - 1) / 18) * 360 - 90;
