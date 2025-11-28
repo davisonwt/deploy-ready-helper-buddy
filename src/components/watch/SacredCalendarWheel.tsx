@@ -73,6 +73,9 @@ export default function SacredCalendarWheel({
 
   // Ring radii (from outer to inner)
   const r1 = maxRadius; // Outermost orange ring
+  const r1Inner = r1 - (maxRadius * 0.08); // Inner edge of orange ring (where black weekday ring starts)
+  const r1Weekday = r1Inner - (maxRadius * 0.06); // Black weekday ring outer radius
+  const r1WeekdayInner = r1Weekday - (maxRadius * 0.05); // Black weekday ring inner radius
   const r2 = maxRadius * 0.85; // Multi-colored segments ring
   const r3 = maxRadius * 0.70; // White moon ring
   const r4 = maxRadius * 0.55; // Inner numbered ring
@@ -195,6 +198,53 @@ export default function SacredCalendarWheel({
           <text x={centerX} y={size - r1 * 0.7} textAnchor="middle" fill="#f97316" fontSize="8" fontWeight="bold">
             366 sun 365
           </text>
+        </g>
+
+        {/* Black Weekday Ring - Just inside orange circle */}
+        <g>
+          {/* Black circle ring */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={r1Weekday}
+            fill="#000000"
+            stroke="#000000"
+            strokeWidth="1"
+          />
+          
+          {/* Weekday numbers (1-7 repeating) starting at day 1's position */}
+          {Array.from({ length: 366 }).map((_, i) => {
+            // Day 1 starts at top (angle -90), anti-clockwise
+            const angle = -((i / 366) * 360) - 90;
+            const rad = (angle * Math.PI) / 180;
+            
+            // Weekday number: 1-7 repeating (day 1 = weekday 1, day 2 = weekday 2, etc.)
+            const weekdayNumber = (i % 7) + 1;
+            
+            // Position number at the center of the weekday ring
+            const textRadius = (r1Weekday + r1WeekdayInner) / 2;
+            const x = centerX + textRadius * Math.cos(rad);
+            const y = centerY + textRadius * Math.sin(rad);
+            
+            // Rotate text to be readable (upright)
+            const textAngle = angle + 90; // Add 90 to make text upright
+            
+            return (
+              <text
+                key={`weekday-${i}`}
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#ffffff"
+                fontSize="10"
+                fontWeight="bold"
+                transform={`rotate(${textAngle}, ${x}, ${y})`}
+              >
+                {weekdayNumber}
+              </text>
+            );
+          })}
         </g>
 
         {/* Ring 2: Multi-colored segments (1-52 weeks) */}
