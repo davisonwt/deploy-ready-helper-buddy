@@ -29,14 +29,17 @@ export default function CalendarComparisonPage() {
           </CardHeader>
         </Card>
 
-        {/* Side by Side Calendar Display */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {/* CalendarWheel */}
+        {/* Side by Side Calendar Display - Three Column Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+          {/* CalendarWheel - Left */}
           <Card 
             className="border shadow-xl backdrop-blur-xl"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
+              position: 'relative',
+              overflow: 'visible',
+              zIndex: 1
             }}
           >
             <CardHeader>
@@ -44,19 +47,21 @@ export default function CalendarComparisonPage() {
                 CalendarWheel (New)
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <div className="w-full flex items-center justify-center">
-                <CalendarWheel 
-                  timezone="Africa/Johannesburg"
-                  theme="auto"
-                  size={400}
-                  onDataUpdate={setCalendarWheelData}
-                />
+            <CardContent className="flex flex-col items-center gap-4 p-6">
+              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden' }}>
+                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 1 }}>
+                  <CalendarWheel 
+                    timezone="Africa/Johannesburg"
+                    theme="auto"
+                    size={400}
+                    onDataUpdate={setCalendarWheelData}
+                  />
+                </div>
               </div>
               
               {/* Calendar Info */}
               {calendarWheelData && (
-                <div className="w-full space-y-2 p-4 rounded-lg" style={{ backgroundColor: currentTheme.cardBg, border: `1px solid ${currentTheme.cardBorder}` }}>
+                <div className="w-full space-y-2 p-4 rounded-lg mt-4" style={{ backgroundColor: currentTheme.cardBg, border: `1px solid ${currentTheme.cardBorder}` }}>
                   <div className="text-base font-bold" style={{ color: '#b48f50' }}>
                     Year {calendarWheelData.year} • Month {calendarWheelData.month} • Day {calendarWheelData.dayOfMonth}
                   </div>
@@ -83,12 +88,15 @@ export default function CalendarComparisonPage() {
             </CardContent>
           </Card>
 
-          {/* YHWHWheel */}
+          {/* YHWHWheel - Right */}
           <Card 
             className="border shadow-xl backdrop-blur-xl"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
+              position: 'relative',
+              overflow: 'visible',
+              zIndex: 1
             }}
           >
             <CardHeader>
@@ -96,16 +104,18 @@ export default function CalendarComparisonPage() {
                 YHWHWheel (Original)
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <div className="w-full flex items-center justify-center">
-                <YHWHWheel 
-                  onDataUpdate={setYhwhWheelData}
-                />
+            <CardContent className="flex flex-col items-center gap-4 p-6">
+              <div className="w-full flex items-center justify-center" style={{ minHeight: '400px', maxWidth: '100%', overflow: 'hidden' }}>
+                <div style={{ width: '400px', height: '400px', position: 'relative', zIndex: 1 }}>
+                  <YHWHWheel 
+                    onDataUpdate={setYhwhWheelData}
+                  />
+                </div>
               </div>
               
               {/* Calendar Info */}
               {yhwhWheelData && (
-                <div className="w-full space-y-2 p-4 rounded-lg" style={{ backgroundColor: currentTheme.cardBg, border: `1px solid ${currentTheme.cardBorder}` }}>
+                <div className="w-full space-y-2 p-4 rounded-lg mt-4" style={{ backgroundColor: currentTheme.cardBg, border: `1px solid ${currentTheme.cardBorder}` }}>
                   <div className="text-base font-bold" style={{ color: '#b48f50' }}>
                     Year {yhwhWheelData.year} • Month {yhwhWheelData.month} • Day {yhwhWheelData.day}
                   </div>
@@ -121,6 +131,9 @@ export default function CalendarComparisonPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Empty Third Column for Spacing (or future use) */}
+          <div className="hidden xl:block"></div>
         </div>
       </div>
     </div>
