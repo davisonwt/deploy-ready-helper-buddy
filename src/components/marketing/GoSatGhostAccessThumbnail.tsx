@@ -19,13 +19,21 @@ export function GoSatGhostAccessThumbnail() {
       </div>
 
       {/* Top-left Logo */}
-      <div className="absolute top-6 left-6 z-20">
-        <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" style={{
+      <div className="absolute top-4 left-4 z-20">
+        <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" style={{
           textShadow: '0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4)',
           fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '3px'
+          letterSpacing: '2px',
+          lineHeight: '1.2'
         }}>
           2SG
+        </div>
+        <div className="text-xs font-medium text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 mt-0.5" style={{
+          textShadow: '0 0 15px rgba(255,215,0,0.6), 0 0 30px rgba(255,215,0,0.3)',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          letterSpacing: '1px'
+        }}>
+          2SGApp
         </div>
       </div>
 
