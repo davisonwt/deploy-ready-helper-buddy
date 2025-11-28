@@ -53,7 +53,7 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     const resize = () => {
@@ -359,7 +359,8 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
           position: 'relative', 
           zIndex: 10, 
           display: 'block',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          backgroundColor: 'transparent'
         }} 
       />
     </div>
