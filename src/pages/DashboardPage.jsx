@@ -95,7 +95,6 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
-  const [wheelData, setWheelData] = useState(null)
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -439,31 +438,11 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            {/* Wheel Info Text */}
-            {wheelData && (
-              <div className="w-full space-y-2" style={{ color: '#b48f50' }}>
-                <div className="text-base sm:text-lg font-bold">
-                  Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
-                </div>
-                <div className="text-sm sm:text-base">
-                  Weekday {wheelData.weekday} • Part {wheelData.part}/18 • {wheelData.watch}
-                </div>
-                <div className="text-xs sm:text-sm opacity-80">
-                  Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
-                </div>
-                <div className="text-xs font-mono opacity-60">
-                  {wheelData.timestamp}
-                </div>
-                <div className="text-xs opacity-50 italic mt-2">
-                  YHWH's wheels never lie • forever in sync
-                </div>
-              </div>
-            )}
           </div>
           
           {/* YHWH Wheel - Eternal Calendar (Right Side) */}
           <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 relative z-10 ml-auto" style={{ zIndex: 10 }}>
-            <YHWHWheel onDataUpdate={setWheelData} />
+            <YHWHWheel />
           </div>
         </div>
         {/* Custom Time Display - Bottom of welcome section */}
