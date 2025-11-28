@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
+  const [wheelData, setWheelData] = useState(null)
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -438,45 +439,33 @@ export default function DashboardPage() {
               </p>
             </div>
 
+            {/* Wheel Info Text */}
+            {wheelData && (
+              <div className="w-full space-y-2" style={{ color: '#b48f50' }}>
+                <div className="text-base sm:text-lg font-bold">
+                  Year {wheelData.year} • Month {wheelData.month} • Day {wheelData.day}
+                </div>
+                <div className="text-sm sm:text-base">
+                  Weekday {wheelData.weekday} • Part {wheelData.part}/18 • {wheelData.watch}
+                </div>
+                <div className="text-xs sm:text-sm opacity-80">
+                  Priestly courses drift ~10 days/year • now −{wheelData.drift} days behind the sun
+                </div>
+                <div className="text-xs font-mono opacity-60">
+                  {wheelData.timestamp}
+                </div>
+                <div className="text-xs opacity-50 italic mt-2">
+                  YHWH's wheels never lie • forever in sync
+                </div>
+              </div>
+            )}
           </div>
           
           {/* YHWH Wheel - Eternal Calendar (Right Side) */}
           <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 relative z-10 ml-auto" style={{ zIndex: 10 }}>
-            <YHWHWheel />
+            <YHWHWheel onDataUpdate={setWheelData} />
           </div>
         </div>
-        {/* Custom Time Display - Bottom of welcome section */}
-        {customDate && (
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: currentTheme.cardBorder }}>
-            <div className="text-center">
-              {/* Custom Date - Above custom time */}
-              <div className="text-base sm:text-lg md:text-xl font-semibold mb-1" style={{ color: currentTheme.textPrimary }}>
-                Year {customDate.year} · Month {customDate.month} · Day {customDate.day} · {customDate.weekDay === 7 ? 'Sabbath' : `Week Day ${customDate.weekDay}`}
-              </div>
-              {/* Custom Time - Larger font */}
-              <div className="text-lg sm:text-xl md:text-2xl font-bold mb-2" style={{ color: currentTheme.textPrimary }}>
-                {(() => {
-                  const creatorTime = getCreatorTime(currentTime, userLat, userLon);
-                  // Calculate custom seconds within current custom minute (0-59)
-                  const sunriseMinutes = creatorTime.sunriseMinutes;
-                  const nowMinutes = currentTime.getHours() * 60 + currentTime.getMinutes() + currentTime.getSeconds() / 60 + currentTime.getMilliseconds() / 60000;
-                  let elapsed = nowMinutes - sunriseMinutes;
-                  if (elapsed < 0) elapsed += 1440;
-                  const realSecondsSinceSunrise = elapsed * 60;
-                  const secondsIntoCurrentPart = realSecondsSinceSunrise % 4800; // 0-4799 seconds into current part (80 minutes × 60 seconds)
-                  const customSeconds = Math.floor(secondsIntoCurrentPart % 60); // 0-59 seconds within current custom minute
-                  return `${creatorTime.displayText} ${customSeconds}${customSeconds === 1 ? 'st' : customSeconds === 2 ? 'nd' : customSeconds === 3 ? 'rd' : 'th'} sec`;
-                })()}
-              </div>
-              {/* Gregorian Time - Smaller font */}
-              <div className="text-xs sm:text-sm font-mono flex items-center justify-center gap-2 flex-wrap" style={{ color: currentTheme.textSecondary }}>
-                <span>{currentTime.getFullYear()}/{String(currentTime.getMonth() + 1).padStart(2, '0')}/{String(currentTime.getDate()).padStart(2, '0')}</span>
-                <span>{currentTime.toLocaleDateString('en-US', { weekday: 'long' })}</span>
-                <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
