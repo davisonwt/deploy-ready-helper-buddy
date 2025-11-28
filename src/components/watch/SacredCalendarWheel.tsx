@@ -135,10 +135,13 @@ export default function SacredCalendarWheel({
             // Orange circle stroke width
             const orangeStrokeWidth = maxRadius * 0.08;
             
-            // Line starts at inner edge of orange circle (inside the circle, not outside)
-            // The orange circle center is at r1, with stroke width, so inner edge is r1 - strokeWidth/2
-            const lineStartRadius = r1 - (orangeStrokeWidth / 2); // Inner edge of orange circle
-            const lineEndRadius = r1 - maxRadius * 0.12; // Extends further inward
+            // Lines should be WITHIN the orange circle stroke area
+            // Orange circle is drawn at radius r1 with strokeWidth, so:
+            // - Outer edge of orange stroke: r1 + (orangeStrokeWidth / 2)
+            // - Inner edge of orange stroke: r1 - (orangeStrokeWidth / 2)
+            // Lines should span within this stroke area, not extend beyond it
+            const lineStartRadius = r1 + (orangeStrokeWidth / 2); // Outer edge of orange stroke
+            const lineEndRadius = r1 - (orangeStrokeWidth / 2); // Inner edge of orange stroke
             
             // Calculate line endpoints
             const x1 = centerX + lineStartRadius * Math.cos(rad);
