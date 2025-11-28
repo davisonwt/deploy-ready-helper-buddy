@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Globe, Radio } from 'lucide-react';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 
 /**
  * Live timezone display component for the dashboard
@@ -10,6 +11,15 @@ import { Clock, Globe, Radio } from 'lucide-react';
 export default function LiveTimezoneDisplay() {
   const [currentTime, setCurrentTime] = useState('');
   const [selectedTimezone, setSelectedTimezone] = useState('America/New_York');
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
 
   const timezones = [
     { label: 'New York (USA)', zone: 'America/New_York', flag: '🇺🇸' },
@@ -56,17 +66,39 @@ export default function LiveTimezoneDisplay() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-3">
-        <Globe className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>World Clock</span>
+        <Globe className="h-4 w-4" style={{ color: currentTheme.accent }} />
+        <span className="text-sm font-medium" style={{ color: currentTheme.textPrimary }}>World Clock</span>
       </div>
       
       <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger 
+          className="w-full"
+          style={{
+            backgroundColor: currentTheme.secondaryButton,
+            borderColor: currentTheme.cardBorder,
+            color: currentTheme.textPrimary,
+          }}
+        >
           <SelectValue placeholder="Select timezone" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}>
           {timezones.map((tz) => (
-            <SelectItem key={tz.zone} value={tz.zone}>
+            <SelectItem 
+              key={tz.zone} 
+              value={tz.zone}
+              style={{
+                color: currentTheme.textPrimary,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.cardBg;
+              }}
+            >
               <div className="flex items-center gap-2">
                 <span>{tz.flag}</span>
                 <span>{tz.label}</span>
@@ -76,26 +108,45 @@ export default function LiveTimezoneDisplay() {
         </SelectContent>
       </Select>
 
-      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+      <div 
+        className="flex items-center justify-between p-3 rounded-lg"
+        style={{
+          backgroundColor: currentTheme.secondaryButton,
+          borderColor: currentTheme.cardBorder,
+          borderWidth: '1px',
+        }}
+      >
         <div className="flex items-center gap-2">
           <span className="text-xl">{selectedTz?.flag}</span>
           <div>
-            <div className="text-sm font-medium">
+            <div className="text-sm font-medium" style={{ color: currentTheme.textPrimary }}>
               {selectedTz?.label}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
               {selectedTimezone.split('/')[1].replace('_', ' ')}
             </div>
           </div>
         </div>
-        <Badge variant="secondary" className="font-mono">
+        <Badge 
+          className="font-mono"
+          style={{
+            backgroundColor: currentTheme.accent,
+            color: currentTheme.textPrimary,
+          }}
+        >
           <Clock className="h-3 w-3 mr-1" />
           {currentTime || '--:--:--'}
         </Badge>
       </div>
       
-      <div className="text-xs text-center text-white pt-2 border-t">
-        <Radio className="h-3 w-3 inline mr-1" />
+      <div 
+        className="text-xs text-center pt-2 border-t"
+        style={{
+          color: currentTheme.textSecondary,
+          borderColor: currentTheme.cardBorder,
+        }}
+      >
+        <Radio className="h-3 w-3 inline mr-1" style={{ color: currentTheme.accent }} />
         Radio shows scheduled across all zones
       </div>
     </div>
