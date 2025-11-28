@@ -468,7 +468,6 @@ export default function UploadForm() {
                           <input
                             id="zip-file"
                             type="file"
-                            accept=".zip,application/zip,application/x-zip-compressed"
                             className="hidden"
                             disabled={extractingZip || albumFiles.length > 0}
                             onChange={(e) => {
