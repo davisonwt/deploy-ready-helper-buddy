@@ -112,6 +112,7 @@ const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadF
 const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
+const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -186,6 +187,7 @@ const App = () => (
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
+              <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
               
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
