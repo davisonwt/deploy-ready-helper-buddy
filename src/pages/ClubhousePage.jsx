@@ -22,10 +22,12 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { RoomCreationForm } from '@/components/clubhouse/RoomCreationForm'
 import { ClubhouseLiveSession } from '@/components/clubhouse/ClubhouseLiveSession'
+import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 export default function ClubhousePage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   
   const [activeTab, setActiveTab] = useState('discover')
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -36,6 +38,14 @@ export default function ClubhousePage() {
   const [activeRooms, setActiveRooms] = useState([])
   const [featuredRooms, setFeaturedRooms] = useState([])
   const [loading, setLoading] = useState(false)
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, [])
 
   useEffect(() => {
     if (user) {
@@ -317,18 +327,30 @@ export default function ClubhousePage() {
 
   if (showCreateForm || editingRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6">
+      <div className="min-h-screen p-6" style={{ background: currentTheme.background }}>
         <div className="max-w-6xl mx-auto">
-          <Button
-            variant="ghost"
+          <button
             onClick={() => {
               setShowCreateForm(false)
               setEditingRoom(null)
             }}
-            className="mb-6 text-white/60 hover:text-white"
+            className="mb-6 inline-flex items-center px-4 py-2 rounded-lg border transition-all duration-200"
+            style={{
+              backgroundColor: currentTheme.secondaryButton,
+              borderColor: currentTheme.cardBorder,
+              color: currentTheme.textSecondary
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = currentTheme.textPrimary;
+              e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = currentTheme.textSecondary;
+              e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+            }}
           >
             ← Back to Rooms
-          </Button>
+          </button>
           
           <RoomCreationForm
             onRoomCreated={handleRoomCreated}
@@ -344,26 +366,44 @@ export default function ClubhousePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen p-6" style={{ background: currentTheme.background }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold mb-2" style={{ 
+            color: currentTheme.accent,
+            textShadow: `0 0 10px ${currentTheme.shadow}`
+          }}>
             Clubhouse
           </h1>
-          <p className="text-white/60">Drop-in audio conversations</p>
+          <p style={{ color: currentTheme.textSecondary }}>Drop-in audio conversations</p>
         </div>
 
         {/* Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700">
-            <TabsTrigger value="discover" className="text-white">
+          <TabsList 
+            className="grid w-full grid-cols-3"
+            style={{
+              backgroundColor: currentTheme.secondaryButton,
+              borderColor: currentTheme.cardBorder
+            }}
+          >
+            <TabsTrigger 
+              value="discover" 
+              style={{ color: currentTheme.textPrimary }}
+            >
               Discover
             </TabsTrigger>
-            <TabsTrigger value="my-rooms" className="text-white">
+            <TabsTrigger 
+              value="my-rooms" 
+              style={{ color: currentTheme.textPrimary }}
+            >
               My Rooms
             </TabsTrigger>
-            <TabsTrigger value="create" className="text-white">
+            <TabsTrigger 
+              value="create" 
+              style={{ color: currentTheme.textPrimary }}
+            >
               Create
             </TabsTrigger>
           </TabsList>

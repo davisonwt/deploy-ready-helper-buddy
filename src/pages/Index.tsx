@@ -22,11 +22,21 @@ import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 import DeferredVideo from "@/components/performance/DeferredVideo";
+import { getCurrentTheme } from "@/utils/dashboardThemes";
 
 function IndexContent() {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   const { isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, [])
   
   // Get context values - MUST be called before any early returns
   const { 
@@ -66,7 +76,13 @@ function IndexContent() {
     <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="bg-white/90 backdrop-blur-sm border-b border-green-100 sticky top-0 z-50">
+      <nav 
+        className="backdrop-blur-sm border-b sticky top-0 z-50"
+        style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20 md:h-[90px]">
             <div className="flex items-center gap-2 sm:gap-4">
@@ -79,27 +95,53 @@ function IndexContent() {
                 />
               </div>
               <div>
-                <h1 className="text-base sm:text-xl font-bold text-primary">sow2grow</h1>
-                <p className="text-[10px] sm:text-xs text-green-600">364yhvh community farm</p>
+                <h1 className="text-base sm:text-xl font-bold" style={{ color: currentTheme.textPrimary }}>sow2grow</h1>
+                <p className="text-[10px] sm:text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={() => setShowVoiceCommands(true)}
-                className="hover-scale text-muted-foreground hover:text-primary h-9 w-9 sm:h-10 sm:w-10"
+                className="hover-scale h-9 w-9 sm:h-10 sm:w-10 inline-flex items-center justify-center rounded-lg transition-all duration-200"
                 title="Voice Commands"
+                style={{
+                  color: currentTheme.textSecondary,
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = currentTheme.accent;
+                  e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = currentTheme.textSecondary;
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
+              </button>
               
               <AdminButton />
               
               <Link to="/login">
-                <Button variant="default" className="bg-login hover:bg-login/90 text-login-foreground h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base">
+                <button 
+                  className="h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base rounded-lg border transition-all duration-200"
+                  style={{
+                    backgroundColor: currentTheme.primaryButton,
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.accent,
+                    boxShadow: `0 2px 4px ${currentTheme.shadow}`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.primaryButtonHover;
+                    e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.primaryButton;
+                    e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
+                  }}
+                >
                   login
-                </Button>
+                </button>
               </Link>
             </div>
           </div>

@@ -28,6 +28,7 @@ import { useChat } from '@/hooks/useChat.jsx';
 // REMOVED: React call flow - using direct Jitsi links instead
 // import { useCallManager } from '@/hooks/useCallManager';
 import { JitsiCall } from '@/components/JitsiCall';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { useFileUpload } from '@/hooks/useFileUpload.jsx';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +57,15 @@ import { UpcomingSessionsWidget } from '@/components/chat/UpcomingSessionsWidget
 
 const ChatappPage = () => {
   const { user } = useAuth();
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
   const { uploadFile, uploading } = useFileUpload();
   const { toast } = useToast();
   const {
@@ -386,13 +396,13 @@ const ChatappPage = () => {
     <div 
       className="min-h-screen" 
       style={{ 
-        backgroundColor: '#001f3f',
+        background: currentTheme.background,
         minHeight: '100vh'
       }}
     >
       {/* Jitsi Call */}
       {showJitsi && (
-        <div className="p-4 border-b border-blue-900">
+        <div className="p-4 border-b" style={{ borderColor: currentTheme.cardBorder }}>
           <JitsiCall
             roomName={crypto.randomUUID().slice(0, 12)}
             onLeave={() => setShowJitsi(false)}
@@ -401,38 +411,59 @@ const ChatappPage = () => {
       )}
       <div className="container mx-auto p-6 flex flex-col min-h-screen pb-24">
         {/* Header */}
-        <div className="max-w-6xl mx-auto mb-8 p-6 rounded-2xl border border-white/20 shadow-2xl bg-white/10 backdrop-blur-md">
+        <div 
+          className="max-w-6xl mx-auto mb-8 p-6 rounded-2xl border shadow-2xl backdrop-blur-md"
+          style={{
+            backgroundColor: currentTheme.cardBg,
+            borderColor: currentTheme.cardBorder,
+            boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+          }}
+        >
           <div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h1 className="text-3xl font-bold mb-2 px-4 py-2 rounded-lg leading-tight" style={{ 
-                  color: '#3B82F6', 
-                  textShadow: '2px 2px 4px #1D4ED8'
+                  color: currentTheme.accent,
+                  textShadow: `0 0 10px ${currentTheme.shadow}`
                 }}>Chatapp</h1>
                 <p className="text-xs font-medium mb-2 px-4" style={{ 
-                  color: '#87CEEB',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                  color: currentTheme.accentLight,
                   fontStyle: 'italic'
                 }}>
                   chat or chutapp
                 </p>
-                <p style={{ color: '#b0e0e6' }} className="px-4">
+                <p style={{ color: currentTheme.textSecondary }} className="px-4">
                   Connect, collaborate, and grow together in our 364yhvh / sow2grow community
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button 
+                <button 
                   onClick={() => {
                     setShowContactsList(!showContactsList);
                     setShowUserSelector(false);
                   }} 
-                  variant={showContactsList ? "default" : "outline"}
-                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                  className="gap-2 hover:shadow-lg transition-all duration-300 inline-flex items-center justify-center px-4 py-2 rounded-lg border text-sm font-medium"
+                  style={{
+                    backgroundColor: showContactsList ? currentTheme.primaryButton : currentTheme.secondaryButton,
+                    borderColor: currentTheme.accent,
+                    color: currentTheme.textPrimary,
+                    boxShadow: showContactsList ? `0 4px 8px ${currentTheme.shadow}` : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!showContactsList) {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showContactsList) {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    }
+                  }}
                 >
                   <Users className="h-4 w-4" />
                   Contacts
-                </Button>
-                <Button 
+                </button>
+                <button 
                   onClick={() => {
                     console.log('🎯 Direct Chat button clicked!');
                     console.log('Current showUserSelector state:', showUserSelector);
@@ -440,20 +471,48 @@ const ChatappPage = () => {
                     setShowContactsList(false);
                     console.log('New showUserSelector state:', !showUserSelector);
                   }} 
-                  variant={showUserSelector ? "default" : "outline"}
-                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                  className="gap-2 hover:shadow-lg transition-all duration-300 inline-flex items-center justify-center px-4 py-2 rounded-lg border text-sm font-medium"
+                  style={{
+                    backgroundColor: showUserSelector ? currentTheme.primaryButton : currentTheme.secondaryButton,
+                    borderColor: currentTheme.accent,
+                    color: currentTheme.textPrimary,
+                    boxShadow: showUserSelector ? `0 4px 8px ${currentTheme.shadow}` : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!showUserSelector) {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showUserSelector) {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    }
+                  }}
                 >
                   <MessageSquare className="h-4 w-4" />
                   Direct Chat
-                </Button>
-                <Button 
+                </button>
+                <button 
                   onClick={() => setShowCreateModal(true)} 
-                  style={{ backgroundColor: 'white', color: '#0A1931', borderColor: '#0A1931' }}
-                  className="gap-2 hover:shadow-lg transition-all duration-300"
+                  className="gap-2 hover:shadow-lg transition-all duration-300 inline-flex items-center justify-center px-4 py-2 rounded-lg border text-sm font-medium"
+                  style={{
+                    backgroundColor: currentTheme.primaryButton,
+                    borderColor: currentTheme.accent,
+                    color: currentTheme.textPrimary,
+                    boxShadow: `0 2px 4px ${currentTheme.shadow}`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.primaryButtonHover;
+                    e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.primaryButton;
+                    e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
+                  }}
                 >
                   <Plus className="h-4 w-4" />
                   Create Room
-                </Button>
+                </button>
               </div>
             </div>
 
