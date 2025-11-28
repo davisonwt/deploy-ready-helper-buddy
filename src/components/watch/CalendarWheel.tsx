@@ -82,8 +82,10 @@ export default function CalendarWheel({
         'Content-Type': 'application/json',
       };
       
+      // Always include apikey for Supabase Edge Functions
       if (supabaseAnonKey) {
         headers['apikey'] = supabaseAnonKey;
+        headers['Authorization'] = `Bearer ${supabaseAnonKey}`;
       }
       
       const response = await fetch(url, { headers });

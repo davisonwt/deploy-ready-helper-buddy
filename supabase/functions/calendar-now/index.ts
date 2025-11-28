@@ -13,10 +13,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Allow public access - no authentication required
   try {
     const now = new Date();
     
