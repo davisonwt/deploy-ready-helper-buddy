@@ -117,20 +117,42 @@ const ChatInput = ({ roomId, onSendMessage }: ChatInputProps) => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check file size (limit to 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
-        toast({
-          variant: 'destructive',
-          title: 'File too large',
-          description: 'Please select a file smaller than 10MB'
-        });
-        return;
-      }
-      setSelectedFile(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      console.error('No file selected');
+      return;
     }
+    
+    const file = files[0];
+    if (!file) {
+      console.error('No file in files array');
+      return;
+    }
+    
+    // Check if file is empty
+    if (file.size === 0) {
+      console.error('Empty file detected:', file.name);
+      toast({
+        variant: 'destructive',
+        title: 'Empty File',
+        description: `File "${file.name}" is empty. Please select a valid file.`
+      });
+      return;
+    }
+    
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      toast({
+        variant: 'destructive',
+        title: 'File too large',
+        description: 'Please select a file smaller than 10MB'
+      });
+      return;
+    }
+    
+    console.log('File selected:', { name: file.name, size: file.size, type: file.type });
+    setSelectedFile(file);
   };
 
   const removeSelectedFile = () => {

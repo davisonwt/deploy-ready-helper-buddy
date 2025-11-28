@@ -567,8 +567,22 @@ const fetchOrchardById = async (oid) => {
 
   const handleImageUpload = (e) => {
     console.log('🖼️ IMAGE UPLOAD DEBUG: handleImageUpload called');
-    const files = Array.from(e.target.files)
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) {
+      console.error('❌ No files selected');
+      return;
+    }
+    
+    const files = Array.from(fileList);
     console.log('🖼️ IMAGE UPLOAD DEBUG: Files selected:', files.length, files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    
+    // Check for empty files
+    const emptyFiles = files.filter(file => !file || file.size === 0);
+    if (emptyFiles.length > 0) {
+      console.error('❌ Empty files detected:', emptyFiles.map(f => f?.name));
+      setError(`Some files are empty: ${emptyFiles.map(f => f?.name).join(', ')}. Please select valid image files.`);
+      return;
+    }
     
     if (files.length > 3) {
       console.error('❌ Too many files:', files.length);
