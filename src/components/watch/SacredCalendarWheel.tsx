@@ -88,6 +88,24 @@ export default function SacredCalendarWheel({
             strokeWidth={maxRadius * 0.08}
             opacity="0.9"
           />
+          {/* 366 dots around the outer orange circle */}
+          {Array.from({ length: 366 }).map((_, i) => {
+            const angle = (i / 366) * 360 - 90;
+            const rad = (angle * Math.PI) / 180;
+            const dotRadius = r1 + maxRadius * 0.02; // Position dots slightly outside the ring
+            const x = centerX + dotRadius * Math.cos(rad);
+            const y = centerY + dotRadius * Math.sin(rad);
+            return (
+              <circle
+                key={`sun-dot-${i}`}
+                cx={x}
+                cy={y}
+                r={1.5}
+                fill="#f97316"
+                opacity="0.9"
+              />
+            );
+          })}
           {/* 366 segments */}
           {Array.from({ length: 366 }).map((_, i) => {
             const angle = (i / 366) * 360 - 90;
