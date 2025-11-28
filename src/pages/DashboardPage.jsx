@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
+  const [calendarData, setCalendarData] = useState(null)
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
