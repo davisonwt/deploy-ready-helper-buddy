@@ -10,6 +10,7 @@ import { Loader2, RefreshCw, Wallet, Link as LinkIcon, CreditCard, ExternalLink,
 import { useBinanceWallet } from '@/hooks/useBinanceWallet';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 
 export interface BinanceWalletManagerProps {
   className?: string;
@@ -42,6 +43,15 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   const [manualBalanceAmount, setManualBalanceAmount] = useState('');
   const [updatingBalance, setUpdatingBalance] = useState(false);
   const location = useLocation();
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
 
   useEffect(() => {
     if (!wallet) {
@@ -56,8 +66,8 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
     }
   }, [location.search]);
 
-  const pillButtonClasses =
-    "rounded-full border border-primary/40 bg-primary/15 text-primary-foreground/80 hover:bg-primary hover:text-primary-foreground transition-colors duration-200 shadow-sm px-4";
+  // Dynamic button classes based on theme
+  const pillButtonClasses = "rounded-full transition-colors duration-200 shadow-sm px-4";
 
   const handleLink = async () => {
     if (!payIdInput.trim()) {
@@ -129,46 +139,61 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
   };
 
   return (
-    <Card className={className}>
+    <Card 
+      className={className}
+      style={{
+        backgroundColor: currentTheme.cardBg,
+        borderColor: currentTheme.cardBorder,
+      }}
+    >
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-amber-600" />
+        <CardTitle className="flex items-center gap-2" style={{ color: currentTheme.textPrimary }}>
+          <Wallet className="h-5 w-5" style={{ color: currentTheme.accent }} />
           Binance Wallet
         </CardTitle>
-        <CardDescription>
+        <CardDescription style={{ color: currentTheme.textSecondary }}>
           Link your Binance Pay ID to view your balance and top up directly inside Sow2Grow.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {loading ? (
-          <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="flex items-center gap-3" style={{ color: currentTheme.textSecondary }}>
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading wallet information...
           </div>
         ) : (
           <>
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md p-3">
+              <div className="text-sm rounded-md p-3" style={{ 
+                color: '#ef5350', 
+                backgroundColor: 'rgba(239, 83, 80, 0.1)', 
+                border: '1px solid rgba(239, 83, 80, 0.3)' 
+              }}>
                 {error}
               </div>
             )}
 
               {(!wallet || showLinkField) && (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm" style={{ color: currentTheme.textSecondary }}>
                     Link your Binance Pay ID (Pay ID) so Sow2Grow can route distributions to your wallet and display your balance.
                   </p>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="payId">Binance Pay ID *</Label>
+                    <Label htmlFor="payId" style={{ color: currentTheme.textPrimary }}>Binance Pay ID *</Label>
                     <Input
                       id="payId"
                       placeholder="Enter your Binance Pay ID"
                       value={payIdInput}
                       onChange={(event) => setPayIdInput(event.target.value)}
                       disabled={linking}
+                      style={{
+                        backgroundColor: currentTheme.cardBg,
+                        borderColor: currentTheme.cardBorder,
+                        color: currentTheme.textPrimary,
+                      }}
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>
                       Your unique Binance Pay ID for receiving payments
                     </p>
                   </div>
@@ -241,13 +266,30 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                     </p>
                   </div>
 
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 p-3">
-                    <p className="text-xs text-blue-900 dark:text-blue-100">
+                  <div className="rounded-lg border p-3" style={{
+                    borderColor: currentTheme.cardBorder,
+                    backgroundColor: currentTheme.secondaryButton,
+                  }}>
+                    <p className="text-xs" style={{ color: currentTheme.textPrimary }}>
                       <strong>💡 Tip:</strong> Adding API credentials allows the app to query your actual Binance balance directly. Without them, the app will calculate balance from your payment history.
                     </p>
                   </div>
 
-                  <Button onClick={handleLink} disabled={linking} className="w-full">
+                  <Button 
+                    onClick={handleLink} 
+                    disabled={linking} 
+                    className="w-full"
+                    style={{
+                      background: currentTheme.primaryButton,
+                      color: currentTheme.textPrimary,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = currentTheme.primaryButtonHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = currentTheme.primaryButton;
+                    }}
+                  >
                     {linking ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -265,43 +307,52 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
 
               {wallet && !showLinkField && (
                 <div className="space-y-5">
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-1">
-                    <div className="text-xs font-semibold text-muted-foreground">
+                  <div className="rounded-lg border p-4 space-y-1" style={{
+                    borderColor: currentTheme.cardBorder,
+                    backgroundColor: currentTheme.secondaryButton,
+                  }}>
+                    <div className="text-xs font-semibold" style={{ color: currentTheme.textSecondary }}>
                       {wallet.origin === 'organization' ? 'Organization Wallet' : 'Linked Binance Pay ID'}
                     </div>
-                    <div className="text-lg font-semibold tracking-wide break-all">
+                    <div className="text-lg font-semibold tracking-wide break-all" style={{ color: currentTheme.textPrimary }}>
                       {wallet.wallet_name ? `${wallet.wallet_name} • ${wallet.wallet_address}` : wallet.wallet_address}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
                       {wallet.origin === 'organization' ? 'Read-only • Admin access' : 'Primary • Active'}
                     </div>
                     {wallet.origin === 'organization' && (
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-[11px]" style={{ color: currentTheme.textSecondary }}>
                         This wallet is shared by the organization (`{wallet.wallet_name ?? 's2gdavison'}`). Only administrators can view and top up this balance from Sow2Grow.
                       </div>
                     )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-lg border border-border p-4">
-                      <div className="text-xs font-semibold text-muted-foreground mb-1">
+                    <div className="rounded-lg border p-4" style={{
+                      borderColor: currentTheme.cardBorder,
+                      backgroundColor: currentTheme.cardBg,
+                    }}>
+                      <div className="text-xs font-semibold mb-1" style={{ color: currentTheme.textSecondary }}>
                         Available Balance
                       </div>
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-bold" style={{ color: currentTheme.textPrimary }}>
                         {balance?.display ?? '$0.00'}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
+                      <div className="text-xs mt-1" style={{ color: currentTheme.textSecondary }}>
                         {balance?.updatedAt
                           ? `Last synced ${new Date(balance.updatedAt).toLocaleString()}`
                           : 'Sync to fetch the latest balance'}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
                         Source: {balance?.source === 'binance' ? 'Binance Pay' : 'Platform ledger'}
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-border p-4">
-                      <div className="text-xs font-semibold text-muted-foreground mb-2">
+                    <div className="rounded-lg border p-4" style={{
+                      borderColor: currentTheme.cardBorder,
+                      backgroundColor: currentTheme.cardBg,
+                    }}>
+                      <div className="text-xs font-semibold mb-2" style={{ color: currentTheme.textSecondary }}>
                         Quick Actions
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -311,6 +362,19 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                           className={pillButtonClasses}
                           onClick={refreshBalance}
                           disabled={refreshing}
+                          style={{
+                            borderColor: currentTheme.cardBorder,
+                            backgroundColor: currentTheme.secondaryButton,
+                            color: currentTheme.textPrimary,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = currentTheme.accent;
+                            e.currentTarget.style.color = currentTheme.textPrimary;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                            e.currentTarget.style.color = currentTheme.textPrimary;
+                          }}
                         >
                           {refreshing ? (
                             <>
@@ -330,6 +394,19 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                             size="sm"
                             className={pillButtonClasses}
                             onClick={() => setTopUpDialogOpen(true)}
+                            style={{
+                              borderColor: currentTheme.cardBorder,
+                              backgroundColor: currentTheme.secondaryButton,
+                              color: currentTheme.textPrimary,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = currentTheme.accent;
+                              e.currentTarget.style.color = currentTheme.textPrimary;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                              e.currentTarget.style.color = currentTheme.textPrimary;
+                            }}
                           >
                             <CreditCard className="h-4 w-4 mr-2" />
                             Top up wallet
@@ -343,6 +420,19 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                             setManualBalanceAmount(balance?.amount?.toString() || '0');
                             setManualBalanceDialogOpen(true);
                           }}
+                          style={{
+                            borderColor: currentTheme.cardBorder,
+                            backgroundColor: currentTheme.secondaryButton,
+                            color: currentTheme.textPrimary,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = currentTheme.accent;
+                            e.currentTarget.style.color = currentTheme.textPrimary;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                            e.currentTarget.style.color = currentTheme.textPrimary;
+                          }}
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Set balance
@@ -351,7 +441,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator style={{ backgroundColor: currentTheme.cardBorder }} />
 
                   <Button
                     variant="outline"
@@ -361,13 +451,26 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                       setShowLinkField(true);
                       setPayIdInput('');
                     }}
+                    style={{
+                      borderColor: currentTheme.cardBorder,
+                      backgroundColor: currentTheme.secondaryButton,
+                      color: currentTheme.textPrimary,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent;
+                      e.currentTarget.style.color = currentTheme.textPrimary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      e.currentTarget.style.color = currentTheme.textPrimary;
+                    }}
                   >
                     <LinkIcon className="h-3 w-3 mr-2" />
                     Link a different wallet
                   </Button>
 
-                  <div className="text-xs text-muted-foreground space-y-2">
-                    <p className="font-semibold text-foreground">Need your Pay ID?</p>
+                  <div className="text-xs space-y-2" style={{ color: currentTheme.textSecondary }}>
+                    <p className="font-semibold" style={{ color: currentTheme.textPrimary }}>Need your Pay ID?</p>
                     <p>
                       Open the Binance app &gt; tap <strong>Profile</strong> &gt; <strong>Pay</strong> &gt; <strong>Receive</strong> to copy your Pay ID.
                     </p>
@@ -376,6 +479,7 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                       size="sm"
                       className="p-0 h-auto"
                       onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
+                      style={{ color: currentTheme.accent }}
                     >
                       Binance Pay Help <ExternalLink className="h-3 w-3 ml-1" />
                     </Button>
@@ -387,16 +491,19 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
       </CardContent>
 
       <Dialog open={topUpDialogOpen} onOpenChange={setTopUpDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}>
           <DialogHeader>
-            <DialogTitle>Top up your Sow2Grow wallet</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: currentTheme.textPrimary }}>Top up your Sow2Grow wallet</DialogTitle>
+            <DialogDescription style={{ color: currentTheme.textSecondary }}>
               Generate a Binance Pay checkout to add more USDC to the wallet you use on Sow2Grow.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="topUpAmount">Amount (USDC)</Label>
+              <Label htmlFor="topUpAmount" style={{ color: currentTheme.textPrimary }}>Amount (USDC)</Label>
               <Input
                 id="topUpAmount"
                 type="number"
@@ -404,6 +511,11 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                 step="1"
                 value={topUpAmount}
                 onChange={(event) => setTopUpAmount(Number(event.target.value))}
+                style={{
+                  backgroundColor: currentTheme.cardBg,
+                  borderColor: currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                }}
               />
             </div>
             <div className="flex flex-wrap gap-2">
@@ -413,12 +525,36 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   variant="outline"
                   size="sm"
                   onClick={() => setTopUpAmount(preset)}
+                  style={{
+                    borderColor: currentTheme.cardBorder,
+                    backgroundColor: currentTheme.secondaryButton,
+                    color: currentTheme.textPrimary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
                 >
                   {preset} USDC
                 </Button>
               ))}
             </div>
-            <Button onClick={handleTopUp} className="w-full">
+            <Button 
+              onClick={handleTopUp} 
+              className="w-full"
+              style={{
+                background: currentTheme.primaryButton,
+                color: currentTheme.textPrimary,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = currentTheme.primaryButtonHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = currentTheme.primaryButton;
+              }}
+            >
               Create Binance Pay order
             </Button>
           </div>
@@ -426,16 +562,19 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
       </Dialog>
 
       <Dialog open={manualBalanceDialogOpen} onOpenChange={setManualBalanceDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+        }}>
           <DialogHeader>
-            <DialogTitle>Manually Set Balance</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: currentTheme.textPrimary }}>Manually Set Balance</DialogTitle>
+            <DialogDescription style={{ color: currentTheme.textSecondary }}>
               If your Binance balance doesn't match what's shown, you can manually set it here. This is useful when you have external deposits or the API can't query your balance.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="manualBalance">Balance (USDC)</Label>
+              <Label htmlFor="manualBalance" style={{ color: currentTheme.textPrimary }}>Balance (USDC)</Label>
               <Input
                 id="manualBalance"
                 type="number"
@@ -444,8 +583,13 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                 value={manualBalanceAmount}
                 onChange={(event) => setManualBalanceAmount(event.target.value)}
                 placeholder="Enter your actual Binance balance"
+                style={{
+                  backgroundColor: currentTheme.cardBg,
+                  borderColor: currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                }}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs mt-1" style={{ color: currentTheme.textSecondary }}>
                 Enter the exact balance shown in your Binance wallet
               </p>
             </div>
@@ -456,6 +600,17 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   variant="outline"
                   size="sm"
                   onClick={() => setManualBalanceAmount(preset.toString())}
+                  style={{
+                    borderColor: currentTheme.cardBorder,
+                    backgroundColor: currentTheme.secondaryButton,
+                    color: currentTheme.textPrimary,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                  }}
                 >
                   ${preset}
                 </Button>
@@ -465,6 +620,18 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
               onClick={handleManualBalanceUpdate} 
               disabled={updatingBalance}
               className="w-full"
+              style={{
+                background: currentTheme.primaryButton,
+                color: currentTheme.textPrimary,
+              }}
+              onMouseEnter={(e) => {
+                if (!updatingBalance) {
+                  e.currentTarget.style.background = currentTheme.primaryButtonHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = currentTheme.primaryButton;
+              }}
             >
               {updatingBalance ? (
                 <>
