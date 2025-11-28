@@ -3,41 +3,73 @@
  * Based on AutoCAD design with multi-layered rings
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getCreatorDate } from '@/utils/customCalendar';
 import { getCreatorTime } from '@/utils/customTime';
+import { getSunriseSunset, getCurrentDayBySunrise } from '@/utils/sunrise';
 
 interface SacredCalendarWheelProps {
   size?: number;
   className?: string;
+  userLat?: number;
+  userLon?: number;
 }
 
 export default function SacredCalendarWheel({ 
   size = 300, 
-  className = '' 
+  className = '',
+  userLat = -26.2, // Default: South Africa
+  userLon = 28.0
 }: SacredCalendarWheelProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDayOfYear, setCurrentDayOfYear] = useState(1);
+  const [sunriseData, setSunriseData] = useState<{ sunrise: Date; sunset: Date } | null>(null);
+  const sunriseCache = useRef(new Map<string, any>());
   const centerX = size / 2;
   const centerY = size / 2;
   const maxRadius = size / 2 - 10;
 
+  // Update current date and check for sunrise-based day change
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentDate(new Date());
-    }, 60000); // Update every minute
+    const updateDate = async () => {
+      const now = new Date();
+      setCurrentDate(now);
+      
+      // Get sunrise data for today
+      const todayStr = now.toISOString().split('T')[0];
+      let todaySunrise = sunriseCache.current.get(todayStr);
+      
+      if (!todaySunrise) {
+        todaySunrise = await getSunriseSunset(now, userLat, userLon);
+        sunriseCache.current.set(todayStr, todaySunrise);
+      }
+      
+      setSunriseData(todaySunrise);
+      
+      // Determine current day based on sunrise
+      // If current time is before sunrise, we're still on previous day
+      const effectiveDate = now < todaySunrise.sunrise 
+        ? new Date(now.getTime() - 86400000) // Yesterday
+        : now;
+      
+      const creatorDate = getCreatorDate(effectiveDate);
+      const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+      let dayOfYear = 0;
+      for (let i = 0; i < creatorDate.month - 1; i++) {
+        dayOfYear += monthDays[i];
+      }
+      dayOfYear += creatorDate.day;
+      setCurrentDayOfYear(dayOfYear);
+    };
+    
+    updateDate();
+    const interval = setInterval(updateDate, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [userLat, userLon]);
 
   const creatorDate = getCreatorDate(currentDate);
-  const creatorTime = getCreatorTime(currentDate);
-
-  // Calculate day of year
-  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-  let dayOfYear = 0;
-  for (let i = 0; i < creatorDate.month - 1; i++) {
-    dayOfYear += monthDays[i];
-  }
-  dayOfYear += creatorDate.day;
+  const creatorTime = getCreatorTime(currentDate, userLat, userLon);
+  const dayOfYear = currentDayOfYear;
 
   // Ring radii (from outer to inner)
   const r1 = maxRadius; // Outermost orange ring
@@ -88,28 +120,44 @@ export default function SacredCalendarWheel({
             strokeWidth={maxRadius * 0.08}
             opacity="0.9"
           />
-          {/* 366 dots around the outer orange circle - black by default, white for today */}
+          {/* 366 lines around the outer orange circle - black by default, white for today */}
           {Array.from({ length: 366 }).map((_, i) => {
             // Anti-clockwise: day 1 starts at top (angle -90), counting backwards
             // Day 1 = index 0, Day 366 = index 365
             // Current day is dayOfYear (1-366)
-            const isToday = (i + 1) === dayOfYear;
+            const dayNumber = i + 1;
+            const isToday = dayNumber === dayOfYear;
+            
             // Anti-clockwise: angle decreases as we go around
             const angle = -((i / 366) * 360) - 90; // Negative for anti-clockwise
             const rad = (angle * Math.PI) / 180;
-            const dotRadius = r1 + maxRadius * 0.02; // Position dots slightly outside the ring
-            const x = centerX + dotRadius * Math.cos(rad);
-            const y = centerY + dotRadius * Math.sin(rad);
+            
+            // Line starts at outer edge of ring and extends inward
+            const lineStartRadius = r1; // Outer edge
+            const lineEndRadius = r1 - maxRadius * 0.08; // Inner edge (touching the ring stroke)
+            const lineLength = lineStartRadius - lineEndRadius;
+            
+            // Calculate line endpoints
+            const x1 = centerX + lineStartRadius * Math.cos(rad);
+            const y1 = centerY + lineStartRadius * Math.sin(rad);
+            const x2 = centerX + lineEndRadius * Math.cos(rad);
+            const y2 = centerY + lineEndRadius * Math.sin(rad);
+            
+            // Thicker lines that can touch but not overlap
+            // Each line takes up 360/366 degrees, so we can make them thicker
+            const lineWidth = Math.max(2, (lineLength * 0.15)); // Thicker lines, ~15% of line length
+            
             return (
-              <circle
-                key={`sun-dot-${i}`}
-                cx={x}
-                cy={y}
-                r={isToday ? 2.5 : 1.5}
-                fill={isToday ? "#ffffff" : "#000000"}
+              <line
+                key={`sun-line-${i}`}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={isToday ? "#ffffff" : "#000000"}
+                strokeWidth={lineWidth}
                 opacity={isToday ? "1" : "0.9"}
-                stroke={isToday ? "#f97316" : "none"}
-                strokeWidth={isToday ? "1" : "0"}
+                strokeLinecap="round"
               />
             );
           })}

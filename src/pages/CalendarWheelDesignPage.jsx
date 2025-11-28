@@ -32,7 +32,11 @@ export default function CalendarWheelDesignPage() {
 
         {/* Large Calendar Wheel Container */}
         <div className="flex items-center justify-center w-full" style={{ minHeight: 'calc(100vh - 120px)' }}>
-          <SacredCalendarWheel size={wheelSize} />
+          <SacredCalendarWheel 
+            size={wheelSize}
+            userLat={-26.2} // South Africa default
+            userLon={28.0}
+          />
         </div>
       </div>
     </div>
