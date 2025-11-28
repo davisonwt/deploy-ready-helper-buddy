@@ -410,7 +410,7 @@ export default function UploadForm() {
                       <input
                         id="cover"
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.svg,.tiff,.webp,.ico,.heic,.heif"
                         className="hidden"
                         onChange={(e) => {
                           const files = e.target.files;
@@ -505,7 +505,9 @@ export default function UploadForm() {
                         id="file"
                         type="file"
                         className="hidden"
-                        accept={formData.type === 'music' ? 'audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg,.wma,.mp4,.mpeg' : undefined}
+                        accept={formData.type === 'music' 
+                          ? 'audio/*,.mp3,.wav,.m4a,.flac,.aac,.ogg,.wma,.mp4,.mpeg,.opus,.amr,.3gp,.3g2,.aiff,.au,.ra,.wv,.ape,.tta,.tak,.dsf,.dff,.mka,.mpc,.spx,.aa,.aax,.act,.aiff,.alac,.ape,.au,.awb,.dct,.dss,.dvf,.flac,.gsm,.iklax,.ivs,.m4a,.m4b,.mmf,.mp3,.mpc,.msv,.nmf,.ogg,.oga,.mogg,.opus,.ra,.rm,.raw,.rf64,.sln,.tta,.voc,.vox,.wav,.wma,.wv,.webm'
+                          : '*/*,.pdf,.doc,.docx,.txt,.rtf,.odt,.pages,.xls,.xlsx,.csv,.ods,.numbers,.ppt,.pptx,.odp,.key,.zip,.rar,.7z,.tar,.gz,.mp3,.wav,.m4a,.flac,.aac,.ogg,.wma,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.jpg,.jpeg,.png,.gif,.bmp,.svg,.tiff,.psd,.ai,.eps'}
                         multiple={releaseType === 'album'}
                         disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
