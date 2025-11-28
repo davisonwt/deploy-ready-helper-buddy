@@ -377,7 +377,22 @@ export default function UploadForm() {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) {
+                            console.error('No cover image selected');
+                            return;
+                          }
+                          
+                          if (file.size === 0) {
+                            console.error('Empty cover image detected:', file.name);
+                            toast.error(`Cover image "${file.name}" is empty. Please select a valid image file.`);
+                            return;
+                          }
+                          
+                          console.log('Cover image selected:', { name: file.name, size: file.size, type: file.type });
+                          setCoverImage(file);
+                        }}
                       />
                     </label>
                   </div>
@@ -450,12 +465,44 @@ export default function UploadForm() {
                         multiple={releaseType === 'album'}
                         disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
+                          const files = e.target.files;
+                          if (!files || files.length === 0) {
+                            console.error('No files selected');
+                            return;
+                          }
+                          
                           if (releaseType === 'album') {
-                            setAlbumFiles(Array.from(e.target.files || []));
-                            setMainFile(null);
-                            setZipFile(null);
+                            const fileArray = Array.from(files);
+                            // Validate files have content
+                            const validFiles = fileArray.filter(file => {
+                              if (!file || file.size === 0) {
+                                console.error('Empty file detected:', file?.name);
+                                toast.error(`File "${file?.name}" is empty. Please select a valid file.`);
+                                return false;
+                              }
+                              return true;
+                            });
+                            
+                            if (validFiles.length > 0) {
+                              setAlbumFiles(validFiles);
+                              setMainFile(null);
+                              setZipFile(null);
+                            }
                           } else {
-                            setMainFile(e.target.files?.[0] || null);
+                            const file = files[0];
+                            if (!file) {
+                              console.error('No file selected');
+                              return;
+                            }
+                            
+                            if (file.size === 0) {
+                              console.error('Empty file detected:', file.name);
+                              toast.error(`File "${file.name}" is empty. Please select a valid file.`);
+                              return;
+                            }
+                            
+                            console.log('File selected:', { name: file.name, size: file.size, type: file.type });
+                            setMainFile(file);
                             setAlbumFiles([]);
                           }
                         }}

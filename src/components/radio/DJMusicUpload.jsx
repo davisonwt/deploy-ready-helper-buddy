@@ -370,7 +370,28 @@ export default function DJMusicUpload({ trigger }) {
                       type="file"
                       accept="audio/*"
                       multiple={releaseType === 'album'}
-                      onChange={(e) => e.target.files && handleFileSelect(Array.from(e.target.files))}
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) {
+                          console.error('No files selected');
+                          return;
+                        }
+                        
+                        const fileArray = Array.from(files);
+                        // Validate files have content
+                        const validFiles = fileArray.filter(file => {
+                          if (!file || file.size === 0) {
+                            console.error('Empty file detected:', file?.name);
+                            alert(`File "${file?.name}" is empty. Please select a valid file.`);
+                            return false;
+                          }
+                          return true;
+                        });
+                        
+                        if (validFiles.length > 0) {
+                          handleFileSelect(validFiles);
+                        }
+                      }}
                       className="hidden"
                       id="file-upload"
                     />

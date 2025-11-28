@@ -58,7 +58,13 @@ export default function OrchardVideoManager({ orchard }) {
   }
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0]
+    const files = e.target.files
+    if (!files || files.length === 0) {
+      console.error('❌ No file selected')
+      return
+    }
+    
+    const file = files[0]
     console.log('🔍 DEBUG: File selected:', {
       fileName: file?.name,
       fileSize: file?.size,
@@ -66,33 +72,47 @@ export default function OrchardVideoManager({ orchard }) {
       filePath: e.target.value
     })
     
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('video/')) {
-        console.error('❌ Invalid file type:', file.type)
-        toast({
-          title: "Invalid File Type",
-          description: "Please select a video file (.mp4, .mov, .avi, .webm, etc.)",
-          variant: "destructive"
-        })
-        return
-      }
-      
-      // Check file size (max 100MB)
-      const maxSize = 100 * 1024 * 1024
-      if (file.size > maxSize) {
-        console.error('❌ File too large:', file.size, 'bytes')
-        toast({
-          title: "File Too Large",
-          description: `File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 100MB.`,
-          variant: "destructive"
-        })
-        return
-      }
-      
-      console.log('✅ File validation passed')
-      setVideoData(prev => ({ ...prev, file }))
+    if (!file) {
+      console.error('❌ No file in files array')
+      return
     }
+    
+    // Check if file is empty
+    if (file.size === 0) {
+      console.error('❌ Empty file detected:', file.name)
+      toast({
+        title: "Empty File",
+        description: `File "${file.name}" is empty. Please select a valid video file.`,
+        variant: "destructive"
+      })
+      return
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      console.error('❌ Invalid file type:', file.type)
+      toast({
+        title: "Invalid File Type",
+        description: "Please select a video file (.mp4, .mov, .avi, .webm, etc.)",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    // Check file size (max 100MB)
+    const maxSize = 100 * 1024 * 1024
+    if (file.size > maxSize) {
+      console.error('❌ File too large:', file.size, 'bytes')
+      toast({
+        title: "File Too Large",
+        description: `File size is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 100MB.`,
+        variant: "destructive"
+      })
+      return
+    }
+    
+    console.log('✅ File validation passed')
+    setVideoData(prev => ({ ...prev, file }))
   }
 
   const handleUpload = async (e) => {
