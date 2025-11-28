@@ -6,10 +6,10 @@
 .calendar-wheel {
   position: relative;
   display: inline-block;
-  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  background: transparent;
   border-radius: 50%;
-  padding: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 0 100px rgba(255, 215, 0, 0.1);
+  padding: 0;
+  box-shadow: none;
 }
 
 /* CSS Variables - can be overridden via Figma exports */
