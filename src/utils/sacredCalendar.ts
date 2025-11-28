@@ -23,6 +23,7 @@ export interface DayInfo {
 }
 
 // Month structure: [days, startsOnWeekDay]
+// Pattern: 30/30/31/30/30/31/30/30/31/30/30/31 = 364 days total
 const MONTHS = [
   { days: 30, startsOn: 1 }, // Month 1 - starts on day 1 of week
   { days: 30, startsOn: 6 }, // Month 2 - starts on day 6 of week
@@ -32,8 +33,8 @@ const MONTHS = [
   { days: 31, startsOn: 1 }, // Month 6 - starts on day 1 of week
   { days: 30, startsOn: 4 }, // Month 7 - starts on day 4 of week
   { days: 30, startsOn: 6 }, // Month 8 - starts on day 6 of week
-  { days: 30, startsOn: 2 }, // Month 9 - starts on day 2 of week (inferred)
-  { days: 31, startsOn: 1 }, // Month 10 - starts on day 1 of week
+  { days: 31, startsOn: 2 }, // Month 9 - starts on day 2 of week
+  { days: 30, startsOn: 1 }, // Month 10 - starts on day 1 of week
   { days: 30, startsOn: 6 }, // Month 11 - starts on day 6 of week
   { days: 31, startsOn: 1 }, // Month 12 - starts on day 1 of week
 ];
