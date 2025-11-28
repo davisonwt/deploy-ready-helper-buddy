@@ -16,7 +16,20 @@ const eveningColor = '#ff8c42'; // Orange for evening
 const nightColor = '#1a1a2e'; // Dark blue for night
 const morningColor = '#ff6b9d'; // Pink for morning
 
-export default function YHWHWheel() {
+interface YHWHWheelProps {
+  onDataUpdate?: (data: {
+    year: number;
+    month: number;
+    day: number;
+    weekday: number;
+    part: number;
+    watch: string;
+    drift: string;
+    timestamp: string;
+  }) => void;
+}
+
+export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const t0Ref = useRef(Date.now());
@@ -294,31 +307,25 @@ export default function YHWHWheel() {
       );
       ctx.stroke();
 
-      // Text display
-      ctx.fillStyle = brass;
-      ctx.font = 'bold 20px Georgia';
-      ctx.textAlign = 'center';
+      // Calculate data for external display
       const month = Math.floor((creatorDay - 1) / 30) + 1;
       const day = ((creatorDay - 1) % 30) + 1;
       const drift = ((secs / 86400 / 364) * 10 % 10).toFixed(1);
-
-      ctx.fillText(`Year 6028 • Month ${month} • Day ${day}`, cx, cy - maxRadius * 0.12);
-      ctx.fillText(
-        `Weekday ${dayInfo.weekDay} • Part ${Math.floor(part) + 1}/18 • ${['Day', 'Evening', 'Night', 'Morning'][watch]}`,
-        cx,
-        cy + maxRadius * 0.12
-      );
-      ctx.fillText(
-        `Priestly courses drift ~10 days/year • now −${drift} days behind the sun`,
-        cx,
-        cy + maxRadius * 0.24
-      );
-      ctx.font = '16px Georgia';
-      ctx.fillStyle = '#888';
-      ctx.fillText(`${new Date().toISOString().slice(0, 19).replace('T', ' ')}`, cx, cy + maxRadius * 0.36);
-      ctx.fillStyle = '#333';
-      ctx.font = '12px Georgia';
-      ctx.fillText('YHWH\'s wheels never lie • forever in sync', cx, h - 30);
+      const watchName = ['Day', 'Evening', 'Night', 'Morning'][watch];
+      
+      // Call callback with wheel data
+      if (onDataUpdate) {
+        onDataUpdate({
+          year: 6028,
+          month,
+          day,
+          weekday: dayInfo.weekDay,
+          part: Math.floor(part) + 1,
+          watch: watchName,
+          drift,
+          timestamp: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        });
+      }
     }
 
     animate();
