@@ -471,112 +471,112 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-          {/* Addictive Stats Cards */}
-          <div className="mb-6">
-            <StatsCards />
-          </div>
+        {/* Addictive Stats Cards */}
+        <div className="mb-6">
+          <StatsCards />
+        </div>
 
-          {/* Top Sowers Teaser */}
-          <div className="mb-6">
-            <TopSowersTeaser />
-          </div>
+        {/* Top Sowers Teaser */}
+        <div className="mb-6">
+          <TopSowersTeaser />
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-            <div className="lg:col-span-1 wallet-tour">
-              <BinanceWalletManager 
-                className="shadow-xl backdrop-blur-xl"
-                style={{
-                  backgroundColor: currentTheme.cardBg,
-                  borderColor: currentTheme.cardBorder,
-                }}
-              />
-            </div>
-
-            {/* Global Timezone Support */}
-            <Card 
-              className="lg:col-span-1 border shadow-xl timezone-tour backdrop-blur-xl"
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          <div className="lg:col-span-1 wallet-tour">
+            <BinanceWalletManager 
+              className="shadow-xl backdrop-blur-xl"
               style={{
                 backgroundColor: currentTheme.cardBg,
                 borderColor: currentTheme.cardBorder,
               }}
-            >
-              <CardHeader className="p-4 sm:p-5 md:p-6">
-                <CardTitle className="flex items-center text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
-                  <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
-                  Global Time Zones
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-                <LiveTimezoneDisplay />
-                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
-                  <Link to="/grove-station">
-                    <button 
-                      className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
-                      style={{
-                        color: currentTheme.textPrimary,
-                        borderColor: currentTheme.accent,
-                        backgroundColor: currentTheme.secondaryButton,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.accent;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                        e.currentTarget.style.color = currentTheme.textPrimary;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                        e.currentTarget.style.color = currentTheme.textPrimary;
-                      }}
-                    >
-                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      View Radio Schedule
-                    </button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+            />
           </div>
 
-
-          {/* Marketing Thumbnails Section */}
-          <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
-            <Card 
-              className="border shadow-xl backdrop-blur-xl overflow-hidden"
-              style={{
-                backgroundColor: currentTheme.cardBg,
-                borderColor: currentTheme.cardBorder,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="aspect-video w-full">
-                  <AmbassadorThumbnail />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className="border shadow-xl backdrop-blur-xl overflow-hidden"
-              style={{
-                backgroundColor: currentTheme.cardBg,
-                borderColor: currentTheme.cardBorder,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="aspect-video w-full">
-                  <GoSatGhostAccessThumbnail />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
+          {/* Global Timezone Support */}
           <Card 
-            className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl"
+            className="lg:col-span-1 border shadow-xl timezone-tour backdrop-blur-xl"
             style={{
               backgroundColor: currentTheme.cardBg,
               borderColor: currentTheme.cardBorder,
             }}
           >
+            <CardHeader className="p-4 sm:p-5 md:p-6">
+              <CardTitle className="flex items-center text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
+                <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
+                Global Time Zones
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+              <LiveTimezoneDisplay />
+              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
+                <Link to="/grove-station">
+                  <button 
+                    className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
+                    style={{
+                      color: currentTheme.textPrimary,
+                      borderColor: currentTheme.accent,
+                      backgroundColor: currentTheme.secondaryButton,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
+                      e.currentTarget.style.color = currentTheme.textPrimary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
+                      e.currentTarget.style.color = currentTheme.textPrimary;
+                    }}
+                  >
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    View Radio Schedule
+                  </button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+
+        {/* Marketing Thumbnails Section */}
+        <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
+          <Card 
+            className="border shadow-xl backdrop-blur-xl overflow-hidden"
+            style={{
+              backgroundColor: currentTheme.cardBg,
+              borderColor: currentTheme.cardBorder,
+            }}
+          >
+            <CardContent className="p-0">
+              <div className="aspect-video w-full">
+                <AmbassadorThumbnail />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="border shadow-xl backdrop-blur-xl overflow-hidden"
+            style={{
+              backgroundColor: currentTheme.cardBg,
+              borderColor: currentTheme.cardBorder,
+            }}
+          >
+            <CardContent className="p-0">
+              <div className="aspect-video w-full">
+                <GoSatGhostAccessThumbnail />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card 
+          className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl"
+          style={{
+            backgroundColor: currentTheme.cardBg,
+            borderColor: currentTheme.cardBorder,
+          }}
+        >
           <CardHeader className="p-4 sm:p-5 md:p-6">
             <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>Quick Actions</CardTitle>
           </CardHeader>
@@ -609,9 +609,9 @@ export default function DashboardPage() {
                   <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" style={{ color: currentTheme.textPrimary }} />
                   <span className="font-medium text-sm sm:text-base" style={{ color: currentTheme.textPrimary }}>Browse Orchards</span>
                 </div>
-                	<div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
-                  	<Link to="/browse-orchards">
-                    	<div 
+                <div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
+                  <Link to="/browse-orchards">
+                    <div 
                       className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                       style={{
                         borderColor: currentTheme.accent,
@@ -625,12 +625,12 @@ export default function DashboardPage() {
                         e.currentTarget.style.backgroundColor = currentTheme.cardBg;
                         e.currentTarget.style.borderColor = currentTheme.accent;
                       }}
-                    	>
-                      	<Users className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    	</div>
-                  	</Link>
-                  	<Link to="/my-orchards">
-                    	<div 
+                    >
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
+                    </div>
+                  </Link>
+                  <Link to="/my-orchards">
+                    <div 
                       className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
                       style={{
                         borderColor: currentTheme.accent,
@@ -644,17 +644,17 @@ export default function DashboardPage() {
                         e.currentTarget.style.backgroundColor = currentTheme.cardBg;
                         e.currentTarget.style.borderColor = currentTheme.accent;
                       }}
-                    	>
-                      	<User className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    	</div>
-                  	</Link>
-                  	<Link 
+                    >
+                      <User className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
+                    </div>
+                  </Link>
+                  <Link 
                     to="/364yhvh-orchards"
                     onClick={(e) => {
                       console.log('🔗 Navigating to 364yhvh-orchards page');
                     }}
-                  	>
-                    	<div 
+                  >
+                    <div 
                       className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                       style={{
                         borderColor: currentTheme.accent,
@@ -668,11 +668,11 @@ export default function DashboardPage() {
                         e.currentTarget.style.backgroundColor = currentTheme.cardBg;
                         e.currentTarget.style.borderColor = currentTheme.accent;
                       }}
-                    	>
-                      	<Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    	</div>
-                  	</Link>
-                	</div>
+                    >
+                      <Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
+                    </div>
+                  </Link>
+                </div>
               </div>
               
               <Link to="/profile">
