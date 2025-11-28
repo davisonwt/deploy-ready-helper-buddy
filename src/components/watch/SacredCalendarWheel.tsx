@@ -132,10 +132,13 @@ export default function SacredCalendarWheel({
             const angle = -((i / 366) * 360) - 90; // Negative for anti-clockwise
             const rad = (angle * Math.PI) / 180;
             
-            // Line starts at outer edge of ring and extends inward
-            const lineStartRadius = r1; // Outer edge
-            const lineEndRadius = r1 - maxRadius * 0.08; // Inner edge (touching the ring stroke)
-            const lineLength = lineStartRadius - lineEndRadius;
+            // Orange circle stroke width
+            const orangeStrokeWidth = maxRadius * 0.08;
+            
+            // Line starts at inner edge of orange circle (inside the circle, not outside)
+            // The orange circle center is at r1, with stroke width, so inner edge is r1 - strokeWidth/2
+            const lineStartRadius = r1 - (orangeStrokeWidth / 2); // Inner edge of orange circle
+            const lineEndRadius = r1 - maxRadius * 0.12; // Extends further inward
             
             // Calculate line endpoints
             const x1 = centerX + lineStartRadius * Math.cos(rad);
@@ -144,7 +147,7 @@ export default function SacredCalendarWheel({
             const y2 = centerY + lineEndRadius * Math.sin(rad);
             
             // Thicker lines that can touch but not overlap
-            // Each line takes up 360/366 degrees, so we can make them thicker
+            const lineLength = lineStartRadius - lineEndRadius;
             const lineWidth = Math.max(2, (lineLength * 0.15)); // Thicker lines, ~15% of line length
             
             return (
