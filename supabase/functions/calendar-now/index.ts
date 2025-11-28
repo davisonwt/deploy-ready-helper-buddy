@@ -48,11 +48,16 @@ Deno.serve(async (req) => {
     // For Nov 28, 2025: March 20 to Nov 28 = 253 days, so dayOfYear = 254
     const dayOfYear = remainingDays + 1;
     
+    // Ensure timestamp is accurate
+    const timestamp = now.toISOString();
+    const unixMs = now.getTime();
+    
     const response = {
-      timestamp: now.toISOString(),
+      timestamp,
       year,
       dayOfYear,
-      unix: now.getTime(),
+      unix: unixMs,
+      unixSeconds: Math.floor(unixMs / 1000),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     };
 
