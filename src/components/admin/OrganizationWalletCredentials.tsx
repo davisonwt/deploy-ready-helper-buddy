@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Save, RefreshCw } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 interface WalletCredentials {
   wallet_name: string
@@ -19,6 +20,15 @@ export function OrganizationWalletCredentials() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, [])
   
   const [s2gholding, setS2gholding] = useState<WalletCredentials>({
     wallet_name: 's2gholding',
@@ -120,24 +130,43 @@ export function OrganizationWalletCredentials() {
     credentials: WalletCredentials,
     setCredentials: React.Dispatch<React.SetStateAction<WalletCredentials>>
   ) => (
-    <Card>
+    <Card
+      style={{
+        backgroundColor: currentTheme.cardBg,
+        borderColor: currentTheme.cardBorder,
+        boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+      }}
+    >
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle style={{ color: currentTheme.textPrimary }}>{title}</CardTitle>
+        <CardDescription style={{ color: currentTheme.textSecondary }}>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor={`${credentials.wallet_name}-merchant-id`}>Merchant ID</Label>
+          <Label htmlFor={`${credentials.wallet_name}-merchant-id`} style={{ color: currentTheme.textPrimary }}>Merchant ID</Label>
           <Input
             id={`${credentials.wallet_name}-merchant-id`}
             value={credentials.merchant_id}
             onChange={(e) => setCredentials(prev => ({ ...prev, merchant_id: e.target.value }))}
             placeholder="Enter Binance Pay Merchant ID"
+            style={{
+              backgroundColor: currentTheme.secondaryButton,
+              borderColor: currentTheme.cardBorder,
+              color: currentTheme.textPrimary
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = currentTheme.accent;
+              e.currentTarget.style.boxShadow = `0 0 0 2px ${currentTheme.accent}40`;
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = currentTheme.cardBorder;
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${credentials.wallet_name}-api-key`}>API Key</Label>
+          <Label htmlFor={`${credentials.wallet_name}-api-key`} style={{ color: currentTheme.textPrimary }}>API Key</Label>
           <div className="relative">
             <Input
               id={`${credentials.wallet_name}-api-key`}
@@ -146,21 +175,44 @@ export function OrganizationWalletCredentials() {
               onChange={(e) => setCredentials(prev => ({ ...prev, api_key: e.target.value }))}
               placeholder="Enter API Key"
               className="pr-10"
+              style={{
+                backgroundColor: currentTheme.secondaryButton,
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textPrimary
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = currentTheme.accent;
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${currentTheme.accent}40`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3"
+              className="absolute right-0 top-0 h-full px-3 rounded-r-md inline-flex items-center justify-center transition-all duration-200"
               onClick={() => toggleShowSecret(`${credentials.wallet_name}-key`)}
+              style={{
+                backgroundColor: 'transparent',
+                color: currentTheme.textSecondary
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+                e.currentTarget.style.color = currentTheme.accent;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = currentTheme.textSecondary;
+              }}
             >
               {showSecrets[`${credentials.wallet_name}-key`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
+            </button>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${credentials.wallet_name}-api-secret`}>API Secret</Label>
+          <Label htmlFor={`${credentials.wallet_name}-api-secret`} style={{ color: currentTheme.textPrimary }}>API Secret</Label>
           <div className="relative">
             <Input
               id={`${credentials.wallet_name}-api-secret`}
@@ -169,37 +221,84 @@ export function OrganizationWalletCredentials() {
               onChange={(e) => setCredentials(prev => ({ ...prev, api_secret: e.target.value }))}
               placeholder="Enter API Secret"
               className="pr-10"
+              style={{
+                backgroundColor: currentTheme.secondaryButton,
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textPrimary
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = currentTheme.accent;
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${currentTheme.accent}40`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             />
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-full px-3"
+              className="absolute right-0 top-0 h-full px-3 rounded-r-md inline-flex items-center justify-center transition-all duration-200"
               onClick={() => toggleShowSecret(`${credentials.wallet_name}-secret`)}
+              style={{
+                backgroundColor: 'transparent',
+                color: currentTheme.textSecondary
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
+                e.currentTarget.style.color = currentTheme.accent;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = currentTheme.textSecondary;
+              }}
             >
               {showSecrets[`${credentials.wallet_name}-secret`] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
+            </button>
           </div>
         </div>
 
-        <Button
+        <button
           onClick={() => saveCredentials(credentials.wallet_name, credentials)}
           disabled={saving || !credentials.api_key || !credentials.api_secret || !credentials.merchant_id}
-          className="w-full"
+          className="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+          style={{
+            background: currentTheme.primaryButton,
+            borderColor: currentTheme.accent,
+            color: currentTheme.textPrimary,
+            boxShadow: `0 2px 4px ${currentTheme.shadow}`
+          }}
+          onMouseEnter={(e) => {
+            if (!e.currentTarget.disabled) {
+              e.currentTarget.style.background = currentTheme.primaryButtonHover;
+              e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!e.currentTarget.disabled) {
+              e.currentTarget.style.background = currentTheme.primaryButton;
+              e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
+            }
+          }}
         >
           <Save className="mr-2 h-4 w-4" />
           Save Credentials
-        </Button>
+        </button>
       </CardContent>
     </Card>
   )
 
   if (loading) {
     return (
-      <Card>
+      <Card
+        style={{
+          backgroundColor: currentTheme.cardBg,
+          borderColor: currentTheme.cardBorder,
+          boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
+        }}
+      >
         <CardContent className="pt-6">
           <div className="flex items-center justify-center">
-            <RefreshCw className="h-6 w-6 animate-spin" />
+            <RefreshCw className="h-6 w-6 animate-spin" style={{ color: currentTheme.accent }} />
           </div>
         </CardContent>
       </Card>
@@ -208,8 +307,13 @@ export function OrganizationWalletCredentials() {
 
   return (
     <div className="space-y-6">
-      <Alert>
-        <AlertDescription>
+      <Alert
+        style={{
+          backgroundColor: currentTheme.secondaryButton,
+          borderColor: currentTheme.cardBorder
+        }}
+      >
+        <AlertDescription style={{ color: currentTheme.textPrimary }}>
           Each wallet requires its own Binance Pay API credentials. Get these from your Binance Merchant Dashboard for each sub-account.
         </AlertDescription>
       </Alert>
