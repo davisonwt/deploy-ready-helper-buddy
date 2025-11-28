@@ -33,9 +33,9 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import CalendarWheel from '@/components/watch/CalendarWheel'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
+import { getDayInfo } from '@/utils/sacredCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
 import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
@@ -96,6 +96,40 @@ export default function DashboardPage() {
   const [userLon, setUserLon] = useState(28.0) // Default: South Africa
   const [customDate, setCustomDate] = useState(null)
   const [calendarData, setCalendarData] = useState(null)
+  
+  // Calculate calendar data directly (without CalendarWheel component)
+  useEffect(() => {
+    const updateCalendarData = () => {
+      const now = new Date()
+      const creatorDate = getCreatorDate(now)
+      const creatorTime = getCreatorTime(now, userLat, userLon)
+      const dayInfo = getDayInfo(creatorDate.year, creatorDate.month, creatorDate.day)
+      
+      // Calculate day of year
+      const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
+      let dayOfYear = 0
+      for (let i = 0; i < creatorDate.month - 1; i++) {
+        dayOfYear += monthDays[i]
+      }
+      dayOfYear += creatorDate.day
+      
+      setCalendarData({
+        year: creatorDate.year,
+        month: creatorDate.month,
+        dayOfMonth: creatorDate.day,
+        weekday: creatorDate.weekDay,
+        part: creatorTime.part,
+        dayOfYear: dayOfYear,
+        season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : 'Regular Day',
+        timestamp: now.toISOString()
+      })
+    }
+    
+    updateCalendarData()
+    const interval = setInterval(updateCalendarData, 60000) // Update every minute
+    
+    return () => clearInterval(interval)
+  }, [userLat, userLon])
   
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -470,16 +504,6 @@ export default function DashboardPage() {
                 </div>
               )}
 
-            </div>
-            
-            {/* Right Side - Calendar Wheel - Adjusted Position */}
-            <div className="flex-shrink-0 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center self-center sm:self-start" style={{ transform: 'translateX(-1.5cm)' }}>
-              <CalendarWheel 
-                timezone="Africa/Johannesburg"
-                theme="auto"
-                size={400}
-                onDataUpdate={setCalendarData}
-              />
             </div>
           </div>
         </div>
