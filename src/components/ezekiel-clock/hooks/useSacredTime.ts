@@ -26,10 +26,12 @@ export const useSacredTime = (lat: number | null, lon: number | null) => {
   }, []);
 
   useEffect(() => {
-    if (!lat || !lon) return;
+    // Use default location (Johannesburg) if lat/lon not provided
+    const currentLat = lat ?? -26.2;
+    const currentLon = lon ?? 28.0;
 
     try {
-      const times = SunCalc.getTimes(now, lat, lon);
+      const times = SunCalc.getTimes(now, currentLat, currentLon);
       const sunrise = times.sunrise.getTime();
       const sunset = times.sunset.getTime();
       const nowMs = now.getTime();
