@@ -754,156 +754,252 @@ export default function ProfilePage() {
               {/* Enhanced Social Media Links Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* TikTok */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-foreground flex items-center gap-2">
-                    <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center">
-                      <Music className="h-3 w-3 text-white" />
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center shadow-lg">
+                      <Music className="h-6 w-6 text-white" />
                     </div>
-                    TikTok
-                  </label>
-                  {editing ? (
                     <div>
+                      <h3 className="text-foreground font-semibold text-lg">TikTok</h3>
+                    </div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
                       <input
                         type="url"
                         name="tiktok_url"
                         value={formData.tiktok_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
                         placeholder="https://tiktok.com/@username"
                       />
                       {socialLinksError.tiktok && (
-                        <p className="text-destructive text-xs mt-2 flex items-center gap-1">
+                        <p className="text-destructive text-xs flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {socialLinksError.tiktok}
                         </p>
                       )}
+                      {formData.tiktok_url && (
+                        <Button
+                          onClick={() => setFormData(prev => ({ ...prev, tiktok_url: "" }))}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          Disconnect
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-muted/30 rounded-xl">
+                    <div>
                       {user?.tiktok_url ? (
-                        <a href={user.tiktok_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors font-medium flex items-center gap-2">
-                          <Music className="h-4 w-4" />
-                          {user.tiktok_url}
-                        </a>
+                        <div className="space-y-3">
+                          <a 
+                            href={user.tiktok_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                          >
+                            <Music className="h-4 w-4" />
+                            View Profile
+                          </a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">
+                            Connected
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-foreground">Not connected</span>
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
+                          Not connected
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
                 
                 {/* Instagram */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-foreground flex items-center gap-2">
-                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                      <Instagram className="h-3 w-3 text-white" />
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                      <Instagram className="h-6 w-6 text-white" />
                     </div>
-                    Instagram
-                  </label>
-                  {editing ? (
                     <div>
+                      <h3 className="text-foreground font-semibold text-lg">Instagram</h3>
+                    </div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
                       <input
                         type="url"
                         name="instagram_url"
                         value={formData.instagram_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
                         placeholder="https://instagram.com/username"
                       />
                       {socialLinksError.instagram && (
-                        <p className="text-destructive text-xs mt-2 flex items-center gap-1">
+                        <p className="text-destructive text-xs flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {socialLinksError.instagram}
                         </p>
                       )}
+                      {formData.instagram_url && (
+                        <Button
+                          onClick={() => setFormData(prev => ({ ...prev, instagram_url: "" }))}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          Disconnect
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-muted/30 rounded-xl">
+                    <div>
                       {user?.instagram_url ? (
-                        <a href={user.instagram_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors font-medium flex items-center gap-2">
-                          <Instagram className="h-4 w-4" />
-                          {user.instagram_url}
-                        </a>
+                        <div className="space-y-3">
+                          <a 
+                            href={user.instagram_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                          >
+                            <Instagram className="h-4 w-4" />
+                            View Profile
+                          </a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">
+                            Connected
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-foreground">Not connected</span>
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
+                          Not connected
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
                 
                 {/* Facebook */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-foreground flex items-center gap-2">
-                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                      <Facebook className="h-3 w-3 text-white" />
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Facebook className="h-6 w-6 text-white" />
                     </div>
-                    Facebook
-                  </label>
-                  {editing ? (
                     <div>
+                      <h3 className="text-foreground font-semibold text-lg">Facebook</h3>
+                    </div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
                       <input
                         type="url"
                         name="facebook_url"
                         value={formData.facebook_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
                         placeholder="https://facebook.com/username"
                       />
                       {socialLinksError.facebook && (
-                        <p className="text-destructive text-xs mt-2 flex items-center gap-1">
+                        <p className="text-destructive text-xs flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {socialLinksError.facebook}
                         </p>
                       )}
+                      {formData.facebook_url && (
+                        <Button
+                          onClick={() => setFormData(prev => ({ ...prev, facebook_url: "" }))}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          Disconnect
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-muted/30 rounded-xl">
+                    <div>
                       {user?.facebook_url ? (
-                        <a href={user.facebook_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors font-medium flex items-center gap-2">
-                          <Facebook className="h-4 w-4" />
-                          {user.facebook_url}
-                        </a>
+                        <div className="space-y-3">
+                          <a 
+                            href={user.facebook_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                          >
+                            <Facebook className="h-4 w-4" />
+                            View Profile
+                          </a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">
+                            Connected
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-foreground">Not connected</span>
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
+                          Not connected
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
                 
                 {/* YouTube */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-foreground flex items-center gap-2">
-                    <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
-                      <Youtube className="h-3 w-3 text-white" />
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Youtube className="h-6 w-6 text-white" />
                     </div>
-                    YouTube
-                  </label>
-                  {editing ? (
                     <div>
+                      <h3 className="text-foreground font-semibold text-lg">YouTube</h3>
+                    </div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
                       <input
                         type="url"
                         name="youtube_url"
                         value={formData.youtube_url}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-border bg-card rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
                         placeholder="https://youtube.com/c/username"
                       />
                       {socialLinksError.youtube && (
-                        <p className="text-destructive text-xs mt-2 flex items-center gap-1">
+                        <p className="text-destructive text-xs flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
                           {socialLinksError.youtube}
                         </p>
                       )}
+                      {formData.youtube_url && (
+                        <Button
+                          onClick={() => setFormData(prev => ({ ...prev, youtube_url: "" }))}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          Disconnect
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    <div className="py-3 px-4 bg-muted/30 rounded-xl">
+                    <div>
                       {user?.youtube_url ? (
-                        <a href={user.youtube_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors font-medium flex items-center gap-2">
-                          <Youtube className="h-4 w-4" />
-                          {user.youtube_url}
-                        </a>
+                        <div className="space-y-3">
+                          <a 
+                            href={user.youtube_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                          >
+                            <Youtube className="h-4 w-4" />
+                            View Profile
+                          </a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">
+                            Connected
+                          </div>
+                        </div>
                       ) : (
-                        <span className="text-foreground">Not connected</span>
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
+                          Not connected
+                        </div>
                       )}
                     </div>
                   )}
