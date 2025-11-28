@@ -311,7 +311,21 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
       const drift = ((secs / 86400 / 364) * 10 % 10).toFixed(1);
       const watchName = ['Day', 'Evening', 'Night', 'Morning'][watch];
       const nowDate = new Date(now);
-      const dayOfWeek = nowDate.toLocaleDateString('en-US', { weekday: 'long' });
+      
+      // Format time in South Africa timezone (Africa/Johannesburg)
+      const saTime = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Africa/Johannesburg',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).formatToParts(nowDate);
+      
+      const saDateStr = `${saTime.find(p => p.type === 'year')?.value}-${saTime.find(p => p.type === 'month')?.value}-${saTime.find(p => p.type === 'day')?.value} ${saTime.find(p => p.type === 'hour')?.value}:${saTime.find(p => p.type === 'minute')?.value}:${saTime.find(p => p.type === 'second')?.value}`;
+      const dayOfWeek = nowDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Africa/Johannesburg' });
       
       // Call callback with wheel data
       if (onDataUpdate) {
@@ -323,7 +337,7 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
           part: Math.floor(part) + 1,
           watch: watchName,
           drift,
-          timestamp: `${nowDate.toISOString().slice(0, 19).replace('T', ' ')} ${dayOfWeek}`
+          timestamp: `${saDateStr} ${dayOfWeek}`
         });
       }
     }
