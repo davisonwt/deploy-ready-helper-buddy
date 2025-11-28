@@ -28,21 +28,22 @@ export function AnalyticsConsentScreen({ onComplete }: AnalyticsConsentScreenPro
         preciseLocation: locationConsent,
       };
 
-      // Save to Supabase
+      // Save to Supabase (user_consent table not yet created - storing locally for now)
       if (user?.id) {
-        const { error } = await supabase
-          .from('user_consent')
-          .upsert({
-            user_id: user.id,
-            analytics: analyticsConsent,
-            marketing_attribution: marketingConsent,
-            precise_location: locationConsent,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id'
-          });
-
-        if (error) throw error;
+        // TODO: Uncomment when user_consent table is created via migration
+        // const { error } = await supabase
+        //   .from('user_consent')
+        //   .upsert({
+        //     user_id: user.id,
+        //     analytics: analyticsConsent,
+        //     marketing_attribution: marketingConsent,
+        //     precise_location: locationConsent,
+        //     updated_at: new Date().toISOString(),
+        //   }, {
+        //     onConflict: 'user_id'
+        //   });
+        // if (error) throw error;
+        console.log('Consent saved locally (user_consent table not yet created)');
       }
 
       // Save to localStorage and SDK
