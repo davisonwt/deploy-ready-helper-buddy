@@ -359,20 +359,22 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                         <Button
                           variant="outline"
                           size="sm"
-                          className={pillButtonClasses}
+                          className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
                           onClick={refreshBalance}
                           disabled={refreshing}
                           style={{
-                            borderColor: currentTheme.cardBorder,
+                            borderColor: currentTheme.accent,
                             backgroundColor: currentTheme.secondaryButton,
                             color: currentTheme.textPrimary,
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = currentTheme.accent;
+                            e.currentTarget.style.borderColor = currentTheme.accent;
                             e.currentTarget.style.color = currentTheme.textPrimary;
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                            e.currentTarget.style.borderColor = currentTheme.accent;
                             e.currentTarget.style.color = currentTheme.textPrimary;
                           }}
                         >
@@ -392,19 +394,21 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                           <Button
                             variant="outline"
                             size="sm"
-                            className={pillButtonClasses}
+                            className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
                             onClick={() => setTopUpDialogOpen(true)}
                             style={{
-                              borderColor: currentTheme.cardBorder,
+                              borderColor: currentTheme.accent,
                               backgroundColor: currentTheme.secondaryButton,
                               color: currentTheme.textPrimary,
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor = currentTheme.accent;
+                              e.currentTarget.style.borderColor = currentTheme.accent;
                               e.currentTarget.style.color = currentTheme.textPrimary;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                              e.currentTarget.style.borderColor = currentTheme.accent;
                               e.currentTarget.style.color = currentTheme.textPrimary;
                             }}
                           >
@@ -415,22 +419,24 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                         <Button
                           variant="outline"
                           size="sm"
-                          className={pillButtonClasses}
+                          className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
                           onClick={() => {
                             setManualBalanceAmount(balance?.amount?.toString() || '0');
                             setManualBalanceDialogOpen(true);
                           }}
                           style={{
-                            borderColor: currentTheme.cardBorder,
+                            borderColor: currentTheme.accent,
                             backgroundColor: currentTheme.secondaryButton,
                             color: currentTheme.textPrimary,
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = currentTheme.accent;
+                            e.currentTarget.style.borderColor = currentTheme.accent;
                             e.currentTarget.style.color = currentTheme.textPrimary;
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                            e.currentTarget.style.borderColor = currentTheme.accent;
                             e.currentTarget.style.color = currentTheme.textPrimary;
                           }}
                         >
@@ -446,22 +452,24 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                   <Button
                     variant="outline"
                     size="sm"
-                    className={pillButtonClasses}
+                    className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2"
                     onClick={() => {
                       setShowLinkField(true);
                       setPayIdInput('');
                     }}
                     style={{
-                      borderColor: currentTheme.cardBorder,
+                      borderColor: currentTheme.accent,
                       backgroundColor: currentTheme.secondaryButton,
                       color: currentTheme.textPrimary,
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = currentTheme.accent;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
                       e.currentTarget.style.color = currentTheme.textPrimary;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
                       e.currentTarget.style.color = currentTheme.textPrimary;
                     }}
                   >
@@ -475,13 +483,27 @@ export function BinanceWalletManager({ className, showTopUpActions = true }: Bin
                       Open the Binance app &gt; tap <strong>Profile</strong> &gt; <strong>Pay</strong> &gt; <strong>Receive</strong> to copy your Pay ID.
                     </p>
                     <Button
-                      variant="link"
-                      size="sm"
-                      className="p-0 h-auto"
+                      variant="outline"
+                      size="default"
+                      className="rounded-full border transition-all duration-200 shadow-sm px-4 py-2 mt-2"
                       onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
-                      style={{ color: currentTheme.accent }}
+                      style={{
+                        borderColor: currentTheme.accent,
+                        backgroundColor: currentTheme.secondaryButton,
+                        color: currentTheme.textPrimary,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.accent;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                        e.currentTarget.style.color = currentTheme.textPrimary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                        e.currentTarget.style.borderColor = currentTheme.accent;
+                        e.currentTarget.style.color = currentTheme.textPrimary;
+                      }}
                     >
-                      Binance Pay Help <ExternalLink className="h-3 w-3 ml-1" />
+                      Binance Pay Help <ExternalLink className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
                 </div>
