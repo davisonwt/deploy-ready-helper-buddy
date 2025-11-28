@@ -33,7 +33,6 @@ import { GamificationFloatingButton } from '@/components/gamification/Gamificati
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import { CustomWatch } from '@/components/watch/CustomWatch'
 import { EzekielClock } from '@/components/ezekiel-clock/EzekielClock'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDate } from '@/utils/customCalendar'
@@ -389,13 +388,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
-      {/* Clocks Section - Top of page, side by side */}
+      {/* Clocks Section - Top of page */}
       <div className="w-full pt-8 pb-4 px-4 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 z-50">
-        {/* Custom Watch */}
-        <div className="flex-shrink-0">
-          <CustomWatch compact={false} />
-        </div>
-        
         {/* Ezekiel Clock */}
         <div className="flex-shrink-0">
           <EzekielClock />
@@ -404,7 +398,7 @@ export default function DashboardPage() {
       
       {/* Content wrapper */}
       <div className="relative z-10">
-        {/* Welcome Section with Profile Picture and Custom Watch - Mobile Responsive */}
+        {/* Welcome Section with Profile Picture - Mobile Responsive */}
         <div 
           className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl"
           style={{
@@ -446,7 +440,6 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          {/* Custom Watch - moved to top with Ezekiel Clock */}
         </div>
         {/* Custom Time Display - Bottom of welcome section */}
         {customDate && (
