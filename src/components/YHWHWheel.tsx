@@ -307,23 +307,23 @@ export default function YHWHWheel({ onDataUpdate }: YHWHWheelProps = {}) {
       );
       ctx.stroke();
 
-      // Calculate data for external display
-      const month = Math.floor((creatorDay - 1) / 30) + 1;
-      const day = ((creatorDay - 1) % 30) + 1;
+      // Calculate data for external display - use dayInfo for accurate month/day
       const drift = ((secs / 86400 / 364) * 10 % 10).toFixed(1);
       const watchName = ['Day', 'Evening', 'Night', 'Morning'][watch];
+      const nowDate = new Date(now);
+      const dayOfWeek = nowDate.toLocaleDateString('en-US', { weekday: 'long' });
       
       // Call callback with wheel data
       if (onDataUpdate) {
         onDataUpdate({
           year: 6028,
-          month,
-          day,
+          month: dayInfo.month,
+          day: dayInfo.dayOfMonth,
           weekday: dayInfo.weekDay,
           part: Math.floor(part) + 1,
           watch: watchName,
           drift,
-          timestamp: new Date().toISOString().slice(0, 19).replace('T', ' ')
+          timestamp: `${nowDate.toISOString().slice(0, 19).replace('T', ' ')} ${dayOfWeek}`
         });
       }
     }
