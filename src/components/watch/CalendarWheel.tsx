@@ -402,8 +402,7 @@ export default function CalendarWheel({
           </radialGradient>
         </defs>
 
-        {/* Background gradient */}
-        <rect width={size} height={size} fill="url(#blue-gradient)" opacity="0.1" rx={size / 10} />
+        {/* Background removed - transparent */}
 
         {/* Ring 1: 366-dot solar orbit (outermost) */}
         <g transform={`rotate(${rotations.year} ${centerX} ${centerY})`}>
