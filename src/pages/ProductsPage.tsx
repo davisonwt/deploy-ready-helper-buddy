@@ -75,8 +75,12 @@ export default function ProductsPage() {
     return filterParam;
   };
 
+  const getInitialSort = () => {
+    return filterParam === 'trending' ? 'Trending' : 'Most Recent';
+  };
+
   const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
-  const [selectedSort, setSelectedSort] = useState<string>(filterParam === 'trending' ? 'Trending' : 'Most Recent');
+  const [selectedSort, setSelectedSort] = useState<string>(getInitialSort());
   const [activeFilter, setActiveFilter] = useState<string>(filterParam);
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
@@ -131,6 +135,13 @@ export default function ProductsPage() {
 
   const handleFilter = (filterType: string) => {
     setActiveFilter(filterType);
+    
+    // Update URL query parameter
+    if (filterType === 'all') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ filter: filterType });
+    }
     
     if (filterType === 'trending') {
       setSelectedCategory('trending');
