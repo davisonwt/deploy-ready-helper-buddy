@@ -70,6 +70,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     })
 
     // 2. TRIPLE CONFETTI + SPARKLE TSUNAMI
+    playSoundEffect('levelUp', 0.8) // Main level-up sound
     for (let i = 0; i < 5; i++) {
       setTimeout(() => launchConfetti(), i * 150)
     }
@@ -138,6 +139,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
     // 5. TREE VIOLENTLY EXPLODES UPWARD + NEW BRANCHES BURST OUT
     if (treeRef.current) {
+      playSoundEffect('treeGrow', 0.6)
       treeRef.current.style.transition = 'transform 0.6s ease-out'
       treeRef.current.style.transform = 'translateY(-120px) scale(1.4)'
       setTimeout(() => {

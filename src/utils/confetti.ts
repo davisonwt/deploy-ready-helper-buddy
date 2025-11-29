@@ -1,7 +1,52 @@
 // Ultimate Particle Candy - Enhanced confetti system
 
+// CINEMATIC SOUND EFFECTS — THE FINAL BOSS
+const SFX = {
+  levelUp: 'https://assets.mixkit.co/sfx/preview/mixkit-angelic-choir-reveal-1618.mp3', // heavenly choir + bell
+  confetti: 'https://assets.mixkit.co/sfx/preview/mixkit-magic-confetti-burst-2393.mp3', // sparkling pop
+  sparkle: 'https://assets.mixkit.co/sfx/preview/mixkit-ethereal-fairy-voice-1733.mp3', // angelic whoosh
+  bestow: 'https://assets.mixkit.co/sfx/preview/mixkit-coins-pouring-2005.mp3', // golden coins rain
+  mysterySeed: 'https://assets.mixkit.co/sfx/preview/mixkit-mystical-fairy-bell-2436.mp3', // magical chime
+  treeGrow: 'https://assets.mixkit.co/sfx/preview/mixkit-tree-branches-in-wind-1176.mp3', // leaves rustling + growth
+  quickRain: 'https://assets.mixkit.co/sfx/preview/mixkit-rain-of-coins-1992.mp3' // heavy coin pour
+}
+
+const audioCache: Record<string, HTMLAudioElement> = {}
+let audioUnlocked = false
+
+function playSound(soundKey: keyof typeof SFX, volume = 0.7) {
+  if (!SFX[soundKey]) return
+  if (!audioUnlocked) return // Wait for user interaction
+
+  if (!audioCache[soundKey]) {
+    audioCache[soundKey] = new Audio(SFX[soundKey])
+    audioCache[soundKey].preload = 'auto'
+  }
+
+  const sfx = audioCache[soundKey].cloneNode() as HTMLAudioElement
+  sfx.volume = volume
+  sfx.play().catch(() => {}) // Ignore errors (user hasn't interacted yet, etc.)
+}
+
+// AUTO-PLAY ON FIRST USER INTERACTION (required by browsers)
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    if (audioUnlocked) return
+    audioUnlocked = true
+    playSound('confetti', 0.3) // tiny proof it works
+    document.body.removeEventListener('click', unlockAudio)
+  }
+  document.body.addEventListener('click', unlockAudio, { once: true })
+}
+
+// Export playSound function
+export function playSoundEffect(soundKey: keyof typeof SFX, volume = 0.7) {
+  playSound(soundKey, volume)
+}
+
 // 1. Reusable confetti (upgraded version)
 export function launchConfetti() {
+  playSound('confetti', 0.6)
   const canvas = document.createElement('canvas');
   canvas.style.position = 'fixed';
   canvas.style.inset = '0';
