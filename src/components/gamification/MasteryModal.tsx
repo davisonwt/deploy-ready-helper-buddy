@@ -45,64 +45,152 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const treeRef = useRef<SVGSVGElement>(null)
   const lastLevelRef = useRef<number>(1)
 
-  // Level-up animation function
+  // ULTIMATE APOCALYPTIC LEVEL-UP ANIMATION 9000
   const triggerLevelUpAnimation = (newLevel: number) => {
     if (newLevel <= lastLevelRef.current) return
 
-    // 1. Divine flash
-    const flash = document.createElement('div')
-    flash.style.position = 'fixed'
-    flash.style.inset = '0'
-    flash.style.background = 'radial-gradient(circle, #fbbf24 0%, transparent 70%)'
-    flash.style.opacity = '0'
-    flash.style.pointerEvents = 'none'
-    flash.style.zIndex = '99999'
-    document.body.appendChild(flash)
+    // 1. FULL-SCREEN GOLDEN EXPLOSION FLASH
+    const apocalypse = document.createElement('div')
+    apocalypse.style.position = 'fixed'
+    apocalypse.style.inset = '0'
+    apocalypse.style.background = 'radial-gradient(circle at center, #fffbe6 0%, #fbbf24 30%, #f43f5e 100%)'
+    apocalypse.style.opacity = '0'
+    apocalypse.style.pointerEvents = 'none'
+    apocalypse.style.zIndex = '9999999'
+    document.body.appendChild(apocalypse)
     
     requestAnimationFrame(() => {
-      flash.style.transition = 'opacity 0.6s'
-      flash.style.opacity = '1'
-      setTimeout(() => { flash.style.opacity = '0' }, 300)
-      setTimeout(() => flash.remove(), 1000)
+      apocalypse.style.transition = 'opacity 0.4s ease-out'
+      apocalypse.style.opacity = '1'
+      setTimeout(() => {
+        apocalypse.style.transition = 'opacity 1.6s'
+        apocalypse.style.opacity = '0'
+        setTimeout(() => apocalypse.remove(), 1600)
+      }, 400)
     })
 
-    // 2. MASSIVE confetti + sparkles
-    launchConfetti()
-    launchConfetti() // twice = biblical
-    launchSparkles()
-    setTimeout(() => launchConfetti(), 300)
+    // 2. TRIPLE CONFETTI + SPARKLE TSUNAMI
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => launchConfetti(), i * 150)
+    }
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => launchSparkles(), i * 300)
+    }
 
-    // 3. Show level-up text
-    setLevelUpText({ level: newLevel, title: getTitle(newLevel) })
-    setShowLevelUpAnimation(true)
+    // 3. EARTHQUAKE SHAKE ENTIRE PAGE
+    document.body.style.transition = 'transform 0.8s'
+    const shakes = [15, -12, 10, -8, 6, -4, 2]
+    shakes.forEach((px, i) => {
+      setTimeout(() => {
+        document.body.style.transform = `translateX(${px}px)`
+      }, i * 80)
+    })
+    setTimeout(() => {
+      document.body.style.transform = ''
+    }, 80 * shakes.length)
 
-    // 4. Tree GROW animation
+    // 4. MONUMENTAL "LEVEL XX" TEXT — RISES FROM HELL TO HEAVEN
+    const holyText = document.createElement('div')
+    holyText.innerHTML = `
+      <div style="font-size:14rem; font-weight:900; 
+                  background:linear-gradient(0deg, #facc15, #fff, #f43f5e, #c084fc);
+                  -webkit-background-clip:text; background-clip:text; color:transparent;
+                  text-shadow: 0 0 80px #fff, 0 0 160px #facc15;
+                  letter-spacing:-0.5rem;">
+        LEVEL ${newLevel}
+      </div>
+      <div style="font-size:5rem; margin-top:2rem; 
+                  background:linear-gradient(to right, #34d399, #22d3ee);
+                  -webkit-background-clip:text; background-clip:text; color:transparent;
+                  text-shadow:0 0 60px #34d399;">
+        ${getTitle(newLevel).toUpperCase()}
+      </div>
+      <div style="font-size:3rem; margin-top:1rem; color:#fbbf24; opacity:0.9;">
+        HAS BEEN ACHIEVED!
+      </div>
+    `
+    Object.assign(holyText.style, {
+      position: 'fixed',
+      top: '60%',
+      left: '50%',
+      transform: 'translate(-50%, -50%) scale(0.3)',
+      pointerEvents: 'none',
+      zIndex: '99999999',
+      textAlign: 'center',
+      opacity: '0',
+      filter: 'blur(10px)'
+    })
+    document.body.appendChild(holyText)
+
+    // Dramatic entrance
+    requestAnimationFrame(() => {
+      holyText.style.transition = 'all 2.8s cubic-bezier(0.22, 1, 0.36, 1)'
+      holyText.style.opacity = '1'
+      holyText.style.filter = 'blur(0)'
+      holyText.style.transform = 'translate(-50%, -50%) scale(1.1)'
+    })
+    setTimeout(() => {
+      holyText.style.transition = 'all 2s'
+      holyText.style.transform = 'translate(-50%, -50%) scale(0.9)'
+      holyText.style.opacity = '0'
+      setTimeout(() => holyText.remove(), 2000)
+    }, 3000)
+
+    // 5. TREE VIOLENTLY EXPLODES UPWARD + NEW BRANCHES BURST OUT
     if (treeRef.current) {
-      treeRef.current.style.transition = 'transform 1.5s ease-out'
-      treeRef.current.style.transform = 'scale(1.15) translateY(-20px)'
+      treeRef.current.style.transition = 'transform 0.6s ease-out'
+      treeRef.current.style.transform = 'translateY(-120px) scale(1.4)'
       setTimeout(() => {
         if (treeRef.current) {
-          treeRef.current.style.transform = 'scale(1) translateY(0)'
+          treeRef.current.style.transition = 'transform 1.8s cubic-bezier(0.2, 0.8, 0.2, 1)'
+          treeRef.current.style.transform = 'translateY(0) scale(1)'
         }
-      }, 800)
+      }, 600)
     }
 
-    // 5. Floating +LEVEL fruits
-    for (let i = 0; i < 12; i++) {
+    // 6. FRUITS RAIN FROM HEAVEN
+    for (let i = 0; i < 30; i++) {
       setTimeout(() => {
         floatingScore(
-          newLevel * 10,
-          window.innerWidth / 2 + Math.random() * 300 - 150,
-          window.innerHeight / 2
+          newLevel > 20 ? 100 : newLevel * 5,
+          window.innerWidth / 2 + Math.random() * 600 - 300,
+          -100
         )
-      }, i * 150)
+      }, i * 80)
     }
 
-    // Hide animation after 4 seconds
-    setTimeout(() => {
-      setShowLevelUpAnimation(false)
-      setLevelUpText(null)
-    }, 4000)
+    // 7. SCREEN-SHAKING PARTICLE RING EXPLOSION
+    for (let angle = 0; angle < 360; angle += 15) {
+      setTimeout(() => {
+        const x = window.innerWidth / 2 + Math.cos((angle * Math.PI) / 180) * 100
+        const y = window.innerHeight / 2 + Math.sin((angle * Math.PI) / 180) * 100
+        // Create sparkle at specific position
+        const sparkle = document.createElement('div')
+        sparkle.style.position = 'fixed'
+        sparkle.style.left = x + 'px'
+        sparkle.style.top = y + 'px'
+        sparkle.style.width = '20px'
+        sparkle.style.height = '20px'
+        sparkle.style.background = 'radial-gradient(circle, #fff, #facc15, transparent)'
+        sparkle.style.borderRadius = '50%'
+        sparkle.style.pointerEvents = 'none'
+        sparkle.style.zIndex = '999999'
+        sparkle.style.opacity = '0'
+        sparkle.style.transform = 'scale(0)'
+        document.body.appendChild(sparkle)
+        
+        requestAnimationFrame(() => {
+          sparkle.style.transition = 'all 0.6s ease-out'
+          sparkle.style.opacity = '1'
+          sparkle.style.transform = 'scale(1)'
+          setTimeout(() => {
+            sparkle.style.opacity = '0'
+            sparkle.style.transform = 'scale(2) translateY(-50px)'
+            setTimeout(() => sparkle.remove(), 600)
+          }, 300)
+        })
+      }, angle)
+    }
   }
 
   // Load user progress from Supabase
