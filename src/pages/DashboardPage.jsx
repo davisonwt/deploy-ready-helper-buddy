@@ -135,8 +135,13 @@ export default function DashboardPage() {
         console.log(`[Dashboard] Before sunrise (${currentHour}:${currentMinute.toString().padStart(2, '0')} < ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')}), using previous day`)
       }
       
-      // Use effective date for calendar calculations
-      const creatorDate = getCreatorDate(effectiveDate)
+      // Normalize effective date to noon to avoid time component affecting day calculation
+      // This ensures getCreatorDate calculates based purely on the date, not the time
+      const normalizedDate = new Date(effectiveDate)
+      normalizedDate.setHours(12, 0, 0, 0)
+      
+      // Use normalized date for calendar calculations
+      const creatorDate = getCreatorDate(normalizedDate)
       const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
       
       // Calculate day of year
@@ -235,7 +240,10 @@ export default function DashboardPage() {
     if (currentTimeMinutes < sunriseTimeMinutes) {
       effectiveDate.setDate(effectiveDate.getDate() - 1)
     }
-    setCustomDate(getCreatorDate(effectiveDate))
+    // Normalize to noon to avoid time component affecting calculation
+    const normalizedDate = new Date(effectiveDate)
+    normalizedDate.setHours(12, 0, 0, 0)
+    setCustomDate(getCreatorDate(normalizedDate))
   }, [])
 
   // Update time every second
@@ -257,7 +265,10 @@ export default function DashboardPage() {
       if (currentTimeMinutes < sunriseTimeMinutes) {
         effectiveDate.setDate(effectiveDate.getDate() - 1)
       }
-      setCustomDate(getCreatorDate(effectiveDate))
+      // Normalize to noon to avoid time component affecting calculation
+      const normalizedDate = new Date(effectiveDate)
+      normalizedDate.setHours(12, 0, 0, 0)
+      setCustomDate(getCreatorDate(normalizedDate))
     }, 1000)
 
     return () => clearInterval(interval)
