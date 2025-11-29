@@ -124,23 +124,8 @@ function Layout({ children }) {
   ]
 
   // Grouped navigation (dropdowns) - colors will be set dynamically
+  // NOTE: "My Content" has been replaced with "My Garden" panel - removed from here
   const groupedNavigation = [
-    {
-      name: "My Content",
-      icon: User,
-      className: 'browse-orchards-tour',
-      items: [
-        { name: "My S2G Orchards", href: "/my-orchards", icon: User },
-        { name: "S2G Community Orchards", href: "/364yhvh-orchards", icon: Sprout },
-        { name: "My S2G Products", href: "/my-products", icon: ShoppingCart },
-        { name: "S2G Community Products", href: "/products", icon: ShoppingCart },
-        { name: "My S2G Music Library", href: "/music-library", icon: Mic },
-            { name: "S2G Community Music Library", href: "/s2g-community-music", icon: Music },
-        { name: "My S2G Library", href: "/my-s2g-library", icon: Book },
-        { name: "S2G Community Library", href: "/s2g-community-library", icon: Library },
-        { name: "S2G Marketing Video Gallery", href: "/marketing-videos", icon: Video }
-      ]
-    },
     {
       name: "Let It Rain",
       icon: "🌧️", // Using emoji instead of Lucide icon
@@ -159,8 +144,7 @@ function Layout({ children }) {
       ]
     },
       ...(shouldShowAdminButton ? [{
-        name: "gosat's",
-        icon: Settings,
+        name: "gosat's", icon: Settings,
         items: [
           { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
           { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },

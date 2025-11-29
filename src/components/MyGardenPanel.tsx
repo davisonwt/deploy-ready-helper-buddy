@@ -41,28 +41,29 @@ export function MyGardenPanel() {
     closeGarden()
   }
 
+  // Garden cards - EXACTLY matching "My Content" dropdown items
   const gardenCards = [
-    { href: '/my-orchards', title: 'My Orchards', subtitle: '3 growing · +12 fruits today' },
+    { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
     { 
       href: '/364yhvh-orchards', 
-      title: 'Community Orchards', 
+      title: 'S2G Community Orchards', 
       subtitle: '50+ projects need your rain',
       badge: '2 new'
     },
-    { href: '/my-products', title: 'My Creations', subtitle: '11 items · earned 83 USDC' },
-    { href: '/products', title: 'Community Creations', subtitle: 'Fresh drops every hour' },
-    { href: '/music-library', title: 'My Music Garden', subtitle: '8 tracks · 41 plays today' },
-    { href: '/s2g-community-music', title: 'Community Music', subtitle: '26 new tracks · preview free' },
-    { href: '/my-s2g-library', title: 'My Library', subtitle: 'Upload your first e-book!' },
-    { href: '/s2g-community-library', title: 'Community Library', subtitle: 'Free & paid resources' },
-    { href: '/marketing-videos', title: 'Marketing Videos', subtitle: '4 inspiring videos · autoplay' }
+    { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
+    { href: '/products', title: 'S2G Community Products', subtitle: 'Fresh drops every hour' },
+    { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
+    { href: '/s2g-community-music', title: 'S2G Community Music Library', subtitle: '26 new tracks · preview free' },
+    { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
+    { href: '/s2g-community-library', title: 'S2G Community Library', subtitle: 'Free & paid resources' },
+    { href: '/marketing-videos', title: 'S2G Marketing Video Gallery', subtitle: '4 inspiring videos · autoplay' }
   ]
 
-  // Quick action routes - update these to match your actual routes
+  // Quick action routes - matching actual upload/create routes
   const quickActions = [
     { href: '/create-orchard', label: 'New Orchard', color: 'bg-green-600 hover:bg-green-500' },
-    { href: '/upload-music', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' },
-    { href: '/upload-product', label: 'New Resource', color: 'bg-yellow-600 hover:bg-yellow-500' },
+    { href: '/music-library', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' }, // Music uploads happen on music-library page
+    { href: '/products/upload', label: 'New Resource', color: 'bg-yellow-600 hover:bg-yellow-500' }, // Product upload route
     { href: '/tithing', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500' }
   ]
 
