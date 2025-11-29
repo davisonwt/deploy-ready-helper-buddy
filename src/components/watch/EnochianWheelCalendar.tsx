@@ -624,17 +624,25 @@ const EnochianWheelCalendar = () => {
 
                     if (dayNum === 1) {
 
-                      // Calculate where day 364 actually is with original formula
+                      // Day 364 (orange) is at: -90 + (360/364) + (363/364)*360 = 270 degrees
+
+                      // Day 1 (green) MUST be immediately clockwise (RIGHT) after day 364
+
+                      // Calculate day 364's exact angle first
 
                       const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
 
-                      // Day 1 should be immediately clockwise (RIGHT) after day 364
-
-                      // Add one day's worth of degrees: + (360/364)
+                      // Position day 1 immediately clockwise (to the RIGHT) - add positive degrees
 
                       const day1AngleDeg = day364AngleDeg + (360/364);
 
+                      // Convert to radians
+
                       angle = day1AngleDeg * Math.PI / 180;
+
+                      // Debug: log to verify
+
+                      console.log('Day 364 angle:', day364AngleDeg, 'Day 1 angle:', day1AngleDeg);
 
                     } else {
 
