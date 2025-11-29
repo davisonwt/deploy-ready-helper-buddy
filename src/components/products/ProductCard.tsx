@@ -147,6 +147,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
       const y = e?.clientY ?? window.innerHeight / 2;
       floatingScore(amount || 2, x, y);
       launchConfetti();
+      playSoundEffect('bestow', 0.8);
       toast.success('Added to basket!', {
         action: {
           label: 'View Basket',

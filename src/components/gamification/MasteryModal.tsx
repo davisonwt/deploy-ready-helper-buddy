@@ -70,7 +70,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     })
 
     // 2. TRIPLE CONFETTI + SPARKLE TSUNAMI
-    playSoundEffect('levelUp', 0.8) // Main level-up sound
+    playSoundEffect('levelUp', 0.9) // EPIC choir + bell
     for (let i = 0; i < 5; i++) {
       setTimeout(() => launchConfetti(), i * 150)
     }
