@@ -99,11 +99,9 @@ export default function DashboardPage() {
   
   // Helper function to get sunrise/sunset times (using user-provided times)
   const getSunriseSunsetTimes = (date) => {
-    const sunrise = new Date(date)
-    sunrise.setHours(5, 13, 0, 0) // User-provided sunrise: 05:13
-    
-    const sunset = new Date(date)
-    sunset.setHours(19, 26, 0, 0) // User-provided sunset: 19:26
+    // Create new date objects to avoid mutating the original
+    const sunrise = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 5, 13, 0, 0)
+    const sunset = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 19, 26, 0, 0)
     
     return { sunrise, sunset }
   }
@@ -127,21 +125,26 @@ export default function DashboardPage() {
       const currentTimeMinutes = currentHour * 60 + currentMinute
       const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
       
+      console.log(`[Dashboard] Time check: ${currentHour}:${currentMinute.toString().padStart(2, '0')} vs sunrise ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')} (${currentTimeMinutes} < ${sunriseTimeMinutes} = ${currentTimeMinutes < sunriseTimeMinutes})`)
+      
       // If current time is before sunrise, we're still on the previous calendar day
       let effectiveDate = new Date(now)
       if (currentTimeMinutes < sunriseTimeMinutes) {
         // Still on previous day - subtract one day
         effectiveDate.setDate(effectiveDate.getDate() - 1)
-        console.log(`[Dashboard] Before sunrise (${currentHour}:${currentMinute.toString().padStart(2, '0')} < ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')}), using previous day`)
+        console.log(`[Dashboard] Before sunrise - using previous day. Original: ${now.toLocaleString()}, Effective: ${effectiveDate.toLocaleString()}`)
+      } else {
+        console.log(`[Dashboard] After sunrise - using current day: ${effectiveDate.toLocaleString()}`)
       }
       
       // Normalize effective date to noon to avoid time component affecting day calculation
       // This ensures getCreatorDate calculates based purely on the date, not the time
-      const normalizedDate = new Date(effectiveDate)
-      normalizedDate.setHours(12, 0, 0, 0)
+      const normalizedDate = new Date(effectiveDate.getFullYear(), effectiveDate.getMonth(), effectiveDate.getDate(), 12, 0, 0, 0)
+      console.log(`[Dashboard] Normalized date: ${normalizedDate.toLocaleString()}`)
       
       // Use normalized date for calendar calculations
       const creatorDate = getCreatorDate(normalizedDate)
+      console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`)
       const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
       
       // Calculate day of year
