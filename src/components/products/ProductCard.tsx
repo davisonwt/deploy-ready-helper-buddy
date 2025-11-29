@@ -15,7 +15,7 @@ import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
-import { launchConfetti, floatingScore } from '@/utils/confetti';
+import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 
 interface ProductCardProps {
   product: any;
