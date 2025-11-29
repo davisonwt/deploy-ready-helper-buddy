@@ -47,7 +47,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
   // Level-up animation function
   const triggerLevelUpAnimation = (newLevel: number) => {
-    if (newLevel <= previousLevel) return
+    if (newLevel <= lastLevelRef.current) return
 
     // 1. Divine flash
     const flash = document.createElement('div')
