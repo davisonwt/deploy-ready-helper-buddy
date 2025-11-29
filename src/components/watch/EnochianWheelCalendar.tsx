@@ -318,15 +318,19 @@ const EnochianWheelCalendar = () => {
                 </g>
 
                 {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
+                {/* Top middle line is Day 1, counting anti-clockwise */}
                 <g>
                   <circle cx={centerX} cy={centerY} r="330" fill="none" stroke="url(#metallicSilver)" strokeWidth="3" filter="url(#dropShadowDeep)"/>
                   {Array.from({ length: 366 }, (_, i) => {
-                    const angle = (i * (360/366) - 90) * Math.PI / 180;
+                    const dayNumber = i + 1;
+                    // Start at top (-90 degrees) and count anti-clockwise
+                    // Anti-clockwise means decreasing angle: -90, -90-delta, -90-2*delta, etc.
+                    const angle = (-90 - i * (360/366)) * Math.PI / 180;
                     const x1 = centerX + 325 * Math.cos(angle);
                     const y1 = centerY + 325 * Math.sin(angle);
                     const x2 = centerX + 335 * Math.cos(angle);
                     const y2 = centerY + 335 * Math.sin(angle);
-                    const isCurrentDay = i + 1 === enochianDate.totalDayOfYear;
+                    const isCurrentDay = dayNumber === enochianDate.totalDayOfYear;
                     
                     return (
                       <line
@@ -335,9 +339,10 @@ const EnochianWheelCalendar = () => {
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke={isCurrentDay ? '#fef3c7' : '#64748b'}
-                        strokeWidth={isCurrentDay ? 3 : 1}
+                        stroke={isCurrentDay ? '#fef3c7' : '#000000'}
+                        strokeWidth={isCurrentDay ? 4 : 2}
                         filter={isCurrentDay ? "url(#glowStrong)" : undefined}
+                        opacity={isCurrentDay ? 1 : 0.8}
                       />
                     );
                   })}
