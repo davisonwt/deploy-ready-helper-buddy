@@ -42,6 +42,9 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   }
 
   const quickRain = () => {
+    if (typeof window !== 'undefined' && window.launchConfetti) {
+      window.launchConfetti();
+    }
     alert("0.50 USDC sent to a random creator!")
     closeGarden()
   }
