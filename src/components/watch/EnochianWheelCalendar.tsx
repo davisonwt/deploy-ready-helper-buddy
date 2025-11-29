@@ -127,9 +127,12 @@ const EnochianWheelCalendar = () => {
         const day = remainingDays + 1;
         // Weekday calculation: Year starts on Day 4 (weekday 4)
         // Day 1 = weekday 4, Day 2 = weekday 5, Day 3 = weekday 6, Day 4 = weekday 7 (Sabbath), etc.
-        // Formula: ((totalDayOfYear - 1 + 3) % 7) + 1
+        // Formula matches sacredCalendar.ts: ((totalDayOfYear - 1 + 3) % 7) + 1
         // This maps: 0->4, 1->5, 2->6, 3->7, 4->1, 5->2, 6->3
         const weekDay = ((totalDayOfYear - 1 + 3) % 7) + 1;
+        
+        // Debug logging
+        console.log(`[Enochian Calendar] Day ${totalDayOfYear}: weekDay = ${weekDay}, calculation: ((${totalDayOfYear} - 1 + 3) % 7) + 1 = ${((totalDayOfYear - 1 + 3) % 7) + 1}`);
         const sabbathWeek = Math.floor((totalDayOfYear - 1) / 7) + 1;
         const isIntercalary = totalDayOfYear === 91 || totalDayOfYear === 182 || 
                               totalDayOfYear === 273 || totalDayOfYear === 364;
