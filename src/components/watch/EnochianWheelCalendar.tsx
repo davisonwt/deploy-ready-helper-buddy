@@ -618,9 +618,11 @@ const EnochianWheelCalendar = () => {
 
                     // Day 1 should be immediately to the RIGHT (clockwise) of day 366
 
-                    // Start at -89 + (360/364) to be clearly to the right
+                    // To go RIGHT (clockwise), we ADD degrees: -89 + offset
 
-                    const angle = (-89 + (360/364) + (i / 364) * 360) * Math.PI / 180;
+                    // Use a larger offset to ensure it's clearly on the right side
+
+                    const angle = (-89 + 2 * (360/364) + (i / 364) * 360) * Math.PI / 180;
 
                     const isCurrentDay = dayNum === enochianDate.dayOfYear;
 
@@ -646,7 +648,7 @@ const EnochianWheelCalendar = () => {
 
                       const textY = center + 325 * Math.sin(angle);
 
-                      const textAngle = -89 + (360/364) + (i / 364) * 360;
+                      const textAngle = -89 + 2 * (360/364) + (i / 364) * 360;
 
                       
 
