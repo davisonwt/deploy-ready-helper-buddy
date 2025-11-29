@@ -574,7 +574,7 @@ const EnochianWheelCalendar = () => {
                   </text>
                 </g>
 
-                {/* Circle 3: 52 weeks - Divided into 52 sections, each with 7 slots */}
+                {/* Circle 3: 52 weeks - Divided into 52 sections, each with 7 slots, numbers 1-52 displayed */}
                 <g>
                   {/* Outer circle ring */}
                   <circle cx={centerX} cy={centerY} r="250" fill="none" stroke="url(#metallicSilver)" strokeWidth="20" filter="url(#dropShadowDeep)"/>
@@ -587,11 +587,29 @@ const EnochianWheelCalendar = () => {
                     const innerRadius = 235;
                     const outerRadius = 250;
                     
+                    // Color code by quadrant (like the image)
+                    let weekColor = '#94a3b8'; // Default gray
+                    if (weekNum >= 1 && weekNum <= 13) {
+                      weekColor = '#10b981'; // Green (top-left quadrant)
+                    } else if (weekNum >= 14 && weekNum <= 26) {
+                      weekColor = '#ef4444'; // Red (bottom-left quadrant)
+                    } else if (weekNum >= 27 && weekNum <= 39) {
+                      weekColor = '#f97316'; // Orange (bottom-right quadrant)
+                    } else if (weekNum >= 40 && weekNum <= 52) {
+                      weekColor = '#a855f7'; // Magenta/Purple (top-right quadrant)
+                    }
+                    
                     // Draw dividing line for week
                     const x1 = centerX + innerRadius * Math.cos(weekStartAngle);
                     const y1 = centerY + innerRadius * Math.sin(weekStartAngle);
                     const x2 = centerX + outerRadius * Math.cos(weekStartAngle);
                     const y2 = centerY + outerRadius * Math.sin(weekStartAngle);
+                    
+                    // Midpoint for number placement
+                    const midAngle = (-90 - (weekIndex + 0.5) * (360/52)) * Math.PI / 180;
+                    const textRadius = 242.5;
+                    const textX = centerX + textRadius * Math.cos(midAngle);
+                    const textY = centerY + textRadius * Math.sin(midAngle);
                     
                     return (
                       <g key={`week-${weekIndex}`}>
@@ -601,20 +619,29 @@ const EnochianWheelCalendar = () => {
                           y1={y1}
                           x2={x2}
                           y2={y2}
-                          stroke={isCurrentWeek ? '#60a5fa' : '#000000'}
+                          stroke={isCurrentWeek ? '#60a5fa' : weekColor}
                           strokeWidth={isCurrentWeek ? 3 : 2}
-                          opacity={isCurrentWeek ? 1 : 0.6}
+                          opacity={isCurrentWeek ? 1 : 0.7}
                         />
+                        
+                        {/* Week number displayed in the section */}
+                        <text
+                          x={textX}
+                          y={textY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className={`text-xs font-bold`}
+                          fill={isCurrentWeek ? '#60a5fa' : weekColor}
+                          transform={`rotate(${-90 - (weekIndex + 0.5) * (360/52)} ${textX} ${textY})`}
+                        >
+                          {weekNum}
+                        </text>
                         
                         {/* 7 slots within each week section */}
                         {Array.from({ length: 7 }, (_, dayIndex) => {
                           const slotAngle = weekStartAngle - (dayIndex * (360/52/7));
                           const slotInnerRadius = innerRadius + (dayIndex * (outerRadius - innerRadius) / 7);
                           const slotOuterRadius = innerRadius + ((dayIndex + 1) * (outerRadius - innerRadius) / 7);
-                          const slotMidRadius = (slotInnerRadius + slotOuterRadius) / 2;
-                          const slotMidAngle = weekStartAngle - ((dayIndex + 0.5) * (360/52/7));
-                          const slotX = centerX + slotMidRadius * Math.cos(slotMidAngle);
-                          const slotY = centerY + slotMidRadius * Math.sin(slotMidAngle);
                           
                           // Draw slot divider
                           const slotX1 = centerX + slotInnerRadius * Math.cos(slotAngle);
@@ -631,7 +658,7 @@ const EnochianWheelCalendar = () => {
                               y2={slotY2}
                               stroke="#000000"
                               strokeWidth="1"
-                              opacity="0.4"
+                              opacity="0.3"
                             />
                           );
                         })}
