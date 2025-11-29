@@ -122,22 +122,30 @@ export default function DashboardPage() {
       const currentTimeMinutes = localHour * 60 + localMinute
       const sunriseTimeMinutes = 5 * 60 + 13 // 05:13 = 313 minutes
       
-      console.log(`[Dashboard] LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}, Sunrise: 05:13, Before sunrise: ${currentTimeMinutes < sunriseTimeMinutes}`)
+      const isBeforeSunrise = currentTimeMinutes < sunriseTimeMinutes
+      
+      console.log(`[Dashboard] ===== SUNRISE CHECK =====`)
+      console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`)
+      console.log(`[Dashboard] Sunrise time: 05:13 (313 minutes)`)
+      console.log(`[Dashboard] Current time in minutes: ${currentTimeMinutes}`)
+      console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`)
+      console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`)
       
       // If current time is before sunrise, we're still on the previous calendar day
       let effectiveYear = localYear
       let effectiveMonth = localMonth
       let effectiveDate = localDate
       
-      if (currentTimeMinutes < sunriseTimeMinutes) {
-        // Still on previous day - go back one day
-        const prevDay = new Date(localYear, localMonth, localDate - 1)
-        effectiveYear = prevDay.getFullYear()
-        effectiveMonth = prevDay.getMonth()
-        effectiveDate = prevDay.getDate()
-        console.log(`[Dashboard] BEFORE SUNRISE - Using previous day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+      if (isBeforeSunrise) {
+        // Still on previous day - go back one day using date arithmetic
+        const prevDayDate = new Date(localYear, localMonth, localDate)
+        prevDayDate.setDate(prevDayDate.getDate() - 1)
+        effectiveYear = prevDayDate.getFullYear()
+        effectiveMonth = prevDayDate.getMonth()
+        effectiveDate = prevDayDate.getDate()
+        console.log(`[Dashboard] ⚠️ BEFORE SUNRISE - Using PREVIOUS day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       } else {
-        console.log(`[Dashboard] AFTER SUNRISE - Using current day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       }
       
       // Calculate Creator date using LOCAL date components (not UTC)
