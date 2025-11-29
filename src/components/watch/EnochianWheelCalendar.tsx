@@ -1,1861 +1,470 @@
 import React, { useState, useEffect } from 'react';
-
 import { Sun, Moon, Calendar } from 'lucide-react';
 
-
+const PART_MINUTES   = 80;            // 1 part = 80 min
+const PARTS_PER_DAY  = 18;            // 18 parts
+const MINUTES_PER_DAY = PART_MINUTES * PARTS_PER_DAY; // 1 440
+const DAYS_PER_YEAR  = 364;
 
 const EnochianWheelCalendar = () => {
-
   const [currentDate, setCurrentDate] = useState(new Date());
-
   const [enochianDate, setEnochianDate] = useState({ 
-
-    dayOfYear: 254,
-
-    month: 9,
-
-    dayOfMonth: 12,
-
-    weekOfYear: 36,
-
-    dayOfWeek: 5,
-
-    dayPart: 'Laylah',
-
-    eighteenPart: 15,
-
-    daysInCurrentMonth: 31,
-
-    timelessDay: 0,
-
-    season: 'Fall'
-
+    dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
+    dayOfWeek: 6, dayPart: 'Laylah', eighteenPart: 12, daysInCurrentMonth: 31,
+    timelessDay: 0, season: 'Fall'
   });
+  const [sunData, setSunData]       = useState(null);
+  const [sacredNow, setSacredNow]   = useState(null);   // sunrise-based clock
 
-
-
+  /* ----------  MONTH STRUCTURE  ---------- */
   const monthStructure = [
-
-    { num: 1, days: 30, season: 'Spring' },
-
-    { num: 2, days: 30, season: 'Spring' },
-
-    { num: 3, days: 31, season: 'Spring' },
-
-    { num: 4, days: 30, season: 'Summer' },
-
-    { num: 5, days: 30, season: 'Summer' },
-
-    { num: 6, days: 31, season: 'Summer' },
-
-    { num: 7, days: 30, season: 'Fall' },
-
-    { num: 8, days: 30, season: 'Fall' },
-
-    { num: 9, days: 31, season: 'Fall' },
-
-    { num: 10, days: 30, season: 'Winter' },
-
-    { num: 11, days: 30, season: 'Winter' },
-
-    { num: 12, days: 31, season: 'Winter' }
-
+    { num: 1, days: 30, season: 'Spring' }, { num: 2, days: 30, season: 'Spring' },
+    { num: 3, days: 31, season: 'Spring' }, { num: 4, days: 30, season: 'Summer' },
+    { num: 5, days: 30, season: 'Summer' }, { num: 6, days: 31, season: 'Summer' },
+    { num: 7, days: 30, season: 'Fall' },   { num: 8, days: 30, season: 'Fall' },
+    { num: 9, days: 31, season: 'Fall' },   { num: 10, days: 30, season: 'Winter' },
+    { num: 11, days: 30, season: 'Winter' },{ num: 12, days: 31, season: 'Winter' }
   ];
 
-
-
   const seasons = {
-
     Spring: { color: '#10b981', icon: '🐏', name: 'ARIES' },
-
     Summer: { color: '#f59e0b', icon: '♋', name: 'CANCER' },
-
     Fall: { color: '#ef4444', icon: '♎', name: 'LIBRA' },
-
     Winter: { color: '#3b82f6', icon: '♑', name: 'CAPRICORN' }
-
   };
 
+  /* ----------  12 & 4 GREAT WHEELS  ---------- */
+  const zodiacWheel = [
+    { num: 1, constellation: 'Aries', tribe: 'Yehudah', banner: '🦁', month: 'Nisan', priest: 'Har', highPriest: 'Alki\'el' },
+    { num: 2, constellation: 'Taurus', tribe: 'Yissakar', banner: '🫏', month: 'Iyar', priest: 'Nar', highPriest: 'El' },
+    { num: 3, constellation: 'Gemini', tribe: 'Zebulon', banner: '⛵', month: 'Sivan', priest: 'Iel', highPriest: 'Iel' },
+    { num: 4, constellation: 'Cancer', tribe: 'Reuben', banner: '👤', month: 'Tammuz', priest: 'Kohath', highPriest: 'Kohath' },
+    { num: 5, constellation: 'Leo', tribe: 'Simeon', banner: '⚔️', month: 'Av', priest: 'Kohath', highPriest: 'Kohath' },
+    { num: 6, constellation: 'Virgo', tribe: 'Gad', banner: '🔥', month: 'Elul', priest: 'Kohath', highPriest: 'Kohath' },
+    { num: 7, constellation: 'Libra', tribe: 'Ephraim', banner: '🐂', month: 'Tishrei', priest: 'Gershon', highPriest: 'Gershon' },
+    { num: 8, constellation: 'Scorpius', tribe: 'Manasseh', banner: '🦄', month: 'Cheshvan', priest: 'Gershon', highPriest: 'Gershon' },
+    { num: 9, constellation: 'Sagittarius', tribe: 'Benyamin', banner: '🐺', month: 'Kislev', priest: 'Gershon', highPriest: 'Gershon' },
+    { num: 10, constellation: 'Capricornus', tribe: 'Dan', banner: '🦅', month: 'Tevet', priest: 'Merari', highPriest: 'Merari' },
+    { num: 11, constellation: 'Aquarius', tribe: 'Asher', banner: '🌿', month: 'Shevat', priest: 'Merari', highPriest: 'Merari' },
+    { num: 12, constellation: 'Pisces', tribe: 'Naphtali', banner: '🦌', month: 'Adar', priest: 'Merari', highPriest: 'Merari' }
+  ];
 
+  const greatWheel = [
+    { name: 'Orion', highPriest: 'Moses & Aaron', tribes: ['Yehudah', 'Yissakar', 'Zebulon'], banners: ['🦁', '🫏', '⛵'], priest: 'Aaron', season: 'Spring', startDay: 1 },
+    { name: 'Hydra', highPriest: 'Kohath', tribes: ['Reuben', 'Simeon', 'Gad'], banners: ['👤', '⚔️', '🔥'], priest: 'Kohath', season: 'Summer', startDay: 92 },
+    { name: 'Centaurus', highPriest: 'Gershon', tribes: ['Ephraim', 'Manasseh', 'Benyamin'], banners: ['🐂', '🦄', '🐺'], priest: 'Gershon', season: 'Fall', startDay: 183 },
+    { name: 'Pegasus', highPriest: 'Merari', tribes: ['Dan', 'Asher', 'Naphtali'], banners: ['🦅', '🌿', '🦌'], priest: 'Merari', season: 'Winter', startDay: 274 }
+  ];
 
-  const getSunTimes = () => {
+  /* ----------  SACRED PORTAL TABLE  ---------- */
+  const portalMap = {
+    north: [
+      { days: 30, dayParts: 10, nightParts: 8 },   // Portal 4 – Spring
+      { days: 30, dayParts: 11, nightParts: 7 },   // Portal 5 – Spring
+      { days: 31, dayParts: 12, nightParts: 6 },   // Portal 6 – Summer
+      { days: 30, dayParts: 11, nightParts: 7 },   // Portal 6 – Fall
+      { days: 30, dayParts: 10, nightParts: 8 },   // Portal 5 – Fall
+      { days: 31, dayParts: 9, nightParts: 9 },    // Portal 4 – Equinox
+      { days: 30, dayParts: 8, nightParts: 10 },   // Portal 3 – Winter
+      { days: 30, dayParts: 7, nightParts: 11 },   // Portal 2 – Winter
+      { days: 31, dayParts: 6, nightParts: 12 },   // Portal 1 – Winter
+      { days: 30, dayParts: 7, nightParts: 11 },   // Portal 1 – Spring
+      { days: 30, dayParts: 8, nightParts: 10 },   // Portal 2 – Spring
+      { days: 31, dayParts: 9, nightParts: 9 },    // Portal 3 – Equinox
+    ],
+    south: function () { return this.north.slice().reverse(); }
+  };
 
-    // Calculate day/night parts based on Book of Enoch portal system
-
-    // Year divided into quarters at days: 91 (Spring Equinox), 182 (Summer Solstice), 273 (Fall Equinox), 364 (Winter Solstice)
-
-    const dayOfYear = enochianDate.dayOfYear;
-
-    
-
-    let dayParts, nightParts;
-
-    
-
-    // Determine which season and calculate day/night ratio
-
-    if (dayOfYear <= 91) {
-
-      // Spring: Day 1-91, transitioning from 9 to 12 parts
-
-      const progress = dayOfYear / 91;
-
-      dayParts = 9 + (progress * 3); // 9 to 12
-
-      nightParts = 18 - dayParts;
-
-    } else if (dayOfYear <= 182) {
-
-      // Summer: Day 92-182, transitioning from 12 to 9 parts
-
-      const progress = (dayOfYear - 91) / 91;
-
-      dayParts = 12 - (progress * 3); // 12 to 9
-
-      nightParts = 18 - dayParts;
-
-    } else if (dayOfYear <= 273) {
-
-      // Fall: Day 183-273, transitioning from 9 to 6 parts
-
-      const progress = (dayOfYear - 182) / 91;
-
-      dayParts = 9 - (progress * 3); // 9 to 6
-
-      nightParts = 18 - dayParts;
-
-    } else {
-
-      // Winter: Day 274-364, transitioning from 6 to 9 parts
-
-      const progress = (dayOfYear - 273) / 91;
-
-      dayParts = 6 + (progress * 3); // 6 to 9
-
-      nightParts = 18 - dayParts;
-
+  const getSacredDayNight = (dayOfYear, hemisphere = 'north') => {
+    const map = hemisphere === 'south' ? portalMap.south() : portalMap.north;
+    let d = 1;
+    for (const p of map) {
+      if (dayOfYear <= d + p.days - 1) return { dayParts: p.dayParts, nightParts: p.nightParts };
+      d += p.days;
     }
-
-    
-
-    // Convert parts to actual hours (18 parts = 24 hours, so 1 part = 1.333 hours = 80 minutes)
-
-    const minutesPerPart = 80;
-
-    const dayMinutes = dayParts * minutesPerPart;
-
-    const nightMinutes = nightParts * minutesPerPart;
-
-    
-
-    // Assume sunrise at 6:00 AM as base, adjust based on day length
-
-    const sunriseMinutesFromMidnight = 360 - (nightMinutes / 2);
-
-    const sunsetMinutesFromMidnight = sunriseMinutesFromMidnight + dayMinutes;
-
-    
-
-    const sunrise = {
-
-      hour: Math.floor(sunriseMinutesFromMidnight / 60),
-
-      minute: Math.floor(sunriseMinutesFromMidnight % 60)
-
-    };
-
-    
-
-    const sunset = {
-
-      hour: Math.floor(sunsetMinutesFromMidnight / 60),
-
-      minute: Math.floor(sunsetMinutesFromMidnight % 60)
-
-    };
-
-    
-
-    return { sunrise, sunset, dayParts, nightParts };
-
+    return { dayParts: 9, nightParts: 9 };
   };
 
-
-
-  const getDayPart = (hour: number, minute: number) => {
-
-    const { sunrise, sunset } = getSunTimes();
-
-    const currentMinutes = hour * 60 + minute;
-
-    const sunriseMinutes = sunrise.hour * 60 + sunrise.minute;
-
-    const sunsetMinutes = sunset.hour * 60 + sunset.minute;
-
-    const erevEnd = sunsetMinutes + 120;
-
-    const boqerStart = sunriseMinutes - 120;
-
-    
-
-    if (currentMinutes >= sunriseMinutes && currentMinutes < sunsetMinutes) return 'Yôm';
-
-    else if (currentMinutes >= sunsetMinutes && currentMinutes < erevEnd) return 'Erev';
-
-    else if (currentMinutes >= boqerStart && currentMinutes < sunriseMinutes) return 'Boqer';
-
-    else return 'Laylah';
-
+  const getRealSunrise = async (lat, lng) => {
+    const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const sr = new Date(data.results.sunrise);
+    return { hour: sr.getHours(), minute: sr.getMinutes() };
   };
 
-
-
-  const getEighteenPart = (hour: number, minute: number) => {
-
-    const { sunrise } = getSunTimes();
-
-    const sunriseMinutes = sunrise.hour * 60 + sunrise.minute;
-
-    const currentMinutes = hour * 60 + minute;
-
-    let minutesSinceSunrise = currentMinutes - sunriseMinutes;
-
-    if (minutesSinceSunrise < 0) minutesSinceSunrise += 1440;
-
-    return Math.floor(minutesSinceSunrise / 80) + 1;
-
-  };
-
-
-
-  const getSpringEquinox = (year: number) => new Date(year, 2, 20);
-
-
-
-  const convertToEnochian = (gregorianDate: Date) => {
-
-    const year = gregorianDate.getFullYear();
-
-    const springEquinox = getSpringEquinox(year);
-
-    const daysSinceEquinox = Math.floor((gregorianDate.getTime() - springEquinox.getTime()) / (1000 * 60 * 60 * 24));
-
-    
-
-    if (daysSinceEquinox < 0) {
-
-      const prevEquinox = getSpringEquinox(year - 1);
-
-      const daysSincePrevEquinox = Math.floor((gregorianDate.getTime() - prevEquinox.getTime()) / (1000 * 60 * 60 * 24));
-
-      return calculateEnochianDate(daysSincePrevEquinox, gregorianDate);
-
-    } else if (daysSinceEquinox >= 364) {
-
-      const timelessDay = daysSinceEquinox - 363;
-
+  const getSacredSunTimes = async (doy, lat, lng, hem) => {
+    const { dayParts, nightParts } = getSacredDayNight(doy, hem);
+    const { hour, minute } = await getRealSunrise(lat, lng);
+    const sunriseMin = hour * 60 + minute;
+    const dayMin = dayParts * PART_MINUTES;
+    const sunsetMin = sunriseMin + dayMin;
       return {
-
-        dayOfYear: 364 + timelessDay,
-
-        month: 12,
-
-        dayOfMonth: 31,
-
-        weekOfYear: 52,
-
-        dayOfWeek: 7,
-
-        dayPart: getDayPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-        eighteenPart: getEighteenPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-        daysInCurrentMonth: 31,
-
-        timelessDay,
-
-        season: 'Winter'
-
-      };
-
-    }
-
-    
-
-    return calculateEnochianDate(daysSinceEquinox, gregorianDate);
-
-  };
-
-
-
-  const calculateEnochianDate = (dayCount: number, gregorianDate: Date) => {
-
-    const dayOfYear = dayCount + 1;
-
-    let remainingDays = dayCount;
-
-    
-
-    for (const m of monthStructure) {
-
-      if (remainingDays < m.days) {
-
-        const dayOfMonth = remainingDays + 1;
-
-        const weekOfYear = Math.floor(dayCount / 7) + 1;
-
-        const dayOfWeek = (dayCount % 7) + 1;
-
-        
-
-        return {
-
-          dayOfYear,
-
-          month: m.num,
-
-          dayOfMonth,
-
-          weekOfYear,
-
-          dayOfWeek,
-
-          dayPart: getDayPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-          eighteenPart: getEighteenPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-          daysInCurrentMonth: m.days,
-
-          timelessDay: 0,
-
-          season: m.season
-
-        };
-
-      }
-
-      remainingDays -= m.days;
-
-    }
-
-    
-
-    return {
-
-      dayOfYear: 364,
-
-      month: 12,
-
-      dayOfMonth: 31,
-
-      weekOfYear: 52,
-
-      dayOfWeek: 7,
-
-      dayPart: getDayPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-      eighteenPart: getEighteenPart(gregorianDate.getHours(), gregorianDate.getMinutes()),
-
-      daysInCurrentMonth: 31,
-
-      timelessDay: 0,
-
-      season: 'Winter'
-
+      sunrise: { hour, minute },
+      sunset: { hour: Math.floor(sunsetMin / 60) % 24, minute: sunsetMin % 60 },
+      dayParts, nightParts
     };
-
   };
 
+  /* ----------  Enochian DATE  ---------- */
+  const getSpringEquinox = y => new Date(y, 2, 20);
+  const convertToEnochian = d => {
+    const y = d.getFullYear();
+    const equinox = getSpringEquinox(y);
+    let days = Math.floor((d.getTime() - equinox.getTime()) / 86400000);
+    if (days < 0) days += 364;
+    if (days >= 364) return { ...calcEnochian(363, d), dayOfYear: 364 + (days - 363), timelessDay: days - 363 };
+    return calcEnochian(days, d);
+  };
+  const calcEnochian = (days, d) => {
+    let rem = days;
+    for (const m of monthStructure) {
+      if (rem < m.days) return makeEnochian(m.num, rem + 1, days, d);
+      rem -= m.days;
+    }
+    return makeEnochian(12, 31, 363, d);
+  };
+  const makeEnochian = (month, dom, days, d) => ({
+    dayOfYear: days + 1, month, dayOfMonth: dom,
+    weekOfYear: Math.floor(days / 7) + 1, dayOfWeek: (days % 7) + 1,
+    dayPart: '', eighteenPart: 1, daysInCurrentMonth: monthStructure[month - 1].days,
+    timelessDay: 0, season: monthStructure[month - 1].season
+  });
 
+  /* ----------  SUNRISE-BASED CLOCK  ---------- */
+  const updateSacredClock = () => {
+    if (!sunData) return;
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const sunriseMin = sunData.sunrise.hour * 60 + sunData.sunrise.minute;
+    let offsetMin = nowMin - sunriseMin;
+    if (offsetMin < 0) offsetMin += MINUTES_PER_DAY;   // previous sacred day
+    const part = Math.floor(offsetMin / PART_MINUTES) + 1;
+    const dayPartName = (() => {
+      const sunsetMin = sunriseMin + sunData.dayParts * PART_MINUTES;
+      const erevEnd = sunsetMin + 120;
+      const boqerStart = sunriseMin - 120;
+      if (offsetMin >= 0 && offsetMin < sunsetMin - sunriseMin) return 'Yôm';
+      if (offsetMin >= sunsetMin - sunriseMin && offsetMin < erevEnd - sunriseMin) return 'Erev';
+      if (offsetMin >= boqerStart - sunriseMin && offsetMin < 0) return 'Boqer'; // before sunrise same day
+      return 'Laylah';
+    })();
+    setSacredNow({ part, dayPartName, offsetMin });
+    setEnochianDate(prev => ({ ...prev, dayPart: dayPartName, eighteenPart: part }));
+  };
+
+  /* ----------  LIFE-CYCLE  ---------- */
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCurrentDate(new Date());
+      updateSacredClock();
+    }, 1000);
+    return () => clearInterval(t);
+  }, [sunData]);
 
   useEffect(() => {
+    setEnochianDate(convertToEnochian(currentDate));
+  }, [currentDate]);
 
-    const timer = setInterval(() => {
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude, longitude } = pos.coords;
+      const hem = latitude < 0 ? 'south' : 'north';
+      const data = await getSacredSunTimes(enochianDate.dayOfYear, latitude, longitude, hem);
+      setSunData(data);
+    }, async () => {
+      const data = await getSacredSunTimes(enochianDate.dayOfYear, 31.8, 35.2, 'north');
+      setSunData(data);
+    });
+  }, [enochianDate.dayOfYear]);
 
-      const now = new Date();
+  /* ----------  DISPLAY LINE  ---------- */
+  const displayLine = sunData && sacredNow
+    ? `Year 6028 • Month ${enochianDate.month} • Day ${enochianDate.dayOfMonth}  •  Weekday ${enochianDate.dayOfWeek} • Part ${sacredNow.part}/${PARTS_PER_DAY}  •  Day ${enochianDate.dayOfYear} of 6028 • Regular Day  •  ${currentDate.toLocaleDateString('en-US', { weekday: 'long' })}, ${currentDate.toLocaleDateString('en-GB')} at ${currentDate.toLocaleTimeString('en-GB')}  •  Creator's wheels never lie • forever in sync`
+    : 'Loading sacred time...';
 
-      setCurrentDate(now);
-
-      setEnochianDate(convertToEnochian(now));
-
-    }, 1000);
-
-
-
-    return () => clearInterval(timer);
-
-  }, []);
-
-
-
-  const size = 800;
-
-  const center = size / 2;
-
+  const size = 1000, center = size / 2;
   const seasonRotation = ((enochianDate.dayOfYear - 1) / 91) * 90;
-
-
+  const zodiacRotation   = -((enochianDate.dayOfYear - 1) / 30) * 30;
+  const greatRotation    = -((enochianDate.dayOfYear - 1) / 91) * 90;
 
   return (
-
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-4">
-
       <div className="max-w-7xl mx-auto">
-
         <div className="text-center mb-6">
-
           <h1 className="text-5xl font-bold text-amber-400 mb-2 flex items-center justify-center gap-3 drop-shadow-lg">
-
-            <Sun className="w-12 h-12 animate-pulse" />
-
-            The Creator's Calendar
-
-            <Moon className="w-10 h-10 text-blue-300" />
-
+            <Sun className="w-12 h-12 animate-pulse" />The Creator's Calendar<Moon className="w-10 h-10 text-blue-300" />
           </h1>
-
-          <p className="text-gray-300 text-sm">7 Synchronized Circles • 364-Day Solar Year</p>
-
+          <p className="text-gray-300 text-xs">Sun-rise aligned • 10 Sacred Wheels • 364-Day Portal Year</p>
         </div>
 
+        {/* ---------------  WHEEL  --------------- */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur rounded-2xl shadow-2xl p-6 border-4 border-amber-600/30">
+            <svg width={800} height={800} viewBox="0 0 1000 1000" className="drop-shadow-xl">
+              <defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
 
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-          <div className="xl:col-span-2">
-
-            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur rounded-2xl shadow-2xl p-8 border-4 border-amber-600/30">
-
-              <svg width={size} height={size} viewBox="0 0 800 800">
-
-                <defs>
-
-                  <filter id="glow">
-
-                    <feGaussianBlur stdDeviation="2" result="blur"/>
-
-                    <feMerge>
-
-                      <feMergeNode in="blur"/>
-
-                      <feMergeNode in="SourceGraphic"/>
-
-                    </feMerge>
-
-                  </filter>
-
-                </defs>
-
-
-
-                {/* Background seasons - rotating */}
-
-                <g transform={`rotate(${seasonRotation} ${center} ${center})`}>
-
-                  {Object.entries(seasons).map(([season, data], i) => {
-
-                    const startAngle = i * 90;
-
-                    const endAngle = (i + 1) * 90;
-
-                    const pathStart = (startAngle - 90) * Math.PI / 180;
-
-                    const pathEnd = (endAngle - 90) * Math.PI / 180;
-
-                    
-
-                    return (
-
-                      <path
-
-                        key={season}
-
-                        d={`M ${center} ${center} 
-
-                            L ${center + 340 * Math.cos(pathStart)} ${center + 340 * Math.sin(pathStart)} 
-
-                            A 340 340 0 0 1 ${center + 340 * Math.cos(pathEnd)} ${center + 340 * Math.sin(pathEnd)} 
-
-                            Z`}
-
-                        fill={data.color}
-
-                        opacity="0.15"
-
-                      />
-
-                    );
-
-                  })}
-
-                </g>
-
-                
-
-                {/* Season labels outside - NOT rotating */}
-
-                {Object.entries(seasons).map(([season, data], i) => {
-
-                  const angle = (i * 90 + 45 - 90) * Math.PI / 180;
-
-                  const x = center + 355 * Math.cos(angle);
-
-                  const y = center + 355 * Math.sin(angle);
-
-                  const textAngle = i * 90 + 45;
-
-                  
-
-                  return (
-
-                    <text
-
-                      key={`label-${season}`}
-
-                      x={x}
-
-                      y={y}
-
-                      textAnchor="middle"
-
-                      dominantBaseline="middle"
-
-                      transform={`rotate(${textAngle} ${x} ${y})`}
-
-                      className="text-lg font-bold fill-white"
-
-                      style={{ fontSize: '16px', letterSpacing: '2px' }}
-
-                    >
-
-                      {season.toUpperCase()}
-
-                    </text>
-
-                  );
-
+              {/* BACKGROUND SEASONS */}
+                <g transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
+                {Object.entries(seasons).map(([s, d], i) => {
+                  const a = (i * 90 - 90) * Math.PI / 180;
+                  const b = ((i + 1) * 90 - 90) * Math.PI / 180;
+                  return <path key={s} d={`M ${center} ${center} L ${center + 375 * Math.cos(a)} ${center + 375 * Math.sin(a)} A 375 375 0 0 1 ${center + 375 * Math.cos(b)} ${center + 375 * Math.sin(b)} Z`} fill={d.color} opacity="0.15" />;
                 })}
+              </g>
 
+              {/* 12 ZODIAC CIRCLE - Render early so it's visible */}
+              <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 30) * 360}, ${center}, ${center})`}>
+                <circle cx={center} cy={center} r="335" fill="none" stroke="#f59e0b" strokeWidth="6" opacity="1" />
+              </g>
 
+              {/* 4 GREAT CONSTELLATIONS CIRCLE - Render early so it's visible */}
+              <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 91) * 90}, ${center}, ${center})`}>
+                <circle cx={center} cy={center} r="305" fill="none" stroke="#22c55e" strokeWidth="6" opacity="1" />
+              </g>
 
-                {/* CIRCLE 1: 366 days */}
+              {Object.entries(seasons).map(([s, d], i) => {
+                const ang = (i * 90 + 45 - 90) * Math.PI / 180;
+                const x = center + 390 * Math.cos(ang);
+                const y = center + 390 * Math.sin(ang);
+                return <text key={`lbl-${s}`} x={x} y={y} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${i * 90 + 45} ${x} ${y})`} className="text-lg fill-white font-bold tracking-widest">{s.toUpperCase()}</text>;
+              })}
 
-                <g transform={`rotate(${254 * (360/364)} ${center} ${center})`}>
-
-                  {/* Timeless days 365 and 366 positioned at TOP (12 o'clock = -90 degrees or 270 degrees) */}
-
-                  {[365, 366].map((dayNum, idx) => {
-
-                    // -90 degrees is TOP in SVG, then offset left/right
-
-                    const angle = (-90 + (idx - 0.5) * 2) * Math.PI / 180;
-
-                    const isCurrentDay = dayNum === enochianDate.dayOfYear;
-
-                    const dotX = center + 325 * Math.cos(angle);
-
-                    const dotY = center + 325 * Math.sin(angle);
-
-                    
-
-                    return (
-
-                      <g key={`timeless-${dayNum}`}>
-
-                        <circle
-
-                          cx={dotX}
-
-                          cy={dotY}
-
-                          r="8"
-
-                          fill={isCurrentDay ? "#a855f7" : "#9333ea"}
-
-                          stroke="#fbbf24"
-
-                          strokeWidth="2"
-
-                        />
-
-                        {isCurrentDay && (
-
-                          <text
-
-                            x={dotX}
-
-                            y={dotY}
-
-                            textAnchor="middle"
-
-                            dominantBaseline="middle"
-
-                            className="text-xs font-bold fill-white"
-
-                          >
-
-                            {dayNum}
-
-                          </text>
-
-                        )}
-
-                      </g>
-
-                    );
-
-                  })}
-
-                  
-
-                  {/* Days 1-364: Day 364 (orange) is last day of month 12, Day 1 (green) is first day of new year */}
-
+              {/* 365 DAY WHEEL */}
+              <g transform={`rotate(${((enochianDate.dayOfYear - 1) / 364) * 360}, ${center}, ${center})`}>
+                {[365, 366].map((d, i) => {
+                  const ang = (-90 + (i - 0.5) * 2) * Math.PI / 180;
+                  const x = center + 360 * Math.cos(ang);
+                  const y = center + 360 * Math.sin(ang);
+                  const cur = d === enochianDate.dayOfYear;
+                  return <g key={`t-${d}`}><circle cx={x} cy={y} r="8" fill={cur ? '#a855f7' : '#9333ea'} stroke="#fbbf24" strokeWidth="2" />{cur && <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-white">{d}</text>}</g>;
+                })}
                   {Array.from({ length: 364 }).map((_, i) => {
-
-                    const dayNum = i + 1;
-
-                    // Keep original angle calculation for all days EXCEPT day 1
-
-                    // Day 364 (orange) stays at its original position
-
-                    // Day 1 (green) must be immediately clockwise (RIGHT) after day 364
-
-                    let angle: number;
-
-                    if (dayNum === 1) {
-
-                      // Day 364 (orange) is at: -90 + (360/364) + (363/364)*360 = 270 degrees
-
-                      // Day 1 (green) MUST be immediately clockwise (RIGHT) after day 364
-
-                      // Calculate day 364's exact angle first
-
-                      const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
-
-                      // Position day 1 immediately clockwise (to the RIGHT) - add positive degrees
-
-                      // Use a larger offset to make it clearly visible on the right side
-
-                      const day1AngleDeg = day364AngleDeg + (360/364) * 2; // Double the offset to make it more obvious
-
-                      // Convert to radians
-
-                      angle = day1AngleDeg * Math.PI / 180;
-
-                      // Debug: log to verify
-
-                      console.log('Day 364 angle:', day364AngleDeg, 'Day 1 angle:', day1AngleDeg);
-
-                    } else {
-
-                      // All other days use original calculation
-
-                      angle = (-90 + (360/364) + (i / 364) * 360) * Math.PI / 180;
-
-                    }
-
-                    const isCurrentDay = dayNum === enochianDate.dayOfYear;
-
-                    const isIntercalary = dayNum === 91 || dayNum === 182 || dayNum === 273 || dayNum === 364;
-
-                    const isDayOne = dayNum === 1; // Day 1 of the year - mark green
-
-                    
-
-                    const x1 = center + 310 * Math.cos(angle);
-
-                    const y1 = center + 310 * Math.sin(angle);
-
-                    const x2 = center + 340 * Math.cos(angle);
-
-                    const y2 = center + 340 * Math.sin(angle);
-
-                    
-
-                    if (isCurrentDay && dayNum !== 255) {
-
-                      const textX = center + 325 * Math.cos(angle);
-
-                      const textY = center + 325 * Math.sin(angle);
-
-                      // Calculate text angle same as line angle
-                      let textAngle: number;
-                      
-                      if (dayNum === 1) {
-                        // Day 1: position clockwise after day 364
-                        const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
-                        textAngle = day364AngleDeg + (360/364);
-                      } else {
-                        // All other days: original calculation
-                        textAngle = -90 + (360/364) + (i / 364) * 360;
-                      }
-
-                      
-
-                      return (
-
-                        <g key={i}>
-
-                          <circle cx={textX} cy={textY} r="14" fill="#fbbf24" opacity="0.3"/>
-
-                          <circle cx={textX} cy={textY} r="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="2"/>
-
-                          <text
-
-                            x={textX}
-
-                            y={textY}
-
-                            textAnchor="middle"
-
-                            dominantBaseline="middle"
-
-                            transform={`rotate(${textAngle} ${textX} ${textY})`}
-
-                            className="font-bold fill-amber-400"
-
-                            style={{ fontSize: '14px' }}
-
-                          >
-
-                            {dayNum}
-
-                          </text>
-
-                        </g>
-
-                      );
-
-                    }
-
-                    
-
-                    return (
-
-                      <line
-
-                        key={i}
-
-                        x1={x1} y1={y1} x2={x2} y2={y2}
-
-                        stroke={isDayOne ? "#10b981" : isIntercalary ? "#f59e0b" : "#64748b"}
-
-                        strokeWidth={isDayOne ? "3" : isIntercalary ? "3" : "2.5"}
-
-                        strokeLinecap="round"
-
-                        opacity={isDayOne ? "1" : isIntercalary ? "0.9" : "0.7"}
-
-                      />
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 2: 30 days - ONE BORDER ONLY */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="295" fill="none" stroke="#10b981" strokeWidth="3"/>
-
+                  const day = i + 1;
+                  const ang = (-90 + (i / 364) * 360) * Math.PI / 180;
+                  const cur = day === enochianDate.dayOfYear;
+                  const int = day === 91 || day === 182 || day === 273 || day === 364;
+                  const x1 = center + 345 * Math.cos(ang);
+                  const y1 = center + 345 * Math.sin(ang);
+                  const x2 = center + 375 * Math.cos(ang);
+                  const y2 = center + 375 * Math.sin(ang);
+                  if (cur && day !== 255) {
+                    const tx = center + 360 * Math.cos(ang);
+                    const ty = center + 360 * Math.sin(ang);
+                    return <g key={`d-${i}`}><circle cx={tx} cy={ty} r="14" fill="#fbbf24" opacity="0.3" /><circle cx={tx} cy={ty} r="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" /><text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${-90 + (i / 364) * 360}, ${tx}, ${ty})`} className="font-bold fill-amber-400" style={{ fontSize: '14px' }}>{day}</text></g>;
+                  }
+                  return <line key={`l-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={int ? '#f59e0b' : '#64748b'} strokeWidth={int ? '3' : '2.5'} strokeLinecap="round" opacity={int ? '0.9' : '0.7'} />;
+                })}
+              </g>
+
+              {/* 12 ZODIAC LABELS AND MARKERS */}
+              <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 30) * 360}, ${center}, ${center})`}>
+                {zodiacWheel.map((s, i) => {
+                  const ang = (i * 30 - 90) * Math.PI / 180;
+                  const mid = (i * 30 + 15 - 90);
+                  const midRad = mid * Math.PI / 180;
+                  const labelX = center + 320 * Math.cos(midRad);
+                  const labelY = center + 320 * Math.sin(midRad);
+                  const textRot = mid + 90;
+                  return <g key={`z-${i}`}>
+                    <line x1={center + 330 * Math.cos(ang)} y1={center + 330 * Math.sin(ang)} x2={center + 335 * Math.cos(ang)} y2={center + 335 * Math.sin(ang)} stroke="#f59e0b" strokeWidth="4" />
+                    <text x={labelX} y={labelY - 8} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY - 8})`} fill="#fbbf24" fontSize="16" fontWeight="bold" style={{textShadow: '0 0 3px black'}}>{s.num}. {s.constellation}</text>
+                    <text x={labelX} y={labelY + 8} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 8})`} fill="#f59e0b" fontSize="13" style={{textShadow: '0 0 3px black'}}>{s.tribe}</text>
+                    <text x={labelX} y={labelY + 20} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 20})`} fill="#fbbf24" fontSize="12" style={{textShadow: '0 0 3px black'}}>{s.month}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 4 GREAT CONSTELLATIONS LABELS AND MARKERS */}
+              <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 91) * 90}, ${center}, ${center})`}>
+                {greatWheel.map((g, i) => {
+                  const ang = (i * 90 - 90) * Math.PI / 180;
+                  const mid = (i * 90 + 45 - 90);
+                  const midRad = mid * Math.PI / 180;
+                  const labelX = center + 290 * Math.cos(midRad);
+                  const labelY = center + 290 * Math.sin(midRad);
+                  const textRot = mid + 90;
+                  return <g key={`g-${i}`}>
+                    <line x1={center + 300 * Math.cos(ang)} y1={center + 300 * Math.sin(ang)} x2={center + 305 * Math.cos(ang)} y2={center + 305 * Math.sin(ang)} stroke="#22c55e" strokeWidth="5" />
+                    <text x={labelX} y={labelY - 6} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY - 6})`} fill="#10b981" fontSize="18" fontWeight="bold" style={{textShadow: '0 0 4px black'}}>{g.name}</text>
+                    <text x={labelX} y={labelY + 10} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 10})`} fill="#22c55e" fontSize="14" style={{textShadow: '0 0 4px black'}}>{g.highPriest}</text>
+                    <text x={labelX} y={labelY + 24} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 24})`} fill="#34d399" fontSize="12" style={{textShadow: '0 0 4px black'}}>{g.tribes.join(' ')}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 30 DAY */}
+              <g>
+                <circle cx={center} cy={center} r="255" fill="none" stroke="#10b981" strokeWidth="3" />
                   {Array.from({ length: 30 }).map((_, i) => {
-
-                    const dayNum = i + 1;
-
-                    const degreesPerDay = 360 / 30;
-
-                    const startAngle = (90 + i * degreesPerDay) * Math.PI / 180;
-
-                    const midAngle = 90 + (i + 0.5) * degreesPerDay;
-
-                    const isCurrentDay = enochianDate.daysInCurrentMonth === 30 && dayNum === enochianDate.dayOfMonth;
-
-                    
-
-                    return (
-
-                      <g key={i}>
-
-                        <line
-
-                          x1={center + 275 * Math.cos(startAngle)}
-
-                          y1={center + 275 * Math.sin(startAngle)}
-
-                          x2={center + 295 * Math.cos(startAngle)}
-
-                          y2={center + 295 * Math.sin(startAngle)}
-
-                          stroke="#10b981"
-
-                          strokeWidth="2"
-
-                        />
-
-                        <text
-
-                          x={center + 285 * Math.cos((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180)}
-
-                          y={center + 285 * Math.sin((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180)}
-
-                          textAnchor="middle"
-
-                          dominantBaseline="middle"
-
-                          transform={`rotate(${midAngle} ${center + 285 * Math.cos(midAngle * Math.PI / 180)} ${center + 285 * Math.sin(midAngle * Math.PI / 180)})`}
-
-                          className={`font-bold ${isCurrentDay ? 'fill-green-200' : 'fill-green-400'}`}
-
-                          style={{ fontSize: '14px' }}
-
-                        >
-
-                          {dayNum}
-
-                        </text>
-
-                      </g>
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 3: 52 weeks - ONE BORDER ONLY */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="265" fill="none" stroke="#60a5fa" strokeWidth="3"/>
-
-                  {Array.from({ length: 52 }).map((_, weekIndex) => {
-
-                    const degreesPerWeek = 360 / 52;
-
-                    const weekStartAngle = (90 + weekIndex * degreesPerWeek) * Math.PI / 180;
-
-                    
-
-                    return (
-
-                      <g key={weekIndex}>
-
-                        <line
-
-                          x1={center + 245 * Math.cos(weekStartAngle)}
-
-                          y1={center + 245 * Math.sin(weekStartAngle)}
-
-                          x2={center + 265 * Math.cos(weekStartAngle)}
-
-                          y2={center + 265 * Math.sin(weekStartAngle)}
-
-                          stroke="#60a5fa"
-
-                          strokeWidth="3"
-
-                        />
-
-                        {Array.from({ length: 6 }).map((_, dayIndex) => {
-
-                          const degreesPerDay = degreesPerWeek / 7;
-
-                          const dayAngle = (90 + weekIndex * degreesPerWeek + (dayIndex + 1) * degreesPerDay) * Math.PI / 180;
-
-                          const isSabbath = dayIndex === 5;
-
-                          
-
-                          return (
-
-                            <line
-
-                              key={dayIndex}
-
-                              x1={center + 248 * Math.cos(dayAngle)}
-
-                              y1={center + 248 * Math.sin(dayAngle)}
-
-                              x2={center + 262 * Math.cos(dayAngle)}
-
-                              y2={center + 262 * Math.sin(dayAngle)}
-
-                              stroke={isSabbath ? "#93c5fd" : "#64748b"}
-
-                              strokeWidth={isSabbath ? "2" : "1.5"}
-
-                            />
-
-                          );
-
-                        })}
-
-                      </g>
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 4: 31 days - ONE BORDER ONLY */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="235" fill="none" stroke="#ef4444" strokeWidth="3"/>
-
+                  const ang = (i * 12 - 90) * Math.PI / 180;
+                  const mid = (i * 12 + 6 - 90);
+                  const cur = enochianDate.daysInCurrentMonth === 30 && i + 1 === enochianDate.dayOfMonth;
+                  return <g key={`30-${i}`}>
+                    <line x1={center + 235 * Math.cos(ang)} y1={center + 235 * Math.sin(ang)} x2={center + 255 * Math.cos(ang)} y2={center + 255 * Math.sin(ang)} stroke="#10b981" strokeWidth="2" />
+                    <text x={center + 245 * Math.cos(mid * Math.PI / 180)} y={center + 245 * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + 245 * Math.cos(mid * Math.PI / 180)} ${center + 245 * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-green-200' : 'fill-green-400'}`} style={{ fontSize: '14px' }}>{i + 1}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 52 WEEKS */}
+              <g>
+                <circle cx={center} cy={center} r="225" fill="none" stroke="#60a5fa" strokeWidth="3" />
+                {Array.from({ length: 52 }).map((_, w) => {
+                  const ang = (w * 6.923 - 90) * Math.PI / 180;
+                  return <g key={`w-${w}`}>
+                    <line x1={center + 205 * Math.cos(ang)} y1={center + 205 * Math.sin(ang)} x2={center + 225 * Math.cos(ang)} y2={center + 225 * Math.sin(ang)} stroke="#60a5fa" strokeWidth="3" />
+                    {Array.from({ length: 6 }).map((_, d) => {
+                      const a2 = (w * 6.923 + (d + 1) * (6.923 / 7) - 90) * Math.PI / 180;
+                      const sab = d === 5;
+                      return <line key={`d-${d}`} x1={center + 208 * Math.cos(a2)} y1={center + 208 * Math.sin(a2)} x2={center + 222 * Math.cos(a2)} y2={center + 222 * Math.sin(a2)} stroke={sab ? '#93c5fd' : '#64748b'} strokeWidth={sab ? '2' : '1.5'} />;
+                    })}
+                  </g>;
+                })}
+              </g>
+
+              {/* 31 DAY */}
+              <g>
+                <circle cx={center} cy={center} r="195" fill="none" stroke="#ef4444" strokeWidth="3" />
                   {Array.from({ length: 31 }).map((_, i) => {
-
-                    const dayNum = i + 1;
-
-                    const degreesPerDay = 360 / 31;
-
-                    const startAngle = (90 + i * degreesPerDay) * Math.PI / 180;
-
-                    const midAngle = 90 + (i + 0.5) * degreesPerDay;
-
-                    const isCurrentDay = enochianDate.daysInCurrentMonth === 31 && dayNum === enochianDate.dayOfMonth;
-
-                    
-
-                    return (
-
-                      <g key={i}>
-
-                        <line
-
-                          x1={center + 215 * Math.cos(startAngle)}
-
-                          y1={center + 215 * Math.sin(startAngle)}
-
-                          x2={center + 235 * Math.cos(startAngle)}
-
-                          y2={center + 235 * Math.sin(startAngle)}
-
-                          stroke="#ef4444"
-
-                          strokeWidth="2"
-
-                        />
-
-                        <text
-
-                          x={center + 225 * Math.cos((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180)}
-
-                          y={center + 225 * Math.sin((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180)}
-
-                          textAnchor="middle"
-
-                          dominantBaseline="middle"
-
-                          transform={`rotate(${midAngle} ${center + 225 * Math.cos(midAngle * Math.PI / 180)} ${center + 225 * Math.sin(midAngle * Math.PI / 180)})`}
-
-                          className={`font-bold ${isCurrentDay ? 'fill-red-200' : 'fill-red-400'}`}
-
-                          style={{ fontSize: '14px' }}
-
-                        >
-
-                          {dayNum}
-
-                        </text>
-
-                      </g>
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 5: 18 parts - ONE BORDER ONLY */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="205" fill="none" stroke="#1e40af" strokeWidth="3"/>
-
-                  {Array.from({ length: 18 }).map((_, i) => {
-
-                    const partNum = i + 1;
-
-                    const degreesPerPart = 360 / 18;
-
-                    const startAngle = (90 + i * degreesPerPart) * Math.PI / 180;
-
-                    const midAngle = 90 + (i + 0.5) * degreesPerPart;
-
-                    const isDayPart = i < 9;
-
-                    const partColor = isDayPart ? '#fbbf24' : '#1e40af';
-
-                    const isCurrentPart = partNum === enochianDate.eighteenPart;
-
-                    
-
-                    return (
-
-                      <g key={i}>
-
-                        <line
-
-                          x1={center + 185 * Math.cos(startAngle)}
-
-                          y1={center + 185 * Math.sin(startAngle)}
-
-                          x2={center + 205 * Math.cos(startAngle)}
-
-                          y2={center + 205 * Math.sin(startAngle)}
-
-                          stroke={partColor}
-
-                          strokeWidth={i === 0 || i === 9 ? "3" : "2"}
-
-                        />
-
-                        <text
-
-                          x={center + 195 * Math.cos((90 + (i + 0.5) * degreesPerPart) * Math.PI / 180)}
-
-                          y={center + 195 * Math.sin((90 + (i + 0.5) * degreesPerPart) * Math.PI / 180)}
-
-                          textAnchor="middle"
-
-                          dominantBaseline="middle"
-
-                          transform={`rotate(${midAngle} ${center + 195 * Math.cos(midAngle * Math.PI / 180)} ${center + 195 * Math.sin(midAngle * Math.PI / 180)})`}
-
-                          className={`font-bold ${isCurrentPart ? 'fill-yellow-200' : 'fill-blue-300'}`}
-
-                          style={{ fontSize: '12px' }}
-
-                        >
-
-                          {partNum}
-
-                        </text>
-
-                      </g>
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 6: 7 days of the week */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="175" fill="none" stroke="#8b5cf6" strokeWidth="3"/>
-
+                  const ang = (i * 11.612 - 90) * Math.PI / 180;
+                  const mid = (i * 11.612 + 5.806 - 90);
+                  const cur = enochianDate.daysInCurrentMonth === 31 && i + 1 === enochianDate.dayOfMonth;
+                  return <g key={`31-${i}`}>
+                    <line x1={center + 175 * Math.cos(ang)} y1={center + 175 * Math.sin(ang)} x2={center + 195 * Math.cos(ang)} y2={center + 195 * Math.sin(ang)} stroke="#ef4444" strokeWidth="2" />
+                    <text x={center + 185 * Math.cos(mid * Math.PI / 180)} y={center + 185 * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + 185 * Math.cos(mid * Math.PI / 180)} ${center + 185 * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-red-200' : 'fill-red-400'}`} style={{ fontSize: '14px' }}>{i + 1}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 18 PARTS – SACRED LENGTH */}
+              <g>
+                <circle cx={center} cy={center} r="165" fill="none" stroke="#1e40af" strokeWidth="3" />
+                {sunData && Array.from({ length: 18 }).map((_, i) => {
+                  const ang = (i * 20 - 90) * Math.PI / 180;
+                  const mid = (i * 20 + 10 - 90);
+                  const day = i < sunData.dayParts;
+                  const cur = i + 1 === enochianDate.eighteenPart;
+                  return <g key={`18-${i}`}>
+                    <line x1={center + 145 * Math.cos(ang)} y1={center + 145 * Math.sin(ang)} x2={center + 165 * Math.cos(ang)} y2={center + 165 * Math.sin(ang)} stroke={day ? '#fbbf24' : '#1e40af'} strokeWidth={i === 0 || i === sunData.dayParts ? '3' : '2'} />
+                    <text x={center + 155 * Math.cos(mid * Math.PI / 180)} y={center + 155 * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + 155 * Math.cos(mid * Math.PI / 180)} ${center + 155 * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-yellow-200' : 'fill-blue-300'}`} style={{ fontSize: '12px' }}>{i + 1}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 7 WEEKDAYS */}
+              <g>
+                <circle cx={center} cy={center} r="135" fill="none" stroke="#8b5cf6" strokeWidth="3" />
                   {Array.from({ length: 7 }).map((_, i) => {
-
-                    const dayNum = i + 1;
-
-                    const degreesPerDay = 360 / 7;
-
-                    const startAngle = (90 + i * degreesPerDay) * Math.PI / 180;
-
-                    const midAngle = 90 + (i + 0.5) * degreesPerDay;
-
-                    const isSabbath = dayNum === 7;
-
-                    const isCurrentDay = dayNum === enochianDate.dayOfWeek;
-
-                    const dayLabel = isSabbath ? 'Sabbath' : `Day ${dayNum}`;
-
-                    
-
-                    const textX = center + 165 * Math.cos((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180);
-
-                    const textY = center + 165 * Math.sin((90 + (i + 0.5) * degreesPerDay) * Math.PI / 180);
-
-                    
-
-                    // Rotate text radially (perpendicular to the center)
-
-                    const textRotation = midAngle + 90;
-
-                    
-
-                    return (
-
-                      <g key={i}>
-
-                        <line
-
-                          x1={center + 155 * Math.cos(startAngle)}
-
-                          y1={center + 155 * Math.sin(startAngle)}
-
-                          x2={center + 175 * Math.cos(startAngle)}
-
-                          y2={center + 175 * Math.sin(startAngle)}
-
-                          stroke={isSabbath ? "#a78bfa" : "#8b5cf6"}
-
-                          strokeWidth={isSabbath ? "3" : "2"}
-
-                        />
-
-                        <text
-
-                          x={textX}
-
-                          y={textY}
-
-                          textAnchor="middle"
-
-                          dominantBaseline="middle"
-
-                          transform={`rotate(${textRotation} ${textX} ${textY})`}
-
-                          className={`font-bold ${isCurrentDay ? 'fill-purple-200' : 'fill-purple-400'}`}
-
-                          style={{ fontSize: isSabbath ? '11px' : '10px' }}
-
-                        >
-
-                          {dayLabel}
-
-                        </text>
-
-                      </g>
-
-                    );
-
-                  })}
-
-                </g>
-
-
-
-                {/* CIRCLE 7: 4 parts of the day - proportionally sized based on actual sun position */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="145" fill="none" stroke="#ec4899" strokeWidth="3"/>
-
-                  {(() => {
-
-                    // Get current day/night parts from Enochian calculation
-
-                    const { dayParts, nightParts } = getSunTimes();
-
-                    
-
-                    // Each part = 1/18 of full circle = 20 degrees
-
-                    const degreesPerPart = 360 / 18;
-
-                    
-
-                    // Yôm (Day): from sunrise to sunset
-
-                    const yomDegrees = dayParts * degreesPerPart;
-
-                    
-
-                    // Erev (Evening): 2 hours after sunset = 2/1.333 = 1.5 parts
-
-                    const erevDegrees = 1.5 * degreesPerPart;
-
-                    
-
-                    // Boqer (Morning): 2 hours before sunrise = 1.5 parts  
-
-                    const boqerDegrees = 1.5 * degreesPerPart;
-
-                    
-
-                    // Laylah (Night): remainder
-
-                    const laylahDegrees = nightParts * degreesPerPart - erevDegrees - boqerDegrees;
-
-                    
-
-                    const dayPartsList = [
-
-                      { name: 'Yôm', label: 'Day', degrees: yomDegrees, color: '#fbbf24', key: 'Yôm' },
-
-                      { name: 'Erev', label: 'Evening', degrees: erevDegrees, color: '#f97316', key: 'Erev' },
-
-                      { name: 'Laylah', label: 'Night', degrees: laylahDegrees, color: '#1e3a8a', key: 'Laylah' },
-
-                      { name: 'Boqer', label: 'Morning', degrees: boqerDegrees, color: '#fb923c', key: 'Boqer' }
-
-                    ];
-
-                    
-
-                    let currentAngle = 90; // Start at top
-
-                    
-
-                    return dayPartsList.map((part, i) => {
-
-                      const startAngle = currentAngle;
-
-                      const endAngle = currentAngle + part.degrees;
-
-                      const midAngle = (startAngle + endAngle) / 2;
-
-                      const isCurrentPart = part.key === enochianDate.dayPart;
-
-                      
-
-                      const startRad = startAngle * Math.PI / 180;
-
-                      const endRad = endAngle * Math.PI / 180;
-
-                      const midRad = midAngle * Math.PI / 180;
-
-                      
-
-                      const textX = center + 135 * Math.cos(midRad);
-
-                      const textY = center + 135 * Math.sin(midRad);
-
-                      const textRotation = midAngle + 90;
-
-                      
-
-                      currentAngle = endAngle;
-
-                      
-
-                      return (
-
-                        <g key={i}>
-
-                          <line
-
-                            x1={center + 125 * Math.cos(startRad)}
-
-                            y1={center + 125 * Math.sin(startRad)}
-
-                            x2={center + 145 * Math.cos(startRad)}
-
-                            y2={center + 145 * Math.sin(startRad)}
-
-                            stroke={part.color}
-
-                            strokeWidth="3"
-
-                          />
-
-                          <text
-
-                            x={textX}
-
-                            y={textY}
-
-                            textAnchor="middle"
-
-                            dominantBaseline="middle"
-
-                            transform={`rotate(${textRotation} ${textX} ${textY})`}
-
-                            className={`font-bold ${isCurrentPart ? 'fill-white' : 'fill-gray-300'}`}
-
-                            style={{ fontSize: part.name === 'Yôm' ? '13px' : '10px' }}
-
-                          >
-
-                            {part.label}
-
-                          </text>
-
-                        </g>
-
-                      );
-
-                    });
-
+                  const ang = (i * 51.428 - 90) * Math.PI / 180;
+                  const mid = (i * 51.428 + 25.714 - 90);
+                  const sab = i === 6;
+                  const cur = i + 1 === enochianDate.dayOfWeek;
+                  const tx = center + 125 * Math.cos(mid * Math.PI / 180);
+                  const ty = center + 125 * Math.sin(mid * Math.PI / 180);
+                  return <g key={`7-${i}`}>
+                    <line x1={center + 115 * Math.cos(ang)} y1={center + 115 * Math.sin(ang)} x2={center + 135 * Math.cos(ang)} y2={center + 135 * Math.sin(ang)} stroke={sab ? '#a78bfa' : '#8b5cf6'} strokeWidth={sab ? '3' : '2'} />
+                    <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid + 90} ${tx} ${ty})`} className={`font-bold ${cur ? 'fill-purple-200' : 'fill-purple-400'}`} style={{ fontSize: sab ? '11px' : '10px' }}>{sab ? 'Sabbath' : `Day ${i + 1}`}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* 4 PARTS OF DAY – PROPORTIONAL */}
+              <g>
+                <circle cx={center} cy={center} r="105" fill="none" stroke="#ec4899" strokeWidth="3" />
+                {sunData && (() => {
+                  const { dayParts, nightParts } = sunData;
+                  const degPer = 360 / 18;
+                  const yom = dayParts * degPer;
+                  const erev = 1.5 * degPer;
+                  const boqer = 1.5 * degPer;
+                  const laylah = nightParts * degPer - erev - boqer;
+                  const parts = [
+                    { name: 'Yôm', label: 'Day', deg: yom, color: '#fbbf24', key: 'Yôm' },
+                    { name: 'Erev', label: 'Evening', deg: erev, color: '#f97316', key: 'Erev' },
+                    { name: 'Laylah', label: 'Night', deg: laylah, color: '#1e3a8a', key: 'Laylah' },
+                    { name: 'Boqer', label: 'Morning', deg: boqer, color: '#fb923c', key: 'Boqer' }
+                  ];
+                  let curAng = 90;
+                  return parts.map((p, i) => {
+                    const start = curAng;
+                    const end = start + p.deg;
+                    const mid = (start + end) / 2;
+                    const startRad = start * Math.PI / 180;
+                    const isCur = p.key === enochianDate.dayPart;
+                    curAng = end;
+                    const tx = center + 95 * Math.cos(mid * Math.PI / 180);
+                    const ty = center + 95 * Math.sin(mid * Math.PI / 180);
+                    return <g key={`4p-${i}`}>
+                      <line x1={center + 85 * Math.cos(startRad)} y1={center + 85 * Math.sin(startRad)} x2={center + 105 * Math.cos(startRad)} y2={center + 105 * Math.sin(startRad)} stroke={p.color} strokeWidth="3" />
+                      <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid + 90} ${tx} ${ty})`} className={`font-bold ${isCur ? 'fill-white' : 'fill-gray-300'}`} style={{ fontSize: p.name === 'Yôm' ? '13px' : '10px' }}>{p.label}</text>
+                  </g>;
+                  });
                   })()}
-
-                </g>
-
-
-
-                {/* CIRCLE 8: 2 Days Out Of Time (DOOT) - Helio-Yasef & Asfa'el */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="115" fill="none" stroke="#9333ea" strokeWidth="3"/>
-
-                  {(() => {
-
-                    const dootDays = [
-
-                      { name: 'Helio-Yasef', dayNum: 365, color: '#a855f7' },
-
-                      { name: "Asfa'el", dayNum: 366, color: '#7c3aed' }
-
-                    ];
-
-                    
-
-                    return dootDays.map((doot, i) => {
-
-                      const startAngle = (90 + i * 180) * Math.PI / 180;
-
-                      const midAngle = 90 + (i + 0.5) * 180;
-
-                      const midRad = midAngle * Math.PI / 180;
-
-                      const isCurrentDoot = enochianDate.dayOfYear === doot.dayNum;
-
-                      
-
-                      const textX = center + 105 * Math.cos(midRad);
-
-                      const textY = center + 105 * Math.sin(midRad);
-
-                      const textRotation = midAngle + 90;
-
-                      
-
-                      return (
-
-                        <g key={i}>
-
-                          <line
-
-                            x1={center + 95 * Math.cos(startAngle)}
-
-                            y1={center + 95 * Math.sin(startAngle)}
-
-                            x2={center + 115 * Math.cos(startAngle)}
-
-                            y2={center + 115 * Math.sin(startAngle)}
-
-                            stroke={doot.color}
-
-                            strokeWidth="3"
-
-                          />
-
-                          <text
-
-                            x={textX}
-
-                            y={textY}
-
-                            textAnchor="middle"
-
-                            dominantBaseline="middle"
-
-                            transform={`rotate(${textRotation} ${textX} ${textY})`}
-
-                            className={`font-bold ${isCurrentDoot ? 'fill-purple-200' : 'fill-purple-400'}`}
-
-                            style={{ fontSize: '11px' }}
-
-                          >
-
-                            {doot.name}
-
-                          </text>
-
-                        </g>
-
-                      );
-
-                    });
-
-                  })()}
-
-                </g>
-
-
-
-                {/* Center Display */}
-
-                <circle cx={center} cy={center} r="120" fill="#0f172a" stroke="#d97706" strokeWidth="3"/>
-
-                
-
-                {enochianDate.dayOfWeek === 7 && (
-
-                  <circle cx={center} cy={center} r="115" fill="none" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8,4">
-
-                    <animate attributeName="stroke-opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
-
-                  </circle>
-
-                )}
-
-                
-
-                {/* Large Day Number */}
-
-                <text x={center} y={center - 20} textAnchor="middle" className="text-7xl fill-amber-400 font-bold">
-
-                  {enochianDate.dayOfMonth}
-
-                </text>
-
-                
-
-                {/* Day Part */}
-
-                <text x={center} y={center + 25} textAnchor="middle" className="text-xl fill-amber-500 font-bold">
-
-                  {enochianDate.dayPart}
-
-                </text>
-
-                
-
-                {/* Week Info */}
-
-                <text x={center} y={center + 45} textAnchor="middle" className="text-xs fill-gray-400">
-
-                  Week Day {enochianDate.dayOfWeek} • Week {enochianDate.weekOfYear}/52
-
-                </text>
-
-                
-
-                {/* Day of Year */}
-
-                <text x={center} y={center + 60} textAnchor="middle" className="text-xs fill-gray-400">
-
-                  Day {enochianDate.dayOfYear}/364
-
-                </text>
-
-                
-
-                {/* Gregorian Date */}
-
-                <text x={center} y={center + 77} textAnchor="middle" className="text-xs fill-blue-400">
-
-                  {currentDate.toLocaleDateString('en-US', { weekday: 'long' })}
-
-                </text>
-
-                <text x={center} y={center + 91} textAnchor="middle" className="text-xs fill-blue-400">
-
-                  {currentDate.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
-
-                </text>
-
-                
-
-                {/* Time */}
-
-                <text x={center} y={center + 108} textAnchor="middle" className="text-sm fill-green-400 font-mono font-bold">
-
-                  {currentDate.toLocaleTimeString('en-US', { hour12: false })}
-
-                </text>
-
-                
-
-                {/* PINK LINE - Day 5 position (4th line to the LEFT from orange Day 1 line) */}
-
-                {/* Orange line (Day 1) is at top (-90°)
-
-                    To go anti-clockwise (LEFT), we subtract degrees
-
-                    Each day = 360/364 degrees
-
-                    Day 5 is 4 positions left from Day 1
-
-                    So: -90° - (4 * 360/364)° */}
-
+              </g>
+
+              {/* 2 DOOT */}
+              <g>
+                <circle cx={center} cy={center} r="75" fill="none" stroke="#9333ea" strokeWidth="3" />
+                {[
+                  { name: 'Helio-Yasef', day: 365, color: '#a855f7' },
+                  { name: "Asfa'el", day: 366, color: '#7c3aed' }
+                ].map((d, i) => {
+                  const ang = (i * 180 - 90) * Math.PI / 180;
+                  const mid = (i * 180 + 90 - 90);
+                  const midRad = mid * Math.PI / 180;
+                  const cur = enochianDate.dayOfYear === d.day;
+                  const tx = center + 65 * Math.cos(midRad);
+                  const ty = center + 65 * Math.sin(midRad);
+                  return <g key={`doot-${i}`}>
+                    <line x1={center + 55 * Math.cos(ang)} y1={center + 55 * Math.sin(ang)} x2={center + 75 * Math.cos(ang)} y2={center + 75 * Math.sin(ang)} stroke={d.color} strokeWidth="3" />
+                    <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid + 90} ${tx} ${ty})`} className={`font-bold ${cur ? 'fill-purple-200' : 'fill-purple-400'}`} style={{ fontSize: '11px' }}>{d.name}</text>
+                  </g>;
+                })}
+              </g>
+
+              {/* CENTRE DISC */}
+              <circle cx={center} cy={center} r="10" fill="#0f172a" stroke="#d97706" strokeWidth="2" />
+              {enochianDate.dayOfWeek === 7 && <circle cx={center} cy={center} r="8" fill="none" stroke="#60a5fa" strokeWidth="2" strokeDasharray="4,2"><animate attributeName="stroke-opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" /></circle>}
+              <text x={center} y={center + 3} textAnchor="middle" className="text-[8px] fill-amber-400 font-bold">{enochianDate.dayOfMonth}</text>
+
+              {/* PINK 255 MARKERS */}
                 {(() => {
-
-                  const degreesPerDay = 360 / 364;
-
-                  const stepsLeft = 4; // 4 steps left from Day 1 = Day 5
-
-                  const day5Angle = (-90 - (stepsLeft * degreesPerDay)) * Math.PI / 180;
-
-                  
-
-                  return (
-
-                    <line
-
-                      x1={center + 310 * Math.cos(day5Angle)}
-
-                      y1={center + 310 * Math.sin(day5Angle)}
-
-                      x2={center + 340 * Math.cos(day5Angle)}
-
-                      y2={center + 340 * Math.sin(day5Angle)}
-
-                      stroke="#ec4899"
-
-                      strokeWidth="5"
-
-                      opacity="1"
-
-                      strokeLinecap="round"
-
-                    />
-
-                  );
-
+                const degPer = 360 / 364;
+                const pinkLine = -90 - (4 * degPer);
+                const pink255 = pinkLine - (254 * degPer);
+                const ang = pink255 * Math.PI / 180;
+                const tipX = center + 375 * Math.cos(ang);
+                const tipY = center + 375 * Math.sin(ang);
+                const outerX = center + 390 * Math.cos(ang);
+                const outerY = center + 390 * Math.sin(ang);
+                const p1 = (pink255 + 90) * Math.PI / 180;
+                const p2 = (pink255 - 90) * Math.PI / 180;
+                const b1x = outerX + 10 * Math.cos(p1);
+                const b1y = outerY + 10 * Math.sin(p1);
+                const b2x = outerX + 10 * Math.cos(p2);
+                const b2y = outerY + 10 * Math.sin(p2);
+                const tx = center + 420 * Math.cos(ang);
+                const ty = center + 420 * Math.sin(ang);
+                return <g>
+                  <polygon points={`${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`} fill="#ec4899" stroke="#ec4899" strokeWidth="2" />
+                  <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" style={{ fill: '#ec4899', fontWeight: 'bold', fontSize: '28px', fontFamily: 'Arial, sans-serif' }}>255</text>
+                </g>;
                 })()}
-
-                
-
-                {/* PINK 255 - Triangular pointer at Day 255 counting anti-clockwise from pink line (human count) */}
-
-                {(() => {
-
-                  const degreesPerDay = 360 / 364;
-
-                  const pinkLineAngle = -90 - (4 * degreesPerDay); // Pink line position
-
-                  const day255Angle = pinkLineAngle - (254 * degreesPerDay); // 254 more days anti-clockwise
-
-                  const angleRad = day255Angle * Math.PI / 180;
-
-                  
-
-                  // Triangle vertices pointing inward
-
-                  const tipX = center + 340 * Math.cos(angleRad);
-
-                  const tipY = center + 340 * Math.sin(angleRad);
-
-                  
-
-                  const outerX = center + 355 * Math.cos(angleRad);
-
-                  const outerY = center + 355 * Math.sin(angleRad);
-
-                  
-
-                  const perpAngle1 = (day255Angle + 90) * Math.PI / 180;
-
-                  const perpAngle2 = (day255Angle - 90) * Math.PI / 180;
-
-                  
-
-                  const base1X = outerX + 10 * Math.cos(perpAngle1);
-
-                  const base1Y = outerY + 10 * Math.sin(perpAngle1);
-
-                  const base2X = outerX + 10 * Math.cos(perpAngle2);
-
-                  const base2Y = outerY + 10 * Math.sin(perpAngle2);
-
-                  
-
-                  // Text well outside the wheel
-
-                  const textX = center + 385 * Math.cos(angleRad);
-
-                  const textY = center + 385 * Math.sin(angleRad);
-
-                  
-
-                  return (
-
-                    <g>
-
-                      <polygon
-
-                        points={`${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`}
-
-                        fill="#ec4899"
-
-                        stroke="#ec4899"
-
-                        strokeWidth="2"
-
-                      />
-
-                      <text
-
-                        x={textX}
-
-                        y={textY}
-
-                        textAnchor="middle"
-
-                        dominantBaseline="middle"
-
-                        style={{
-
-                          fill: '#ec4899',
-
-                          fontWeight: 'bold',
-
-                          fontSize: '28px',
-
-                          fontFamily: 'Arial, sans-serif'
-
-                        }}
-
-                      >
-
-                        255
-
-                      </text>
-
-                    </g>
-
-                  );
-
-                })()}
-
-                
-
-                {/* ORANGE 255 - Triangular pointer 3 lines BEFORE pink 255 (counter-clockwise) */}
-
-                {(() => {
-
-                  const degreesPerDay = 360 / 364;
-
-                  // Pink 255 angle first
-
-                  const pinkLineAngle = -90 - (4 * degreesPerDay);
-
-                  const pink255Angle = pinkLineAngle - (254 * degreesPerDay);
-
-                  // Orange 255 is 3 lines counter-clockwise from pink 255
-
-                  const orange255Angle = pink255Angle - (3 * degreesPerDay);
-
-                  const angleRad = orange255Angle * Math.PI / 180;
-
-                  
-
-                  // Triangle vertices pointing inward
-
-                  const tipX = center + 340 * Math.cos(angleRad);
-
-                  const tipY = center + 340 * Math.sin(angleRad);
-
-                  
-
-                  const outerX = center + 355 * Math.cos(angleRad);
-
-                  const outerY = center + 355 * Math.sin(angleRad);
-
-                  
-
-                  const perpAngle1 = (orange255Angle + 90) * Math.PI / 180;
-
-                  const perpAngle2 = (orange255Angle - 90) * Math.PI / 180;
-
-                  
-
-                  const base1X = outerX + 10 * Math.cos(perpAngle1);
-
-                  const base1Y = outerY + 10 * Math.sin(perpAngle1);
-
-                  const base2X = outerX + 10 * Math.cos(perpAngle2);
-
-                  const base2Y = outerY + 10 * Math.sin(perpAngle2);
-
-                  
-
-                  // Text well outside the wheel
-
-                  const textX = center + 385 * Math.cos(angleRad);
-
-                  const textY = center + 385 * Math.sin(angleRad);
-
-                  
-
-                  return (
-
-                    <g>
-
-                      <polygon
-
-                        points={`${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`}
-
-                        fill="#f59e0b"
-
-                        stroke="#f59e0b"
-
-                        strokeWidth="2"
-
-                      />
-
-                      <text
-
-                        x={textX}
-
-                        y={textY}
-
-                        textAnchor="middle"
-
-                        dominantBaseline="middle"
-
-                        style={{
-
-                          fill: '#f59e0b',
-
-                          fontWeight: 'bold',
-
-                          fontSize: '28px',
-
-                          fontFamily: 'Arial, sans-serif'
-
-                        }}
-
-                      >
-
-                        255
-
-                      </text>
-
-                    </g>
-
-                  );
-
-                })()}
-
               </svg>
-
             </div>
-
           </div>
 
-
-
-          <div className="space-y-4">
-
-            <div className="bg-gradient-to-br from-amber-900/40 to-slate-800/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-amber-600/40">
-
-              <h3 className="text-amber-400 font-bold mb-3 flex items-center gap-2">
-
-                <Sun className="w-5 h-5" />
-
-                Current Position
-
-              </h3>
-
-              <div className="space-y-2 text-sm">
-
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Day of Year:</span>
-
-                  <span className="text-white font-bold">{enochianDate.dayOfYear} of 364</span>
-
+        {/* ---------------  BANNER-LINE YOU REQUESTED  --------------- */}
+        <div className="text-center">
+          <p className="text-amber-300 font-semibold text-sm tracking-wide">
+            {displayLine}
+          </p>
                 </div>
 
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Month {enochianDate.month} Day:</span>
-
-                  <span className="text-white font-bold">{enochianDate.dayOfMonth} of {enochianDate.daysInCurrentMonth}</span>
-
                 </div>
-
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Week:</span>
-
-                  <span className="text-white font-bold">{enochianDate.weekOfYear} of 52</span>
-
                 </div>
-
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Day Part:</span>
-
-                  <span className="text-amber-500 font-bold">{enochianDate.dayPart}</span>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-
-            <div className="bg-gradient-to-br from-blue-900/40 to-slate-800/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-blue-600/40">
-
-              <h3 className="text-blue-400 font-bold mb-3 flex items-center gap-2">
-
-                <Calendar className="w-5 h-5" />
-
-                Gregorian Date
-
-              </h3>
-
-              <div className="space-y-2 text-sm">
-
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Date:</span>
-
-                  <span className="text-white">{currentDate.toLocaleDateString()}</span>
-
-                </div>
-
-                <div className="flex justify-between">
-
-                  <span className="text-gray-400">Time:</span>
-
-                  <span className="text-white font-mono">{currentDate.toLocaleTimeString()}</span>
-
-                </div>
-
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-blue-600/30">
-
-                <div className="text-xs space-y-1">
-
-                  <div className="flex justify-between">
-
-                    <span className="text-gray-400">Sunrise:</span>
-
-                    <span className="text-amber-400 font-mono">05:13</span>
-
-                  </div>
-
-                  <div className="flex justify-between">
-
-                    <span className="text-gray-400">Sunset:</span>
-
-                    <span className="text-orange-400 font-mono">19:26</span>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
   );
-
 };
-
-
 
 export default EnochianWheelCalendar;
