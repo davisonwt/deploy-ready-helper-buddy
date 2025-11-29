@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserRoles } from '@/hooks/useUserRoles'
@@ -11,7 +11,24 @@ function AuthProtectedRoute({ children }) {
   return <>{children}</>
 }
 
-function RoleProtectedRoute({ children, allowedRoles = [] }) {
+// Wrapper to defer rendering until React is fully initialized
+function SafeRoleProtectedRoute({ children, allowedRoles }) {
+  const [isReady, setIsReady] = useState(false)
+  
+  useEffect(() => {
+    // Defer rendering until next tick to ensure React dispatcher is ready
+    const timer = setTimeout(() => setIsReady(true), 0)
+    return () => clearTimeout(timer)
+  }, [])
+  
+  if (!isReady) {
+    return <LoadingSpinner full text="Initializing..." />
+  }
+  
+  return <RoleProtectedRouteInner allowedRoles={allowedRoles}>{children}</RoleProtectedRouteInner>
+}
+
+function RoleProtectedRouteInner({ children, allowedRoles = [] }) {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
 
@@ -29,7 +46,7 @@ function RoleProtectedRoute({ children, allowedRoles = [] }) {
 export default function ProtectedRoute({ children, allowedRoles = null }) {
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
   return shouldCheckRoles ? (
-    <RoleProtectedRoute allowedRoles={allowedRoles || []}>{children}</RoleProtectedRoute>
+    <SafeRoleProtectedRoute allowedRoles={allowedRoles || []}>{children}</SafeRoleProtectedRoute>
   ) : (
     <AuthProtectedRoute>{children}</AuthProtectedRoute>
   )
