@@ -348,43 +348,49 @@ const EnochianWheelCalendar = () => {
 
                 {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
                 {/* Top middle line is Day 1, counting anti-clockwise */}
-                {/* Elevated outer circle with 3D depth effect */}
+                {/* Elevated outer circle with 3D depth effect - RAISED ABOVE inner circles */}
                 <g>
-                  {/* Shadow layer - creates the elevated effect */}
-                  <circle cx={centerX} cy={centerY + 4} r="332" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="6" opacity="0.4"/>
-                  
-                  {/* Main elevated circle with gradient and highlight */}
+                  {/* Outer shadow BELOW the circle - creates elevation effect */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY} 
+                    cy={centerY + 6} 
+                    r="332" 
+                    fill="rgba(0,0,0,0.15)" 
+                    opacity="0.6"
+                  />
+                  
+                  {/* Main elevated circle - positioned slightly UP */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 2} 
                     r="330" 
                     fill="url(#elevatedCircleGradient)" 
                     stroke="url(#metallicSilver)" 
                     strokeWidth="4" 
                     filter="url(#elevatedShadow)"
-                    opacity="0.95"
+                    opacity="0.98"
                   />
                   
-                  {/* Top highlight for 3D effect */}
+                  {/* Bright top highlight - simulates light hitting raised surface */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY - 2} 
+                    cy={centerY - 4} 
                     r="328" 
                     fill="none" 
-                    stroke="url(#elevatedHighlight)" 
+                    stroke="rgba(255,255,255,0.5)" 
+                    strokeWidth="3" 
+                    opacity="0.8"
+                  />
+                  
+                  {/* Secondary top highlight */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 3} 
+                    r="329" 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.3)" 
                     strokeWidth="2" 
-                    opacity="0.7"
-                  />
-                  
-                  {/* Inner shadow to create depth */}
-                  <circle 
-                    cx={centerX} 
-                    cy={centerY + 2} 
-                    r="328" 
-                    fill="none" 
-                    stroke="rgba(0,0,0,0.2)" 
-                    strokeWidth="1" 
-                    opacity="0.5"
+                    opacity="0.6"
                   />
                   {Array.from({ length: 366 }, (_, i) => {
                     const dayNumber = i + 1;
