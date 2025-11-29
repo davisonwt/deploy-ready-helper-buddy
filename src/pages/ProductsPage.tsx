@@ -242,6 +242,7 @@ export default function ProductsPage() {
         bestowal_count: randomProduct.bestowal_count || 0,
         sowers: randomProduct.sowers
       });
+      launchConfetti();
       toast.success(`Quick Rain! Added ${randomProduct.title} to basket`, {
         action: {
           label: 'View Basket',
