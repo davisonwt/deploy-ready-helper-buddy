@@ -140,13 +140,50 @@ export default function DashboardPage() {
         console.log(`[Dashboard] AFTER SUNRISE - Using current day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       }
       
-      // Create date at LOCAL noon to avoid timezone issues
-      // This ensures getCreatorDate calculates based purely on the date, not the time
-      const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
-      console.log(`[Dashboard] Normalized LOCAL date: ${normalizedDate.toLocaleString()}`)
+      // Calculate Creator date using LOCAL date components (not UTC)
+      // Epoch: March 20, 2025 = Year 6028, Month 1, Day 1 (LOCAL time)
+      const epochYear = 2025
+      const epochMonth = 2 // March (0-indexed)
+      const epochDate = 20
       
-      // Use normalized date for calendar calculations
-      const creatorDate = getCreatorDate(normalizedDate)
+      // Calculate days difference using LOCAL dates only
+      const epochLocal = new Date(epochYear, epochMonth, epochDate, 12, 0, 0, 0)
+      const effectiveLocal = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
+      
+      // Calculate difference in LOCAL days (not UTC milliseconds)
+      const msDiff = effectiveLocal.getTime() - epochLocal.getTime()
+      const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000))
+      
+      console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}, Days since epoch: ${totalDays}`)
+      
+      // Calculate Creator calendar date
+      const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
+      let year = 6028
+      let remainingDays = totalDays
+      
+      // Calculate year
+      while (remainingDays >= 365) {
+        remainingDays -= 365
+        year++
+      }
+      
+      // Calculate month and day
+      let month = 1
+      let day = remainingDays + 1
+      
+      while (day > daysPerMonth[month - 1]) {
+        day -= daysPerMonth[month - 1]
+        month++
+        if (month > 12) {
+          month = 1
+          year++
+        }
+      }
+      
+      // Weekday: Year starts on "Day 4" (weekday 4)
+      const weekDay = ((totalDays % 7) + 4) % 7 || 7
+      
+      const creatorDate = { year, month, day, weekDay }
       console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`)
       const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
       
