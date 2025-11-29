@@ -78,7 +78,8 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/products?filter=music', title: 'Community Music', subtitle: 'Now inside Creations' },
     { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
     { href: '/products?filter=ebook', title: 'Community Library', subtitle: 'E-books, courses, docs' },
-    { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' }
+    { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' },
+    { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' }
   ]
 
   // Quick action routes - matching actual upload/create routes
