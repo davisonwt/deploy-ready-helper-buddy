@@ -6,13 +6,43 @@ import { useAuth } from '@/hooks/useAuth'
 const roleCache = new Map()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+// Safe defaults for when React isn't ready
+const safeDefaults = {
+  userRoles: [],
+  loading: true,
+  error: null,
+  hasRole: () => false,
+  isAdmin: false,
+  isGosat: false,
+  isAdminOrGosat: false
+}
+
 export function useUserRoles() {
-  const { user } = useAuth()
-  const userId = user?.id
-  
+  // Always call hooks unconditionally - required by React rules
   const [userRoles, setUserRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  
+  let authResult
+  try {
+    authResult = useAuth()
+  } catch (err) {
+    // If useAuth fails, return safe defaults but hooks were already called
+    console.warn('[useUserRoles] useAuth failed, returning safe defaults:', err)
+    // Return early with current state (which will be safe defaults)
+    return {
+      userRoles: [],
+      loading: true,
+      error: null,
+      hasRole: () => false,
+      isAdmin: false,
+      isGosat: false,
+      isAdminOrGosat: false
+    }
+  }
+  
+  const { user, loading: authLoading } = authResult
+  const userId = user?.id
 
   useEffect(() => {
     let isMounted = true
