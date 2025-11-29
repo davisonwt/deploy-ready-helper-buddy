@@ -6,54 +6,38 @@ import { useAuth } from '@/hooks/useAuth'
 const roleCache = new Map()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-// Safe defaults for when React isn't ready
-const safeDefaults = {
-  userRoles: [],
-  loading: true,
-  error: null,
-  hasRole: () => false,
-  isAdmin: false,
-  isGosat: false,
-  isAdminOrGosat: false
-}
-
 export function useUserRoles() {
   // Always call hooks unconditionally - required by React rules
   const [userRoles, setUserRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
-  let authResult
-  try {
-    authResult = useAuth()
-  } catch (err) {
-    // If useAuth fails, return safe defaults but hooks were already called
-    console.warn('[useUserRoles] useAuth failed, returning safe defaults:', err)
-    // Return early with current state (which will be safe defaults)
-    return {
-      userRoles: [],
-      loading: true,
-      error: null,
-      hasRole: () => false,
-      isAdmin: false,
-      isGosat: false,
-      isAdminOrGosat: false
-    }
-  }
-  
-  const { user, loading: authLoading } = authResult
+  // Call useAuth unconditionally - it returns safe defaults if context is unavailable
+  const { user, loading: authLoading, isAuthenticated } = useAuth()
   const userId = user?.id
 
   useEffect(() => {
     let isMounted = true
     
     const fetchRoles = async () => {
-      console.log('🔍 [useUserRoles] Starting fetch for userId:', userId)
+      console.log('🔍 [useUserRoles] Starting fetch for userId:', userId, 'authLoading:', authLoading, 'isAuthenticated:', isAuthenticated)
+      
+      // If auth is still loading or user is not authenticated, return early
+      if (authLoading || !isAuthenticated) {
+        console.log('⚠️ [useUserRoles] Auth not ready or not authenticated, clearing roles')
+        if (isMounted) {
+          setUserRoles([])
+          setLoading(false)
+        }
+        return
+      }
       
       if (!userId) {
         console.log('⚠️ [useUserRoles] No userId, clearing roles')
-        setUserRoles([])
-        setLoading(false)
+        if (isMounted) {
+          setUserRoles([])
+          setLoading(false)
+        }
         return
       }
 
@@ -107,7 +91,7 @@ export function useUserRoles() {
 
     fetchRoles()
     return () => { isMounted = false }
-  }, [userId])
+  }, [userId, authLoading, isAuthenticated])
 
   // Memoize computed values
   const hasRole = useMemo(
