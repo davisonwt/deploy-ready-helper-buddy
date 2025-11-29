@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
-import { launchSparkles } from '@/utils/confetti'
+import { launchSparkles, floatingScore } from '@/utils/confetti'
 
 interface MyGardenPanelProps {
   isOpen: boolean
@@ -30,8 +30,11 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   }, [isOpen])
 
   const mysterySeed = () => {
+    const gifts = [1, 2, 5, 10];
+    const won = gifts[Math.floor(Math.random() * gifts.length)];
+    floatingScore(won);
     launchSparkles();
-    alert("You just unlocked a hidden blessing! Check Community Music →")
+    alert(`You found ${won} USDC inside the seed! Check Community Music →`)
     navigate('/products?filter=music')
     closeGarden()
   }
@@ -45,8 +48,14 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   }
 
   const quickRain = () => {
-    if (typeof window !== 'undefined' && window.launchConfetti) {
-      window.launchConfetti();
+    const rainAmount = 0.50;
+    if (typeof window !== 'undefined') {
+      if (window.launchConfetti) {
+        window.launchConfetti();
+      }
+      if (window.floatingScore) {
+        window.floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
+      }
     }
     alert("0.50 USDC sent to a random creator!")
     closeGarden()

@@ -7,7 +7,7 @@ import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { launchConfetti } from '@/utils/confetti';
+import { launchConfetti, floatingScore } from '@/utils/confetti';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -199,15 +199,20 @@ export default function ProductsPage() {
         toast.error('Invalid product');
         return;
       }
+      const amount = parseFloat(product.price || 0);
       addToBasket({
         id: product.id,
         title: product.title,
-        price: parseFloat(product.price || 0),
+        price: amount,
         cover_image_url: product.cover_image_url,
         sower_id: product.sower_id,
         bestowal_count: product.bestowal_count || 0,
         sowers: product.sowers
       });
+      // Show floating score at click position
+      const x = e?.clientX ?? window.innerWidth / 2;
+      const y = e?.clientY ?? window.innerHeight / 2;
+      floatingScore(amount || 2, x, y);
       launchConfetti();
       toast.success('Added to basket!', {
         action: {
@@ -233,15 +238,18 @@ export default function ProductsPage() {
     
     // Add to basket with 0.50 USDC price override for Quick Rain
     try {
+      const rainAmount = 0.50;
       addToBasket({
         id: randomProduct.id,
         title: randomProduct.title,
-        price: 0.50, // Quick Rain fixed amount
+        price: rainAmount,
         cover_image_url: randomProduct.cover_image_url,
         sower_id: randomProduct.sower_id,
         bestowal_count: randomProduct.bestowal_count || 0,
         sowers: randomProduct.sowers
       });
+      // Show floating score near the Quick Rain button (bottom right)
+      floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
       launchConfetti();
       toast.success(`Quick Rain! Added ${randomProduct.title} to basket`, {
         action: {
