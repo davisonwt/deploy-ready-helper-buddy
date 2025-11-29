@@ -364,6 +364,26 @@ const EnochianWheelCalendar = () => {
                       />
                     );
                   })}
+                  {/* Display current day number next to the highlighted line */}
+                  {(() => {
+                    const currentDayNumber = enochianDate.totalDayOfYear;
+                    const currentDayIndex = currentDayNumber - 1;
+                    const angle = (-90 - currentDayIndex * (360/366)) * Math.PI / 180;
+                    const textX = centerX + 310 * Math.cos(angle);
+                    const textY = centerY + 310 * Math.sin(angle);
+                    return (
+                      <text
+                        x={textX}
+                        y={textY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="text-sm fill-amber-400 font-bold"
+                        filter="url(#glowStrong)"
+                      >
+                        {currentDayNumber}
+                      </text>
+                    );
+                  })()}
                   <text x={centerX} y={centerY - 310} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
                     Day {enochianDate.totalDayOfYear} of 364
                   </text>
