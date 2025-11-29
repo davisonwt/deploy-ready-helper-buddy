@@ -43,6 +43,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false)
   const [levelUpText, setLevelUpText] = useState<{ level: number; title: string } | null>(null)
   const treeRef = useRef<SVGSVGElement>(null)
+  const lastLevelRef = useRef<number>(1)
 
   // Level-up animation function
   const triggerLevelUpAnimation = (newLevel: number) => {
@@ -140,6 +141,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
       }
 
       if (data) {
+        lastLevelRef.current = data.level
         setProgress(data)
         setPreviousLevel(data.level)
         updateTree(data)
@@ -157,12 +159,6 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     
     setProgress(data)
     
-    // Check for level up
-    if (data.level > oldLevel) {
-      triggerLevelUpAnimation(data.level)
-      setPreviousLevel(data.level)
-    }
-    
     // Trigger animations on XP increase
     if (data.xp > (progress?.xp || 0)) {
       const xpGained = data.xp - (progress?.xp || 0)
@@ -172,6 +168,13 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
         launchSparkles()
         floatingScore(xpGained)
       }
+    }
+
+    // Inside updateTree(data) — after all other updates
+    if (data.level > lastLevelRef.current) {
+      triggerLevelUpAnimation(data.level)
+      lastLevelRef.current = data.level
+      setPreviousLevel(data.level)
     }
   }
 
