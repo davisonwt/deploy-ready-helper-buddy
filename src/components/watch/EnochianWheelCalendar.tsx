@@ -325,31 +325,51 @@ const EnochianWheelCalendar = () => {
                     const dayNumber = i + 1;
                     // Start at top (-90 degrees) and count anti-clockwise
                     // Anti-clockwise means decreasing angle: -90, -90-delta, -90-2*delta, etc.
-                    const angle = (-90 - i * (360/366)) * Math.PI / 180;
-                    const x1 = centerX + 325 * Math.cos(angle);
-                    const y1 = centerY + 325 * Math.sin(angle);
-                    const x2 = centerX + 335 * Math.cos(angle);
-                    const y2 = centerY + 335 * Math.sin(angle);
+                    const angleRad = (-90 - i * (360/366)) * Math.PI / 180;
+                    const angleDeg = (-90 - i * (360/366));
+                    const x1 = centerX + 325 * Math.cos(angleRad);
+                    const y1 = centerY + 325 * Math.sin(angleRad);
+                    const x2 = centerX + 335 * Math.cos(angleRad);
+                    const y2 = centerY + 335 * Math.sin(angleRad);
                     const isCurrentDay = dayNumber === enochianDate.totalDayOfYear;
                     const isDay365Or366 = dayNumber === 365 || dayNumber === 366;
                     
-                    // Days 365 and 366 are dots, all others are lines
+                    // For current day: show number instead of line/dot
+                    if (isCurrentDay) {
+                      const textX = centerX + 330 * Math.cos(angleRad);
+                      const textY = centerY + 330 * Math.sin(angleRad);
+                      return (
+                        <text
+                          key={`day-${i}`}
+                          x={textX}
+                          y={textY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-sm fill-black font-bold"
+                          transform={`rotate(${angleDeg} ${textX} ${textY})`}
+                        >
+                          {dayNumber}
+                        </text>
+                      );
+                    }
+                    
+                    // Days 365 and 366 are dots (when not current day)
                     if (isDay365Or366) {
-                      const dotX = centerX + 330 * Math.cos(angle);
-                      const dotY = centerY + 330 * Math.sin(angle);
+                      const dotX = centerX + 330 * Math.cos(angleRad);
+                      const dotY = centerY + 330 * Math.sin(angleRad);
                       return (
                         <circle
                           key={`day-${i}`}
                           cx={dotX}
                           cy={dotY}
-                          r={isCurrentDay ? 4 : 3}
-                          fill={isCurrentDay ? '#fef3c7' : '#000000'}
-                          filter={isCurrentDay ? "url(#glowStrong)" : undefined}
-                          opacity={isCurrentDay ? 1 : 0.8}
+                          r={3}
+                          fill="#000000"
+                          opacity={0.8}
                         />
                       );
                     }
                     
+                    // All other days: show line
                     return (
                       <line
                         key={`day-${i}`}
@@ -357,34 +377,12 @@ const EnochianWheelCalendar = () => {
                         y1={y1}
                         x2={x2}
                         y2={y2}
-                        stroke={isCurrentDay ? '#fef3c7' : '#000000'}
-                        strokeWidth={isCurrentDay ? 4 : 2}
-                        filter={isCurrentDay ? "url(#glowStrong)" : undefined}
-                        opacity={isCurrentDay ? 1 : 0.8}
+                        stroke="#000000"
+                        strokeWidth={2}
+                        opacity={0.8}
                       />
                     );
                   })}
-                  {/* Display current day number next to the highlighted line */}
-                  {(() => {
-                    const currentDayNumber = enochianDate.totalDayOfYear;
-                    const currentDayIndex = currentDayNumber - 1;
-                    const angleRad = (-90 - currentDayIndex * (360/366)) * Math.PI / 180;
-                    const angleDeg = (-90 - currentDayIndex * (360/366));
-                    const textX = centerX + 310 * Math.cos(angleRad);
-                    const textY = centerY + 310 * Math.sin(angleRad);
-                    return (
-                      <text
-                        x={textX}
-                        y={textY}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="text-sm fill-black font-bold"
-                        transform={`rotate(${angleDeg} ${textX} ${textY})`}
-                      >
-                        {currentDayNumber}
-                      </text>
-                    );
-                  })()}
                   <text x={centerX} y={centerY - 310} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
                     Day {enochianDate.totalDayOfYear} of 364
                   </text>
