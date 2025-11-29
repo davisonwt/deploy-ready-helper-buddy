@@ -52,6 +52,11 @@ export default function BestowalCheckout() {
         if (!data?.success) {
           throw new Error(data?.message || 'Bestowal completion failed');
         }
+
+        // Award XP for bestowal (100 XP per product)
+        if (user) {
+          await supabase.rpc('add_xp_to_current_user', { amount: 100 });
+        }
       }
 
       // Show floating score for total amount

@@ -132,6 +132,12 @@ export function MusicLibraryTable({
       setLocalProcessing(true);
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
+      
+      // Award XP for music bestowal (100 XP)
+      if (user) {
+        await supabase.rpc('add_xp_to_current_user', { amount: 100 });
+      }
+      
       launchConfetti();
       toast.success('Bestowal completed! You can now download the track.');
     } catch (error: any) {
