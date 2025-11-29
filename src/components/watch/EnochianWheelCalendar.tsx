@@ -406,7 +406,6 @@ const EnochianWheelCalendar = () => {
                       const textX = centerX + 330 * Math.cos(angleRad);
                       const textY = centerY + 330 * Math.sin(angleRad);
                       // Rotate to align with radial line direction (pointing outward from center)
-                      // angleDeg is already the angle from top, so rotate by that amount
                       return (
                         <text
                           key={`day-${i}`}
@@ -415,7 +414,7 @@ const EnochianWheelCalendar = () => {
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-sm fill-black font-bold"
-                          transform={`rotate(${angleDeg + 90} ${textX} ${textY})`}
+                          transform={`rotate(${angleDeg} ${textX} ${textY})`}
                         >
                           {dayNumber}
                         </text>
