@@ -133,6 +133,7 @@ const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAcces
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
+const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -731,6 +732,13 @@ const App = () => (
                       <GamificationDashboard />
                     </Suspense>
                   </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/eternal-forest" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <EternalForestPage />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               <Route path="/search" element={
