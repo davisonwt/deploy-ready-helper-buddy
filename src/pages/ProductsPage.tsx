@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,8 @@ import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+
+const ITEMS_PER_PAGE = 20;
 
 // Helper function to check if a product is an album
 function isAlbum(product: any): boolean {
@@ -67,10 +69,17 @@ export default function ProductsPage() {
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ['products', selectedCategory, selectedSort],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      let query = supabase
         .from('products')
         .select(`
           *,
@@ -81,31 +90,36 @@ export default function ProductsPage() {
             is_verified
           )
         `)
-        .order('created_at', { ascending: false });
+        .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
+      // Apply category filter
+      if (selectedCategory !== 'all') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      // Apply sorting
+      switch (selectedSort) {
+        case 'Trending':
+          query = query.order('bestowal_count', { ascending: false });
+          break;
+        case 'Most Recent':
+        default:
+          query = query.order('created_at', { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
-    }
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < ITEMS_PER_PAGE) return undefined;
+      return allPages.length * ITEMS_PER_PAGE;
+    },
   });
 
-  const filteredProducts = products?.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category?.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesCategory;
-  }) || [];
-
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (selectedSort) {
-      case 'Trending':
-        return (b.bestowal_count || 0) - (a.bestowal_count || 0);
-      case 'Most Recent':
-      default:
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-  });
-
-  const quickPicks = sortedProducts.slice(0, 4);
-  const allProducts = sortedProducts;
+  const allProducts = data?.pages.flatMap(page => page) || [];
+  const quickPicks = allProducts.slice(0, 4);
 
   const handleBestow = (product: any, e?: React.MouseEvent) => {
     if (e) {
@@ -274,7 +288,7 @@ export default function ProductsPage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div id="creations-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {allProducts.map((product, index) => (
             <motion.div
               key={product.id}
@@ -339,15 +353,32 @@ export default function ProductsPage() {
         </div>
 
         {/* Load more button */}
-        {allProducts.length > 0 && (
-          <div className="text-center mt-16">
-            <button className="bg-white/20 hover:bg-white/30 backdrop-blur px-12 py-6 rounded-full text-2xl font-bold transition hover:scale-110">
-              More Creations Growing…
+        {hasNextPage && (
+          <div className="text-center mt-16" id="load-more-section">
+            <button
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur px-12 py-6 rounded-full text-2xl font-bold transition hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isFetchingNextPage ? (
+                <span className="flex items-center gap-3 justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                'More Creations Growing…'
+              )}
             </button>
           </div>
         )}
 
-        {allProducts.length === 0 && (
+        {!hasNextPage && allProducts.length > 0 && (
+          <div className="text-center mt-16">
+            <p className="text-xl opacity-70">You've reached the end of the garden for now 🌱</p>
+          </div>
+        )}
+
+        {allProducts.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <p className="text-white/80 text-lg">No products found in this category</p>
           </div>
