@@ -214,6 +214,7 @@ export default function ProductsPage() {
       const y = e?.clientY ?? window.innerHeight / 2;
       floatingScore(amount || 2, x, y);
       launchConfetti();
+      playSoundEffect('bestow', 0.8);
       toast.success('Added to basket!', {
         action: {
           label: 'View Basket',
@@ -251,6 +252,7 @@ export default function ProductsPage() {
       // Show floating score near the Quick Rain button (bottom right)
       floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
       launchConfetti();
+      playSoundEffect('quickRain', 1.0);
       toast.success(`Quick Rain! Added ${randomProduct.title} to basket`, {
         action: {
           label: 'View Basket',
