@@ -36,24 +36,34 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const [xpBarWidth, setXpBarWidth] = useState(0)
   const [treeShake, setTreeShake] = useState(false)
 
-  // Calculate XP bar width
+  // Calculate XP bar width based on points_to_next_level
   useEffect(() => {
     if (userPoints) {
-      const currentLevelXP = userPoints.total_points % 1000
-      const width = (currentLevelXP / 1000) * 100
-      setXpBarWidth(Math.min(width, 100))
+      // Calculate progress: if points_to_next_level is 100, and user has 60 points in this level,
+      // then progress is 40% (60/100)
+      // We need to calculate current level XP from total_points
+      const pointsPerLevel = 1000 // Standard level size
+      const currentLevelStartXP = (userPoints.level - 1) * pointsPerLevel
+      const currentLevelXP = userPoints.total_points - currentLevelStartXP
+      const pointsNeededForLevel = pointsPerLevel
+      const width = Math.min((currentLevelXP / pointsNeededForLevel) * 100, 100)
+      setXpBarWidth(Math.max(0, width))
     }
   }, [userPoints])
 
   // Check for level up (when level changes)
+  const [previousLevel, setPreviousLevel] = useState(1)
   useEffect(() => {
-    if (userPoints && userPoints.level > 1) {
+    if (userPoints && userPoints.level > previousLevel) {
       // Trigger confetti and tree shake on level up
       launchConfetti()
       setTreeShake(true)
       setTimeout(() => setTreeShake(false), 500)
+      setPreviousLevel(userPoints.level)
+    } else if (userPoints) {
+      setPreviousLevel(userPoints.level)
     }
-  }, [userPoints?.level])
+  }, [userPoints?.level, previousLevel])
 
   // Get user badges from achievements
   const userBadges = achievements
@@ -63,8 +73,10 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   // Calculate XP progress
   const currentXP = userPoints?.total_points || 0
   const xpToNext = userPoints?.points_to_next_level || 100
-  const levelXP = currentXP % 1000
-  const xpProgress = `${levelXP} / ${1000} XP`
+  const pointsPerLevel = 1000
+  const currentLevelStartXP = userPoints ? (userPoints.level - 1) * pointsPerLevel : 0
+  const levelXP = currentXP - currentLevelStartXP
+  const xpProgress = `${levelXP} / ${pointsPerLevel} XP`
 
   const handleShare = async () => {
     const shareText = `🌳 I'm a ${getLevelTitle(userPoints?.level || 1)} on S2G! Level ${userPoints?.level || 1} with ${currentXP} XP. Join me and grow your orchard!`
