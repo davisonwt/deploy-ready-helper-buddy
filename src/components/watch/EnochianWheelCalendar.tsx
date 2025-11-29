@@ -614,21 +614,27 @@ const EnochianWheelCalendar = () => {
 
                     const dayNum = i + 1;
 
-                    // Day 364 (orange, last day of month 12) should be at -89 degrees (near timeless days)
+                    // Keep original angle calculation for all days (orange line stays where it is)
 
-                    // Day 1 (green, first day of new year) should be immediately clockwise (right) after day 364
+                    // Only adjust day 1 (green) to be immediately clockwise (right) after day 364
 
-                    // Day 1 (i=0) should be at -89 + (360/364) = -88.011 degrees
+                    // Original calculation: start from timeless days position
 
-                    // Day 364 (i=363) should be at -89 degrees
+                    let angle = (-90 + (360/364) + (i / 364) * 360) * Math.PI / 180;
 
-                    // Calculate: startAngle + (i/364)*360
-                    // For day 364: -89 = startAngle + (363/364)*360
-                    // So: startAngle = -89 - 359.011 = -448.011, which is -88.011 (normalized)
+                    // If this is day 1, calculate where day 364 is and position day 1 immediately clockwise after it
 
-                    const startAngle = -89 - (363/364) * 360; // This gives -88.011 for day 1
+                    if (dayNum === 1) {
 
-                    const angle = (startAngle + (i / 364) * 360) * Math.PI / 180;
+                      // Day 364 (i=363) would be at: -90 + (360/364) + (363/364)*360 = -90 + 0.989 + 359.011 = 270 degrees
+
+                      const day364Angle = (-90 + (360/364) + (363 / 364) * 360) * Math.PI / 180;
+
+                      // Day 1 should be immediately clockwise (right) after day 364
+
+                      angle = day364Angle + (360/364) * Math.PI / 180;
+
+                    }
 
                     const isCurrentDay = dayNum === enochianDate.dayOfYear;
 
@@ -654,8 +660,14 @@ const EnochianWheelCalendar = () => {
 
                       const textY = center + 325 * Math.sin(angle);
 
-                      const startAngle = -89 - (363/364) * 360;
-                      const textAngle = startAngle + (i / 364) * 360;
+                      // Calculate text angle same as line angle
+                      let textAngle = -90 + (360/364) + (i / 364) * 360;
+                      
+                      // If day 1, position it clockwise after day 364
+                      if (dayNum === 1) {
+                        const day364Angle = -90 + (360/364) + (363 / 364) * 360;
+                        textAngle = day364Angle + (360/364);
+                      }
 
                       
 
