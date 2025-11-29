@@ -614,15 +614,15 @@ const EnochianWheelCalendar = () => {
 
                     const dayNum = i + 1;
 
-                    // Timeless day 366 is at -89 degrees (rightmost)
+                    // Timeless day 366 is at -89 degrees (rightmost timeless day)
 
                     // Day 1 should be immediately to the RIGHT (clockwise) of day 366
 
-                    // To go RIGHT (clockwise), we ADD degrees: -89 + offset
+                    // Orange stays at -89, green moves to RIGHT by adding: -89 + (360/364)
 
-                    // Use a larger offset to ensure it's clearly on the right side
+                    // Day 1 starts at -89 + (360/364) = -88.011 degrees (immediately clockwise/right)
 
-                    const angle = (-89 + 2 * (360/364) + (i / 364) * 360) * Math.PI / 180;
+                    const angle = (-89 + (360/364) + (i / 364) * 360) * Math.PI / 180;
 
                     const isCurrentDay = dayNum === enochianDate.dayOfYear;
 
@@ -648,7 +648,7 @@ const EnochianWheelCalendar = () => {
 
                       const textY = center + 325 * Math.sin(angle);
 
-                      const textAngle = -89 + 2 * (360/364) + (i / 364) * 360;
+                      const textAngle = -89 + (360/364) + (i / 364) * 360;
 
                       
 
