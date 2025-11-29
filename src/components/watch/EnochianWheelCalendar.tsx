@@ -188,6 +188,21 @@ const EnochianWheelCalendar = () => {
   const zodiacRotation   = -((enochianDate.dayOfYear - 1) / 30) * 30;
   const greatRotation    = -((enochianDate.dayOfYear - 1) / 91) * 90;
 
+  /* ----------  NEW EVEN SPACING + BORDER COLORS  ---------- */
+  const ringData = [
+    { r: 340, stroke: '#fbbf24', name: '365-day' },
+    { r: 315, stroke: '#f59e0b', name: '12-Zodiac' },
+    { r: 285, stroke: '#22c55e', name: '4-Great' },
+    { r: 255, stroke: '#10b981', name: '30-day' },
+    { r: 225, stroke: '#60a5fa', name: '52-week' },
+    { r: 195, stroke: '#ef4444', name: '31-day' },
+    { r: 165, stroke: '#1e40af', name: '18-part' },
+    { r: 135, stroke: '#8b5cf6', name: '7-weekday' },
+    { r: 105, stroke: '#ec4899', name: '4-part-day' },
+    { r: 75, stroke: '#9333ea', name: '2-DOOT' },
+    { r: 10, stroke: '#d97706', name: 'centre' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-4">
       <div className="max-w-7xl mx-auto">
@@ -215,13 +230,33 @@ const EnochianWheelCalendar = () => {
 
               {/* 12 ZODIAC CIRCLE - Render early so it's visible */}
               <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 30) * 360}, ${center}, ${center})`}>
-                <circle cx={center} cy={center} r="335" fill="none" stroke="#f59e0b" strokeWidth="6" opacity="1" />
+                <circle cx={center} cy={center} r={ringData.find(r => r.name === '12-Zodiac')?.r} fill="none" stroke={ringData.find(r => r.name === '12-Zodiac')?.stroke} strokeWidth="6" opacity="1" />
               </g>
 
               {/* 4 GREAT CONSTELLATIONS CIRCLE - Render early so it's visible */}
               <g transform={`rotate(${-((enochianDate.dayOfYear - 1) / 91) * 90}, ${center}, ${center})`}>
-                <circle cx={center} cy={center} r="305" fill="none" stroke="#22c55e" strokeWidth="6" opacity="1" />
+                <circle cx={center} cy={center} r={ringData.find(r => r.name === '4-Great')?.r} fill="none" stroke={ringData.find(r => r.name === '4-Great')?.stroke} strokeWidth="6" opacity="1" />
               </g>
+
+              {/* ----------  RENDER EACH RING WITH BORDER  ---------- */}
+              {ringData.map((ring, i) => {
+                // Skip zodiac and great constellations as they're rendered above with rotation
+                if (ring.name === '12-Zodiac' || ring.name === '4-Great') return null;
+                // Skip centre as it has special handling below
+                if (ring.name === 'centre') return null;
+                  return (
+                        <circle
+                    key={ring.name}
+                    cx={center}
+                    cy={center}
+                    r={ring.r}
+                    fill="none"
+                    stroke={ring.stroke}
+                    strokeWidth="3"
+                    opacity="0.9"
+                  />
+                );
+              })}
 
               {Object.entries(seasons).map(([s, d], i) => {
                 const ang = (i * 90 + 45 - 90) * Math.PI / 180;
@@ -233,9 +268,10 @@ const EnochianWheelCalendar = () => {
               {/* 365 DAY WHEEL */}
               <g transform={`rotate(${((enochianDate.dayOfYear - 1) / 364) * 360}, ${center}, ${center})`}>
                 {[365, 366].map((d, i) => {
+                  const outerRadius = ringData.find(r => r.name === '365-day')?.r || 340;
                   const ang = (-90 + (i - 0.5) * 2) * Math.PI / 180;
-                  const x = center + 360 * Math.cos(ang);
-                  const y = center + 360 * Math.sin(ang);
+                  const x = center + (outerRadius - 20) * Math.cos(ang);
+                  const y = center + (outerRadius - 20) * Math.sin(ang);
                   const cur = d === enochianDate.dayOfYear;
                   return <g key={`t-${d}`}><circle cx={x} cy={y} r="8" fill={cur ? '#a855f7' : '#9333ea'} stroke="#fbbf24" strokeWidth="2" />{cur && <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-white">{d}</text>}</g>;
                 })}
@@ -244,13 +280,15 @@ const EnochianWheelCalendar = () => {
                   const ang = (-90 + (i / 364) * 360) * Math.PI / 180;
                   const cur = day === enochianDate.dayOfYear;
                   const int = day === 91 || day === 182 || day === 273 || day === 364;
-                  const x1 = center + 345 * Math.cos(ang);
-                  const y1 = center + 345 * Math.sin(ang);
-                  const x2 = center + 375 * Math.cos(ang);
-                  const y2 = center + 375 * Math.sin(ang);
+                  const outerRadius = ringData.find(r => r.name === '365-day')?.r || 340;
+                  const x1 = center + (outerRadius - 25) * Math.cos(ang);
+                  const y1 = center + (outerRadius - 25) * Math.sin(ang);
+                  const x2 = center + outerRadius * Math.cos(ang);
+                  const y2 = center + outerRadius * Math.sin(ang);
                   if (cur && day !== 255) {
-                    const tx = center + 360 * Math.cos(ang);
-                    const ty = center + 360 * Math.sin(ang);
+                    const outerRadius = ringData.find(r => r.name === '365-day')?.r || 340;
+                    const tx = center + (outerRadius - 20) * Math.cos(ang);
+                    const ty = center + (outerRadius - 20) * Math.sin(ang);
                     return <g key={`d-${i}`}><circle cx={tx} cy={ty} r="14" fill="#fbbf24" opacity="0.3" /><circle cx={tx} cy={ty} r="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" /><text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${-90 + (i / 364) * 360}, ${tx}, ${ty})`} className="font-bold fill-amber-400" style={{ fontSize: '14px' }}>{day}</text></g>;
                   }
                   return <line key={`l-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={int ? '#f59e0b' : '#64748b'} strokeWidth={int ? '3' : '2.5'} strokeLinecap="round" opacity={int ? '0.9' : '0.7'} />;
@@ -263,11 +301,12 @@ const EnochianWheelCalendar = () => {
                   const ang = (i * 30 - 90) * Math.PI / 180;
                   const mid = (i * 30 + 15 - 90);
                   const midRad = mid * Math.PI / 180;
-                  const labelX = center + 320 * Math.cos(midRad);
-                  const labelY = center + 320 * Math.sin(midRad);
+                  const zodiacRadius = ringData.find(r => r.name === '12-Zodiac')?.r || 315;
+                  const labelX = center + (zodiacRadius - 5) * Math.cos(midRad);
+                  const labelY = center + (zodiacRadius - 5) * Math.sin(midRad);
                   const textRot = mid + 90;
                   return <g key={`z-${i}`}>
-                    <line x1={center + 330 * Math.cos(ang)} y1={center + 330 * Math.sin(ang)} x2={center + 335 * Math.cos(ang)} y2={center + 335 * Math.sin(ang)} stroke="#f59e0b" strokeWidth="4" />
+                    <line x1={center + (zodiacRadius - 15) * Math.cos(ang)} y1={center + (zodiacRadius - 15) * Math.sin(ang)} x2={center + zodiacRadius * Math.cos(ang)} y2={center + zodiacRadius * Math.sin(ang)} stroke={ringData.find(r => r.name === '12-Zodiac')?.stroke} strokeWidth="4" />
                     <text x={labelX} y={labelY - 8} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY - 8})`} fill="#fbbf24" fontSize="16" fontWeight="bold" style={{textShadow: '0 0 3px black'}}>{s.num}. {s.constellation}</text>
                     <text x={labelX} y={labelY + 8} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 8})`} fill="#f59e0b" fontSize="13" style={{textShadow: '0 0 3px black'}}>{s.tribe}</text>
                     <text x={labelX} y={labelY + 20} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 20})`} fill="#fbbf24" fontSize="12" style={{textShadow: '0 0 3px black'}}>{s.month}</text>
@@ -281,11 +320,12 @@ const EnochianWheelCalendar = () => {
                   const ang = (i * 90 - 90) * Math.PI / 180;
                   const mid = (i * 90 + 45 - 90);
                   const midRad = mid * Math.PI / 180;
-                  const labelX = center + 290 * Math.cos(midRad);
-                  const labelY = center + 290 * Math.sin(midRad);
+                  const greatRadius = ringData.find(r => r.name === '4-Great')?.r || 285;
+                  const labelX = center + (greatRadius - 5) * Math.cos(midRad);
+                  const labelY = center + (greatRadius - 5) * Math.sin(midRad);
                   const textRot = mid + 90;
                   return <g key={`g-${i}`}>
-                    <line x1={center + 300 * Math.cos(ang)} y1={center + 300 * Math.sin(ang)} x2={center + 305 * Math.cos(ang)} y2={center + 305 * Math.sin(ang)} stroke="#22c55e" strokeWidth="5" />
+                    <line x1={center + (greatRadius - 15) * Math.cos(ang)} y1={center + (greatRadius - 15) * Math.sin(ang)} x2={center + greatRadius * Math.cos(ang)} y2={center + greatRadius * Math.sin(ang)} stroke={ringData.find(r => r.name === '4-Great')?.stroke} strokeWidth="5" />
                     <text x={labelX} y={labelY - 6} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY - 6})`} fill="#10b981" fontSize="18" fontWeight="bold" style={{textShadow: '0 0 4px black'}}>{g.name}</text>
                     <text x={labelX} y={labelY + 10} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 10})`} fill="#22c55e" fontSize="14" style={{textShadow: '0 0 4px black'}}>{g.highPriest}</text>
                     <text x={labelX} y={labelY + 24} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${textRot}, ${labelX}, ${labelY + 24})`} fill="#34d399" fontSize="12" style={{textShadow: '0 0 4px black'}}>{g.tribes.join(' ')}</text>
@@ -295,39 +335,31 @@ const EnochianWheelCalendar = () => {
 
               {/* 30 DAY */}
               <g>
-                <circle cx={center} cy={center} r="255" fill="none" stroke="#10b981" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '30-day');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" /> : null;
+                })()}
                   {Array.from({ length: 30 }).map((_, i) => {
+                  const ring = ringData.find(r => r.name === '30-day');
+                  const ringRadius = ring?.r || 255;
                   const ang = (i * 12 - 90) * Math.PI / 180;
                   const mid = (i * 12 + 6 - 90);
                   const cur = enochianDate.daysInCurrentMonth === 30 && i + 1 === enochianDate.dayOfMonth;
                   return <g key={`30-${i}`}>
-                    <line x1={center + 235 * Math.cos(ang)} y1={center + 235 * Math.sin(ang)} x2={center + 255 * Math.cos(ang)} y2={center + 255 * Math.sin(ang)} stroke="#10b981" strokeWidth="2" />
-                    <text x={center + 245 * Math.cos(mid * Math.PI / 180)} y={center + 245 * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + 245 * Math.cos(mid * Math.PI / 180)} ${center + 245 * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-green-200' : 'fill-green-400'}`} style={{ fontSize: '14px' }}>{i + 1}</text>
+                    <line x1={center + (ringRadius - 20) * Math.cos(ang)} y1={center + (ringRadius - 20) * Math.sin(ang)} x2={center + ringRadius * Math.cos(ang)} y2={center + ringRadius * Math.sin(ang)} stroke={ring?.stroke} strokeWidth="2" />
+                    <text x={center + (ringRadius - 10) * Math.cos(mid * Math.PI / 180)} y={center + (ringRadius - 10) * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + (ringRadius - 10) * Math.cos(mid * Math.PI / 180)} ${center + (ringRadius - 10) * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-green-200' : 'fill-green-400'}`} style={{ fontSize: '14px' }}>{i + 1}</text>
                   </g>;
                 })}
-              </g>
+                </g>
 
 
-
-                {/* CIRCLE 2: 30 days - ONE BORDER ONLY */}
-
-                <g>
-
-                  <circle cx={center} cy={center} r="295" fill="none" stroke="#10b981" strokeWidth="3"/>
-                  {Array.from({ length: 30 }).map((_, i) => {
-                  const ang = (i * 12 - 90) * Math.PI / 180;
-                  const mid = (i * 12 + 6 - 90);
-                  const cur = enochianDate.daysInCurrentMonth === 30 && i + 1 === enochianDate.dayOfMonth;
-                  return <g key={`30-${i}`}>
-                    <line x1={center + 235 * Math.cos(ang)} y1={center + 235 * Math.sin(ang)} x2={center + 255 * Math.cos(ang)} y2={center + 255 * Math.sin(ang)} stroke="#10b981" strokeWidth="2" />
-                    <text x={center + 245 * Math.cos(mid * Math.PI / 180)} y={center + 245 * Math.sin(mid * Math.PI / 180)} textAnchor="middle" dominantBaseline="middle" transform={`rotate(${mid} ${center + 245 * Math.cos(mid * Math.PI / 180)} ${center + 245 * Math.sin(mid * Math.PI / 180)})`} className={`font-bold ${cur ? 'fill-green-200' : 'fill-green-400'}`} style={{ fontSize: '14px' }}>{i + 1}</text>
-                  </g>;
-                })}
-              </g>
 
               {/* 52 WEEKS */}
               <g>
-                <circle cx={center} cy={center} r="225" fill="none" stroke="#60a5fa" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '52-week');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                 {Array.from({ length: 52 }).map((_, w) => {
                   const ang = (w * 6.923 - 90) * Math.PI / 180;
                   return <g key={`w-${w}`}>
@@ -343,7 +375,10 @@ const EnochianWheelCalendar = () => {
 
               {/* 31 DAY */}
               <g>
-                <circle cx={center} cy={center} r="195" fill="none" stroke="#ef4444" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '31-day');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                   {Array.from({ length: 31 }).map((_, i) => {
                   const ang = (i * 11.612 - 90) * Math.PI / 180;
                   const mid = (i * 11.612 + 5.806 - 90);
@@ -357,7 +392,10 @@ const EnochianWheelCalendar = () => {
 
               {/* 18 PARTS – SACRED LENGTH */}
               <g>
-                <circle cx={center} cy={center} r="165" fill="none" stroke="#1e40af" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '18-part');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                 {sunData && Array.from({ length: 18 }).map((_, i) => {
                   const ang = (i * 20 - 90) * Math.PI / 180;
                   const mid = (i * 20 + 10 - 90);
@@ -372,7 +410,10 @@ const EnochianWheelCalendar = () => {
 
               {/* 7 WEEKDAYS */}
               <g>
-                <circle cx={center} cy={center} r="135" fill="none" stroke="#8b5cf6" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '7-weekday');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                   {Array.from({ length: 7 }).map((_, i) => {
                   const ang = (i * 51.428 - 90) * Math.PI / 180;
                   const mid = (i * 51.428 + 25.714 - 90);
@@ -389,7 +430,10 @@ const EnochianWheelCalendar = () => {
 
               {/* 4 PARTS OF DAY – PROPORTIONAL */}
               <g>
-                <circle cx={center} cy={center} r="105" fill="none" stroke="#ec4899" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '4-part-day');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                 {sunData && (() => {
                   const { dayParts, nightParts } = sunData;
                   const degPer = 360 / 18;
@@ -423,7 +467,10 @@ const EnochianWheelCalendar = () => {
 
               {/* 2 DOOT */}
               <g>
-                <circle cx={center} cy={center} r="75" fill="none" stroke="#9333ea" strokeWidth="3" />
+                {(() => {
+                  const ring = ringData.find(r => r.name === '2-DOOT');
+                  return ring ? <circle cx={center} cy={center} r={ring.r} fill="none" stroke={ring.stroke} strokeWidth="3" opacity="0.9" /> : null;
+                })()}
                 {[
                   { name: 'Helio-Yasef', day: 365, color: '#a855f7' },
                   { name: "Asfa'el", day: 366, color: '#7c3aed' }
@@ -442,28 +489,32 @@ const EnochianWheelCalendar = () => {
               </g>
 
               {/* CENTRE DISC */}
-              <circle cx={center} cy={center} r="10" fill="#0f172a" stroke="#d97706" strokeWidth="2" />
+              {(() => {
+                const ring = ringData.find(r => r.name === 'centre');
+                return ring ? <circle cx={center} cy={center} r={ring.r} fill="#0f172a" stroke={ring.stroke} strokeWidth="2" /> : null;
+              })()}
               {enochianDate.dayOfWeek === 7 && <circle cx={center} cy={center} r="8" fill="none" stroke="#60a5fa" strokeWidth="2" strokeDasharray="4,2"><animate attributeName="stroke-opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" /></circle>}
               <text x={center} y={center + 3} textAnchor="middle" className="text-[8px] fill-amber-400 font-bold">{enochianDate.dayOfMonth}</text>
 
               {/* PINK 255 MARKERS */}
                 {(() => {
+                const outerRadius = ringData.find(r => r.name === '365-day')?.r || 340;
                 const degPer = 360 / 364;
                 const pinkLine = -90 - (4 * degPer);
                 const pink255 = pinkLine - (254 * degPer);
                 const ang = pink255 * Math.PI / 180;
-                const tipX = center + 375 * Math.cos(ang);
-                const tipY = center + 375 * Math.sin(ang);
-                const outerX = center + 390 * Math.cos(ang);
-                const outerY = center + 390 * Math.sin(ang);
+                const tipX = center + outerRadius * Math.cos(ang);
+                const tipY = center + outerRadius * Math.sin(ang);
+                const outerX = center + (outerRadius + 15) * Math.cos(ang);
+                const outerY = center + (outerRadius + 15) * Math.sin(ang);
                 const p1 = (pink255 + 90) * Math.PI / 180;
                 const p2 = (pink255 - 90) * Math.PI / 180;
                 const b1x = outerX + 10 * Math.cos(p1);
                 const b1y = outerY + 10 * Math.sin(p1);
                 const b2x = outerX + 10 * Math.cos(p2);
                 const b2y = outerY + 10 * Math.sin(p2);
-                const tx = center + 420 * Math.cos(ang);
-                const ty = center + 420 * Math.sin(ang);
+                const tx = center + (outerRadius + 50) * Math.cos(ang);
+                const ty = center + (outerRadius + 50) * Math.sin(ang);
                 return <g>
                   <polygon points={`${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`} fill="#ec4899" stroke="#ec4899" strokeWidth="2" />
                   <text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" style={{ fill: '#ec4899', fontWeight: 'bold', fontSize: '28px', fontFamily: 'Arial, sans-serif' }}>255</text>
