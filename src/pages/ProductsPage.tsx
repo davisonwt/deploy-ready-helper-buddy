@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -64,9 +64,20 @@ function getCategoryColor(category: string) {
 }
 
 export default function ProductsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSort, setSelectedSort] = useState<string>('Most Recent');
-  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter') || 'all';
+  
+  // Initialize state from URL params
+  const getInitialCategory = () => {
+    if (filterParam === 'all' || !filterParam) return 'all';
+    if (filterParam === 'trending') return 'trending';
+    if (filterParam === 'ebook') return 'book';
+    return filterParam;
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
+  const [selectedSort, setSelectedSort] = useState<string>(filterParam === 'trending' ? 'Trending' : 'Most Recent');
+  const [activeFilter, setActiveFilter] = useState<string>(filterParam);
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
 

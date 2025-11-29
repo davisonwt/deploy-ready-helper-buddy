@@ -30,12 +30,12 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
 
   const mysterySeed = () => {
     alert("You just unlocked a hidden blessing! Check Community Music →")
-    navigate('/s2g-community-music')
+    navigate('/products?filter=music')
     closeGarden()
   }
 
   const surpriseMe = () => {
-    const routes = ['/s2g-community-music', '/marketing-videos', '/products']
+    const routes = ['/products?filter=music', '/products?filter=video', '/products']
     const randomRoute = routes[Math.floor(Math.random() * routes.length)]
     navigate(randomRoute)
     closeGarden()
@@ -56,12 +56,12 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
       badge: '2 new'
     },
     { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
-    { href: '/products', title: 'S2G Community Products', subtitle: 'Fresh drops every hour' },
+    { href: '/products', title: 'Community Creations', subtitle: 'Everything in one place' },
     { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
-    { href: '/s2g-community-music', title: 'S2G Community Music Library', subtitle: '26 new tracks · preview free' },
+    { href: '/products?filter=music', title: 'Community Music', subtitle: 'Now inside Creations' },
     { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
-    { href: '/s2g-community-library', title: 'S2G Community Library', subtitle: 'Free & paid resources' },
-    { href: '/marketing-videos', title: 'S2G Marketing Video Gallery', subtitle: '4 inspiring videos · autoplay' }
+    { href: '/products?filter=ebook', title: 'Community Library', subtitle: 'E-books, courses, docs' },
+    { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' }
   ]
 
   // Quick action routes - matching actual upload/create routes
