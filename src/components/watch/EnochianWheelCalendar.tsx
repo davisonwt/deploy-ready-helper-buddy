@@ -85,14 +85,33 @@ const EnochianWheelCalendar = () => {
   };
 
   const convertToEnochian = async (gregorianDate: Date, sunrise: Date, sunset: Date): Promise<EnochianDateState> => {
-    // Check if current time is before sunrise - if so, use previous day
-    const effectiveDate = gregorianDate < sunrise ? 
-      new Date(gregorianDate.getTime() - 24 * 60 * 60 * 1000) : 
-      gregorianDate;
+    // IMPORTANT: Day starts at sunrise, not midnight!
+    // Compare current time with today's sunrise time
+    const currentHour = gregorianDate.getHours();
+    const currentMinute = gregorianDate.getMinutes();
+    const sunriseHour = sunrise.getHours();
+    const sunriseMinute = sunrise.getMinutes();
+    
+    // Convert to minutes for accurate comparison
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+    const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute;
+    
+    // If current time is before sunrise, we're still on the previous calendar day
+    let effectiveDate = new Date(gregorianDate);
+    if (currentTimeMinutes < sunriseTimeMinutes) {
+      // Still on previous day - subtract one day
+      effectiveDate.setDate(effectiveDate.getDate() - 1);
+      console.log(`[Enochian Calendar] Before sunrise (${currentHour}:${currentMinute.toString().padStart(2, '0')} < ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')}), using previous day`);
+    }
 
     const year = effectiveDate.getFullYear();
     const springEquinox = getSpringEquinox(year);
-    const daysSinceEquinox = Math.floor((effectiveDate.getTime() - springEquinox.getTime()) / (1000 * 60 * 60 * 24));
+    // Calculate days since equinox using the effective date (date portion only, normalized to noon)
+    const effectiveDateNoon = new Date(effectiveDate);
+    effectiveDateNoon.setHours(12, 0, 0, 0);
+    const equinoxNoon = new Date(springEquinox);
+    equinoxNoon.setHours(12, 0, 0, 0);
+    const daysSinceEquinox = Math.floor((effectiveDateNoon.getTime() - equinoxNoon.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysSinceEquinox < 0) {
       const prevEquinox = getSpringEquinox(year - 1);
@@ -173,25 +192,15 @@ const EnochianWheelCalendar = () => {
   useEffect(() => {
     const updateCalendar = async () => {
       const now = new Date();
+      // Get today's sunrise/sunset times
       const { sunrise, sunset } = await getSunriseSunsetTimes(now);
-      
-      // Check if before sunrise - if so, use previous day's sunrise/sunset
-      let effectiveDate = now;
-      let effectiveSunrise = sunrise;
-      let effectiveSunset = sunset;
-      
-      if (now < sunrise) {
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const yesterdayTimes = await getSunriseSunsetTimes(yesterday);
-        effectiveDate = yesterday;
-        effectiveSunrise = yesterdayTimes.sunrise;
-        effectiveSunset = yesterdayTimes.sunset;
-      }
       
       setSunriseTime(sunrise);
       setSunsetTime(sunset);
       setCurrentDate(now);
-      const enochian = await convertToEnochian(now, effectiveSunrise, effectiveSunset);
+      
+      // convertToEnochian will handle the sunrise-based day calculation internally
+      const enochian = await convertToEnochian(now, sunrise, sunset);
       setEnochianDate(enochian);
     };
 
