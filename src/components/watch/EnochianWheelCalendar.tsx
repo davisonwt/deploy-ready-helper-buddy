@@ -614,25 +614,33 @@ const EnochianWheelCalendar = () => {
 
                     const dayNum = i + 1;
 
-                    // Keep original angle calculation for all days (orange line stays where it is)
+                    // Keep original angle calculation for all days EXCEPT day 1
 
-                    // Only adjust day 1 (green) to be immediately clockwise (right) after day 364
+                    // Day 364 (orange) stays at its original position
 
-                    // Original calculation: start from timeless days position
+                    // Day 1 (green) must be immediately clockwise (RIGHT) after day 364
 
-                    let angle = (-90 + (360/364) + (i / 364) * 360) * Math.PI / 180;
-
-                    // If this is day 1, calculate where day 364 is and position day 1 immediately clockwise after it
+                    let angle: number;
 
                     if (dayNum === 1) {
 
-                      // Day 364 (i=363) would be at: -90 + (360/364) + (363/364)*360 = -90 + 0.989 + 359.011 = 270 degrees
+                      // Calculate where day 364 actually is with original formula
 
-                      const day364Angle = (-90 + (360/364) + (363 / 364) * 360) * Math.PI / 180;
+                      const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
 
-                      // Day 1 should be immediately clockwise (right) after day 364
+                      // Day 1 should be immediately clockwise (RIGHT) after day 364
 
-                      angle = day364Angle + (360/364) * Math.PI / 180;
+                      // Add one day's worth of degrees: + (360/364)
+
+                      const day1AngleDeg = day364AngleDeg + (360/364);
+
+                      angle = day1AngleDeg * Math.PI / 180;
+
+                    } else {
+
+                      // All other days use original calculation
+
+                      angle = (-90 + (360/364) + (i / 364) * 360) * Math.PI / 180;
 
                     }
 
@@ -661,12 +669,15 @@ const EnochianWheelCalendar = () => {
                       const textY = center + 325 * Math.sin(angle);
 
                       // Calculate text angle same as line angle
-                      let textAngle = -90 + (360/364) + (i / 364) * 360;
+                      let textAngle: number;
                       
-                      // If day 1, position it clockwise after day 364
                       if (dayNum === 1) {
-                        const day364Angle = -90 + (360/364) + (363 / 364) * 360;
-                        textAngle = day364Angle + (360/364);
+                        // Day 1: position clockwise after day 364
+                        const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
+                        textAngle = day364AngleDeg + (360/364);
+                      } else {
+                        // All other days: original calculation
+                        textAngle = -90 + (360/364) + (i / 364) * 360;
                       }
 
                       
