@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
 import { launchConfetti } from '@/utils/confetti';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import { supabase } from '@/integrations/supabase/client';
 
 
 interface MusicTrack {
