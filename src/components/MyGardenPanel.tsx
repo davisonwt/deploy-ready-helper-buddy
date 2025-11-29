@@ -1,27 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 
-export function MyGardenPanel() {
-  const [isOpen, setIsOpen] = useState(false)
+interface MyGardenPanelProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   const navigate = useNavigate()
 
-  const openGarden = () => {
-    setIsOpen(true)
-    document.body.style.overflow = 'hidden' // Prevent background scrolling
-  }
-
   const closeGarden = () => {
-    setIsOpen(false)
+    onClose()
     document.body.style.overflow = '' // Restore scrolling
   }
 
-  // Cleanup on unmount
+  // Handle body scroll when panel opens/closes
   useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden' // Prevent background scrolling
+    } else {
+      document.body.style.overflow = '' // Restore scrolling
+    }
+    
     return () => {
       document.body.style.overflow = ''
     }
-  }, [])
+  }, [isOpen])
 
   const mysterySeed = () => {
     alert("You just unlocked a hidden blessing! Check Community Music →")
@@ -69,14 +74,6 @@ export function MyGardenPanel() {
 
   return (
     <>
-      {/* Open Garden Button */}
-      <button
-        onClick={openGarden}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gradient-to-r from-teal-500 to-cyan-400 hover:from-teal-400 hover:to-cyan-300 text-white font-bold px-8 py-4 rounded-full shadow-2xl transition-all duration-300 hover:shadow-xl text-xl"
-      >
-        <span className="text-3xl">My Garden</span>
-      </button>
-
       {/* Garden Panel */}
       <div
         id="s2g-garden"
