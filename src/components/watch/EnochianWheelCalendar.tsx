@@ -331,6 +331,24 @@ const EnochianWheelCalendar = () => {
                     const x2 = centerX + 335 * Math.cos(angle);
                     const y2 = centerY + 335 * Math.sin(angle);
                     const isCurrentDay = dayNumber === enochianDate.totalDayOfYear;
+                    const isDay365Or366 = dayNumber === 365 || dayNumber === 366;
+                    
+                    // Days 365 and 366 are dots, all others are lines
+                    if (isDay365Or366) {
+                      const dotX = centerX + 330 * Math.cos(angle);
+                      const dotY = centerY + 330 * Math.sin(angle);
+                      return (
+                        <circle
+                          key={`day-${i}`}
+                          cx={dotX}
+                          cy={dotY}
+                          r={isCurrentDay ? 4 : 3}
+                          fill={isCurrentDay ? '#fef3c7' : '#000000'}
+                          filter={isCurrentDay ? "url(#glowStrong)" : undefined}
+                          opacity={isCurrentDay ? 1 : 0.8}
+                        />
+                      );
+                    }
                     
                     return (
                       <line
