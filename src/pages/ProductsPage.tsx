@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
@@ -120,6 +120,37 @@ export default function ProductsPage() {
 
   const allProducts = data?.pages.flatMap(page => page) || [];
   const quickPicks = allProducts.slice(0, 4);
+
+  // Infinite scroll observer
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [handleLoadMore, hasNextPage, isFetchingNextPage]);
 
   const handleBestow = (product: any, e?: React.MouseEvent) => {
     if (e) {
@@ -288,7 +319,7 @@ export default function ProductsPage() {
           </select>
         </div>
 
-        <div id="creations-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div id="creations-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-6 pb-20">
           {allProducts.map((product, index) => (
             <motion.div
               key={product.id}
@@ -352,29 +383,32 @@ export default function ProductsPage() {
           ))}
         </div>
 
-        {/* Load more button */}
-        {hasNextPage && (
+        {/* Infinite scroll trigger element */}
+        <div ref={observerTarget} className="h-10" />
+
+        {/* Loading indicator - shows when fetching more */}
+        {isFetchingNextPage && (
+          <div id="loader" className="text-center py-12">
+            <span className="text-6xl animate-bounce">Growing…</span>
+          </div>
+        )}
+
+        {/* Load more button (fallback for manual loading) */}
+        {hasNextPage && !isFetchingNextPage && (
           <div className="text-center mt-16" id="load-more-section">
             <button
               onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur px-12 py-6 rounded-full text-2xl font-bold transition hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-white/20 hover:bg-white/30 backdrop-blur px-12 py-6 rounded-full text-2xl font-bold transition hover:scale-110"
             >
-              {isFetchingNextPage ? (
-                <span className="flex items-center gap-3 justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  Loading...
-                </span>
-              ) : (
-                'More Creations Growing…'
-              )}
+              More Creations Growing…
             </button>
           </div>
         )}
 
-        {!hasNextPage && allProducts.length > 0 && (
+        {/* End message */}
+        {!hasNextPage && allProducts.length > 0 && !isFetchingNextPage && (
           <div className="text-center mt-16">
-            <p className="text-xl opacity-70">You've reached the end of the garden for now 🌱</p>
+            <p className="text-xl opacity-70">You've seen everything for now 🌱 Come back soon!</p>
           </div>
         )}
 
