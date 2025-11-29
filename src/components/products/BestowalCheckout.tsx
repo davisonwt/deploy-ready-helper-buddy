@@ -54,6 +54,9 @@ export default function BestowalCheckout() {
         }
       }
 
+      // Show floating score for total amount
+      floatingScore(totalAmount);
+      launchConfetti();
       toast.success('Bestowal completed successfully!', {
         description: 'Thank you for supporting our sowers! Check your chat for invoice and messages.'
       });
