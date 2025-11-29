@@ -21,6 +21,7 @@ interface EnochianDateState {
 const EnochianWheelCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [sunriseTime, setSunriseTime] = useState<Date | null>(null);
+  const [sunsetTime, setSunsetTime] = useState<Date | null>(null);
   const [enochianDate, setEnochianDate] = useState<EnochianDateState>({ 
     month: 1, day: 1, year: 2025, weekDay: 4, sabbathWeek: 1,
     dayPart: 'Yom', totalDayOfYear: 1, isIntercalary: false
@@ -49,25 +50,41 @@ const EnochianWheelCalendar = () => {
     { num: 12, days: 31, portal: 3, season: 'Winter', name: 'Adar' }
   ];
 
-  // Get sunrise time (simplified - in production, use actual sunrise API)
-  const getSunriseTime = async (date: Date): Promise<Date> => {
-    // Simplified: assume sunrise at 6 AM local time
-    // In production, use sunrise-sunset API or calculation library
+  // Get sunrise and sunset times
+  const getSunriseSunsetTimes = async (date: Date): Promise<{ sunrise: Date; sunset: Date }> => {
+    // For now, use provided times: sunrise 05:13, sunset 19:26
+    // In production, integrate with sunrise-sunset API based on user location
     const sunrise = new Date(date);
-    sunrise.setHours(6, 0, 0, 0);
-    return sunrise;
+    sunrise.setHours(5, 13, 0, 0);
+    
+    const sunset = new Date(date);
+    sunset.setHours(19, 26, 0, 0);
+    
+    return { sunrise, sunset };
   };
 
   const getSpringEquinox = (year: number) => new Date(year, 2, 20);
 
-  const getDayPart = (hour: number): string => {
-    if (hour >= 6 && hour < 18) return 'Yom'; // Day
-    if (hour >= 18 && hour < 20) return 'Erev'; // Evening
-    if (hour >= 20 || hour < 4) return 'Laylah'; // Night
-    return 'Boqer'; // Morning
+  const getDayPart = (currentTime: Date, sunrise: Date, sunset: Date): string => {
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const timeInMinutes = hour * 60 + minute;
+    const sunriseMinutes = sunrise.getHours() * 60 + sunrise.getMinutes();
+    const sunsetMinutes = sunset.getHours() * 60 + sunset.getMinutes();
+    
+    // Day part calculation based on actual sunrise/sunset
+    if (timeInMinutes >= sunriseMinutes && timeInMinutes < sunsetMinutes) {
+      return 'Yom'; // Day (between sunrise and sunset)
+    } else if (timeInMinutes >= sunsetMinutes && timeInMinutes < sunsetMinutes + 120) {
+      return 'Erev'; // Evening (2 hours after sunset)
+    } else if (timeInMinutes >= sunsetMinutes + 120 || timeInMinutes < sunriseMinutes - 120) {
+      return 'Laylah'; // Night
+    } else {
+      return 'Boqer'; // Morning (2 hours before sunrise)
+    }
   };
 
-  const convertToEnochian = async (gregorianDate: Date, sunrise: Date): Promise<EnochianDateState> => {
+  const convertToEnochian = async (gregorianDate: Date, sunrise: Date, sunset: Date): Promise<EnochianDateState> => {
     // Check if current time is before sunrise - if so, use previous day
     const effectiveDate = gregorianDate < sunrise ? 
       new Date(gregorianDate.getTime() - 24 * 60 * 60 * 1000) : 
@@ -80,7 +97,7 @@ const EnochianWheelCalendar = () => {
     if (daysSinceEquinox < 0) {
       const prevEquinox = getSpringEquinox(year - 1);
       const daysSincePrevEquinox = Math.floor((effectiveDate.getTime() - prevEquinox.getTime()) / (1000 * 60 * 60 * 24));
-      return calculateEnochianDate(daysSincePrevEquinox, year - 1, effectiveDate);
+      return calculateEnochianDate(daysSincePrevEquinox, year - 1, effectiveDate, sunrise, sunset);
     } else if (daysSinceEquinox >= 364) {
       const timelessDay = daysSinceEquinox - 363;
       return { 
@@ -92,23 +109,27 @@ const EnochianWheelCalendar = () => {
         timelessDay,
         isIntercalary: true,
         totalDayOfYear: 365 + (timelessDay - 1),
-        dayPart: getDayPart(effectiveDate.getHours()),
+        dayPart: getDayPart(gregorianDate, sunrise, sunset),
         dayOf30Cycle: ((timelessDay - 1) % 30) + 1,
         dayOf31Cycle: ((timelessDay - 1) % 31) + 1
       };
     }
     
-    return calculateEnochianDate(daysSinceEquinox, year, effectiveDate);
+    return calculateEnochianDate(daysSinceEquinox, year, effectiveDate, sunrise, sunset);
   };
 
-  const calculateEnochianDate = (dayCount: number, year: number, gregorianDate: Date): EnochianDateState => {
+  const calculateEnochianDate = (dayCount: number, year: number, gregorianDate: Date, sunrise: Date, sunset: Date): EnochianDateState => {
     let remainingDays = dayCount;
     let totalDayOfYear = dayCount + 1;
     
     for (const m of monthStructure) {
       if (remainingDays < m.days) {
         const day = remainingDays + 1;
-        const weekDay = ((totalDayOfYear - 1) % 7) + 1;
+        // Weekday calculation: Year starts on Day 4 (weekday 4)
+        // Day 1 = weekday 4, Day 2 = weekday 5, Day 3 = weekday 6, Day 4 = weekday 7 (Sabbath), etc.
+        // Formula: ((totalDayOfYear - 1 + 3) % 7) + 1
+        // This maps: 0->4, 1->5, 2->6, 3->7, 4->1, 5->2, 6->3
+        const weekDay = ((totalDayOfYear - 1 + 3) % 7) + 1;
         const sabbathWeek = Math.floor((totalDayOfYear - 1) / 7) + 1;
         const isIntercalary = totalDayOfYear === 91 || totalDayOfYear === 182 || 
                               totalDayOfYear === 273 || totalDayOfYear === 364;
@@ -122,7 +143,7 @@ const EnochianWheelCalendar = () => {
           portal: m.portal, 
           season: m.season,
           monthName: m.name,
-          dayPart: getDayPart(gregorianDate.getHours()),
+          dayPart: getDayPart(gregorianDate, sunrise, sunset),
           totalDayOfYear,
           isIntercalary,
           dayOf30Cycle: ((day - 1) % 30) + 1,
@@ -139,7 +160,7 @@ const EnochianWheelCalendar = () => {
       weekDay: 7, 
       sabbathWeek: 52, 
       totalDayOfYear: 364,
-      dayPart: getDayPart(gregorianDate.getHours()),
+      dayPart: getDayPart(gregorianDate, sunrise, sunset),
       isIntercalary: false,
       dayOf30Cycle: 30,
       dayOf31Cycle: 31
@@ -149,10 +170,11 @@ const EnochianWheelCalendar = () => {
   useEffect(() => {
     const updateCalendar = async () => {
       const now = new Date();
-      const sunrise = await getSunriseTime(now);
+      const { sunrise, sunset } = await getSunriseSunsetTimes(now);
       setSunriseTime(sunrise);
+      setSunsetTime(sunset);
       setCurrentDate(now);
-      const enochian = await convertToEnochian(now, sunrise);
+      const enochian = await convertToEnochian(now, sunrise, sunset);
       setEnochianDate(enochian);
     };
 
@@ -482,7 +504,8 @@ const EnochianWheelCalendar = () => {
               </h3>
               <div className="space-y-2 text-xs text-amber-900/80">
                 <p><strong>Current Time:</strong> {currentDate.toLocaleTimeString()}</p>
-                <p><strong>Sunrise:</strong> {sunriseTime?.toLocaleTimeString() || 'Calculating...'}</p>
+                <p><strong>Sunrise:</strong> {sunriseTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '05:13'}</p>
+                <p><strong>Sunset:</strong> {sunsetTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '19:26'}</p>
                 <p><strong>Day Begins:</strong> At Sunrise</p>
                 <p><strong>Season:</strong> {enochianDate.season}</p>
               </div>
