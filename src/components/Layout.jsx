@@ -88,6 +88,7 @@ function Layout({ children }) {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  const [isGardenOpen, setIsGardenOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   
   // Update theme every 2 hours
@@ -157,6 +158,24 @@ function Layout({ children }) {
   // Check if current path is in any dropdown
   const isGroupActive = (group) => {
     return group.items.some(item => location.pathname === item.href)
+  }
+
+  // Check if current path matches any My Garden routes (for highlighting the button)
+  const isGardenActive = () => {
+    const gardenRoutes = [
+      '/my-orchards',
+      '/364yhvh-orchards',
+      '/my-products',
+      '/products',
+      '/music-library',
+      '/s2g-community-music',
+      '/my-s2g-library',
+      '/s2g-community-library',
+      '/marketing-videos',
+      '/create-orchard',
+      '/products/upload'
+    ]
+    return gardenRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))
   }
   
   const isActive = (href) => location.pathname === href
@@ -239,6 +258,41 @@ function Layout({ children }) {
                   </Link>
                 )
               })}
+
+              {/* My Garden Button - replaces old "My Content" dropdown */}
+              <button
+                onClick={() => setIsGardenOpen(true)}
+                className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
+                  ${isGardenActive() ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  browse-orchards-tour
+                `}
+                style={{
+                  backgroundColor: isGardenActive() ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: isGardenActive() ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: isGardenActive()
+                    ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  ringColor: currentTheme.accent,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isGardenActive()) {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isGardenActive()) {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                  }
+                }}
+              >
+                <User className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate text-center leading-tight">My Garden</span>
+              </button>
 
               {/* Grouped Navigation Dropdowns */}
               {groupedNavigation.map((group) => {
@@ -691,7 +745,7 @@ function Layout({ children }) {
       />
       
       {/* My Garden Panel */}
-      <MyGardenPanel />
+      <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
     </div>
   )
 }
