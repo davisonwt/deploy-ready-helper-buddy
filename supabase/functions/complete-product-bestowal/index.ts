@@ -306,6 +306,15 @@ serve(async (req) => {
       }
     });
 
+    // Award XP to bestower (100 XP per bestowal)
+    await supabase.rpc('add_xp', {
+      user_id_param: user.id,
+      amount: 100
+    }).catch((err) => {
+      console.error('Failed to award XP:', err);
+      // Don't fail the bestowal if XP award fails
+    });
+
     return createSuccessResponse({
       success: true,
       bestowalId: bestowal.id,
