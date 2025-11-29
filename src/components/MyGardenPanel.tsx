@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
+import { launchSparkles } from '@/utils/confetti'
 
 interface MyGardenPanelProps {
   isOpen: boolean
@@ -29,12 +30,14 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   }, [isOpen])
 
   const mysterySeed = () => {
+    launchSparkles();
     alert("You just unlocked a hidden blessing! Check Community Music →")
     navigate('/products?filter=music')
     closeGarden()
   }
 
   const surpriseMe = () => {
+    launchSparkles();
     const routes = ['/products?filter=music', '/products?filter=video', '/products']
     const randomRoute = routes[Math.floor(Math.random() * routes.length)]
     navigate(randomRoute)
