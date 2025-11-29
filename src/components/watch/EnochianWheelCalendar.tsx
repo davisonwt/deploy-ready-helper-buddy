@@ -750,6 +750,26 @@ const EnochianWheelCalendar = () => {
 
                   })}
 
+                  {/* Extra line at original Day 1 position (clockwise of Day 364) - regular color */}
+                  {(() => {
+                    const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
+                    const extraLineAngleDeg = day364AngleDeg + (360/364); // 1 space clockwise of Day 364
+                    const extraAngle = extraLineAngleDeg * Math.PI / 180;
+                    const x1 = center + 310 * Math.cos(extraAngle);
+                    const y1 = center + 310 * Math.sin(extraAngle);
+                    const x2 = center + 340 * Math.cos(extraAngle);
+                    const y2 = center + 340 * Math.sin(extraAngle);
+                    return (
+                      <line
+                        x1={x1} y1={y1} x2={x2} y2={y2}
+                        stroke="#64748b"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        opacity="0.7"
+                      />
+                    );
+                  })()}
+
                 </g>
 
 
