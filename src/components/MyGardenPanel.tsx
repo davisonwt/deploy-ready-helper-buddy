@@ -72,28 +72,29 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/tithing', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500' }
   ]
 
+  // Don't render anything if panel is closed
+  if (!isOpen) {
+    return null
+  }
+
   return (
     <>
-      {/* Garden Panel */}
+      {/* Garden Panel - Only visible when isOpen is true */}
       <div
         id="s2g-garden"
-        className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className="fixed inset-0 z-50 pointer-events-auto"
       >
         {/* Dark backdrop */}
         <div
           id="garden-backdrop"
           onClick={closeGarden}
-          className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 ${
-            isOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
 
         {/* Sliding panel */}
         <div
           id="garden-panel"
-          className={`absolute inset-y-0 left-0 w-full max-w-lg bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto ${
-            isOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          className="absolute inset-y-0 left-0 w-full max-w-lg bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0"
         >
           <div className="p-8 pb-32 space-y-8 text-white">
             {/* Close X */}
