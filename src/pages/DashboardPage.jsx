@@ -235,6 +235,10 @@ export default function DashboardPage() {
       
       const dayInfo = getDayInfo(dayOfYear)
       
+      // Create timestamp string in LOCAL time (not UTC)
+      // Format: YYYY-MM-DDTHH:mm:ss (local time, no timezone)
+      const localTimestamp = `${localYear}-${String(localMonth + 1).padStart(2, '0')}-${String(localDate).padStart(2, '0')}T${String(localHour).padStart(2, '0')}:${String(localMinute).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+      
       const newCalendarData = {
         year: creatorDate.year,
         month: creatorDate.month,
@@ -243,7 +247,7 @@ export default function DashboardPage() {
         part: creatorTime.part,
         dayOfYear: dayOfYear,
         season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : 'Regular Day',
-        timestamp: now.toISOString()
+        timestamp: localTimestamp // Use LOCAL time string, not UTC ISO string
       }
       
       console.log(`[Dashboard] Setting calendar data:`, newCalendarData)
@@ -657,8 +661,9 @@ export default function DashboardPage() {
                     Day {calendarData.dayOfYear} of {calendarData.year} • {calendarData.season}
                   </div>
                   <div className="text-xs font-mono opacity-60">
-                    {new Date(calendarData.timestamp).toLocaleString('en-ZA', { 
-                      timeZone: 'Africa/Johannesburg',
+                    {/* Display current LOCAL time - each user sees their own timezone */}
+                    {currentTime.toLocaleString(undefined, { 
+                      // Use user's LOCAL timezone - no hardcoded timezone!
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
