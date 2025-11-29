@@ -148,21 +148,49 @@ export default function DashboardPage() {
         console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       }
       
-      // Calculate Creator date using LOCAL date components (not UTC)
+      // Calculate Creator date using PURE LOCAL date arithmetic (NO UTC, NO getTime())
       // Epoch: March 20, 2025 = Year 6028, Month 1, Day 1 (LOCAL time)
       const epochYear = 2025
       const epochMonth = 2 // March (0-indexed)
       const epochDate = 20
       
-      // Calculate days difference using LOCAL dates only
-      const epochLocal = new Date(epochYear, epochMonth, epochDate, 12, 0, 0, 0)
-      const effectiveLocal = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
+      // Calculate days difference using PURE date arithmetic (no milliseconds, no UTC)
+      let totalDays = 0
       
-      // Calculate difference in LOCAL days (not UTC milliseconds)
-      const msDiff = effectiveLocal.getTime() - epochLocal.getTime()
-      const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000))
+      // Count days from epoch to effective date using local date components only
+      let currentYear = epochYear
+      let currentMonth = epochMonth
+      let currentDate = epochDate
       
-      console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}, Days since epoch: ${totalDays}`)
+      const gregorianDaysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+      
+      // Check for leap years
+      const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
+      
+      while (currentYear < effectiveYear || 
+             (currentYear === effectiveYear && currentMonth < effectiveMonth) ||
+             (currentYear === effectiveYear && currentMonth === effectiveMonth && currentDate < effectiveDate)) {
+        totalDays++
+        currentDate++
+        
+        let daysInCurrentMonth = gregorianDaysPerMonth[currentMonth]
+        if (currentMonth === 1 && isLeapYear(currentYear)) {
+          daysInCurrentMonth = 29 // February in leap year
+        }
+        
+        if (currentDate > daysInCurrentMonth) {
+          currentDate = 1
+          currentMonth++
+          if (currentMonth > 11) {
+            currentMonth = 0
+            currentYear++
+          }
+        }
+      }
+      
+      console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+      console.log(`[Dashboard] Epoch LOCAL: ${epochYear}-${epochMonth + 1}-${epochDate}`)
+      console.log(`[Dashboard] Days since epoch (PURE LOCAL): ${totalDays}`)
       
       // Calculate Creator calendar date
       const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
