@@ -39,6 +39,70 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const [progress, setProgress] = useState<UserProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const channelRef = useRef<any>(null)
+  const [previousLevel, setPreviousLevel] = useState(1)
+  const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false)
+  const [levelUpText, setLevelUpText] = useState<{ level: number; title: string } | null>(null)
+  const treeRef = useRef<SVGSVGElement>(null)
+
+  // Level-up animation function
+  const triggerLevelUpAnimation = (newLevel: number) => {
+    if (newLevel <= previousLevel) return
+
+    // 1. Divine flash
+    const flash = document.createElement('div')
+    flash.style.position = 'fixed'
+    flash.style.inset = '0'
+    flash.style.background = 'radial-gradient(circle, #fbbf24 0%, transparent 70%)'
+    flash.style.opacity = '0'
+    flash.style.pointerEvents = 'none'
+    flash.style.zIndex = '99999'
+    document.body.appendChild(flash)
+    
+    requestAnimationFrame(() => {
+      flash.style.transition = 'opacity 0.6s'
+      flash.style.opacity = '1'
+      setTimeout(() => { flash.style.opacity = '0' }, 300)
+      setTimeout(() => flash.remove(), 1000)
+    })
+
+    // 2. MASSIVE confetti + sparkles
+    launchConfetti()
+    launchConfetti() // twice = biblical
+    launchSparkles()
+    setTimeout(() => launchConfetti(), 300)
+
+    // 3. Show level-up text
+    setLevelUpText({ level: newLevel, title: getTitle(newLevel) })
+    setShowLevelUpAnimation(true)
+
+    // 4. Tree GROW animation
+    if (treeRef.current) {
+      treeRef.current.style.transition = 'transform 1.5s ease-out'
+      treeRef.current.style.transform = 'scale(1.15) translateY(-20px)'
+      setTimeout(() => {
+        if (treeRef.current) {
+          treeRef.current.style.transform = 'scale(1) translateY(0)'
+        }
+      }, 800)
+    }
+
+    // 5. Floating +LEVEL fruits
+    for (let i = 0; i < 12; i++) {
+      setTimeout(() => {
+        floatingScore(
+          newLevel * 10,
+          window.innerWidth / 2 + Math.random() * 300 - 150,
+          window.innerHeight / 2
+        )
+      }, i * 150)
+    }
+
+    // Hide animation after 4 seconds
+    setTimeout(() => {
+      setShowLevelUpAnimation(false)
+      setLevelUpText(null)
+    }, 4000)
+  }
 
   // Load user progress from Supabase
   const loadUserProgress = async () => {
@@ -77,6 +141,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
       if (data) {
         setProgress(data)
+        setPreviousLevel(data.level)
         updateTree(data)
       }
     } catch (error) {
@@ -88,12 +153,21 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
   // Update tree visualization based on progress
   const updateTree = (data: UserProgress) => {
+    const oldLevel = progress?.level || 1
+    
     setProgress(data)
+    
+    // Check for level up
+    if (data.level > oldLevel) {
+      triggerLevelUpAnimation(data.level)
+      setPreviousLevel(data.level)
+    }
     
     // Trigger animations on XP increase
     if (data.xp > (progress?.xp || 0)) {
       const xpGained = data.xp - (progress?.xp || 0)
-      if (xpGained > 0) {
+      if (xpGained > 0 && data.level === oldLevel) {
+        // Only show confetti/sparkles if not leveling up
         launchConfetti()
         launchSparkles()
         floatingScore(xpGained)
@@ -194,7 +268,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
           {/* LIVE TREE SVG */}
           <div className="relative mx-auto w-96 h-96 mb-12">
-            <svg id="live-tree" viewBox="0 0 400 500" className="w-full h-full">
+            <svg ref={treeRef} id="live-tree" viewBox="0 0 400 500" className="w-full h-full">
               {/* Trunk grows thicker every 5 levels */}
               <rect
                 id="trunk"
@@ -336,6 +410,41 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
             </div>
           )}
         </motion.div>
+
+        {/* Level-Up Animation Overlay */}
+        <AnimatePresence>
+          {showLevelUpAnimation && levelUpText && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 0 }}
+              animate={{ opacity: 1, scale: 1.2, y: -80 }}
+              exit={{ opacity: 0, scale: 0.8, y: -120 }}
+              transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[999999] text-center"
+            >
+              <div
+                className="text-8xl font-black"
+                style={{
+                  background: 'linear-gradient(to bottom, #facc15, #f43f5e)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  textShadow: '0 0 40px #fbbf24',
+                }}
+              >
+                LEVEL {levelUpText.level}
+              </div>
+              <div
+                className="text-5xl mt-4"
+                style={{
+                  color: '#fbbf24',
+                  textShadow: '0 0 30px #facc15',
+                }}
+              >
+                {levelUpText.title}!
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </AnimatePresence>
   )
