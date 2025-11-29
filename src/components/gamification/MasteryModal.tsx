@@ -156,12 +156,13 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   // Update tree visualization based on progress
   const updateTree = (data: UserProgress) => {
     const oldLevel = progress?.level || 1
+    const oldXp = progress?.xp || 0
     
     setProgress(data)
     
     // Trigger animations on XP increase
-    if (data.xp > (progress?.xp || 0)) {
-      const xpGained = data.xp - (progress?.xp || 0)
+    if (data.xp > oldXp) {
+      const xpGained = data.xp - oldXp
       if (xpGained > 0 && data.level === oldLevel) {
         // Only show confetti/sparkles if not leveling up
         launchConfetti()
