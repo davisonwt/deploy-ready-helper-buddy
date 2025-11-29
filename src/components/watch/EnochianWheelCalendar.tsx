@@ -608,15 +608,17 @@ const EnochianWheelCalendar = () => {
 
                   
 
-                  {/* Days 1-364 starting from left (-180 degrees) and going clockwise */}
+                  {/* Days 1-364 starting just anti-clockwise (left) of timeless days and going clockwise */}
 
                   {Array.from({ length: 364 }).map((_, i) => {
 
                     const dayNum = i + 1;
 
-                    // Start at -180 (left/9 o'clock) so day 1 is left of timeless days at top
+                    // Start just anti-clockwise (left) of timeless days at top (-90 degrees)
 
-                    const angle = (-180 + (i / 364) * 360) * Math.PI / 180;
+                    // Day 1 should be right next to timeless days, going anti-clockwise
+
+                    const angle = (-90 - (360/364) + (i / 364) * 360) * Math.PI / 180;
 
                     const isCurrentDay = dayNum === enochianDate.dayOfYear;
 
@@ -642,7 +644,7 @@ const EnochianWheelCalendar = () => {
 
                       const textY = center + 325 * Math.sin(angle);
 
-                      const textAngle = -180 + (i / 364) * 360;
+                      const textAngle = -90 - (360/364) + (i / 364) * 360;
 
                       
 
