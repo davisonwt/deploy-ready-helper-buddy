@@ -118,6 +118,23 @@ export default function ProductsPage() {
   const allProducts = data?.pages.flatMap(page => page) || [];
   const quickPicks = allProducts.slice(0, 4);
 
+  const handleFilter = (filterType: string) => {
+    setActiveFilter(filterType);
+    
+    if (filterType === 'trending') {
+      setSelectedCategory('trending');
+      setSelectedSort('Trending');
+    } else if (filterType === 'all') {
+      setSelectedCategory('all');
+      setSelectedSort('Most Recent');
+    } else {
+      // Map 'ebook' to 'book' for database query
+      const dbCategory = filterType === 'ebook' ? 'book' : filterType;
+      setSelectedCategory(dbCategory);
+      setSelectedSort('Most Recent');
+    }
+  };
+
   // Infinite scroll observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -295,25 +312,46 @@ export default function ProductsPage() {
             <span className="text-6xl">All Fresh Creations</span>
             <span className="text-2xl text-yellow-300 animate-pulse">Live • {allProducts.length} available</span>
           </h2>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-white/20 backdrop-blur rounded-xl px-6 py-3 text-lg border border-white/30"
+        </div>
+
+        {/* Filter candy bar */}
+        <div className="flex flex-wrap justify-center gap-4 my-10 px-6">
+          <button
+            onClick={() => handleFilter('all')}
+            className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
           >
-            <option value="all">All Categories</option>
-            <option value="music">Music</option>
-            <option value="art">Art</option>
-            <option value="book">E-Books</option>
-            <option value="video">Videos</option>
-          </select>
-          <select
-            value={selectedSort}
-            onChange={(e) => setSelectedSort(e.target.value)}
-            className="bg-white/20 backdrop-blur rounded-xl px-6 py-3 text-lg border border-white/30"
+            All Creations
+          </button>
+          <button
+            onClick={() => handleFilter('music')}
+            className={`filter-btn ${activeFilter === 'music' ? 'active' : ''}`}
           >
-            <option>Most Recent</option>
-            <option>Trending</option>
-          </select>
+            Music
+          </button>
+          <button
+            onClick={() => handleFilter('ebook')}
+            className={`filter-btn ${activeFilter === 'ebook' ? 'active' : ''}`}
+          >
+            E-Books & Courses
+          </button>
+          <button
+            onClick={() => handleFilter('art')}
+            className={`filter-btn ${activeFilter === 'art' ? 'active' : ''}`}
+          >
+            Art & Assets
+          </button>
+          <button
+            onClick={() => handleFilter('video')}
+            className={`filter-btn ${activeFilter === 'video' ? 'active' : ''}`}
+          >
+            Videos
+          </button>
+          <button
+            onClick={() => handleFilter('trending')}
+            className={`filter-btn ${activeFilter === 'trending' ? 'active' : ''}`}
+          >
+            Trending Now
+          </button>
         </div>
 
         <div id="creations-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-6 pb-20">
