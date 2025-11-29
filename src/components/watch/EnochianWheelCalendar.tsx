@@ -335,9 +335,13 @@ const EnochianWheelCalendar = () => {
                     const isDay365Or366 = dayNumber === 365 || dayNumber === 366;
                     
                     // For current day: show number instead of line/dot
+                    // Number is positioned exactly where the line would be (radius 325-335, centered at 330)
                     if (isCurrentDay) {
+                      // Position at the center of where the line would be (radius 330)
                       const textX = centerX + 330 * Math.cos(angleRad);
                       const textY = centerY + 330 * Math.sin(angleRad);
+                      // Rotate to align with radial line direction (pointing outward from center)
+                      // angleDeg is already the angle from top, so rotate by that amount
                       return (
                         <text
                           key={`day-${i}`}
@@ -346,7 +350,7 @@ const EnochianWheelCalendar = () => {
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-sm fill-black font-bold"
-                          transform={`rotate(${angleDeg} ${textX} ${textY})`}
+                          transform={`rotate(${angleDeg + 90} ${textX} ${textY})`}
                         >
                           {dayNumber}
                         </text>
