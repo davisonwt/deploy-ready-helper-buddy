@@ -608,21 +608,27 @@ const EnochianWheelCalendar = () => {
 
                   
 
-                  {/* Days 1-364 starting immediately clockwise (right) of timeless days and going clockwise */}
+                  {/* Days 1-364: Day 364 (orange) is last day of month 12, Day 1 (green) is first day of new year */}
 
                   {Array.from({ length: 364 }).map((_, i) => {
 
                     const dayNum = i + 1;
 
-                    // Timeless day 366 is at -89 degrees (rightmost timeless day)
+                    // Day 364 (orange, last day of month 12) should be at -89 degrees (near timeless days)
 
-                    // Day 1 should be immediately to the RIGHT (clockwise) of day 366
+                    // Day 1 (green, first day of new year) should be immediately clockwise (right) after day 364
 
-                    // Orange stays at -89, green moves to RIGHT by adding: -89 + (360/364)
+                    // Day 1 (i=0) should be at -89 + (360/364) = -88.011 degrees
 
-                    // Day 1 starts at -89 + (360/364) = -88.011 degrees (immediately clockwise/right)
+                    // Day 364 (i=363) should be at -89 degrees
 
-                    const angle = (-89 + (360/364) + (i / 364) * 360) * Math.PI / 180;
+                    // Calculate: startAngle + (i/364)*360
+                    // For day 364: -89 = startAngle + (363/364)*360
+                    // So: startAngle = -89 - 359.011 = -448.011, which is -88.011 (normalized)
+
+                    const startAngle = -89 - (363/364) * 360; // This gives -88.011 for day 1
+
+                    const angle = (startAngle + (i / 364) * 360) * Math.PI / 180;
 
                     const isCurrentDay = dayNum === enochianDate.dayOfYear;
 
@@ -648,7 +654,8 @@ const EnochianWheelCalendar = () => {
 
                       const textY = center + 325 * Math.sin(angle);
 
-                      const textAngle = -89 + (360/364) + (i / 364) * 360;
+                      const startAngle = -89 - (363/364) * 360;
+                      const textAngle = startAngle + (i / 364) * 360;
 
                       
 
