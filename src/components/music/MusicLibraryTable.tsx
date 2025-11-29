@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
+import { launchConfetti } from '@/utils/confetti';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 
@@ -131,6 +132,7 @@ export function MusicLibraryTable({
       setLocalProcessing(true);
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
+      launchConfetti();
       toast.success('Bestowal completed! You can now download the track.');
     } catch (error: any) {
       console.error('Bestowal error:', error);

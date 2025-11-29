@@ -79,6 +79,7 @@ export default function S2GCommunityLibraryPage() {
         }
       });
       if (result.data?.success) {
+        launchConfetti();
         toast.success('Giveaway access granted!');
         window.location.reload();
       }

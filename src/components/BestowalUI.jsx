@@ -8,6 +8,12 @@ import PaymentModal from './PaymentModal';
 import { WalletOnboardingGuide } from '@/components/wallet/WalletOnboardingGuide';
 import { WalletHelpModal } from '@/components/wallet/WalletHelpModal';
 
+// Import confetti utility
+let launchConfetti;
+if (typeof window !== 'undefined') {
+  launchConfetti = window.launchConfetti;
+}
+
 const BestowalUI = ({ orchard, onBestow }) => {
   const [selectedPockets, setSelectedPockets] = useState([]);
   const [selectedAmount, setSelectedAmount] = useState(null);
