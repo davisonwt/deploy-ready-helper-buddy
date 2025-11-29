@@ -97,12 +97,47 @@ export default function DashboardPage() {
   const [customDate, setCustomDate] = useState(null)
   const [calendarData, setCalendarData] = useState(null)
   
+  // Helper function to get sunrise/sunset times (using user-provided times)
+  const getSunriseSunsetTimes = (date) => {
+    const sunrise = new Date(date)
+    sunrise.setHours(5, 13, 0, 0) // User-provided sunrise: 05:13
+    
+    const sunset = new Date(date)
+    sunset.setHours(19, 26, 0, 0) // User-provided sunset: 19:26
+    
+    return { sunrise, sunset }
+  }
+
   // Calculate calendar data directly (without CalendarWheel component)
   useEffect(() => {
     const updateCalendarData = () => {
       const now = new Date()
-      const creatorDate = getCreatorDate(now)
-      const creatorTime = getCreatorTime(now, userLat, userLon)
+      
+      // IMPORTANT: Day starts at sunrise, not midnight!
+      // Get today's sunrise/sunset times
+      const { sunrise, sunset } = getSunriseSunsetTimes(now)
+      
+      // Compare current time with today's sunrise time
+      const currentHour = now.getHours()
+      const currentMinute = now.getMinutes()
+      const sunriseHour = sunrise.getHours()
+      const sunriseMinute = sunrise.getMinutes()
+      
+      // Convert to minutes for accurate comparison
+      const currentTimeMinutes = currentHour * 60 + currentMinute
+      const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
+      
+      // If current time is before sunrise, we're still on the previous calendar day
+      let effectiveDate = new Date(now)
+      if (currentTimeMinutes < sunriseTimeMinutes) {
+        // Still on previous day - subtract one day
+        effectiveDate.setDate(effectiveDate.getDate() - 1)
+        console.log(`[Dashboard] Before sunrise (${currentHour}:${currentMinute.toString().padStart(2, '0')} < ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')}), using previous day`)
+      }
+      
+      // Use effective date for calendar calculations
+      const creatorDate = getCreatorDate(effectiveDate)
+      const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
       
       // Calculate day of year
       const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
@@ -186,9 +221,21 @@ export default function DashboardPage() {
       )
     }
     
-    // Initialize custom date
+    // Initialize custom date (with sunrise-based calculation)
     const now = new Date()
-    setCustomDate(getCreatorDate(now))
+    const { sunrise } = getSunriseSunsetTimes(now)
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const sunriseHour = sunrise.getHours()
+    const sunriseMinute = sunrise.getMinutes()
+    const currentTimeMinutes = currentHour * 60 + currentMinute
+    const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
+    
+    let effectiveDate = new Date(now)
+    if (currentTimeMinutes < sunriseTimeMinutes) {
+      effectiveDate.setDate(effectiveDate.getDate() - 1)
+    }
+    setCustomDate(getCreatorDate(effectiveDate))
   }, [])
 
   // Update time every second
@@ -196,7 +243,21 @@ export default function DashboardPage() {
     const interval = setInterval(() => {
       const now = new Date()
       setCurrentTime(now)
-      setCustomDate(getCreatorDate(now))
+      
+      // Use sunrise-based day calculation
+      const { sunrise } = getSunriseSunsetTimes(now)
+      const currentHour = now.getHours()
+      const currentMinute = now.getMinutes()
+      const sunriseHour = sunrise.getHours()
+      const sunriseMinute = sunrise.getMinutes()
+      const currentTimeMinutes = currentHour * 60 + currentMinute
+      const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
+      
+      let effectiveDate = new Date(now)
+      if (currentTimeMinutes < sunriseTimeMinutes) {
+        effectiveDate.setDate(effectiveDate.getDate() - 1)
+      }
+      setCustomDate(getCreatorDate(effectiveDate))
     }, 1000)
 
     return () => clearInterval(interval)
