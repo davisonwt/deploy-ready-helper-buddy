@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
-import { launchSparkles, floatingScore } from '@/utils/confetti'
+import { launchSparkles, floatingScore, playSoundEffect } from '@/utils/confetti'
 
 interface MyGardenPanelProps {
   isOpen: boolean
