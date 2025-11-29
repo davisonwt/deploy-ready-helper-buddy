@@ -75,6 +75,16 @@ export const useDirectMusicUpload = () => {
       }
 
       console.log('🔥 Track created:', trackRecord)
+      
+      // Award XP for uploading music (100 XP)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.rpc('add_xp_to_current_user', { amount: 100 }).catch((err) => {
+          console.error('Failed to award XP:', err);
+          // Don't fail the upload if XP award fails
+        });
+      }
+      
       toast.success('Track uploaded successfully!')
       
       return trackRecord
