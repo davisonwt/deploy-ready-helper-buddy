@@ -368,9 +368,10 @@ const EnochianWheelCalendar = () => {
                   {(() => {
                     const currentDayNumber = enochianDate.totalDayOfYear;
                     const currentDayIndex = currentDayNumber - 1;
-                    const angle = (-90 - currentDayIndex * (360/366)) * Math.PI / 180;
-                    const textX = centerX + 310 * Math.cos(angle);
-                    const textY = centerY + 310 * Math.sin(angle);
+                    const angleRad = (-90 - currentDayIndex * (360/366)) * Math.PI / 180;
+                    const angleDeg = (-90 - currentDayIndex * (360/366));
+                    const textX = centerX + 310 * Math.cos(angleRad);
+                    const textY = centerY + 310 * Math.sin(angleRad);
                     return (
                       <text
                         x={textX}
@@ -379,6 +380,7 @@ const EnochianWheelCalendar = () => {
                         dominantBaseline="middle"
                         className="text-sm fill-amber-400 font-bold"
                         filter="url(#glowStrong)"
+                        transform={`rotate(${angleDeg + 90} ${textX} ${textY})`}
                       >
                         {currentDayNumber}
                       </text>
