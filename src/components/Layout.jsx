@@ -45,6 +45,7 @@ import { VoiceCommands } from "./voice/VoiceCommands"
 import { MyGardenPanel } from "./MyGardenPanel"
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
+import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -91,6 +92,18 @@ function Layout({ children }) {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   const [isGardenOpen, setIsGardenOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+  const [jitsiCall, setJitsiCall] = useState(null)
+
+  // Listen for Jitsi call start events
+  useEffect(() => {
+    const handleJitsiStart = (event) => {
+      setJitsiCall(event.detail)
+    }
+    window.addEventListener('jitsi-start-call', handleJitsiStart)
+    return () => {
+      window.removeEventListener('jitsi-start-call', handleJitsiStart)
+    }
+  }, [])
   
   // Update theme every 2 hours
   useEffect(() => {
@@ -750,8 +763,24 @@ function Layout({ children }) {
 
       {/* Your Progress Button & Modal */}
       <ProgressButton />
+
+      {/* Jitsi Video Window */}
+      {jitsiCall && (
+        <JitsiVideoWindow
+          isOpen={!!jitsiCall}
+          roomName={jitsiCall.roomName}
+          displayName={jitsiCall.displayName}
+          password={jitsiCall.password}
+          onClose={() => setJitsiCall(null)}
+        />
+      )}
     </div>
   )
 }
 
 export default Layout
+
+// Export startJitsiCall globally for use anywhere
+if (typeof window !== 'undefined') {
+  window.startJitsiCall = startJitsiCall
+}
