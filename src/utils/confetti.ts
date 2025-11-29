@@ -213,9 +213,37 @@ export function startGardenParticles() {
   };
 }
 
+// 4. Floating score numbers (+1, +5, +10 etc.)
+export function floatingScore(amount: number = 1, x?: number, y?: number) {
+  const score = document.createElement('div');
+  score.textContent = `+${amount} USDC`;
+  score.style.position = 'fixed';
+  score.style.left = (x ?? window.innerWidth / 2) + 'px';
+  score.style.top = (y ?? window.innerHeight / 2) + 'px';
+  score.style.transform = 'translate(-50%, -50%)';
+  score.style.fontSize = amount > 5 ? '3.5rem' : '2.8rem';
+  score.style.fontWeight = '900';
+  score.style.color = amount > 10 ? '#f43f5e' : amount > 5 ? '#facc15' : '#34d399';
+  score.style.pointerEvents = 'none';
+  score.style.zIndex = '99999';
+  score.style.textShadow = '0 0 20px rgba(0,0,0,0.8), 0 0 40px currentColor';
+  score.style.opacity = '0';
+  score.style.transition = 'all 1.4s cubic-bezier(0.22,1,0.36,1)';
+  document.body.appendChild(score);
+
+  // Animate in → up → fade
+  requestAnimationFrame(() => {
+    score.style.opacity = '1';
+    score.style.transform = `translate(-50%, -${200 + amount * 10}px) scale(${1 + amount * 0.1})`;
+  });
+
+  setTimeout(() => score.remove(), 1600);
+}
+
 // Make functions available globally
 if (typeof window !== 'undefined') {
   (window as any).launchConfetti = launchConfetti;
   (window as any).launchSparkles = launchSparkles;
   (window as any).startGardenParticles = startGardenParticles;
+  (window as any).floatingScore = floatingScore;
 }

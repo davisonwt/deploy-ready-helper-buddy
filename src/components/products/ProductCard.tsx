@@ -15,7 +15,7 @@ import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
-import { launchConfetti } from '@/utils/confetti';
+import { launchConfetti, floatingScore } from '@/utils/confetti';
 
 interface ProductCardProps {
   product: any;
@@ -140,7 +140,12 @@ export default function ProductCard({ product, featured, showActions = false }: 
         toast.error('Invalid product');
         return;
       }
+      const amount = parseFloat(product.price || product.bestow || 0);
       addToBasket(product);
+      // Show floating score at click position
+      const x = e?.clientX ?? window.innerWidth / 2;
+      const y = e?.clientY ?? window.innerHeight / 2;
+      floatingScore(amount || 2, x, y);
       launchConfetti();
       toast.success('Added to basket!', {
         action: {
