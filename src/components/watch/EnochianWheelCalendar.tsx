@@ -222,9 +222,10 @@ const EnochianWheelCalendar = () => {
               {/* BACKGROUND SEASONS */}
                 <g transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
                 {Object.entries(seasons).map(([s, d], i) => {
+                  const outerRadius = ringData.find(r => r.name === '365-day')?.r || 340;
                   const a = (i * 90 - 90) * Math.PI / 180;
                   const b = ((i + 1) * 90 - 90) * Math.PI / 180;
-                  return <path key={s} d={`M ${center} ${center} L ${center + 375 * Math.cos(a)} ${center + 375 * Math.sin(a)} A 375 375 0 0 1 ${center + 375 * Math.cos(b)} ${center + 375 * Math.sin(b)} Z`} fill={d.color} opacity="0.15" />;
+                  return <path key={s} d={`M ${center} ${center} L ${center + outerRadius * Math.cos(a)} ${center + outerRadius * Math.sin(a)} A ${outerRadius} ${outerRadius} 0 0 1 ${center + outerRadius * Math.cos(b)} ${center + outerRadius * Math.sin(b)} Z`} fill={d.color} opacity="0.15" />;
                 })}
               </g>
 
