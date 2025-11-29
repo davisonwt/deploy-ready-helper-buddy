@@ -15,6 +15,7 @@ import "./index.css";
 import React from "react";
 import * as ReactDOMPkg from "react-dom";
 import '@/utils/confetti'; // Initialize confetti utility
+import { startGardenParticles } from '@/utils/confetti';
 
 // Extend Window interface for cache clearing
 declare global {
@@ -102,6 +103,13 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
     } else {
       setTimeout(registerServiceWorker, 2000);
     }
+  });
+}
+
+// Auto-start floating garden particles when page loads
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    startGardenParticles();
   });
 }
 
