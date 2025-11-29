@@ -7,6 +7,7 @@ import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { launchConfetti } from '@/utils/confetti';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -454,7 +455,10 @@ export default function ProductsPage() {
         {hasNextPage && !isFetchingNextPage && (
           <div className="text-center mt-16" id="load-more-section">
             <button
-              onClick={() => fetchNextPage()}
+              onClick={() => {
+                fetchNextPage();
+                launchConfetti();
+              }}
               className="bg-white/20 hover:bg-white/30 backdrop-blur px-12 py-6 rounded-full text-2xl font-bold transition hover:scale-110"
             >
               More Creations Growing…
