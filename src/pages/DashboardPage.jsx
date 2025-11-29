@@ -231,9 +231,11 @@ export default function DashboardPage() {
       }
       dayOfYear += creatorDate.day
       
+      console.log(`[Dashboard] Day of year calculated: ${dayOfYear}`)
+      
       const dayInfo = getDayInfo(dayOfYear)
       
-      setCalendarData({
+      const newCalendarData = {
         year: creatorDate.year,
         month: creatorDate.month,
         dayOfMonth: creatorDate.day,
@@ -242,9 +244,13 @@ export default function DashboardPage() {
         dayOfYear: dayOfYear,
         season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : 'Regular Day',
         timestamp: now.toISOString()
-      })
+      }
+      
+      console.log(`[Dashboard] Setting calendar data:`, newCalendarData)
+      setCalendarData(newCalendarData)
     }
     
+    // Run immediately and update every minute
     updateCalendarData()
     const interval = setInterval(updateCalendarData, 60000) // Update every minute
     
