@@ -66,6 +66,7 @@ function getCategoryColor(category: string) {
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSort, setSelectedSort] = useState<string>('Most Recent');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
 
@@ -93,19 +94,15 @@ export default function ProductsPage() {
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
       // Apply category filter
-      if (selectedCategory !== 'all') {
+      if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
         query = query.eq('category', selectedCategory);
       }
 
-      // Apply sorting
-      switch (selectedSort) {
-        case 'Trending':
-          query = query.order('bestowal_count', { ascending: false });
-          break;
-        case 'Most Recent':
-        default:
-          query = query.order('created_at', { ascending: false });
-          break;
+      // Apply sorting - if trending filter is selected, sort by bestowal_count
+      if (selectedCategory === 'trending' || selectedSort === 'Trending') {
+        query = query.order('bestowal_count', { ascending: false });
+      } else {
+        query = query.order('created_at', { ascending: false });
       }
 
       const { data, error } = await query;
@@ -426,6 +423,29 @@ export default function ProductsPage() {
       >
         Quick Rain 0.50 USDC
       </button>
+
+      {/* Filter button styles */}
+      <style>{`
+        .filter-btn {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 1rem 2rem;
+          border-radius: 9999px;
+          font-weight: bold;
+          transition: all 0.3s;
+          color: white;
+          border: none;
+          cursor: pointer;
+        }
+        .filter-btn:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(1.1);
+        }
+        .filter-btn.active {
+          background: linear-gradient(to right, #14b8a6, #06b6d4);
+          color: white;
+        }
+      `}</style>
     </div>
   );
 }
