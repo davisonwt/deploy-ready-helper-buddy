@@ -171,10 +171,24 @@ const EnochianWheelCalendar = () => {
     const updateCalendar = async () => {
       const now = new Date();
       const { sunrise, sunset } = await getSunriseSunsetTimes(now);
+      
+      // Check if before sunrise - if so, use previous day's sunrise/sunset
+      let effectiveDate = now;
+      let effectiveSunrise = sunrise;
+      let effectiveSunset = sunset;
+      
+      if (now < sunrise) {
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const yesterdayTimes = await getSunriseSunsetTimes(yesterday);
+        effectiveDate = yesterday;
+        effectiveSunrise = yesterdayTimes.sunrise;
+        effectiveSunset = yesterdayTimes.sunset;
+      }
+      
       setSunriseTime(sunrise);
       setSunsetTime(sunset);
       setCurrentDate(now);
-      const enochian = await convertToEnochian(now, sunrise, sunset);
+      const enochian = await convertToEnochian(now, effectiveSunrise, effectiveSunset);
       setEnochianDate(enochian);
     };
 
@@ -417,7 +431,7 @@ const EnochianWheelCalendar = () => {
                     );
                   })}
                   <text x={centerX} y={centerY - 150} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
-                    Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay} of Week
+                    Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay} of the week
                   </text>
                 </g>
 
@@ -491,7 +505,7 @@ const EnochianWheelCalendar = () => {
                 <p><strong>Circle 2 (30-day):</strong> Day {(enochianDate.dayOf30Cycle || enochianDate.day)}</p>
                 <p><strong>Circle 3 (52 weeks):</strong> Week {enochianDate.sabbathWeek}</p>
                 <p><strong>Circle 4 (31-day):</strong> Day {(enochianDate.dayOf31Cycle || enochianDate.day)} of Month {enochianDate.month}</p>
-                <p><strong>Circle 5 (7 days):</strong> Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay}</p>
+                <p><strong>Circle 5 (7 days):</strong> Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay} of the week</p>
                 <p><strong>Circle 6 (4 parts):</strong> {enochianDate.dayPart}</p>
                 <p><strong>Circle 7 (DOOT):</strong> {enochianDate.timelessDay ? `Day ${enochianDate.timelessDay}` : 'Regular Day'}</p>
               </div>
@@ -504,8 +518,8 @@ const EnochianWheelCalendar = () => {
               </h3>
               <div className="space-y-2 text-xs text-amber-900/80">
                 <p><strong>Current Time:</strong> {currentDate.toLocaleTimeString()}</p>
-                <p><strong>Sunrise:</strong> {sunriseTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '05:13'}</p>
-                <p><strong>Sunset:</strong> {sunsetTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '19:26'}</p>
+                <p><strong>Sunrise:</strong> {sunriseTime ? `${String(sunriseTime.getHours()).padStart(2, '0')}:${String(sunriseTime.getMinutes()).padStart(2, '0')}` : '05:13'}</p>
+                <p><strong>Sunset:</strong> {sunsetTime ? `${String(sunsetTime.getHours()).padStart(2, '0')}:${String(sunsetTime.getMinutes()).padStart(2, '0')}` : '19:26'}</p>
                 <p><strong>Day Begins:</strong> At Sunrise</p>
                 <p><strong>Season:</strong> {enochianDate.season}</p>
               </div>
