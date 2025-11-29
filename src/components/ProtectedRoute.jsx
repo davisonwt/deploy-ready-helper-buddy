@@ -11,23 +11,24 @@ function AuthProtectedRoute({ children }) {
   return <>{children}</>
 }
 
-// Wrapper to defer rendering until React is fully initialized
-function SafeRoleProtectedRoute({ children, allowedRoles }) {
-  const [isReady, setIsReady] = useState(false)
+// Wrapper component that delays rendering until React is ready
+function DelayedRoleProtectedRoute({ children, allowedRoles }) {
+  const [ready, setReady] = useState(false)
   
   useEffect(() => {
-    // Defer rendering until next tick to ensure React dispatcher is ready
-    const timer = setTimeout(() => setIsReady(true), 0)
+    // Longer delay to ensure React dispatcher is fully initialized
+    const timer = setTimeout(() => setReady(true), 200)
     return () => clearTimeout(timer)
   }, [])
   
-  if (!isReady) {
+  if (!ready) {
     return <LoadingSpinner full text="Initializing..." />
   }
   
   return <RoleProtectedRouteInner allowedRoles={allowedRoles}>{children}</RoleProtectedRouteInner>
 }
 
+// Inner component that uses hooks - only rendered after delay
 function RoleProtectedRouteInner({ children, allowedRoles = [] }) {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { userRoles, hasRole, loading: rolesLoading } = useUserRoles()
@@ -46,7 +47,7 @@ function RoleProtectedRouteInner({ children, allowedRoles = [] }) {
 export default function ProtectedRoute({ children, allowedRoles = null }) {
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
   return shouldCheckRoles ? (
-    <SafeRoleProtectedRoute allowedRoles={allowedRoles || []}>{children}</SafeRoleProtectedRoute>
+    <DelayedRoleProtectedRoute allowedRoles={allowedRoles || []}>{children}</DelayedRoleProtectedRoute>
   ) : (
     <AuthProtectedRoute>{children}</AuthProtectedRoute>
   )
