@@ -783,4 +783,6 @@ export default Layout
 // Export startJitsiCall globally for use anywhere
 if (typeof window !== 'undefined') {
   window.startJitsiCall = startJitsiCall
+  // Also export as startJitsi for HTML onclick compatibility
+  window.startJitsi = startJitsiCall
 }
