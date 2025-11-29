@@ -104,10 +104,26 @@ const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
-const MusicLibraryPage = lazy(() => import("./pages/MusicLibraryPage").catch((error) => {
-  console.error('Failed to load MusicLibraryPage:', error);
-  return { default: () => <div className="p-8 text-center">Failed to load Music Library. Please refresh the page.</div> };
-}));
+const MusicLibraryPage = lazy(() => 
+  import("./pages/MusicLibraryPage").catch((error) => {
+    console.error('Failed to load MusicLibraryPage:', error);
+    // Return a fallback component module
+    return Promise.resolve({
+      default: () => (
+        <div className="p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Failed to load Music Library</h2>
+          <p className="mb-4">Please refresh the page or try again later.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-500 text-white"
+          >
+            Refresh Page
+          </button>
+        </div>
+      )
+    });
+  })
+);
 const MyS2GLibraryPage = lazy(() => import("./pages/MyS2GLibraryPage"));
 const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPage"));
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
