@@ -634,7 +634,9 @@ const EnochianWheelCalendar = () => {
 
                       // Position day 1 immediately clockwise (to the RIGHT) - add positive degrees
 
-                      const day1AngleDeg = day364AngleDeg + (360/364);
+                      // Use a larger offset to make it clearly visible on the right side
+
+                      const day1AngleDeg = day364AngleDeg + (360/364) * 2; // Double the offset to make it more obvious
 
                       // Convert to radians
 
