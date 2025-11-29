@@ -14,6 +14,7 @@ import { logReactDiagnostics } from '@/utils/reactDuplicateDetector';
 import "./index.css";
 import React from "react";
 import * as ReactDOMPkg from "react-dom";
+import '@/utils/confetti'; // Initialize confetti utility
 
 // Extend Window interface for cache clearing
 declare global {
