@@ -1,10 +1,8 @@
-import React, { Suspense, lazy } from 'react'
+import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-
-// Lazy load the role-checking component to avoid hooks issues during flushSync
-const RoleChecker = lazy(() => import('./RoleChecker'))
+import RoleChecker from './RoleChecker'
 
 function AuthProtectedRoute({ children }) {
   const { isAuthenticated, loading: authLoading } = useAuth()
@@ -13,18 +11,10 @@ function AuthProtectedRoute({ children }) {
   return <>{children}</>
 }
 
-function RoleProtectedRoute({ children, allowedRoles = [] }) {
-  return (
-    <Suspense fallback={<LoadingSpinner full text="Loading permissions..." />}>
-      <RoleChecker allowedRoles={allowedRoles}>{children}</RoleChecker>
-    </Suspense>
-  )
-}
-
 export default function ProtectedRoute({ children, allowedRoles = null }) {
   const shouldCheckRoles = Array.isArray(allowedRoles) && allowedRoles.length > 0
   return shouldCheckRoles ? (
-    <RoleProtectedRoute allowedRoles={allowedRoles || []}>{children}</RoleProtectedRoute>
+    <RoleChecker allowedRoles={allowedRoles}>{children}</RoleChecker>
   ) : (
     <AuthProtectedRoute>{children}</AuthProtectedRoute>
   )
