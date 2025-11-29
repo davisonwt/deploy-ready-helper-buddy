@@ -77,6 +77,9 @@ const BestowalUI = ({ orchard, onBestow }) => {
   };
 
   const handlePaymentComplete = () => {
+    if (typeof window !== 'undefined' && window.launchConfetti) {
+      window.launchConfetti();
+    }
     setShowPaymentModal(false);
     setSelectedPockets([]);
     setSelectedAmount(null);
