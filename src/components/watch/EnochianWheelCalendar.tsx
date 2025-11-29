@@ -314,20 +314,30 @@ const EnochianWheelCalendar = () => {
                     </feComponentTransfer>
                   </filter>
                   
-                  {/* Radial gradient for elevated circle depth */}
-                  <radialGradient id="elevatedCircleGradient" cx="50%" cy="30%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4"/>
-                    <stop offset="30%" stopColor="#e2e8f0" stopOpacity="0.3"/>
-                    <stop offset="70%" stopColor="#94a3b8" stopOpacity="0.5"/>
-                    <stop offset="100%" stopColor="#475569" stopOpacity="0.6"/>
+                  {/* Radial gradient for elevated circle - bright top, dark bottom */}
+                  <radialGradient id="elevatedCircleGradient" cx="50%" cy="20%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8"/>
+                    <stop offset="25%" stopColor="#f8fafc" stopOpacity="0.7"/>
+                    <stop offset="50%" stopColor="#e2e8f0" stopOpacity="0.6"/>
+                    <stop offset="75%" stopColor="#94a3b8" stopOpacity="0.7"/>
+                    <stop offset="100%" stopColor="#475569" stopOpacity="0.8"/>
                   </radialGradient>
+                  
+                  {/* Strong vertical gradient for 3D bevel effect */}
+                  <linearGradient id="elevatedBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/>
+                    <stop offset="15%" stopColor="#f1f5f9" stopOpacity="0.7"/>
+                    <stop offset="50%" stopColor="#cbd5e1" stopOpacity="0.4"/>
+                    <stop offset="85%" stopColor="#64748b" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="#334155" stopOpacity="0.8"/>
+                  </linearGradient>
                   
                   {/* Highlight for top edge of elevated circle */}
                   <linearGradient id="elevatedHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6"/>
-                    <stop offset="20%" stopColor="#f1f5f9" stopOpacity="0.4"/>
-                    <stop offset="50%" stopColor="#cbd5e1" stopOpacity="0.2"/>
-                    <stop offset="100%" stopColor="#64748b" stopOpacity="0.1"/>
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="1"/>
+                    <stop offset="10%" stopColor="#f8fafc" stopOpacity="0.8"/>
+                    <stop offset="30%" stopColor="#e2e8f0" stopOpacity="0.5"/>
+                    <stop offset="100%" stopColor="#64748b" stopOpacity="0.2"/>
                   </linearGradient>
                 </defs>
 
@@ -357,70 +367,88 @@ const EnochianWheelCalendar = () => {
 
                 {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
                 {/* Top middle line is Day 1, counting anti-clockwise */}
-                {/* Elevated outer circle with STRONG 3D depth effect - RAISED ABOVE inner circles */}
+                {/* Elevated outer circle - TRUE 3D RAISED EFFECT */}
                 <g>
-                  {/* Strong outer shadow BELOW - creates pronounced elevation effect */}
+                  {/* Deep shadow BELOW - creates strong elevation */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY + 10} 
-                    r="333" 
-                    fill="rgba(0,0,0,0.25)" 
+                    cy={centerY + 12} 
+                    r="334" 
+                    fill="rgba(0,0,0,0.4)" 
                     filter="url(#strongElevationShadow)"
+                    opacity="0.8"
+                  />
+                  
+                  {/* Medium shadow layer */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY + 9} 
+                    r="333" 
+                    fill="rgba(0,0,0,0.3)" 
                     opacity="0.7"
                   />
                   
-                  {/* Secondary shadow layer */}
+                  {/* Light shadow layer */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY + 8} 
+                    cy={centerY + 6} 
                     r="332" 
                     fill="rgba(0,0,0,0.2)" 
                     opacity="0.6"
                   />
                   
-                  {/* Main elevated circle - positioned UP to appear raised */}
+                  {/* Base circle with bevel gradient - creates 3D thickness */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY - 3} 
+                    cy={centerY - 4} 
+                    r="331" 
+                    fill="url(#elevatedBevel)" 
+                    opacity="0.9"
+                  />
+                  
+                  {/* Main elevated circle - positioned HIGHER to appear raised */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 5} 
                     r="330" 
                     fill="url(#elevatedCircleGradient)" 
                     stroke="url(#metallicSilver)" 
-                    strokeWidth="5" 
+                    strokeWidth="6" 
                     filter="url(#elevatedShadow)"
                     opacity="1"
                   />
                   
-                  {/* Bright top highlight - simulates light hitting raised top edge */}
+                  {/* Bright top edge highlight - simulates light hitting raised top */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 7} 
+                    r="329" 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.9)" 
+                    strokeWidth="5" 
+                    opacity="1"
+                  />
+                  
+                  {/* Secondary top highlight */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 6} 
+                    r="329.5" 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.7)" 
+                    strokeWidth="3" 
+                    opacity="0.8"
+                  />
+                  
+                  {/* Inner top highlight for bevel effect */}
                   <circle 
                     cx={centerX} 
                     cy={centerY - 5} 
                     r="328" 
                     fill="none" 
-                    stroke="rgba(255,255,255,0.7)" 
-                    strokeWidth="4" 
-                    opacity="0.9"
-                  />
-                  
-                  {/* Secondary bright highlight */}
-                  <circle 
-                    cx={centerX} 
-                    cy={centerY - 4} 
-                    r="329" 
-                    fill="none" 
                     stroke="rgba(255,255,255,0.5)" 
                     strokeWidth="2" 
-                    opacity="0.7"
-                  />
-                  
-                  {/* Inner edge highlight for depth */}
-                  <circle 
-                    cx={centerX} 
-                    cy={centerY - 3} 
-                    r="327" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.3)" 
-                    strokeWidth="1" 
-                    opacity="0.5"
+                    opacity="0.6"
                   />
                   {Array.from({ length: 366 }, (_, i) => {
                     const dayNumber = i + 1;
