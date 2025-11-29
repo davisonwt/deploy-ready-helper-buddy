@@ -41,6 +41,7 @@ import { GamificationFloatingButton } from "./gamification/GamificationFloatingB
 import { GamificationHUD } from "./gamification/GamificationHUD"
 import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
+import { MyGardenPanel } from "./MyGardenPanel"
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 
@@ -704,6 +705,9 @@ function Layout({ children }) {
         isOpen={showVoiceCommands}
         onOpenChange={setShowVoiceCommands}
       />
+      
+      {/* My Garden Panel */}
+      <MyGardenPanel />
     </div>
   )
 }
