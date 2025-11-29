@@ -292,17 +292,26 @@ const EnochianWheelCalendar = () => {
                     </feMerge>
                   </filter>
                   
-                  {/* Elevated circle shadow - creates depth effect */}
-                  <filter id="elevatedShadow" x="-150%" y="-150%" width="400%" height="400%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
-                    <feOffset dx="0" dy="8"/>
+                  {/* Elevated circle shadow - creates strong depth effect */}
+                  <filter id="elevatedShadow" x="-200%" y="-200%" width="500%" height="500%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="15"/>
+                    <feOffset dx="0" dy="12"/>
                     <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.6"/>
+                      <feFuncA type="linear" slope="0.7"/>
                     </feComponentTransfer>
                     <feMerge>
                       <feMergeNode/>
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
+                  </filter>
+                  
+                  {/* Strong outer shadow for elevation */}
+                  <filter id="strongElevationShadow" x="-200%" y="-200%" width="500%" height="500%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="20"/>
+                    <feOffset dx="0" dy="15"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.5"/>
+                    </feComponentTransfer>
                   </filter>
                   
                   {/* Radial gradient for elevated circle depth */}
@@ -348,49 +357,70 @@ const EnochianWheelCalendar = () => {
 
                 {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
                 {/* Top middle line is Day 1, counting anti-clockwise */}
-                {/* Elevated outer circle with 3D depth effect - RAISED ABOVE inner circles */}
+                {/* Elevated outer circle with STRONG 3D depth effect - RAISED ABOVE inner circles */}
                 <g>
-                  {/* Outer shadow BELOW the circle - creates elevation effect */}
+                  {/* Strong outer shadow BELOW - creates pronounced elevation effect */}
                   <circle 
                     cx={centerX} 
-                    cy={centerY + 6} 
+                    cy={centerY + 10} 
+                    r="333" 
+                    fill="rgba(0,0,0,0.25)" 
+                    filter="url(#strongElevationShadow)"
+                    opacity="0.7"
+                  />
+                  
+                  {/* Secondary shadow layer */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY + 8} 
                     r="332" 
-                    fill="rgba(0,0,0,0.15)" 
+                    fill="rgba(0,0,0,0.2)" 
                     opacity="0.6"
                   />
                   
-                  {/* Main elevated circle - positioned slightly UP */}
-                  <circle 
-                    cx={centerX} 
-                    cy={centerY - 2} 
-                    r="330" 
-                    fill="url(#elevatedCircleGradient)" 
-                    stroke="url(#metallicSilver)" 
-                    strokeWidth="4" 
-                    filter="url(#elevatedShadow)"
-                    opacity="0.98"
-                  />
-                  
-                  {/* Bright top highlight - simulates light hitting raised surface */}
-                  <circle 
-                    cx={centerX} 
-                    cy={centerY - 4} 
-                    r="328" 
-                    fill="none" 
-                    stroke="rgba(255,255,255,0.5)" 
-                    strokeWidth="3" 
-                    opacity="0.8"
-                  />
-                  
-                  {/* Secondary top highlight */}
+                  {/* Main elevated circle - positioned UP to appear raised */}
                   <circle 
                     cx={centerX} 
                     cy={centerY - 3} 
+                    r="330" 
+                    fill="url(#elevatedCircleGradient)" 
+                    stroke="url(#metallicSilver)" 
+                    strokeWidth="5" 
+                    filter="url(#elevatedShadow)"
+                    opacity="1"
+                  />
+                  
+                  {/* Bright top highlight - simulates light hitting raised top edge */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 5} 
+                    r="328" 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.7)" 
+                    strokeWidth="4" 
+                    opacity="0.9"
+                  />
+                  
+                  {/* Secondary bright highlight */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 4} 
                     r="329" 
                     fill="none" 
-                    stroke="rgba(255,255,255,0.3)" 
+                    stroke="rgba(255,255,255,0.5)" 
                     strokeWidth="2" 
-                    opacity="0.6"
+                    opacity="0.7"
+                  />
+                  
+                  {/* Inner edge highlight for depth */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 3} 
+                    r="327" 
+                    fill="none" 
+                    stroke="rgba(255,255,255,0.3)" 
+                    strokeWidth="1" 
+                    opacity="0.5"
                   />
                   {Array.from({ length: 366 }, (_, i) => {
                     const dayNumber = i + 1;
