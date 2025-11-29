@@ -634,7 +634,7 @@ const EnochianWheelCalendar = () => {
 
                       // Position day 1 on the opposite side of day 364 (counter-clockwise / to the LEFT when viewing from outside)
 
-                      const day1AngleDeg = day364AngleDeg - (360/364) * 2; // Move 2 spaces to the left of day 364
+                      const day1AngleDeg = day364AngleDeg - (360/364); // Move 1 space to the left of day 364
 
                       // Convert to radians
 
