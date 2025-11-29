@@ -36,17 +36,25 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const [xpBarWidth, setXpBarWidth] = useState(0)
   const [treeShake, setTreeShake] = useState(false)
 
-  // Calculate XP bar width based on points_to_next_level
+  // Level thresholds based on database logic
+  const getLevelThresholds = (level: number) => {
+    switch (level) {
+      case 1: return { start: 0, end: 100 }
+      case 2: return { start: 100, end: 250 }
+      case 3: return { start: 250, end: 500 }
+      case 4: return { start: 500, end: 1000 }
+      case 5: return { start: 1000, end: Infinity }
+      default: return { start: 0, end: 100 }
+    }
+  }
+
+  // Calculate XP bar width based on level thresholds
   useEffect(() => {
     if (userPoints) {
-      // Calculate progress: if points_to_next_level is 100, and user has 60 points in this level,
-      // then progress is 40% (60/100)
-      // We need to calculate current level XP from total_points
-      const pointsPerLevel = 1000 // Standard level size
-      const currentLevelStartXP = (userPoints.level - 1) * pointsPerLevel
-      const currentLevelXP = userPoints.total_points - currentLevelStartXP
-      const pointsNeededForLevel = pointsPerLevel
-      const width = Math.min((currentLevelXP / pointsNeededForLevel) * 100, 100)
+      const thresholds = getLevelThresholds(userPoints.level)
+      const levelRange = thresholds.end - thresholds.start
+      const currentLevelXP = userPoints.total_points - thresholds.start
+      const width = levelRange > 0 ? Math.min((currentLevelXP / levelRange) * 100, 100) : 100
       setXpBarWidth(Math.max(0, width))
     }
   }, [userPoints])
@@ -73,10 +81,10 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   // Calculate XP progress
   const currentXP = userPoints?.total_points || 0
   const xpToNext = userPoints?.points_to_next_level || 100
-  const pointsPerLevel = 1000
-  const currentLevelStartXP = userPoints ? (userPoints.level - 1) * pointsPerLevel : 0
-  const levelXP = currentXP - currentLevelStartXP
-  const xpProgress = `${levelXP} / ${pointsPerLevel} XP`
+  const thresholds = userPoints ? getLevelThresholds(userPoints.level) : { start: 0, end: 100 }
+  const levelRange = thresholds.end - thresholds.start
+  const levelXP = currentXP - thresholds.start
+  const xpProgress = `${levelXP} / ${levelRange} XP`
 
   const handleShare = async () => {
     const shareText = `🌳 I'm a ${getLevelTitle(userPoints?.level || 1)} on S2G! Level ${userPoints?.level || 1} with ${currentXP} XP. Join me and grow your orchard!`
