@@ -79,7 +79,17 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
     { href: '/products?filter=ebook', title: 'Community Library', subtitle: 'E-books, courses, docs' },
     { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' },
-    { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' }
+    { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
+    { 
+      onClick: () => {
+        if (typeof window !== 'undefined' && window.startJitsi) {
+          window.startJitsi('GardenRadioLive');
+        }
+        closeGarden();
+      },
+      title: 'Garden Radio Live', 
+      subtitle: 'Jump in now – 12 listening' 
+    }
   ]
 
   // Quick action routes - matching actual upload/create routes
@@ -167,24 +177,47 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
 
             {/* Garden cards */}
             <div className="space-y-5">
-              {gardenCards.map((card, index) => (
-                <Link
-                  key={index}
-                  to={card.href}
-                  onClick={closeGarden}
-                  className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl"
-                >
-                  <div>
-                    <div className="font-semibold text-lg">{card.title}</div>
-                    <span className="text-teal-200 text-sm">{card.subtitle}</span>
-                  </div>
-                  {card.badge && (
-                    <span className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-4 py-2 rounded-full animate-bounce">
-                      {card.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+              {gardenCards.map((card, index) => {
+                if (card.onClick) {
+                  // Handle onClick cards (like Garden Radio Live)
+                  return (
+                    <button
+                      key={index}
+                      onClick={card.onClick}
+                      className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl w-full text-left"
+                    >
+                      <div>
+                        <div className="font-semibold text-lg">{card.title}</div>
+                        <span className="text-teal-200 text-sm">{card.subtitle}</span>
+                      </div>
+                      {card.badge && (
+                        <span className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-4 py-2 rounded-full animate-bounce">
+                          {card.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }
+                // Handle Link cards (normal navigation)
+                return (
+                  <Link
+                    key={index}
+                    to={card.href}
+                    onClick={closeGarden}
+                    className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl"
+                  >
+                    <div>
+                      <div className="font-semibold text-lg">{card.title}</div>
+                      <span className="text-teal-200 text-sm">{card.subtitle}</span>
+                    </div>
+                    {card.badge && (
+                      <span className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-4 py-2 rounded-full animate-bounce">
+                        {card.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Daily Mystery Seed */}
