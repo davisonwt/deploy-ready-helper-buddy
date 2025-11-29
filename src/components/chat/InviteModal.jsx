@@ -82,6 +82,15 @@ const InviteModal = ({ isOpen, onClose, room, currentParticipants = [] }) => {
 
       if (error) throw error;
 
+      // Award XP for inviting user (50 XP per invite)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        await supabase.rpc('add_xp_to_current_user', { amount: 50 }).catch((err) => {
+          console.error('Failed to award XP:', err);
+          // Don't fail the invite if XP award fails
+        });
+      }
+
       toast({
         title: "Success",
         description: "User invited successfully",

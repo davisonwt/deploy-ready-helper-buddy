@@ -109,6 +109,15 @@ export default function InviteUsersModal({ isOpen, onClose, roomId, roomName }) 
         .from('user_notifications')
         .insert(notifications)
 
+      // Award XP for inviting users (50 XP per invite, max 500 XP)
+      if (user) {
+        const xpAmount = Math.min(selectedUsers.length * 50, 500);
+        await supabase.rpc('add_xp_to_current_user', { amount: xpAmount }).catch((err) => {
+          console.error('Failed to award XP:', err);
+          // Don't fail the invite if XP award fails
+        });
+      }
+
       toast.success(`Successfully invited ${selectedUsers.length} user(s) to the chat room!`)
       setSelectedUsers([])
       onClose()
