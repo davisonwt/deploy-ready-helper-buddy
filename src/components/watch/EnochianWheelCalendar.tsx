@@ -14,29 +14,24 @@ interface EnochianDateState {
   monthName?: string;
   season?: string;
   portal?: number;
+  dayOf30Cycle?: number; // For circle 2 (30-day cycle)
+  dayOf31Cycle?: number; // For circle 4 (31-day cycle)
 }
 
 const EnochianWheelCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [rotation, setRotation] = useState({ 
-    outer: 0, 
-    year: 0,
-    months: 0, 
-    weeks: 0, 
-    days: 0, 
-    dayWheel: 0 
-  });
+  const [sunriseTime, setSunriseTime] = useState<Date | null>(null);
   const [enochianDate, setEnochianDate] = useState<EnochianDateState>({ 
     month: 1, day: 1, year: 2025, weekDay: 4, sabbathWeek: 1,
     dayPart: 'Yom', totalDayOfYear: 1, isIntercalary: false
   });
 
-  // Constellation symbols for each season
-  const constellations = {
-    Spring: { name: 'Aries', symbol: '♈', icon: '☿', color: '#10b981' },
-    Summer: { name: 'Cancer', symbol: '♋', icon: '☿', color: '#f59e0b' },
-    Fall: { name: 'Libra', symbol: '♎', icon: '⚖️', color: '#ef4444' },
-    Winter: { name: 'Capricorn', symbol: '♑', icon: '☿', color: '#3b82f6' }
+  // Season colors
+  const seasons = {
+    Spring: { color: '#10b981', name: 'Spring', angle: 0 },
+    Summer: { color: '#f59e0b', name: 'Summer', angle: 90 },
+    Fall: { color: '#ef4444', name: 'Fall', angle: 180 },
+    Winter: { color: '#3b82f6', name: 'Winter', angle: 270 }
   };
 
   const monthStructure = [
@@ -54,19 +49,39 @@ const EnochianWheelCalendar = () => {
     { num: 12, days: 31, portal: 3, season: 'Winter', name: 'Adar' }
   ];
 
+  // Get sunrise time (simplified - in production, use actual sunrise API)
+  const getSunriseTime = async (date: Date): Promise<Date> => {
+    // Simplified: assume sunrise at 6 AM local time
+    // In production, use sunrise-sunset API or calculation library
+    const sunrise = new Date(date);
+    sunrise.setHours(6, 0, 0, 0);
+    return sunrise;
+  };
+
   const getSpringEquinox = (year: number) => new Date(year, 2, 20);
 
-  const convertToEnochian = (gregorianDate: Date): EnochianDateState => {
-    const year = gregorianDate.getFullYear();
+  const getDayPart = (hour: number): string => {
+    if (hour >= 6 && hour < 18) return 'Yom'; // Day
+    if (hour >= 18 && hour < 20) return 'Erev'; // Evening
+    if (hour >= 20 || hour < 4) return 'Laylah'; // Night
+    return 'Boqer'; // Morning
+  };
+
+  const convertToEnochian = async (gregorianDate: Date, sunrise: Date): Promise<EnochianDateState> => {
+    // Check if current time is before sunrise - if so, use previous day
+    const effectiveDate = gregorianDate < sunrise ? 
+      new Date(gregorianDate.getTime() - 24 * 60 * 60 * 1000) : 
+      gregorianDate;
+
+    const year = effectiveDate.getFullYear();
     const springEquinox = getSpringEquinox(year);
-    const daysSinceEquinox = Math.floor((gregorianDate.getTime() - springEquinox.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceEquinox = Math.floor((effectiveDate.getTime() - springEquinox.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysSinceEquinox < 0) {
       const prevEquinox = getSpringEquinox(year - 1);
-      const daysSincePrevEquinox = Math.floor((gregorianDate.getTime() - prevEquinox.getTime()) / (1000 * 60 * 60 * 24));
-      return calculateEnochianDate(daysSincePrevEquinox, year - 1, gregorianDate);
+      const daysSincePrevEquinox = Math.floor((effectiveDate.getTime() - prevEquinox.getTime()) / (1000 * 60 * 60 * 24));
+      return calculateEnochianDate(daysSincePrevEquinox, year - 1, effectiveDate);
     } else if (daysSinceEquinox >= 364) {
-      // Timeless/Intercalary days (Hello-Yasef & Asfael)
       const timelessDay = daysSinceEquinox - 363;
       return { 
         month: 12, 
@@ -77,18 +92,13 @@ const EnochianWheelCalendar = () => {
         timelessDay,
         isIntercalary: true,
         totalDayOfYear: 365 + (timelessDay - 1),
-        dayPart: getDayPart(gregorianDate.getHours())
+        dayPart: getDayPart(effectiveDate.getHours()),
+        dayOf30Cycle: ((timelessDay - 1) % 30) + 1,
+        dayOf31Cycle: ((timelessDay - 1) % 31) + 1
       };
     }
     
-    return calculateEnochianDate(daysSinceEquinox, year, gregorianDate);
-  };
-
-  const getDayPart = (hour: number) => {
-    if (hour >= 6 && hour < 18) return 'Yom';
-    if (hour >= 18 && hour < 20) return 'Erev';
-    if (hour >= 20 || hour < 4) return 'Laylah';
-    return 'Boqer';
+    return calculateEnochianDate(daysSinceEquinox, year, effectiveDate);
   };
 
   const calculateEnochianDate = (dayCount: number, year: number, gregorianDate: Date): EnochianDateState => {
@@ -100,8 +110,6 @@ const EnochianWheelCalendar = () => {
         const day = remainingDays + 1;
         const weekDay = ((totalDayOfYear - 1) % 7) + 1;
         const sabbathWeek = Math.floor((totalDayOfYear - 1) / 7) + 1;
-        
-        // Check if this is an intercalary day (days 91, 182, 273, 364)
         const isIntercalary = totalDayOfYear === 91 || totalDayOfYear === 182 || 
                               totalDayOfYear === 273 || totalDayOfYear === 364;
         
@@ -116,7 +124,9 @@ const EnochianWheelCalendar = () => {
           monthName: m.name,
           dayPart: getDayPart(gregorianDate.getHours()),
           totalDayOfYear,
-          isIntercalary
+          isIntercalary,
+          dayOf30Cycle: ((day - 1) % 30) + 1,
+          dayOf31Cycle: m.days === 31 ? day : ((day - 1) % 31) + 1
         };
       }
       remainingDays -= m.days;
@@ -130,112 +140,103 @@ const EnochianWheelCalendar = () => {
       sabbathWeek: 52, 
       totalDayOfYear: 364,
       dayPart: getDayPart(gregorianDate.getHours()),
-      isIntercalary: false
+      isIntercalary: false,
+      dayOf30Cycle: 30,
+      dayOf31Cycle: 31
     };
   };
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const updateCalendar = async () => {
       const now = new Date();
+      const sunrise = await getSunriseTime(now);
+      setSunriseTime(sunrise);
       setCurrentDate(now);
-      setEnochianDate(convertToEnochian(now));
-      
-      setRotation(prev => ({
-        outer: (prev.outer + 0.02) % 360,
-        year: (prev.year - 0.01) % 360,
-        months: (prev.months - 0.08) % 360,
-        weeks: (prev.weeks + 0.12) % 360,
-        days: (prev.days - 0.15) % 360,
-        dayWheel: (prev.dayWheel + 0.5) % 360
-      }));
-    }, 50);
+      const enochian = await convertToEnochian(now, sunrise);
+      setEnochianDate(enochian);
+    };
 
+    updateCalendar();
+    const timer = setInterval(updateCalendar, 60000); // Update every minute
     return () => clearInterval(timer);
   }, []);
 
-  const getCreationDay = (weekDay: number) => {
-    const days = ['', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 1', 'Day 2', 'Day 3'];
-    return days[weekDay] || '';
-  };
+  const centerX = 350;
+  const centerY = 350;
+  
+  // Calculate rotations and positions
+  const dayOfYearAngle = ((enochianDate.totalDayOfYear - 1) / 364) * 360;
+  const weekAngle = ((enochianDate.sabbathWeek - 1) / 52) * 360;
+  const dayOfWeekAngle = ((enochianDate.weekDay - 1) / 7) * 360;
+  const dayPartAngle = (() => {
+    const parts = ['Yom', 'Erev', 'Laylah', 'Boqer'];
+    const index = parts.indexOf(enochianDate.dayPart);
+    return (index / 4) * 360;
+  })();
+  
+  // Season background rotation (1/4 per 91 days)
+  const seasonRotation = ((enochianDate.totalDayOfYear - 1) % 91) / 91 * 90;
+  const currentSeason = enochianDate.season || 'Spring';
+  const seasonAngle = seasons[currentSeason as keyof typeof seasons]?.angle || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-4" style={{ background: 'radial-gradient(circle at center, #fef3c7 0%, #fde68a 50%, #fcd34d 100%)' }}>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-5xl font-bold text-amber-400 mb-2 flex items-center justify-center gap-3 drop-shadow-lg">
-            <Sun className="w-12 h-12 animate-pulse" />
+          <h1 className="text-5xl font-bold text-amber-800 mb-2 flex items-center justify-center gap-3 drop-shadow-lg">
+            <Sun className="w-12 h-12 animate-pulse text-amber-600" />
             The Creator's Calendar
-            <Moon className="w-10 h-10 text-blue-300" />
+            <Moon className="w-10 h-10 text-amber-700" />
           </h1>
-          <p className="text-gray-300 text-sm">364-Day Priestly Wheel 🌟 Solar-Locked Sabbaths</p>
+          <p className="text-amber-900/70 text-sm font-medium">7-Circle Time Wheel 🌟 Day Begins at Sunrise</p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Main Wheel */}
           <div className="xl:col-span-2">
-            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur rounded-2xl shadow-2xl p-8 border-4 border-amber-600/30">
-              <svg width="100%" height="100%" viewBox="0 0 700 700" className="mx-auto">
+            <div className="bg-gradient-to-br from-amber-100/90 via-orange-50/90 to-yellow-50/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border-4 border-amber-400/50" style={{ 
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(251, 191, 36, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5)'
+            }}>
+              <svg width="100%" height="100%" viewBox="0 0 700 700" className="mx-auto" style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.3))' }}>
                 <defs>
-                  {/* Metallic gradients for silver/gold appearance */}
                   <linearGradient id="metallicSilver" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#e8eaf6" stopOpacity="0.9"/>
-                    <stop offset="25%" stopColor="#c5cae9" stopOpacity="0.8"/>
-                    <stop offset="50%" stopColor="#9fa8da" stopOpacity="0.7"/>
-                    <stop offset="75%" stopColor="#7986cb" stopOpacity="0.8"/>
-                    <stop offset="100%" stopColor="#5c6bc0" stopOpacity="0.9"/>
+                    <stop offset="0%" stopColor="#f8fafc" stopOpacity="1"/>
+                    <stop offset="50%" stopColor="#cbd5e1" stopOpacity="0.9"/>
+                    <stop offset="100%" stopColor="#64748b" stopOpacity="1"/>
                   </linearGradient>
                   
                   <linearGradient id="metallicGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#fff9c4" stopOpacity="0.95"/>
-                    <stop offset="25%" stopColor="#fff59d" stopOpacity="0.9"/>
-                    <stop offset="50%" stopColor="#fdd835" stopOpacity="0.85"/>
-                    <stop offset="75%" stopColor="#fbc02d" stopOpacity="0.9"/>
-                    <stop offset="100%" stopColor="#f9a825" stopOpacity="0.95"/>
+                    <stop offset="0%" stopColor="#fef9c3" stopOpacity="1"/>
+                    <stop offset="50%" stopColor="#fde047" stopOpacity="0.95"/>
+                    <stop offset="100%" stopColor="#eab308" stopOpacity="1"/>
                   </linearGradient>
                   
                   <radialGradient id="centerGlow">
-                    <stop offset="0%" stopColor="#fff9c4" stopOpacity="1"/>
-                    <stop offset="30%" stopColor="#fdd835" stopOpacity="0.8"/>
-                    <stop offset="60%" stopColor="#fbc02d" stopOpacity="0.4"/>
-                    <stop offset="100%" stopColor="#f9a825" stopOpacity="0"/>
+                    <stop offset="0%" stopColor="#fef9c3" stopOpacity="1"/>
+                    <stop offset="50%" stopColor="#fde047" stopOpacity="0.8"/>
+                    <stop offset="100%" stopColor="#eab308" stopOpacity="0"/>
                   </radialGradient>
                   
-                  {/* Glowing white effect */}
-                  <filter id="glowWhite" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <filter id="glowWhite" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                     <feMerge>
                       <feMergeNode in="coloredBlur"/>
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
                   
-                  <filter id="glowStrong" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                  <filter id="glowStrong" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
                     <feMerge>
                       <feMergeNode in="coloredBlur"/>
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
                   
-                  {/* Depth and shadow filters - enhanced */}
-                  <filter id="dropShadowOuter" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
-                    <feOffset dx="3" dy="3" result="offsetblur"/>
+                  <filter id="dropShadowDeep" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+                    <feOffset dx="4" dy="6"/>
                     <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.4"/>
-                    </feComponentTransfer>
-                    <feMerge>
-                      <feMergeNode/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                  
-                  <filter id="dropShadowMiddle" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                    <feOffset dx="2" dy="2" result="offsetblur"/>
-                    <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.3"/>
+                      <feFuncA type="linear" slope="0.5"/>
                     </feComponentTransfer>
                     <feMerge>
                       <feMergeNode/>
@@ -244,167 +245,213 @@ const EnochianWheelCalendar = () => {
                   </filter>
                 </defs>
 
-                {/* Outer decorative ring - Year ring */}
-                <g style={{ transform: `rotate(${rotation.outer}deg)`, transformOrigin: '350px 350px' }}>
-                  <circle cx="350" cy="350" r="340" fill="none" stroke="url(#metallicSilver)" strokeWidth="8" filter="url(#dropShadowOuter)"/>
-                  {/* Year markers */}
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const angle = (i * 30 - 90) * Math.PI / 180;
-                    const x = 350 + 320 * Math.cos(angle);
-                    const y = 350 + 320 * Math.sin(angle);
-                    return (
-                      <g key={`year-${i}`}>
-                        <circle cx={x} cy={y} r="8" fill="url(#metallicGold)" filter="url(#glowWhite)"/>
-                      </g>
-                    );
-                  })}
-                </g>
-
-                {/* Months Ring */}
-                <g style={{ transform: `rotate(${rotation.months}deg)`, transformOrigin: '350px 350px' }}>
-                  <circle cx="350" cy="350" r="290" fill="none" stroke="url(#metallicGold)" strokeWidth="35" filter="url(#dropShadowMiddle)"/>
-                  {monthStructure.map((month, i) => {
-                    const angle = (i * 30 - 90) * Math.PI / 180;
-                    const x = 350 + 290 * Math.cos(angle);
-                    const y = 350 + 290 * Math.sin(angle);
-                    const isCurrentMonth = enochianDate.month === month.num;
-                    const seasonColor = constellations[month.season as keyof typeof constellations]?.color || '#fff';
+                {/* Background: 4 Seasons rotating */}
+                <g style={{ transform: `rotate(${seasonRotation + seasonAngle}deg)`, transformOrigin: `${centerX}px ${centerY}px` }}>
+                  {Object.values(seasons).map((season, i) => {
+                    const angle = (i * 90 - 90) * Math.PI / 180;
+                    const startAngle = angle - Math.PI / 2;
+                    const endAngle = angle + Math.PI / 2;
+                    const largeArc = 1;
+                    const x1 = centerX + 340 * Math.cos(startAngle);
+                    const y1 = centerY + 340 * Math.sin(startAngle);
+                    const x2 = centerX + 340 * Math.cos(endAngle);
+                    const y2 = centerY + 340 * Math.sin(endAngle);
                     
                     return (
-                      <g key={`month-${month.num}`}>
-                        <circle 
-                          cx={x} 
-                          cy={y} 
-                          r={isCurrentMonth ? 22 : 18}
-                          fill={isCurrentMonth ? seasonColor : '#1e293b'}
-                          stroke={seasonColor}
-                          strokeWidth={isCurrentMonth ? 3 : 2}
-                          filter={isCurrentMonth ? "url(#glowStrong)" : "url(#glowWhite)"}
+                      <g key={season.name}>
+                        <path
+                          d={`M ${centerX} ${centerY} L ${x1} ${y1} A 340 340 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                          fill={season.color}
+                          opacity="0.15"
                         />
-                        <text 
-                          x={x} 
-                          y={y + 4} 
-                          textAnchor="middle" 
-                          className={`text-xs font-bold ${isCurrentMonth ? 'fill-white' : 'fill-gray-300'}`}
-                        >
-                          {month.num}
-                        </text>
                       </g>
                     );
                   })}
                 </g>
 
-                {/* Weeks Ring - 52 Sabbaths */}
-                <g style={{ transform: `rotate(${rotation.weeks}deg)`, transformOrigin: '350px 350px' }}>
-                  <circle cx="350" cy="350" r="230" fill="none" stroke="url(#metallicSilver)" strokeWidth="25" filter="url(#dropShadowMiddle)"/>
-                  {Array.from({ length: 52 }, (_, i) => {
-                    const angle = (i * (360/52) - 90) * Math.PI / 180;
-                    const x = 350 + 230 * Math.cos(angle);
-                    const y = 350 + 230 * Math.sin(angle);
-                    const isCurrentWeek = enochianDate.sabbathWeek === i + 1;
+                {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
+                <g>
+                  <circle cx={centerX} cy={centerY} r="330" fill="none" stroke="url(#metallicSilver)" strokeWidth="3" filter="url(#dropShadowDeep)"/>
+                  {Array.from({ length: 366 }, (_, i) => {
+                    const angle = (i * (360/366) - 90) * Math.PI / 180;
+                    const x1 = centerX + 325 * Math.cos(angle);
+                    const y1 = centerY + 325 * Math.sin(angle);
+                    const x2 = centerX + 335 * Math.cos(angle);
+                    const y2 = centerY + 335 * Math.sin(angle);
+                    const isCurrentDay = i + 1 === enochianDate.totalDayOfYear;
                     
                     return (
-                      <circle 
-                        key={`week-${i}`}
-                        cx={x} 
-                        cy={y} 
-                        r={isCurrentWeek ? 8 : 4}
-                        fill={isCurrentWeek ? '#60a5fa' : '#64748b'}
-                        filter={isCurrentWeek ? "url(#glowStrong)" : undefined}
-                      >
-                        {isCurrentWeek && (
-                          <animate attributeName="r" values="8;10;8" dur="1s" repeatCount="indefinite"/>
+                      <line
+                        key={`day-${i}`}
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke={isCurrentDay ? '#fef3c7' : '#64748b'}
+                        strokeWidth={isCurrentDay ? 3 : 1}
+                        filter={isCurrentDay ? "url(#glowStrong)" : undefined}
+                      />
+                    );
+                  })}
+                  <text x={centerX} y={centerY - 310} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Day {enochianDate.totalDayOfYear} of 364
+                  </text>
+                </g>
+
+                {/* Circle 2: 30 days (1-30) */}
+                <g>
+                  <circle cx={centerX} cy={centerY} r="290" fill="none" stroke="url(#metallicGold)" strokeWidth="25" filter="url(#dropShadowDeep)"/>
+                  {Array.from({ length: 30 }, (_, i) => {
+                    const angle = (i * (360/30) - 90) * Math.PI / 180;
+                    const x = centerX + 290 * Math.cos(angle);
+                    const y = centerY + 290 * Math.sin(angle);
+                    const dayNum = i + 1;
+                    const isCurrent = dayNum === (enochianDate.dayOf30Cycle || enochianDate.day);
+                    
+                    return (
+                      <g key={`day30-${i}`}>
+                        <circle cx={x} cy={y} r={isCurrent ? 8 : 4} fill={isCurrent ? '#fbbf24' : '#94a3b8'} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
+                        {i % 5 === 0 && (
+                          <text x={x} y={y - 12} textAnchor="middle" className="text-[8px] fill-amber-900 font-bold">
+                            {dayNum}
+                          </text>
                         )}
-                      </circle>
+                      </g>
                     );
                   })}
+                  <text x={centerX} y={centerY - 270} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Day {(enochianDate.dayOf30Cycle || enochianDate.day)} of 30
+                  </text>
                 </g>
 
-                {/* Days Ring - 7 days of week */}
-                <g style={{ transform: `rotate(${rotation.days}deg)`, transformOrigin: '350px 350px' }}>
-                  <circle cx="350" cy="350" r="170" fill="none" stroke="url(#metallicGold)" strokeWidth="20" filter="url(#dropShadowMiddle)"/>
-                  {['Day 4', 'Day 5', 'Day 6', 'Sabbath', 'Day 1', 'Day 2', 'Day 3'].map((day, i) => {
-                    const angle = (i * (360/7) - 90) * Math.PI / 180;
-                    const x = 350 + 170 * Math.cos(angle);
-                    const y = 350 + 170 * Math.sin(angle);
-                    const isToday = enochianDate.weekDay === i + 1;
-                    const isSabbath = day === 'Sabbath';
+                {/* Circle 3: 52 weeks (364 dots) */}
+                <g>
+                  <circle cx={centerX} cy={centerY} r="250" fill="none" stroke="url(#metallicSilver)" strokeWidth="20" filter="url(#dropShadowDeep)"/>
+                  {Array.from({ length: 364 }, (_, i) => {
+                    const angle = (i * (360/364) - 90) * Math.PI / 180;
+                    const x = centerX + 250 * Math.cos(angle);
+                    const y = centerY + 250 * Math.sin(angle);
+                    const weekNum = Math.floor(i / 7) + 1;
+                    const isCurrentWeek = weekNum === enochianDate.sabbathWeek;
                     
                     return (
-                      <g key={`day-${i}`}>
-                        <circle 
-                          cx={x} 
-                          cy={y} 
-                          r={isToday ? 16 : 12}
-                          fill={isSabbath ? '#3b82f6' : (isToday ? '#fbbf24' : '#374151')}
-                          stroke={isSabbath ? '#60a5fa' : '#fbbf24'}
-                          strokeWidth={isToday ? 3 : 1}
-                          filter={isToday ? "url(#glowStrong)" : "url(#glowWhite)"}
-                        />
-                        <text 
-                          x={x} 
-                          y={y + 3} 
-                          textAnchor="middle" 
-                          className="text-[8px] fill-white font-bold"
-                        >
-                          {day.replace('Day ', '')}
+                      <circle
+                        key={`week-${i}`}
+                        cx={x}
+                        cy={y}
+                        r={isCurrentWeek ? 3 : 1}
+                        fill={isCurrentWeek ? '#60a5fa' : '#94a3b8'}
+                        filter={isCurrentWeek ? "url(#glowStrong)" : undefined}
+                      />
+                    );
+                  })}
+                  <text x={centerX} y={centerY - 230} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Week {enochianDate.sabbathWeek} of 52
+                  </text>
+                </g>
+
+                {/* Circle 4: 31 days (1-31) */}
+                <g>
+                  <circle cx={centerX} cy={centerY} r="210" fill="none" stroke="url(#metallicGold)" strokeWidth="18" filter="url(#dropShadowDeep)"/>
+                  {Array.from({ length: 31 }, (_, i) => {
+                    const angle = (i * (360/31) - 90) * Math.PI / 180;
+                    const x = centerX + 210 * Math.cos(angle);
+                    const y = centerY + 210 * Math.sin(angle);
+                    const dayNum = i + 1;
+                    const isCurrent = dayNum === (enochianDate.dayOf31Cycle || enochianDate.day);
+                    
+                    return (
+                      <g key={`day31-${i}`}>
+                        <circle cx={x} cy={y} r={isCurrent ? 7 : 3} fill={isCurrent ? '#fbbf24' : '#94a3b8'} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
+                        {i % 5 === 0 && (
+                          <text x={x} y={y - 4} textAnchor="middle" className="text-[8px] fill-amber-900 font-bold">
+                            {dayNum}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                  <text x={centerX} y={centerY - 190} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Day {(enochianDate.dayOf31Cycle || enochianDate.day)} of Month {enochianDate.month}
+                  </text>
+                </g>
+
+                {/* Circle 5: 7 days (1,2,3,4,5,6,s) */}
+                <g style={{ transform: `rotate(${dayOfWeekAngle}deg)`, transformOrigin: `${centerX}px ${centerY}px` }}>
+                  <circle cx={centerX} cy={centerY} r="170" fill="none" stroke="url(#metallicGold)" strokeWidth="15" filter="url(#dropShadowDeep)"/>
+                  {['1', '2', '3', '4', '5', '6', 's'].map((day, i) => {
+                    const angle = (i * (360/7) - 90) * Math.PI / 180;
+                    const x = centerX + 170 * Math.cos(angle);
+                    const y = centerY + 170 * Math.sin(angle);
+                    const isCurrent = i + 1 === enochianDate.weekDay;
+                    
+                    return (
+                      <g key={`weekday-${i}`}>
+                        <circle cx={x} cy={y} r={isCurrent ? 12 : 8} fill={day === 's' ? '#3b82f6' : (isCurrent ? '#fbbf24' : '#475569')} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
+                        <text x={x} y={y + 3} textAnchor="middle" className="text-[10px] fill-white font-bold">
+                          {day}
                         </text>
                       </g>
                     );
                   })}
+                  <text x={centerX} y={centerY - 150} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay} of Week
+                  </text>
                 </g>
 
-                {/* Center sun with day info */}
-                <circle cx="350" cy="350" r="100" fill="url(#centerGlow)" filter="url(#glowStrong)"/>
-                <circle cx="350" cy="350" r="90" fill="#1e293b" stroke="url(#metallicGold)" strokeWidth="4"/>
-                
-                {/* Sabbath indicator */}
-                {enochianDate.weekDay === 7 && (
-                  <g>
-                    <circle cx="350" cy="350" r="115" fill="none" stroke="#60a5fa" strokeWidth="3" strokeDasharray="8,4">
-                      <animate attributeName="stroke-opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
-                    </circle>
-                    <text x="350" y="300" textAnchor="middle" className="text-sm fill-blue-400 font-bold">
-                      ⚖️ SABBATH
-                    </text>
-                  </g>
-                )}
+                {/* Circle 6: 4 parts (day/evening/night/morning) */}
+                <g style={{ transform: `rotate(${dayPartAngle}deg)`, transformOrigin: `${centerX}px ${centerY}px` }}>
+                  <circle cx={centerX} cy={centerY} r="130" fill="none" stroke="url(#metallicSilver)" strokeWidth="12" filter="url(#dropShadowDeep)"/>
+                  {['Yom', 'Erev', 'Laylah', 'Boqer'].map((part, i) => {
+                    const angle = (i * (360/4) - 90) * Math.PI / 180;
+                    const x = centerX + 130 * Math.cos(angle);
+                    const y = centerY + 130 * Math.sin(angle);
+                    const isCurrent = part === enochianDate.dayPart;
+                    const colors = { Yom: '#fbbf24', Erev: '#f97316', Laylah: '#1e40af', Boqer: '#06b6d4' };
+                    
+                    return (
+                      <g key={`part-${i}`}>
+                        <circle cx={x} cy={y} r={isCurrent ? 10 : 6} fill={colors[part as keyof typeof colors]} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
+                        <text x={x} y={y + 3} textAnchor="middle" className="text-[9px] fill-white font-bold">
+                          {part}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  <text x={centerX} y={centerY - 110} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    {enochianDate.dayPart}
+                  </text>
+                </g>
 
-                {/* Intercalary Day indicator */}
-                {enochianDate.isIntercalary && !enochianDate.timelessDay && (
-                  <g>
-                    <circle cx="350" cy="350" r="120" fill="none" stroke="#fbbf24" strokeWidth="4">
-                      <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
-                    </circle>
-                    <text x="350" y="295" textAnchor="middle" className="text-xs fill-amber-400 font-bold">
-                      🌟 INTERCALARY GATE
+                {/* Circle 7: Inner circle - 2 parts (Hello-Yasef & Asfa'el) */}
+                <g>
+                  <circle cx={centerX} cy={centerY} r="90" fill="url(#centerGlow)" filter="url(#glowStrong)"/>
+                  <circle cx={centerX} cy={centerY} r="80" fill="url(#metallicGold)" stroke="url(#metallicGold)" strokeWidth="4" filter="url(#dropShadowDeep)"/>
+                  
+                  {/* Split circle into 2 parts */}
+                  <path d={`M ${centerX} ${centerY} L ${centerX} ${centerY - 80} A 80 80 0 0 1 ${centerX} ${centerY + 80} Z`} fill="#a855f7" opacity="0.3"/>
+                  <path d={`M ${centerX} ${centerY} L ${centerX} ${centerY + 80} A 80 80 0 0 1 ${centerX} ${centerY - 80} Z`} fill="#f59e0b" opacity="0.3"/>
+                  
+                  <text x={centerX} y={centerY - 20} textAnchor="middle" className="text-xs fill-purple-700 font-bold">
+                    Hello-Yasef
+                  </text>
+                  <text x={centerX} y={centerY + 20} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
+                    Asfa'el
+                  </text>
+                  
+                  {enochianDate.timelessDay && (
+                    <text x={centerX} y={centerY + 5} textAnchor="middle" className="text-lg fill-purple-600 font-bold">
+                      DOOT {enochianDate.timelessDay}
                     </text>
-                  </g>
-                )}
+                  )}
+                </g>
 
-                {/* Timeless Days */}
-                {enochianDate.timelessDay && (
-                  <g>
-                    <circle cx="350" cy="350" r="120" fill="none" stroke="#a855f7" strokeWidth="5" strokeDasharray="10,5">
-                      <animate attributeName="stroke-opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
-                    </circle>
-                    <text x="350" y="295" textAnchor="middle" className="text-sm fill-purple-400 font-bold">
-                      ✨ TIMELESS DAY {enochianDate.timelessDay}
-                    </text>
-                  </g>
-                )}
-                
-                <text x="350" y="340" textAnchor="middle" className="text-6xl fill-amber-400 font-bold drop-shadow-lg">
+                {/* Center display */}
+                <text x={centerX} y={centerY - 10} textAnchor="middle" className="text-4xl fill-amber-900 font-bold" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
                   {enochianDate.day}
                 </text>
-                <text x="350" y="365" textAnchor="middle" className="text-base fill-gray-300">
-                  {enochianDate.monthName} 🌟 Month {enochianDate.month}
-                </text>
-                <text x="350" y="385" textAnchor="middle" className="text-sm fill-gray-400">
-                  Day {enochianDate.totalDayOfYear} of 364
-                </text>
-                <text x="350" y="405" textAnchor="middle" className="text-sm fill-amber-500 font-bold">
-                  {enochianDate.dayPart}
+                <text x={centerX} y={centerY + 15} textAnchor="middle" className="text-sm fill-amber-800 font-semibold">
+                  {enochianDate.monthName}
                 </text>
               </svg>
             </div>
@@ -412,122 +459,32 @@ const EnochianWheelCalendar = () => {
 
           {/* Info Panels */}
           <div className="space-y-4">
-            {/* Sacred Time Card */}
-            <div className="bg-gradient-to-br from-amber-900/40 to-slate-800/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-amber-600/40">
-              <h3 className="text-amber-400 font-bold mb-3 flex items-center gap-2">
-                <Sun className="w-5 h-5" />
-                Sacred Time
+            <div className="bg-gradient-to-br from-amber-100/90 via-orange-50/90 to-yellow-50/90 backdrop-blur-xl rounded-xl shadow-xl p-5 border-2 border-amber-400/50">
+              <h3 className="text-amber-800 font-bold mb-3 flex items-center gap-2">
+                <Sun className="w-5 h-5 text-amber-600" />
+                7-Circle Display
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Day:</span>
-                  <span className="text-white font-bold">{enochianDate.day}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Month:</span>
-                  <span className="text-white font-bold">{enochianDate.monthName} ({enochianDate.month})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Season:</span>
-                  <span className="text-white font-bold">{enochianDate.season}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Portal:</span>
-                  <span className="text-amber-400 font-bold">Portal {enochianDate.portal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Sabbath Week:</span>
-                  <span className="text-white font-bold">{enochianDate.sabbathWeek} of 52</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Creation Day:</span>
-                  <span className="text-white font-bold">{getCreationDay(enochianDate.weekDay)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Day Part:</span>
-                  <span className="text-amber-500 font-bold">{enochianDate.dayPart}</span>
-                </div>
-
-                {enochianDate.isIntercalary && !enochianDate.timelessDay && (
-                  <div className="mt-3 pt-3 border-t border-amber-600/30">
-                    <div className="flex items-center gap-2 text-amber-400">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-bold">Priestly Intercalary Gate</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">Season-ending cosmic clock reset</p>
-                  </div>
-                )}
-
-                {enochianDate.timelessDay && (
-                  <div className="mt-3 pt-3 border-t border-purple-600/30">
-                    <div className="flex items-center gap-2 text-purple-400">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-bold">Timeless Day {enochianDate.timelessDay}</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {enochianDate.timelessDay === 1 ? 'Hello-Yasef: "Behold YHVH is adding"' : 'Asfael: "El is adding"'}
-                    </p>
-                  </div>
-                )}
-
-                {enochianDate.weekDay === 7 && (
-                  <div className="mt-3 pt-3 border-t border-blue-600/30">
-                    <div className="flex items-center gap-2 text-blue-400">
-                      <Flame className="w-4 h-4" />
-                      <span className="font-bold">Holy Sabbath</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">Weekly rest and worship</p>
-                  </div>
-                )}
+              <div className="space-y-2 text-xs text-amber-900/80">
+                <p><strong>Circle 1:</strong> Day {enochianDate.totalDayOfYear} of 364</p>
+                <p><strong>Circle 2 (30-day):</strong> Day {(enochianDate.dayOf30Cycle || enochianDate.day)}</p>
+                <p><strong>Circle 3 (52 weeks):</strong> Week {enochianDate.sabbathWeek}</p>
+                <p><strong>Circle 4 (31-day):</strong> Day {(enochianDate.dayOf31Cycle || enochianDate.day)} of Month {enochianDate.month}</p>
+                <p><strong>Circle 5 (7 days):</strong> Day {enochianDate.weekDay === 7 ? 'Sabbath' : enochianDate.weekDay}</p>
+                <p><strong>Circle 6 (4 parts):</strong> {enochianDate.dayPart}</p>
+                <p><strong>Circle 7 (DOOT):</strong> {enochianDate.timelessDay ? `Day ${enochianDate.timelessDay}` : 'Regular Day'}</p>
               </div>
             </div>
 
-            {/* Gregorian Comparison */}
-            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-gray-600/40">
-              <h3 className="text-gray-300 font-bold mb-3 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Gregorian Reference
+            <div className="bg-gradient-to-br from-amber-100/90 via-orange-50/90 to-yellow-50/90 backdrop-blur-xl rounded-xl shadow-xl p-5 border-2 border-amber-400/50">
+              <h3 className="text-amber-800 font-bold mb-3 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" />
+                Time Info
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Date:</span>
-                  <span className="text-white font-bold">{currentDate.toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Time:</span>
-                  <span className="text-white font-bold">{currentDate.toLocaleTimeString()}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Season Info */}
-            {enochianDate.season && (
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-gray-600/40">
-                <h3 className="text-gray-300 font-bold mb-3 flex items-center gap-2">
-                  🌿 Current Season
-                </h3>
-                <div className="text-center">
-                  <div className="text-4xl mb-2">{constellations[enochianDate.season as keyof typeof constellations]?.icon}</div>
-                  <div className="text-xl font-bold" style={{ color: constellations[enochianDate.season as keyof typeof constellations]?.color }}>
-                    {enochianDate.season}
-                  </div>
-                  <div className="text-gray-400 text-sm mt-1">
-                    {constellations[enochianDate.season as keyof typeof constellations]?.name} {constellations[enochianDate.season as keyof typeof constellations]?.symbol}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Calendar Structure */}
-            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur rounded-xl shadow-xl p-5 border-2 border-gray-600/40">
-              <h3 className="text-gray-300 font-bold mb-3">📜 Calendar Structure</h3>
-              <div className="space-y-1 text-xs text-gray-400">
-                <p>• 364 days = 52 perfect weeks</p>
-                <p>• 12 months (30-30-31 pattern)</p>
-                <p>• 4 seasons × 91 days each</p>
-                <p>• Sabbath always on Day 4</p>
-                <p>• 4 intercalary gate days</p>
-                <p>• 1-2 timeless days yearly</p>
+              <div className="space-y-2 text-xs text-amber-900/80">
+                <p><strong>Current Time:</strong> {currentDate.toLocaleTimeString()}</p>
+                <p><strong>Sunrise:</strong> {sunriseTime?.toLocaleTimeString() || 'Calculating...'}</p>
+                <p><strong>Day Begins:</strong> At Sunrise</p>
+                <p><strong>Season:</strong> {enochianDate.season}</p>
               </div>
             </div>
           </div>
