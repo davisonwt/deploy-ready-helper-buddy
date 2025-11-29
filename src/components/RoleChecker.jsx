@@ -40,16 +40,19 @@ class RoleCheckerWrapper extends React.Component {
   componentDidMount() {
     // Delay rendering to ensure React's dispatcher is fully initialized
     // This prevents "dispatcher is null" errors during lazy loading
-    // Using a longer delay (500ms) to ensure React is completely ready
+    // Using a longer delay (1000ms) to ensure React is completely ready
     const scheduleRender = () => {
       if ('requestIdleCallback' in window) {
         this.idleCallbackId = requestIdleCallback(() => {
-          this.setState({ ready: true })
-        }, { timeout: 500 })
+          // Additional delay to ensure dispatcher is ready
+          this.timeoutId = setTimeout(() => {
+            this.setState({ ready: true })
+          }, 500)
+        }, { timeout: 1000 })
       } else {
         this.timeoutId = setTimeout(() => {
           this.setState({ ready: true })
-        }, 500)
+        }, 1000)
       }
     }
     
@@ -66,10 +69,13 @@ class RoleCheckerWrapper extends React.Component {
   }
 
   render() {
+    // Never render RoleCheckerInner until React dispatcher is confirmed ready
+    // This prevents "dispatcher is null" errors during lazy loading
     if (!this.state.ready) {
       return <LoadingSpinner full text="Initializing permissions..." />
     }
     
+    // Only render the hook-using component after delay confirms React is ready
     return (
       <RoleCheckerInner allowedRoles={this.props.allowedRoles}>
         {this.props.children}
