@@ -520,24 +520,52 @@ const EnochianWheelCalendar = () => {
                   </text>
                 </g>
 
-                {/* Circle 2: 30 days (1-30) */}
+                {/* Circle 2: 30 days (1-30) - Divided into 30 equal sections with numbers */}
                 <g>
+                  {/* Outer circle ring */}
                   <circle cx={centerX} cy={centerY} r="290" fill="none" stroke="url(#metallicGold)" strokeWidth="25" filter="url(#dropShadowDeep)"/>
+                  
+                  {/* Divide into 30 equal sections with lines */}
                   {Array.from({ length: 30 }, (_, i) => {
-                    const angle = (i * (360/30) - 90) * Math.PI / 180;
-                    const x = centerX + 290 * Math.cos(angle);
-                    const y = centerY + 290 * Math.sin(angle);
+                    const angle = (-90 - i * (360/30)) * Math.PI / 180;
+                    const innerRadius = 275;
+                    const outerRadius = 290;
+                    const x1 = centerX + innerRadius * Math.cos(angle);
+                    const y1 = centerY + innerRadius * Math.sin(angle);
+                    const x2 = centerX + outerRadius * Math.cos(angle);
+                    const y2 = centerY + outerRadius * Math.sin(angle);
                     const dayNum = i + 1;
                     const isCurrent = dayNum === (enochianDate.dayOf30Cycle || enochianDate.day);
                     
+                    // Midpoint of section for number placement
+                    const midAngle = (-90 - (i + 0.5) * (360/30)) * Math.PI / 180;
+                    const textRadius = 282.5;
+                    const textX = centerX + textRadius * Math.cos(midAngle);
+                    const textY = centerY + textRadius * Math.sin(midAngle);
+                    
                     return (
                       <g key={`day30-${i}`}>
-                        <circle cx={x} cy={y} r={isCurrent ? 8 : 4} fill={isCurrent ? '#fbbf24' : '#94a3b8'} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
-                        {i % 5 === 0 && (
-                          <text x={x} y={y - 12} textAnchor="middle" className="text-[8px] fill-amber-900 font-bold">
-                            {dayNum}
-                          </text>
-                        )}
+                        {/* Dividing line */}
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke={isCurrent ? '#fbbf24' : '#000000'}
+                          strokeWidth={isCurrent ? 3 : 2}
+                          opacity={isCurrent ? 1 : 0.6}
+                        />
+                        {/* Number in section */}
+                        <text
+                          x={textX}
+                          y={textY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className={`text-sm fill-black font-bold`}
+                          transform={`rotate(${-90 - (i + 0.5) * (360/30)} ${textX} ${textY})`}
+                        >
+                          {dayNum}
+                        </text>
                       </g>
                     );
                   })}
@@ -546,25 +574,68 @@ const EnochianWheelCalendar = () => {
                   </text>
                 </g>
 
-                {/* Circle 3: 52 weeks (364 dots) */}
+                {/* Circle 3: 52 weeks - Divided into 52 sections, each with 7 slots */}
                 <g>
+                  {/* Outer circle ring */}
                   <circle cx={centerX} cy={centerY} r="250" fill="none" stroke="url(#metallicSilver)" strokeWidth="20" filter="url(#dropShadowDeep)"/>
-                  {Array.from({ length: 364 }, (_, i) => {
-                    const angle = (i * (360/364) - 90) * Math.PI / 180;
-                    const x = centerX + 250 * Math.cos(angle);
-                    const y = centerY + 250 * Math.sin(angle);
-                    const weekNum = Math.floor(i / 7) + 1;
+                  
+                  {Array.from({ length: 52 }, (_, weekIndex) => {
+                    const weekNum = weekIndex + 1;
                     const isCurrentWeek = weekNum === enochianDate.sabbathWeek;
+                    const weekStartAngle = (-90 - weekIndex * (360/52)) * Math.PI / 180;
+                    const weekEndAngle = (-90 - (weekIndex + 1) * (360/52)) * Math.PI / 180;
+                    const innerRadius = 235;
+                    const outerRadius = 250;
+                    
+                    // Draw dividing line for week
+                    const x1 = centerX + innerRadius * Math.cos(weekStartAngle);
+                    const y1 = centerY + innerRadius * Math.sin(weekStartAngle);
+                    const x2 = centerX + outerRadius * Math.cos(weekStartAngle);
+                    const y2 = centerY + outerRadius * Math.sin(weekStartAngle);
                     
                     return (
-                      <circle
-                        key={`week-${i}`}
-                        cx={x}
-                        cy={y}
-                        r={isCurrentWeek ? 3 : 1}
-                        fill={isCurrentWeek ? '#60a5fa' : '#94a3b8'}
-                        filter={isCurrentWeek ? "url(#glowStrong)" : undefined}
-                      />
+                      <g key={`week-${weekIndex}`}>
+                        {/* Week dividing line */}
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke={isCurrentWeek ? '#60a5fa' : '#000000'}
+                          strokeWidth={isCurrentWeek ? 3 : 2}
+                          opacity={isCurrentWeek ? 1 : 0.6}
+                        />
+                        
+                        {/* 7 slots within each week section */}
+                        {Array.from({ length: 7 }, (_, dayIndex) => {
+                          const slotAngle = weekStartAngle - (dayIndex * (360/52/7));
+                          const slotInnerRadius = innerRadius + (dayIndex * (outerRadius - innerRadius) / 7);
+                          const slotOuterRadius = innerRadius + ((dayIndex + 1) * (outerRadius - innerRadius) / 7);
+                          const slotMidRadius = (slotInnerRadius + slotOuterRadius) / 2;
+                          const slotMidAngle = weekStartAngle - ((dayIndex + 0.5) * (360/52/7));
+                          const slotX = centerX + slotMidRadius * Math.cos(slotMidAngle);
+                          const slotY = centerY + slotMidRadius * Math.sin(slotMidAngle);
+                          
+                          // Draw slot divider
+                          const slotX1 = centerX + slotInnerRadius * Math.cos(slotAngle);
+                          const slotY1 = centerY + slotInnerRadius * Math.sin(slotAngle);
+                          const slotX2 = centerX + slotOuterRadius * Math.cos(slotAngle);
+                          const slotY2 = centerY + slotOuterRadius * Math.sin(slotAngle);
+                          
+                          return (
+                            <line
+                              key={`slot-${weekIndex}-${dayIndex}`}
+                              x1={slotX1}
+                              y1={slotY1}
+                              x2={slotX2}
+                              y2={slotY2}
+                              stroke="#000000"
+                              strokeWidth="1"
+                              opacity="0.4"
+                            />
+                          );
+                        })}
+                      </g>
                     );
                   })}
                   <text x={centerX} y={centerY - 230} textAnchor="middle" className="text-xs fill-amber-800 font-bold">
@@ -572,24 +643,52 @@ const EnochianWheelCalendar = () => {
                   </text>
                 </g>
 
-                {/* Circle 4: 31 days (1-31) */}
+                {/* Circle 4: 31 days (1-31) - Divided into 31 equal sections with numbers */}
                 <g>
+                  {/* Outer circle ring */}
                   <circle cx={centerX} cy={centerY} r="210" fill="none" stroke="url(#metallicGold)" strokeWidth="18" filter="url(#dropShadowDeep)"/>
+                  
+                  {/* Divide into 31 equal sections with lines */}
                   {Array.from({ length: 31 }, (_, i) => {
-                    const angle = (i * (360/31) - 90) * Math.PI / 180;
-                    const x = centerX + 210 * Math.cos(angle);
-                    const y = centerY + 210 * Math.sin(angle);
+                    const angle = (-90 - i * (360/31)) * Math.PI / 180;
+                    const innerRadius = 195;
+                    const outerRadius = 210;
+                    const x1 = centerX + innerRadius * Math.cos(angle);
+                    const y1 = centerY + innerRadius * Math.sin(angle);
+                    const x2 = centerX + outerRadius * Math.cos(angle);
+                    const y2 = centerY + outerRadius * Math.sin(angle);
                     const dayNum = i + 1;
                     const isCurrent = dayNum === (enochianDate.dayOf31Cycle || enochianDate.day);
                     
+                    // Midpoint of section for number placement
+                    const midAngle = (-90 - (i + 0.5) * (360/31)) * Math.PI / 180;
+                    const textRadius = 202.5;
+                    const textX = centerX + textRadius * Math.cos(midAngle);
+                    const textY = centerY + textRadius * Math.sin(midAngle);
+                    
                     return (
                       <g key={`day31-${i}`}>
-                        <circle cx={x} cy={y} r={isCurrent ? 7 : 3} fill={isCurrent ? '#fbbf24' : '#94a3b8'} filter={isCurrent ? "url(#glowStrong)" : undefined}/>
-                        {i % 5 === 0 && (
-                          <text x={x} y={y - 4} textAnchor="middle" className="text-[8px] fill-amber-900 font-bold">
-                            {dayNum}
-                          </text>
-                        )}
+                        {/* Dividing line */}
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke={isCurrent ? '#fbbf24' : '#000000'}
+                          strokeWidth={isCurrent ? 3 : 2}
+                          opacity={isCurrent ? 1 : 0.6}
+                        />
+                        {/* Number in section */}
+                        <text
+                          x={textX}
+                          y={textY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className={`text-sm fill-black font-bold`}
+                          transform={`rotate(${-90 - (i + 0.5) * (360/31)} ${textX} ${textY})`}
+                        >
+                          {dayNum}
+                        </text>
                       </g>
                     );
                   })}
