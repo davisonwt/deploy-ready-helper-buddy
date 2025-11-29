@@ -378,9 +378,8 @@ const EnochianWheelCalendar = () => {
                         y={textY}
                         textAnchor="middle"
                         dominantBaseline="middle"
-                        className="text-sm fill-amber-400 font-bold"
-                        filter="url(#glowStrong)"
-                        transform={`rotate(${angleDeg + 90} ${textX} ${textY})`}
+                        className="text-sm fill-black font-bold"
+                        transform={`rotate(${angleDeg} ${textX} ${textY})`}
                       >
                         {currentDayNumber}
                       </text>
