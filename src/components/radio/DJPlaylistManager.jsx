@@ -334,6 +334,12 @@ export default function DJPlaylistManager() {
 
           if (playlistTrackError) throw playlistTrackError
 
+          // Award XP for uploading music (100 XP per track)
+          await supabase.rpc('add_xp_to_current_user', { amount: 100 }).catch((err) => {
+            console.error('Failed to award XP:', err);
+            // Don't fail the upload if XP award fails
+          });
+
           // Update track status to success
           setUploadData(prev => ({
             ...prev,
