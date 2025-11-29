@@ -243,9 +243,12 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
               <g id="fruits">
                 {Array.from({ length: fruitCount }).map((_, i) => {
                   const colors = ['#facc15', '#f43f5e', '#fbbf24']
-                  const cx = 100 + Math.random() * 200
-                  const cy = 100 + Math.random() * 150
-                  const r = 12 + Math.random() * 10
+                  // Deterministic positioning based on index
+                  const angle = (i / fruitCount) * Math.PI * 2
+                  const radius = 80 + (i % 3) * 20
+                  const cx = 200 + Math.cos(angle) * radius
+                  const cy = 200 + Math.sin(angle) * radius - 50
+                  const r = 12 + (i % 3) * 3
                   return (
                     <motion.circle
                       key={i}
