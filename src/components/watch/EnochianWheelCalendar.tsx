@@ -240,6 +240,7 @@ const EnochianWheelCalendar = () => {
                   return <g key={`t-${d}`}><circle cx={x} cy={y} r="8" fill={cur ? '#a855f7' : '#9333ea'} stroke="#fbbf24" strokeWidth="2" />{cur && <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-white">{d}</text>}</g>;
                 })}
                   {Array.from({ length: 364 }).map((_, i) => {
+<<<<<<< HEAD
                   const day = i + 1;
                   const ang = (-90 + (i / 364) * 360) * Math.PI / 180;
                   const cur = day === enochianDate.dayOfYear;
@@ -296,6 +297,177 @@ const EnochianWheelCalendar = () => {
               {/* 30 DAY */}
               <g>
                 <circle cx={center} cy={center} r="255" fill="none" stroke="#10b981" strokeWidth="3" />
+=======
+
+                    const dayNum = i + 1;
+
+                    // Keep original angle calculation for all days EXCEPT day 1
+
+                    // Day 364 (orange) stays at its original position
+
+                    // Day 1 (green) must be immediately clockwise (RIGHT) after day 364
+
+                    let angle: number;
+
+                    if (dayNum === 1) {
+
+                      // Day 364 (orange) is at: -90 + (360/364) + (363/364)*360 = 270 degrees
+
+                      // Day 1 (green) MUST be immediately clockwise (RIGHT) after day 364
+
+                      // Calculate day 364's exact angle first
+
+                      const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
+
+                      // Position day 1 on the opposite side of day 364 (counter-clockwise / to the LEFT when viewing from outside)
+
+                      const day1AngleDeg = day364AngleDeg - (360/364); // Move 1 space to the left of day 364
+
+                      // Convert to radians
+
+                      angle = day1AngleDeg * Math.PI / 180;
+
+                      // Debug: log to verify
+
+                      console.log('Day 364 angle:', day364AngleDeg, 'Day 1 angle:', day1AngleDeg);
+
+                    } else {
+
+                      // All other days use original calculation
+
+                      angle = (-90 + (360/364) + (i / 364) * 360) * Math.PI / 180;
+
+                    }
+
+                    const isCurrentDay = dayNum === enochianDate.dayOfYear;
+
+                    const isIntercalary = dayNum === 91 || dayNum === 182 || dayNum === 273 || dayNum === 364;
+
+                    const isDayOne = dayNum === 1; // Day 1 of the year - mark green
+
+                    
+
+                    const x1 = center + 310 * Math.cos(angle);
+
+                    const y1 = center + 310 * Math.sin(angle);
+
+                    const x2 = center + 340 * Math.cos(angle);
+
+                    const y2 = center + 340 * Math.sin(angle);
+
+                    
+
+                    if (isCurrentDay && dayNum !== 255) {
+
+                      const textX = center + 325 * Math.cos(angle);
+
+                      const textY = center + 325 * Math.sin(angle);
+
+                      // Calculate text angle same as line angle
+                      let textAngle: number;
+                      
+                      if (dayNum === 1) {
+                        // Day 1: position clockwise after day 364
+                        const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
+                        textAngle = day364AngleDeg + (360/364);
+                      } else {
+                        // All other days: original calculation
+                        textAngle = -90 + (360/364) + (i / 364) * 360;
+                      }
+
+                      
+
+                      return (
+
+                        <g key={i}>
+
+                          <circle cx={textX} cy={textY} r="14" fill="#fbbf24" opacity="0.3"/>
+
+                          <circle cx={textX} cy={textY} r="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="2"/>
+
+                          <text
+
+                            x={textX}
+
+                            y={textY}
+
+                            textAnchor="middle"
+
+                            dominantBaseline="middle"
+
+                            transform={`rotate(${textAngle} ${textX} ${textY})`}
+
+                            className="font-bold fill-amber-400"
+
+                            style={{ fontSize: '14px' }}
+
+                          >
+
+                            {dayNum}
+
+                          </text>
+
+                        </g>
+
+                      );
+
+                    }
+
+                    
+
+                    return (
+
+                      <line
+
+                        key={i}
+
+                        x1={x1} y1={y1} x2={x2} y2={y2}
+
+                        stroke={isDayOne ? "#10b981" : isIntercalary ? "#f59e0b" : "#64748b"}
+
+                        strokeWidth={isDayOne ? "3" : isIntercalary ? "3" : "2.5"}
+
+                        strokeLinecap="round"
+
+                        opacity={isDayOne ? "1" : isIntercalary ? "0.9" : "0.7"}
+
+                      />
+
+                    );
+
+                  })}
+
+                  {/* Extra line at original Day 1 position (clockwise of Day 364) - regular color */}
+                  {(() => {
+                    const day364AngleDeg = -90 + (360/364) + (363 / 364) * 360;
+                    const extraLineAngleDeg = day364AngleDeg + (360/364); // 1 space clockwise of Day 364
+                    const extraAngle = extraLineAngleDeg * Math.PI / 180;
+                    const x1 = center + 310 * Math.cos(extraAngle);
+                    const y1 = center + 310 * Math.sin(extraAngle);
+                    const x2 = center + 340 * Math.cos(extraAngle);
+                    const y2 = center + 340 * Math.sin(extraAngle);
+                    return (
+                      <line
+                        x1={x1} y1={y1} x2={x2} y2={y2}
+                        stroke="#64748b"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        opacity="0.7"
+                      />
+                    );
+                  })()}
+
+                </g>
+
+
+
+                {/* CIRCLE 2: 30 days - ONE BORDER ONLY */}
+
+                <g>
+
+                  <circle cx={center} cy={center} r="295" fill="none" stroke="#10b981" strokeWidth="3"/>
+
+>>>>>>> def54342d1bc2c2239c7645733d9a409eb62413e
                   {Array.from({ length: 30 }).map((_, i) => {
                   const ang = (i * 12 - 90) * Math.PI / 180;
                   const mid = (i * 12 + 6 - 90);
