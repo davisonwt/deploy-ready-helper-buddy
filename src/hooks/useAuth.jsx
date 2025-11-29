@@ -8,7 +8,23 @@ const AuthContext = createContext(undefined)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within an AuthProvider')
+  if (!context) {
+    // Return safe defaults instead of throwing to prevent React dispatcher errors
+    console.warn('useAuth called outside AuthProvider, returning safe defaults')
+    return {
+      user: null,
+      session: null,
+      loading: true,
+      isAuthenticated: false,
+      login: async () => ({ success: false, error: 'AuthProvider not initialized' }),
+      register: async () => ({ success: false, error: 'AuthProvider not initialized' }),
+      loginAnonymously: async () => ({ success: false, error: 'AuthProvider not initialized' }),
+      logout: async () => {},
+      resetPassword: async () => ({ success: false, error: 'AuthProvider not initialized' }),
+      updateProfile: async () => ({ success: false, error: 'AuthProvider not initialized' }),
+      reinitializeAuth: () => {},
+    }
+  }
   return context
 }
 
