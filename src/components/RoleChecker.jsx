@@ -1,93 +1,92 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
-import { useUserRoles } from '@/hooks/useUserRoles'
+import { supabase } from '@/integrations/supabase/client'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 
-// Inner component that uses hooks - only rendered after React dispatcher is ready
-function RoleCheckerInner({ children, allowedRoles = [] }) {
-  const { isAuthenticated, loading: authLoading } = useAuth()
-  const { hasRole, loading: rolesLoading } = useUserRoles()
-
-  if (authLoading || rolesLoading) {
-    return <LoadingSpinner full text="Loading permissions..." />
+/**
+ * Pure class component for role checking - avoids hooks entirely
+ * to prevent "dispatcher is null" errors during flushSync navigation
+ */
+class RoleChecker extends React.Component {
+  state = {
+    loading: true,
+    isAuthenticated: false,
+    userRoles: [],
+    user: null
   }
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
+  _isMounted = false
 
-  const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.length > 0
-    ? allowedRoles.some((r) => hasRole(r))
-    : true
-
-  if (!hasRequiredRole) {
-    return <Navigate to="/dashboard" replace />
-  }
-  
-  return <>{children}</>
-}
-
-// Class component wrapper that delays rendering without using hooks
-class RoleCheckerWrapper extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { ready: false }
-    this.timeoutId = null
-    this.idleCallbackId = null
-  }
-
-  componentDidMount() {
-    // Delay rendering to ensure React's dispatcher is fully initialized
-    // This prevents "dispatcher is null" errors during lazy loading
-    // Using a longer delay (1000ms) to ensure React is completely ready
-    const scheduleRender = () => {
-      if ('requestIdleCallback' in window) {
-        this.idleCallbackId = requestIdleCallback(() => {
-          // Additional delay to ensure dispatcher is ready
-          this.timeoutId = setTimeout(() => {
-            this.setState({ ready: true })
-          }, 500)
-        }, { timeout: 1000 })
+  async componentDidMount() {
+    this._isMounted = true
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (session?.user) {
+        const roles = await this.fetchRoles(session.user.id)
+        if (this._isMounted) {
+          this.setState({
+            loading: false,
+            isAuthenticated: true,
+            user: session.user,
+            userRoles: roles
+          })
+        }
       } else {
-        this.timeoutId = setTimeout(() => {
-          this.setState({ ready: true })
-        }, 1000)
+        if (this._isMounted) {
+          this.setState({ loading: false, isAuthenticated: false })
+        }
+      }
+    } catch (err) {
+      console.error('RoleChecker auth error:', err)
+      if (this._isMounted) {
+        this.setState({ loading: false, isAuthenticated: false })
       }
     }
-    
-    scheduleRender()
   }
 
   componentWillUnmount() {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId)
-    }
-    if (this.idleCallbackId && 'cancelIdleCallback' in window) {
-      cancelIdleCallback(this.idleCallbackId)
+    this._isMounted = false
+  }
+
+  fetchRoles = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+      
+      if (error) throw error
+      return (data || []).map(r => String(r.role).toLowerCase())
+    } catch (err) {
+      console.error('Failed to fetch roles:', err)
+      return []
     }
   }
 
   render() {
-    // Never render RoleCheckerInner until React dispatcher is confirmed ready
-    // This prevents "dispatcher is null" errors during lazy loading
-    if (!this.state.ready) {
-      return <LoadingSpinner full text="Initializing permissions..." />
+    const { loading, isAuthenticated, userRoles } = this.state
+    const { allowedRoles = [], children } = this.props
+
+    if (loading) {
+      return <LoadingSpinner full text="Loading permissions..." />
     }
-    
-    // Only render the hook-using component after delay confirms React is ready
-    return (
-      <RoleCheckerInner allowedRoles={this.props.allowedRoles}>
-        {this.props.children}
-      </RoleCheckerInner>
-    )
+
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />
+    }
+
+    const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.length > 0
+      ? allowedRoles.some(r => userRoles.includes(r.toLowerCase()))
+      : true
+
+    if (!hasRequiredRole) {
+      return <Navigate to="/dashboard" replace />
+    }
+
+    return <>{children}</>
   }
 }
 
-export default function RoleChecker({ children, allowedRoles = [] }) {
-  return (
-    <RoleCheckerWrapper allowedRoles={allowedRoles}>
-      {children}
-    </RoleCheckerWrapper>
-  )
-}
+export default RoleChecker
