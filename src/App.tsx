@@ -104,7 +104,10 @@ const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
-const MusicLibraryPage = lazy(() => import("./pages/MusicLibraryPage"));
+const MusicLibraryPage = lazy(() => import("./pages/MusicLibraryPage").catch((error) => {
+  console.error('Failed to load MusicLibraryPage:', error);
+  return { default: () => <div className="p-8 text-center">Failed to load Music Library. Please refresh the page.</div> };
+}));
 const MyS2GLibraryPage = lazy(() => import("./pages/MyS2GLibraryPage"));
 const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPage"));
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
