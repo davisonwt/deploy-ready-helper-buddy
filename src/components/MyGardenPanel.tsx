@@ -29,15 +29,16 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     }
   }, [isOpen])
 
-  const mysterySeed = () => {
-    const gifts = [1, 2, 5, 10];
-    const won = gifts[Math.floor(Math.random() * gifts.length)];
-    floatingScore(won);
-    launchSparkles();
-    alert(`You found ${won} USDC inside the seed! Check Community Music →`)
-    navigate('/products?filter=music')
-    closeGarden()
-  }
+      const mysterySeed = () => {
+        const gifts = [1, 2, 5, 10];
+        const won = gifts[Math.floor(Math.random() * gifts.length)];
+        playSoundEffect('mysterySeed', 0.7)
+        floatingScore(won);
+        launchSparkles();
+        alert(`You found ${won} USDC inside the seed! Check Community Music →`)
+        navigate('/products?filter=music')
+        closeGarden()
+      }
 
   const surpriseMe = () => {
     launchSparkles();
@@ -47,19 +48,20 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     closeGarden()
   }
 
-  const quickRain = () => {
-    const rainAmount = 0.50;
-    if (typeof window !== 'undefined') {
-      if (window.launchConfetti) {
-        window.launchConfetti();
+      const quickRain = () => {
+        const rainAmount = 0.50;
+        playSoundEffect('quickRain', 0.7)
+        if (typeof window !== 'undefined') {
+          if (window.launchConfetti) {
+            window.launchConfetti();
+          }
+          if (window.floatingScore) {
+            window.floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
+          }
+        }
+        alert("0.50 USDC sent to a random creator!")
+        closeGarden()
       }
-      if (window.floatingScore) {
-        window.floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
-      }
-    }
-    alert("0.50 USDC sent to a random creator!")
-    closeGarden()
-  }
 
   // Garden cards - EXACTLY matching "My Content" dropdown items
   const gardenCards = [
