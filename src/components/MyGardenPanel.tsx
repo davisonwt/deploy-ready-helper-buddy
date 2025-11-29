@@ -84,7 +84,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/create-orchard', label: 'New Orchard', color: 'bg-green-600 hover:bg-green-500' },
     { href: '/music-library', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' }, // Music uploads happen on music-library page
     { href: '/products/upload', label: 'New Resource', color: 'bg-yellow-600 hover:bg-yellow-500' }, // Product upload route
-    { href: '/tithing', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500' }
+    { href: '#', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500', onClick: quickRain } // Quick Rain action
   ]
 
   // Don't render anything if panel is closed
@@ -134,16 +134,32 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
 
             {/* Quick actions grid */}
             <div className="grid grid-cols-2 gap-5">
-              {quickActions.map((action, index) => (
-                <Link
-                  key={index}
-                  to={action.href}
-                  onClick={closeGarden}
-                  className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
-                >
-                  {action.label}
-                </Link>
-              ))}
+              {quickActions.map((action, index) => {
+                if (action.onClick) {
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        action.onClick?.();
+                        closeGarden();
+                      }}
+                      className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
+                    >
+                      {action.label}
+                    </button>
+                  );
+                }
+                return (
+                  <Link
+                    key={index}
+                    to={action.href}
+                    onClick={closeGarden}
+                    className={`${action.color} rounded-3xl p-8 text-center font-bold text-xl shadow-2xl hover:scale-105 transition`}
+                  >
+                    {action.label}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Garden cards */}
@@ -175,7 +191,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
             >
               <div className="text-7xl mb-4">🌱</div>
               <div className="text-2xl font-bold">Daily Mystery Seed</div>
-              <div className="text-lg mt-2">Tap me – something beautiful grows…</div>
+              <div className="text-2xl font-bold mt-2">Tap me – something beautiful grows…</div>
             </div>
 
             {/* Bottom fun buttons */}
