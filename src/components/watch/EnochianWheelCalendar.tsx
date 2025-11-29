@@ -291,6 +291,35 @@ const EnochianWheelCalendar = () => {
                       <feMergeNode in="SourceGraphic"/>
                     </feMerge>
                   </filter>
+                  
+                  {/* Elevated circle shadow - creates depth effect */}
+                  <filter id="elevatedShadow" x="-150%" y="-150%" width="400%" height="400%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
+                    <feOffset dx="0" dy="8"/>
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.6"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  
+                  {/* Radial gradient for elevated circle depth */}
+                  <radialGradient id="elevatedCircleGradient" cx="50%" cy="30%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4"/>
+                    <stop offset="30%" stopColor="#e2e8f0" stopOpacity="0.3"/>
+                    <stop offset="70%" stopColor="#94a3b8" stopOpacity="0.5"/>
+                    <stop offset="100%" stopColor="#475569" stopOpacity="0.6"/>
+                  </radialGradient>
+                  
+                  {/* Highlight for top edge of elevated circle */}
+                  <linearGradient id="elevatedHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6"/>
+                    <stop offset="20%" stopColor="#f1f5f9" stopOpacity="0.4"/>
+                    <stop offset="50%" stopColor="#cbd5e1" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="#64748b" stopOpacity="0.1"/>
+                  </linearGradient>
                 </defs>
 
                 {/* Background: 4 Seasons rotating */}
@@ -319,8 +348,44 @@ const EnochianWheelCalendar = () => {
 
                 {/* Circle 1: 366 dots/lines - Day 254 of 364 year */}
                 {/* Top middle line is Day 1, counting anti-clockwise */}
+                {/* Elevated outer circle with 3D depth effect */}
                 <g>
-                  <circle cx={centerX} cy={centerY} r="330" fill="none" stroke="url(#metallicSilver)" strokeWidth="3" filter="url(#dropShadowDeep)"/>
+                  {/* Shadow layer - creates the elevated effect */}
+                  <circle cx={centerX} cy={centerY + 4} r="332" fill="none" stroke="rgba(0,0,0,0.3)" strokeWidth="6" opacity="0.4"/>
+                  
+                  {/* Main elevated circle with gradient and highlight */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY} 
+                    r="330" 
+                    fill="url(#elevatedCircleGradient)" 
+                    stroke="url(#metallicSilver)" 
+                    strokeWidth="4" 
+                    filter="url(#elevatedShadow)"
+                    opacity="0.95"
+                  />
+                  
+                  {/* Top highlight for 3D effect */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY - 2} 
+                    r="328" 
+                    fill="none" 
+                    stroke="url(#elevatedHighlight)" 
+                    strokeWidth="2" 
+                    opacity="0.7"
+                  />
+                  
+                  {/* Inner shadow to create depth */}
+                  <circle 
+                    cx={centerX} 
+                    cy={centerY + 2} 
+                    r="328" 
+                    fill="none" 
+                    stroke="rgba(0,0,0,0.2)" 
+                    strokeWidth="1" 
+                    opacity="0.5"
+                  />
                   {Array.from({ length: 366 }, (_, i) => {
                     const dayNumber = i + 1;
                     // Start at top (-90 degrees) and count anti-clockwise
