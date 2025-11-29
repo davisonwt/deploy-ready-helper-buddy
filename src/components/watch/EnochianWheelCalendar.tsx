@@ -622,6 +622,8 @@ const EnochianWheelCalendar = () => {
 
                     const isIntercalary = dayNum === 91 || dayNum === 182 || dayNum === 273 || dayNum === 364;
 
+                    const isDayOne = dayNum === 1; // Day 1 of the year - mark green
+
                     
 
                     const x1 = center + 310 * Math.cos(angle);
@@ -690,13 +692,13 @@ const EnochianWheelCalendar = () => {
 
                         x1={x1} y1={y1} x2={x2} y2={y2}
 
-                        stroke={isIntercalary ? "#f59e0b" : "#64748b"}
+                        stroke={isDayOne ? "#10b981" : isIntercalary ? "#f59e0b" : "#64748b"}
 
-                        strokeWidth={isIntercalary ? "3" : "2.5"}
+                        strokeWidth={isDayOne ? "3" : isIntercalary ? "3" : "2.5"}
 
                         strokeLinecap="round"
 
-                        opacity={isIntercalary ? "0.9" : "0.7"}
+                        opacity={isDayOne ? "1" : isIntercalary ? "0.9" : "0.7"}
 
                       />
 
