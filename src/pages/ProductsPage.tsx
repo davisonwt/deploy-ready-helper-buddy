@@ -7,7 +7,7 @@ import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-import { launchConfetti, floatingScore } from '@/utils/confetti';
+import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 
 const ITEMS_PER_PAGE = 20;
 

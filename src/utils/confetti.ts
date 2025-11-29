@@ -46,7 +46,7 @@ export function playSoundEffect(soundKey: keyof typeof SFX, volume = 0.7) {
 
 // 1. Reusable confetti (upgraded version)
 export function launchConfetti() {
-  playSound('confetti', 0.6)
+  if (audioUnlocked) playSound('confetti', 0.5)
   const canvas = document.createElement('canvas');
   canvas.style.position = 'fixed';
   canvas.style.inset = '0';
@@ -115,6 +115,7 @@ export function launchConfetti() {
 
 // 2. Sparkle burst (perfect for Mystery Seed & Surprise Me)
 export function launchSparkles(x?: number, y?: number) {
+  if (audioUnlocked) playSound('sparkle', 0.6)
   const canvas = document.createElement('canvas');
   canvas.style.position = 'fixed';
   canvas.style.inset = '0';

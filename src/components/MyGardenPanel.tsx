@@ -32,7 +32,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
       const mysterySeed = () => {
         const gifts = [1, 2, 5, 10];
         const won = gifts[Math.floor(Math.random() * gifts.length)];
-        playSoundEffect('mysterySeed', 0.7)
+        playSoundEffect('mysterySeed', 0.9);
         floatingScore(won);
         launchSparkles();
         alert(`You found ${won} USDC inside the seed! Check Community Music →`)
@@ -50,7 +50,6 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
 
       const quickRain = () => {
         const rainAmount = 0.50;
-        playSoundEffect('quickRain', 0.7)
         if (typeof window !== 'undefined') {
           if (window.launchConfetti) {
             window.launchConfetti();
@@ -59,6 +58,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
             window.floatingScore(rainAmount, window.innerWidth - 100, window.innerHeight - 100);
           }
         }
+        playSoundEffect('quickRain', 1.0);
         alert("0.50 USDC sent to a random creator!")
         closeGarden()
       }
