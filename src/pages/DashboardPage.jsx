@@ -109,38 +109,41 @@ export default function DashboardPage() {
   // Calculate calendar data directly (without CalendarWheel component)
   useEffect(() => {
     const updateCalendarData = () => {
+      // Get current LOCAL time - no internet, no UTC conversion, just local time
       const now = new Date()
+      const localYear = now.getFullYear()
+      const localMonth = now.getMonth()
+      const localDate = now.getDate()
+      const localHour = now.getHours()
+      const localMinute = now.getMinutes()
       
-      // IMPORTANT: Day starts at sunrise, not midnight!
-      // Get today's sunrise/sunset times
-      const { sunrise, sunset } = getSunriseSunsetTimes(now)
+      // IMPORTANT: Day starts at sunrise (05:13), not midnight!
+      // Compare current LOCAL time with sunrise time (05:13)
+      const currentTimeMinutes = localHour * 60 + localMinute
+      const sunriseTimeMinutes = 5 * 60 + 13 // 05:13 = 313 minutes
       
-      // Compare current time with today's sunrise time
-      const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
-      const sunriseHour = sunrise.getHours()
-      const sunriseMinute = sunrise.getMinutes()
-      
-      // Convert to minutes for accurate comparison
-      const currentTimeMinutes = currentHour * 60 + currentMinute
-      const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
-      
-      console.log(`[Dashboard] Time check: ${currentHour}:${currentMinute.toString().padStart(2, '0')} vs sunrise ${sunriseHour}:${sunriseMinute.toString().padStart(2, '0')} (${currentTimeMinutes} < ${sunriseTimeMinutes} = ${currentTimeMinutes < sunriseTimeMinutes})`)
+      console.log(`[Dashboard] LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}, Sunrise: 05:13, Before sunrise: ${currentTimeMinutes < sunriseTimeMinutes}`)
       
       // If current time is before sunrise, we're still on the previous calendar day
-      let effectiveDate = new Date(now)
+      let effectiveYear = localYear
+      let effectiveMonth = localMonth
+      let effectiveDate = localDate
+      
       if (currentTimeMinutes < sunriseTimeMinutes) {
-        // Still on previous day - subtract one day
-        effectiveDate.setDate(effectiveDate.getDate() - 1)
-        console.log(`[Dashboard] Before sunrise - using previous day. Original: ${now.toLocaleString()}, Effective: ${effectiveDate.toLocaleString()}`)
+        // Still on previous day - go back one day
+        const prevDay = new Date(localYear, localMonth, localDate - 1)
+        effectiveYear = prevDay.getFullYear()
+        effectiveMonth = prevDay.getMonth()
+        effectiveDate = prevDay.getDate()
+        console.log(`[Dashboard] BEFORE SUNRISE - Using previous day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       } else {
-        console.log(`[Dashboard] After sunrise - using current day: ${effectiveDate.toLocaleString()}`)
+        console.log(`[Dashboard] AFTER SUNRISE - Using current day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
       }
       
-      // Normalize effective date to noon to avoid time component affecting day calculation
+      // Create date at LOCAL noon to avoid timezone issues
       // This ensures getCreatorDate calculates based purely on the date, not the time
-      const normalizedDate = new Date(effectiveDate.getFullYear(), effectiveDate.getMonth(), effectiveDate.getDate(), 12, 0, 0, 0)
-      console.log(`[Dashboard] Normalized date: ${normalizedDate.toLocaleString()}`)
+      const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
+      console.log(`[Dashboard] Normalized LOCAL date: ${normalizedDate.toLocaleString()}`)
       
       // Use normalized date for calendar calculations
       const creatorDate = getCreatorDate(normalizedDate)
@@ -231,21 +234,27 @@ export default function DashboardPage() {
     
     // Initialize custom date (with sunrise-based calculation)
     const now = new Date()
-    const { sunrise } = getSunriseSunsetTimes(now)
-    const currentHour = now.getHours()
-    const currentMinute = now.getMinutes()
-    const sunriseHour = sunrise.getHours()
-    const sunriseMinute = sunrise.getMinutes()
-    const currentTimeMinutes = currentHour * 60 + currentMinute
-    const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
+    const localYear = now.getFullYear()
+    const localMonth = now.getMonth()
+    const localDate = now.getDate()
+    const localHour = now.getHours()
+    const localMinute = now.getMinutes()
     
-    let effectiveDate = new Date(now)
+    const currentTimeMinutes = localHour * 60 + localMinute
+    const sunriseTimeMinutes = 5 * 60 + 13 // 05:13
+    
+    let effectiveYear = localYear
+    let effectiveMonth = localMonth
+    let effectiveDate = localDate
+    
     if (currentTimeMinutes < sunriseTimeMinutes) {
-      effectiveDate.setDate(effectiveDate.getDate() - 1)
+      const prevDay = new Date(localYear, localMonth, localDate - 1)
+      effectiveYear = prevDay.getFullYear()
+      effectiveMonth = prevDay.getMonth()
+      effectiveDate = prevDay.getDate()
     }
-    // Normalize to noon to avoid time component affecting calculation
-    const normalizedDate = new Date(effectiveDate)
-    normalizedDate.setHours(12, 0, 0, 0)
+    
+    const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
     setCustomDate(getCreatorDate(normalizedDate))
   }, [])
 
@@ -255,22 +264,28 @@ export default function DashboardPage() {
       const now = new Date()
       setCurrentTime(now)
       
-      // Use sunrise-based day calculation
-      const { sunrise } = getSunriseSunsetTimes(now)
-      const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
-      const sunriseHour = sunrise.getHours()
-      const sunriseMinute = sunrise.getMinutes()
-      const currentTimeMinutes = currentHour * 60 + currentMinute
-      const sunriseTimeMinutes = sunriseHour * 60 + sunriseMinute
+      // Use sunrise-based day calculation - LOCAL time only
+      const localYear = now.getFullYear()
+      const localMonth = now.getMonth()
+      const localDate = now.getDate()
+      const localHour = now.getHours()
+      const localMinute = now.getMinutes()
       
-      let effectiveDate = new Date(now)
+      const currentTimeMinutes = localHour * 60 + localMinute
+      const sunriseTimeMinutes = 5 * 60 + 13 // 05:13
+      
+      let effectiveYear = localYear
+      let effectiveMonth = localMonth
+      let effectiveDate = localDate
+      
       if (currentTimeMinutes < sunriseTimeMinutes) {
-        effectiveDate.setDate(effectiveDate.getDate() - 1)
+        const prevDay = new Date(localYear, localMonth, localDate - 1)
+        effectiveYear = prevDay.getFullYear()
+        effectiveMonth = prevDay.getMonth()
+        effectiveDate = prevDay.getDate()
       }
-      // Normalize to noon to avoid time component affecting calculation
-      const normalizedDate = new Date(effectiveDate)
-      normalizedDate.setHours(12, 0, 0, 0)
+      
+      const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
       setCustomDate(getCreatorDate(normalizedDate))
     }, 1000)
 
