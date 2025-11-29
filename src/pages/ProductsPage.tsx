@@ -208,6 +208,7 @@ export default function ProductsPage() {
         bestowal_count: product.bestowal_count || 0,
         sowers: product.sowers
       });
+      launchConfetti();
       toast.success('Added to basket!', {
         action: {
           label: 'View Basket',

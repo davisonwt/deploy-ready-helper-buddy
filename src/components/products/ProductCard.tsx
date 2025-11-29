@@ -15,6 +15,7 @@ import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
+import { launchConfetti } from '@/utils/confetti';
 
 interface ProductCardProps {
   product: any;
@@ -140,6 +141,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
         return;
       }
       addToBasket(product);
+      launchConfetti();
       toast.success('Added to basket!', {
         action: {
           label: 'View Basket',

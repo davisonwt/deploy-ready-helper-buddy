@@ -7,6 +7,7 @@ import { useCryptomusPay } from '@/hooks/useCryptomusPay';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { supabase } from '@/integrations/supabase/client';
+import { launchConfetti } from '@/utils/confetti';
 
 interface BestowalCoinProps {
   assetId: string;
@@ -81,6 +82,7 @@ export function BestowalCoin({
 
       if (paymentResult?.paymentUrl) {
         // Show confetti
+        launchConfetti();
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
 

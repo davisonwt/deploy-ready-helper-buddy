@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import { launchConfetti } from '@/utils/confetti';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
@@ -263,6 +264,7 @@ export default function S2GCommunityMusicPage() {
         }
       });
       if (result.data?.success) {
+        launchConfetti();
         toast.success('Giveaway access granted!');
         window.location.reload();
       }
