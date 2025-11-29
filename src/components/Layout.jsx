@@ -39,6 +39,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 import { GamificationFloatingButton } from "./gamification/GamificationFloatingButton"
 import { GamificationHUD } from "./gamification/GamificationHUD"
+import { ProgressButton } from "./gamification/ProgressButton"
 import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { MyGardenPanel } from "./MyGardenPanel"
@@ -746,6 +747,9 @@ function Layout({ children }) {
       
       {/* My Garden Panel */}
       <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
+
+      {/* Your Progress Button & Modal */}
+      <ProgressButton />
     </div>
   )
 }
