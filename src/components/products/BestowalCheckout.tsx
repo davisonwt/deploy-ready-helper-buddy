@@ -9,7 +9,7 @@ import { ShoppingCart, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
-import { launchConfetti, floatingScore } from '@/utils/confetti';
+import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, clearBasket, totalAmount } = useProductBasket();
@@ -60,6 +60,7 @@ export default function BestowalCheckout() {
       }
 
       // Show floating score for total amount
+      playSoundEffect('bestow', 0.7)
       floatingScore(totalAmount);
       launchConfetti();
       toast.success('Bestowal completed successfully!', {
