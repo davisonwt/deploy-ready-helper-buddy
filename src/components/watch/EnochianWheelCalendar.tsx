@@ -626,6 +626,266 @@ const SivanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const TammuzStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Tammuz = 30 days
+
+  // Global day starts at 92 (30+30+31+1)
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const dayInMonth = i + 1;
+
+    const globalDay = 91 + dayInMonth;
+
+    const dayOfWeek = (globalDay - 1) % 7;
+
+
+
+    const isSabbath      = dayOfWeek === 6;                     // 3,10,17,24
+
+    const is17Tammuz     = dayInMonth === 17;                   // Fast — breach of Jerusalem walls
+
+    const isGoldenCalf   = dayInMonth === 16;                   // Day before the fast — sin committed
+
+    const isThreeWeeks   = dayInMonth >= 17;                    // Mourning period begins
+
+
+
+    let color = '#1f2937';                                      // Regular day — midnight black
+
+    if (isSabbath)                     color = '#fbbf24';      // Golden Sabbath
+
+    if (is17Tammuz)                    color = '#dc2626';      // Blood-red — the fast
+
+    if (isGoldenCalf)                  color = '#f59e0b';      // False gold — the calf
+
+    if (isThreeWeeks && !is17Tammuz && !isSabbath) color = '#475569'; // Ash-grey mourning
+
+
+
+    return {
+
+      day: dayInMonth,
+
+      color,
+
+      isToday: dayInMonth === dayOfMonth,
+
+      is17Tammuz,
+
+      isGoldenCalf,
+
+      isThreeWeeks,
+
+      isSabbath
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60">
+
+      <motion.h2 
+
+        initial={{ scale: 0.8, opacity: 0 }}
+
+        animate={{ scale: 1, opacity: 1 }}
+
+        transition={{ duration: 2, type: "spring", stiffness: 60 }}
+
+        className="text-7xl font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+
+      >
+
+        TAMMUZ • STRAND 4
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-5">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 1.8, 1],
+
+              boxShadow: ["0 0 40px #fff", "0 0 120px #dc2626", "0 0 40px #fff"]
+
+            } : bead.is17Tammuz ? {
+
+              boxShadow: ["0 0 80px #dc2626", "0 0 140px #450a0a", "0 0 80px #dc2626"]
+
+            } : {}}
+
+            transition={bead.is17Tammuz ? { duration: 4, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-24 h-24 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.is17Tammuz
+
+                  ? '0 0 120px #dc2626, 0 0 180px #450a0a, inset 0 0 60px #991b1b'
+
+                  : bead.isGoldenCalf
+
+                  ? '0 0 80px #f59e0b, 0 0 0 12px #000 inset'
+
+                  : bead.isToday
+
+                  ? '0 0 100px #dc2626, inset 0 0 40px #fff'
+
+                  : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.2)',
+
+                transform: 'translateZ(60px)',
+
+                border: bead.is17Tammuz ? '8px solid #991b1b' : '8px solid #000'
+
+              }}
+
+            />
+
+
+
+            {/* 17 Tammuz — Cracked tablet effect */}
+
+            {bead.is17Tammuz && (
+
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+
+                <div className="w-32 h-1 bg-red-800 rotate-45" />
+
+                <div className="w-32 h-1 bg-red-800 -rotate-45" />
+
+                <div className="text-red-300 text-xs font-bold">Walls Breached</div>
+
+              </div>
+
+            )}
+
+
+
+            {/* Golden Calf false fire */}
+
+            {bead.isGoldenCalf && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-4 border-yellow-600 opacity-60"
+
+              />
+
+            )}
+
+
+
+            {/* Mourning ash overlay after 17th */}
+
+            {bead.isThreeWeeks && bead.day >= 17 && !bead.is17Tammuz && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-gray-800/40" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80"
+
+              />
+
+            )}
+
+
+
+            <span className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-2xl font-bold text-amber-200 drop-shadow-lg">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      {/* Legend */}
+
+      <div className="mt-20 grid grid-cols-2 gap-10 text-amber-100 text-lg font-medium text-center">
+
+        <div>Yellow = Shabbat (3,10,17,24)</div>
+
+        <div>Blood Red = 17th • Fast of Tammuz</div>
+
+        <div>False Gold = 16th • Golden Calf sin</div>
+
+        <div>Ash Grey = Three Weeks of mourning begin</div>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0 }}
+
+        animate={{ opacity: 1 }}
+
+        transition={{ delay: 2 }}
+
+        className="mt-12 text-3xl text-red-400 italic font-light tracking-wider"
+
+      >
+
+        "And Moses saw the calf… and he broke the tablets…"
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1070,6 +1330,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <SivanStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Tammuz Strand - Show when month is Tammuz (month 4) */}
+      {enochianDate.month === 4 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <TammuzStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
