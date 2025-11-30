@@ -52,13 +52,20 @@ async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Dat
     const data = await response.json();
     
     if (data.status === 'OK' && data.results) {
-      return new Date(data.results.sunrise);
+      // Sunrise API returns UTC time in ISO format (e.g., "2025-12-01T05:13:00+00:00")
+      // JavaScript Date constructor automatically converts UTC to local timezone
+      // So sunriseUTC represents the sunrise time at the location, converted to user's local timezone
+      const sunriseUTC = new Date(data.results.sunrise);
+      
+      // The Date object now represents the sunrise time in the user's local timezone
+      // This is correct because we want to compare with the user's local current time
+      return sunriseUTC;
     }
   } catch (error) {
     console.warn('Sunrise API failed, using fallback:', error);
   }
   
-  // Fallback: Use calculateSunrise from customTime
+  // Fallback: Use calculateSunrise from customTime (already in local time)
   const { calculateSunrise } = await import('./customTime');
   const sunriseMinutes = calculateSunrise(date, lat, lon);
   const sunrise = new Date(date);

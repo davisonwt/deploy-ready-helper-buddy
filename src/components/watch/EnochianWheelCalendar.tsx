@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 
 import { Sun, Moon } from 'lucide-react';
 
-import { getCreatorDate } from '@/utils/customCalendar';
-
+import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
 
 
@@ -3832,9 +3832,9 @@ const getSolarCurveAngle = (globalDay: number) => {
 
 const EnochianTimepiece = () => {
 
-  // Use shared location hook
+  // Use shared location hook for time parts calculation
   const { location } = useUserLocation();
-  const [effectiveDate, setEffectiveDate] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const [enochianDate, setEnochianDate] = useState({ 
 
@@ -3848,7 +3848,7 @@ const EnochianTimepiece = () => {
 
   // Calculate if Asfa'el should be shown (appears on +2 years, every 5-year cycle)
   // For now, showing it every 2 years as a simple implementation
-  const currentYear = effectiveDate.getFullYear();
+  const currentYear = currentTime.getFullYear();
   const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
 
 
@@ -3905,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 3500; // Increased size for bigger wheel
+  const size = 4500; // Even bigger wheel with more space
 
   const center = size / 2;
 
@@ -3961,81 +3961,51 @@ const EnochianTimepiece = () => {
 
   };
 
-  // Calculate effective date based on sunrise (day starts at sunrise, not midnight)
+  // Update calendar date using the exact same logic as DashboardPage
   useEffect(() => {
-    const calculateEffectiveDate = async () => {
+    const updateCalendar = () => {
       const now = new Date();
+      setCurrentTime(now);
       
-      try {
-        // Get sunrise time for today
-        const dateStr = now.toISOString().split('T')[0];
-        const url = `https://api.sunrise-sunset.org/json?lat=${location.lat}&lng=${location.lon}&date=${dateStr}&formatted=0`;
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.status === 'OK' && data.results) {
-          const sunrise = new Date(data.results.sunrise);
-          
-          // If current time is before sunrise, we're still on the previous calendar day
-          if (now < sunrise) {
-            const prevDay = new Date(now);
-            prevDay.setDate(prevDay.getDate() - 1);
-            setEffectiveDate(prevDay);
-          } else {
-            setEffectiveDate(now);
-          }
-        } else {
-          setEffectiveDate(now);
-        }
-      } catch (error) {
-        console.warn('Error fetching sunrise, using current date:', error);
-        setEffectiveDate(now);
-      }
+      // Use the exact same calculation as DashboardPage
+      const creatorDate = calculateCreatorDate(now);
+      
+      // Get Creator time parts
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      
+      // Get day part name
+      const dayParts = [
+        'Boker', 'Boker', 'Boker', 'Tzohorayim', 'Tzohorayim', 'Tzohorayim',
+        'Tzohorayim', 'Tzohorayim', 'Tzohorayim', 'Erev', 'Erev', 'Erev',
+        'Laylah', 'Laylah', 'Laylah', 'Laylah', 'Laylah', 'Laylah'
+      ];
+      const dayPart = dayParts[creatorTime.part - 1] || 'Boker';
+      
+      // Get season
+      const season = creatorDate.month <= 3 ? 'Spring' :
+                    creatorDate.month <= 6 ? 'Summer' :
+                    creatorDate.month <= 9 ? 'Fall' : 'Winter';
+      
+      setEnochianDate((prev) => ({
+        ...prev,
+        year: creatorDate.year,
+        month: creatorDate.month,
+        dayOfMonth: creatorDate.day,
+        dayOfYear: creatorDate.dayOfYear,
+        weekOfYear: Math.floor((creatorDate.dayOfYear - 1) / 7) + 1,
+        dayOfWeek: creatorDate.weekDay,
+        dayPart,
+        eighteenPart: creatorTime.part,
+        season,
+      }));
     };
 
-    calculateEffectiveDate();
+    updateCalendar();
     
-    // Update every minute
-    const interval = setInterval(calculateEffectiveDate, 60000);
+    // Update every minute (same as Dashboard)
+    const interval = setInterval(updateCalendar, 60000);
     return () => clearInterval(interval);
   }, [location.lat, location.lon]);
-
-  // Convert effective date to Enochian calendar using shared calculation
-  useEffect(() => {
-    const convertToEnochian = async () => {
-      try {
-        const creatorDate = await getCreatorDate(effectiveDate, true, location.lat, location.lon);
-        
-        // Calculate day of year
-        const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-        let dayOfYear = 0;
-        for (let i = 0; i < creatorDate.month - 1; i++) {
-          dayOfYear += monthDays[i];
-        }
-        dayOfYear += creatorDate.day;
-        
-        // Get season
-        const season = creatorDate.month <= 3 ? 'Spring' :
-                      creatorDate.month <= 6 ? 'Summer' :
-                      creatorDate.month <= 9 ? 'Fall' : 'Winter';
-        
-        setEnochianDate({
-          ...enochianDate,
-          year: creatorDate.year,
-          month: creatorDate.month,
-          dayOfMonth: creatorDate.day,
-          dayOfYear,
-          weekOfYear: Math.floor((dayOfYear - 1) / 7) + 1,
-          dayOfWeek: creatorDate.weekDay,
-          season,
-        });
-      } catch (error) {
-        console.error('Error converting to Enochian date:', error);
-      }
-    };
-
-    convertToEnochian();
-  }, [effectiveDate, location.lat, location.lon]);
 
 
 
@@ -4055,7 +4025,7 @@ const EnochianTimepiece = () => {
 
   return (
 
-    <div className="min-h-screen bg-black overflow-x-hidden relative">
+    <div className="min-h-screen bg-black overflow-x-hidden relative" style={{ padding: '5cm' }}>
 
       <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-blue-950" />
 
@@ -4078,7 +4048,7 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between gap-8 px-4 pb-8 pt-4">
+      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between gap-8" style={{ padding: '5cm 5cm 5cm 5cm' }}>
         
         {/* Calendar Wheel - Left/Center Side - Takes most of the space */}
         <motion.div 
@@ -4087,7 +4057,7 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-1 w-full lg:w-auto flex items-center justify-center min-w-0"
         >
-          <div className="w-full max-w-[90vw] lg:max-w-[calc(100vw-380px)] xl:max-w-[calc(100vw-420px)] mx-auto">
+          <div className="w-full max-w-[calc(100vw-500px)] lg:max-w-[calc(100vw-480px)] xl:max-w-[calc(100vw-520px)] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
