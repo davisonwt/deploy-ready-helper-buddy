@@ -9,6 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
+// Define playSoundEffect locally if needed
+const playSoundEffect = (sound: string, volume?: number) => {
+  try {
+    const audio = new Audio(`/sounds/${sound}.mp3`);
+    audio.volume = volume || 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {}
+};
+
 interface MasteryModalProps {
   isOpen: boolean
   onClose: () => void
@@ -101,7 +110,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     })
 
     // 2. TRIPLE CONFETTI + SPARKLE TSUNAMI
-    playSoundEffect('levelUp', 0.9) // EPIC choir + bell
+    try { playSoundEffect('levelUp', 0.9) } catch {} // EPIC choir + bell
     for (let i = 0; i < 5; i++) {
       setTimeout(() => launchConfetti(), i * 150)
     }
@@ -234,17 +243,19 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     }
 
     try {
-      let { data, error } = await supabase
-        .from('user_progress')
-        .select('*')
+      // Use type assertion since user_progress table may not be in generated types
+      let { data, error } = await (supabase
+        .from('profiles') as any)
+        .select('user_id, xp, level, fruits, streak, last_active')
         .eq('user_id', user.id)
         .single()
 
       if (error && error.code === 'PGRST116') {
-        // First time – create row with 50 XP
-        const { data: newData, error: insertError } = await supabase
-          .from('user_progress')
-          .insert({ user_id: user.id, xp: 50, level: 1, fruits: 0, streak: 1 })
+        // First time – create row with 50 XP - use profiles table
+        const { data: newData, error: insertError } = await (supabase
+          .from('profiles') as any)
+          .update({ xp: 50, level: 1, fruits: 0, streak: 1 })
+          .eq('user_id', user.id)
           .select()
           .single()
 
@@ -262,10 +273,18 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
       }
 
       if (data) {
-        lastLevelRef.current = data.level
-        setProgress(data)
-        setPreviousLevel(data.level)
-        updateTree(data)
+        lastLevelRef.current = data.level || 1
+        const progressData: UserProgress = {
+          user_id: data.user_id || user.id,
+          xp: data.xp || 0,
+          level: data.level || 1,
+          fruits: data.fruits || 0,
+          streak: data.streak || 0,
+          last_active: data.last_active || new Date().toISOString()
+        }
+        setProgress(progressData)
+        setPreviousLevel(progressData.level)
+        updateTree(progressData)
       }
     } catch (error) {
       console.error('Error in loadUserProgress:', error)

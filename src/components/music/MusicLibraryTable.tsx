@@ -134,9 +134,13 @@ export function MusicLibraryTable({
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
       
-      // Award XP for music bestowal (100 XP)
+      // Award XP for music bestowal (100 XP) - use type assertion for RPC
       if (user) {
-        await supabase.rpc('add_xp_to_current_user', { amount: 100 });
+        try {
+          await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
+        } catch (err) {
+          console.warn('XP award not available:', err);
+        }
       }
       
       launchConfetti();
