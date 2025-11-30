@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 
 import { Sun, Moon } from 'lucide-react';
 
+import { getCreatorDate } from '@/utils/customCalendar';
+
+import { useUserLocation } from '@/hooks/useUserLocation';
+
 
 
 const PART_MINUTES = 80;
@@ -3828,11 +3832,13 @@ const getSolarCurveAngle = (globalDay: number) => {
 
 const EnochianTimepiece = () => {
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Use shared location hook
+  const { location } = useUserLocation();
+  const [effectiveDate, setEffectiveDate] = useState<Date>(new Date());
 
   const [enochianDate, setEnochianDate] = useState({ 
 
-    dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
+    year: 6028, dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
 
     dayOfWeek: 6, dayPart: 'Laylah', eighteenPart: 12, daysInCurrentMonth: 31,
 
@@ -3840,11 +3846,9 @@ const EnochianTimepiece = () => {
 
   });
 
-  const [sunData, setSunData] = useState<any>(null);
-  
   // Calculate if Asfa'el should be shown (appears on +2 years, every 5-year cycle)
   // For now, showing it every 2 years as a simple implementation
-  const currentYear = currentDate.getFullYear();
+  const currentYear = effectiveDate.getFullYear();
   const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
 
 
@@ -3901,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 2000;
+  const size = 3500; // Increased size for bigger wheel
 
   const center = size / 2;
 
@@ -3957,77 +3961,85 @@ const EnochianTimepiece = () => {
 
   };
 
-
-
-  const getSpringEquinox = (y: number) => new Date(y, 2, 20);
-
-  const convertToEnochian = (d: Date) => {
-
-    const y = d.getFullYear();
-
-    const equinox = getSpringEquinox(y);
-
-    let days = Math.floor((d.getTime() - equinox.getTime()) / 86400000);
-
-    if (days < 0) days += 364;
-
-    if (days >= 364) days = 363;
-
-    let rem = days;
-
-    for (const m of monthStructure) {
-
-      if (rem < m.days) return { ...enochianDate, month: m.num, dayOfMonth: rem + 1, dayOfYear: days + 1, season: m.season };
-
-      rem -= m.days;
-
-    }
-
-    return enochianDate;
-
-  };
-
-
-
+  // Calculate effective date based on sunrise (day starts at sunrise, not midnight)
   useEffect(() => {
+    const calculateEffectiveDate = async () => {
+      const now = new Date();
+      
+      try {
+        // Get sunrise time for today
+        const dateStr = now.toISOString().split('T')[0];
+        const url = `https://api.sunrise-sunset.org/json?lat=${location.lat}&lng=${location.lon}&date=${dateStr}&formatted=0`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.results) {
+          const sunrise = new Date(data.results.sunrise);
+          
+          // If current time is before sunrise, we're still on the previous calendar day
+          if (now < sunrise) {
+            const prevDay = new Date(now);
+            prevDay.setDate(prevDay.getDate() - 1);
+            setEffectiveDate(prevDay);
+          } else {
+            setEffectiveDate(now);
+          }
+        } else {
+          setEffectiveDate(now);
+        }
+      } catch (error) {
+        console.warn('Error fetching sunrise, using current date:', error);
+        setEffectiveDate(now);
+      }
+    };
 
-    const timer = setInterval(() => setCurrentDate(new Date()), 1000);
+    calculateEffectiveDate();
+    
+    // Update every minute
+    const interval = setInterval(calculateEffectiveDate, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
-    return () => clearInterval(timer);
-
-  }, []);
-
-
-
+  // Convert effective date to Enochian calendar using shared calculation
   useEffect(() => {
+    const convertToEnochian = async () => {
+      try {
+        const creatorDate = await getCreatorDate(effectiveDate, true, location.lat, location.lon);
+        
+        // Calculate day of year
+        const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+        let dayOfYear = 0;
+        for (let i = 0; i < creatorDate.month - 1; i++) {
+          dayOfYear += monthDays[i];
+        }
+        dayOfYear += creatorDate.day;
+        
+        // Get season
+        const season = creatorDate.month <= 3 ? 'Spring' :
+                      creatorDate.month <= 6 ? 'Summer' :
+                      creatorDate.month <= 9 ? 'Fall' : 'Winter';
+        
+        setEnochianDate({
+          ...enochianDate,
+          year: creatorDate.year,
+          month: creatorDate.month,
+          dayOfMonth: creatorDate.day,
+          dayOfYear,
+          weekOfYear: Math.floor((dayOfYear - 1) / 7) + 1,
+          dayOfWeek: creatorDate.weekDay,
+          season,
+        });
+      } catch (error) {
+        console.error('Error converting to Enochian date:', error);
+      }
+    };
 
-    setEnochianDate(convertToEnochian(currentDate));
-
-  }, [currentDate]);
-
+    convertToEnochian();
+  }, [effectiveDate, location.lat, location.lon]);
 
 
-  useEffect(() => {
 
-    navigator.geolocation.getCurrentPosition(
-
-      async (pos) => {
-
-        const res = await fetch(`https://api.sunrise-sunset.org/json?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&formatted=0`);
-
-        const data = await res.json();
-
-        const sr = new Date(data.results.sunrise);
-
-        setSunData({ sunrise: sr });
-
-      },
-
-      () => setSunData({ sunrise: new Date() })
-
-    );
-
-  }, []);
+  // Location and sunrise are now handled by useUserLocation hook and effectiveDate calculation above
 
 
 
@@ -4066,16 +4078,16 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-center gap-8 px-4 pb-8 pt-4">
+      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between gap-8 px-4 pb-8 pt-4">
         
-        {/* Calendar Wheel - Left Side */}
+        {/* Calendar Wheel - Left/Center Side - Takes most of the space */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex-shrink-0 w-full lg:w-auto"
+          className="flex-1 w-full lg:w-auto flex items-center justify-center min-w-0"
         >
-          <div className="w-full max-w-[2800px] lg:max-w-[2600px] xl:max-w-[2800px] mx-auto">
+          <div className="w-full max-w-[90vw] lg:max-w-[calc(100vw-380px)] xl:max-w-[calc(100vw-420px)] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
@@ -4230,8 +4242,8 @@ const EnochianTimepiece = () => {
 
 
 
-        {/* Month Strand - Right Side */}
-        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]">
+        {/* Month Strand - Right Side with 1cm gap from edge */}
+        <div className="flex-shrink-0 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px] lg:mr-[1cm]">
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ x: -200, opacity: 0 }} 
