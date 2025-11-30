@@ -3905,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 6000; // Much bigger wheel - 10cm diameter target
+  const size = 6000; // SVG viewBox size - wheel will be rendered large
 
   const center = size / 2;
 
@@ -4059,22 +4059,22 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-row items-center justify-start gap-8" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
+      <div className="relative z-10 flex flex-row items-center justify-start" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
         
-        {/* Calendar Wheel - LEFT SIDE - HUGE Circle */}
+        {/* Calendar Wheel - LEFT SIDE - HUGE Circle - Takes up most of left side */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-center flex-shrink-0"
+          className="flex items-center justify-center"
           style={{ 
-            width: '60%',
+            width: '65%',
             height: 'calc(100vh - 10cm)', 
-            minHeight: '70cm',
-            minWidth: '70cm'
+            minHeight: '80cm',
+            flexShrink: 0
           }}
         >
-          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet" style={{ minWidth: '70cm', minHeight: '70cm' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none' }}>
 
           <defs>
 
@@ -4220,10 +4220,10 @@ const EnochianTimepiece = () => {
         <div 
           className="flex-shrink-0 flex items-center justify-center"
           style={{ 
-            width: '35%',
+            width: '30%',
             height: 'calc(100vh - 10cm)',
             marginRight: '1cm',
-            minHeight: '70cm'
+            minHeight: '80cm'
           }}
         >
           {/* Only show current month beads */}
