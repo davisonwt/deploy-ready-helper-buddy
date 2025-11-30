@@ -4068,9 +4068,9 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex items-center justify-center flex-shrink-0"
           style={{ 
-            width: '65%',
+            width: '75%',
             height: 'calc(100vh - 10cm)', 
-            minHeight: '80cm',
+            minHeight: '90cm',
             backgroundColor: 'rgba(255,0,0,0.1)' // Temporary debug color
           }}
         >
@@ -4220,10 +4220,10 @@ const EnochianTimepiece = () => {
         <div 
           className="flex-shrink-0 flex items-center justify-center"
           style={{ 
-            width: '30%',
+            width: '20%',
             height: 'calc(100vh - 10cm)',
             marginRight: '1cm',
-            minHeight: '80cm',
+            minHeight: '90cm',
             backgroundColor: 'rgba(0,255,0,0.1)' // Temporary debug color
           }}
         >
