@@ -101,11 +101,12 @@ export default function RadioGenerator() {
 
       if (insertError) throw insertError;
 
-      // Award XP for uploading music (100 XP)
-      await supabase.rpc('add_xp_to_current_user', { amount: 100 }).catch((err) => {
-        console.error('Failed to award XP:', err);
-        // Don't fail the upload if XP award fails
-      });
+      // Award XP for uploading music (100 XP) - use type assertion
+      try {
+        await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
+      } catch (err) {
+        console.warn('XP award not available:', err);
+      }
 
       toast.success('Track uploaded successfully!');
       setPendingFile(null);

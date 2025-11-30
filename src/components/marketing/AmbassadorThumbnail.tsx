@@ -40,7 +40,8 @@ export function AmbassadorThumbnail() {
   const checkPreviousSubmission = async () => {
     if (!user) return false;
     try {
-      const { data, error } = await supabase
+      // Use type assertion since ambassador_applications may not be in generated types
+      const { data, error } = await (supabase as any)
         .from('ambassador_applications')
         .select('id, created_at')
         .eq('user_id', user.id)
@@ -168,8 +169,8 @@ export function AmbassadorThumbnail() {
     setSubmitError('');
     
     try {
-      // Store application in database
-      const { data, error } = await supabase
+      // Store application in database - use type assertion for table not in types
+      const { data, error } = await (supabase as any)
         .from('ambassador_applications')
         .insert({
           user_id: user?.id || null,
