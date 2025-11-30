@@ -98,31 +98,45 @@ code .env
 Set the following variables in `.env`:
 
 ```bash
-# REQUIRED: Set your domain
-PUBLIC_URL=https://meet.yourdomain.com
+# Domain & Ports
+PUBLIC_URL=https://meet.yourdomain.com  # Your domain
+HTTP_PORT=80
+HTTPS_PORT=443
 
-# REQUIRED: Generate strong passwords
-JICOFO_AUTH_PASSWORD=$(openssl rand -hex 16)
-JVB_AUTH_PASSWORD=$(openssl rand -hex 16)
-JIGASI_XMPP_PASSWORD=$(openssl rand -hex 16)
-JIBRI_RECORDER_PASSWORD=$(openssl rand -hex 16)
-JIBRI_XMPP_PASSWORD=$(openssl rand -hex 16)
+# SSL (Let's Encrypt – recommended)
+ENABLE_LETSENCRYPT=1
+LETSENCRYPT_DOMAIN=meet.yourdomain.com
+LETSENCRYPT_EMAIL=admin@yourdomain.com
+ENABLE_HTTP_REDIRECT=1  # Redirect HTTP to HTTPS
 
-# Enable authentication (optional - for private server)
-ENABLE_AUTH=0
-ENABLE_GUESTS=1
+# Authentication (guest = open; internal = users)
+ENABLE_AUTH=0  # Set to 1 for internal auth
+AUTH_TYPE=guest
+
+# Timezone & Misc
+TZ=America/New_York
+JVB_ADVERTISE_IPS=your.public.ip  # If NAT/LAN
+ENABLE_HSTS=1  # Security header
+
+# REQUIRED: Generate strong passwords (these are auto-generated if not set)
+# JICOFO_AUTH_PASSWORD=$(openssl rand -hex 16)
+# JVB_AUTH_PASSWORD=$(openssl rand -hex 16)
+# JIGASI_XMPP_PASSWORD=$(openssl rand -hex 16)
+# JIBRI_RECORDER_PASSWORD=$(openssl rand -hex 16)
+# JIBRI_XMPP_PASSWORD=$(openssl rand -hex 16)
 ```
+
+**Note**: Replace `meet.yourdomain.com` with your actual domain and `your.public.ip` with your server's public IP address if behind NAT/LAN.
 
 ### 5. Configure SSL Certificates
 
 **Option A: Let's Encrypt (Recommended for Production)**
 
-```bash
-# Set in .env
-ENABLE_LETSENCRYPT=1
-LETSENCRYPT_DOMAIN=meet.yourdomain.com
-LETSENCRYPT_EMAIL=admin@yourdomain.com
-```
+The Let's Encrypt configuration is already included in the `.env` file above. Make sure:
+- `ENABLE_LETSENCRYPT=1`
+- `LETSENCRYPT_DOMAIN` matches your domain
+- `LETSENCRYPT_EMAIL` is a valid email address
+- `ENABLE_HTTP_REDIRECT=1` to automatically redirect HTTP to HTTPS
 
 **Option B: Custom Certificates**
 
