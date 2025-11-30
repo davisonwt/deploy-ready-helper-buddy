@@ -155,9 +155,27 @@ The Let's Encrypt configuration is already included in the `.env` file above. Ma
 
 **Option B: Custom Certificates**
 
-Place your certificates in:
-- `~/.jitsi-meet-cfg/web/keys/cert.crt`
-- `~/.jitsi-meet-cfg/web/keys/cert.key`
+If you have your own SSL certificates, you can mount them using volumes in `docker-compose.yml`:
+
+1. **Add volumes to the `web` service** in `docker-compose.yml`:
+
+```yaml
+services:
+  web:
+    volumes:
+      - /path/to/fullchain.pem:/config/keys/cert.crt
+      - /path/to/privkey.pem:/config/keys/cert.key
+```
+
+**Or** place your certificates directly in the configuration directory:
+
+```bash
+# Copy your certificates to the config directory
+cp /path/to/fullchain.pem ~/.jitsi-meet-cfg/web/keys/cert.crt
+cp /path/to/privkey.pem ~/.jitsi-meet-cfg/web/keys/cert.key
+```
+
+**Note**: Replace `/path/to/fullchain.pem` and `/path/to/privkey.pem` with the actual paths to your certificate files.
 
 ### 6. Create Configuration Directories
 
