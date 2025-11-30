@@ -375,7 +375,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="max-w-2xl w-full max-h-[90vh] bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 rounded-3xl shadow-4xl p-10 text-white relative overflow-y-auto"
+          className="max-w-2xl w-full max-h-[90vh] bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 rounded-3xl shadow-4xl px-10 pb-10 pt-[188px] text-white relative overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
