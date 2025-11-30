@@ -52,6 +52,26 @@ mkdir -p ~/.jitsi-meet-cfg/{web,transcripts,prosody/config,prosody/prosody-plugi
 
 ### 3. Download Configuration Files
 
+**Option A: Download Latest from GitHub (Recommended)**
+
+```bash
+cd ~/jitsi-meet
+
+# Download the latest release
+ZIP_URL=$(wget -q -O - https://api.github.com/repos/jitsi/docker-jitsi-meet/releases/latest | grep zip | cut -d\" -f4)
+ZIP_FILE=$(basename "$ZIP_URL")
+wget "$ZIP_URL"
+
+# Unzip the downloaded file
+unzip "$ZIP_FILE"
+
+# Navigate into the extracted directory (remove .zip extension)
+DIR_NAME="${ZIP_FILE%.zip}"
+cd "$DIR_NAME"
+```
+
+**Option B: Use Files from This Repository**
+
 Copy the `docker-compose.yml` and `.env.jitsi` files from this repository to `~/jitsi-meet/`
 
 ### 4. Configure Environment Variables
