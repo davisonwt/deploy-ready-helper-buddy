@@ -375,7 +375,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="max-w-2xl w-full bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 rounded-3xl shadow-4xl p-10 text-white relative overflow-hidden"
+          className="max-w-2xl w-full max-h-[90vh] bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 rounded-3xl shadow-4xl p-10 text-white relative overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button */}
@@ -390,44 +390,6 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
           <h2 className="text-6xl font-black text-center mb-6 bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent">
             Your Progress
           </h2>
-
-          {/* User Stats Header */}
-          {userPoints && (
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-white/10 border-white/20">
-                <CardContent className="p-4 text-center">
-                  <div className="text-3xl font-bold text-yellow-400">{userPoints.total_points}</div>
-                  <div className="text-sm text-white/70">Total Points</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/10 border-white/20">
-                <CardContent className="p-4 text-center">
-                  <div className="text-3xl font-bold text-yellow-400">Level {userPoints.level}</div>
-                  <div className="text-sm text-white/70">Current Level</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/10 border-white/20">
-                <CardContent className="p-4">
-                  <div className="text-center mb-2">
-                    <div className="text-lg font-semibold text-white">Next Level</div>
-                    <div className="text-sm text-white/70">
-                      {userPoints.points_to_next_level} points to go
-                    </div>
-                  </div>
-                  <div className="w-full bg-white/20 rounded-full h-2">
-                    <div 
-                      className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
-                      style={{ 
-                        width: `${userPoints.points_to_next_level > 0 ? 
-                          ((100 - (userPoints.points_to_next_level / 100) * 100)) : 100
-                        }%` 
-                      }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
           {/* Tabs */}
           <div className="flex border-b border-white/20 mb-6">
@@ -606,6 +568,44 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
               <div className="text-sm opacity-80 mt-2">Day Streak</div>
             </div>
           </div>
+
+          {/* User Stats Header - Moved below tree */}
+          {userPoints && (
+            <div className="mt-12 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-400">{userPoints.total_points}</div>
+                  <div className="text-sm text-white/70">Total Points</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-400">Level {userPoints.level}</div>
+                  <div className="text-sm text-white/70">Current Level</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4">
+                  <div className="text-center mb-2">
+                    <div className="text-lg font-semibold text-white">Next Level</div>
+                    <div className="text-sm text-white/70">
+                      {userPoints.points_to_next_level} points to go
+                    </div>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div 
+                      className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${userPoints.points_to_next_level > 0 ? 
+                          ((100 - (userPoints.points_to_next_level / 100) * 100)) : 100
+                        }%` 
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Loading state */}
           {loading && (
