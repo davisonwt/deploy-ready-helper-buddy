@@ -32,6 +32,8 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const day = i + 1;
 
+    const globalDay = day; // Month 1 starts at global day 1
+
     const isSabbath = day % 7 === 0;
 
     const isFeast = day <= 4;                   // First 4 days = blue feast cycle
@@ -48,7 +50,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-    return { day, color, isToday: day === dayOfMonth, isTekufah };
+    return { day, globalDay, color, isToday: day === dayOfMonth, isTekufah };
 
   });
 
@@ -58,31 +60,29 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full max-h-[90vh] overflow-y-auto">
 
-      <h2 className="text-sm md:text-base lg:text-lg font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1 • STRAND 1</h2>
+      <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
 
       
 
       <div className="flex flex-col gap-1 md:gap-2">
 
-        {beads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
-
-            animate={bead.isToday ? {
-
-              scale: [1, 1.5, 1],
-
-              boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
-
-            } : {}}
-
-            transition={{ duration: 2, repeat: Infinity }}
-
-            className="relative"
-
-          >
+        {beads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.5, 1],
+                boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative"
+            >
 
             <div
 
@@ -139,8 +139,8 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             </span>
 
           </motion.div>
-
-        ))}
+          );
+        })}
 
       </div>
 
@@ -202,6 +202,8 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       day: dayInMonth,
 
+      globalDay,
+
       color,
 
       isToday: dayInMonth === dayOfMonth,
@@ -232,7 +234,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest">MONTH 2 • STRAND 2</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest">MONTH 2</h2>
 
       </motion.h2>
 
@@ -240,25 +242,23 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       <div className="flex flex-col gap-4">
 
-        {beads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
-
-            animate={bead.isToday ? {
-
-              scale: [1, 1.6, 1],
-
-              boxShadow: ["0 0 30px #fff", "0 0 100px #ec4899", "0 0 30px #fff"]
-
-            } : {}}
-
-            transition={{ duration: 2, repeat: Infinity }}
-
-            className="relative"
-
-          >
+        {beads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.6, 1],
+                boxShadow: ["0 0 30px #fff", "0 0 100px #ec4899", "0 0 30px #fff"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative"
+            >
 
             {/* Main Bead */}
 
@@ -345,8 +345,8 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             </span>
 
           </motion.div>
-
-        ))}
+          );
+        })}
 
       </div>
 
@@ -424,6 +424,8 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       day: dayInMonth,
 
+      globalDay,
+
       color,
 
       isToday: dayInMonth === dayOfMonth,
@@ -458,7 +460,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 3 • STRAND 3</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 3</h2>
 
       </motion.h2>
 
@@ -466,29 +468,25 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       <div className="flex flex-col gap-5">
 
-        {beads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
-
-            animate={bead.isToday ? {
-
-              scale: [1, 1.8, 1],
-
-              boxShadow: ["0 0 40px #fff", "0 0 120px #ec4899", "0 0 40px #fff"]
-
-            } : bead.isShavuot ? {
-
-              boxShadow: ["0 0 60px #ec4899", "0 0 100px #fff", "0 0 60px #ec4899"]
-
-            } : {}}
-
-            transition={bead.isShavuot ? { duration: 3, repeat: Infinity } : { duration: 2, repeat: Infinity }}
-
-            className="relative"
-
-          >
+        {beads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.8, 1],
+                boxShadow: ["0 0 40px #fff", "0 0 120px #ec4899", "0 0 40px #fff"]
+              } : bead.isShavuot ? {
+                boxShadow: ["0 0 60px #ec4899", "0 0 100px #fff", "0 0 60px #ec4899"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative"
+            >
 
             {/* Main Bead */}
 
@@ -579,8 +577,8 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             </span>
 
           </motion.div>
-
-        ))}
+          );
+        })}
 
       </div>
 
@@ -702,7 +700,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 4 • STRAND 4</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 4</h2>
 
       </motion.h2>
 
@@ -964,7 +962,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 5 • STRAND 5</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 5</h2>
 
       </motion.h2>
 
@@ -1214,7 +1212,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 6 • STRAND 6</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 6</h2>
 
       </motion.h2>
 
@@ -1494,7 +1492,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 7 • STRAND 7</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 7</h2>
 
       </motion.h2>
 
@@ -1708,7 +1706,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black text-gray-500 mb-2 md:mb-4 tracking-widest">MONTH 8 • STRAND 8</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-500 mb-2 md:mb-4 tracking-widest">MONTH 8</h2>
 
       </motion.h2>
 
@@ -1946,7 +1944,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 9 • STRAND 9</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 9</h2>
 
       </motion.h2>
 
@@ -2198,7 +2196,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black text-gray-400 mb-2 md:mb-4 tracking-widest">MONTH 10 • STRAND 10</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black text-gray-400 mb-2 md:mb-4 tracking-widest">MONTH 10</h2>
 
       </motion.h2>
 
@@ -2434,7 +2432,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-300 via-white to-teal-300 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 11 • STRAND 11</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-pink-300 via-white to-teal-300 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 11</h2>
 
       </motion.h2>
 
@@ -2684,7 +2682,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 12 • STRAND 12</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 12</h2>
 
       </motion.h2>
 
@@ -2846,29 +2844,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const EnochianTimepiece = () => {
-
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  const [enochianDate, setEnochianDate] = useState({
-
-    dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
-
-    dayOfWeek: 6, dayPart: 'Laylah', eighteenPart: 12, daysInCurrentMonth: 31,
-
-    timelessDay: 0, season: 'Fall'
-
-  });
-
-  const [sunData, setSunData] = useState<any>(null);
-  
-  // Calculate if Asfa'el should be shown (appears on +2 years, every 5-year cycle)
-  // For now, showing it every 2 years as a simple implementation
-  const currentYear = currentDate.getFullYear();
-  const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
-
-  // ——— Solar Curve Angle Calculation ———
-  const getSolarCurveAngle = (globalDay: number) => {
+// ——— Solar Curve Angle Calculation ———
+const getSolarCurveAngle = (globalDay: number) => {
     // Your fixed reference: Day 4 = 20 March 2025 = straight line (0°)
     const daySinceTekufah = globalDay - 4;
 
@@ -2899,7 +2876,30 @@ const EnochianTimepiece = () => {
     }
 
     return angle;   // Returns value between -28° and +28°
-  };
+};
+
+
+
+const EnochianTimepiece = () => {
+
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const [enochianDate, setEnochianDate] = useState({
+
+    dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
+
+    dayOfWeek: 6, dayPart: 'Laylah', eighteenPart: 12, daysInCurrentMonth: 31,
+
+    timelessDay: 0, season: 'Fall'
+
+  });
+
+  const [sunData, setSunData] = useState<any>(null);
+  
+  // Calculate if Asfa'el should be shown (appears on +2 years, every 5-year cycle)
+  // For now, showing it every 2 years as a simple implementation
+  const currentYear = currentDate.getFullYear();
+  const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
 
 
 
@@ -3129,7 +3129,7 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-shrink-0 w-full lg:w-auto"
         >
-          <div className="w-full max-w-[1200px] lg:max-w-[1000px] xl:max-w-[1200px] mx-auto">
+          <div className="w-full max-w-[1400px] lg:max-w-[1300px] xl:max-w-[1400px] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
