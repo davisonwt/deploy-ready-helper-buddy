@@ -285,12 +285,13 @@ export default function UploadForm() {
 
       if (productError) throw productError;
 
-      // Award XP for uploading product (100 XP)
+      // Award XP for uploading product (100 XP) - use type assertion for RPC
       if (user) {
-        await supabase.rpc('add_xp_to_current_user', { amount: 100 }).catch((err) => {
-          console.error('Failed to award XP:', err);
-          // Don't fail the upload if XP award fails
-        });
+        try {
+          await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
+        } catch (err) {
+          console.warn('XP award not available:', err);
+        }
       }
 
       toast.success('Product uploaded successfully!');

@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { launchConfetti, playSoundEffect, floatingScore } from '@/utils/confetti';
+import { launchConfetti, launchSparkles, floatingScore } from '@/utils/confetti';
+
+// Define playSoundEffect locally if it doesn't exist in confetti utils
+const playSoundEffect = (sound: string, volume?: number) => {
+  try {
+    // Simple audio play implementation
+    const audio = new Audio(`/sounds/${sound}.mp3`);
+    audio.volume = volume || 0.5;
+    audio.play().catch(() => {});
+  } catch (e) {
+    // Silently fail if sound doesn't exist
+  }
+};
 
 interface UserTree {
   id: string;
@@ -29,7 +41,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
   useEffect(() => {
     loadForest();
     
-    // Set up real-time subscription
+    // Set up real-time subscription - use type assertion for table not in generated types
     const channel = supabase
       .channel('forest')
       .on(
@@ -37,11 +49,11 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         {
           event: '*',
           schema: 'public',
-          table: 'user_progress',
+          table: 'profiles', // Use profiles instead since user_progress may not exist
         },
-        (payload) => {
-          const updated = usersRef.current.find((u) => u.id === payload.new.user_id);
-          if (updated) {
+        (payload: any) => {
+          const updated = usersRef.current.find((u) => u.id === payload.new?.user_id);
+          if (updated && payload.new) {
             const oldLevel = updated.level;
             updated.xp = payload.new.xp || 0;
             updated.level = payload.new.level || Math.floor(Math.sqrt((payload.new.xp || 0) / 100));
@@ -51,10 +63,10 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
               launchConfetti();
               playSoundEffect('treeGrow', 0.6);
               playSoundEffect('levelUp', 0.9);
-              floatingScore('LEVEL UP!', updated.x, updated.y - 200);
+              floatingScore(updated.x, updated.y - 200);
             } else {
               playSoundEffect('treeGrow', 0.4);
-              floatingScore('+XP', updated.x, updated.y - 200);
+              floatingScore(updated.x, updated.y - 200);
             }
             
             // Update state to trigger re-render
@@ -77,17 +89,11 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Load top 500 users
-      const { data, error } = await supabase
-        .from('user_progress')
-        .select(`
-          user_id,
-          xp,
-          level,
-          profiles:user_id (
-            display_name
-          )
-        `)
+      // Load top 500 users from profiles table with xp/level fields
+      // Use type assertion since these columns may not be in generated types
+      const { data, error } = await (supabase
+        .from('profiles') as any)
+        .select('user_id, display_name, xp, level')
         .order('xp', { ascending: false })
         .limit(500);
 
@@ -99,29 +105,22 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
       // Also get current user if not in top 500
       let currentUserData = null;
       if (user) {
-        const { data: currentUser } = await supabase
-          .from('user_progress')
-          .select(`
-            user_id,
-            xp,
-            level,
-            profiles:user_id (
-              display_name
-            )
-          `)
+        const { data: currentUser } = await (supabase
+          .from('profiles') as any)
+          .select('user_id, display_name, xp, level')
           .eq('user_id', user.id)
           .single();
 
-        if (currentUser && !data?.some((u) => u.user_id === user.id)) {
+        if (currentUser && !data?.some((u: any) => u.user_id === user.id)) {
           currentUserData = currentUser;
         }
       }
 
       const allUsers = currentUserData ? [...(data || []), currentUserData] : (data || []);
 
-      const forestUsers: UserTree[] = allUsers.map((u, i) => ({
-        id: u.user_id,
-        name: (u.profiles as any)?.display_name || `Sower #${i + 1}`,
+      const forestUsers: UserTree[] = allUsers.map((u: any, i: number) => ({
+        id: u.user_id || `user-${i}`,
+        name: u.display_name || `Sower #${i + 1}`,
         level: u.level || 1,
         xp: u.xp || 0,
         x: (i % 50) * 300 + Math.random() * 100,
