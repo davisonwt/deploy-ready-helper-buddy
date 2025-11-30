@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, CheckCircle2, AlertCircle, Loader2, Globe, Settings } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertCircle, Loader2, Globe, Settings, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,7 +13,7 @@ export function LocationVerification() {
   const [verifying, setVerifying] = useState(false);
   const [timezone, setTimezone] = useState<string>('');
   const [timezoneVerified, setTimezoneVerified] = useState(false);
-  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [showVerificationCard, setShowVerificationCard] = useState(false);
 
   // Detect and load timezone
   useEffect(() => {
@@ -42,14 +42,16 @@ export function LocationVerification() {
     detectTimezone();
   }, [user?.id]);
 
-  // Show floating button when verified
+  // Close verification card when verified
   useEffect(() => {
-    if (location.verified && timezoneVerified && !loading) {
-      setShowFloatingButton(true);
-    } else {
-      setShowFloatingButton(false);
+    if (location.verified && timezoneVerified && !loading && showVerificationCard) {
+      // Close the card after a short delay to show success
+      const timer = setTimeout(() => {
+        setShowVerificationCard(false);
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-  }, [location.verified, timezoneVerified, loading]);
+  }, [location.verified, timezoneVerified, loading, showVerificationCard]);
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -75,9 +77,39 @@ export function LocationVerification() {
 
   return (
     <>
-      {/* Full Card - Show when NOT verified */}
+      {/* Button - Show when card is closed */}
+      {!showVerificationCard && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-md mx-auto mb-4 relative z-20"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowVerificationCard(true)}
+            className="w-full px-6 py-4 rounded-xl shadow-2xl border-2 flex items-center justify-center gap-3"
+            style={{
+              background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(234, 179, 8, 0.95) 100%)',
+              borderColor: 'rgba(251, 191, 36, 0.5)',
+              boxShadow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <MapPin className="w-5 h-5 text-black" />
+            <span className="text-base font-bold text-black tracking-wide">
+              Verify your calendar location
+            </span>
+            {isVerified && (
+              <CheckCircle2 className="w-5 h-5 text-black" />
+            )}
+          </motion.button>
+        </motion.div>
+      )}
+
+      {/* Full Card - Show when button is clicked */}
       <AnimatePresence>
-        {!isVerified && (
+        {showVerificationCard && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -94,11 +126,19 @@ export function LocationVerification() {
               }}
             >
               <div className="p-4 border-b" style={{ borderColor: 'rgba(251, 191, 36, 0.2)' }}>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-lg font-bold bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">
-                    Calendar Location
-                  </h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-lg font-bold bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">
+                      Calendar Location
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowVerificationCard(false)}
+                    className="text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
               <div className="p-4 space-y-3">
@@ -157,7 +197,13 @@ export function LocationVerification() {
                         )}
                       </div>
                     )}
-                    {(!location.verified || !timezoneVerified) && (
+                    {isVerified && (
+                      <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        ✓ Your calendar times are synced to your location's sunrise and timezone
+                      </p>
+                    )}
+                    {!isVerified && (
                       <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
                         Please verify your location to ensure accurate calendar times
@@ -167,36 +213,6 @@ export function LocationVerification() {
                 )}
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Floating Button - Show when verified */}
-      <AnimatePresence>
-        {showFloatingButton && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0, x: 100 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0, x: 100 }}
-            transition={{ duration: 0.3, type: "spring" }}
-            className="fixed bottom-6 right-6 z-50"
-          >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleVerify}
-              className="group relative flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border-2"
-              style={{
-                background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(234, 179, 8, 0.95) 100%)',
-                borderColor: 'rgba(251, 191, 36, 0.5)',
-                boxShadow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)',
-              }}
-            >
-              <CheckCircle2 className="w-5 h-5 text-black flex-shrink-0" />
-              <span className="text-sm font-bold text-black tracking-wide whitespace-nowrap">
-                Verify Calendar Location
-              </span>
-            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>
