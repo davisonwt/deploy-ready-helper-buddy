@@ -175,45 +175,27 @@ export function LocationVerification() {
       <AnimatePresence>
         {showFloatingButton && (
           <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0, scale: 0, x: 100 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0, x: 100 }}
             transition={{ duration: 0.3, type: "spring" }}
             className="fixed bottom-6 right-6 z-50"
           >
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleVerify}
-              className="group relative"
+              className="group relative flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border-2"
+              style={{
+                background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(234, 179, 8, 0.95) 100%)',
+                borderColor: 'rgba(251, 191, 36, 0.5)',
+                boxShadow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)',
+              }}
             >
-              <div 
-                className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl border-2"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.9) 0%, rgba(234, 179, 8, 0.9) 100%)',
-                  borderColor: 'rgba(251, 191, 36, 0.5)',
-                  boxShadow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                <CheckCircle2 className="w-6 h-6 text-black" />
-              </div>
-              {/* Tooltip */}
-              <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                <div 
-                  className="px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg border"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(30, 0, 60, 0.95) 0%, rgba(0, 0, 20, 0.95) 100%)',
-                    borderColor: 'rgba(251, 191, 36, 0.3)',
-                    color: '#fbbf24',
-                  }}
-                >
-                  <div className="text-amber-200">Location Verified</div>
-                  <div className="text-amber-300/70 text-[10px] mt-0.5">
-                    {location.lat.toFixed(2)}°, {location.lon.toFixed(2)}°
-                  </div>
-                  <div className="text-amber-300/70 text-[10px]">Click to re-verify</div>
-                </div>
-              </div>
+              <CheckCircle2 className="w-5 h-5 text-black flex-shrink-0" />
+              <span className="text-sm font-bold text-black tracking-wide whitespace-nowrap">
+                Verify Calendar Location
+              </span>
             </motion.button>
           </motion.div>
         )}
