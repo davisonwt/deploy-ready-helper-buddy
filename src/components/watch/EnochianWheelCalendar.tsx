@@ -52,7 +52,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     return { day, globalDay, color, isToday: day === dayOfMonth, isTekufah };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
 
 
@@ -81,12 +81,12 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
               } : {}}
               transition={{ duration: 0 }}
-              className="relative"
+              className="relative flex items-center justify-center"
             >
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -106,11 +106,15 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-xs font-bold text-amber-300 relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
             {bead.isTekufah && (
 
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
                 <div className="w-2 h-full bg-cyan-400/80" /> {/* Tekufah straight line */}
 
@@ -126,17 +130,11 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed"
+                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
 
               />
 
             )}
-
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs text-amber-300">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
           );
@@ -216,7 +214,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
 
 
@@ -264,7 +262,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-7 h-7 md:w-9 md:h-9 rounded-full border-2 md:border-3 border-black"
+              className="w-7 h-7 md:w-9 md:h-9 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -288,7 +286,11 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-xs md:text-sm font-bold text-amber-200 relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
 
 
@@ -296,7 +298,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isLagBaOmer && (
 
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
                 <div className="w-16 h-16 rounded-full border-4 border-orange-500 animate-pulse" />
 
@@ -308,7 +310,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isFeast && (
 
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none">
 
                 <div className="text-cyan-300 text-xs font-bold">Pesach Sheni</div>
 
@@ -328,21 +330,11 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-70"
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-70 pointer-events-none"
 
               />
 
             )}
-
-
-
-            {/* Day Number */}
-
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-amber-200 font-bold text-lg">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
           );
@@ -440,7 +432,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -492,7 +484,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-24 h-24 rounded-full border-8 border-black"
+              className="w-24 h-24 rounded-full border-8 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -514,7 +506,11 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-sm md:text-base font-bold text-amber-200 drop-shadow-lg relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
 
 
@@ -528,7 +524,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 6, repeat: Infinity }}
 
-                className="absolute -top-12 left-1/2 -translate-x-1/2"
+                className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-none"
 
               >
 
@@ -544,7 +540,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isPreShavuot && (
 
-              <div className="absolute inset-0 rounded-full border-4 border-purple-400 animate-ping" />
+              <div className="absolute inset-0 rounded-full border-4 border-purple-400 animate-ping pointer-events-none" />
 
             )}
 
@@ -560,21 +556,11 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80"
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80 pointer-events-none"
 
               />
 
             )}
-
-
-
-            {/* Day Number */}
-
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
           );
@@ -680,7 +666,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -736,7 +722,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-24 h-24 rounded-full border-8 border-black"
+              className="w-24 h-24 rounded-full border-8 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -762,7 +748,11 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-sm md:text-base font-bold text-amber-200 drop-shadow-lg relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
 
 
@@ -770,7 +760,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.is17Tammuz && (
 
-              <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
 
                 <div className="w-32 h-1 bg-red-800 rotate-45" />
 
@@ -794,7 +784,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-4 border-yellow-600 opacity-60"
+                className="absolute inset-0 rounded-full border-4 border-yellow-600 opacity-60 pointer-events-none"
 
               />
 
@@ -806,7 +796,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isThreeWeeks && bead.day >= 17 && !bead.is17Tammuz && !bead.isSabbath && (
 
-              <div className="absolute inset-0 rounded-full bg-gray-800/40" />
+              <div className="absolute inset-0 rounded-full bg-gray-800/40 pointer-events-none" />
 
             )}
 
@@ -822,19 +812,11 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80"
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80 pointer-events-none"
 
               />
 
             )}
-
-
-
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
 
@@ -942,7 +924,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -1000,7 +982,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-28 h-28 rounded-full border-8 border-black"
+              className="w-28 h-28 rounded-full border-8 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -1022,7 +1004,11 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
 
 
@@ -1038,11 +1024,11 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                   transition={{ duration: 4, repeat: Infinity }}
 
-                  className="absolute inset-0 rounded-full bg-red-900/60 blur-xl"
+                  className="absolute inset-0 rounded-full bg-red-900/60 blur-xl pointer-events-none"
 
                 />
 
-                <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800">
+                <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 pointer-events-none">
 
                   Temple
 
@@ -1058,7 +1044,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isPre9Av && !bead.isSabbath && (
 
-              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/60" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
 
             )}
 
@@ -1074,19 +1060,11 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80"
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80 pointer-events-none"
 
               />
 
             )}
-
-
-
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
 
@@ -1192,7 +1170,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -1250,7 +1228,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-28 h-28 rounded-full border-8 border-black"
+              className="w-28 h-28 rounded-full border-8 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -1272,7 +1250,11 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl relative z-10">
+                {bead.day}
+              </span>
+            </div>
 
 
 
@@ -1286,7 +1268,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 4, repeat: Infinity }}
 
-                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base pointer-events-none"
 
               >
 
@@ -1302,7 +1284,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isLast12Days && !bead.isSabbath && (
 
-              <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" />
+              <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping pointer-events-none" />
 
             )}
 
@@ -1312,7 +1294,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {bead.isShofarDay && !bead.isLast12Days && !bead.isSabbath && (
 
-              <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse pointer-events-none" />
 
             )}
 
@@ -1328,19 +1310,11 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
 
-                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80"
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80 pointer-events-none"
 
               />
 
             )}
-
-
-
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl">
-
-              {bead.day}
-
-            </span>
 
           </motion.div>
 
@@ -1472,7 +1446,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -1684,7 +1658,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
 
 
@@ -1924,7 +1898,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
@@ -2174,7 +2148,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
 
 
@@ -2412,7 +2386,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
 
 
@@ -2662,7 +2636,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     };
 
-  });
+  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
 
 
