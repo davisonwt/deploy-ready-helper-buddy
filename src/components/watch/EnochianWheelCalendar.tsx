@@ -3905,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 6000; // SVG viewBox size - wheel will be rendered large
+  const size = 8000; // SVG viewBox size - larger for bigger wheel rendering
 
   const center = size / 2;
 
