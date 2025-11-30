@@ -4048,13 +4048,6 @@ const EnochianTimepiece = () => {
 
 
 
-      {/* Header */}
-      <motion.div initial={{ y: -100 }} animate={{ y: 0 }} className="relative z-10 pt-8 pb-4 text-center">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
-          THE CREATOR'S WHEEL
-        </h1>
-        <p className="text-xl md:text-2xl text-amber-200 mt-2 tracking-widest">Eternal • 364 • Aligned Forever</p>
-      </motion.div>
 
 
 
