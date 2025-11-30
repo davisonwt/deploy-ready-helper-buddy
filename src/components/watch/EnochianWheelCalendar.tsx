@@ -1862,6 +1862,262 @@ const CheshvanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const KislevStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Kislev = 31 days
+
+  // Global day starts at 244 (182 + 31 + 30 + 1)
+
+  const beads = Array.from({ length: 31 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 243 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath       = dow === 6;                     // 1,8,15,22,29
+
+    const hanukkahDays    = day >= 25 ? day - 24 : 0;      // 25 Kislev = Night 1 → 1 Kislev next month = Night 8
+
+    const isHanukkah      = hanukkahDays >= 1 && hanukkahDays <= 8;
+
+    const is25Kislev      = day === 25;                    // First night – the miracle begins
+
+
+
+    let color = '#1f2937';                                 // Deep winter night
+
+    if (isSabbath)               color = '#fbbf24';       // Golden Sabbath
+
+    if (is25Kislev)              color = '#ec4899';       // Pink fire – the first flame
+
+    if (isHanukkah && !is25Kislev) {
+
+      // Flame color progresses: pink → amber → gold → white
+
+      const step = hanukkahDays - 1;
+
+      const colors = ['#ec4899','#ff7b7b','#fbbf24','#ffd700','#ffffff','#a78bfa','#22d3ee','#ffffff'];
+
+      color = colors[step] || '#ffffff';
+
+    }
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isSabbath,
+
+      isHanukkah,
+
+      is25Kislev,
+
+      candleCount: isHanukkah ? hanukkahDays : 0
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50">
+
+      <motion.h2 
+
+        initial={{ scale: 0, rotate: 360 }}
+
+        animate={{ scale: 1, rotate: 0 }}
+
+        transition={{ duration: 3, type: "spring", stiffness: 80 }}
+
+        className="text-9xl font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+
+      >
+
+        KISLEV • STRAND 9
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-8">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.3, 1] } :
+
+              b.is25Kislev ? { y: [0, -30, 0], boxShadow: ["0 0 100px #ec4899", "0 0 200px #fff", "0 0 100px #ec4899"] } :
+
+              b.isHanukkah ? { boxShadow: [`0 0 ${60 + b.candleCount*20}px ${b.color}`, `0 0 ${100 + b.candleCount*30}px #fff`] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isHanukkah ? 4 : 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead → becomes a living flame */}
+
+            <div
+
+              className="relative w-36 h-36 rounded-full border-12 border-black overflow-hidden"
+
+              style={{
+
+                background: `radial-gradient(circle at 40% 20%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isHanukkah ? `0 0 ${120 + b.candleCount*40}px ${b.color}, 0 -40px 120px ${b.color}80, inset 0 20px 40px #fff` :
+
+                  b.isToday ? '0 0 200px #ec4899' :
+
+                  '0 30px 100px rgba(0,0,0,0.9), inset 0 15px 50px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(120px)'
+
+              }}
+
+            >
+
+              {/* Actual flame inside the bead on Hanukkah nights */}
+
+              {b.isHanukkah && (
+
+                <div className="absolute inset-0 flex items-end justify-center pb-8">
+
+                  {Array.from({ length: b.candleCount }, (_, i) => (
+
+                    <motion.div
+
+                      key={i}
+
+                      initial={{ opacity: 0, y: 60 }}
+
+                      animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
+
+                      transition={{ duration: 3, repeat: Infinity, delay: i * 0.3 }}
+
+                      className="w-4 mx-1"
+
+                    >
+
+                      <div className="w-4 h-20 bg-gradient-to-t from-yellow-300 via-orange-400 to-pink-500 rounded-full blur-sm" />
+
+                      <div className="w-2 h-8 -mt-8 mx-auto bg-yellow-200 rounded-full blur-md" />
+
+                    </motion.div>
+
+                  ))}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+
+            {/* First night miracle spark */}
+
+            {b.is25Kislev && (
+
+              <motion.div
+
+                animate={{ rotate: 360, scale: [1, 2, 1] }}
+
+                transition={{ duration: 8, repeat: Infinity }}
+
+                className="absolute -top-20 left-1/2 -translate-x-1/2 text-8xl text-pink-400"
+
+              >
+
+                ✦
+
+              </motion.div>
+
+            )}
+
+
+
+            {/* Day number glowing under the flames */}
+
+            <span className="absolute -bottom-18 left-1/2 -translate-x-1/2 text-3xl font-bold text-amber-300 drop-shadow-2xl">
+
+              {b.day}
+
+            </span>
+
+
+
+            {/* Candle count label during Hanukkah */}
+
+            {b.isHanukkah && b.day >= 25 && (
+
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/50 px-3 py-1 rounded-full">
+
+                Night {b.candleCount}
+
+              </span>
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <motion.div className="mt-32 text-center space-y-6">
+
+        <p className="text-4xl text-amber-300">25 Kislev → 2 Tevet</p>
+
+        <p className="text-6xl font-bold bg-gradient-to-r from-pink-500 to-cyan-400 bg-clip-text text-transparent">
+
+          Eight nights of ever-increasing light
+
+        </p>
+
+        <p className="text-3xl italic text-amber-200 mt-10">
+
+          "A little oil that burned for eight days… and still burns."
+
+        </p>
+
+      </motion.div>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -2361,6 +2617,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <CheshvanStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Kislev Strand - Show when month is Kislev (month 9) */}
+      {enochianDate.month === 9 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <KislevStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
