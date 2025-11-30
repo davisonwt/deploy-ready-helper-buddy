@@ -245,7 +245,7 @@ export default function DashboardPage() {
         weekday: creatorDate.weekDay,
         part: creatorTime.part,
         dayOfYear: dayOfYear,
-        season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : 'Regular Day',
+        season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : (creatorDate.weekDay === 7 ? 'Sabbath Day' : 'Regular Day'),
         timestamp: localTimestamp // Use LOCAL time string, not UTC ISO string
       }
       
@@ -657,7 +657,7 @@ export default function DashboardPage() {
                     Weekday {calendarData.weekday} • Part {calendarData.part}/18
                   </div>
                   <div className="text-xs sm:text-sm opacity-80">
-                    Day {calendarData.dayOfYear} of {calendarData.year} • {calendarData.season}
+                    Day {calendarData.dayOfYear} of 364 • {calendarData.season}
                   </div>
                   <div className="text-xs font-mono opacity-60">
                     {/* Display current LOCAL time - each user sees their own timezone */}
