@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
+// Remove global Window declaration - it conflicts with jitsi types
 
 interface JitsiVideoWindowProps {
   isOpen: boolean;
@@ -77,7 +73,7 @@ export function JitsiVideoWindow({
           'raisehand',
         ],
       },
-      userInfo: { displayName },
+      userInfo: { displayName, email: '' },
       password: password || undefined,
       configOverwrite: {
         startWithAudioMuted: false,

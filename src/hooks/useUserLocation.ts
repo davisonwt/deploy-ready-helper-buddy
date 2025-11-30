@@ -34,17 +34,18 @@ export function useUserLocation() {
       try {
         // Try to get from profile first
         if (user?.id) {
+          // Use type assertion since location columns may not be in generated types yet
           const { data: profile } = await supabase
             .from('profiles')
-            .select('latitude, longitude, location_verified')
+            .select('*')
             .eq('user_id', user.id)
-            .maybeSingle();
+            .maybeSingle() as any;
 
           if (profile?.latitude && profile?.longitude) {
             setLocation({
-              lat: profile.latitude,
-              lon: profile.longitude,
-              verified: profile.location_verified || false,
+              lat: Number(profile.latitude),
+              lon: Number(profile.longitude),
+              verified: Boolean(profile.location_verified) || false,
             });
             setLoading(false);
             return;
@@ -99,8 +100,9 @@ export function useUserLocation() {
     try {
       // Check if profiles table has latitude/longitude columns
       // If not, we'll need to add them via migration
-      const { error } = await supabase
-        .from('profiles')
+      // Use type assertion since these columns may not be in generated types
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({
           latitude: loc.lat,
           longitude: loc.lon,

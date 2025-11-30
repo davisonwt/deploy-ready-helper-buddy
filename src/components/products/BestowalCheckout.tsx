@@ -53,9 +53,13 @@ export default function BestowalCheckout() {
           throw new Error(data?.message || 'Bestowal completion failed');
         }
 
-        // Award XP for bestowal (100 XP per product)
+        // Award XP for bestowal (100 XP per product) - use type assertion
         if (user) {
-          await supabase.rpc('add_xp_to_current_user', { amount: 100 });
+          try {
+            await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
+          } catch (err) {
+            console.warn('XP award not available:', err);
+          }
         }
       }
 
