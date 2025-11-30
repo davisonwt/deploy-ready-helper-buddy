@@ -1408,6 +1408,234 @@ const ElulStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const TishreiStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Tishrei = 31 days
+
+  // Global day starts at 183 (previous 6 months = 182 days)
+
+  const beads = Array.from({ length: 31 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 182 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath     = dow === 6;                    // 4,11,18,25
+
+    const isRoshHashana = day <= 2;                     // 1–2 Tishrei
+
+    const isYomKippur   = day === 10;
+
+    const isSukkot      = day >= 15 && day <= 21;
+
+    const isSheminiAtzeret = day === 22;
+
+    const isSimchatTorah = day === 23;
+
+
+
+    let color = '#1f2937';
+
+    if (isSabbath)           color = '#fbbf24';         // Gold
+
+    if (isRoshHashana)       color = '#dc2626';         // Deep red crown
+
+    if (isYomKippur)         color = '#ffffff';         // Pure white – forgiveness
+
+    if (isSukkot)            color = '#34d399';         // Emerald joy of Sukkot
+
+    if (isSheminiAtzeret || isSimchatTorah) color = '#a78bfa'; // Purple-violet rejoicing with Torah
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isRoshHashana,
+
+      isYomKippur,
+
+      isSukkot,
+
+      isSheminiAtzeret,
+
+      isSimchatTorah,
+
+      isSabbath
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600">
+
+      <motion.h2 
+
+        initial={{ scale: 0, rotate: -180 }}
+
+        animate={{ scale: 1, rotate: 0 }}
+
+        transition={{ duration: 3, type: "spring", stiffness: 60 }}
+
+        className="text-9xl font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+
+      >
+
+        TISHREI • STRAND 7
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-7">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.2, 1], boxShadow: ["0 0 60px #fff", "0 0 180px gold", "0 0 60px #fff"] } :
+
+              b.isRoshHashana ? { y: [0, -15, 0] } :
+
+              b.isYomKippur ? { boxShadow: ["0 0 100px #fff", "0 0 200px #fff", "0 0 100px #fff"] } :
+
+              b.isSukkot ? { rotate: [0, 360] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isSukkot ? 20 : 3, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            <div
+
+              className="w-32 h-32 rounded-full border-12 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isRoshHashana ? '0 0 160px #dc2626, inset 0 0 80px #fff' :
+
+                  b.isYomKippur   ? '0 0 200px #fff, 0 0 300px #fff, inset -80px -80px 120px #0000' :
+
+                  b.isSukkot      ? '0 0 120px #34d399, 0 20px 60px rgba(0,0,0,0.8)' :
+
+                  b.isToday       ? '0 0 180px gold' :
+
+                  '0 25px 80px rgba(0,0,0,0.9), inset 0 12px 40px rgba(255,255,255,0.4)',
+
+                transform: 'translateZ(100px)'
+
+              }}
+
+            />
+
+
+
+            {/* Rosh Hashana crown */}
+
+            {b.isRoshHashana && (
+
+              <motion.div animate={{ y: [0, -30, 0] }} transition={{ repeat: Infinity, duration: 4 }}
+
+                className="absolute -top-20 left-1/2 -translate-x-1/2 text-8xl">Crown</motion.div>
+
+            )}
+
+
+
+            {/* Yom Kippur white fire */}
+
+            {b.isYomKippur && (
+
+              <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 5, repeat: Infinity }}
+
+                className="absolute inset-0 rounded-full bg-white blur-3xl" />
+
+            )}
+
+
+
+            {/* Sukkot lulav spin */}
+
+            {b.isSukkot && (
+
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+
+                className="absolute -inset-8 bg-emerald-500/20 rounded-full" />
+
+            )}
+
+
+
+            {/* Day number */}
+
+            <span className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-3xl font-bold text-amber-300 drop-shadow-2xl">
+
+              {b.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <div className="mt-28 text-center space-y-4 text-2xl text-amber-200">
+
+        <p>1–2 Red • Rosh Hashana – The King is crowned</p>
+
+        <p>10 White • Yom Kippur – Sealed in the Book of Life</p>
+
+        <p>15–21 Emerald • Sukkot – Joy of the clouds of glory</p>
+
+        <p>22–23 Violet • Shemini Atzeret & Simchat Torah</p>
+
+      </div>
+
+
+
+      <motion.p className="mt-20 text-5xl font-light text-amber-400 italic">
+
+        "In the seventh month… you shall afflict your souls… and rejoice with the Torah."
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1885,6 +2113,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <ElulStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Tishrei Strand - Show when month is Tishrei (month 7) */}
+      {enochianDate.month === 7 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <TishreiStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
