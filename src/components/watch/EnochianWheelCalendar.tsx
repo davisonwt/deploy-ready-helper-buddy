@@ -886,6 +886,258 @@ const TammuzStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const AvStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Av = 30 days
+
+  // Global day starts at 122 (30+30+31+30+1)
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const dayInMonth = i + 1;
+
+    const globalDay = 121 + dayInMonth;
+
+    const dayOfWeek = (globalDay - 1) % 7;
+
+
+
+    const isSabbath      = dayOfWeek === 6;                     // 1,8,15,22,29
+
+    const is9Av          = dayInMonth === 9;                    // Destruction of both Temples
+
+    const isPre9Av       = dayInMonth >= 1 && dayInMonth <= 8;   // Nine Days of intensifying mourning
+
+    const isPost9Av      = dayInMonth >= 10;                    // Mourning continues, but lighter
+
+    const isSpiesReport  = dayInMonth === 9;                    // Same day — spies returned (tradition)
+
+
+
+    let color = '#1f2937';                                      // Regular day — midnight black
+
+    if (isSabbath)                     color = '#fbbf24';      // Golden Sabbath (even in mourning, Shabbat shines)
+
+    if (is9Av)                         color = '#450a0a';      // Blackest red — heart of destruction
+
+    if (isPre9Av && !isSabbath)        color = '#374151';      // Dark slate — Nine Days
+
+    if (isPost9Av && !isSabbath)       color = '#475569';      // Ash grey — mourning lingers
+
+
+
+    return {
+
+      day: dayInMonth,
+
+      color,
+
+      isToday: dayInMonth === dayOfMonth,
+
+      is9Av,
+
+      isPre9Av,
+
+      isPost9Av,
+
+      isSabbath
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80">
+
+      <motion.h2 
+
+        initial={{ scale: 0.7, opacity: 0 }}
+
+        animate={{ scale: 1, opacity: 1 }}
+
+        transition={{ duration: 2.5, type: "spring", stiffness: 70 }}
+
+        className="text-8xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+
+      >
+
+        AV • STRAND 5
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-6">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 2, 1],
+
+              boxShadow: ["0 0 50px #fff", "0 0 150px #dc2626", "0 0 50px #fff"]
+
+            } : bead.is9Av ? {
+
+              boxShadow: ["0 0 100px #450a0a", "0 0 200px #000", "0 0 100px #450a0a"],
+
+              rotate: [0, 5, -5, 0]
+
+            } : {}}
+
+            transition={bead.is9Av ? { duration: 6, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-28 h-28 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #333, ${bead.color})`,
+
+                boxShadow: bead.is9Av
+
+                  ? '0 0 180px #450a0a, 0 0 300px #000, inset 0 0 80px #000'
+
+                  : bead.isToday
+
+                  ? '0 0 140px #dc2626, inset 0 0 60px #fff'
+
+                  : '0 20px 60px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.1)',
+
+                transform: 'translateZ(80px)',
+
+                border: bead.is9Av ? '12px solid #000' : '8px solid #000'
+
+              }}
+
+            />
+
+
+
+            {/* 9th of Av — Temple flames and smoke */}
+
+            {bead.is9Av && (
+
+              <>
+
+                <motion.div
+
+                  animate={{ y: [-20, -60], opacity: [1, 0] }}
+
+                  transition={{ duration: 4, repeat: Infinity }}
+
+                  className="absolute inset-0 rounded-full bg-red-900/60 blur-xl"
+
+                />
+
+                <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-gray-800">
+
+                  Temple
+
+                </div>
+
+              </>
+
+            )}
+
+
+
+            {/* Nine Days — increasing darkness */}
+
+            {bead.isPre9Av && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/60" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80"
+
+              />
+
+            )}
+
+
+
+            <span className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-400 drop-shadow-2xl">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      {/* Legend */}
+
+      <div className="mt-24 grid grid-cols-2 gap-12 text-gray-300 text-lg font-medium text-center">
+
+        <div>Yellow = Shabbat (1,8,15,22,29)</div>
+
+        <div>Blackest Red = 9th • Both Temples Destroyed</div>
+
+        <div>Dark Slate = First 8 days • Nine Days of mourning</div>
+
+        <div>Ash Grey = After 9th • Mourning lingers</div>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0, y: 30 }}
+
+        animate={{ opacity: 1, y: 0 }}
+
+        transition={{ delay: 3 }}
+
+        className="mt-16 text-4xl text-red-500 italic font-light tracking-widest text-center max-w-2xl"
+
+      >
+
+        "By the rivers of Babylon, there we sat and wept…"
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1341,6 +1593,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <TammuzStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Av Strand - Show when month is Av (month 5) */}
+      {enochianDate.month === 5 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <AvStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
