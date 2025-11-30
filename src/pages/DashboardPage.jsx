@@ -29,7 +29,6 @@ import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
 import { supabase } from "@/integrations/supabase/client"
 import LiveActivityWidget from '@/components/LiveActivityWidget'
 import { GamificationHUD } from '@/components/gamification/GamificationHUD'
-import { GamificationFloatingButton } from '@/components/gamification/GamificationFloatingButton'
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'

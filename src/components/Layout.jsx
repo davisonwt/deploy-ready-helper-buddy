@@ -37,8 +37,6 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
-import { GamificationFloatingButton } from "./gamification/GamificationFloatingButton"
-import { GamificationHUD } from "./gamification/GamificationHUD"
 import { ProgressButton } from "./gamification/ProgressButton"
 import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
@@ -82,8 +80,6 @@ function Layout({ children }) {
   const {
     showOnboarding, 
     setShowOnboarding, 
-    showGamificationHUD, 
-    setShowGamificationHUD,
     voiceCommandsEnabled,
     setVoiceCommandsEnabled
   } = useAppContext()
@@ -739,15 +735,6 @@ function Layout({ children }) {
         </div>
       </footer>
 
-      {/* Floating Features */}
-      <GamificationFloatingButton onToggleHUD={() => setShowGamificationHUD(!showGamificationHUD)} />
-      
-      {/* Modals and Overlays */}
-      <GamificationHUD 
-        isVisible={showGamificationHUD} 
-        onClose={() => setShowGamificationHUD(false)} 
-      />
-      
       {/* OnboardingTour rendered at App root only */}
       
       {/* Voice Commands */}
