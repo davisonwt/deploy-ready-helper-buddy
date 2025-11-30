@@ -3905,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 8000; // SVG viewBox size - larger for bigger wheel rendering
+  const size = 1000; // SVG viewBox size - optimized for 2/3 page width display
 
   const center = size / 2;
 
@@ -4025,7 +4025,7 @@ const EnochianTimepiece = () => {
 
   return (
 
-    <div className="min-h-screen bg-black relative" style={{ padding: '5cm', overflow: 'visible' }}>
+    <div className="min-h-screen bg-black relative overflow-hidden">
 
       <style>{`
         @keyframes pulse {
@@ -4041,40 +4041,33 @@ const EnochianTimepiece = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-blue-950" />
 
       <div className="absolute inset-0">
-
         <div className="absolute top-0 left-0 w-full h-full bg-radial-gradient from-purple-900/20 to-transparent" />
+      </div>
 
-        </div>
-
-
-
-
-      {/* Header */}
-      <motion.div initial={{ y: -100 }} animate={{ y: 0 }} className="relative z-10 pt-8 pb-4 text-center">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
+      {/* Header - Compact */}
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="relative z-10 pt-4 pb-2 text-center">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
           THE CREATOR'S WHEEL
         </h1>
-        <p className="text-xl md:text-2xl text-amber-200 mt-2 tracking-widest">Eternal • 364 • Aligned Forever</p>
+        <p className="text-base md:text-lg text-amber-200 mt-1 tracking-widest">Eternal • 364 • Aligned Forever</p>
       </motion.div>
 
-
-      {/* Main Content Container */}
-      <div className="relative z-10 flex flex-row items-center justify-start w-full" style={{ minHeight: 'calc(100vh - 10cm)' }}>
+      {/* Main Content Container - Professional Layout */}
+      <div className="relative z-10 flex flex-row items-start justify-center w-full px-4 md:px-8 gap-4 md:gap-8" style={{ height: 'calc(100vh - 100px)' }}>
         
-        {/* Calendar Wheel - LEFT SIDE - HUGE Circle */}
+        {/* Calendar Wheel - LEFT SIDE - 2/3 width */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
-          transition={{ duration: 2 }}
-          className="flex items-center justify-center flex-shrink-0"
+          transition={{ duration: 1.5 }}
+          className="flex items-center justify-center"
           style={{ 
-            width: '75%',
-            height: 'calc(100vh - 10cm)', 
-            minHeight: '90cm',
-            backgroundColor: 'rgba(255,0,0,0.1)' // Temporary debug color
+            width: '66%',
+            height: '100%',
+            maxHeight: 'calc(100vh - 120px)'
           }}
         >
-          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
 
           <defs>
 
@@ -4216,15 +4209,15 @@ const EnochianTimepiece = () => {
 
 
 
-        {/* Month Strand - RIGHT SIDE - Tall Rounded Rectangle */}
+        {/* Month Strand - RIGHT SIDE - Professional Purple Container */}
         <div 
-          className="flex-shrink-0 flex items-center justify-center"
+          className="flex-shrink-0 flex flex-col items-center bg-gradient-to-b from-purple-900/60 via-purple-950/80 to-black/90 rounded-3xl border border-purple-500/30 shadow-2xl backdrop-blur-sm p-4"
           style={{ 
-            width: '20%',
-            height: 'calc(100vh - 10cm)',
-            marginRight: '1cm',
-            minHeight: '90cm',
-            backgroundColor: 'rgba(0,255,0,0.1)' // Temporary debug color
+            width: '30%',
+            maxWidth: '280px',
+            minHeight: '500px',
+            maxHeight: 'calc(100vh - 180px)',
+            overflowY: 'auto'
           }}
         >
           {/* Only show current month beads */}
