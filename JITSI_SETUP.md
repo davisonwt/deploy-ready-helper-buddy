@@ -112,7 +112,11 @@ ENABLE_HTTP_REDIRECT=1  # Redirect HTTP to HTTPS
 
 # Authentication (guest = open; internal = users)
 ENABLE_AUTH=0  # Set to 1 for internal auth
-AUTH_TYPE=guest
+AUTH_TYPE=guest  # Options: 'guest' (open) or 'internal' (requires user accounts)
+
+# To enable internal authentication (requires user accounts):
+# ENABLE_AUTH=1
+# AUTH_TYPE=internal
 
 # Timezone & Misc
 TZ=America/New_York
@@ -444,8 +448,10 @@ JAVA_SYS_PROPS=-Xmx4096m
 1. **Enable Authentication**:
 ```bash
 ENABLE_AUTH=1
-ENABLE_GUESTS=0
+AUTH_TYPE=internal
 ```
+
+This requires setting up user accounts via Prosody. Only authenticated users will be able to create and join meetings.
 
 2. **Restrict Room Creation**:
 - Only authenticated users can create rooms
