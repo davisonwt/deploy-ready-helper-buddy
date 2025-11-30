@@ -56,9 +56,9 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-12 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl">
+    <div className="flex flex-col items-center p-6 md:p-12 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full max-h-[90vh] overflow-y-auto">
 
-      <h2 className="text-5xl font-black text-amber-400 mb-8 tracking-widest">MONTH 1 • STRAND 1</h2>
+      <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-amber-400 mb-4 md:mb-8 tracking-widest">MONTH 1 • STRAND 1</h2>
 
       
 
@@ -3058,7 +3058,7 @@ const EnochianTimepiece = () => {
 
   return (
 
-    <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative">
+    <div className="min-h-screen bg-black overflow-x-hidden relative">
 
       <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-blue-950" />
 
@@ -3070,23 +3070,28 @@ const EnochianTimepiece = () => {
 
 
 
-      <motion.div initial={{ y: -100 }} animate={{ y: 0 }} className="absolute top-8 left-1/2 -translate-x-1/2 text-center z-10">
-
-        <h1 className="text-6xl md:text-9xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent">
-
+      {/* Header */}
+      <motion.div initial={{ y: -100 }} animate={{ y: 0 }} className="relative z-10 pt-8 pb-4 text-center">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
           THE CREATOR'S WHEEL
-
         </h1>
-
-        <p className="text-3xl text-amber-200 mt-4 tracking-widest">Eternal • 364 • Aligned Forever</p>
-
+        <p className="text-xl md:text-2xl text-amber-200 mt-2 tracking-widest">Eternal • 364 • Aligned Forever</p>
       </motion.div>
 
 
 
-      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 2 }}>
-
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Main Content Container */}
+      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-center gap-8 px-4 pb-8 pt-4">
+        
+        {/* Calendar Wheel - Left Side */}
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          transition={{ duration: 2 }}
+          className="flex-shrink-0 w-full lg:w-auto"
+        >
+          <div className="w-full max-w-[600px] lg:max-w-[500px] mx-auto">
+            <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
 
@@ -3234,163 +3239,157 @@ const EnochianTimepiece = () => {
 
           </motion.g>
 
-        </svg>
+            </svg>
+          </div>
+        </motion.div>
 
-      </motion.div>
+
+
+        {/* Month Strand - Right Side */}
+        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[400px]">
+          {enochianDate.month === 1 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 2 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month2Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 3 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month3Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 4 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month4Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 5 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month5Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 6 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month6Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 7 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month7Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 8 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month8Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 9 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month9Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 10 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month10Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 11 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month11Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+
+          {enochianDate.month === 12 && (
+            <motion.div 
+              initial={{ x: -200, opacity: 0 }} 
+              animate={{ x: 0, opacity: 1 }} 
+              className="w-full"
+            >
+              <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
+            </motion.div>
+          )}
+        </div>
+      </div>
 
 
 
-      <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 text-center">
-
-        <p className="text-4xl font-bold text-amber-300 tracking-widest">
-
+      {/* Footer Info */}
+      <motion.div 
+        initial={{ y: 100 }} 
+        animate={{ y: 0 }} 
+        className="relative z-10 px-4 pb-8 text-center"
+      >
+        <p className="text-xl md:text-2xl font-bold text-amber-300 tracking-widest">
           Year 6028 • Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.eighteenPart}/18
-
         </p>
-
-        <p className="text-2xl text-amber-200 mt-4">The Creator's wheels never lie • Forever in sync</p>
-
-        <p className="text-yellow-400 mt-4">Day {enochianDate.dayOfYear} → Wheel at {dayRotation.toFixed(2)}°</p>
-
+        <p className="text-base md:text-lg text-amber-200 mt-2">The Creator's wheels never lie • Forever in sync</p>
+        <p className="text-sm md:text-base text-yellow-400 mt-2">Day {enochianDate.dayOfYear} → Wheel at {dayRotation.toFixed(2)}°</p>
       </motion.div>
 
 
 
-      <Sun className="absolute top-10 right-10 w-24 h-24 text-amber-400 animate-pulse" />
+      {/* Decorative Icons */}
+      <Sun className="absolute top-4 right-4 w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 text-amber-400 animate-pulse z-10" />
+      <Moon className="absolute top-4 left-4 w-10 h-10 md:w-14 md:h-14 lg:w-20 lg:h-20 text-blue-300 animate-pulse z-10" />
 
-      <Moon className="absolute top-10 left-10 w-20 h-20 text-blue-300 animate-pulse" />
-
-      {/* Nisan Strand - Show when month is Nisan (month 1) */}
-      {enochianDate.month === 1 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month1Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Iyar Strand - Show when month is Iyar (month 2) */}
-      {enochianDate.month === 2 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month2Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Sivan Strand - Show when month is Sivan (month 3) */}
-      {enochianDate.month === 3 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month3Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Tammuz Strand - Show when month is Tammuz (month 4) */}
-      {enochianDate.month === 4 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month4Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Av Strand - Show when month is Av (month 5) */}
-      {enochianDate.month === 5 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month5Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Elul Strand - Show when month is Elul (month 6) */}
-      {enochianDate.month === 6 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month6Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Tishrei Strand - Show when month is Tishrei (month 7) */}
-      {enochianDate.month === 7 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month7Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Cheshvan Strand - Show when month is Cheshvan (month 8) */}
-      {enochianDate.month === 8 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month8Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Kislev Strand - Show when month is Kislev (month 9) */}
-      {enochianDate.month === 9 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month9Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Tevet Strand - Show when month is Tevet (month 10) */}
-      {enochianDate.month === 10 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month10Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Shevat Strand - Show when month is Shevat (month 11) */}
-      {enochianDate.month === 11 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month11Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
-
-      {/* Adar Strand - Show when month is Adar (month 12) */}
-      {enochianDate.month === 12 && (
-        <motion.div 
-          initial={{ x: -200, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
-          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
-        >
-          <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
-        </motion.div>
-      )}
 
     </div>
 
