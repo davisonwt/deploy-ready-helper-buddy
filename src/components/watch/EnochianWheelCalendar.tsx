@@ -1636,6 +1636,232 @@ const TishreiStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const CheshvanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Cheshvan = 30 days
+
+  // Global day starts at 214 (182 + 31 previous months)
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 213 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath     = dow === 6;                     // 2,9,16,23,30
+
+    const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Israel)
+
+    const is23Cheshvan  = day === 23;                    // Traditional date of future Temple cornerstone laying
+
+
+
+    let color = '#1f2937';                               // Deep midnight – the "bitter" month
+
+    if (isSabbath)          color = '#fbbf24';           // Golden Sabbath – light even in bitterness
+
+    if (is7Cheshvan)        color = '#22d3ee';           // Rain-blue – Geshem prayer begins
+
+    if (is23Cheshvan)       color = '#f59e0b';           // Hidden fire – future Temple stone
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isSabbath,
+
+      is7Cheshvan,
+
+      is23Cheshvan
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700">
+
+      <motion.h2 
+
+        initial={{ opacity: 0, y: -100 }}
+
+        animate={{ opacity: 1, y: 0 }}
+
+        transition={{ duration: 2, type: "spring", stiffness: 70 }}
+
+        className="text-8xl font-black text-gray-500 mb-16 tracking-widest"
+
+        style={{ textShadow: '0 0 40px rgba(251,191,36,0.3)' }}
+
+      >
+
+        CHESHVAN • STRAND 8
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-7">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2, 1], boxShadow: ["0 0 60px #fff", "0 0 160px #f59e0b", "0 0 60px #fff"] } :
+
+              b.is23Cheshvan ? { boxShadow: ["0 0 100px #f59e0b", "0 0 180px #ff8c00", "0 0 100px #f59e0b"] } :
+
+              b.is7Cheshvan ? { opacity: [0.7, 1, 0.7] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.is23Cheshvan ? 6 : 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-32 h-32 rounded-full border-12 border-gray-900"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #444, ${b.color})`,
+
+                boxShadow: 
+
+                  b.is23Cheshvan ? '0 0 180px #f59e0b, 0 0 300px #ff8c00, inset 0 0 80px #fff' :
+
+                  b.is7Cheshvan   ? '0 0 80px #22d3ee, inset 0 0 40px #67e8f9' :
+
+                  b.isToday       ? '0 0 160px #fff' :
+
+                  '0 20px 70px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.15)',
+
+                transform: 'translateZ(90px)'
+
+              }}
+
+            />
+
+
+
+            {/* 23 Cheshvan – Temple cornerstone fire */}
+
+            {b.is23Cheshvan && (
+
+              <motion.div
+
+                animate={{ scale: [1, 1.6, 1] }}
+
+                transition={{ duration: 5, repeat: Infinity }}
+
+                className="absolute inset-0 rounded-full border-8 border-orange-600 blur-sm"
+
+              />
+
+            )}
+
+
+
+            {/* 7 Cheshvan – Rain drops */}
+
+            {b.is7Cheshvan && (
+
+              <>
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity }}
+
+                  className="absolute top-0 left-1/2 w-1 h-12 bg-cyan-400/60 blur-sm" />
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+
+                  className="absolute top-0 left-1/3 w-1 h-12 bg-cyan-400/60 blur-sm" />
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+
+                  className="absolute top-0 right-1/3 w-1 h-12 bg-cyan-400/60 blur-sm" />
+
+              </>
+
+            )}
+
+
+
+            {/* Day number */}
+
+            <span className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-3xl font-bold text-gray-400">
+
+              {b.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <div className="mt-28 text-center space-y-6 text-xl text-gray-400">
+
+        <p>Yellow = Sabbath (2,9,16,23,30)</p>
+
+        <p>Cyan = 7th • Prayers for rain begin in the Land</p>
+
+        <p>Hidden Fire = 23rd • Future laying of Third Temple cornerstone</p>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0 }}
+
+        animate={{ opacity: [0.4, 1, 0.4] }}
+
+        transition={{ duration: 8, repeat: Infinity }}
+
+        className="mt-20 text-4xl text-orange-500 italic font-light tracking-widest"
+
+      >
+
+        "Mar-Cheshvan" … yet the seeds of redemption are planted here.
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -2124,6 +2350,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <TishreiStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Cheshvan Strand - Show when month is Cheshvan (month 8) */}
+      {enochianDate.month === 8 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <CheshvanStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
