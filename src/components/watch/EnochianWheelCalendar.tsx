@@ -4027,6 +4027,17 @@ const EnochianTimepiece = () => {
 
     <div className="min-h-screen bg-black overflow-x-hidden relative" style={{ padding: '5cm' }}>
 
+      <style>{`
+        @keyframes pulse {
+          from { 
+            filter: drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 130px #00ff9d);
+          }
+          to { 
+            filter: drop-shadow(0 0 130px #00ff9d) drop-shadow(0 0 200px #00ff9d);
+          }
+        }
+      `}</style>
+
       <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-blue-950" />
 
       <div className="absolute inset-0">
@@ -4217,7 +4228,7 @@ const EnochianTimepiece = () => {
 
 
 
-        {/* Month Strands - Curved Path Positioning - All 12 months visible */}
+        {/* Month Strands - Circular/Elliptical Path Positioning - All 12 months visible around the wheel */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{ 
@@ -4226,16 +4237,17 @@ const EnochianTimepiece = () => {
             paddingRight: '1cm'
           }}
         >
-          {/* Month 1 - almost nothing */}
+          {/* Month 1 - Bottom (Day 1 - Tekufah ♋) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 800px)', 
-              top: 'calc(100% - 120px)',
-              width: '280px'
+              left: 'calc(50% + 0px)', 
+              top: 'calc(50% + 180px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month1Strand dayOfMonth={enochianDate.month === 1 ? enochianDate.dayOfMonth : 0} />
@@ -4243,14 +4255,15 @@ const EnochianTimepiece = () => {
 
           {/* Month 2 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.1 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.1 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 740px)', 
-              top: 'calc(100% - 130px)',
-              width: '280px'
+              left: 'calc(50% + 140px)', 
+              top: 'calc(50% + 170px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month2Strand dayOfMonth={enochianDate.month === 2 ? enochianDate.dayOfMonth : 0} />
@@ -4258,29 +4271,33 @@ const EnochianTimepiece = () => {
 
           {/* Month 3 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.2 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.2 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 680px)', 
-              top: 'calc(100% - 140px)',
-              width: '280px'
+              left: 'calc(50% + 260px)', 
+              top: 'calc(50% + 100px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month3Strand dayOfMonth={enochianDate.month === 3 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 4 */}
+          {/* Month 4 - Top (Summer Solstice - 91 days, MAX CURVE) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.3 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.3 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 620px)', 
-              top: 'calc(100% - 150px)',
-              width: '280px'
+              left: 'calc(50% + 340px)', 
+              top: 'calc(50% + 0px)',
+              width: '320px',
+              transform: 'translateX(-50%)',
+              filter: 'drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 130px #00ff9d)',
+              animation: 'pulse 3s infinite alternate'
             }}
           >
             <Month4Strand dayOfMonth={enochianDate.month === 4 ? enochianDate.dayOfMonth : 0} />
@@ -4288,29 +4305,32 @@ const EnochianTimepiece = () => {
 
           {/* Month 5 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.4 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.4 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 560px)', 
-              top: 'calc(100% - 160px)',
-              width: '280px'
+              left: 'calc(50% + 300px)', 
+              top: 'calc(50% - 120px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month5Strand dayOfMonth={enochianDate.month === 5 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 6 */}
+          {/* Month 6 - Left (Tekufah ♎ - 182-183 days) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.5 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.5 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 500px)', 
-              top: 'calc(100% - 170px)',
-              width: '280px'
+              left: 'calc(50% + 180px)', 
+              top: 'calc(50% - 180px)',
+              width: '300px',
+              transform: 'translateX(-50%)',
+              filter: 'drop-shadow(0 0 50px #ff9500)'
             }}
           >
             <Month6Strand dayOfMonth={enochianDate.month === 6 ? enochianDate.dayOfMonth : 0} />
@@ -4318,14 +4338,15 @@ const EnochianTimepiece = () => {
 
           {/* Month 7 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.6 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.6 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 440px)', 
-              top: 'calc(100% - 185px)',
-              width: '280px'
+              left: 'calc(50% + 20px)', 
+              top: 'calc(50% - 160px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month7Strand dayOfMonth={enochianDate.month === 7 ? enochianDate.dayOfMonth : 0} />
@@ -4333,76 +4354,82 @@ const EnochianTimepiece = () => {
 
           {/* Month 8 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.7 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.7 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 380px)', 
-              top: 'calc(100% - 210px)',
-              width: '280px'
+              left: 'calc(50% - 120px)', 
+              top: 'calc(50% - 100px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month8Strand dayOfMonth={enochianDate.month === 8 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 9 - still barely visible */}
+          {/* Month 9 - Bottom (Winter Solstice - 274 days, MAX CURVE) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.8 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.8 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 320px)', 
-              top: 'calc(100% - 260px)',
-              width: '280px'
+              left: 'calc(50% - 200px)', 
+              top: 'calc(50% + 0px)',
+              width: '320px',
+              transform: 'translateX(-50%)',
+              filter: 'drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 130px #00ff9d)',
+              animation: 'pulse 3s infinite alternate'
             }}
           >
             <Month9Strand dayOfMonth={enochianDate.month === 9 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 10 - starts shooting up fast */}
+          {/* Month 10 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 0.9 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 0.9 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 260px)', 
-              top: 'calc(100% - 350px)',
-              width: '280px'
+              left: 'calc(50% - 140px)', 
+              top: 'calc(50% + 120px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month10Strand dayOfMonth={enochianDate.month === 10 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 11 - huge jump */}
+          {/* Month 11 */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 1.0 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 1.0 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 200px)', 
-              top: 'calc(100% - 460px)',
-              width: '280px'
+              left: 'calc(50% - 20px)', 
+              top: 'calc(50% + 170px)',
+              width: '280px',
+              transform: 'translateX(-50%)'
             }}
           >
             <Month11Strand dayOfMonth={enochianDate.month === 11 ? enochianDate.dayOfMonth : 0} />
           </motion.div>
 
-          {/* Month 12 - THE BIGGEST */}
+          {/* Month 12 - Back to Tekufah (New Year) - Special glow */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.1, y: 100 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.8, delay: 1.1 }}
+            initial={{ opacity: 0, scale: 0.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 1.1 }}
             className="absolute pointer-events-auto"
             style={{ 
-              left: 'calc(100% - 150px)', 
-              top: 'calc(100% - 520px)',
+              left: 'calc(50% + 0px)', 
+              top: 'calc(50% + 180px)',
               width: '350px',
-              transform: 'scale(1.2)',
-              filter: 'drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 160px #00ff9d)'
+              transform: 'translateX(-50%) scale(1.2)',
+              filter: 'drop-shadow(0 0 50px #ff9500) drop-shadow(0 0 100px #ff9500)'
             }}
           >
             <Month12Strand dayOfMonth={enochianDate.month === 12 ? enochianDate.dayOfMonth : 0} />
