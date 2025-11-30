@@ -41,10 +41,128 @@ export function getDaysInMonth(month: number): number {
 }
 
 /**
+ * Get sunrise time for a given date and location
+ * Uses sunrise-sunset API or fallback calculation
+ */
+async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Date> {
+  try {
+    const dateStr = date.toISOString().split('T')[0];
+    const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${dateStr}&formatted=0`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results) {
+      return new Date(data.results.sunrise);
+    }
+  } catch (error) {
+    console.warn('Sunrise API failed, using fallback:', error);
+  }
+  
+  // Fallback: Use calculateSunrise from customTime
+  const { calculateSunrise } = await import('./customTime');
+  const sunriseMinutes = calculateSunrise(date, lat, lon);
+  const sunrise = new Date(date);
+  sunrise.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
+  return sunrise;
+}
+
+/**
+ * Get sunrise time synchronously (for backwards compatibility)
+ */
+function getSunriseTimeSync(date: Date, lat: number, lon: number): Date {
+  const { calculateSunrise } = require('./customTime');
+  const sunriseMinutes = calculateSunrise(date, lat, lon);
+  const sunrise = new Date(date);
+  sunrise.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
+  return sunrise;
+}
+
+/**
+ * Get effective date considering sunrise-based day start
+ * If current time is before sunrise, use previous day
+ */
+async function getEffectiveDate(
+  gregorianDate: Date,
+  lat: number = -26.2,
+  lon: number = 28.0
+): Promise<Date> {
+  const today = new Date(gregorianDate);
+  today.setHours(0, 0, 0, 0);
+  
+  const sunrise = await getSunriseTime(today, lat, lon);
+  
+  // If current time is before sunrise, we're still on the previous calendar day
+  if (gregorianDate < sunrise) {
+    const prevDay = new Date(today);
+    prevDay.setDate(prevDay.getDate() - 1);
+    return prevDay;
+  }
+  
+  return today;
+}
+
+/**
  * Convert Gregorian date to Creator's calendar date
  * Epoch: March 20, 2025 = Year 6028, Month 1, Day 1
+ * 
+ * @param gregorianDate - The Gregorian date to convert
+ * @param useSunrise - If true, day starts at sunrise instead of midnight
+ * @param lat - Latitude for sunrise calculation (default: -26.2, South Africa)
+ * @param lon - Longitude for sunrise calculation (default: 28.0, South Africa)
  */
-export function getCreatorDate(gregorianDate: Date = new Date()): CustomDate {
+export async function getCreatorDate(
+  gregorianDate: Date = new Date(),
+  useSunrise: boolean = false,
+  lat: number = -26.2,
+  lon: number = 28.0
+): Promise<CustomDate> {
+  let effectiveDate = gregorianDate;
+  
+  if (useSunrise) {
+    effectiveDate = await getEffectiveDate(gregorianDate, lat, lon);
+  }
+  
+  const msDiff = effectiveDate.getTime() - CREATOR_EPOCH.getTime();
+  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+
+  let year = 6028;
+  let remainingDays = totalDays;
+
+  // Calculate year
+  while (remainingDays >= (365 + (isLongYear(year) ? 1 : 0))) {
+    remainingDays -= 365 + (isLongYear(year) ? 1 : 0);
+    year++;
+  }
+
+  // Calculate month and day
+  let month = 1;
+  let day = remainingDays + 1;  // Day 1-based
+
+  while (day > getDaysInMonth(month)) {
+    day -= getDaysInMonth(month);
+    month++;
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+  }
+
+  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
+  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+
+  return {
+    year,
+    month,
+    day,
+    weekDay,  // 1-7
+  };
+}
+
+/**
+ * Synchronous version for backwards compatibility
+ * Uses midnight-based day start
+ */
+export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate {
   const msDiff = gregorianDate.getTime() - CREATOR_EPOCH.getTime();
   const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
 
@@ -85,7 +203,7 @@ export function getCreatorDate(gregorianDate: Date = new Date()): CustomDate {
  * Convert standard JavaScript Date to custom calendar date (legacy support)
  */
 export function toCustomDate(standardDate: Date, startYear: number = 6028): CustomDate {
-  return getCreatorDate(standardDate);
+  return getCreatorDateSync(standardDate);
 }
 
 /**
