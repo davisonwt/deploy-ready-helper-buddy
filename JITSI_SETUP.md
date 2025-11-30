@@ -76,7 +76,26 @@ Copy the `docker-compose.yml` and `.env.jitsi` files from this repository to `~/
 
 ### 4. Configure Environment Variables
 
-Edit `.env.jitsi` and set:
+Copy the example environment file and edit it:
+
+```bash
+# Copy the example environment file
+cp env.example .env
+
+# Edit the environment file
+nano .env
+```
+
+Or if you prefer a different editor:
+```bash
+# Using vim
+vim .env
+
+# Using VS Code (if installed)
+code .env
+```
+
+Set the following variables in `.env`:
 
 ```bash
 # REQUIRED: Set your domain
@@ -99,7 +118,7 @@ ENABLE_GUESTS=1
 **Option A: Let's Encrypt (Recommended for Production)**
 
 ```bash
-# Set in .env.jitsi
+# Set in .env
 ENABLE_LETSENCRYPT=1
 LETSENCRYPT_DOMAIN=meet.yourdomain.com
 LETSENCRYPT_EMAIL=admin@yourdomain.com
@@ -133,7 +152,7 @@ Access your Jitsi instance at: `https://meet.yourdomain.com`
 
 ### Enable TURN Server (for NAT traversal)
 
-Edit `.env.jitsi`:
+Edit `.env`:
 
 ```bash
 # TURN server configuration
@@ -210,7 +229,7 @@ sudo apt update
 sudo apt install google-chrome-stable -y
 ```
 
-2. Enable Jibri in `.env.jitsi`:
+2. Enable Jibri in `.env`:
 ```bash
 ENABLE_RECORDING=1
 ```
@@ -337,7 +356,7 @@ docker-compose exec web certbot certificates
 
 ### For 50+ Concurrent Users
 
-Edit `.env.jitsi`:
+Edit `.env`:
 ```bash
 # JVB tuning
 JVB_OPTS=--apis=rest,xmpp
