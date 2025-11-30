@@ -4048,17 +4048,17 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10" style={{ padding: '5cm 5cm 5cm 5cm' }}>
+      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between" style={{ padding: '5cm 5cm 5cm 5cm' }}>
         
-        {/* Calendar Wheel - Left/Center Side - Exactly 10cm diameter */}
+        {/* Calendar Wheel - Left/Center Side - Exactly 20cm diameter */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-center"
-          style={{ width: '10cm', height: '10cm', margin: '0 auto' }}
+          className="flex items-center justify-center flex-1"
+          style={{ width: '20cm', height: '20cm', margin: '0 auto' }}
         >
-          <svg width="10cm" height="10cm" viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
+          <svg width="20cm" height="20cm" viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
 
           <defs>
 
@@ -4211,10 +4211,10 @@ const EnochianTimepiece = () => {
 
 
 
-        {/* Month Strand - Right Side - Positioned at right edge with 1cm gap */}
+        {/* Month Strand - Right Side - Positioned at right edge of container with 1cm gap */}
         <div 
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-30 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]"
-          style={{ right: '1cm' }}
+          className="flex-shrink-0 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]"
+          style={{ marginRight: '1cm' }}
         >
           {enochianDate.month === 1 && (
             <motion.div 
