@@ -2606,6 +2606,246 @@ const ShevatStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const AdarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Adar = 31 days (in your 364-day system)
+
+  // Global day starts at 335 (304 + 30 + 1)
+
+  const beads = Array.from({ length: 31 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 334 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath     = dow === 6;                     // 3,10,17,24,31
+
+    const isPurim       = day === 14;                    // 14 Adar – Purim
+
+    const isShushanPurim= day === 15;                    // 15 Adar – Shushan Purim
+
+    const isAdarJoy     = day >= 13;                     // Joy increases from 13th onward
+
+
+
+    let color = '#1f2937';                               // Night before the dawn
+
+    if (isSabbath)          color = '#fbbf24';           // Golden Sabbath
+
+    if (isPurim)            color = '#ec4899';           // Royal pink – Esther's victory
+
+    if (isShushanPurim)     color = '#a78bfa';           // Purple – the walled city's extra day
+
+    if (isAdarJoy && !isPurim && !isShushanPurim && !isSabbath)
+
+                            color = '#f0abfc';           // Light pink – the joy spreads
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isSabbath,
+
+      isPurim,
+
+      isShushanPurim,
+
+      isAdarJoy
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700">
+
+      <motion.h2 
+
+        initial={{ scale: 0, rotate: -720 }}
+
+        animate={{ scale: 1, rotate: 0 }}
+
+        transition={{ duration: 4, type: "spring", stiffness: 50 }}
+
+        className="text-9xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+
+      >
+
+        ADAR • STRAND 12
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-9">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.5, 1] } :
+
+              b.isPurim ? { 
+
+                scale: [1, 1.3, 1],
+
+                rotate: [0, 360],
+
+                boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
+
+              } :
+
+              b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
+
+              b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead – explodes into joy on Purim */}
+
+            <div
+
+              className="relative w-40 h-40 rounded-full border-12 border-black overflow-hidden"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
+
+                  b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
+
+                  b.isToday ? '0 0 250px #ec4899' :
+
+                  '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
+
+                transform: 'translateZ(160px)'
+
+              }}
+
+            >
+
+              {/* Purim celebration – confetti & groggers */}
+
+              {b.isPurim && (
+
+                <>
+
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+
+                    className="absolute inset-0">
+
+                    {Array.from({ length: 12 }, (_, i) => (
+
+                      <div
+
+                        key={i}
+
+                        className="absolute w-4 h-12 bg-gradient-to-b from-pink-400 to-purple-400 rounded-full blur-sm"
+
+                        style={{ 
+
+                          transform: `rotate(${i * 30}deg) translateY(-100px)`,
+
+                          animation: `confetti 4s infinite ${i * 0.2}s`
+
+                        }}
+
+                      />
+
+                    ))}
+
+                  </motion.div>
+
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold text-pink-300">
+
+                    PURIM
+
+                  </div>
+
+                </>
+
+              )}
+
+            </div>
+
+
+
+            {/* Day number */}
+
+            <span className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-300 drop-shadow-2xl">
+
+              {b.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <motion.div className="mt-40 text-center space-y-10">
+
+        <p className="text-6xl text-pink-400 font-light">14 Adar • PURIM</p>
+
+        <p className="text-8xl font-black bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+
+          Joy Increased
+
+        </p>
+
+        <p className="text-4xl italic text-pink-200 mt-16 max-w-3xl">
+
+          "When Adar enters, we increase in joy."
+
+        </p>
+
+        <p className="text-5xl text-amber-300 mt-12">
+
+          The final strand completes the circle.
+
+        </p>
+
+      </motion.div>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -3138,6 +3378,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <ShevatStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Adar Strand - Show when month is Adar (month 12) */}
+      {enochianDate.month === 12 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <AdarStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
