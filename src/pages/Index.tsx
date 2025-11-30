@@ -16,8 +16,6 @@ import { AdminButton } from "../components/AdminButton";
 import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../integrations/supabase/client";
 
-import { GamificationFloatingButton } from "../components/gamification/GamificationFloatingButton";
-import { GamificationHUD } from "../components/gamification/GamificationHUD";
 import OnboardingTour from "../components/onboarding/OnboardingTour";
 import { VoiceCommands } from "../components/voice/VoiceCommands";
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
@@ -42,8 +40,6 @@ function IndexContent() {
   const { 
     showOnboarding, 
     setShowOnboarding, 
-    showGamificationHUD, 
-    setShowGamificationHUD,
     voiceCommandsEnabled,
     setVoiceCommandsEnabled
   } = useAppContext()
@@ -818,15 +814,6 @@ function IndexContent() {
         </div>
       </section>
 
-      {/* Floating Features */}
-      <GamificationFloatingButton onToggleHUD={() => setShowGamificationHUD(!showGamificationHUD)} />
-      
-      {/* Modals and Overlays */}
-      <GamificationHUD 
-        isVisible={showGamificationHUD} 
-        onClose={() => setShowGamificationHUD(false)} 
-      />
-      
       {/* OnboardingTour rendered at App root only */}
       
       {/* Voice Commands */}

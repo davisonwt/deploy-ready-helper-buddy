@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, Trophy, Award, Bell, CheckCircle } from 'lucide-react'
 import { useGamification } from '@/hooks/useGamification'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { launchConfetti, launchSparkles, floatingScore } from '@/utils/confetti'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface MasteryModalProps {
   isOpen: boolean
@@ -44,6 +47,34 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   const [levelUpText, setLevelUpText] = useState<{ level: number; title: string } | null>(null)
   const treeRef = useRef<SVGSVGElement>(null)
   const lastLevelRef = useRef<number>(1)
+  const [activeTab, setActiveTab] = useState<"tree" | "achievements" | "notifications">("tree")
+  
+  // Get gamification data
+  let achievements: any[] = []
+  let notifications: any[] = []
+  let userPoints: any = null
+  let markNotificationAsRead = async (id: string) => {}
+  
+  try {
+    const gamification = useGamification()
+    achievements = gamification.achievements
+    notifications = gamification.notifications
+    userPoints = gamification.userPoints
+    markNotificationAsRead = gamification.markNotificationAsRead
+  } catch (error) {
+    console.warn('MasteryModal: gamification hook error', error)
+  }
+  
+  const unreadNotifications = notifications.filter(n => !n.is_read)
+  
+  const handleNotificationClick = async (notification: any) => {
+    if (!notification.is_read) {
+      await markNotificationAsRead(notification.id)
+    }
+    if (notification.action_url) {
+      window.location.href = notification.action_url
+    }
+  }
 
   // ULTIMATE APOCALYPTIC LEVEL-UP ANIMATION 9000
   const triggerLevelUpAnimation = (newLevel: number) => {
@@ -356,11 +387,90 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
           </button>
 
           {/* Title */}
-          <h2 className="text-6xl font-black text-center mb-8 bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent">
-            Your Living Orchard 🌳
+          <h2 className="text-6xl font-black text-center mb-6 bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent">
+            Your Progress
           </h2>
 
-          {/* LIVE TREE SVG */}
+          {/* User Stats Header */}
+          {userPoints && (
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-400">{userPoints.total_points}</div>
+                  <div className="text-sm text-white/70">Total Points</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-400">Level {userPoints.level}</div>
+                  <div className="text-sm text-white/70">Current Level</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white/10 border-white/20">
+                <CardContent className="p-4">
+                  <div className="text-center mb-2">
+                    <div className="text-lg font-semibold text-white">Next Level</div>
+                    <div className="text-sm text-white/70">
+                      {userPoints.points_to_next_level} points to go
+                    </div>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div 
+                      className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${userPoints.points_to_next_level > 0 ? 
+                          ((100 - (userPoints.points_to_next_level / 100) * 100)) : 100
+                        }%` 
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="flex border-b border-white/20 mb-6">
+            <Button
+              variant={activeTab === "tree" ? "default" : "ghost"}
+              onClick={() => setActiveTab("tree")}
+              className="rounded-none flex-1 text-white hover:text-white"
+            >
+              🌳 Tree
+            </Button>
+            <Button
+              variant={activeTab === "achievements" ? "default" : "ghost"}
+              onClick={() => setActiveTab("achievements")}
+              className="rounded-none flex-1 text-white hover:text-white relative"
+            >
+              <Award className="h-4 w-4 mr-2" />
+              Achievements ({achievements.length})
+            </Button>
+            <Button
+              variant={activeTab === "notifications" ? "default" : "ghost"}
+              onClick={() => setActiveTab("notifications")}
+              className="rounded-none flex-1 text-white hover:text-white relative"
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+              {unreadNotifications.length > 0 && (
+                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                  {unreadNotifications.length}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Tab Content */}
+          <AnimatePresence mode="wait">
+            {activeTab === "tree" && (
+              <motion.div
+                key="tree"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+              >
+                {/* LIVE TREE SVG */}
           <div className="relative mx-auto w-96 h-96 mb-12">
             <svg ref={treeRef} id="live-tree" viewBox="0 0 400 500" className="w-full h-full">
               {/* Trunk grows thicker every 5 levels */}
@@ -503,6 +613,110 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
               <div className="text-2xl">Loading your orchard...</div>
             </div>
           )}
+              </motion.div>
+            )}
+
+            {activeTab === "achievements" && (
+              <motion.div
+                key="achievements"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 max-h-[60vh] overflow-y-auto"
+              >
+                {achievements.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Trophy className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-white">No achievements yet</h3>
+                    <p className="text-white/60">Start creating orchards and supporting others to earn your first achievements!</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {achievements.map((achievement, index) => (
+                      <motion.div
+                        key={achievement.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="border-l-4 border-l-yellow-400 bg-white/10 border-white/20">
+                          <CardContent className="p-4">
+                            <div className="flex items-center space-x-4">
+                              <div className="p-2 bg-yellow-400/20 rounded-full">
+                                <Award className="h-6 w-6 text-yellow-400" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-white">{achievement.title}</h4>
+                                <p className="text-sm text-white/70">{achievement.description}</p>
+                                <div className="flex items-center mt-1">
+                                  <Badge variant="secondary" className="bg-yellow-400/20 text-yellow-400 border-yellow-400/30">
+                                    +{achievement.points_awarded} points
+                                  </Badge>
+                                  <span className="text-xs text-white/50 ml-2">
+                                    {new Date(achievement.unlocked_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === "notifications" && (
+              <motion.div
+                key="notifications"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4 max-h-[60vh] overflow-y-auto"
+              >
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-white">No notifications</h3>
+                    <p className="text-white/60">You're all caught up!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map((notification, index) => (
+                      <motion.div
+                        key={notification.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`p-4 rounded-lg border cursor-pointer transition-colors hover:bg-white/10 ${
+                          !notification.is_read ? 'bg-yellow-400/10 border-yellow-400/30' : 'bg-white/5 border-white/20'
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className={`p-1 rounded-full ${!notification.is_read ? 'bg-yellow-400' : 'bg-white/20'}`}>
+                            {notification.is_read ? (
+                              <CheckCircle className="h-3 w-3 text-white/60" />
+                            ) : (
+                              <div className="h-3 w-3 bg-white rounded-full" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-white">{notification.title}</h4>
+                            <p className="text-sm text-white/70">{notification.message}</p>
+                            <p className="text-xs text-white/50 mt-1">
+                              {new Date(notification.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Level-Up Animation Overlay */}
