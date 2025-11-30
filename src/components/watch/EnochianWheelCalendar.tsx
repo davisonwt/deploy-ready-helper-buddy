@@ -3905,7 +3905,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 4500; // Even bigger wheel with more space
+  const size = 6000; // Much bigger wheel - 10cm diameter target
 
   const center = size / 2;
 
@@ -4057,8 +4057,8 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-1 w-full lg:w-auto flex items-center justify-center min-w-0"
         >
-          <div className="w-full max-w-[calc(100vw-500px)] lg:max-w-[calc(100vw-480px)] xl:max-w-[calc(100vw-520px)] mx-auto">
-            <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
+          <div className="w-full max-w-[calc(100vw-400px)] lg:max-w-[calc(100vw-380px)] xl:max-w-[calc(100vw-400px)] mx-auto" style={{ minWidth: '10cm', minHeight: '10cm' }}>
+            <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto" style={{ minWidth: '10cm', minHeight: '10cm' }}>
 
           <defs>
 
@@ -4213,7 +4213,7 @@ const EnochianTimepiece = () => {
 
 
         {/* Month Strand - Right Side with 1cm gap from edge */}
-        <div className="flex-shrink-0 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px] lg:mr-[1cm]">
+        <div className="flex-shrink-0 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]" style={{ marginRight: '1cm' }}>
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ x: -200, opacity: 0 }} 
