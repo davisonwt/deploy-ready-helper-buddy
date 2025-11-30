@@ -391,38 +391,6 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
             Your Progress
           </h2>
 
-          {/* Tabs */}
-          <div className="flex border-b border-white/20 mb-6">
-            <Button
-              variant={activeTab === "tree" ? "default" : "ghost"}
-              onClick={() => setActiveTab("tree")}
-              className="rounded-none flex-1 text-white hover:text-white"
-            >
-              🌳 Tree
-            </Button>
-            <Button
-              variant={activeTab === "achievements" ? "default" : "ghost"}
-              onClick={() => setActiveTab("achievements")}
-              className="rounded-none flex-1 text-white hover:text-white relative"
-            >
-              <Award className="h-4 w-4 mr-2" />
-              Achievements ({achievements.length})
-            </Button>
-            <Button
-              variant={activeTab === "notifications" ? "default" : "ghost"}
-              onClick={() => setActiveTab("notifications")}
-              className="rounded-none flex-1 text-white hover:text-white relative"
-            >
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
-              {unreadNotifications.length > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
-                  {unreadNotifications.length}
-                </Badge>
-              )}
-            </Button>
-          </div>
-
           {/* Tab Content */}
           <AnimatePresence mode="wait">
             {activeTab === "tree" && (
@@ -717,6 +685,84 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Tabs - Moved to bottom */}
+          <div className="mt-8 pt-6 border-t border-white/20">
+            <div className="flex gap-3 justify-center">
+              <motion.button
+                onClick={() => setActiveTab("tree")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 relative ${
+                  activeTab === "tree"
+                    ? "bg-gradient-to-r from-emerald-500/30 to-teal-500/30 text-white border-2 border-emerald-400/50 shadow-lg shadow-emerald-500/20"
+                    : "bg-white/5 text-white/70 border-2 border-white/10 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <span className="text-xl">🌳</span>
+                <span>Tree</span>
+                {activeTab === "tree" && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
+              
+              <motion.button
+                onClick={() => setActiveTab("achievements")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 relative ${
+                  activeTab === "achievements"
+                    ? "bg-gradient-to-r from-yellow-500/30 to-amber-500/30 text-white border-2 border-yellow-400/50 shadow-lg shadow-yellow-500/20"
+                    : "bg-white/5 text-white/70 border-2 border-white/10 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <Award className="h-5 w-5" />
+                <span>Achievements</span>
+                {achievements.length > 0 && (
+                  <Badge className="ml-1 bg-yellow-400/20 text-yellow-300 border-yellow-400/30">
+                    {achievements.length}
+                  </Badge>
+                )}
+                {activeTab === "achievements" && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-xl -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
+              
+              <motion.button
+                onClick={() => setActiveTab("notifications")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 relative ${
+                  activeTab === "notifications"
+                    ? "bg-gradient-to-r from-pink-500/30 to-rose-500/30 text-white border-2 border-pink-400/50 shadow-lg shadow-pink-500/20"
+                    : "bg-white/5 text-white/70 border-2 border-white/10 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <Bell className="h-5 w-5" />
+                <span>Notifications</span>
+                {unreadNotifications.length > 0 && (
+                  <Badge className="ml-1 bg-pink-500 text-white border-pink-400/50 animate-pulse">
+                    {unreadNotifications.length}
+                  </Badge>
+                )}
+                {activeTab === "notifications" && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-rose-500/20 rounded-xl -z-10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Level-Up Animation Overlay */}
