@@ -2118,6 +2118,258 @@ const KislevStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const TevetStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Tevet = 30 days
+
+  // Global day starts at 275 (182 + 31 + 30 + 31 + 1)
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 274 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath       = dow === 6;                     // 7,14,21,28
+
+    const is10Tevet       = day === 10;                    // Fast – siege of Jerusalem began
+
+    const isHanukkahFinal = day <= 2;                      // 1–2 Tevet = final two nights of Hanukkah
+
+    const isEndOfHanukkah = day === 2;                     // 8th night
+
+
+
+    let color = '#1f2937';                                 // Cold winter night
+
+    if (isSabbath)               color = '#fbbf24';       // Golden Sabbath
+
+    if (is10Tevet)               color = '#374151';       // Iron-grey siege
+
+    if (isHanukkahFinal)         color = '#ffffff';       // Pure white – final miracle lights
+
+    if (isEndOfHanukkah)         color = '#a78bfa';       // Violet-white – climax of light
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isSabbath,
+
+      is10Tevet,
+
+      isHanukkahFinal,
+
+      isEndOfHanukkah,
+
+      hanukkahNight: isHanukkahFinal ? 7 + day : 0
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800">
+
+      <motion.h2 
+
+        initial={{ opacity: 0, y: -80 }}
+
+        animate={{ opacity: 1, y: 0 }}
+
+        transition={{ duration: 2.5, type: "spring", stiffness: 70 }}
+
+        className="text-8xl font-black text-gray-400 mb-16 tracking-widest"
+
+        style={{ textShadow: '0 0 60px rgba(255,255,255,0.2)' }}
+
+      >
+
+        TEVET • STRAND 10
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-8">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.2, 1] } :
+
+              b.is10Tevet ? { rotate: [0, 3, -3, 0], boxShadow: ["0 0 120px #1e293b", "0 0 200px #000"] } :
+
+              b.isEndOfHanukkah ? { boxShadow: ["0 0 160px #fff", "0 0 300px #a78bfa"] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.is10Tevet ? 6 : 3, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-36 h-36 rounded-full border-12 border-black overflow-hidden"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.is10Tevet ? '0 0 180px #1e293b, 0 0 300px #000, inset 0 0 80px #111' :
+
+                  b.isHanukkahFinal ? `0 0 ${140 + b.hanukkahNight*40}px #fff, 0 -60px 160px #a78bfa` :
+
+                  b.isToday ? '0 0 200px #fff' :
+
+                  '0 30px 100px rgba(0,0,0,0.95), inset 0 15px 50px rgba(255,255,255,0.15)',
+
+                transform: 'translateZ(110px)'
+
+              }}
+
+            >
+
+              {/* Final Hanukkah flames still burning on days 1–2 */}
+
+              {b.isHanukkahFinal && (
+
+                <div className="absolute inset-0 flex items-end justify-center pb-10">
+
+                  {Array.from({ length: b.hanukkahNight }, (_, i) => (
+
+                    <motion.div
+
+                      key={i}
+
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
+
+                      className="w-5 mx-1"
+
+                    >
+
+                      <div className="w-5 h-24 bg-gradient-to-t from-amber-200 via-white to-purple-300 rounded-full blur-sm" />
+
+                    </motion.div>
+
+                  ))}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+
+            {/* 10 Tevet – siege walls */}
+
+            {b.is10Tevet && (
+
+              <div className="absolute inset-0 flex items-center justify-center text-6xl font-black text-gray-800 rotate-12">
+
+                Walls
+
+              </div>
+
+            )}
+
+
+
+            {/* Day number */}
+
+            <span className="absolute -bottom-18 left-1/2 -translate-x-1/2 text-3xl font-bold text-gray-400 drop-shadow-2xl">
+
+              {b.day}
+
+            </span>
+
+
+
+            {/* Hanukkah night label */}
+
+            {b.isHanukkahFinal && (
+
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/60 px-4 py-1 rounded-full">
+
+                Night {b.hanukkahNight}
+
+              </span>
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <div className="mt-32 text-center space-y-6 text-xl text-gray-400">
+
+        <p>Yellow = Sabbath (7,14,21,28)</p>
+
+        <p>White flames = 1–2 Tevet • Final nights of Hanukkah</p>
+
+        <p>Iron Grey = 10 Tevet • Siege of Jerusalem began</p>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0 }}
+
+        animate={{ opacity: 1 }}
+
+        transition={{ delay: 2 }}
+
+        className="mt-20 text-4xl text-gray-300 italic font-light tracking-widest"
+
+      >
+
+        Even as the walls closed in, the light refused to die.
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -2628,6 +2880,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <KislevStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Tevet Strand - Show when month is Tevet (month 10) */}
+      {enochianDate.month === 10 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <TevetStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
