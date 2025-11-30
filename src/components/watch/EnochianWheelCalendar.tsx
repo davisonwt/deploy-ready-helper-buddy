@@ -2775,7 +2775,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-    return {
+      return {
 
       day,
 
@@ -3312,7 +3312,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         {futureBeads.map((b) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
-          return (
+  return (
             <motion.div
               key={b.day}
               style={{
@@ -3368,7 +3368,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                     </motion.div>
                     <div className="absolute inset-0 flex items-center justify-center text-pink-300 text-xs font-light pointer-events-none">
                       Almond Tree
-                    </div>
+        </div>
                   </>
                 )}
 
@@ -3402,7 +3402,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {pastBeads.map((b) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
-          return (
+                  return (
             <motion.div
               key={b.day}
               style={{
@@ -3480,8 +3480,8 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </>
               )}
             </motion.div>
-          );
-        })}
+                );
+              })}
       </div>
 
       <motion.div className="mt-36 text-center space-y-8">
@@ -3518,7 +3518,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   const beads = Array.from({ length: 31 }, (_, i) => {
 
-    const day = i + 1;
+                  const day = i + 1;
 
     const globalDay = 334 + day;
 
@@ -4050,15 +4050,21 @@ const EnochianTimepiece = () => {
       {/* Main Content Container */}
       <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between" style={{ padding: '5cm 5cm 5cm 5cm' }}>
         
-        {/* Calendar Wheel - Left/Center Side - Exactly 20cm diameter */}
+        {/* Calendar Wheel - Left/Center Side - MUCH BIGGER - fills left side */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-center flex-1"
-          style={{ width: '20cm', height: '20cm', margin: '0 auto' }}
+          className="flex items-center justify-center flex-1 min-w-0"
+          style={{ 
+            width: 'calc(100vw - 450px)', 
+            height: 'calc(100vh - 10cm)', 
+            minWidth: '50cm',
+            minHeight: '50cm',
+            maxWidth: 'none'
+          }}
         >
-          <svg width="20cm" height="20cm" viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
+          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
 
           <defs>
 
@@ -4206,7 +4212,7 @@ const EnochianTimepiece = () => {
 
           </motion.g>
 
-          </svg>
+              </svg>
         </motion.div>
 
 
@@ -4335,8 +4341,8 @@ const EnochianTimepiece = () => {
               <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
 
 
 
