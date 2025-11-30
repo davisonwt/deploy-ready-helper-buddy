@@ -62,7 +62,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1 md:gap-2">
 
         {beads.map((bead) => (
 
@@ -86,7 +86,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-16 h-16 rounded-full border-8 border-black"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 md:border-6 border-black"
 
               style={{
 
@@ -264,7 +264,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-20 h-20 rounded-full border-8 border-black"
+              className="w-12 h-12 md:w-14 md:h-14 rounded-full border-4 md:border-6 border-black"
 
               style={{
 
@@ -572,7 +572,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day Number */}
 
-            <span className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-2xl font-bold text-amber-200 drop-shadow-lg">
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
 
               {bead.day}
 
@@ -832,7 +832,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-2xl font-bold text-amber-200 drop-shadow-lg">
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
 
               {bead.day}
 
@@ -1084,7 +1084,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-400 drop-shadow-2xl">
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl">
 
               {bead.day}
 
@@ -1338,7 +1338,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-2xl font-bold text-cyan-300 drop-shadow-2xl">
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl">
 
               {bead.day}
 
@@ -1530,7 +1530,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-32 h-32 rounded-full border-12 border-black"
+              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-black"
 
               style={{
 
@@ -1594,7 +1594,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-3xl font-bold text-amber-300 drop-shadow-2xl">
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
 
               {b.day}
 
@@ -1744,7 +1744,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-32 h-32 rounded-full border-12 border-gray-900"
+              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-gray-900"
 
               style={{
 
@@ -1812,7 +1812,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-3xl font-bold text-gray-400">
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400">
 
               {b.day}
 
@@ -1982,7 +1982,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="relative w-36 h-36 rounded-full border-12 border-black overflow-hidden"
+              className="relative w-20 h-20 md:w-[22px] md:h-[22px] rounded-full border-6 md:border-8 border-black overflow-hidden"
 
               style={{
 
@@ -2064,7 +2064,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number glowing under the flames */}
 
-            <span className="absolute -bottom-18 left-1/2 -translate-x-1/2 text-3xl font-bold text-amber-300 drop-shadow-2xl">
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
 
               {b.day}
 
@@ -2234,7 +2234,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-36 h-36 rounded-full border-12 border-black overflow-hidden"
+              className="w-20 h-20 md:w-[22px] md:h-[22px] rounded-full border-6 md:border-8 border-black overflow-hidden"
 
               style={{
 
@@ -2566,7 +2566,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-200 drop-shadow-2xl">
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-pink-200 drop-shadow-2xl">
 
               {b.day}
 
@@ -3095,7 +3095,7 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-shrink-0 w-full lg:w-auto"
         >
-          <div className="w-full max-w-[600px] lg:max-w-[500px] mx-auto">
+          <div className="w-full max-w-[900px] lg:max-w-[800px] xl:max-w-[900px] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
@@ -3251,7 +3251,7 @@ const EnochianTimepiece = () => {
 
 
         {/* Month Strand - Right Side */}
-        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[400px]">
+        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[350px] xl:max-w-[400px]">
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ x: -200, opacity: 0 }} 
