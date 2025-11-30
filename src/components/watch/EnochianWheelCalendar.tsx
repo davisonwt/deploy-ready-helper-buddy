@@ -56,9 +56,9 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-6 md:p-12 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full max-h-[90vh] overflow-y-auto">
 
-      <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-amber-400 mb-4 md:mb-8 tracking-widest">MONTH 1 • STRAND 1</h2>
+      <h2 className="text-sm md:text-base lg:text-lg font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1 • STRAND 1</h2>
 
       
 
@@ -86,7 +86,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-4 md:border-6 border-black"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black"
 
               style={{
 
@@ -220,7 +220,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-12 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30">
 
       <motion.h2 
 
@@ -228,11 +228,11 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         animate={{ y: 0, opacity: 1 }}
 
-        className="text-6xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-10 tracking-widest"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest"
 
       >
 
-        MONTH 2 • STRAND 2
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest">MONTH 2 • STRAND 2</h2>
 
       </motion.h2>
 
@@ -264,7 +264,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-12 h-12 md:w-14 md:h-14 rounded-full border-4 md:border-6 border-black"
+              className="w-7 h-7 md:w-9 md:h-9 rounded-full border-2 md:border-3 border-black"
 
               style={{
 
@@ -354,7 +354,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       {/* Legend */}
 
-      <div className="mt-16 grid grid-cols-2 gap-8 text-amber-100 text-center">
+      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm text-center">
 
         <div>Yellow = Sabbath (6, 13, 20, 27)</div>
 
@@ -444,7 +444,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40">
 
       <motion.h2 
 
@@ -454,11 +454,11 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 1.5, type: "spring", stiffness: 80 }}
 
-        className="text-7xl font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 3 • STRAND 3
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 3 • STRAND 3</h2>
 
       </motion.h2>
 
@@ -534,7 +534,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               >
 
-                <div className="text-6xl">Torah</div>
+                <div className="text-sm md:text-base">Torah</div>
 
               </motion.div>
 
@@ -588,7 +588,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       {/* Sacred Legend */}
 
-      <div className="mt-20 grid grid-cols-2 gap-10 text-amber-100 text-lg font-medium text-center">
+      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm font-medium text-center">
 
         <div>Yellow = Sabbath (5,12,19,26)</div>
 
@@ -610,7 +610,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ delay: 2 }}
 
-        className="mt-12 text-3xl text-amber-300 italic font-light tracking-wider"
+        className="mt-6 text-xs md:text-sm text-amber-300 italic font-light tracking-wider"
 
       >
 
@@ -688,7 +688,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60">
 
       <motion.h2 
 
@@ -698,11 +698,11 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 2, type: "spring", stiffness: 60 }}
 
-        className="text-7xl font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 4 • STRAND 4
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-amber-600 via-red-600 to-gray-800 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 4 • STRAND 4</h2>
 
       </motion.h2>
 
@@ -848,7 +848,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       {/* Legend */}
 
-      <div className="mt-20 grid grid-cols-2 gap-10 text-amber-100 text-lg font-medium text-center">
+      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm font-medium text-center">
 
         <div>Yellow = Shabbat (3,10,17,24)</div>
 
@@ -950,7 +950,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80">
 
       <motion.h2 
 
@@ -960,11 +960,11 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 2.5, type: "spring", stiffness: 70 }}
 
-        className="text-8xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 5 • STRAND 5
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 5 • STRAND 5</h2>
 
       </motion.h2>
 
@@ -1044,7 +1044,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 />
 
-                <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-gray-800">
+                <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800">
 
                   Temple
 
@@ -1100,7 +1100,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       {/* Legend */}
 
-      <div className="mt-24 grid grid-cols-2 gap-12 text-gray-300 text-lg font-medium text-center">
+      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-gray-300 text-xs md:text-sm font-medium text-center">
 
         <div>Yellow = Shabbat (1,8,15,22,29)</div>
 
@@ -1122,7 +1122,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ delay: 3 }}
 
-        className="mt-16 text-4xl text-red-500 italic font-light tracking-widest text-center max-w-2xl"
+        className="mt-8 text-xs md:text-sm text-red-500 italic font-light tracking-widest text-center max-w-2xl"
 
       >
 
@@ -1200,7 +1200,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60">
 
       <motion.h2 
 
@@ -1210,11 +1210,11 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 2, type: "spring", stiffness: 80 }}
 
-        className="text-8xl font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-14 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 6 • STRAND 6
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 6 • STRAND 6</h2>
 
       </motion.h2>
 
@@ -1288,7 +1288,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 4, repeat: Infinity }}
 
-                className="absolute -top-16 left-1/2 -translate-x-1/2 text-6xl"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base"
 
               >
 
@@ -1354,7 +1354,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       {/* Legend */}
 
-      <div className="mt-24 grid grid-cols-2 gap-12 text-cyan-200 text-lg font-medium text-center">
+      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-cyan-200 text-xs md:text-sm font-medium text-center">
 
         <div>Yellow = Shabbat (6,13,20,27)</div>
 
@@ -1376,7 +1376,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ delay: 3 }}
 
-        className="mt-16 text-4xl text-pink-400 italic font-light tracking-widest text-center"
+        className="mt-8 text-xs md:text-sm text-pink-400 italic font-light tracking-widest text-center"
 
       >
 
@@ -1392,7 +1392,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 4, repeat: Infinity }}
 
-        className="mt-8 text-2xl text-cyan-300"
+        className="mt-4 text-xs md:text-sm text-cyan-300"
 
       >
 
@@ -1480,7 +1480,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600">
 
       <motion.h2 
 
@@ -1490,11 +1490,11 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 3, type: "spring", stiffness: 60 }}
 
-        className="text-9xl font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 7 • STRAND 7
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-red-600 via-white to-amber-500 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 7 • STRAND 7</h2>
 
       </motion.h2>
 
@@ -1530,7 +1530,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-black"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black"
 
               style={{
 
@@ -1562,7 +1562,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               <motion.div animate={{ y: [0, -30, 0] }} transition={{ repeat: Infinity, duration: 4 }}
 
-                className="absolute -top-20 left-1/2 -translate-x-1/2 text-8xl">Crown</motion.div>
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base">Crown</motion.div>
 
             )}
 
@@ -1608,7 +1608,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="mt-28 text-center space-y-4 text-2xl text-amber-200">
+      <div className="mt-12 text-center space-y-2 text-xs md:text-sm text-amber-200">
 
         <p>1–2 Red • Rosh Hashana – The King is crowned</p>
 
@@ -1622,7 +1622,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <motion.p className="mt-20 text-5xl font-light text-amber-400 italic">
+      <motion.p className="mt-8 text-xs md:text-sm font-light text-amber-400 italic">
 
         "In the seventh month… you shall afflict your souls… and rejoice with the Torah."
 
@@ -1692,7 +1692,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700">
 
       <motion.h2 
 
@@ -1702,13 +1702,13 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 2, type: "spring", stiffness: 70 }}
 
-        className="text-8xl font-black text-gray-500 mb-16 tracking-widest"
+        className="text-lg md:text-xl font-black text-gray-500 mb-4 md:mb-6 tracking-widest"
 
         style={{ textShadow: '0 0 40px rgba(251,191,36,0.3)' }}
 
       >
 
-        MONTH 8 • STRAND 8
+        <h2 className="text-sm md:text-base lg:text-lg font-black text-gray-500 mb-2 md:mb-4 tracking-widest">MONTH 8 • STRAND 8</h2>
 
       </motion.h2>
 
@@ -1846,7 +1846,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 8, repeat: Infinity }}
 
-        className="mt-20 text-4xl text-orange-500 italic font-light tracking-widest"
+        className="mt-8 text-xs md:text-sm text-orange-500 italic font-light tracking-widest"
 
       >
 
@@ -1932,7 +1932,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50">
 
       <motion.h2 
 
@@ -1942,11 +1942,11 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 3, type: "spring", stiffness: 80 }}
 
-        className="text-9xl font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        MONTH 9 • STRAND 9
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-500 via-amber-400 to-cyan-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 9 • STRAND 9</h2>
 
       </motion.h2>
 
@@ -1982,7 +1982,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="relative w-20 h-20 md:w-[22px] md:h-[22px] rounded-full border-6 md:border-8 border-black overflow-hidden"
+              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden"
 
               style={{
 
@@ -2050,7 +2050,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 8, repeat: Infinity }}
 
-                className="absolute -top-20 left-1/2 -translate-x-1/2 text-8xl text-pink-400"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base text-pink-400"
 
               >
 
@@ -2182,7 +2182,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800">
 
       <motion.h2 
 
@@ -2192,13 +2192,13 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ duration: 2.5, type: "spring", stiffness: 70 }}
 
-        className="text-8xl font-black text-gray-400 mb-16 tracking-widest"
+        className="text-lg md:text-xl font-black text-gray-400 mb-4 md:mb-6 tracking-widest"
 
         style={{ textShadow: '0 0 60px rgba(255,255,255,0.2)' }}
 
       >
 
-        MONTH 10 • STRAND 10
+        <h2 className="text-sm md:text-base lg:text-lg font-black text-gray-400 mb-2 md:mb-4 tracking-widest">MONTH 10 • STRAND 10</h2>
 
       </motion.h2>
 
@@ -2234,7 +2234,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-20 h-20 md:w-[22px] md:h-[22px] rounded-full border-6 md:border-8 border-black overflow-hidden"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden"
 
               style={{
 
@@ -2294,7 +2294,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {b.is10Tevet && (
 
-              <div className="absolute inset-0 flex items-center justify-center text-6xl font-black text-gray-800 rotate-12">
+              <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 rotate-12">
 
                 Walls
 
@@ -2306,7 +2306,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-18 left-1/2 -translate-x-1/2 text-3xl font-bold text-gray-400 drop-shadow-2xl">
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400 drop-shadow-2xl">
 
               {b.day}
 
@@ -2354,7 +2354,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
         transition={{ delay: 2 }}
 
-        className="mt-20 text-4xl text-gray-300 italic font-light tracking-widest"
+        className="mt-8 text-xs md:text-sm text-gray-300 italic font-light tracking-widest"
 
       >
 
@@ -2420,7 +2420,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40">
 
       <motion.h2 
 
@@ -2434,7 +2434,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        MONTH 11 • STRAND 11
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-300 via-white to-teal-300 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 11 • STRAND 11</h2>
 
       </motion.h2>
 
@@ -2670,7 +2670,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   return (
 
-    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700">
 
       <motion.h2 
 
@@ -2684,7 +2684,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        MONTH 12 • STRAND 12
+        <h2 className="text-sm md:text-base lg:text-lg font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 12 • STRAND 12</h2>
 
       </motion.h2>
 
@@ -3095,7 +3095,7 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-shrink-0 w-full lg:w-auto"
         >
-          <div className="w-full max-w-[900px] lg:max-w-[800px] xl:max-w-[900px] mx-auto">
+          <div className="w-full max-w-[1200px] lg:max-w-[1000px] xl:max-w-[1200px] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
@@ -3251,7 +3251,7 @@ const EnochianTimepiece = () => {
 
 
         {/* Month Strand - Right Side */}
-        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[350px] xl:max-w-[400px]">
+        <div className="flex-1 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]">
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ x: -200, opacity: 0 }} 
