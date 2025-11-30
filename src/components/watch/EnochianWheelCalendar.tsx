@@ -2370,6 +2370,242 @@ const TevetStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const ShevatStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Shevat = 30 days
+
+  // Global day starts at 305 (274 + 30 + 1)
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const day = i + 1;
+
+    const globalDay = 304 + day;
+
+    const dow = (globalDay - 1) % 7;
+
+
+
+    const isSabbath    = dow === 6;                     // 5,12,19,26
+
+    const isTuBShevat  = day === 15;                    // New Year for Trees – almond blossoms
+
+
+
+    let color = '#1f2937';                              // Winter night
+
+    if (isSabbath)      color = '#fbbf24';              // Golden Sabbath
+
+    if (isTuBShevat)    color = '#f8fafc';              // Pure snow-white with pink undertone
+
+
+
+    return {
+
+      day,
+
+      color,
+
+      isToday: day === dayOfMonth,
+
+      isSabbath,
+
+      isTuBShevat
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-20 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40">
+
+      <motion.h2 
+
+        initial={{ scale: 0.6, opacity: 0 }}
+
+        animate={{ scale: 1, opacity: 1 }}
+
+        transition={{ duration: 3, type: "spring", stiffness: 60, damping: 15 }}
+
+        className="text-9xl font-black bg-gradient-to-r from-pink-300 via-white to-teal-300 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
+
+      >
+
+        SHEVAT • STRAND 11
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-9">
+
+        {beads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.4, 1] } :
+
+              b.isTuBShevat ? { 
+
+                y: [0, -20, 0],
+
+                rotate: [0, 5, -5, 0],
+
+                boxShadow: ["0 0 120px #fff", "0 0 240px #f8fafc", "0 0 120px #fff"]
+
+              } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isTuBShevat ? 6 : 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead – becomes an almond blossom on 15 Shevat */}
+
+            <div
+
+              className="relative w-40 h-40 rounded-full border-12 border-black overflow-hidden"
+
+              style={{
+
+                background: b.isTuBShevat 
+
+                  ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
+
+                  : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
+
+                  b.isToday ? '0 0 220px #ec4899' :
+
+                  '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(140px)'
+
+              }}
+
+            >
+
+              {/* Almond blossoms blooming on Tu B'Shevat */}
+
+              {b.isTuBShevat && (
+
+                <>
+
+                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+
+                    className="absolute inset-0 flex items-center justify-center">
+
+                    {Array.from({ length: 8 }, (_, i) => (
+
+                      <div
+
+                        key={i}
+
+                        className="absolute w-12 h-20 bg-gradient-to-b from-pink-200 to-white rounded-full blur-md"
+
+                        style={{ transform: `rotate(${i * 45}deg) translateY(-70px)` }}
+
+                      />
+
+                    ))}
+
+                  </motion.div>
+
+                  <div className="absolute inset-0 flex items-center justify-center text-pink-300 text-6xl font-light">
+
+                    Almond Tree
+
+                  </div>
+
+                </>
+
+              )}
+
+            </div>
+
+
+
+            {/* Gentle falling petals on Tu B'Shevat */}
+
+            {b.isTuBShevat && (
+
+              <>
+
+                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 0 }}
+
+                  className="absolute top-0 left-1/4 w-6 h-10 bg-pink-200/60 rounded-full blur-sm" />
+
+                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 2 }}
+
+                  className="absolute top-0 left-1/2 w-8 h-12 bg-white/70 rounded-full blur-sm" />
+
+                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 4 }}
+
+                  className="absolute top-0 right-1/4 w-7 h-11 bg-pink-100/60 rounded-full blur-sm" />
+
+              </>
+
+            )}
+
+
+
+            {/* Day number */}
+
+            <span className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-200 drop-shadow-2xl">
+
+              {b.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <motion.div className="mt-36 text-center space-y-8">
+
+        <p className="text-5xl text-pink-300 font-light">15 Shevat • Tu B'Shevat</p>
+
+        <p className="text-7xl font-bold bg-gradient-to-r from-pink-400 to-white bg-clip-text text-transparent">
+
+          The almond tree awakens
+
+        </p>
+
+        <p className="text-3xl italic text-pink-200 mt-12 max-w-2xl">
+
+          "For behold, the winter is past… the blossoms appear on the earth."
+
+        </p>
+
+      </motion.div>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -2891,6 +3127,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <TevetStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Shevat Strand - Show when month is Shevat (month 11) */}
+      {enochianDate.month === 11 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <ShevatStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
