@@ -16,6 +16,372 @@ const DAYS_PER_YEAR = 364;
 
 
 
+const NisanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Nisan pattern exactly as in your photo:
+
+  // 1–3 = Blue (New Moon cycle start)
+
+  // 4   = Blue + Tekufah shadow (straight line)
+
+  // 7,14,21,28 = Yellow Sabbath
+
+  // Rest = Black
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const day = i + 1;
+
+    const isSabbath = day % 7 === 0;
+
+    const isFeast = day <= 4;                   // First 4 days = blue feast cycle
+
+    const isTekufah = day === 4;                // Day 4 = special tekufah marker
+
+
+
+    let color = '#1f2937';                      // Regular day (deep black)
+
+    if (isSabbath) color = '#fbbf24';           // Golden Sabbath
+
+    if (isFeast)   color = '#22d3ee';           // Turquoise feast
+
+
+
+    return { day, color, isToday: day === dayOfMonth, isTekufah };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-12 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl">
+
+      <h2 className="text-5xl font-black text-amber-400 mb-8 tracking-widest">NISAN • STRAND 1</h2>
+
+      
+
+      <div className="flex flex-col gap-3">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 1.5, 1],
+
+              boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
+
+            } : {}}
+
+            transition={{ duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            <div
+
+              className="w-16 h-16 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isToday 
+
+                  ? '0 0 60px #ec4899, inset 0 0 30px #fff'
+
+                  : bead.isTekufah
+
+                  ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
+
+                  : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
+
+                transform: 'translateZ(30px)'
+
+              }}
+
+            />
+
+            {bead.isTekufah && (
+
+              <div className="absolute inset-0 flex items-center justify-center">
+
+                <div className="w-2 h-full bg-cyan-400/80" /> {/* Tekufah straight line */}
+
+              </div>
+
+            )}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed"
+
+              />
+
+            )}
+
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-amber-300">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      <div className="mt-12 text-amber-200 text-center">
+
+        <p>Blue = First 4 days of new cycle</p>
+
+        <p>Day 4 = Tekufah • The straight shadow falls</p>
+
+        <p>Yellow = Sabbath • Day 7,14,21,28</p>
+
+      </div>
+
+    </div>
+
+  );
+
+};
+
+
+
+const IyarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Iyar = 30 days
+
+  // Global day 31 → Day 1 of Iyar
+
+  const beads = Array.from({ length: 30 }, (_, i) => {
+
+    const dayInMonth = i + 1;
+
+    const globalDay = 30 + dayInMonth;           // Nisan = 30 days, so Iyar starts at global day 31
+
+    const dayOfWeek = (globalDay - 1) % 7;        // 0 = Day 1 of creation week
+
+
+
+    const isSabbath = dayOfWeek === 6;           // Every 7th day: 6,13,20,27
+
+    const isFeast = dayInMonth === 14;           // Pesach Sheni (14th of Iyar)
+
+    const isLagBaOmer = dayInMonth === 18;       // Traditional Lag BaOmer (33rd day of Omer count)
+
+
+
+    let color = '#1f2937';                       // Regular day — deep midnight black
+
+    if (isSabbath) color = '#fbbf24';            // Golden Sabbath
+
+    if (isFeast)   color = '#22d3ee';            // Turquoise — Pesach Sheni
+
+    if (isLagBaOmer) color = '#f59e0b';          // Amber fire — Lag BaOmer
+
+
+
+    return {
+
+      day: dayInMonth,
+
+      color,
+
+      isToday: dayInMonth === dayOfMonth,
+
+      isSabbath,
+
+      isFeast,
+
+      isLagBaOmer
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-12 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30">
+
+      <motion.h2 
+
+        initial={{ y: -50, opacity: 0 }}
+
+        animate={{ y: 0, opacity: 1 }}
+
+        className="text-6xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-10 tracking-widest"
+
+      >
+
+        IYAR • STRAND 2
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-4">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 1.6, 1],
+
+              boxShadow: ["0 0 30px #fff", "0 0 100px #ec4899", "0 0 30px #fff"]
+
+            } : {}}
+
+            transition={{ duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-20 h-20 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 35% 35%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isToday
+
+                  ? '0 0 80px #ec4899, inset 0 0 40px #fff'
+
+                  : bead.isLagBaOmer
+
+                  ? '0 0 60px #f59e0b, 0 0 0 12px #000 inset'
+
+                  : bead.isFeast
+
+                  ? '0 0 50px #22d3ee, 0 0 0 10px #000 inset'
+
+                  : '0 12px 40px rgba(0,0,0,0.9), inset 0 6px 20px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(40px)'
+
+              }}
+
+            />
+
+
+
+            {/* Special Markers */}
+
+            {bead.isLagBaOmer && (
+
+              <div className="absolute inset-0 flex items-center justify-center">
+
+                <div className="w-16 h-16 rounded-full border-4 border-orange-500 animate-pulse" />
+
+              </div>
+
+            )}
+
+
+
+            {bead.isFeast && (
+
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+
+                <div className="text-cyan-300 text-xs font-bold">Pesach Sheni</div>
+
+              </div>
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-70"
+
+              />
+
+            )}
+
+
+
+            {/* Day Number */}
+
+            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-amber-200 font-bold text-lg">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      {/* Legend */}
+
+      <div className="mt-16 grid grid-cols-2 gap-8 text-amber-100 text-center">
+
+        <div>Yellow = Sabbath (6, 13, 20, 27)</div>
+
+        <div>Turquoise = 14th • Pesach Sheni</div>
+
+        <div>Amber = 18th • Lag BaOmer</div>
+
+        <div>Black = Regular days</div>
+
+      </div>
+
+
+
+      <p className="mt-8 text-amber-300 italic text-sm">
+
+        The second cord — month of healing, second chances, and hidden fire.
+
+      </p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -429,6 +795,28 @@ const EnochianTimepiece = () => {
       <Sun className="absolute top-10 right-10 w-24 h-24 text-amber-400 animate-pulse" />
 
       <Moon className="absolute top-10 left-10 w-20 h-20 text-blue-300 animate-pulse" />
+
+      {/* Nisan Strand - Show when month is Nisan (month 1) */}
+      {enochianDate.month === 1 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <NisanStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Iyar Strand - Show when month is Iyar (month 2) */}
+      {enochianDate.month === 2 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <IyarStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
 
     </div>
 
