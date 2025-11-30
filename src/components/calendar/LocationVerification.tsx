@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, CheckCircle2, AlertCircle, Loader2, Globe } from 'lucide-react';
+import { MapPin, CheckCircle2, AlertCircle, Loader2, Globe, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ export function LocationVerification() {
   const [verifying, setVerifying] = useState(false);
   const [timezone, setTimezone] = useState<string>('');
   const [timezoneVerified, setTimezoneVerified] = useState(false);
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
 
   // Detect and load timezone
   useEffect(() => {
@@ -40,6 +42,15 @@ export function LocationVerification() {
     detectTimezone();
   }, [user?.id]);
 
+  // Show floating button when verified
+  useEffect(() => {
+    if (location.verified && timezoneVerified && !loading) {
+      setShowFloatingButton(true);
+    } else {
+      setShowFloatingButton(false);
+    }
+  }, [location.verified, timezoneVerified, loading]);
+
   const handleVerify = async () => {
     setVerifying(true);
     try {
@@ -60,84 +71,154 @@ export function LocationVerification() {
     }
   };
 
+  const isVerified = location.verified && timezoneVerified && !loading;
+
   return (
-    <Card className="w-full max-w-md mx-auto mb-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <MapPin className="w-4 h-4" />
-          Calendar Location
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Loading location...
-          </div>
-        ) : error ? (
-          <div className="flex items-center gap-2 text-sm text-red-500">
-            <AlertCircle className="w-4 h-4" />
-            {error}
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {location.verified ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                ) : (
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                )}
-                <div className="text-sm">
-                  <div className="font-medium">
-                    {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}°
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {location.verified ? 'Verified' : 'Not verified'}
-                  </div>
+    <>
+      {/* Full Card - Show when NOT verified */}
+      <AnimatePresence>
+        {!isVerified && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-md mx-auto mb-4 relative z-20"
+          >
+            <div 
+              className="rounded-2xl shadow-2xl border-2 overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 0, 60, 0.95) 0%, rgba(0, 0, 20, 0.95) 100%)',
+                borderColor: 'rgba(251, 191, 36, 0.3)',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <div className="p-4 border-b" style={{ borderColor: 'rgba(251, 191, 36, 0.2)' }}>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-lg font-bold bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">
+                    Calendar Location
+                  </h3>
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant={location.verified ? "outline" : "default"}
-                onClick={handleVerify}
-                disabled={verifying}
-              >
-                {verifying ? (
-                  <>
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    Verifying...
-                  </>
-                ) : location.verified ? (
-                  'Re-verify'
+              <div className="p-4 space-y-3">
+                {loading ? (
+                  <div className="flex items-center gap-2 text-sm text-amber-200">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading location...
+                  </div>
+                ) : error ? (
+                  <div className="flex items-center gap-2 text-sm text-red-400">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                  </div>
                 ) : (
-                  'Verify Location'
-                )}
-              </Button>
-            </div>
-            {timezone && (
-              <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
-                <Globe className="w-3 h-3" />
-                <span>Timezone: {timezone}</span>
-                {timezoneVerified && (
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {location.verified ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-400" />
+                        ) : (
+                          <MapPin className="w-5 h-5 text-amber-400" />
+                        )}
+                        <div className="text-sm">
+                          <div className="font-medium text-amber-200">
+                            {location.lat.toFixed(4)}°, {location.lon.toFixed(4)}°
+                          </div>
+                          <div className="text-xs text-amber-300/70">
+                            {location.verified ? 'Verified' : 'Not verified'}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={handleVerify}
+                        disabled={verifying}
+                        className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold border-2 border-amber-400 shadow-lg"
+                      >
+                        {verifying ? (
+                          <>
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : location.verified ? (
+                          'Re-verify'
+                        ) : (
+                          'Verify Location'
+                        )}
+                      </Button>
+                    </div>
+                    {timezone && (
+                      <div className="flex items-center gap-2 text-xs text-amber-300/80 mt-2">
+                        <Globe className="w-3 h-3" />
+                        <span>Timezone: {timezone}</span>
+                        {timezoneVerified && (
+                          <CheckCircle2 className="w-3 h-3 text-green-400" />
+                        )}
+                      </div>
+                    )}
+                    {(!location.verified || !timezoneVerified) && (
+                      <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        Please verify your location to ensure accurate calendar times
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
-            )}
-            {location.verified && timezoneVerified && (
-              <p className="text-xs text-green-600 mt-2">
-                ✓ Your calendar times are synced to your location's sunrise and timezone
-              </p>
-            )}
-            {(!location.verified || !timezoneVerified) && (
-              <p className="text-xs text-amber-600 mt-2">
-                ⚠ Please verify your location to ensure accurate calendar times
-              </p>
-            )}
-          </>
+            </div>
+          </motion.div>
         )}
-      </CardContent>
-    </Card>
+      </AnimatePresence>
+
+      {/* Floating Button - Show when verified */}
+      <AnimatePresence>
+        {showFloatingButton && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
+            transition={{ duration: 0.3, type: "spring" }}
+            className="fixed bottom-6 right-6 z-50"
+          >
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleVerify}
+              className="group relative"
+            >
+              <div 
+                className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl border-2"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.9) 0%, rgba(234, 179, 8, 0.9) 100%)',
+                  borderColor: 'rgba(251, 191, 36, 0.5)',
+                  boxShadow: '0 0 30px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2)',
+                }}
+              >
+                <CheckCircle2 className="w-6 h-6 text-black" />
+              </div>
+              {/* Tooltip */}
+              <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                <div 
+                  className="px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap shadow-lg border"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(30, 0, 60, 0.95) 0%, rgba(0, 0, 20, 0.95) 100%)',
+                    borderColor: 'rgba(251, 191, 36, 0.3)',
+                    color: '#fbbf24',
+                  }}
+                >
+                  <div className="text-amber-200">Location Verified</div>
+                  <div className="text-amber-300/70 text-[10px] mt-0.5">
+                    {location.lat.toFixed(2)}°, {location.lon.toFixed(2)}°
+                  </div>
+                  <div className="text-amber-300/70 text-[10px]">Click to re-verify</div>
+                </div>
+              </div>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
