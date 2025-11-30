@@ -382,6 +382,250 @@ const IyarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const SivanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Sivan = 31 days
+
+  // Global day starts at 61 (30 Nisan + 30 Iyar + 1)
+
+  const beads = Array.from({ length: 31 }, (_, i) => {
+
+    const dayInMonth = i + 1;
+
+    const globalDay = 60 + dayInMonth;
+
+    const dayOfWeek = (globalDay - 1) % 7;
+
+
+
+    const isSabbath = dayOfWeek === 6;                    // 5,12,19,26
+
+    const isShavuot = dayInMonth === 6;                   // Torah given on 6th Sivan
+
+    const isPreShavuot = dayInMonth === 5;                // Day before — special preparation
+
+    const isPostShavuot = dayInMonth === 7;               // Day after — lingering light
+
+
+
+    let color = '#1f2937';                                // Regular day
+
+    if (isSabbath) color = '#fbbf24';                     // Golden Sabbath
+
+    if (isShavuot) color = '#ec4899';                     // Deep pink fire — the day Torah descended
+
+    if (isPreShavuot) color = '#c084fc';                  // Purple dawn — anticipation
+
+    if (isPostShavuot) color = '#f0abfc';                 // Soft pink glow — afterglow
+
+
+
+    return {
+
+      day: dayInMonth,
+
+      color,
+
+      isToday: dayInMonth === dayOfMonth,
+
+      isShavuot,
+
+      isPreShavuot,
+
+      isPostShavuot,
+
+      isSabbath
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40">
+
+      <motion.h2 
+
+        initial={{ scale: 0.8, opacity: 0 }}
+
+        animate={{ scale: 1, opacity: 1 }}
+
+        transition={{ duration: 1.5, type: "spring", stiffness: 80 }}
+
+        className="text-7xl font-black bg-gradient-to-r from-amber-300 via-pink-500 to-purple-400 bg-clip-text text-transparent mb-12 tracking-widest drop-shadow-2xl"
+
+      >
+
+        SIVAN • STRAND 3
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-5">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 1.8, 1],
+
+              boxShadow: ["0 0 40px #fff", "0 0 120px #ec4899", "0 0 40px #fff"]
+
+            } : bead.isShavuot ? {
+
+              boxShadow: ["0 0 60px #ec4899", "0 0 100px #fff", "0 0 60px #ec4899"]
+
+            } : {}}
+
+            transition={bead.isShavuot ? { duration: 3, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-24 h-24 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isShavuot
+
+                  ? '0 0 100px #ec4899, 0 0 160px #fff, inset 0 0 50px #fff'
+
+                  : bead.isToday
+
+                  ? '0 0 100px #ec4899, inset 0 0 40px #fff'
+
+                  : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(60px)',
+
+                border: bead.isShavuot ? '8px solid #fff' : '8px solid #000'
+
+              }}
+
+            />
+
+
+
+            {/* Shavuot Crown — Torah descending */}
+
+            {bead.isShavuot && (
+
+              <motion.div
+
+                animate={{ y: [0, -20, 0], rotate: [0, 360] }}
+
+                transition={{ duration: 6, repeat: Infinity }}
+
+                className="absolute -top-12 left-1/2 -translate-x-1/2"
+
+              >
+
+                <div className="text-6xl">Torah</div>
+
+              </motion.div>
+
+            )}
+
+
+
+            {/* Pre-Shavuot glow */}
+
+            {bead.isPreShavuot && (
+
+              <div className="absolute inset-0 rounded-full border-4 border-purple-400 animate-ping" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80"
+
+              />
+
+            )}
+
+
+
+            {/* Day Number */}
+
+            <span className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-2xl font-bold text-amber-200 drop-shadow-lg">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      {/* Sacred Legend */}
+
+      <div className="mt-20 grid grid-cols-2 gap-10 text-amber-100 text-lg font-medium text-center">
+
+        <div>Yellow = Sabbath (5,12,19,26)</div>
+
+        <div>Pink Fire = 6th • Shavuot • Torah Given</div>
+
+        <div>Purple = 5th • Day of Preparation</div>
+
+        <div>Soft Pink = 7th • Afterglow of Revelation</div>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0 }}
+
+        animate={{ opacity: 1 }}
+
+        transition={{ delay: 2 }}
+
+        className="mt-12 text-3xl text-amber-300 italic font-light tracking-wider"
+
+      >
+
+        "And the mountain burned with fire unto the heart of heaven…"
+
+      </motion.p>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -815,6 +1059,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <IyarStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Sivan Strand - Show when month is Sivan (month 3) */}
+      {enochianDate.month === 3 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <SivanStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
