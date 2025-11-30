@@ -158,14 +158,32 @@ Place your certificates in:
 - `~/.jitsi-meet-cfg/web/keys/cert.crt`
 - `~/.jitsi-meet-cfg/web/keys/cert.key`
 
-### 6. Start Jitsi Meet
+### 6. Create Configuration Directories
+
+Before starting Jitsi Meet, ensure all required configuration directories exist:
+
+```bash
+mkdir -p ~/.jitsi-meet-cfg/{web,transcripts,prosody/config,prosody/prosody-plugins-custom,jicofo,jvb,jigasi,jibri}
+```
+
+This creates the necessary directories for:
+- `web` - Web interface configuration
+- `transcripts` - Meeting transcripts storage
+- `prosody/config` - XMPP server configuration
+- `prosody/prosody-plugins-custom` - Custom Prosody plugins
+- `jicofo` - Jitsi Conference Focus configuration
+- `jvb` - Jitsi Video Bridge configuration
+- `jigasi` - Jitsi Gateway to SIP configuration
+- `jibri` - Jitsi Broadcasting Infrastructure configuration
+
+### 7. Start Jitsi Meet
 
 ```bash
 cd ~/jitsi-meet
 docker-compose up -d
 ```
 
-### 7. Verify Installation
+### 8. Verify Installation
 
 Check container status:
 ```bash
