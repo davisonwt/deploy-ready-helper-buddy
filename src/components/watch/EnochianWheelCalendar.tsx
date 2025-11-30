@@ -2861,6 +2861,11 @@ const EnochianTimepiece = () => {
   });
 
   const [sunData, setSunData] = useState<any>(null);
+  
+  // Calculate if Asfa'el should be shown (appears on +2 years, every 5-year cycle)
+  // For now, showing it every 2 years as a simple implementation
+  const currentYear = currentDate.getFullYear();
+  const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
 
 
 
@@ -3368,6 +3373,41 @@ const EnochianTimepiece = () => {
           )}
         </div>
       </div>
+
+
+
+      {/* THE TWO DAYS OUTSIDE TIME — ELOYASEF & ASFA'EL */}
+      <motion.div 
+        initial={{ opacity: 0, y: 100 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+        className="relative z-10 mt-16 md:mt-32 pt-8 md:pt-16 border-t-4 border-pink-900/50 px-4"
+      >
+        <p className="text-2xl md:text-4xl text-pink-300 mb-8 md:mb-12 tracking-widest text-center">Days Outside Time</p>
+
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-4xl mx-auto">
+          {/* Eloyasef — always appears every 5-year cycle */}
+          <div className="my-6 md:my-12">
+            <div className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full bg-gradient-to-br from-gray-900 to-black border-4 md:border-8 border-gray-800 shadow-2xl flex items-center justify-center">
+              <span className="text-xl md:text-2xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
+            </div>
+            <p className="text-center mt-4 text-base md:text-xl text-gray-400">Eloyasef • Yah is adding</p>
+          </div>
+
+          {/* Asfa'el — appears only on +2 years */}
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: showAsfael ? 1 : 0 }}
+            transition={{ duration: 0.5 }}
+            className="my-6 md:my-12"
+          >
+            <div className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-4 md:border-8 border-zinc-700 shadow-2xl flex items-center justify-center">
+              <span className="text-xl md:text-2xl font-bold text-zinc-500">אַסְפָּעֵאל</span>
+            </div>
+            <p className="text-center mt-4 text-base md:text-xl text-zinc-500">Asfa'el • El is adding</p>
+          </motion.div>
+        </div>
+      </motion.div>
 
 
 
