@@ -16,7 +16,7 @@ const DAYS_PER_YEAR = 364;
 
 
 
-const NisanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Nisan pattern exactly as in your photo:
 
@@ -58,7 +58,7 @@ const NisanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     <div className="flex flex-col items-center p-12 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl">
 
-      <h2 className="text-5xl font-black text-amber-400 mb-8 tracking-widest">NISAN • STRAND 1</h2>
+      <h2 className="text-5xl font-black text-amber-400 mb-8 tracking-widest">MONTH 1 • STRAND 1</h2>
 
       
 
@@ -164,7 +164,7 @@ const NisanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const IyarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Iyar = 30 days
 
@@ -232,7 +232,7 @@ const IyarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        IYAR • STRAND 2
+        MONTH 2 • STRAND 2
 
       </motion.h2>
 
@@ -382,7 +382,7 @@ const IyarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const SivanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Sivan = 31 days
 
@@ -458,7 +458,7 @@ const SivanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        SIVAN • STRAND 3
+        MONTH 3 • STRAND 3
 
       </motion.h2>
 
@@ -626,7 +626,7 @@ const SivanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const TammuzStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Tammuz = 30 days
 
@@ -702,7 +702,7 @@ const TammuzStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        TAMMUZ • STRAND 4
+        MONTH 4 • STRAND 4
 
       </motion.h2>
 
@@ -886,7 +886,7 @@ const TammuzStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const AvStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Av = 30 days
 
@@ -964,7 +964,7 @@ const AvStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        AV • STRAND 5
+        MONTH 5 • STRAND 5
 
       </motion.h2>
 
@@ -1138,7 +1138,7 @@ const AvStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const ElulStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Elul = 31 days
 
@@ -1214,7 +1214,7 @@ const ElulStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        ELUL • STRAND 6
+        MONTH 6 • STRAND 6
 
       </motion.h2>
 
@@ -1408,7 +1408,7 @@ const ElulStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const TishreiStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Tishrei = 31 days
 
@@ -1494,7 +1494,7 @@ const TishreiStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        TISHREI • STRAND 7
+        MONTH 7 • STRAND 7
 
       </motion.h2>
 
@@ -1636,7 +1636,7 @@ const TishreiStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const CheshvanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Cheshvan = 30 days
 
@@ -1708,7 +1708,7 @@ const CheshvanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        CHESHVAN • STRAND 8
+        MONTH 8 • STRAND 8
 
       </motion.h2>
 
@@ -1862,7 +1862,7 @@ const CheshvanStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const KislevStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Kislev = 31 days
 
@@ -1946,7 +1946,7 @@ const KislevStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        KISLEV • STRAND 9
+        MONTH 9 • STRAND 9
 
       </motion.h2>
 
@@ -2118,7 +2118,7 @@ const KislevStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const TevetStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Tevet = 30 days
 
@@ -2198,7 +2198,7 @@ const TevetStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        TEVET • STRAND 10
+        MONTH 10 • STRAND 10
 
       </motion.h2>
 
@@ -2370,7 +2370,7 @@ const TevetStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const ShevatStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Shevat = 30 days
 
@@ -2434,7 +2434,7 @@ const ShevatStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        SHEVAT • STRAND 11
+        MONTH 11 • STRAND 11
 
       </motion.h2>
 
@@ -2606,7 +2606,7 @@ const ShevatStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const AdarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   // Adar = 31 days (in your 364-day system)
 
@@ -2684,7 +2684,7 @@ const AdarStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       >
 
-        ADAR • STRAND 12
+        MONTH 12 • STRAND 12
 
       </motion.h2>
 
@@ -3267,7 +3267,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <NisanStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month1Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3278,7 +3278,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <IyarStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month2Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3289,7 +3289,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <SivanStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month3Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3300,7 +3300,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <TammuzStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month4Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3311,7 +3311,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <AvStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month5Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3322,7 +3322,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <ElulStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month6Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3333,7 +3333,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <TishreiStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month7Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3344,7 +3344,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <CheshvanStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month8Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3355,7 +3355,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <KislevStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month9Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3366,7 +3366,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <TevetStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month10Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3377,7 +3377,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <ShevatStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month11Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
@@ -3388,7 +3388,7 @@ const EnochianTimepiece = () => {
           animate={{ x: 0, opacity: 1 }} 
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
-          <AdarStrand dayOfMonth={enochianDate.dayOfMonth} />
+          <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
