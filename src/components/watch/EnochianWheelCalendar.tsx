@@ -4009,7 +4009,7 @@ const EnochianTimepiece = () => {
 
 
 
-  // Location and sunrise are now handled by useUserLocation hook and effectiveDate calculation above
+  // Calendar date is now calculated using the exact same logic as DashboardPage
 
 
 
@@ -4338,7 +4338,7 @@ const EnochianTimepiece = () => {
 
 
 
-      {/* THE TWO DAYS OUTSIDE TIME — ELOYASEF & ASFA'EL */}
+      {/* THE TWO DAYS OUTSIDE TIME — HELO-YASEPH & ASFA'EL */}
       <motion.div 
         initial={{ opacity: 0, y: 100 }}
         animate={{ opacity: 1, y: 0 }}
@@ -4348,12 +4348,12 @@ const EnochianTimepiece = () => {
         <p className="text-2xl md:text-4xl text-pink-300 mb-8 md:mb-12 tracking-widest text-center">Days Outside Time</p>
 
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-4xl mx-auto">
-          {/* Eloyasef — always appears every 5-year cycle */}
+          {/* Helo-Yaseph — always appears every 5-year cycle */}
           <div className="my-6 md:my-12">
             <div className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full bg-gradient-to-br from-gray-900 to-black border-4 md:border-8 border-gray-800 shadow-2xl flex items-center justify-center">
               <span className="text-xl md:text-2xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
             </div>
-            <p className="text-center mt-4 text-base md:text-xl text-gray-400">Eloyasef • Yah is adding</p>
+            <p className="text-center mt-4 text-base md:text-xl text-gray-400">Helo-Yaseph • Yah is adding</p>
                 </div>
 
           {/* Asfa'el — appears only on +2 years */}
@@ -4380,7 +4380,7 @@ const EnochianTimepiece = () => {
         className="relative z-10 px-4 pb-8 text-center"
       >
         <p className="text-xl md:text-2xl font-bold text-amber-300 tracking-widest">
-          Year 6028 • Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.eighteenPart}/18
+          Year {enochianDate.year} • Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.eighteenPart}/18
         </p>
         <p className="text-base md:text-lg text-amber-200 mt-2">The Creator's wheels never lie • Forever in sync</p>
         <p className="text-sm md:text-base text-yellow-400 mt-2">Day {enochianDate.dayOfYear} → Wheel at {dayRotation.toFixed(2)}°</p>
