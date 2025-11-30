@@ -32,7 +32,8 @@ sudo apt update && sudo apt upgrade -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Install Docker Compose
+# Note: Docker Compose V2 is integrated into Docker (use 'docker compose')
+# If you need the standalone docker-compose (V1), install it:
 sudo apt install docker-compose -y
 
 # Add your user to docker group
@@ -180,14 +181,14 @@ This creates the necessary directories for:
 
 ```bash
 cd ~/jitsi-meet
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 8. Verify Installation
 
 Check container status:
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 All containers should show "Up" status.
@@ -282,7 +283,7 @@ ENABLE_RECORDING=1
 
 3. Restart services:
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ## Mobile Optimization
@@ -321,22 +322,22 @@ constraints: {
 ### View Logs
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f web
-docker-compose logs -f jvb
+docker compose logs -f web
+docker compose logs -f jvb
 ```
 
 ### Restart Services
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### Update Jitsi
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ### Backup Configuration
@@ -372,11 +373,11 @@ sudo iptables -A INPUT -p tcp --dport 5349 -j ACCEPT   # TURN over TLS
 ### Container Won't Start
 ```bash
 # Check logs
-docker-compose logs
+docker compose logs
 
 # Remove and recreate
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ### No Audio/Video
@@ -392,10 +393,10 @@ docker-compose up -d
 ### SSL Certificate Issues
 ```bash
 # Renew Let's Encrypt certificate
-docker-compose exec web certbot renew
+docker compose exec web certbot renew
 
 # Check certificate expiry
-docker-compose exec web certbot certificates
+docker compose exec web certbot certificates
 ```
 
 ## Performance Tuning
@@ -440,8 +441,8 @@ enableLobbyChat: true,
 
 4. **Regular Updates**:
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
 ```
 
 ## Integration with Your App
