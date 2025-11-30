@@ -41,6 +41,23 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
+**Optional: Add Jitsi Repository (for additional Jitsi tools)**
+
+If you need to install additional Jitsi components or tools outside of Docker:
+
+```bash
+# Add Jitsi GPG key
+wget -qO - https://download.jitsi.org/jitsi-key.gpg.key | sudo apt-key add -
+
+# Add Jitsi repository
+sudo sh -c "echo 'deb https://download.jitsi.org stable/' > /etc/apt/sources.list.d/jitsi-stable.list"
+
+# Update package list
+sudo apt update
+```
+
+**Note**: This is optional for Docker-based installations. Only needed if you want to install Jitsi packages directly on the host system.
+
 ### 2. Create Jitsi Directory Structure
 
 ```bash
