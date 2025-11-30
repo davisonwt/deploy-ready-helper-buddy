@@ -4059,22 +4059,20 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
+      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-start gap-8" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
         
         {/* Calendar Wheel - Left Side - MUCH BIGGER - positioned to the left */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-start flex-1"
+          className="flex items-center justify-start"
           style={{ 
-            width: '100%',
+            width: '60%',
             height: 'calc(100vh - 10cm)', 
             minWidth: '50cm',
             minHeight: '50cm',
-            maxWidth: 'calc(100% - 350px)',
-            marginLeft: '0',
-            marginRight: 'auto'
+            flexShrink: 0
           }}
         >
           <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
