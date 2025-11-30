@@ -128,6 +128,20 @@ ENABLE_HSTS=1  # Security header
 
 **Note**: Replace `meet.yourdomain.com` with your actual domain and `your.public.ip` with your server's public IP address if behind NAT/LAN.
 
+**Generate Passwords**:
+
+After editing your `.env` file, run the password generation script:
+
+```bash
+# Generate passwords and back up .env as .env.bak
+./gen-passwords.sh
+```
+
+This script will:
+- Generate secure random passwords for all required services
+- Add them to your `.env` file
+- Create a backup of your original `.env` file as `.env.bak`
+
 ### 5. Configure SSL Certificates
 
 **Option A: Let's Encrypt (Recommended for Production)**
