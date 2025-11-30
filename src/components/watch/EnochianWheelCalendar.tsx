@@ -4059,20 +4059,18 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-start gap-8" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
+      <div className="relative z-10 flex flex-row items-center justify-between gap-8" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
         
-        {/* Calendar Wheel - Left Side - MUCH BIGGER - positioned to the left */}
+        {/* Calendar Wheel - LEFT SIDE - Large Circle */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-start"
+          className="flex items-center justify-center flex-shrink-0"
           style={{ 
-            width: '60%',
+            width: '50%',
             height: 'calc(100vh - 10cm)', 
-            minWidth: '50cm',
-            minHeight: '50cm',
-            flexShrink: 0
+            minHeight: '50cm'
           }}
         >
           <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
@@ -4217,15 +4215,16 @@ const EnochianTimepiece = () => {
 
 
 
-        {/* Month Strand - Only Current Month Visible Around Wheel */}
+        {/* Month Strand - RIGHT SIDE - Tall Rounded Rectangle */}
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="flex-shrink-0 flex items-center justify-center"
           style={{ 
-            width: '100%', 
-            height: '100%',
-            paddingRight: '1cm'
+            width: '40%',
+            height: 'calc(100vh - 10cm)',
+            marginRight: '1cm'
           }}
         >
+          <div className="w-full h-full flex items-center justify-center">
           {/* Only show current month around the wheel */}
           {enochianDate.month === 1 && (
             <motion.div 
