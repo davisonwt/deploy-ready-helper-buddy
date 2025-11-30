@@ -34,7 +34,8 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = day; // Month 1 starts at global day 1
 
-    const isSabbath = day % 7 === 0;
+    // Month 1 Sabbaths: Days 4, 11, 18, 25
+    const isSabbath = [4, 11, 18, 25].includes(day);
 
     const isFeast = day <= 4;                   // First 4 days = blue feast cycle
 
@@ -261,11 +262,8 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 30 + dayInMonth;           // Nisan = 30 days, so Iyar starts at global day 31
 
-    const dayOfWeek = (globalDay - 1) % 7;        // 0 = Day 1 of creation week
-
-
-
-    const isSabbath = dayOfWeek === 6;           // Every 7th day: 6,13,20,27
+    // Month 2 Sabbaths: Days 2, 9, 16, 23, 30
+    const isSabbath = [2, 9, 16, 23, 30].includes(dayInMonth);
 
     const isFeast = dayInMonth === 14;           // Pesach Sheni (14th of Iyar)
 
@@ -586,11 +584,8 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 60 + dayInMonth;
 
-    const dayOfWeek = (globalDay - 1) % 7;
-
-
-
-    const isSabbath = dayOfWeek === 6;                    // 5,12,19,26
+    // Month 3 Sabbaths: Days 7, 14, 21, 28
+    const isSabbath = [7, 14, 21, 28].includes(dayInMonth);
 
     const isShavuot = dayInMonth === 6;                   // Torah given on 6th Sivan
 
@@ -941,11 +936,8 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 91 + dayInMonth;
 
-    const dayOfWeek = (globalDay - 1) % 7;
-
-
-
-    const isSabbath      = dayOfWeek === 6;                     // 3,10,17,24
+    // Month 4 Sabbaths: Days 4, 11, 18, 25
+    const isSabbath = [4, 11, 18, 25].includes(dayInMonth);
 
     const is17Tammuz     = dayInMonth === 17;                   // Fast — breach of Jerusalem walls
 
@@ -1338,11 +1330,8 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 121 + dayInMonth;
 
-    const dayOfWeek = (globalDay - 1) % 7;
-
-
-
-    const isSabbath      = dayOfWeek === 6;                     // 1,8,15,22,29
+    // Month 5 Sabbaths: Days 2, 9, 16, 23, 30
+    const isSabbath = [2, 9, 16, 23, 30].includes(dayInMonth);
 
     const is9Av          = dayInMonth === 9;                    // Destruction of both Temples
 
@@ -1717,11 +1706,8 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 151 + dayInMonth;
 
-    const dayOfWeek = (globalDay - 1) % 7;
-
-
-
-    const isSabbath     = dayOfWeek === 6;                     // 6,13,20,27
+    // Month 6 Sabbaths: Days 7, 14, 21, 28
+    const isSabbath = [7, 14, 21, 28].includes(dayInMonth);
 
     const isLast12Days  = dayInMonth >= 19;                    // 12 days of return (tribe-by-tribe tradition)
 
@@ -2118,11 +2104,8 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 182 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath     = dow === 6;                    // 4,11,18,25
+    // Month 7 Sabbaths: Days 4, 11, 18, 25
+    const isSabbath = [4, 11, 18, 25].includes(day);
 
     const isRoshHashana = day <= 2;                     // 1–2 Tishrei
 
@@ -2449,11 +2432,8 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 213 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath     = dow === 6;                     // 2,9,16,23,30
+    // Month 8 Sabbaths: Days 2, 9, 16, 23, 30
+    const isSabbath = [2, 9, 16, 23, 30].includes(day);
 
     const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Israel)
 
@@ -2782,11 +2762,8 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 243 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath       = dow === 6;                     // 1,8,15,22,29
+    // Month 9 Sabbaths: Days 7, 14, 21, 28
+    const isSabbath = [7, 14, 21, 28].includes(day);
 
     let color = '#1f2937';                                 // Deep winter night
 
@@ -2992,11 +2969,8 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 274 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath       = dow === 6;                     // 7,14,21,28
+    // Month 10 Sabbaths: Days 4, 11, 18, 25
+    const isSabbath = [4, 11, 18, 25].includes(day);
 
     const is10Tevet       = day === 10;                    // Fast – siege of Jerusalem began
 
@@ -3268,11 +3242,8 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 304 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath    = dow === 6;                     // 5,12,19,26
+    // Month 11 Sabbaths: Days 2, 9, 16, 23, 30
+    const isSabbath = [2, 9, 16, 23, 30].includes(day);
 
     const isTuBShevat  = day === 15;                    // New Year for Trees – almond blossoms
 
@@ -3547,11 +3518,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 334 + day;
 
-    const dow = (globalDay - 1) % 7;
-
-
-
-    const isSabbath     = dow === 6;                     // 3,10,17,24,31
+    // Month 12 Sabbaths: Days 7, 14, 21, 28
+    const isSabbath = [7, 14, 21, 28].includes(day);
 
     const isPurim       = day === 14;                    // 14 Adar – Purim
 
