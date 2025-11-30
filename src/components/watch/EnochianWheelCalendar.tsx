@@ -4048,17 +4048,17 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-col lg:flex-row items-start justify-between gap-8" style={{ padding: '5cm 5cm 5cm 5cm' }}>
+      <div className="relative z-10" style={{ padding: '5cm 5cm 5cm 5cm' }}>
         
-        {/* Calendar Wheel - Left/Center Side - Takes most of the space */}
+        {/* Calendar Wheel - Left/Center Side - Exactly 10cm diameter */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex-1 w-full lg:w-auto flex items-center justify-center min-w-0"
+          className="flex items-center justify-center"
+          style={{ width: '10cm', height: '10cm', margin: '0 auto' }}
         >
-          <div className="w-full max-w-[calc(100vw-400px)] lg:max-w-[calc(100vw-380px)] xl:max-w-[calc(100vw-400px)] mx-auto" style={{ minWidth: '10cm', minHeight: '10cm' }}>
-            <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto" style={{ minWidth: '10cm', minHeight: '10cm' }}>
+          <svg width="10cm" height="10cm" viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
 
           <defs>
 
@@ -4206,14 +4206,16 @@ const EnochianTimepiece = () => {
 
           </motion.g>
 
-              </svg>
-          </div>
+          </svg>
         </motion.div>
 
 
 
-        {/* Month Strand - Right Side with 1cm gap from edge */}
-        <div className="flex-shrink-0 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]" style={{ marginRight: '1cm' }}>
+        {/* Month Strand - Right Side - Positioned at right edge with 1cm gap */}
+        <div 
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-30 w-full lg:w-auto max-w-full lg:max-w-[280px] xl:max-w-[320px]"
+          style={{ right: '1cm' }}
+        >
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ x: -200, opacity: 0 }} 
@@ -4333,8 +4335,8 @@ const EnochianTimepiece = () => {
               <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
-            </div>
-          </div>
+        </div>
+      </div>
 
 
 
