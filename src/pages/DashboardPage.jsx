@@ -33,7 +33,7 @@ import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
 // Binance Pay - no wallet connection needed
 import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 import { getCreatorTime } from '@/utils/customTime'
-import { getCreatorDate } from '@/utils/customCalendar'
+import { getCreatorDateSync } from '@/utils/customCalendar'
 import { getDayInfo } from '@/utils/sacredCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
@@ -337,7 +337,7 @@ export default function DashboardPage() {
     }
     
     const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
-    setCustomDate(getCreatorDate(normalizedDate))
+    setCustomDate(getCreatorDateSync(normalizedDate))
   }, [])
 
   // Update time every second
@@ -368,7 +368,7 @@ export default function DashboardPage() {
       }
       
       const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
-      setCustomDate(getCreatorDate(normalizedDate))
+      setCustomDate(getCreatorDateSync(normalizedDate))
     }, 1000)
 
     return () => clearInterval(interval)
