@@ -4049,6 +4049,13 @@ const EnochianTimepiece = () => {
 
 
 
+      {/* Header */}
+      <motion.div initial={{ y: -100 }} animate={{ y: 0 }} className="relative z-10 pt-8 pb-4 text-center">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
+          THE CREATOR'S WHEEL
+        </h1>
+        <p className="text-xl md:text-2xl text-amber-200 mt-2 tracking-widest">Eternal • 364 • Aligned Forever</p>
+      </motion.div>
 
 
       {/* Main Content Container */}
@@ -4204,17 +4211,6 @@ const EnochianTimepiece = () => {
 
 
 
-          <motion.g initial={{ scale: 0 }} animate={{ scale: 1.3 }} transition={{ duration: 3, type: "spring" }}>
-
-            <path d="M 500 20 L 550 160 L 450 160 Z" fill="#ec4899" stroke="#fff" strokeWidth="8" filter="url(#holyFire)"/>
-
-            <text x="500" y="10" textAnchor="middle" className="text-9xl font-black fill-pink-500" filter="url(#holyFire)">
-
-              255
-
-            </text>
-
-          </motion.g>
 
               </svg>
         </motion.div>
