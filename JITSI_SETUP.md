@@ -12,7 +12,13 @@ This guide provides complete instructions for setting up a self-hosted Jitsi Mee
   - Public IP address
 - Docker and Docker Compose installed
 - A domain name pointing to your server (e.g., `meet.yourdomain.com`)
-- Ports 80, 443, 4443, and 10000 UDP open in firewall
+- Ports open in firewall:
+  - 80/tcp (HTTP)
+  - 443/tcp (HTTPS)
+  - 4443/tcp (Jitsi web)
+  - 10000/udp (Video bridge)
+  - 3478/udp (STUN/TURN)
+  - 5349/tcp (TURN over TLS)
 
 ## Installation Steps
 
@@ -257,19 +263,23 @@ tar -czf jitsi-backup-$(date +%Y%m%d).tar.gz ~/.jitsi-meet-cfg/
 
 ### UFW (Ubuntu)
 ```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 4443/tcp
-sudo ufw allow 10000/udp
+sudo ufw allow 80/tcp   # HTTP (for SSL)
+sudo ufw allow 443/tcp  # HTTPS
+sudo ufw allow 4443/tcp # Jitsi web
+sudo ufw allow 10000/udp # Video bridge
+sudo ufw allow 3478/udp  # STUN/TURN
+sudo ufw allow 5349/tcp  # TURN over TLS
 sudo ufw enable
 ```
 
 ### iptables
 ```bash
-sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 4443 -j ACCEPT
-sudo iptables -A INPUT -p udp --dport 10000 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT    # HTTP
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT     # HTTPS
+sudo iptables -A INPUT -p tcp --dport 4443 -j ACCEPT   # Jitsi web
+sudo iptables -A INPUT -p udp --dport 10000 -j ACCEPT  # Video bridge
+sudo iptables -A INPUT -p udp --dport 3478 -j ACCEPT   # STUN/TURN
+sudo iptables -A INPUT -p tcp --dport 5349 -j ACCEPT   # TURN over TLS
 ```
 
 ## Troubleshooting
