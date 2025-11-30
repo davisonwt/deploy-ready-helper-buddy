@@ -1138,6 +1138,276 @@ const AvStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
+const ElulStrand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+
+  // Elul = 31 days
+
+  // Global day starts at 152 (30+30+31+30+30+1)
+
+  const beads = Array.from({ length: 31 }, (_, i) => {
+
+    const dayInMonth = i + 1;
+
+    const globalDay = 151 + dayInMonth;
+
+    const dayOfWeek = (globalDay - 1) % 7;
+
+
+
+    const isSabbath     = dayOfWeek === 6;                     // 6,13,20,27
+
+    const isLast12Days  = dayInMonth >= 19;                    // 12 days of return (tribe-by-tribe tradition)
+
+    const is29Elul      = dayInMonth === 29;                   // Final day — the King enters the city
+
+    const isShofarDay   = dayInMonth >= 2 && !isSabbath;       // Shofar blown every weekday
+
+
+
+    let color = '#1f2937';                                     // Regular day
+
+    if (isSabbath)                    color = '#fbbf24';     // Golden Sabbath
+
+    if (is29Elul)                     color = '#ec4899';     // Royal pink — the King returns
+
+    if (isLast12Days && !isSabbath)   color = '#22d3ee';     // Turquoise light of teshuvah
+
+    if (isShofarDay && !isLast12Days && !isSabbath) color = '#60a5fa'; // Soft blue — daily shofar
+
+
+
+    return {
+
+      day: dayInMonth,
+
+      color,
+
+      isToday: dayInMonth === dayOfMonth,
+
+      is29Elul,
+
+      isLast12Days,
+
+      isShofarDay,
+
+      isSabbath
+
+    };
+
+  });
+
+
+
+  return (
+
+    <div className="flex flex-col items-center p-16 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60">
+
+      <motion.h2 
+
+        initial={{ y: -80, opacity: 0 }}
+
+        animate={{ y: 0, opacity: 1 }}
+
+        transition={{ duration: 2, type: "spring", stiffness: 80 }}
+
+        className="text-8xl font-black bg-gradient-to-r from-cyan-400 via-pink-500 to-amber-400 bg-clip-text text-transparent mb-14 tracking-widest drop-shadow-2xl"
+
+      >
+
+        ELUL • STRAND 6
+
+      </motion.h2>
+
+
+
+      <div className="flex flex-col gap-6">
+
+        {beads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 2, 1],
+
+              boxShadow: ["0 0 50px #fff", "0 0 160px #ec4899", "0 0 50px #fff"]
+
+            } : bead.is29Elul ? {
+
+              boxShadow: ["0 0 120px #ec4899", "0 0 200px #fff", "0 0 120px #ec4899"],
+
+              rotate: [0, 360]
+
+            } : {}}
+
+            transition={bead.is29Elul ? { duration: 8, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-28 h-28 rounded-full border-8 border-black"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.is29Elul
+
+                  ? '0 0 180px #ec4899, 0 0 300px #fff, inset 0 0 80px #fff'
+
+                  : bead.isToday
+
+                  ? '0 0 140px #ec4899, inset 0 0 60px #fff'
+
+                  : '0 20px 60px rgba(0,0,0,0.9), inset 0 10px 30px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(80px)',
+
+                border: bead.is29Elul ? '12px solid #fff' : '8px solid #000'
+
+              }}
+
+            />
+
+
+
+            {/* 29 Elul — Royal entrance */}
+
+            {bead.is29Elul && (
+
+              <motion.div
+
+                animate={{ scale: [1, 1.4, 1] }}
+
+                transition={{ duration: 4, repeat: Infinity }}
+
+                className="absolute -top-16 left-1/2 -translate-x-1/2 text-6xl"
+
+              >
+
+                Crown
+
+              </motion.div>
+
+            )}
+
+
+
+            {/* Last 12 days — rising light */}
+
+            {bead.isLast12Days && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping" />
+
+            )}
+
+
+
+            {/* Daily shofar glow (weekdays) */}
+
+            {bead.isShofarDay && !bead.isLast12Days && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80"
+
+              />
+
+            )}
+
+
+
+            <span className="absolute -bottom-14 left-1/2 -translate-x-1/2 text-2xl font-bold text-cyan-300 drop-shadow-2xl">
+
+              {bead.day}
+
+            </span>
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+
+
+      {/* Legend */}
+
+      <div className="mt-24 grid grid-cols-2 gap-12 text-cyan-200 text-lg font-medium text-center">
+
+        <div>Yellow = Shabbat (6,13,20,27)</div>
+
+        <div>Royal Pink = 29th • The King Returns</div>
+
+        <div>Turquoise = Days 19–30 • Twelve Tribes Return</div>
+
+        <div>Blue glow = Daily Shofar (weekdays)</div>
+
+      </div>
+
+
+
+      <motion.p 
+
+        initial={{ opacity: 0, y: 40 }}
+
+        animate={{ opacity: 1, y: 0 }}
+
+        transition={{ delay: 3 }}
+
+        className="mt-16 text-4xl text-pink-400 italic font-light tracking-widest text-center"
+
+      >
+
+        "I am my Beloved's, and my Beloved is mine."
+
+      </motion.p>
+
+
+
+      <motion.div 
+
+        animate={{ opacity: [0.4, 1, 0.4] }}
+
+        transition={{ duration: 4, repeat: Infinity }}
+
+        className="mt-8 text-2xl text-cyan-300"
+
+      >
+
+        The shofar calls… the King is in the field.
+
+      </motion.div>
+
+    </div>
+
+  );
+
+};
+
+
+
 const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -1604,6 +1874,17 @@ const EnochianTimepiece = () => {
           className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
         >
           <AvStrand dayOfMonth={enochianDate.dayOfMonth} />
+        </motion.div>
+      )}
+
+      {/* Elul Strand - Show when month is Elul (month 6) */}
+      {enochianDate.month === 6 && (
+        <motion.div 
+          initial={{ x: -200, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="absolute left-10 top-1/2 -translate-y-1/2 z-20"
+        >
+          <ElulStrand dayOfMonth={enochianDate.dayOfMonth} />
         </motion.div>
       )}
 
