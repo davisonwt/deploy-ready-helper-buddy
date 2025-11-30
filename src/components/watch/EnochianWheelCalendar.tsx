@@ -54,6 +54,10 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -64,9 +68,92 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       
 
-      <div className="flex flex-col gap-1 md:gap-2">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => {
+        {futureBeads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.5, 1],
+                boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative flex items-center justify-center"
+            >
+
+            <div
+
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isToday 
+
+                  ? '0 0 60px #ec4899, inset 0 0 30px #fff'
+
+                  : bead.isTekufah
+
+                  ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
+
+                  : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
+
+                transform: 'translateZ(30px)'
+
+              }}
+
+            >
+              <span className="text-xs font-bold text-amber-300 relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+            {bead.isTekufah && (
+
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+                <div className="w-2 h-full bg-cyan-400/80" /> {/* Tekufah straight line */}
+
+              </div>
+
+            )}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+          );
+        })}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           
           return (
@@ -216,6 +303,10 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -238,9 +329,118 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-4">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => {
+        {futureBeads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.6, 1],
+                boxShadow: ["0 0 30px #fff", "0 0 100px #ec4899", "0 0 30px #fff"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative"
+            >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-7 h-7 md:w-9 md:h-9 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 35% 35%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isToday
+
+                  ? '0 0 80px #ec4899, inset 0 0 40px #fff'
+
+                  : bead.isLagBaOmer
+
+                  ? '0 0 60px #f59e0b, 0 0 0 12px #000 inset'
+
+                  : bead.isFeast
+
+                  ? '0 0 50px #22d3ee, 0 0 0 10px #000 inset'
+
+                  : '0 12px 40px rgba(0,0,0,0.9), inset 0 6px 20px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(40px)'
+
+              }}
+
+            >
+              <span className="text-xs md:text-sm font-bold text-amber-200 relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+
+
+            {/* Special Markers */}
+
+            {bead.isLagBaOmer && (
+
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+                <div className="w-16 h-16 rounded-full border-4 border-orange-500 animate-pulse" />
+
+              </div>
+
+            )}
+
+
+
+            {bead.isFeast && (
+
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none">
+
+                <div className="text-cyan-300 text-xs font-bold">Pesach Sheni</div>
+
+              </div>
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-70 pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+          );
+        })}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           
           return (
@@ -434,6 +634,10 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -458,9 +662,124 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-5">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => {
+        {futureBeads.map((bead) => {
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          
+          return (
+            <motion.div
+              key={bead.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={bead.isToday ? {
+                scale: [1, 1.8, 1],
+                boxShadow: ["0 0 40px #fff", "0 0 120px #ec4899", "0 0 40px #fff"]
+              } : bead.isShavuot ? {
+                boxShadow: ["0 0 60px #ec4899", "0 0 100px #fff", "0 0 60px #ec4899"]
+              } : {}}
+              transition={{ duration: 0 }}
+              className="relative"
+            >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-24 h-24 rounded-full border-8 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.isShavuot
+
+                  ? '0 0 100px #ec4899, 0 0 160px #fff, inset 0 0 50px #fff'
+
+                  : bead.isToday
+
+                  ? '0 0 100px #ec4899, inset 0 0 40px #fff'
+
+                  : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(60px)',
+
+                border: bead.isShavuot ? '8px solid #fff' : '8px solid #000'
+
+              }}
+
+            >
+              <span className="text-sm md:text-base font-bold text-amber-200 drop-shadow-lg relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+
+
+            {/* Shavuot Crown — Torah descending */}
+
+            {bead.isShavuot && (
+
+              <motion.div
+
+                animate={{ y: [0, -20, 0], rotate: [0, 360] }}
+
+                transition={{ duration: 6, repeat: Infinity }}
+
+                className="absolute -top-12 left-1/2 -translate-x-1/2 pointer-events-none"
+
+              >
+
+                <div className="text-sm md:text-base">Torah</div>
+
+              </motion.div>
+
+            )}
+
+
+
+            {/* Pre-Shavuot glow */}
+
+            {bead.isPreShavuot && (
+
+              <div className="absolute inset-0 rounded-full border-4 border-purple-400 animate-ping pointer-events-none" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80 pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+          );
+        })}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           
           return (
@@ -668,6 +987,10 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -692,9 +1015,146 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-5">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => (
+        {futureBeads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 1.8, 1],
+
+              boxShadow: ["0 0 40px #fff", "0 0 120px #dc2626", "0 0 40px #fff"]
+
+            } : bead.is17Tammuz ? {
+
+              boxShadow: ["0 0 80px #dc2626", "0 0 140px #450a0a", "0 0 80px #dc2626"]
+
+            } : {}}
+
+            transition={bead.is17Tammuz ? { duration: 4, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-24 h-24 rounded-full border-8 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.is17Tammuz
+
+                  ? '0 0 120px #dc2626, 0 0 180px #450a0a, inset 0 0 60px #991b1b'
+
+                  : bead.isGoldenCalf
+
+                  ? '0 0 80px #f59e0b, 0 0 0 12px #000 inset'
+
+                  : bead.isToday
+
+                  ? '0 0 100px #dc2626, inset 0 0 40px #fff'
+
+                  : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.2)',
+
+                transform: 'translateZ(60px)',
+
+                border: bead.is17Tammuz ? '8px solid #991b1b' : '8px solid #000'
+
+              }}
+
+            >
+              <span className="text-sm md:text-base font-bold text-amber-200 drop-shadow-lg relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+
+
+            {/* 17 Tammuz — Cracked tablet effect */}
+
+            {bead.is17Tammuz && (
+
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+
+                <div className="w-32 h-1 bg-red-800 rotate-45" />
+
+                <div className="w-32 h-1 bg-red-800 -rotate-45" />
+
+                <div className="text-red-300 text-xs font-bold">Walls Breached</div>
+
+              </div>
+
+            )}
+
+
+
+            {/* Golden Calf false fire */}
+
+            {bead.isGoldenCalf && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-4 border-yellow-600 opacity-60 pointer-events-none"
+
+              />
+
+            )}
+
+
+
+            {/* Mourning ash overlay after 17th */}
+
+            {bead.isThreeWeeks && bead.day >= 17 && !bead.is17Tammuz && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-gray-800/40 pointer-events-none" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80 pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => (
 
           <motion.div
 
@@ -926,6 +1386,10 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -950,9 +1414,136 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-6">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => (
+        {futureBeads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 2, 1],
+
+              boxShadow: ["0 0 50px #fff", "0 0 150px #dc2626", "0 0 50px #fff"]
+
+            } : bead.is9Av ? {
+
+              boxShadow: ["0 0 100px #450a0a", "0 0 200px #000", "0 0 100px #450a0a"],
+
+              rotate: [0, 5, -5, 0]
+
+            } : {}}
+
+            transition={bead.is9Av ? { duration: 6, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-28 h-28 rounded-full border-8 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #333, ${bead.color})`,
+
+                boxShadow: bead.is9Av
+
+                  ? '0 0 180px #450a0a, 0 0 300px #000, inset 0 0 80px #000'
+
+                  : bead.isToday
+
+                  ? '0 0 140px #dc2626, inset 0 0 60px #fff'
+
+                  : '0 20px 60px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.1)',
+
+                transform: 'translateZ(80px)',
+
+                border: bead.is9Av ? '12px solid #000' : '8px solid #000'
+
+              }}
+
+            >
+              <span className="text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+
+
+            {/* 9th of Av — Temple flames and smoke */}
+
+            {bead.is9Av && (
+
+              <>
+
+                <motion.div
+
+                  animate={{ y: [-20, -60], opacity: [1, 0] }}
+
+                  transition={{ duration: 4, repeat: Infinity }}
+
+                  className="absolute inset-0 rounded-full bg-red-900/60 blur-xl pointer-events-none"
+
+                />
+
+                <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 pointer-events-none">
+
+                  Temple
+
+                </div>
+
+              </>
+
+            )}
+
+
+
+            {/* Nine Days — increasing darkness */}
+
+            {bead.isPre9Av && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-black/60 pointer-events-none" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-red-600 border-dashed opacity-80 pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => (
 
           <motion.div
 
@@ -1172,6 +1763,10 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -1196,9 +1791,140 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-6">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((bead) => (
+        {futureBeads.map((bead) => (
+
+          <motion.div
+
+            key={bead.day}
+
+            animate={bead.isToday ? {
+
+              scale: [1, 2, 1],
+
+              boxShadow: ["0 0 50px #fff", "0 0 160px #ec4899", "0 0 50px #fff"]
+
+            } : bead.is29Elul ? {
+
+              boxShadow: ["0 0 120px #ec4899", "0 0 200px #fff", "0 0 120px #ec4899"],
+
+              rotate: [0, 360]
+
+            } : {}}
+
+            transition={bead.is29Elul ? { duration: 8, repeat: Infinity } : { duration: 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-28 h-28 rounded-full border-8 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+
+                boxShadow: bead.is29Elul
+
+                  ? '0 0 180px #ec4899, 0 0 300px #fff, inset 0 0 80px #fff'
+
+                  : bead.isToday
+
+                  ? '0 0 140px #ec4899, inset 0 0 60px #fff'
+
+                  : '0 20px 60px rgba(0,0,0,0.9), inset 0 10px 30px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(80px)',
+
+                border: bead.is29Elul ? '12px solid #fff' : '8px solid #000'
+
+              }}
+
+            >
+              <span className="text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl relative z-10">
+                {bead.day}
+              </span>
+            </div>
+
+
+
+            {/* 29 Elul — Royal entrance */}
+
+            {bead.is29Elul && (
+
+              <motion.div
+
+                animate={{ scale: [1, 1.4, 1] }}
+
+                transition={{ duration: 4, repeat: Infinity }}
+
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base pointer-events-none"
+
+              >
+
+                Crown
+
+              </motion.div>
+
+            )}
+
+
+
+            {/* Last 12 days — rising light */}
+
+            {bead.isLast12Days && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full bg-cyan-400/20 animate-ping pointer-events-none" />
+
+            )}
+
+
+
+            {/* Daily shofar glow (weekdays) */}
+
+            {bead.isShofarDay && !bead.isLast12Days && !bead.isSabbath && (
+
+              <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse pointer-events-none" />
+
+            )}
+
+
+
+            {/* Today Ring */}
+
+            {bead.isToday && (
+
+              <motion.div
+
+                animate={{ rotate: 360 }}
+
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+
+                className="absolute inset-0 rounded-full border-8 border-pink-500 border-dashed opacity-80 pointer-events-none"
+
+              />
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((bead) => (
 
           <motion.div
 
@@ -1448,6 +2174,10 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -1472,9 +2202,10 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-7">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((b) => (
+        {futureBeads.map((b) => (
 
           <motion.div
 
@@ -1502,7 +2233,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -1524,7 +2255,11 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
+            </div>
 
 
 
@@ -1534,7 +2269,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               <motion.div animate={{ y: [0, -30, 0] }} transition={{ repeat: Infinity, duration: 4 }}
 
-                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base">Crown</motion.div>
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base pointer-events-none">Crown</motion.div>
 
             )}
 
@@ -1546,7 +2281,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 5, repeat: Infinity }}
 
-                className="absolute inset-0 rounded-full bg-white blur-3xl" />
+                className="absolute inset-0 rounded-full bg-white blur-3xl pointer-events-none" />
 
             )}
 
@@ -1558,19 +2293,113 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
 
-                className="absolute -inset-8 bg-emerald-500/20 rounded-full" />
+                className="absolute -inset-8 bg-emerald-500/20 rounded-full pointer-events-none" />
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.2, 1], boxShadow: ["0 0 60px #fff", "0 0 180px gold", "0 0 60px #fff"] } :
+
+              b.isRoshHashana ? { y: [0, -15, 0] } :
+
+              b.isYomKippur ? { boxShadow: ["0 0 100px #fff", "0 0 200px #fff", "0 0 100px #fff"] } :
+
+              b.isSukkot ? { rotate: [0, 360] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isSukkot ? 20 : 3, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            <div
+
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isRoshHashana ? '0 0 160px #dc2626, inset 0 0 80px #fff' :
+
+                  b.isYomKippur   ? '0 0 200px #fff, 0 0 300px #fff, inset -80px -80px 120px #0000' :
+
+                  b.isSukkot      ? '0 0 120px #34d399, 0 20px 60px rgba(0,0,0,0.8)' :
+
+                  b.isToday       ? '0 0 180px gold' :
+
+                  '0 25px 80px rgba(0,0,0,0.9), inset 0 12px 40px rgba(255,255,255,0.4)',
+
+                transform: 'translateZ(100px)'
+
+              }}
+
+            >
+              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
+            </div>
+
+
+
+            {/* Rosh Hashana crown */}
+
+            {b.isRoshHashana && (
+
+              <motion.div animate={{ y: [0, -30, 0] }} transition={{ repeat: Infinity, duration: 4 }}
+
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base pointer-events-none">Crown</motion.div>
 
             )}
 
 
 
-            {/* Day number */}
+            {/* Yom Kippur white fire */}
 
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
+            {b.isYomKippur && (
 
-              {b.day}
+              <motion.div animate={{ opacity: [0.6, 1, 0.6] }} transition={{ duration: 5, repeat: Infinity }}
 
-            </span>
+                className="absolute inset-0 rounded-full bg-white blur-3xl pointer-events-none" />
+
+            )}
+
+
+
+            {/* Sukkot lulav spin */}
+
+            {b.isSukkot && (
+
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+
+                className="absolute -inset-8 bg-emerald-500/20 rounded-full pointer-events-none" />
+
+            )}
 
           </motion.div>
 
@@ -1660,6 +2489,10 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -1686,9 +2519,10 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-7">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((b) => (
+        {futureBeads.map((b) => (
 
           <motion.div
 
@@ -1716,7 +2550,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-gray-900"
+              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-gray-900 relative flex items-center justify-center"
 
               style={{
 
@@ -1736,7 +2570,11 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
               }}
 
-            />
+            >
+              <span className="text-xs md:text-sm font-bold text-gray-400 relative z-10">
+                {b.day}
+              </span>
+            </div>
 
 
 
@@ -1750,7 +2588,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 5, repeat: Infinity }}
 
-                className="absolute inset-0 rounded-full border-8 border-orange-600 blur-sm"
+                className="absolute inset-0 rounded-full border-8 border-orange-600 blur-sm pointer-events-none"
 
               />
 
@@ -1766,29 +2604,127 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity }}
 
-                  className="absolute top-0 left-1/2 w-1 h-12 bg-cyan-400/60 blur-sm" />
+                  className="absolute top-0 left-1/2 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
 
                 <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
 
-                  className="absolute top-0 left-1/3 w-1 h-12 bg-cyan-400/60 blur-sm" />
+                  className="absolute top-0 left-1/3 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
 
                 <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }}
 
-                  className="absolute top-0 right-1/3 w-1 h-12 bg-cyan-400/60 blur-sm" />
+                  className="absolute top-0 right-1/3 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
 
               </>
 
             )}
 
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2, 1], boxShadow: ["0 0 60px #fff", "0 0 160px #f59e0b", "0 0 60px #fff"] } :
+
+              b.is23Cheshvan ? { boxShadow: ["0 0 100px #f59e0b", "0 0 180px #ff8c00", "0 0 100px #f59e0b"] } :
+
+              b.is7Cheshvan ? { opacity: [0.7, 1, 0.7] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.is23Cheshvan ? 6 : 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-[18px] h-[18px] md:w-20 md:h-20 rounded-full border-6 md:border-8 border-gray-900 relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #444, ${b.color})`,
+
+                boxShadow: 
+
+                  b.is23Cheshvan ? '0 0 180px #f59e0b, 0 0 300px #ff8c00, inset 0 0 80px #fff' :
+
+                  b.is7Cheshvan   ? '0 0 80px #22d3ee, inset 0 0 40px #67e8f9' :
+
+                  b.isToday       ? '0 0 160px #fff' :
+
+                  '0 20px 70px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.15)',
+
+                transform: 'translateZ(90px)'
+
+              }}
+
+            >
+              <span className="text-xs md:text-sm font-bold text-gray-400 relative z-10">
+                {b.day}
+              </span>
+            </div>
 
 
-            {/* Day number */}
 
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400">
+            {/* 23 Cheshvan – Temple cornerstone fire */}
 
-              {b.day}
+            {b.is23Cheshvan && (
 
-            </span>
+              <motion.div
+
+                animate={{ scale: [1, 1.6, 1] }}
+
+                transition={{ duration: 5, repeat: Infinity }}
+
+                className="absolute inset-0 rounded-full border-8 border-orange-600 blur-sm pointer-events-none"
+
+              />
+
+            )}
+
+
+
+            {/* 7 Cheshvan – Rain drops */}
+
+            {b.is7Cheshvan && (
+
+              <>
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity }}
+
+                  className="absolute top-0 left-1/2 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+
+                  className="absolute top-0 left-1/3 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
+
+                <motion.div animate={{ y: [-40, 40] }} transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+
+                  className="absolute top-0 right-1/3 w-1 h-12 bg-cyan-400/60 blur-sm pointer-events-none" />
+
+              </>
+
+            )}
 
           </motion.div>
 
@@ -1900,6 +2836,10 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -1924,9 +2864,10 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-8">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((b) => (
+        {futureBeads.map((b) => (
 
           <motion.div
 
@@ -1954,7 +2895,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden"
+              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
 
               style={{
 
@@ -1973,12 +2914,15 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
               }}
 
             >
+              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
 
               {/* Actual flame inside the bead on Hanukkah nights */}
 
               {b.isHanukkah && (
 
-                <div className="absolute inset-0 flex items-end justify-center pb-8">
+                <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
 
                   {Array.from({ length: b.candleCount }, (_, i) => (
 
@@ -2022,7 +2966,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
                 transition={{ duration: 8, repeat: Infinity }}
 
-                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base text-pink-400"
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base text-pink-400 pointer-events-none"
 
               >
 
@@ -2034,13 +2978,138 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            {/* Day number glowing under the flames */}
+            {/* Candle count label during Hanukkah */}
 
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
+            {b.isHanukkah && b.day >= 25 && (
 
-              {b.day}
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/50 px-3 py-1 rounded-full">
 
-            </span>
+                Night {b.candleCount}
+
+              </span>
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.3, 1] } :
+
+              b.is25Kislev ? { y: [0, -30, 0], boxShadow: ["0 0 100px #ec4899", "0 0 200px #fff", "0 0 100px #ec4899"] } :
+
+              b.isHanukkah ? { boxShadow: [`0 0 ${60 + b.candleCount*20}px ${b.color}`, `0 0 ${100 + b.candleCount*30}px #fff`] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.isHanukkah ? 4 : 2, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead → becomes a living flame */}
+
+            <div
+
+              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 40% 20%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.isHanukkah ? `0 0 ${120 + b.candleCount*40}px ${b.color}, 0 -40px 120px ${b.color}80, inset 0 20px 40px #fff` :
+
+                  b.isToday ? '0 0 200px #ec4899' :
+
+                  '0 30px 100px rgba(0,0,0,0.9), inset 0 15px 50px rgba(255,255,255,0.3)',
+
+                transform: 'translateZ(120px)'
+
+              }}
+
+            >
+              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
+
+              {/* Actual flame inside the bead on Hanukkah nights */}
+
+              {b.isHanukkah && (
+
+                <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
+
+                  {Array.from({ length: b.candleCount }, (_, i) => (
+
+                    <motion.div
+
+                      key={i}
+
+                      initial={{ opacity: 0, y: 60 }}
+
+                      animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
+
+                      transition={{ duration: 3, repeat: Infinity, delay: i * 0.3 }}
+
+                      className="w-4 mx-1"
+
+                    >
+
+                      <div className="w-4 h-20 bg-gradient-to-t from-yellow-300 via-orange-400 to-pink-500 rounded-full blur-sm" />
+
+                      <div className="w-2 h-8 -mt-8 mx-auto bg-yellow-200 rounded-full blur-md" />
+
+                    </motion.div>
+
+                  ))}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+
+            {/* First night miracle spark */}
+
+            {b.is25Kislev && (
+
+              <motion.div
+
+                animate={{ rotate: 360, scale: [1, 2, 1] }}
+
+                transition={{ duration: 8, repeat: Infinity }}
+
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base text-pink-400 pointer-events-none"
+
+              >
+
+                ✦
+
+              </motion.div>
+
+            )}
 
 
 
@@ -2048,7 +3117,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {b.isHanukkah && b.day >= 25 && (
 
-              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/50 px-3 py-1 rounded-full">
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/50 px-3 py-1 rounded-full pointer-events-none">
 
                 Night {b.candleCount}
 
@@ -2150,6 +3219,10 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
   }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
 
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
 
 
   return (
@@ -2176,9 +3249,10 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-8">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((b) => (
+        {futureBeads.map((b) => (
 
           <motion.div
 
@@ -2206,7 +3280,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden relative flex items-center justify-center"
 
               style={{
 
@@ -2227,12 +3301,15 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
               }}
 
             >
+              <span className="text-xs md:text-sm font-bold text-gray-400 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
 
               {/* Final Hanukkah flames still burning on days 1–2 */}
 
               {b.isHanukkahFinal && (
 
-                <div className="absolute inset-0 flex items-end justify-center pb-10">
+                <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none">
 
                   {Array.from({ length: b.hanukkahNight }, (_, i) => (
 
@@ -2266,7 +3343,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {b.is10Tevet && (
 
-              <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 rotate-12">
+              <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 rotate-12 pointer-events-none">
 
                 Walls
 
@@ -2276,13 +3353,128 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            {/* Day number */}
+            {/* Hanukkah night label */}
 
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400 drop-shadow-2xl">
+            {b.isHanukkahFinal && (
 
-              {b.day}
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/60 px-4 py-1 rounded-full">
 
-            </span>
+                Night {b.hanukkahNight}
+
+              </span>
+
+            )}
+
+          </motion.div>
+
+        ))}
+
+      </div>
+
+      {/* 1cm gap between future and past days */}
+      <div style={{ height: '1cm' }} />
+
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+
+        {pastBeads.map((b) => (
+
+          <motion.div
+
+            key={b.day}
+
+            animate={
+
+              b.isToday ? { scale: [1, 2.2, 1] } :
+
+              b.is10Tevet ? { rotate: [0, 3, -3, 0], boxShadow: ["0 0 120px #1e293b", "0 0 200px #000"] } :
+
+              b.isEndOfHanukkah ? { boxShadow: ["0 0 160px #fff", "0 0 300px #a78bfa"] } :
+
+              {}
+
+            }
+
+            transition={{ duration: b.is10Tevet ? 6 : 3, repeat: Infinity }}
+
+            className="relative"
+
+          >
+
+            {/* Main Bead */}
+
+            <div
+
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden relative flex items-center justify-center"
+
+              style={{
+
+                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+
+                boxShadow: 
+
+                  b.is10Tevet ? '0 0 180px #1e293b, 0 0 300px #000, inset 0 0 80px #111' :
+
+                  b.isHanukkahFinal ? `0 0 ${140 + b.hanukkahNight*40}px #fff, 0 -60px 160px #a78bfa` :
+
+                  b.isToday ? '0 0 200px #fff' :
+
+                  '0 30px 100px rgba(0,0,0,0.95), inset 0 15px 50px rgba(255,255,255,0.15)',
+
+                transform: 'translateZ(110px)'
+
+              }}
+
+            >
+              <span className="text-xs md:text-sm font-bold text-gray-400 drop-shadow-2xl relative z-10">
+                {b.day}
+              </span>
+
+              {/* Final Hanukkah flames still burning on days 1–2 */}
+
+              {b.isHanukkahFinal && (
+
+                <div className="absolute inset-0 flex items-end justify-center pb-10 pointer-events-none">
+
+                  {Array.from({ length: b.hanukkahNight }, (_, i) => (
+
+                    <motion.div
+
+                      key={i}
+
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
+
+                      className="w-5 mx-1"
+
+                    >
+
+                      <div className="w-5 h-24 bg-gradient-to-t from-amber-200 via-white to-purple-300 rounded-full blur-sm" />
+
+                    </motion.div>
+
+                  ))}
+
+                </div>
+
+              )}
+
+            </div>
+
+
+
+            {/* 10 Tevet – siege walls */}
+
+            {b.is10Tevet && (
+
+              <div className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-black text-gray-800 rotate-12 pointer-events-none">
+
+                Walls
+
+              </div>
+
+            )}
 
 
 
@@ -2290,7 +3482,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {b.isHanukkahFinal && (
 
-              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/60 px-4 py-1 rounded-full">
+              <span className="absolute top-4 left-1/2 -translate-x-1/2 text-lg font-bold text-white bg-black/60 px-4 py-1 rounded-full pointer-events-none">
 
                 Night {b.hanukkahNight}
 
@@ -2376,6 +3568,8 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       day,
 
+      globalDay,
+
       color,
 
       isToday: day === dayOfMonth,
@@ -2387,6 +3581,10 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     };
 
   }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
+
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
 
 
 
@@ -2412,145 +3610,182 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-9">
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
 
-        {beads.map((b) => (
-
-          <motion.div
-
-            key={b.day}
-
-            animate={
-
-              b.isToday ? { scale: [1, 2.4, 1] } :
-
-              b.isTuBShevat ? { 
-
-                y: [0, -20, 0],
-
-                rotate: [0, 5, -5, 0],
-
-                boxShadow: ["0 0 120px #fff", "0 0 240px #f8fafc", "0 0 120px #fff"]
-
-              } :
-
-              {}
-
-            }
-
-            transition={{ duration: b.isTuBShevat ? 6 : 2, repeat: Infinity }}
-
-            className="relative"
-
-          >
-
-            {/* Main Bead – becomes an almond blossom on 15 Shevat */}
-
-            <div
-
-              className="relative w-40 h-40 rounded-full border-12 border-black overflow-hidden"
-
+        {futureBeads.map((b) => {
+          const curveAngle = getSolarCurveAngle(b.globalDay);
+          return (
+            <motion.div
+              key={b.day}
               style={{
-
-                background: b.isTuBShevat 
-
-                  ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
-
-                  : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
-
-                boxShadow: 
-
-                  b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
-
-                  b.isToday ? '0 0 220px #ec4899' :
-
-                  '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
-
-                transform: 'translateZ(140px)'
-
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
               }}
+              animate={
 
+                b.isToday ? { scale: [1, 2.4, 1] } :
+
+                b.isTuBShevat ? { 
+
+                  y: [0, -20, 0],
+
+                  rotate: [0, 5, -5, 0],
+
+                  boxShadow: ["0 0 120px #fff", "0 0 240px #f8fafc", "0 0 120px #fff"]
+
+                } :
+
+                {}
+
+              }
+              transition={{ duration: b.isTuBShevat ? 6 : 2, repeat: Infinity }}
+              className="relative flex items-center justify-center"
             >
+              {/* Main Bead – becomes an almond blossom on 15 Shevat */}
+              <div
+                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                style={{
+                  background: b.isTuBShevat 
+                    ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
+                    : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  boxShadow: 
+                    b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
+                    b.isToday ? '0 0 220px #ec4899' :
+                    '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
+                  transform: 'translateZ(140px)'
+                }}
+              >
+                {/* Almond blossoms blooming on Tu B'Shevat */}
+                {b.isTuBShevat && (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-12 h-20 bg-gradient-to-b from-pink-200 to-white rounded-full blur-md"
+                          style={{ transform: `rotate(${i * 45}deg) translateY(-70px)` }}
+                        />
+                      ))}
+                    </motion.div>
+                    <div className="absolute inset-0 flex items-center justify-center text-pink-300 text-xs font-light pointer-events-none">
+                      Almond Tree
+                    </div>
+                  </>
+                )}
 
-              {/* Almond blossoms blooming on Tu B'Shevat */}
+                {/* Day number */}
+                <span className="text-xs font-bold text-pink-200 drop-shadow-2xl relative z-10">
+                  {b.day}
+                </span>
+              </div>
 
+              {/* Gentle falling petals on Tu B'Shevat */}
               {b.isTuBShevat && (
-
                 <>
-
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-
-                    className="absolute inset-0 flex items-center justify-center">
-
-                    {Array.from({ length: 8 }, (_, i) => (
-
-                      <div
-
-                        key={i}
-
-                        className="absolute w-12 h-20 bg-gradient-to-b from-pink-200 to-white rounded-full blur-md"
-
-                        style={{ transform: `rotate(${i * 45}deg) translateY(-70px)` }}
-
-                      />
-
-                    ))}
-
-                  </motion.div>
-
-                  <div className="absolute inset-0 flex items-center justify-center text-pink-300 text-6xl font-light">
-
-                    Almond Tree
-
-                  </div>
-
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 0 }}
+                    className="absolute top-0 left-1/4 w-6 h-10 bg-pink-200/60 rounded-full blur-sm pointer-events-none" />
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 2 }}
+                    className="absolute top-0 left-1/2 w-8 h-12 bg-white/70 rounded-full blur-sm pointer-events-none" />
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 4 }}
+                    className="absolute top-0 right-1/4 w-7 h-11 bg-pink-100/60 rounded-full blur-sm pointer-events-none" />
                 </>
-
               )}
-
-            </div>
-
-
-
-            {/* Gentle falling petals on Tu B'Shevat */}
-
-            {b.isTuBShevat && (
-
-              <>
-
-                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 0 }}
-
-                  className="absolute top-0 left-1/4 w-6 h-10 bg-pink-200/60 rounded-full blur-sm" />
-
-                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 2 }}
-
-                  className="absolute top-0 left-1/2 w-8 h-12 bg-white/70 rounded-full blur-sm" />
-
-                <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 4 }}
-
-                  className="absolute top-0 right-1/4 w-7 h-11 bg-pink-100/60 rounded-full blur-sm" />
-
-              </>
-
-            )}
-
-
-
-            {/* Day number */}
-
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-pink-200 drop-shadow-2xl">
-
-              {b.day}
-
-            </span>
-
-          </motion.div>
-
-        ))}
+            </motion.div>
+          );
+        })}
 
       </div>
 
+      {/* 1cm gap between future and past beads */}
+      <div style={{ height: '1cm' }} />
 
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+        {pastBeads.map((b) => {
+          const curveAngle = getSolarCurveAngle(b.globalDay);
+          return (
+            <motion.div
+              key={b.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={
+
+                b.isToday ? { scale: [1, 2.4, 1] } :
+
+                b.isTuBShevat ? { 
+
+                  y: [0, -20, 0],
+
+                  rotate: [0, 5, -5, 0],
+
+                  boxShadow: ["0 0 120px #fff", "0 0 240px #f8fafc", "0 0 120px #fff"]
+
+                } :
+
+                {}
+
+              }
+              transition={{ duration: b.isTuBShevat ? 6 : 2, repeat: Infinity }}
+              className="relative flex items-center justify-center"
+            >
+              {/* Main Bead – becomes an almond blossom on 15 Shevat */}
+              <div
+                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                style={{
+                  background: b.isTuBShevat 
+                    ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
+                    : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  boxShadow: 
+                    b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
+                    b.isToday ? '0 0 220px #ec4899' :
+                    '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
+                  transform: 'translateZ(140px)'
+                }}
+              >
+                {/* Almond blossoms blooming on Tu B'Shevat */}
+                {b.isTuBShevat && (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-12 h-20 bg-gradient-to-b from-pink-200 to-white rounded-full blur-md"
+                          style={{ transform: `rotate(${i * 45}deg) translateY(-70px)` }}
+                        />
+                      ))}
+                    </motion.div>
+                    <div className="absolute inset-0 flex items-center justify-center text-pink-300 text-xs font-light pointer-events-none">
+                      Almond Tree
+                    </div>
+                  </>
+                )}
+
+                {/* Day number */}
+                <span className="text-xs font-bold text-pink-200 drop-shadow-2xl relative z-10">
+                  {b.day}
+                </span>
+              </div>
+
+              {/* Gentle falling petals on Tu B'Shevat */}
+              {b.isTuBShevat && (
+                <>
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 0 }}
+                    className="absolute top-0 left-1/4 w-6 h-10 bg-pink-200/60 rounded-full blur-sm pointer-events-none" />
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 2 }}
+                    className="absolute top-0 left-1/2 w-8 h-12 bg-white/70 rounded-full blur-sm pointer-events-none" />
+                  <motion.div animate={{ y: [100, -300], opacity: [0, 1, 0] }} transition={{ duration: 8, repeat: Infinity, delay: 4 }}
+                    className="absolute top-0 right-1/4 w-7 h-11 bg-pink-100/60 rounded-full blur-sm pointer-events-none" />
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
 
       <motion.div className="mt-36 text-center space-y-8">
 
@@ -2622,6 +3857,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       day,
 
+      globalDay,
+
       color,
 
       isToday: day === dayOfMonth,
@@ -2637,6 +3874,10 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     };
 
   }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
+
+  // Split beads into future (uncounted) and past (counted) days
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
 
 
 
@@ -2662,126 +3903,167 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-      <div className="flex flex-col gap-9">
-
-        {beads.map((b) => (
-
-          <motion.div
-
-            key={b.day}
-
-            animate={
-
-              b.isToday ? { scale: [1, 2.5, 1] } :
-
-              b.isPurim ? { 
-
-                scale: [1, 1.3, 1],
-
-                rotate: [0, 360],
-
-                boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
-
-              } :
-
-              b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
-
-              b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
-
-              {}
-
-            }
-
-            transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
-
-            className="relative"
-
-          >
-
-            {/* Main Bead – explodes into joy on Purim */}
-
-            <div
-
-              className="relative w-40 h-40 rounded-full border-12 border-black overflow-hidden"
-
+      {/* Future days (uncounted) - at top */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+        {futureBeads.map((b) => {
+          const curveAngle = getSolarCurveAngle(b.globalDay);
+          return (
+            <motion.div
+              key={b.day}
               style={{
-
-                background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
-
-                boxShadow: 
-
-                  b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
-
-                  b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
-
-                  b.isToday ? '0 0 250px #ec4899' :
-
-                  '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
-
-                transform: 'translateZ(160px)'
-
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
               }}
+              animate={
 
+                b.isToday ? { scale: [1, 2.5, 1] } :
+
+                b.isPurim ? { 
+
+                  scale: [1, 1.3, 1],
+
+                  rotate: [0, 360],
+
+                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
+
+                } :
+
+                b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
+
+                b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
+
+                {}
+
+              }
+              transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
+              className="relative flex items-center justify-center"
             >
+              {/* Main Bead – explodes into joy on Purim */}
+              <div
+                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                style={{
+                  background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  boxShadow: 
+                    b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
+                    b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
+                    b.isToday ? '0 0 250px #ec4899' :
+                    '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
+                  transform: 'translateZ(160px)'
+                }}
+              >
+                {/* Purim celebration – confetti & groggers */}
+                {b.isPurim && (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 pointer-events-none">
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-4 h-12 bg-gradient-to-b from-pink-400 to-purple-400 rounded-full blur-sm"
+                          style={{ 
+                            transform: `rotate(${i * 30}deg) translateY(-100px)`,
+                            animation: `confetti 4s infinite ${i * 0.2}s`
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-pink-300 pointer-events-none">
+                      PURIM
+                    </div>
+                  </>
+                )}
 
-              {/* Purim celebration – confetti & groggers */}
+                {/* Day number */}
+                <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
+                  {b.day}
+                </span>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
 
-              {b.isPurim && (
+      {/* 1cm gap between future and past beads */}
+      <div style={{ height: '1cm' }} />
 
-                <>
+      {/* Past days (counted) - at bottom */}
+      <div className="flex flex-col" style={{ gap: '1mm' }}>
+        {pastBeads.map((b) => {
+          const curveAngle = getSolarCurveAngle(b.globalDay);
+          return (
+            <motion.div
+              key={b.day}
+              style={{
+                transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+                transformOrigin: "center bottom",
+              }}
+              animate={
 
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                b.isToday ? { scale: [1, 2.5, 1] } :
 
-                    className="absolute inset-0">
+                b.isPurim ? { 
 
-                    {Array.from({ length: 12 }, (_, i) => (
+                  scale: [1, 1.3, 1],
 
-                      <div
+                  rotate: [0, 360],
 
-                        key={i}
+                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
 
-                        className="absolute w-4 h-12 bg-gradient-to-b from-pink-400 to-purple-400 rounded-full blur-sm"
+                } :
 
-                        style={{ 
+                b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
 
-                          transform: `rotate(${i * 30}deg) translateY(-100px)`,
+                b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
 
-                          animation: `confetti 4s infinite ${i * 0.2}s`
+                {}
 
-                        }}
+              }
+              transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
+              className="relative flex items-center justify-center"
+            >
+              {/* Main Bead – explodes into joy on Purim */}
+              <div
+                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                style={{
+                  background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  boxShadow: 
+                    b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
+                    b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
+                    b.isToday ? '0 0 250px #ec4899' :
+                    '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
+                  transform: 'translateZ(160px)'
+                }}
+              >
+                {/* Purim celebration – confetti & groggers */}
+                {b.isPurim && (
+                  <>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 pointer-events-none">
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="absolute w-4 h-12 bg-gradient-to-b from-pink-400 to-purple-400 rounded-full blur-sm"
+                          style={{ 
+                            transform: `rotate(${i * 30}deg) translateY(-100px)`,
+                            animation: `confetti 4s infinite ${i * 0.2}s`
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-pink-300 pointer-events-none">
+                      PURIM
+                    </div>
+                  </>
+                )}
 
-                      />
-
-                    ))}
-
-                  </motion.div>
-
-                  <div className="absolute inset-0 flex items-center justify-center text-6xl font-bold text-pink-300">
-
-                    PURIM
-
-                  </div>
-
-                </>
-
-              )}
-
-            </div>
-
-
-
-            {/* Day number */}
-
-            <span className="absolute -top-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-300 drop-shadow-2xl">
-
-              {b.day}
-
-            </span>
-
-          </motion.div>
-
-        ))}
-
+                {/* Day number */}
+                <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
+                  {b.day}
+                </span>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
 
