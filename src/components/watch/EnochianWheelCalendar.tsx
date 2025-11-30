@@ -2867,6 +2867,40 @@ const EnochianTimepiece = () => {
   const currentYear = currentDate.getFullYear();
   const showAsfael = (currentYear % 2 === 0); // Simple: show on even years
 
+  // ——— Solar Curve Angle Calculation ———
+  const getSolarCurveAngle = (globalDay: number) => {
+    // Your fixed reference: Day 4 = 20 March 2025 = straight line (0°)
+    const daySinceTekufah = globalDay - 4;
+
+    // Key sacred days in your 364-day year
+    const longestDayGlobal = 30 + 30 + 31;            // = Day 91 → 31st of 3rd month
+    const nextStraightLineGlobal = 182 + 2;           // Day 184 → 2nd of 7th month
+
+    let angle = 0;
+
+    if (globalDay < 4 || globalDay >= 364) {
+      angle = 0;                                          // Outside the year = perfectly straight
+    }
+    else if (daySinceTekufah <= longestDayGlobal - 4) {
+      // First quarter → curve grows from 0° → max 28°
+      const progress = daySinceTekufah / (longestDayGlobal - 4);
+      angle = 28 * Math.sin(progress * Math.PI / 2);
+    }
+    else if (globalDay <= nextStraightLineGlobal) {
+      // Second quarter → curve shrinks back to 0°
+      const progress = (globalDay - longestDayGlobal) / (nextStraightLineGlobal - longestDayGlobal);
+      angle = 28 * Math.cos(progress * Math.PI / 2);
+    }
+    else {
+      // Second half of year → mirror the curve (southern-hemisphere style)
+      const mirrorDay = globalDay - nextStraightLineGlobal + 4;
+      const progress = mirrorDay / (longestDayGlobal - 4);
+      angle = -28 * Math.sin(progress * Math.PI / 2);     // negative = opposite bow
+    }
+
+    return angle;   // Returns value between -28° and +28°
+  };
+
 
 
   const monthStructure = [
