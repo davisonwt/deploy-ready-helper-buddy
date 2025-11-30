@@ -4224,20 +4224,13 @@ const EnochianTimepiece = () => {
             marginRight: '1cm'
           }}
         >
-          <div className="w-full h-full flex items-center justify-center">
-          {/* Only show current month around the wheel */}
+          {/* Only show current month beads */}
           {enochianDate.month === 1 && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 0px)', 
-                top: 'calc(50% + 180px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month1Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4248,13 +4241,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 140px)', 
-                top: 'calc(50% + 170px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month2Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4265,13 +4252,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 260px)', 
-                top: 'calc(50% + 100px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month3Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4282,15 +4263,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 340px)', 
-                top: 'calc(50% + 0px)',
-                width: '320px',
-                transform: 'translateX(-50%)',
-                filter: 'drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 130px #00ff9d)',
-                animation: 'pulse 3s infinite alternate'
-              }}
+              className="w-full"
             >
               <Month4Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4301,13 +4274,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 300px)', 
-                top: 'calc(50% - 120px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month5Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4318,14 +4285,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 180px)', 
-                top: 'calc(50% - 180px)',
-                width: '300px',
-                transform: 'translateX(-50%)',
-                filter: 'drop-shadow(0 0 50px #ff9500)'
-              }}
+              className="w-full"
             >
               <Month6Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4336,13 +4296,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 20px)', 
-                top: 'calc(50% - 160px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month7Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4353,13 +4307,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% - 120px)', 
-                top: 'calc(50% - 100px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month8Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4370,15 +4318,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% - 200px)', 
-                top: 'calc(50% + 0px)',
-                width: '320px',
-                transform: 'translateX(-50%)',
-                filter: 'drop-shadow(0 0 80px #00ff9d) drop-shadow(0 0 130px #00ff9d)',
-                animation: 'pulse 3s infinite alternate'
-              }}
+              className="w-full"
             >
               <Month9Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4389,13 +4329,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% - 140px)', 
-                top: 'calc(50% + 120px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month10Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4406,13 +4340,7 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% - 20px)', 
-                top: 'calc(50% + 170px)',
-                width: '280px',
-                transform: 'translateX(-50%)'
-              }}
+              className="w-full"
             >
               <Month11Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
@@ -4423,20 +4351,12 @@ const EnochianTimepiece = () => {
               initial={{ opacity: 0, scale: 0.1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5 }}
-              className="absolute pointer-events-auto"
-              style={{ 
-                left: 'calc(50% + 0px)', 
-                top: 'calc(50% + 180px)',
-                width: '350px',
-                transform: 'translateX(-50%) scale(1.2)',
-                filter: 'drop-shadow(0 0 50px #ff9500) drop-shadow(0 0 100px #ff9500)'
-              }}
+              className="w-full"
             >
               <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
         </div>
-      </div>
 
 
 
