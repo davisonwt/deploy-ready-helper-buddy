@@ -132,7 +132,7 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             )}
 
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-amber-300">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs text-amber-300">
 
               {bead.day}
 
@@ -338,7 +338,7 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day Number */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-amber-200 font-bold text-lg">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-amber-200 font-bold text-lg">
 
               {bead.day}
 
@@ -570,7 +570,7 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day Number */}
 
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
 
               {bead.day}
 
@@ -830,7 +830,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-amber-200 drop-shadow-lg">
 
               {bead.day}
 
@@ -1082,7 +1082,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-gray-400 drop-shadow-2xl">
 
               {bead.day}
 
@@ -1336,7 +1336,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl">
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-sm md:text-base font-bold text-cyan-300 drop-shadow-2xl">
 
               {bead.day}
 
@@ -1592,7 +1592,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
 
               {b.day}
 
@@ -1810,7 +1810,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400">
 
               {b.day}
 
@@ -2062,7 +2062,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number glowing under the flames */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-amber-300 drop-shadow-2xl">
 
               {b.day}
 
@@ -2304,7 +2304,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400 drop-shadow-2xl">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-gray-400 drop-shadow-2xl">
 
               {b.day}
 
@@ -2564,7 +2564,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-pink-200 drop-shadow-2xl">
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-base md:text-lg font-bold text-pink-200 drop-shadow-2xl">
 
               {b.day}
 
@@ -2798,7 +2798,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             {/* Day number */}
 
-            <span className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-300 drop-shadow-2xl">
+            <span className="absolute -top-20 left-1/2 -translate-x-1/2 text-3xl font-bold text-pink-300 drop-shadow-2xl">
 
               {b.day}
 
@@ -2884,7 +2884,7 @@ const EnochianTimepiece = () => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const [enochianDate, setEnochianDate] = useState({
+  const [enochianDate, setEnochianDate] = useState({ 
 
     dayOfYear: 255, month: 9, dayOfMonth: 13, weekOfYear: 37,
 
@@ -2955,7 +2955,7 @@ const EnochianTimepiece = () => {
 
 
 
-  const size = 1000;
+  const size = 2000;
 
   const center = size / 2;
 
@@ -3105,7 +3105,7 @@ const EnochianTimepiece = () => {
 
         <div className="absolute top-0 left-0 w-full h-full bg-radial-gradient from-purple-900/20 to-transparent" />
 
-      </div>
+        </div>
 
 
 
@@ -3129,7 +3129,7 @@ const EnochianTimepiece = () => {
           transition={{ duration: 2 }}
           className="flex-shrink-0 w-full lg:w-auto"
         >
-          <div className="w-full max-w-[1400px] lg:max-w-[1300px] xl:max-w-[1400px] mx-auto">
+          <div className="w-full max-w-[2800px] lg:max-w-[2600px] xl:max-w-[2800px] mx-auto">
             <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="w-full h-auto">
 
           <defs>
@@ -3278,7 +3278,7 @@ const EnochianTimepiece = () => {
 
           </motion.g>
 
-            </svg>
+              </svg>
           </div>
         </motion.div>
 
@@ -3405,8 +3405,8 @@ const EnochianTimepiece = () => {
               <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
 
 
 
@@ -3426,7 +3426,7 @@ const EnochianTimepiece = () => {
               <span className="text-xl md:text-2xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
             </div>
             <p className="text-center mt-4 text-base md:text-xl text-gray-400">Eloyasef • Yah is adding</p>
-          </div>
+                </div>
 
           {/* Asfa'el — appears only on +2 years */}
           <motion.div 
@@ -3437,10 +3437,10 @@ const EnochianTimepiece = () => {
           >
             <div className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-4 md:border-8 border-zinc-700 shadow-2xl flex items-center justify-center">
               <span className="text-xl md:text-2xl font-bold text-zinc-500">אַסְפָּעֵאל</span>
-            </div>
+                </div>
             <p className="text-center mt-4 text-base md:text-xl text-zinc-500">Asfa'el • El is adding</p>
           </motion.div>
-        </div>
+                </div>
       </motion.div>
 
 
