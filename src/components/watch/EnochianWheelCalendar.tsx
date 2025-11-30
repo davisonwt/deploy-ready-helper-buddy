@@ -4025,7 +4025,7 @@ const EnochianTimepiece = () => {
 
   return (
 
-    <div className="min-h-screen bg-black overflow-x-hidden relative" style={{ padding: '5cm' }}>
+    <div className="min-h-screen bg-black relative" style={{ padding: '5cm', overflow: 'visible' }}>
 
       <style>{`
         @keyframes pulse {
@@ -4059,22 +4059,22 @@ const EnochianTimepiece = () => {
 
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex flex-row items-center justify-start" style={{ padding: '5cm 5cm 5cm 5cm', minHeight: 'calc(100vh - 10cm)' }}>
+      <div className="relative z-10 flex flex-row items-center justify-start w-full" style={{ minHeight: 'calc(100vh - 10cm)' }}>
         
-        {/* Calendar Wheel - LEFT SIDE - HUGE Circle - Takes up most of left side */}
+        {/* Calendar Wheel - LEFT SIDE - HUGE Circle */}
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }} 
           animate={{ scale: 1, opacity: 1 }} 
           transition={{ duration: 2 }}
-          className="flex items-center justify-center"
+          className="flex items-center justify-center flex-shrink-0"
           style={{ 
             width: '65%',
             height: 'calc(100vh - 10cm)', 
             minHeight: '80cm',
-            flexShrink: 0
+            backgroundColor: 'rgba(255,0,0,0.1)' // Temporary debug color
           }}
         >
-          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }}>
 
           <defs>
 
@@ -4223,7 +4223,8 @@ const EnochianTimepiece = () => {
             width: '30%',
             height: 'calc(100vh - 10cm)',
             marginRight: '1cm',
-            minHeight: '80cm'
+            minHeight: '80cm',
+            backgroundColor: 'rgba(0,255,0,0.1)' // Temporary debug color
           }}
         >
           {/* Only show current month beads */}
