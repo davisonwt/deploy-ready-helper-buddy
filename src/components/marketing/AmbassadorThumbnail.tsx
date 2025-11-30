@@ -1,8 +1,228 @@
 import React, { useState, useEffect } from 'react';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export function AmbassadorThumbnail() {
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
+  const { user } = useAuth();
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    currentRole: '',
+    username: '',
+    email: '',
+    platforms: [] as string[],
+    brandName: '',
+    whyRepresent: '',
+    honeypot: '' // Hidden field for bot detection
+  });
+  
+  // Vetting state
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  
+  // Generate random CAPTCHA question
+  useEffect(() => {
+    const num1 = Math.floor(Math.random() * 10) + 1;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+  }, []);
+  
+  // Check if user has already submitted (rate limiting)
+  const checkPreviousSubmission = async () => {
+    if (!user) return false;
+    try {
+      const { data, error } = await supabase
+        .from('ambassador_applications')
+        .select('id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking submissions:', error);
+        return false;
+      }
+      
+      if (data) {
+        const submissionDate = new Date(data.created_at);
+        const daysSince = (Date.now() - submissionDate.getTime()) / (1000 * 60 * 60 * 24);
+        // Allow resubmission after 30 days
+        return daysSince < 30;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking submissions:', error);
+      return false;
+    }
+  };
+  
+  // Generate and send email verification code
+  const sendVerificationCode = async () => {
+    if (!formData.email || !formData.email.includes('@')) {
+      setSubmitError('Please enter a valid email address');
+      return;
+    }
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    
+    // In production, send email via Supabase Edge Function or email service
+    // For now, we'll store it and show it (remove in production!)
+    console.log('Verification code:', code);
+    alert(`Verification code: ${code}\n\nIn production, this will be sent to your email.`);
+    
+    setSubmitError('');
+  };
+  
+  // Verify email code
+  const verifyEmailCode = () => {
+    if (verificationCode === generatedCode) {
+      setEmailVerified(true);
+      setSubmitError('');
+    } else {
+      setSubmitError('Invalid verification code. Please try again.');
+    }
+  };
+  
+  // Validate form
+  const validateForm = async () => {
+    setSubmitError('');
+    
+    // Honeypot check (bots will fill this)
+    if (formData.honeypot !== '') {
+      setSubmitError('Bot detected. Submission rejected.');
+      return false;
+    }
+    
+    // Required fields
+    if (!formData.fullName.trim()) {
+      setSubmitError('Please enter your full name');
+      return false;
+    }
+    
+    if (!formData.currentRole) {
+      setSubmitError('Please select your current 2SG role');
+      return false;
+    }
+    
+    if (!formData.username.trim()) {
+      setSubmitError('Please enter a desired username');
+      return false;
+    }
+    
+    if (!formData.email.trim() || !formData.email.includes('@')) {
+      setSubmitError('Please enter a valid email address');
+      return false;
+    }
+    
+    if (!emailVerified) {
+      setSubmitError('Please verify your email address');
+      return false;
+    }
+    
+    if (formData.platforms.length === 0) {
+      setSubmitError('Please select at least one platform');
+      return false;
+    }
+    
+    if (!formData.whyRepresent.trim() || formData.whyRepresent.trim().length < 50) {
+      setSubmitError('Please provide a thoughtful answer (at least 50 characters) explaining why you want to represent 2SG');
+      return false;
+    }
+    
+    // CAPTCHA check
+    if (captchaAnswer !== captchaQuestion.answer.toString()) {
+      setSubmitError('Please solve the math problem correctly');
+      return false;
+    }
+    
+    // Check for previous submission
+    const hasRecentSubmission = await checkPreviousSubmission();
+    if (hasRecentSubmission) {
+      setSubmitError('You have already submitted an application recently. Please wait 30 days before submitting again.');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!(await validateForm())) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitError('');
+    
+    try {
+      // Store application in database
+      const { data, error } = await supabase
+        .from('ambassador_applications')
+        .insert({
+          user_id: user?.id || null,
+          full_name: formData.fullName,
+          current_role: formData.currentRole,
+          username: formData.username,
+          email: formData.email,
+          platforms: formData.platforms,
+          brand_name: formData.brandName || null,
+          why_represent: formData.whyRepresent,
+          status: 'pending', // Requires manual review
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        // Create table if it doesn't exist (for development)
+        console.error('Error submitting application:', error);
+        setSubmitError('Error submitting application. Please try again later.');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      setSubmitSuccess(true);
+      setIsSubmitting(false);
+      
+      // Reset form
+      setFormData({
+        fullName: '',
+        currentRole: '',
+        username: '',
+        email: '',
+        platforms: [],
+        brandName: '',
+        whyRepresent: '',
+        honeypot: ''
+      });
+      setEmailVerified(false);
+      setVerificationCode('');
+      setCaptchaAnswer('');
+      
+      // Generate new CAPTCHA
+      const num1 = Math.floor(Math.random() * 10) + 1;
+      const num2 = Math.floor(Math.random() * 10) + 1;
+      setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+      
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      setSubmitError('An unexpected error occurred. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
 
   // Update theme every 2 hours
   useEffect(() => {
@@ -117,14 +337,46 @@ export function AmbassadorThumbnail() {
           </p>
 
           {/* Application Form */}
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot Field - Hidden from humans, bots will fill */}
+            <input
+              type="text"
+              name="website"
+              value={formData.honeypot}
+              onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            
+            {/* Success Message */}
+            {submitSuccess && (
+              <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: '#10b98120', borderColor: '#10b981', borderWidth: '1px' }}>
+                <p className="text-sm" style={{ color: '#10b981' }}>
+                  ✓ Application submitted successfully! Your application is now pending manual review by the GoSat team. You will receive an email notification once your application has been reviewed.
+                </p>
+              </div>
+            )}
+            
+            {/* Error Message */}
+            {submitError && (
+              <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: '#ef444420', borderColor: '#ef4444', borderWidth: '1px' }}>
+                <p className="text-sm" style={{ color: '#ef4444' }}>{submitError}</p>
+              </div>
+            )}
+            
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>Full Name</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
+                Full Name <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input 
                 type="text" 
+                required
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
                 placeholder="Enter your full name"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 style={{
                   backgroundColor: currentTheme.cardBg,
                   borderColor: currentTheme.cardBorder,
@@ -140,12 +392,96 @@ export function AmbassadorThumbnail() {
                 }}
               />
             </div>
+            
+            {/* Email with Verification */}
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
+                Email Address <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <div className="flex gap-2">
+                <input 
+                  type="email" 
+                  required
+                  className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                  placeholder="your.email@example.com"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setEmailVerified(false);
+                  }}
+                  style={{
+                    backgroundColor: currentTheme.cardBg,
+                    borderColor: currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${currentTheme.accent}40`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                />
+                {!emailVerified && (
+                  <button
+                    type="button"
+                    onClick={sendVerificationCode}
+                    className="px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{
+                      backgroundColor: currentTheme.primaryButton,
+                      color: currentTheme.textPrimary,
+                    }}
+                  >
+                    Send Code
+                  </button>
+                )}
+              </div>
+              
+              {/* Email Verification Code Input */}
+              {!emailVerified && generatedCode && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    className="flex-1 px-4 py-2 border rounded-lg"
+                    placeholder="Enter 6-digit verification code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    style={{
+                      backgroundColor: currentTheme.cardBg,
+                      borderColor: currentTheme.cardBorder,
+                      color: currentTheme.textPrimary,
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyEmailCode}
+                    className="px-4 py-2 rounded-lg text-sm font-medium"
+                    style={{
+                      backgroundColor: currentTheme.accent,
+                      color: currentTheme.textPrimary,
+                    }}
+                  >
+                    Verify
+                  </button>
+                </div>
+              )}
+              
+              {emailVerified && (
+                <p className="text-xs mt-1" style={{ color: '#10b981' }}>✓ Email verified</p>
+              )}
+            </div>
 
             {/* Current 2SG Role */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>Current 2SG Role</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
+                Current 2SG Role <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select 
+                required
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                value={formData.currentRole}
+                onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
                 style={{
                   backgroundColor: currentTheme.cardBg,
                   borderColor: currentTheme.cardBorder,
@@ -160,6 +496,7 @@ export function AmbassadorThumbnail() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
+                <option value="">Select your role</option>
                 <option>Sower</option>
                 <option>Grower</option>
                 <option>Bestower</option>
@@ -172,7 +509,9 @@ export function AmbassadorThumbnail() {
 
             {/* Desired Username */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>Desired Username</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
+                Desired Username <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <div className="flex items-center">
                 <span 
                   className="px-4 py-2 border border-r-0 rounded-l-lg font-mono"
@@ -184,8 +523,11 @@ export function AmbassadorThumbnail() {
                 >s2g@</span>
                 <input 
                   type="text" 
+                  required
                   className="flex-1 px-4 py-2 border rounded-r-lg focus:ring-2 focus:border-transparent"
                   placeholder="gosatqueen"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value.replace(/[^a-zA-Z0-9_-]/g, '') })}
                   style={{
                     backgroundColor: currentTheme.cardBg,
                     borderColor: currentTheme.cardBorder,
@@ -205,13 +547,23 @@ export function AmbassadorThumbnail() {
 
             {/* Platform Checkboxes */}
             <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: currentTheme.textPrimary }}>Platforms</label>
+              <label className="block text-xs font-medium mb-2" style={{ color: currentTheme.textPrimary }}>
+                Platforms <span style={{ color: '#ef4444' }}>*</span> (Select at least one)
+              </label>
               <div className="grid grid-cols-5 gap-2">
                 {['TikTok', 'YouTube', 'Instagram', 'Facebook', 'Twitter/X', 'Discord', 'Snapchat', 'Reddit', 'Telegram', 'WhatsApp'].map((platform) => (
                   <label key={platform} className="flex items-center space-x-2 cursor-pointer">
                     <input 
                       type="checkbox" 
                       className="w-4 h-4 rounded"
+                      checked={formData.platforms.includes(platform)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({ ...formData, platforms: [...formData.platforms, platform] });
+                        } else {
+                          setFormData({ ...formData, platforms: formData.platforms.filter(p => p !== platform) });
+                        }
+                      }}
                       style={{
                         accentColor: currentTheme.accent,
                         borderColor: currentTheme.cardBorder,
@@ -232,6 +584,8 @@ export function AmbassadorThumbnail() {
                 type="text" 
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
                 placeholder="Enter your brand name"
+                value={formData.brandName}
+                onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
                 style={{
                   backgroundColor: currentTheme.cardBg,
                   borderColor: currentTheme.cardBorder,
@@ -250,11 +604,20 @@ export function AmbassadorThumbnail() {
 
             {/* Why I want to represent 2SG */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>Why I want to represent 2SG</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
+                Why I want to represent 2SG <span style={{ color: '#ef4444' }}>*</span>
+                <span className="text-xs font-normal ml-1" style={{ color: currentTheme.textSecondary }}>
+                  (Minimum 50 characters - be thoughtful and specific)
+                </span>
+              </label>
               <textarea 
-                rows={3}
+                rows={4}
+                required
+                minLength={50}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent resize-none"
-                placeholder="Tell us about your passion for the 2SG community..."
+                placeholder="Tell us about your passion for the 2SG community, your vision, and how you plan to represent us..."
+                value={formData.whyRepresent}
+                onChange={(e) => setFormData({ ...formData, whyRepresent: e.target.value })}
                 style={{
                   backgroundColor: currentTheme.cardBg,
                   borderColor: currentTheme.cardBorder,
@@ -269,13 +632,68 @@ export function AmbassadorThumbnail() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               />
+              <p className="text-xs mt-1" style={{ color: currentTheme.textSecondary }}>
+                {formData.whyRepresent.length}/50 characters minimum
+              </p>
+            </div>
+            
+            {/* Human Verification CAPTCHA */}
+            <div className="p-4 rounded-lg border" style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}>
+              <label className="block text-xs font-medium mb-2" style={{ color: currentTheme.textPrimary }}>
+                Human Verification <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold" style={{ color: currentTheme.textPrimary }}>
+                  {captchaQuestion.num1} + {captchaQuestion.num2} = ?
+                </span>
+                <input
+                  type="text"
+                  required
+                  className="w-24 px-3 py-2 border rounded-lg"
+                  placeholder="Answer"
+                  value={captchaAnswer}
+                  onChange={(e) => setCaptchaAnswer(e.target.value.replace(/\D/g, ''))}
+                  style={{
+                    backgroundColor: currentTheme.cardBg,
+                    borderColor: currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const num1 = Math.floor(Math.random() * 10) + 1;
+                    const num2 = Math.floor(Math.random() * 10) + 1;
+                    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+                    setCaptchaAnswer('');
+                  }}
+                  className="text-xs px-3 py-1 rounded"
+                  style={{
+                    backgroundColor: currentTheme.cardBg,
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.cardBorder,
+                    borderWidth: '1px',
+                  }}
+                >
+                  New Question
+                </button>
+              </div>
             </div>
 
+            {/* Manual Review Notice */}
+            <div className="p-4 rounded-lg border" style={{ backgroundColor: '#fbbf2420', borderColor: '#fbbf24', borderWidth: '1px' }}>
+              <p className="text-xs" style={{ color: '#fbbf24' }}>
+                ⚠️ <strong>Manual Review Process:</strong> All applications are manually reviewed by the GoSat team to ensure quality and authenticity. This process typically takes 3-5 business days. You will receive an email notification once your application has been reviewed.
+              </p>
+            </div>
+            
             {/* Submit Button */}
             <button 
-              className="w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] mb-6"
+              type="submit"
+              disabled={isSubmitting || !emailVerified}
+              className="w-full py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: currentTheme.primaryButton,
+                background: isSubmitting || !emailVerified ? currentTheme.secondaryButton : currentTheme.primaryButton,
                 color: currentTheme.textPrimary,
                 boxShadow: `0 10px 25px -5px ${currentTheme.shadow}`,
                 paddingTop: '1rem',
@@ -288,15 +706,19 @@ export function AmbassadorThumbnail() {
                 justifyContent: 'center',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = currentTheme.primaryButtonHover;
+                if (!isSubmitting && emailVerified) {
+                  e.currentTarget.style.background = currentTheme.primaryButtonHover;
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = currentTheme.primaryButton;
+                if (!isSubmitting && emailVerified) {
+                  e.currentTarget.style.background = currentTheme.primaryButton;
+                }
               }}
             >
-              Submit for GoSat Approval
+              {isSubmitting ? 'Submitting...' : 'Submit for GoSat Approval'}
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
