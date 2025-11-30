@@ -387,7 +387,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
           </button>
 
           {/* Title */}
-          <h2 className="text-6xl font-black text-center mb-6 bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent">
+          <h2 className="text-6xl font-black text-center mb-6 bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent" style={{ marginTop: '-188px' }}>
             Your Progress
           </h2>
 
