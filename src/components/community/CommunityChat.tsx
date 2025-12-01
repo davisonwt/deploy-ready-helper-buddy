@@ -111,7 +111,7 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       return
     }
 
-    // Check if Firebase is configured and user is authenticated
+    // Check if Firebase is configured
     if (!isFirebaseConfigured) {
       toast({
         title: 'Firebase Not Configured',
@@ -121,31 +121,61 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       return
     }
 
+    // Check if db is available
+    if (!db) {
+      toast({
+        title: 'Database Error',
+        description: 'Firebase database is not available. Please refresh the page.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Check if user is authenticated
     if (!firebaseAuth.user) {
       toast({
         title: 'Sign In Required',
-        description: 'Please sign in with Firebase to send messages. Use the Auth button in the header.',
+        description: 'Please sign in with Firebase to send messages. Click the Auth button in the header to sign in.',
         variant: 'destructive',
       })
       return
     }
 
     try {
+      const messageText = newMessage.trim()
+      setNewMessage('') // Clear input immediately for better UX
+      
       await addDoc(collection(db, 'community_chat'), {
-        text: newMessage.trim(),
+        text: messageText,
         authorUID: firebaseAuth.user.uid,
         authorDisplayName: firebaseAuth.user.displayName || firebaseAuth.user.email || 'Anonymous',
         createdAt: serverTimestamp(),
         warningCount: 0,
         isDeleted: false,
       })
-      setNewMessage('')
+      
+      // Success - message will appear via real-time listener
     } catch (error: any) {
+      // Restore message text if send failed
+      setNewMessage(messageText)
+      
       console.error('Error sending message:', error)
-      const errorMessage = error?.message || error?.code || 'Failed to send message'
+      const errorCode = error?.code || ''
+      const errorMessage = error?.message || 'Failed to send message'
+      
+      // Provide specific error messages
+      let userFriendlyMessage = errorMessage
+      if (errorCode === 'permission-denied') {
+        userFriendlyMessage = 'Permission denied. Please check your authentication.'
+      } else if (errorCode === 'unavailable') {
+        userFriendlyMessage = 'Service unavailable. Please check your internet connection.'
+      } else if (errorCode.includes('auth')) {
+        userFriendlyMessage = 'Authentication error. Please sign in again.'
+      }
+      
       toast({
         title: 'Error Sending Message',
-        description: errorMessage,
+        description: userFriendlyMessage,
         variant: 'destructive',
       })
     }
