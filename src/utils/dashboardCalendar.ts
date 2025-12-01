@@ -112,9 +112,6 @@ export function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDa
     }
   }
   
-  // Weekday: Year starts on "Day 4" (weekday 4)
-  const weekDay = ((totalDays % 7) + 4) % 7 || 7;
-  
   // Calculate day of year
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   let dayOfYear = 0;
@@ -122,6 +119,14 @@ export function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDa
     dayOfYear += monthDays[i];
   }
   dayOfYear += day;
+  
+  // Weekday: Fixed pattern - each year has 364 days (52 weeks), so the pattern repeats exactly
+  // Calculate weekday based on day of year (1-364) within the current year, not total days from epoch
+  // Formula: weekday = ((dayOfYear - 1) + startingWeekday - 1) % 7 + 1
+  // Starting weekday for Year 6028 Month 1 Day 1 = 4 (ensures Month 9 Day 1 = Day 243 = Day 1 of week)
+  // Verification: Month 9 Day 1 = Day 243, (4 + 242) % 7 = (4 + 4) % 7 = 1 ✓
+  const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
+  const weekDay = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
   
   return {
     year,

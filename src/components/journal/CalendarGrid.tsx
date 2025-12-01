@@ -65,17 +65,26 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
 
     const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
     
-    // Get the first day of the YHWH month
-    const firstDayGregorian = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, 1);
-    const firstDayYhwh = calculateCreatorDate(firstDayGregorian);
-    
     // Generate all days in the YHWH month
+    const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
     for (let day = 1; day <= daysInMonth; day++) {
       const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
       // Use noon to avoid sunrise time issues when calculating YHWH date
       const gregorianAtNoon = new Date(gregorianDate);
       gregorianAtNoon.setHours(12, 0, 0, 0);
       const yhwhDate = calculateCreatorDate(gregorianAtNoon);
+      
+      // Calculate day of year for fixed weekday pattern
+      let dayOfYear = 0;
+      for (let i = 0; i < currentYhwhMonth - 1; i++) {
+        dayOfYear += monthDays[i];
+      }
+      dayOfYear += day;
+      
+      // Override weekday with fixed pattern calculation (same for all years)
+      const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
+      const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
+      const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
       
       // Find entry for this date
       const entry = entries.find(e => {
@@ -85,7 +94,7 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
 
       days.push({
         gregorianDate, // Keep original for display
-        yhwhDate, // This should now be correct with noon time
+        yhwhDate: yhwhDateWithFixedWeekday, // Use fixed weekday pattern
         hasEntry: !!entry,
         entry,
       });
@@ -95,16 +104,22 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
   }, [currentYhwhMonth, currentYhwhYear, entries]);
 
   // Get first day of month for grid positioning using YHWH calendar
-  // Calculate the weekday directly from the YHWH date calculation
-  // Month 9 Day 1 = November 17, 2025 = Day 1 of week
-  const firstDayGregorian = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, 1);
-  // Use noon to avoid sunrise time issues
-  const firstDayAtNoon = new Date(firstDayGregorian);
-  firstDayAtNoon.setHours(12, 0, 0, 0);
-  const firstYhwhDate = calculateCreatorDate(firstDayAtNoon);
+  // Calculate weekday using fixed pattern based on day of year
+  // Each year has 364 days (52 weeks), so the weekday pattern repeats exactly every year
+  // Year 6028 Month 1 Day 1 starts on Day 4
+  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  let dayOfYearForFirstDay = 0;
+  for (let i = 0; i < currentYhwhMonth - 1; i++) {
+    dayOfYearForFirstDay += monthDays[i];
+  }
+  dayOfYearForFirstDay += 1; // Day 1 of the month
+  
+  // Fixed weekday calculation: same pattern every year
+  const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
+  const firstDayWeekday = ((dayOfYearForFirstDay - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
   // Convert YHWH weekday (1-7, where 7 is Shabbat) to grid position (0-6)
   // YHWH Day 1 = grid position 0, Day 2 = 1, ..., Shabbat (7) = 6
-  const firstDayOfMonth = (firstYhwhDate.weekDay - 1) % 7;
+  const firstDayOfMonth = (firstDayWeekday - 1) % 7;
 
   // Navigate YHWH months
   const goToPreviousMonth = () => {
