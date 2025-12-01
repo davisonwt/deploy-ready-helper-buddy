@@ -11,14 +11,23 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "./config";
+import { auth, isFirebaseConfigured } from "./config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "./config";
+
+// Check if Firebase is configured before using auth
+if (!isFirebaseConfigured || !auth) {
+  console.warn("Firebase Auth is not configured. Auth features will be disabled.");
+}
 
 /**
  * Auto-sign in anonymously (called on first visit)
  */
 export async function signInAnonymouslyUser() {
+  if (!isFirebaseConfigured || !auth) {
+    return { success: false, error: "Firebase is not configured" };
+  }
+  
   try {
     const userCredential = await signInAnonymously(auth);
     const user = userCredential.user;
@@ -41,6 +50,10 @@ export async function signInAnonymouslyUser() {
  * Create account with email and password
  */
 export async function createAccount(email, password, displayName = null) {
+  if (!isFirebaseConfigured || !auth) {
+    return { success: false, error: "Firebase is not configured" };
+  }
+  
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
@@ -69,6 +82,10 @@ export async function createAccount(email, password, displayName = null) {
  * Sign in with email and password
  */
 export async function signInWithEmail(email, password) {
+  if (!isFirebaseConfigured || !auth) {
+    return { success: false, error: "Firebase is not configured" };
+  }
+  
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, user: userCredential.user };
@@ -82,6 +99,10 @@ export async function signInWithEmail(email, password) {
  * Sign out current user
  */
 export async function signOutUser() {
+  if (!isFirebaseConfigured || !auth) {
+    return { success: false, error: "Firebase is not configured" };
+  }
+  
   try {
     await signOut(auth);
     return { success: true };
@@ -118,6 +139,11 @@ export function getCurrentUser() {
  * Subscribe to auth state changes
  */
 export function onAuthStateChange(callback) {
+  if (!isFirebaseConfigured || !auth) {
+    // Return a no-op unsubscribe function if Firebase is not configured
+    callback(null);
+    return () => {};
+  }
   return onAuthStateChanged(auth, callback);
 }
 
