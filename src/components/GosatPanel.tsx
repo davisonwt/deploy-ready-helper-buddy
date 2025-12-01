@@ -110,3 +110,4 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
   )
 }
 
+

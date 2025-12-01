@@ -101,7 +101,7 @@ export default function AuthButton() {
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
               <User className="h-4 w-4 mr-2" />
-              Account
+              Remnant Wall
             </Button>
           </DialogTrigger>
           <DialogContent>
