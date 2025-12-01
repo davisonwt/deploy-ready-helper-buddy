@@ -40,49 +40,49 @@ const hasPlaceholders =
   firebaseConfig.projectId.includes("YOUR_PROJECT_ID") ||
   firebaseConfig.appId.includes("YOUR_APP_ID");
 
+let app = null;
+let firebaseConfigured = false;
+
 if (hasPlaceholders) {
-  console.error(`
-    ⚠️ FIREBASE CONFIG ERROR ⚠️
+  console.warn(`
+    ⚠️ FIREBASE NOT CONFIGURED ⚠️
     
-    You need to replace the placeholder values in:
-    src/integrations/firebase/config.js
+    Firebase features are disabled because placeholder values are still in use.
     
-    Get your Firebase config from:
-    https://console.firebase.google.com/ → Project Settings → Your apps → Web
-    
-    Current error: Invalid API key because placeholders are still in use.
+    To enable Firebase:
+    1. Go to: https://console.firebase.google.com/
+    2. Create/select project → Project Settings → Your apps → Web
+    3. Copy your Firebase config values
+    4. Update: src/integrations/firebase/config.js
     
     Replace these values:
     - apiKey: "YOUR_API_KEY_HERE" → Your actual API key
     - projectId: "YOUR_PROJECT_ID" → Your actual project ID
     - appId: "YOUR_APP_ID" → Your actual app ID
     - etc.
+    
+    The app will continue to work without Firebase, but Firebase features
+    (authentication, Remnant Wall, etc.) will be disabled.
   `);
-  
-  // Don't initialize Firebase with invalid config
-  throw new Error(
-    "Firebase config contains placeholder values. " +
-    "Please update src/integrations/firebase/config.js with your actual Firebase credentials. " +
-    "See console for details."
-  );
+} else {
+  // Initialize Firebase only if config is valid
+  try {
+    app = initializeApp(firebaseConfig);
+    firebaseConfigured = true;
+    console.log("✅ Firebase initialized successfully");
+  } catch (error) {
+    console.error("Firebase initialization error:", error);
+    console.warn("Firebase features will be disabled. App will continue to work.");
+  }
 }
 
-// Initialize Firebase
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  throw new Error(
-    "Failed to initialize Firebase. " +
-    "Please check your Firebase config values in src/integrations/firebase/config.js"
-  );
-}
+// Export a flag to check if Firebase is configured
+export const isFirebaseConfigured = firebaseConfigured;
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Initialize Firebase services (only if app is initialized)
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const storage = app ? getStorage(app) : null;
 
 // Connect to emulators in development (optional)
 if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {

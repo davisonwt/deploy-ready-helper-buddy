@@ -12,6 +12,7 @@ import {
   signOutUser,
   getCurrentUser,
 } from "@/integrations/firebase/auth";
+import { isFirebaseConfigured } from "@/integrations/firebase/config";
 
 export function useFirebaseAuth() {
   const [user, setUser] = useState(null);
@@ -19,6 +20,11 @@ export function useFirebaseAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     // Subscribe to auth state changes
     const unsubscribe = onAuthStateChange((firebaseUser) => {
       setUser(firebaseUser);
@@ -31,6 +37,10 @@ export function useFirebaseAuth() {
 
   // Auto-sign in anonymously if not authenticated
   const autoSignIn = async () => {
+    if (!isFirebaseConfigured) {
+      return { success: false, error: "Firebase is not configured" };
+    }
+    
     if (!user) {
       const result = await signInAnonymouslyUser();
       return result;
