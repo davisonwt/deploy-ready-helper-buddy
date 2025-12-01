@@ -29,7 +29,7 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
   // Calculate days from epoch
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   
-  // Days from epoch year start
+  // Days from epoch year start (each year has 364 days)
   let daysFromEpoch = (yhwhYear - 6028) * 364;
   
   // Add days from months before current month
@@ -37,10 +37,11 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
     daysFromEpoch += monthDays[i];
   }
   
-  // Add days in current month
+  // Add days in current month (subtract 1 because Day 1 is the first day, so 0 days added)
   daysFromEpoch += yhwhDay - 1;
   
   // Calculate Gregorian date
+  // Use UTC to avoid timezone issues, then convert to local
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
   
@@ -71,7 +72,10 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
     // Generate all days in the YHWH month
     for (let day = 1; day <= daysInMonth; day++) {
       const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
-      const yhwhDate = calculateCreatorDate(gregorianDate);
+      // Use noon to avoid sunrise time issues when calculating YHWH date
+      const gregorianAtNoon = new Date(gregorianDate);
+      gregorianAtNoon.setHours(12, 0, 0, 0);
+      const yhwhDate = calculateCreatorDate(gregorianAtNoon);
       
       // Find entry for this date
       const entry = entries.find(e => {
@@ -80,8 +84,8 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
       });
 
       days.push({
-        gregorianDate,
-        yhwhDate,
+        gregorianDate, // Keep original for display
+        yhwhDate, // This should now be correct with noon time
         hasEntry: !!entry,
         entry,
       });
@@ -91,8 +95,13 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
   }, [currentYhwhMonth, currentYhwhYear, entries]);
 
   // Get first day of month for grid positioning using YHWH calendar
+  // Calculate the weekday directly from the YHWH date calculation
+  // Month 9 Day 1 = November 17, 2025 = Day 1 of week
   const firstDayGregorian = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, 1);
-  const firstYhwhDate = calculateCreatorDate(firstDayGregorian);
+  // Use noon to avoid sunrise time issues
+  const firstDayAtNoon = new Date(firstDayGregorian);
+  firstDayAtNoon.setHours(12, 0, 0, 0);
+  const firstYhwhDate = calculateCreatorDate(firstDayAtNoon);
   // Convert YHWH weekday (1-7, where 7 is Shabbat) to grid position (0-6)
   // YHWH Day 1 = grid position 0, Day 2 = 1, ..., Shabbat (7) = 6
   const firstDayOfMonth = (firstYhwhDate.weekDay - 1) % 7;
