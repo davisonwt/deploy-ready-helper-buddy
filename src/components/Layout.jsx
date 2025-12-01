@@ -139,7 +139,7 @@ function Layout({ children }) {
   const groupedNavigation = [
     {
       name: "Let It Rain",
-      icon: "🌧️", // Using emoji instead of Lucide icon
+      icon: Cloud, // Using Cloud icon to match My Garden button style
       className: 'tithing-tour',
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
@@ -308,7 +308,6 @@ function Layout({ children }) {
               {groupedNavigation.map((group) => {
                 const Icon = group.icon
                 const isGroupHighlighted = isGroupActive(group)
-                const isEmojiIcon = typeof Icon === 'string'
                 
                 return (
                   <DropdownMenu key={group.name}>
@@ -342,13 +341,8 @@ function Layout({ children }) {
                       }
                     }}
                       >
-                        {isEmojiIcon ? (
-                          <span className="text-base mr-1">{Icon}</span>
-                        ) : (
-                          <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
-                        )}
+                        <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
                         <span className="truncate text-center leading-tight">{group.name}</span>
-                        <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent 
