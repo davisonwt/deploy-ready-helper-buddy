@@ -615,14 +615,33 @@ Meditate on the significance of this day in the Creator's calendar. What does th
 
   return (
     <>
-      <div className="fixed inset-0 z-50 pointer-events-auto overflow-hidden">
+      <style>{`
+        .day-entry-modal-scroll::-webkit-scrollbar {
+          width: 12px;
+        }
+        .day-entry-modal-scroll::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 6px;
+        }
+        .day-entry-modal-scroll::-webkit-scrollbar-thumb {
+          background-color: rgba(255, 255, 255, 0.5);
+          border-radius: 6px;
+          border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+        .day-entry-modal-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(255, 255, 255, 0.7);
+        }
+      `}</style>
+      <div className="fixed inset-0 z-50 pointer-events-auto">
         <div
           onClick={closePanel}
           className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
         <div 
-          className="absolute top-0 left-0 right-0 bottom-0 w-full max-w-4xl mx-auto shadow-2xl transform transition-all duration-1000 pointer-events-auto flex flex-col h-screen max-h-screen overflow-hidden"
+          className="absolute top-0 left-0 right-0 bottom-0 w-full max-w-4xl mx-auto shadow-2xl transform transition-all duration-1000 pointer-events-auto flex flex-col"
           style={{
+            height: '100vh',
+            maxHeight: '100vh',
             background: isNightMode 
               ? 'linear-gradient(to bottom right, rgb(2 6 23), rgb(30 27 75), rgb(30 27 75))'
               : `linear-gradient(to bottom right, ${currentTheme.colors[0]}, ${currentTheme.colors[1]}, ${currentTheme.colors[2]})`
@@ -643,29 +662,13 @@ Meditate on the significance of this day in the Creator's calendar. What does th
           
           {/* Scrollable content area - Takes remaining space */}
           <div 
-            className="flex-1 overflow-y-auto overscroll-contain scroll-smooth min-h-0"
+            className="flex-1 overflow-y-auto day-entry-modal-scroll min-h-0"
             style={{
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent'
+              scrollbarColor: 'rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.3)'
             }}
           >
-            <style>{`
-              .day-entry-scroll::-webkit-scrollbar {
-                width: 10px;
-              }
-              .day-entry-scroll::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 5px;
-              }
-              .day-entry-scroll::-webkit-scrollbar-thumb {
-                background-color: rgba(255, 255, 255, 0.4);
-                border-radius: 5px;
-              }
-              .day-entry-scroll::-webkit-scrollbar-thumb:hover {
-                background-color: rgba(255, 255, 255, 0.6);
-              }
-            `}</style>
-            <div className="day-entry-scroll p-8 pb-32 space-y-6 text-white">
+            <div className="p-8 pb-8 space-y-6 text-white">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
