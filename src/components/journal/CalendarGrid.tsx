@@ -17,7 +17,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Shabbat'];
 
 const YHWH_MONTHS = [
   'Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6',
@@ -62,8 +62,13 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
     return days;
   }, [currentMonth, currentYear, entries]);
 
-  // Get first day of month for grid positioning
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  // Get first day of month for grid positioning using YHWH calendar
+  // Find the YHWH date for the first day of the Gregorian month
+  const firstGregorianDay = new Date(currentYear, currentMonth, 1);
+  const firstYhwhDate = calculateCreatorDate(firstGregorianDay);
+  // Convert YHWH weekday (1-7, where 7 is Shabbat) to grid position (0-6)
+  // YHWH Day 1 = grid position 0, Day 2 = 1, ..., Shabbat (7) = 6
+  const firstDayOfMonth = (firstYhwhDate.weekDay - 1) % 7;
 
   // Navigate months
   const goToPreviousMonth = () => {
