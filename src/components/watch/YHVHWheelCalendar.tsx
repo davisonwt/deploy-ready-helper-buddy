@@ -32,6 +32,29 @@ const getCurrentLeader = (dayOfYear: number) => {
   return 3; // Nar'el
 };
 
+// Calculate day and night parts based on Enoch calendar (day of year)
+// Based on Book of Enoch: day/night lengths vary throughout the year
+// Total: 18 parts per day (dayParts + nightParts = 18)
+// Equinox: day = 9, night = 9
+// Longest day: day = 12, night = 6
+// Shortest day: day = 6, night = 12
+const calculateDayNightParts = (dayOfYear: number): { dayParts: number; nightParts: number } => {
+  // Creator year has 364 days
+  // Use sinusoidal function to approximate the gradual change
+  // Day 91 (end of first quarter) = longest day
+  // Day 273 (end of third quarter) = shortest day
+  // Day 182 (middle) = equinox
+  
+  const normalizedDay = ((dayOfYear - 91) / 182) * Math.PI * 2; // Normalize to 0-2π
+  const variation = Math.sin(normalizedDay); // -1 to 1
+  
+  // Base: 9 parts each, variation: ±3 parts
+  const dayParts = Math.round(9 + variation * 3);
+  const nightParts = 18 - dayParts;
+  
+  return { dayParts, nightParts };
+};
+
 // Get current day part (0-3) based on part of day (1-18)
 const getDayPartIndex = (partOfDay: number): number => {
   // Day: parts 1-4, Evening: parts 5-8, Night: parts 9-13, Morning: parts 14-18
@@ -60,26 +83,26 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     leadersInner: size * 0.36,
     monthDaysOuter: size * 0.35,
     monthDaysInner: size * 0.28,
-    weeksOuter: size * 0.27,
+    weeksOuter: size * 0.27, // Yellow wheel (364 dots)
     weeksInner: size * 0.22,
     daysOuter: size * 0.21,
     daysInner: size * 0.16,
-    partsOuter: size * 0.15,
-    partsInner: size * 0.08,
+    dayPartsOuter: size * 0.15, // New 18-part wheel
+    dayPartsInner: size * 0.08,
   }), [size]);
 
   // Current leader index (0-3)
   const currentLeaderIndex = getCurrentLeader(dayOfYear);
   
-  // Current day part index (0-3)
-  const currentDayPartIndex = getDayPartIndex(partOfDay);
+  // Calculate day/night parts for current day
+  const { dayParts, nightParts } = calculateDayNightParts(dayOfYear);
   
   // Rotation angles
   const sunRotation = -(dayOfYear / 366) * 360;
   const leaderRotation = -(currentLeaderIndex * 90);
   const weeksRotation = -(dayOfYear / 364) * 360;
   const daysRotation = -((dayOfWeek - 1) / 7) * 360;
-  const partsRotation = -(currentDayPartIndex / 4) * 360;
+  const dayPartsRotation = -((partOfDay - 1) / 18) * 360;
 
   // Generate 366 tick marks for sun circle
   const sunTicks = useMemo(() => {
@@ -383,138 +406,312 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             strokeWidth={radii.daysOuter - radii.daysInner}
           />
           
-          {/* 7 day segments */}
+          {/* 7 day segments with 4 sections each (Day, Evening, Night, Morning) */}
           {['1', '2', '3', '4', '5', '6', 'שבת'].map((day, i) => {
             const dayNumber = i + 1;
+            const daySegmentAngle = (360 / 7) * (Math.PI / 180);
             const startAngle = (i * (360 / 7) - 90) * (Math.PI / 180);
-            const midAngle = ((i + 0.5) * (360 / 7) - 90) * (Math.PI / 180);
-            const textRadius = (radii.daysOuter + radii.daysInner) / 2;
-            const x = center + Math.cos(midAngle) * textRadius;
-            const y = center + Math.sin(midAngle) * textRadius;
             const isCurrentDay = dayNumber === dayOfWeek;
-            // Shabbat (day 7) should only be yellow when it's the current day
             const isSabbath = dayNumber === 7 && dayOfWeek === 7;
             
-            // Calculate text rotation to align with curve
-            const textRotation = (midAngle * 180 / Math.PI) + 90;
+            // Calculate proportions for the 4 sections based on day/night parts
+            // Day: dayParts, Evening: 1 part, Night: nightParts, Morning: 1 part
+            // Total: dayParts + 1 + nightParts + 1 = 18 + 2 = 20 (we'll normalize to 18)
+            const eveningParts = 1;
+            const morningParts = 1;
+            const totalParts = dayParts + eveningParts + nightParts + morningParts;
+            
+            // Normalize to fit within the day segment
+            const dayProportion = dayParts / totalParts;
+            const eveningProportion = eveningParts / totalParts;
+            const nightProportion = nightParts / totalParts;
+            const morningProportion = morningParts / totalParts;
+            
+            // Calculate section angles
+            const dayAngle = daySegmentAngle * dayProportion;
+            const eveningAngle = daySegmentAngle * eveningProportion;
+            const nightAngle = daySegmentAngle * nightProportion;
+            const morningAngle = daySegmentAngle * morningProportion;
+            
+            // Calculate cumulative angles for each section
+            const dayStartAngle = startAngle;
+            const dayEndAngle = startAngle + dayAngle;
+            const eveningStartAngle = dayEndAngle;
+            const eveningEndAngle = eveningStartAngle + eveningAngle;
+            const nightStartAngle = eveningEndAngle;
+            const nightEndAngle = nightStartAngle + nightAngle;
+            const morningStartAngle = nightEndAngle;
+            const morningEndAngle = morningStartAngle + morningAngle;
+            
+            // Section colors
+            const dayColor = '#fbbf24'; // Golden/yellow for day
+            const eveningColor = '#f97316'; // Orange for evening
+            const nightColor = '#1e3a5f'; // Dark blue for night
+            const morningColor = '#60a5fa'; // Light blue for morning
             
             return (
               <g key={i}>
-                {/* Day arc segment */}
-                <path
-                  d={`
-                    M ${center + Math.cos(startAngle) * radii.daysOuter} ${center + Math.sin(startAngle) * radii.daysOuter}
-                    A ${radii.daysOuter} ${radii.daysOuter} 0 0 1 ${center + Math.cos(startAngle + (Math.PI * 2 / 7)) * radii.daysOuter} ${center + Math.sin(startAngle + (Math.PI * 2 / 7)) * radii.daysOuter}
-                  `}
-                  fill="none"
+                {/* Lines extending from center to yellow wheel (weeks circle) to form pie slices */}
+                <line
+                  x1={center}
+                  y1={center}
+                  x2={center + Math.cos(startAngle) * radii.weeksOuter}
+                  y2={center + Math.sin(startAngle) * radii.weeksOuter}
                   stroke={isCurrentDay ? '#ef4444' : isSabbath ? '#fbbf24' : '#374151'}
-                  strokeWidth={radii.daysOuter - radii.daysInner}
-                  strokeLinecap="butt"
+                  strokeWidth={1}
+                  opacity={0.3}
+                />
+                {/* Additional line at end of day segment */}
+                <line
+                  x1={center}
+                  y1={center}
+                  x2={center + Math.cos(startAngle + daySegmentAngle) * radii.weeksOuter}
+                  y2={center + Math.sin(startAngle + daySegmentAngle) * radii.weeksOuter}
+                  stroke={isCurrentDay ? '#ef4444' : isSabbath ? '#fbbf24' : '#374151'}
+                  strokeWidth={1}
+                  opacity={0.3}
                 />
                 
-                {/* Day label - centered in each segment */}
-                {dayNumber === 7 ? (
-                  // Shabbat: Show both Hebrew and English
-                  <g transform={`rotate(${textRotation}, ${x}, ${y})`}>
+                {/* Day section */}
+                <path
+                  d={`
+                    M ${center + Math.cos(dayStartAngle) * radii.daysOuter} ${center + Math.sin(dayStartAngle) * radii.daysOuter}
+                    A ${radii.daysOuter} ${radii.daysOuter} 0 ${dayAngle > Math.PI ? 1 : 0} 1 ${center + Math.cos(dayEndAngle) * radii.daysOuter} ${center + Math.sin(dayEndAngle) * radii.daysOuter}
+                    L ${center + Math.cos(dayEndAngle) * radii.daysInner} ${center + Math.sin(dayEndAngle) * radii.daysInner}
+                    A ${radii.daysInner} ${radii.daysInner} 0 ${dayAngle > Math.PI ? 1 : 0} 0 ${center + Math.cos(dayStartAngle) * radii.daysInner} ${center + Math.sin(dayStartAngle) * radii.daysInner}
+                    Z
+                  `}
+                  fill={dayColor}
+                  fillOpacity={isCurrentDay ? 0.8 : 0.4}
+                  stroke={dayColor}
+                  strokeWidth={isCurrentDay ? 2 : 1}
+                />
+                {(() => {
+                  const sectionMidAngle = dayStartAngle + dayAngle / 2;
+                  const labelRadius = (radii.daysOuter + radii.daysInner) / 2;
+                  const labelX = center + Math.cos(sectionMidAngle) * labelRadius;
+                  const labelY = center + Math.sin(sectionMidAngle) * labelRadius;
+                  return (
                     <text
-                      x={x}
-                      y={y - size * 0.01}
+                      x={labelX}
+                      y={labelY}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
-                      fontSize={size * 0.018}
-                      fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                      fill={isCurrentDay ? '#fff' : '#9ca3af'}
+                      fontSize={size * 0.012}
+                      fontWeight={isCurrentDay ? 'bold' : 'normal'}
+                      transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                    >
+                      Day
+                    </text>
+                  );
+                })()}
+                
+                {/* Evening section */}
+                <path
+                  d={`
+                    M ${center + Math.cos(eveningStartAngle) * radii.daysOuter} ${center + Math.sin(eveningStartAngle) * radii.daysOuter}
+                    A ${radii.daysOuter} ${radii.daysOuter} 0 ${eveningAngle > Math.PI ? 1 : 0} 1 ${center + Math.cos(eveningEndAngle) * radii.daysOuter} ${center + Math.sin(eveningEndAngle) * radii.daysOuter}
+                    L ${center + Math.cos(eveningEndAngle) * radii.daysInner} ${center + Math.sin(eveningEndAngle) * radii.daysInner}
+                    A ${radii.daysInner} ${radii.daysInner} 0 ${eveningAngle > Math.PI ? 1 : 0} 0 ${center + Math.cos(eveningStartAngle) * radii.daysInner} ${center + Math.sin(eveningStartAngle) * radii.daysInner}
+                    Z
+                  `}
+                  fill={eveningColor}
+                  fillOpacity={isCurrentDay ? 0.8 : 0.4}
+                  stroke={eveningColor}
+                  strokeWidth={isCurrentDay ? 2 : 1}
+                />
+                
+                {/* Night section */}
+                <path
+                  d={`
+                    M ${center + Math.cos(nightStartAngle) * radii.daysOuter} ${center + Math.sin(nightStartAngle) * radii.daysOuter}
+                    A ${radii.daysOuter} ${radii.daysOuter} 0 ${nightAngle > Math.PI ? 1 : 0} 1 ${center + Math.cos(nightEndAngle) * radii.daysOuter} ${center + Math.sin(nightEndAngle) * radii.daysOuter}
+                    L ${center + Math.cos(nightEndAngle) * radii.daysInner} ${center + Math.sin(nightEndAngle) * radii.daysInner}
+                    A ${radii.daysInner} ${radii.daysInner} 0 ${nightAngle > Math.PI ? 1 : 0} 0 ${center + Math.cos(nightStartAngle) * radii.daysInner} ${center + Math.sin(nightStartAngle) * radii.daysInner}
+                    Z
+                  `}
+                  fill={nightColor}
+                  fillOpacity={isCurrentDay ? 0.8 : 0.4}
+                  stroke={nightColor}
+                  strokeWidth={isCurrentDay ? 2 : 1}
+                />
+                {(() => {
+                  const sectionMidAngle = nightStartAngle + nightAngle / 2;
+                  const labelRadius = (radii.daysOuter + radii.daysInner) / 2;
+                  const labelX = center + Math.cos(sectionMidAngle) * labelRadius;
+                  const labelY = center + Math.sin(sectionMidAngle) * labelRadius;
+                  return (
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isCurrentDay ? '#fff' : '#9ca3af'}
+                      fontSize={size * 0.012}
+                      fontWeight={isCurrentDay ? 'bold' : 'normal'}
+                      transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                    >
+                      Night
+                    </text>
+                  );
+                })()}
+                
+                {/* Morning section */}
+                <path
+                  d={`
+                    M ${center + Math.cos(morningStartAngle) * radii.daysOuter} ${center + Math.sin(morningStartAngle) * radii.daysOuter}
+                    A ${radii.daysOuter} ${radii.daysOuter} 0 ${morningAngle > Math.PI ? 1 : 0} 1 ${center + Math.cos(morningEndAngle) * radii.daysOuter} ${center + Math.sin(morningEndAngle) * radii.daysOuter}
+                    L ${center + Math.cos(morningEndAngle) * radii.daysInner} ${center + Math.sin(morningEndAngle) * radii.daysInner}
+                    A ${radii.daysInner} ${radii.daysInner} 0 ${morningAngle > Math.PI ? 1 : 0} 0 ${center + Math.cos(morningStartAngle) * radii.daysInner} ${center + Math.sin(morningStartAngle) * radii.daysInner}
+                    Z
+                  `}
+                  fill={morningColor}
+                  fillOpacity={isCurrentDay ? 0.8 : 0.4}
+                  stroke={morningColor}
+                  strokeWidth={isCurrentDay ? 2 : 1}
+                />
+                {(() => {
+                  const sectionMidAngle = morningStartAngle + morningAngle / 2;
+                  const labelRadius = (radii.daysOuter + radii.daysInner) / 2;
+                  const labelX = center + Math.cos(sectionMidAngle) * labelRadius;
+                  const labelY = center + Math.sin(sectionMidAngle) * labelRadius;
+                  return (
+                    <text
+                      x={labelX}
+                      y={labelY}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isCurrentDay ? '#fff' : '#9ca3af'}
+                      fontSize={size * 0.012}
+                      fontWeight={isCurrentDay ? 'bold' : 'normal'}
+                      transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                    >
+                      Morning
+                    </text>
+                  );
+                })()}
+                
+                {/* Day number label - centered in the day segment */}
+                {(() => {
+                  const daySectionMidAngle = startAngle + dayAngle / 2;
+                  const textRadius = (radii.daysOuter + radii.daysInner) / 2;
+                  const x = center + Math.cos(daySectionMidAngle) * textRadius;
+                  const y = center + Math.sin(daySectionMidAngle) * textRadius;
+                  const textRotation = (daySectionMidAngle * 180 / Math.PI) + 90;
+                  
+                  return dayNumber === 7 ? (
+                    // Shabbat: Show both Hebrew and English
+                    <g transform={`rotate(${textRotation}, ${x}, ${y})`}>
+                      <text
+                        x={x}
+                        y={y - size * 0.01}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
+                        fontSize={size * 0.018}
+                        fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                      >
+                        שבת
+                      </text>
+                      <text
+                        x={x}
+                        y={y + size * 0.01}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
+                        fontSize={size * 0.018}
+                        fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                      >
+                        Shabbat
+                      </text>
+                    </g>
+                  ) : (
+                    // Regular days: Show number centered
+                    <text
+                      x={x}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isCurrentDay ? '#fff' : '#9ca3af'}
+                      fontSize={size * 0.025}
+                      fontWeight={isCurrentDay ? 'bold' : 'normal'}
+                      transform={`rotate(${textRotation}, ${x}, ${y})`}
                     >
                       {day}
                     </text>
-                    <text
-                      x={x}
-                      y={y + size * 0.01}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
-                      fontSize={size * 0.018}
-                      fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
-                    >
-                      Shabbat
-                    </text>
-                  </g>
-                ) : (
-                  // Regular days: Show number centered
-                  <text
-                    x={x}
-                    y={y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill={isCurrentDay ? '#fff' : '#9ca3af'}
-                    fontSize={size * 0.025}
-                    fontWeight={isCurrentDay ? 'bold' : 'normal'}
-                    transform={`rotate(${textRotation}, ${x}, ${y})`}
-                  >
-                    {day}
-                  </text>
-                )}
+                  );
+                })()}
               </g>
             );
           })}
         </motion.g>
 
-        {/* ====== CIRCLE 6: 4 PARTS OF DAY ====== */}
+        {/* ====== CIRCLE 6: 18 PARTS OF DAY ====== */}
         <motion.g
-          animate={{ rotate: partsRotation }}
+          animate={{ rotate: dayPartsRotation }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
         >
-          {DAY_PARTS.map((part, i) => {
-            const startAngle = (i * 90 - 90) * (Math.PI / 180);
-            const endAngle = ((i + 1) * 90 - 90) * (Math.PI / 180);
-            const midAngle = ((i * 90 + 45) - 90) * (Math.PI / 180);
+          {Array.from({ length: 18 }, (_, i) => {
+            const partNumber = i + 1;
+            const startAngle = (i * (360 / 18) - 90) * (Math.PI / 180);
+            const endAngle = ((i + 1) * (360 / 18) - 90) * (Math.PI / 180);
+            const midAngle = ((i + 0.5) * (360 / 18) - 90) * (Math.PI / 180);
             
-            const x1 = center + Math.cos(startAngle) * radii.partsOuter;
-            const y1 = center + Math.sin(startAngle) * radii.partsOuter;
-            const x2 = center + Math.cos(endAngle) * radii.partsOuter;
-            const y2 = center + Math.sin(endAngle) * radii.partsOuter;
-            const x3 = center + Math.cos(endAngle) * radii.partsInner;
-            const y3 = center + Math.sin(endAngle) * radii.partsInner;
-            const x4 = center + Math.cos(startAngle) * radii.partsInner;
-            const y4 = center + Math.sin(startAngle) * radii.partsInner;
+            const x1 = center + Math.cos(startAngle) * radii.dayPartsOuter;
+            const y1 = center + Math.sin(startAngle) * radii.dayPartsOuter;
+            const x2 = center + Math.cos(endAngle) * radii.dayPartsOuter;
+            const y2 = center + Math.sin(endAngle) * radii.dayPartsOuter;
+            const x3 = center + Math.cos(endAngle) * radii.dayPartsInner;
+            const y3 = center + Math.sin(endAngle) * radii.dayPartsInner;
+            const x4 = center + Math.cos(startAngle) * radii.dayPartsInner;
+            const y4 = center + Math.sin(startAngle) * radii.dayPartsInner;
             
-            const textRadius = (radii.partsOuter + radii.partsInner) / 2;
-            const textX = center + Math.cos(midAngle) * textRadius;
-            const textY = center + Math.sin(midAngle) * textRadius;
+            const isActive = partNumber === partOfDay;
             
-            const isActive = i === currentDayPartIndex;
-            
-            // Colors for each part of day
-            const partColors = ['#fbbf24', '#f97316', '#1e3a5f', '#60a5fa'];
+            // Determine color based on which part of day (Day, Evening, Night, Morning)
+            let partColor = '#9ca3af';
+            if (partNumber <= dayParts) {
+              partColor = '#fbbf24'; // Day - golden
+            } else if (partNumber <= dayParts + 1) {
+              partColor = '#f97316'; // Evening - orange
+            } else if (partNumber <= dayParts + 1 + nightParts) {
+              partColor = '#1e3a5f'; // Night - dark blue
+            } else {
+              partColor = '#60a5fa'; // Morning - light blue
+            }
             
             return (
               <g key={i}>
                 <path
                   d={`
                     M ${x1} ${y1}
-                    A ${radii.partsOuter} ${radii.partsOuter} 0 0 1 ${x2} ${y2}
+                    A ${radii.dayPartsOuter} ${radii.dayPartsOuter} 0 0 1 ${x2} ${y2}
                     L ${x3} ${y3}
-                    A ${radii.partsInner} ${radii.partsInner} 0 0 0 ${x4} ${y4}
+                    A ${radii.dayPartsInner} ${radii.dayPartsInner} 0 0 0 ${x4} ${y4}
                     Z
                   `}
-                  fill={isActive ? partColors[i] + '80' : partColors[i] + '30'}
-                  stroke={partColors[i]}
+                  fill={isActive ? partColor + 'CC' : partColor + '40'}
+                  stroke={partColor}
                   strokeWidth={isActive ? 2 : 1}
                 />
                 
-                <text
-                  x={textX}
-                  y={textY}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill={isActive ? '#fff' : partColors[i]}
-                  fontSize={size * 0.012}
-                  fontWeight={isActive ? 'bold' : 'normal'}
-                  transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
-                >
-                  {part}
-                </text>
+                {/* Show part number for active part or every 3rd part */}
+                {(isActive || partNumber % 3 === 0) && (
+                  <text
+                    x={center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
+                    y={center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={isActive ? '#fff' : partColor}
+                    fontSize={size * 0.01}
+                    fontWeight={isActive ? 'bold' : 'normal'}
+                    transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}, ${center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)})`}
+                  >
+                    {partNumber}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -524,7 +721,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         <circle
           cx={center}
           cy={center}
-          r={radii.partsInner - 5}
+          r={radii.dayPartsInner - 5}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
