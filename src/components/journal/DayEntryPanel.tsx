@@ -533,7 +533,7 @@ Meditate on the significance of this day in the Creator's calendar. What does th
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                   <div className="mt-2 text-xs text-gray-400">
-                    Supports markdown: **bold**, *italic*, - lists, > quotes
+                    Supports markdown: **bold**, *italic*, - lists, &gt; quotes
                   </div>
                 </div>
 
