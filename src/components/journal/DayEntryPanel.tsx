@@ -13,9 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { isFirebaseConfigured } from '@/integrations/firebase/config'
 import { saveJournalEntry, getJournalEntry, postToRemnantWall } from '@/integrations/firebase/firestore'
 import { uploadUserPhoto, uploadVoiceNote, uploadVideo } from '@/integrations/firebase/storage'
+import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
 interface DayEntryPanelProps {
@@ -26,8 +28,10 @@ interface DayEntryPanelProps {
 }
 
 export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEntryPanelProps) {
-  const { user, isAuthenticated } = useFirebaseAuth()
+  const { user: firebaseUser, isAuthenticated } = useFirebaseAuth()
+  const { user: supabaseUser } = useAuth()
   const { toast } = useToast()
+  const user = firebaseUser || supabaseUser
   
   // Rich Text Notes
   const [richText, setRichText] = useState('')
@@ -180,7 +184,7 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
 
   // Auto-save function
   const autoSave = async () => {
-    if (!isFirebaseConfigured || !user) return
+    if (!user) return
     
     const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     // Use default location (can be enhanced later)
@@ -217,7 +221,69 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
       isTequvah: false,
     }
     
-    await saveJournalEntry(user.uid, yhwhDateStr, entryData)
+    // Save to Firebase (if configured)
+    if (isFirebaseConfigured && firebaseUser) {
+      await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+    }
+    
+    // Save to Supabase journal_entries (for Journal component sync)
+    if (supabaseUser) {
+      try {
+        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+        
+        // Check if entry already exists
+        const { data: existingEntry } = await supabase
+          .from('journal_entries')
+          .select('id')
+          .eq('user_id', supabaseUser.id)
+          .eq('yhwh_year', yhwhDate.year)
+          .eq('yhwh_month', yhwhDate.month)
+          .eq('yhwh_day', yhwhDate.day)
+          .single()
+        
+        const entryPayload = {
+          user_id: supabaseUser.id,
+          yhwh_year: yhwhDate.year,
+          yhwh_month: yhwhDate.month,
+          yhwh_day: yhwhDate.day,
+          yhwh_weekday: yhwhDate.weekDay,
+          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+          gregorian_date: gregorianDateStr,
+          content: richText || '',
+          mood: mood || null,
+          tags: familyTags || [],
+          images: photos || [],
+          voice_notes: voiceNotes.map(v => v.url) || [],
+          videos: videos || [],
+          prayer_requests: prayerRequests || [],
+          answered_prayers: answeredPrayers || [],
+          gratitude: gratitude || null,
+          part_of_yowm: time.part || null,
+          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+          is_shabbat: yhwhDate.weekDay === 7,
+          is_tequvah: false,
+          feast: null,
+        }
+        
+        if (existingEntry) {
+          // Update existing entry
+          await supabase
+            .from('journal_entries')
+            .update(entryPayload)
+            .eq('id', existingEntry.id)
+        } else {
+          // Insert new entry
+          await supabase
+            .from('journal_entries')
+            .insert(entryPayload)
+        }
+        
+        // Emit event to refresh journal
+        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+      } catch (error) {
+        console.error('Error saving to Supabase:', error)
+      }
+    }
   }
 
   // Photo handling
@@ -484,8 +550,8 @@ Meditate on the significance of this day in the Creator's calendar. What does th
       photoURLs: photos,
       voiceNoteURL: voiceNotes[0]?.url || null,
       videoURL: videos[0] || null,
-      authorUID: user.uid,
-      authorDisplayName: user.displayName || 'Anonymous',
+      authorUID: firebaseUser.uid,
+      authorDisplayName: firebaseUser.displayName || 'Anonymous',
       anonymityLevel: 1,
     })
 
@@ -493,6 +559,48 @@ Meditate on the significance of this day in the Creator's calendar. What does th
       toast({
         title: 'Shared',
         description: 'Day entry shared to Remnant Wall'
+      })
+    }
+  }
+
+  // Share to S2G Chatapp All
+  const shareToS2GChat = async () => {
+    if (!isFirebaseConfigured || !db || !firebaseUser) {
+      toast({
+        title: 'Sign In Required',
+        description: 'Please sign in with Firebase to share to S2G Chatapp',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const yhwhDateStr = `Month ${yhwhDate.month}, Day ${yhwhDate.day}`
+      const shareText = richText 
+        ? `${yhwhDateStr}: ${richText.substring(0, 500)}${richText.length > 500 ? '...' : ''}`
+        : `Sharing my day entry for ${yhwhDateStr}`
+
+      await addDoc(collection(db, 'community_chat'), {
+        text: shareText,
+        authorUID: firebaseUser.uid,
+        authorDisplayName: firebaseUser.displayName || firebaseUser.email || 'Anonymous',
+        createdAt: serverTimestamp(),
+        warningCount: 0,
+        isDeleted: false,
+        sharedFrom: 'calendar',
+        yhwhDate: yhwhDateStr,
+      })
+
+      toast({
+        title: 'Shared to S2G Chatapp',
+        description: 'Your day entry has been shared to the community chat'
+      })
+    } catch (error: any) {
+      console.error('Error sharing to S2G Chatapp:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to share to S2G Chatapp: ' + (error.message || 'Unknown error'),
+        variant: 'destructive'
       })
     }
   }
@@ -568,6 +676,10 @@ Meditate on the significance of this day in the Creator's calendar. What does th
               <Button onClick={shareToRemnantWall} variant="outline" size="sm">
                 <Share2 className="h-4 w-4 mr-2" />
                 Share to Wall
+              </Button>
+              <Button onClick={shareToS2GChat} variant="outline" size="sm">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Share to S2G Chatapp
               </Button>
             </div>
 

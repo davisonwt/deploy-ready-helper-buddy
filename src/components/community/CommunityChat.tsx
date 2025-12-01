@@ -286,8 +286,18 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
     }
   }
 
-  const deleteMessage = async (messageId: string) => {
-    if (!isGosat) return
+  const deleteMessage = async (messageId: string, authorUID?: string) => {
+    // Allow deletion if user is Gosat OR if user is deleting their own message
+    const canDelete = isGosat || (user && authorUID === user.uid)
+    
+    if (!canDelete) {
+      toast({
+        title: 'Permission Denied',
+        description: 'You can only delete your own messages',
+        variant: 'destructive',
+      })
+      return
+    }
 
     try {
       const messageRef = doc(db, 'community_chat', messageId)
@@ -379,31 +389,44 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                       {msg.createdAt?.toDate?.()?.toLocaleTimeString() || 'Just now'}
                     </p>
                   </div>
-                  {isGosat && msg.authorUID !== user?.uid && (
-                    <div className="flex gap-2">
+                  <div className="flex gap-2">
+                    {/* User can delete their own messages */}
+                    {msg.authorUID === user?.uid && (
                       <button
-                        onClick={() => warnUser(msg.id, msg.authorUID)}
-                        className="text-yellow-400 hover:text-yellow-300"
-                        title="Warn User"
-                      >
-                        <AlertTriangle className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteMessage(msg.id)}
+                        onClick={() => deleteMessage(msg.id, msg.authorUID)}
                         className="text-red-400 hover:text-red-300"
-                        title="Delete Message"
+                        title="Delete My Message"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
-                      <button
-                        onClick={() => banUser(msg.authorUID)}
-                        className="text-red-600 hover:text-red-500"
-                        title="Ban User"
-                      >
-                        <Ban className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
+                    )}
+                    {/* Gosat moderation tools for other users' messages */}
+                    {isGosat && msg.authorUID !== user?.uid && (
+                      <>
+                        <button
+                          onClick={() => warnUser(msg.id, msg.authorUID)}
+                          className="text-yellow-400 hover:text-yellow-300"
+                          title="Warn User"
+                        >
+                          <AlertTriangle className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteMessage(msg.id, msg.authorUID)}
+                          className="text-red-400 hover:text-red-300"
+                          title="Delete Message"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => banUser(msg.authorUID)}
+                          className="text-red-600 hover:text-red-500"
+                          title="Ban User"
+                        >
+                          <Ban className="h-4 w-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {msg.warningCount > 0 && (
