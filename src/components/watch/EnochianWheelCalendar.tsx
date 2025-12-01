@@ -563,7 +563,8 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -1326,8 +1327,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -1461,7 +1461,8 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -1855,7 +1856,8 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -2255,7 +2257,8 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -2981,7 +2984,8 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          ))}
+          );
+        })}
       </div>
 
 
@@ -4035,7 +4039,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past beads */}
@@ -4117,7 +4122,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
