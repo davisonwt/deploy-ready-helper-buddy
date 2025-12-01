@@ -49,28 +49,72 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isGosat, setIsGosat] = useState(false)
+  const [hasWelcomedUser, setHasWelcomedUser] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
-  // Check if user is Gosat
+  // Check if user is Gosat and send welcome message for new users
   useEffect(() => {
-    if (user && isFirebaseConfigured) {
+    if (user && isFirebaseConfigured && isOpen) {
       // Check user's role in Firestore
       const checkGosatStatus = async () => {
         try {
-          const { getDoc, doc } = await import('firebase/firestore')
-        const userDoc = await getDoc(doc(db, 'users', user.uid))
-        if (userDoc.exists()) {
-          const userData = userDoc.data()
-          setIsGosat(userData.role === 'gosat' || userData.isGosat === true)
+          const userDoc = await getDoc(doc(db, 'users', user.uid))
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            const isGosatUser = userData.role === 'gosat' || userData.isGosat === true
+            setIsGosat(isGosatUser)
+            
+            // Check if this user has been welcomed before
+            const welcomedDoc = await getDoc(doc(db, 'community_chat_welcomes', user.uid))
+            const hasBeenWelcomed = welcomedDoc.exists()
+            
+            // If user hasn't been welcomed and there are gosats, send welcome message
+            if (!hasBeenWelcomed && !hasWelcomedUser) {
+              // Find a gosat to send the welcome message
+              const gosatsQuery = query(
+                collection(db, 'users'),
+                where('role', '==', 'gosat'),
+                limit(1)
+              )
+              const gosatsSnapshot = await getDocs(gosatsQuery)
+              
+              if (!gosatsSnapshot.empty) {
+                const gosatDoc = gosatsSnapshot.docs[0]
+                const gosatData = gosatDoc.data()
+                const gosatUID = gosatDoc.id
+                
+                // Send welcome message from gosat
+                await addDoc(collection(db, 'community_chat'), {
+                  text: 'Welcome to s2g chatapp for all!',
+                  authorUID: gosatUID,
+                  authorDisplayName: gosatData.displayName || 'S2G Gosat',
+                  createdAt: serverTimestamp(),
+                  warningCount: 0,
+                  isDeleted: false,
+                  isWelcomeMessage: true,
+                  welcomedUserUID: user.uid,
+                })
+                
+                // Mark user as welcomed
+                await setDoc(doc(db, 'community_chat_welcomes', user.uid), {
+                  welcomedAt: serverTimestamp(),
+                  welcomedBy: gosatUID,
+                  userUID: user.uid,
+                })
+                
+                setHasWelcomedUser(true)
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking gosat status or welcoming user:', error)
+          // Silently fail - user will just not have Gosat permissions or welcome message
         }
-      } catch (error) {
-        // Silently fail - user will just not have Gosat permissions
-      }
       }
       checkGosatStatus()
     }
-  }, [user])
+  }, [user, isOpen, hasWelcomedUser])
 
   // Load messages
   useEffect(() => {
