@@ -4130,7 +4130,7 @@ const EnochianTimepiece = () => {
       </motion.div>
 
       {/* Main Content Container - Professional Layout */}
-      <div className="relative z-10 flex flex-row items-start justify-center w-full px-4 md:px-8 gap-4 md:gap-8" style={{ height: 'calc(100vh - 100px)' }}>
+      <div className="relative z-10 flex flex-row items-start justify-center w-full px-4 md:px-8 gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
         
         {/* Calendar Wheel - LEFT SIDE - 2/3 width */}
         <motion.div 
@@ -4288,13 +4288,10 @@ const EnochianTimepiece = () => {
 
         {/* Month Strand - RIGHT SIDE - Professional Purple Container */}
         <div 
-          className="flex-shrink-0 flex flex-col items-center bg-gradient-to-b from-purple-900/60 via-purple-950/80 to-black/90 rounded-3xl border border-purple-500/30 shadow-2xl backdrop-blur-sm p-4"
+          className="flex-shrink-0 flex flex-col items-center"
           style={{ 
             width: '30%',
-            maxWidth: '280px',
-            minHeight: '500px',
-            maxHeight: 'calc(100vh - 180px)',
-            overflowY: 'auto'
+            maxWidth: '280px'
           }}
         >
           {/* Only show current month beads */}
