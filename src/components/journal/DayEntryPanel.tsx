@@ -261,14 +261,24 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
         setRecordingTime(prev => prev + 1)
       }, 1000)
       
-      setTimeout(() => {
+      // Auto-stop after 60 seconds max
+      const timeoutId = setTimeout(() => {
         clearInterval(interval)
-      }, 60000) // Max 60 seconds
+        if (mediaRecorderRef.current && isRecording) {
+          mediaRecorderRef.current.stop()
+          setIsRecording(false)
+        }
+      }, 60000)
+      
+      // Store timeout ID for cleanup
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeoutId)
+      }
     } catch (error) {
-      console.error('Error starting recording:', error)
       toast({
         title: 'Error',
-        description: 'Could not access microphone',
+        description: 'Could not access microphone. Please check permissions.',
         variant: 'destructive'
       })
     }

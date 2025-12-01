@@ -52,14 +52,14 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       const checkGosatStatus = async () => {
         try {
           const { getDoc, doc } = await import('firebase/firestore')
-          const userDoc = await getDoc(doc(db, 'users', user.uid))
-          if (userDoc.exists()) {
-            const userData = userDoc.data()
-            setIsGosat(userData.role === 'gosat' || userData.isGosat === true)
-          }
-        } catch (error) {
-          console.error('Error checking Gosat status:', error)
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        if (userDoc.exists()) {
+          const userData = userDoc.data()
+          setIsGosat(userData.role === 'gosat' || userData.isGosat === true)
         }
+      } catch (error) {
+        // Silently fail - user will just not have Gosat permissions
+      }
       }
       checkGosatStatus()
     }
@@ -109,10 +109,10 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       })
       setNewMessage('')
     } catch (error) {
-      console.error('Error sending message:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: errorMessage,
         variant: 'destructive',
       })
     }
@@ -136,10 +136,10 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
         setPhotoFile(null)
       }
     } catch (error) {
-      console.error('Error sending photo:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send photo'
       toast({
         title: 'Error',
-        description: 'Failed to send photo',
+        description: errorMessage,
         variant: 'destructive',
       })
     }
@@ -182,10 +182,9 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       mediaRecorder.start()
       setIsRecording(true)
     } catch (error) {
-      console.error('Error starting recording:', error)
       toast({
         title: 'Error',
-        description: 'Could not access microphone',
+        description: 'Could not access microphone. Please check permissions.',
         variant: 'destructive',
       })
     }
@@ -216,7 +215,11 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
         description: 'User has been warned',
       })
     } catch (error) {
-      console.error('Error warning user:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to issue warning',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -236,7 +239,11 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
         description: 'Message has been removed',
       })
     } catch (error) {
-      console.error('Error deleting message:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to delete message',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -257,7 +264,11 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
         description: 'User has been removed from community',
       })
     } catch (error) {
-      console.error('Error banning user:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to ban user',
+        variant: 'destructive',
+      })
     }
   }
 
