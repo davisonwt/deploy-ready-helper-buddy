@@ -395,105 +395,120 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area - Always visible to show what's available */}
-        <div className="p-4 border-t border-white/20 space-y-2">
-          {!isAuthenticated ? (
-            <div className="text-center space-y-3 py-4">
-              <p className="text-gray-300">Please sign in to participate</p>
-              {isFirebaseConfigured && (
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs text-gray-400">
-                    Use the Firebase Auth button in the header to sign in
-                  </p>
-                  <div className="flex gap-2 items-center text-sm text-gray-400">
-                    <span>Available features:</span>
-                    <Badge className="bg-blue-500/20 text-blue-300">Text Messages</Badge>
-                    <Badge className="bg-green-500/20 text-green-300">Photos</Badge>
-                    <Badge className="bg-purple-500/20 text-purple-300">Voice Notes</Badge>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              {photoFile && (
-                <div className="flex items-center gap-2 bg-white/10 p-2 rounded">
-                  <img
-                    src={URL.createObjectURL(photoFile)}
-                    alt="Preview"
-                    className="h-16 w-16 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <p className="text-sm text-white">{photoFile.name}</p>
-                    <Button onClick={sendPhoto} size="sm" className="mt-1">
-                      Send Photo
-                    </Button>
-                  </div>
-                  <button
-                    onClick={() => setPhotoFile(null)}
-                    className="text-red-400"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      sendMessage()
-                    }
-                  }}
-                  placeholder={isFirebaseConfigured && user ? "Share encouragement..." : "Sign in to send messages..."}
-                  disabled={!isFirebaseConfigured || !user}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label htmlFor="photo-upload">
-                  <Button variant="outline" size="icon" className="border-white/20 text-white hover:bg-white/20" title="Upload Photo">
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                </label>
-                {!isRecording ? (
-                  <Button 
-                    onClick={startRecording} 
-                    variant="outline" 
-                    size="icon" 
-                    className="border-white/20 text-white hover:bg-white/20" 
-                    title="Record Voice Note"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={stopRecording} 
-                    variant="outline" 
-                    size="icon" 
-                    className="bg-red-600 hover:bg-red-500 border-red-500" 
-                    title="Stop Recording"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={!isFirebaseConfigured || !user || !newMessage.trim()}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={!isFirebaseConfigured ? "Firebase not configured" : !user ? "Sign in required" : "Send Message"}
-                >
-                  <Send className="h-4 w-4" />
+        {/* Input Area - Always visible */}
+        <div className="p-4 border-t border-white/20 space-y-2 bg-gradient-to-t from-purple-950/50 to-transparent">
+          {photoFile && (
+            <div className="flex items-center gap-2 bg-white/10 p-2 rounded mb-2">
+              <img
+                src={URL.createObjectURL(photoFile)}
+                alt="Preview"
+                className="h-16 w-16 object-cover rounded"
+              />
+              <div className="flex-1">
+                <p className="text-sm text-white">{photoFile.name}</p>
+                <Button onClick={sendPhoto} size="sm" className="mt-1" disabled={!isAuthenticated}>
+                  Send Photo
                 </Button>
               </div>
-            </>
+              <button
+                onClick={() => setPhotoFile(null)}
+                className="text-red-400 hover:text-red-300"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          
+          <div className="flex gap-2 items-center">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  if (isAuthenticated && newMessage.trim()) {
+                    sendMessage()
+                  }
+                }
+              }}
+              placeholder={isAuthenticated ? "Share encouragement..." : "Sign in to send messages..."}
+              disabled={!isAuthenticated}
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+              className="hidden"
+              id="photo-upload"
+              disabled={!isAuthenticated}
+            />
+            <label htmlFor="photo-upload">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed" 
+                title={isAuthenticated ? "Upload Photo" : "Sign in to upload photos"}
+                disabled={!isAuthenticated}
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </label>
+            
+            {!isRecording ? (
+              <Button 
+                onClick={startRecording} 
+                variant="outline" 
+                size="icon" 
+                className="border-white/20 text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed" 
+                title={isAuthenticated ? "Record Voice Note" : "Sign in to record voice notes"}
+                disabled={!isAuthenticated}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={stopRecording} 
+                variant="outline" 
+                size="icon" 
+                className="bg-red-600 hover:bg-red-500 border-red-500" 
+                title="Stop Recording"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
+            
+            <Button 
+              onClick={sendMessage} 
+              disabled={!isAuthenticated || !newMessage.trim()}
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!isAuthenticated ? "Sign in to send messages" : !newMessage.trim() ? "Enter a message" : "Send Message"}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {!isAuthenticated && (
+            <div className="text-center pt-2">
+              <p className="text-xs text-gray-400 mb-2">
+                Sign in with Firebase to participate in the community
+              </p>
+              <div className="flex justify-center gap-2 flex-wrap">
+                <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                  <Send className="h-3 w-3 mr-1" />
+                  Text Messages
+                </Badge>
+                <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+                  <ImageIcon className="h-3 w-3 mr-1" />
+                  Photos
+                </Badge>
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                  <Mic className="h-3 w-3 mr-1" />
+                  Voice Notes
+                </Badge>
+              </div>
+            </div>
           )}
         </div>
       </div>
