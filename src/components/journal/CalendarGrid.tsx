@@ -12,11 +12,6 @@ interface CalendarGridProps {
   onDateSelect: (date: Date) => void;
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
 const WEEKDAYS = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Shabbat'];
 
 const YHWH_MONTHS = [
@@ -26,11 +21,39 @@ const YHWH_MONTHS = [
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 
-export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProps) {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
+// Epoch: March 20, 2025 = Year 6028, Month 1, Day 1
+const EPOCH_DATE = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
 
-  // Calculate YHWH calendar for the displayed month
+// Calculate Gregorian date for a given YHWH date
+function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date {
+  // Calculate days from epoch
+  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  
+  // Days from epoch year start
+  let daysFromEpoch = (yhwhYear - 6028) * 364;
+  
+  // Add days from months before current month
+  for (let i = 0; i < yhwhMonth - 1; i++) {
+    daysFromEpoch += monthDays[i];
+  }
+  
+  // Add days in current month
+  daysFromEpoch += yhwhDay - 1;
+  
+  // Calculate Gregorian date
+  const gregorianDate = new Date(EPOCH_DATE);
+  gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
+  
+  return gregorianDate;
+}
+
+export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProps) {
+  // Get current YHWH date to determine which month to show
+  const currentYhwhDate = useMemo(() => calculateCreatorDate(new Date()), []);
+  const [currentYhwhMonth, setCurrentYhwhMonth] = React.useState(currentYhwhDate.month);
+  const [currentYhwhYear, setCurrentYhwhYear] = React.useState(currentYhwhDate.year);
+
+  // Calculate calendar days for the YHWH month
   const calendarDays = useMemo(() => {
     const days: Array<{
       gregorianDate: Date;
@@ -39,10 +62,15 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
       entry?: JournalEntry;
     }> = [];
 
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
     
+    // Get the first day of the YHWH month
+    const firstDayGregorian = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, 1);
+    const firstDayYhwh = calculateCreatorDate(firstDayGregorian);
+    
+    // Generate all days in the YHWH month
     for (let day = 1; day <= daysInMonth; day++) {
-      const gregorianDate = new Date(currentYear, currentMonth, day);
+      const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
       const yhwhDate = calculateCreatorDate(gregorianDate);
       
       // Find entry for this date
@@ -60,44 +88,38 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
     }
 
     return days;
-  }, [currentMonth, currentYear, entries]);
+  }, [currentYhwhMonth, currentYhwhYear, entries]);
 
   // Get first day of month for grid positioning using YHWH calendar
-  // Find the YHWH date for the first day of the Gregorian month
-  const firstGregorianDay = new Date(currentYear, currentMonth, 1);
-  const firstYhwhDate = calculateCreatorDate(firstGregorianDay);
+  const firstDayGregorian = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, 1);
+  const firstYhwhDate = calculateCreatorDate(firstDayGregorian);
   // Convert YHWH weekday (1-7, where 7 is Shabbat) to grid position (0-6)
   // YHWH Day 1 = grid position 0, Day 2 = 1, ..., Shabbat (7) = 6
   const firstDayOfMonth = (firstYhwhDate.weekDay - 1) % 7;
 
-  // Navigate months
+  // Navigate YHWH months
   const goToPreviousMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
+    if (currentYhwhMonth === 1) {
+      setCurrentYhwhMonth(12);
+      setCurrentYhwhYear(currentYhwhYear - 1);
     } else {
-      setCurrentMonth(currentMonth - 1);
+      setCurrentYhwhMonth(currentYhwhMonth - 1);
     }
   };
 
   const goToNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(currentYear + 1);
+    if (currentYhwhMonth === 12) {
+      setCurrentYhwhMonth(1);
+      setCurrentYhwhYear(currentYhwhYear + 1);
     } else {
-      setCurrentMonth(currentMonth + 1);
+      setCurrentYhwhMonth(currentYhwhMonth + 1);
     }
   };
 
   const goToToday = () => {
-    const today = new Date();
-    setCurrentMonth(today.getMonth());
-    setCurrentYear(today.getFullYear());
-  };
-
-  // Get YHWH month name for a given day
-  const getYhwhMonthName = (yhwhDate: ReturnType<typeof calculateCreatorDate>) => {
-    return YHWH_MONTHS[yhwhDate.month - 1] || `Month ${yhwhDate.month}`;
+    const today = calculateCreatorDate(new Date());
+    setCurrentYhwhMonth(today.month);
+    setCurrentYhwhYear(today.year);
   };
 
   // Check if day is Shabbat (weekday 7)
@@ -107,8 +129,6 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
 
   // Check if day is Tequvah (alignment day - simplified check)
   const isTequvah = (yhwhDate: ReturnType<typeof calculateCreatorDate>) => {
-    // Tequvah occurs when all wheels align - simplified: check if day is divisible by certain numbers
-    // This is a placeholder - actual Tequvah calculation would be more complex
     return yhwhDate.day === 1 || yhwhDate.day === 15 || yhwhDate.day === 30;
   };
 
@@ -127,7 +147,7 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
             </Button>
             <div className="text-center">
               <h3 className="text-2xl font-bold text-foreground">
-                {MONTHS[currentMonth]} {currentYear}
+                {YHWH_MONTHS[currentYhwhMonth - 1]} {currentYhwhYear}
               </h3>
               <p className="text-sm text-muted-foreground">
                 YHWH Calendar View
@@ -184,20 +204,22 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="flex flex-col items-center justify-center h-full">
-                  {/* Gregorian day number */}
+                  {/* YHWH day number - PRIMARY */}
                   <div className={`
                     text-lg font-bold mb-1
                     ${isToday ? 'text-primary' : 'text-foreground'}
                   `}>
-                    {day.gregorianDate.getDate()}
+                    {day.yhwhDate.day}
                   </div>
 
-                  {/* YHWH date */}
+                  {/* Gregorian date - SECONDARY */}
                   <div className="text-xs text-muted-foreground text-center leading-tight">
                     <div className="font-semibold">
-                      {getYhwhMonthName(day.yhwhDate)}
+                      {day.gregorianDate.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                      }).toUpperCase()}
                     </div>
-                    <div>Day {day.yhwhDate.day}</div>
                   </div>
 
                   {/* Indicators */}
@@ -245,4 +267,3 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
     </Card>
   );
 }
-
