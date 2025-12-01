@@ -563,7 +563,8 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -1461,7 +1462,8 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -1732,7 +1734,8 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -1855,7 +1858,8 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -2128,7 +2132,8 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2255,7 +2260,8 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -2529,7 +2535,8 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2874,7 +2881,8 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3170,7 +3178,8 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3236,8 +3245,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-          );
-        })}
+        ))}
 
       </div>
 
@@ -3424,7 +3432,8 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3506,8 +3515,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-          );
-        })}
+        ))}
 
       </div>
 
@@ -3728,8 +3736,7 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </>
               )}
             </motion.div>
-          );
-        })}
+        ))}
 
       </div>
 
@@ -4035,7 +4042,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past beads */}
@@ -4117,7 +4125,8 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-        ))}
+          );
+        })}
       </div>
 
 
@@ -4391,7 +4400,7 @@ const EnochianTimepiece = () => {
   // Anti-clockwise rotation (negative)
   const anti = -1;
   
-  // EXACT speeds from the wheel design
+  // EXACT speeds from the wheel design - Updated to match new specifications
   const wheelRotations = [
     anti * (yhwhDay % 366) / 366 * 360,                    // Circle 1 – Sun (366 lines)
     anti * leader / 4 * 360,                               // Circle 2 – 4 leaders (91 days each)
@@ -4401,22 +4410,25 @@ const EnochianTimepiece = () => {
     anti * (weekday - 1) / 7 * 360,                        // Circle 5 – 7-day week
     anti * (secsSinceSunrise / (80 * 60) % 18) / 18 * 360, // Circle 6 – 18 parts of yowm
     anti * (secsSinceSunrise / 21600 % 4) / 4 * 360,      // Circle 7 – 4 watches
-    anti * (secsSinceSunrise / 86400 % 1) * 360,          // Circle 8 – daily rotation
-    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,      // Circle 9 – current month days
+    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,      // Circle 8 – current month (30 days)
+    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,       // Circle 9 – duplicate for visual (30 days)
   ];
 
-  // Wheel radii and segments (10 circles)
+  // Wheel radii and segments (10 circles) - Updated to match new specifications
+  // radius: [21,19.2,17.5,15.5,13.5,11.5,9.8,8.2,6.5,5] * 20 for SVG scale
+  // segs: [366,4,4,364,52,7,18,4,30,30]
+  // Material: i%2?wood:brass (alternating)
   const wheelData = [
-    { radius: 420, segments: 366, material: 'brass' },  // Circle 1 – Sun
-    { radius: 380, segments: 4, material: 'wood' },    // Circle 2 – Leaders
-    { radius: 360, segments: 4, material: 'wood' },     // Circle 2 sub
-    { radius: 340, segments: 364, material: 'brass' },  // Circle 3 – Year
-    { radius: 310, segments: 52, material: 'brass' },  // Circle 4 – Weeks
-    { radius: 280, segments: 7, material: 'wood' },     // Circle 5 – Week
-    { radius: 250, segments: 18, material: 'wood' },    // Circle 6 – Parts
-    { radius: 220, segments: 4, material: 'wood' },     // Circle 7 – Watches
-    { radius: 190, segments: 1, material: 'wood' },    // Circle 8 – Daily
-    { radius: 160, segments: 30, material: 'wood' },   // Circle 9 – Month days
+    { radius: 420, segments: 366, material: 'brass' },  // Circle 1 – Sun (i=0, brass)
+    { radius: 384, segments: 4, material: 'wood' },     // Circle 2 – Leaders (i=1, wood)
+    { radius: 350, segments: 4, material: 'brass' },    // Circle 2 sub (i=2, brass)
+    { radius: 310, segments: 364, material: 'wood' },    // Circle 3 – Year (i=3, wood)
+    { radius: 270, segments: 52, material: 'brass' },   // Circle 4 – Weeks (i=4, brass)
+    { radius: 230, segments: 7, material: 'wood' },      // Circle 5 – Week (i=5, wood)
+    { radius: 196, segments: 18, material: 'brass' },    // Circle 6 – Parts (i=6, brass)
+    { radius: 164, segments: 4, material: 'wood' },      // Circle 7 – Watches (i=7, wood)
+    { radius: 130, segments: 30, material: 'brass' },    // Circle 8 – Month (i=8, brass)
+    { radius: 100, segments: 30, material: 'wood' },     // Circle 9 – Month duplicate (i=9, wood)
   ];
 
   const seasonRotation = ((enochianDate.dayOfYear - 1) / 91) * 90;
@@ -4512,12 +4524,12 @@ const EnochianTimepiece = () => {
           );
         })}
 
-        {/* 4 Leaders – 91-day quadrants (Circle 2) */}
+        {/* 4 Leaders – 91-day quadrants (Circle 2) - Updated radius to 19.2 * 20 = 384 */}
         {['Malki\'el (Lion)', 'Hemel-melek (Man)', 'Mel\'eyal (Ox)', 'Nar\'el (Eagle)'].map((leaderName, i) => {
           const leaderRotation = wheelRotations[1]; // Use Circle 2 rotation
           const quadrantAngle = i * 90;
           const angle = (quadrantAngle + leaderRotation - 90) * Math.PI / 180;
-          const radius = 380;
+          const radius = 384; // Updated to match new specification (19.2 * 20)
           const x = center + radius * Math.cos(angle);
           const y = center + radius * Math.sin(angle);
           
