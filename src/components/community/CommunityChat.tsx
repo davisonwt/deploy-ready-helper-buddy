@@ -9,6 +9,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { isFirebaseConfigured } from '@/integrations/firebase/config'
 import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '@/integrations/firebase/config'
@@ -34,8 +35,13 @@ interface CommunityChatProps {
 }
 
 export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
-  const { user, isAuthenticated } = useFirebaseAuth()
+  const firebaseAuth = useFirebaseAuth()
+  const supabaseAuth = useAuth()
   const { toast } = useToast()
+  
+  // Use Supabase auth if available, otherwise fall back to Firebase
+  const user = supabaseAuth.user || firebaseAuth.user
+  const isAuthenticated = supabaseAuth.isAuthenticated || firebaseAuth.isAuthenticated
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -362,71 +368,100 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        {isAuthenticated ? (
-          <div className="p-4 border-t border-white/20 space-y-2">
-            {photoFile && (
-              <div className="flex items-center gap-2 bg-white/10 p-2 rounded">
-                <img
-                  src={URL.createObjectURL(photoFile)}
-                  alt="Preview"
-                  className="h-16 w-16 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <p className="text-sm text-white">{photoFile.name}</p>
-                  <Button onClick={sendPhoto} size="sm" className="mt-1">
-                    Send Photo
-                  </Button>
+        {/* Input Area - Always visible to show what's available */}
+        <div className="p-4 border-t border-white/20 space-y-2">
+          {!isAuthenticated ? (
+            <div className="text-center space-y-3 py-4">
+              <p className="text-gray-300">Please sign in to participate</p>
+              {isFirebaseConfigured && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs text-gray-400">
+                    Use the Firebase Auth button in the header to sign in
+                  </p>
+                  <div className="flex gap-2 items-center text-sm text-gray-400">
+                    <span>Available features:</span>
+                    <Badge className="bg-blue-500/20 text-blue-300">Text Messages</Badge>
+                    <Badge className="bg-green-500/20 text-green-300">Photos</Badge>
+                    <Badge className="bg-purple-500/20 text-purple-300">Voice Notes</Badge>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setPhotoFile(null)}
-                  className="text-red-400"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Share encouragement..."
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label htmlFor="photo-upload">
-                <Button variant="outline" size="icon" asChild>
-                  <span>
-                    <ImageIcon className="h-4 w-4" />
-                  </span>
-                </Button>
-              </label>
-              {!isRecording ? (
-                <Button onClick={startRecording} variant="outline" size="icon">
-                  <Mic className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button onClick={stopRecording} variant="outline" size="icon" className="bg-red-600">
-                  <Mic className="h-4 w-4" />
-                </Button>
               )}
-              <Button onClick={sendMessage}>
-                <Send className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="p-4 border-t border-white/20 text-center">
-            <p className="text-gray-300">Please sign in to participate</p>
-          </div>
-        )}
+          ) : (
+            <>
+              {photoFile && (
+                <div className="flex items-center gap-2 bg-white/10 p-2 rounded">
+                  <img
+                    src={URL.createObjectURL(photoFile)}
+                    alt="Preview"
+                    className="h-16 w-16 object-cover rounded"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm text-white">{photoFile.name}</p>
+                    <Button onClick={sendPhoto} size="sm" className="mt-1">
+                      Send Photo
+                    </Button>
+                  </div>
+                  <button
+                    onClick={() => setPhotoFile(null)}
+                    className="text-red-400"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="Share encouragement..."
+                  className="bg-white/white/10 border-white/20 text-white placeholder:text-gray-400 flex-1"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label htmlFor="photo-upload">
+                  <Button variant="outline" size="icon" className="border-white/20 text-white hover:bg-white/20" title="Upload Photo">
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                </label>
+                {!isRecording ? (
+                  <Button 
+                    onClick={startRecording} 
+                    variant="outline" 
+                    size="icon" 
+                    className="border-white/20 text-white hover:bg-white/20" 
+                    title="Record Voice Note"
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={stopRecording} 
+                    variant="outline" 
+                    size="icon" 
+                    className="bg-red-600 hover:bg-red-500 border-red-500" 
+                    title="Stop Recording"
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button 
+                  onClick={sendMessage} 
+                  className="bg-blue-600 hover:bg-blue-500"
+                  title="Send Message"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
