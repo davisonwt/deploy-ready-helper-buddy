@@ -43,7 +43,8 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
 
   useEffect(() => {
     loadEntry()
-  }, [selectedDate, yhwhDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, yhwhDate.month, yhwhDate.day, yhwhDate.year, user])
 
   const loadEntry = async () => {
     if (!user) return
@@ -53,11 +54,12 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     if (isFirebaseConfigured && firebaseUser) {
       try {
         const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const entry = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (entry?.success && entry.data) {
-          setPhotos(entry.data.photos || [])
-          setVoiceNotes(entry.data.voiceNotes || [])
-          setVideos(entry.data.videos || [])
+        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
+        if (result.success && result.data) {
+          const entry = result.data
+          setPhotos(entry.photos || [])
+          setVoiceNotes(entry.voiceNotes || [])
+          setVideos(entry.videos || [])
         }
       } catch (error) {
         console.error('Error loading entry:', error)
@@ -101,8 +103,10 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     try {
       const uploadedUrls: string[] = []
       for (const file of photoFiles) {
-        const url = await uploadUserPhoto(user.uid, file)
-        uploadedUrls.push(url)
+        const result = await uploadUserPhoto(user.uid, file)
+        if (result.success) {
+          uploadedUrls.push(result.url)
+        }
       }
       setPhotos([...photos, ...uploadedUrls])
       setPhotoFiles([])
@@ -138,13 +142,16 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
         if (user) {
           try {
-            const url = await uploadVoiceNote(user.uid, audioBlob)
-            setVoiceNotes([...voiceNotes, { url, transcript: '', duration: recordingTime }])
-            toast({
-              title: 'Voice note recorded!',
-              description: 'Voice note saved successfully',
-            })
-            await handleSave()
+            const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' })
+            const result = await uploadVoiceNote(user.uid, file)
+            if (result.success) {
+              setVoiceNotes([...voiceNotes, { url: result.url, transcript: '', duration: recordingTime }])
+              toast({
+                title: 'Voice note recorded!',
+                description: 'Voice note saved successfully',
+              })
+              await handleSave()
+            }
           } catch (error) {
             console.error('Error uploading voice note:', error)
           }
@@ -192,8 +199,10 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     try {
       const uploadedUrls: string[] = []
       for (const file of videoFiles) {
-        const url = await uploadVideo(user.uid, file)
-        uploadedUrls.push(url)
+        const result = await uploadVideo(user.uid, file)
+        if (result.success) {
+          uploadedUrls.push(result.url)
+        }
       }
       setVideos([...videos, ...uploadedUrls])
       setVideoFiles([])

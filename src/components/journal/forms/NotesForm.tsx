@@ -39,7 +39,8 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
   // Load existing entry
   useEffect(() => {
     loadEntry()
-  }, [selectedDate, yhwhDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, yhwhDate.month, yhwhDate.day, yhwhDate.year, user])
 
   const loadEntry = async () => {
     if (!user) return
@@ -50,8 +51,9 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
     if (isFirebaseConfigured && firebaseUser) {
       try {
         const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const entry = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (entry) {
+        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
+        if (result.success && result.data) {
+          const entry = result.data
           setRichText(entry.richText || '')
           setDreamEntry(entry.dreamEntry || '')
         }

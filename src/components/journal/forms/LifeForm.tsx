@@ -42,7 +42,8 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
 
   useEffect(() => {
     loadEntry()
-  }, [selectedDate, yhwhDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, yhwhDate.month, yhwhDate.day, yhwhDate.year, user])
 
   const loadEntry = async () => {
     if (!user) return
@@ -52,17 +53,18 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
     if (isFirebaseConfigured && firebaseUser) {
       try {
         const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const entry = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (entry?.success && entry.data) {
-          setIsSpecialDay(entry.data.isSpecialDay || false)
-          setSpecialDayType(entry.data.specialDayType || null)
-          setSpecialDayPerson(entry.data.specialDayPerson || '')
-          setFastingType(entry.data.fastingType || 'none')
-          setWaterIntake(entry.data.waterIntake || 0)
-          setTithesOfferings(entry.data.tithesOfferings || [])
-          setFamilyTags(entry.data.familyTags || [])
-          setMood(entry.data.mood || null)
-          setGratitude(entry.data.gratitude || '')
+        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
+        if (result.success && result.data) {
+          const entry = result.data
+          setIsSpecialDay(entry.isSpecialDay || false)
+          setSpecialDayType(entry.specialDayType || null)
+          setSpecialDayPerson(entry.specialDayPerson || '')
+          setFastingType(entry.fastingType || 'none')
+          setWaterIntake(entry.waterIntake || 0)
+          setTithesOfferings(entry.tithesOfferings || [])
+          setFamilyTags(entry.familyTags || [])
+          setMood(entry.mood || null)
+          setGratitude(entry.gratitude || '')
         }
       } catch (error) {
         console.error('Error loading entry:', error)

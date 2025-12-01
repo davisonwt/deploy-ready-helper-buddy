@@ -31,7 +31,8 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
 
   useEffect(() => {
     loadEntry()
-  }, [selectedDate, yhwhDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, yhwhDate.month, yhwhDate.day, yhwhDate.year, user])
 
   const loadEntry = async () => {
     if (!user) return
@@ -41,10 +42,11 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
     if (isFirebaseConfigured && firebaseUser) {
       try {
         const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const entry = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (entry?.success && entry.data) {
-          setPrayerRequests(entry.data.prayerRequests || [])
-          setAnsweredPrayers(entry.data.answeredPrayers || [])
+        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
+        if (result.success && result.data) {
+          const entry = result.data
+          setPrayerRequests(entry.prayerRequests || [])
+          setAnsweredPrayers(entry.answeredPrayers || [])
         }
       } catch (error) {
         console.error('Error loading entry:', error)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, FileText, Image, Heart, Users, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NotesForm } from './forms/NotesForm'
@@ -42,7 +42,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
   }
 
   // Handle body scroll when menu opens/closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
     } else {
@@ -93,11 +93,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
   ]
 
   return (
-    <>
-      {/* Menu Panel - Only visible when isOpen is true */}
-      <div
-        className="fixed inset-0 z-50 pointer-events-auto"
-      >
+    <div className="fixed inset-0 z-50 pointer-events-auto">
         {/* Dark backdrop */}
         <div
           onClick={closeMenu}
@@ -159,6 +155,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
               })}
             </div>
           </div>
+          </div>
 
           {/* Form Panel - Right Side (when form is selected) */}
           {selectedForm && (
@@ -206,8 +203,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
             </div>
           )}
         </div>
-      </div>
-    </>
+    </div>
   )
 }
 
