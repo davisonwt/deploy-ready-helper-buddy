@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Camera, Mic, Video, Heart, BookOpen, Moon, Droplet, Gift, Users, Smile, Sparkles, FileText, Share2, Download, Image as ImageIcon, Trash2, Play, Pause, Volume2 } from 'lucide-react'
+import { X, Camera, Mic, Video, Heart, BookOpen, Moon, Droplet, Gift, Users, Smile, Sparkles, FileText, Share2, Download, Image as ImageIcon, Trash2, Play, Pause, Volume2, MessageSquare } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/input'
