@@ -599,6 +599,15 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
               </p>
               <Button
                 onClick={async () => {
+                  if (!isFirebaseConfigured) {
+                    toast({
+                      title: 'Firebase Not Configured',
+                      description: 'Firebase needs to be set up for the chat to work. Please contact support or check Firebase configuration.',
+                      variant: 'destructive',
+                    })
+                    return
+                  }
+                  
                   try {
                     const result = await autoSignIn()
                     if (result.success) {
@@ -623,9 +632,15 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                 }}
                 className="bg-blue-600 hover:bg-blue-500 text-white"
                 size="sm"
+                disabled={!isFirebaseConfigured}
               >
                 Sign In Anonymously
               </Button>
+              {!isFirebaseConfigured && (
+                <p className="text-xs text-yellow-400 mt-2 text-center">
+                  ⚠️ Firebase is not configured. Chat requires Firebase to be set up.
+                </p>
+              )}
               <div className="flex justify-center gap-2 flex-wrap">
                 <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
                   <Send className="h-3 w-3 mr-1" />
