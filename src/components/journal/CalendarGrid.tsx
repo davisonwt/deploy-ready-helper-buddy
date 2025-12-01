@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -6,9 +6,11 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { JournalEntry } from './Journal';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CalendarGridProps {
-  entries: JournalEntry[];
+  entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
   onDateSelect: (date: Date) => void;
 }
 
@@ -48,11 +50,73 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
   return gregorianDate;
 }
 
-export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProps) {
+export default function CalendarGrid({ entries: propEntries, onDateSelect }: CalendarGridProps) {
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
+  
   // Get current YHWH date to determine which month to show
   const currentYhwhDate = useMemo(() => calculateCreatorDate(new Date()), []);
   const [currentYhwhMonth, setCurrentYhwhMonth] = React.useState(currentYhwhDate.month);
   const [currentYhwhYear, setCurrentYhwhYear] = React.useState(currentYhwhDate.year);
+
+  // Load entries from Supabase if not provided via props
+  useEffect(() => {
+    if (propEntries) {
+      setEntries(propEntries);
+      return;
+    }
+
+    if (!user) return;
+
+    const loadEntries = async () => {
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        const formattedEntries: JournalEntry[] = data.map((entry: any) => ({
+          id: entry.id,
+          yhwhDate: {
+            year: entry.yhwh_year,
+            month: entry.yhwh_month,
+            day: entry.yhwh_day,
+            weekDay: entry.yhwh_weekday,
+          },
+          gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          content: entry.content,
+          mood: entry.mood,
+          tags: entry.tags || [],
+          images: entry.images || [],
+          createdAt: entry.created_at,
+          updatedAt: entry.updated_at,
+          partOfYowm: entry.part_of_yowm,
+          watch: entry.watch,
+          isShabbat: entry.is_shabbat,
+          isTequvah: entry.is_tequvah,
+          feast: entry.feast,
+        }));
+        setEntries(formattedEntries);
+      }
+    };
+
+    loadEntries();
+
+    // Listen for journal entry updates
+    const handleUpdate = (event: CustomEvent) => {
+      setEntries(event.detail);
+    };
+
+    window.addEventListener('journalEntriesUpdated', handleUpdate as EventListener);
+    return () => {
+      window.removeEventListener('journalEntriesUpdated', handleUpdate as EventListener);
+    };
+  }, [user, propEntries]);
 
   // Calculate calendar days for the YHWH month
   const calendarDays = useMemo(() => {
@@ -86,11 +150,12 @@ export default function CalendarGrid({ entries, onDateSelect }: CalendarGridProp
       const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
       
-      // Find entry for this date
-      const entry = entries.find(e => {
-        const entryDate = new Date(e.createdAt);
-        return entryDate.toDateString() === gregorianDate.toDateString();
-      });
+      // Find entry for this date (match by YHWH date for accurate syncing)
+      const entry = entries.find(e => 
+        e.yhwhDate.year === currentYhwhYear &&
+        e.yhwhDate.month === currentYhwhMonth &&
+        e.yhwhDate.day === day
+      );
 
       days.push({
         gregorianDate, // Keep original for display
