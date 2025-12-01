@@ -1,0 +1,84 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is the owner
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // PRIVATE JOURNAL ENTRIES
+    // ============================================
+    // Path: journal/{userId}/entries/{yhwhDate}
+    match /journal/{userId}/entries/{entryId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================
+    // PUBLIC REMNANT WALL
+    // ============================================
+    // Path: remnant_wall/{postId}
+    match /remnant_wall/{postId} {
+      // Anyone can read
+      allow read: if true;
+      
+      // Only authenticated users can create posts
+      // Must be the author
+      allow create: if isAuthenticated() 
+        && request.resource.data.authorUID == request.auth.uid;
+      
+      // Only author can update or delete
+      allow update, delete: if isAuthenticated() 
+        && resource.data.authorUID == request.auth.uid;
+    }
+    
+    // ============================================
+    // TORAH GROUPS
+    // ============================================
+    // Path: torah_groups/{groupId}
+    match /torah_groups/{groupId} {
+      // Anyone can read
+      allow read: if true;
+      
+      // Only authenticated users can write
+      allow write: if isAuthenticated();
+    }
+    
+    // ============================================
+    // LIVE TEQUVAH PHOTOS
+    // ============================================
+    // Path: live_tequvah_{year}/{photoId}
+    // Note: Dynamic year collections (e.g., live_tequvah_2025, live_tequvah_2026)
+    match /{year}/live_tequvah_{year}/{photoId} {
+      // Anyone can read
+      allow read: if true;
+      
+      // Only authenticated users can create
+      allow create: if isAuthenticated();
+      
+      // Only author can update or delete
+      allow update, delete: if isAuthenticated() 
+        && resource.data.authorUID == request.auth.uid;
+    }
+    
+    // ============================================
+    // USER PROFILES
+    // ============================================
+    // Path: users/{userId}
+    match /users/{userId} {
+      // Anyone can read (for display names, countries, etc.)
+      allow read: if true;
+      
+      // Only owner can write
+      allow write: if isOwner(userId);
+    }
+  }
+}
+
