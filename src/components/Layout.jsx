@@ -42,6 +42,9 @@ import { ProgressButton } from "./gamification/ProgressButton"
 import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { MyGardenPanel } from "./MyGardenPanel"
+import { LetItRainPanel } from "./LetItRainPanel"
+import { SupportPanel } from "./SupportPanel"
+import { GosatPanel } from "./GosatPanel"
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
@@ -89,6 +92,9 @@ function Layout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   const [isGardenOpen, setIsGardenOpen] = useState(false)
+  const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
+  const [isSupportOpen, setIsSupportOpen] = useState(false)
+  const [isGosatOpen, setIsGosatOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   const [jitsiCall, setJitsiCall] = useState(null)
 
@@ -747,6 +753,15 @@ function Layout({ children }) {
       
       {/* My Garden Panel */}
       <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
+      
+      {/* Let It Rain Panel */}
+      <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+      
+      {/* Support Panel */}
+      <SupportPanel isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
+      
+      {/* Gosat Panel */}
+      <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 
       {/* Your Progress Button & Modal */}
       <ProgressButton />
