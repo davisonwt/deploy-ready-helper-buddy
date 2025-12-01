@@ -132,6 +132,9 @@ async function ensureUserDocument(uid, userData) {
  * Get current user
  */
 export function getCurrentUser() {
+  if (!isFirebaseConfigured || !auth) {
+    return null;
+  }
   return auth.currentUser;
 }
 

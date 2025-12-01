@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { isFirebaseConfigured } from "@/integrations/firebase/config";
 import { User, LogOut, Mail } from "lucide-react";
 import {
   Dialog,
@@ -20,6 +21,11 @@ import { Label } from "../ui/label";
 
 export default function AuthButton() {
   const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = useFirebaseAuth();
+  
+  // Don't render if Firebase is not configured
+  if (!isFirebaseConfigured) {
+    return null; // Return null to hide the button when Firebase isn't configured
+  }
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
