@@ -100,13 +100,13 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
           className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
 
-        {/* Container for menu and form side-by-side */}
-        <div className="absolute inset-0 flex h-screen overflow-hidden">
+        {/* Container for menu and form side-by-side - positioned at top */}
+        <div className="absolute top-0 left-0 right-0 bottom-0 flex h-screen overflow-hidden">
           {/* Options Menu - Left Side */}
           <div
             className={`${selectedForm ? 'w-80' : 'w-full max-w-md'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-all duration-500 pointer-events-auto flex flex-col h-full overflow-hidden`}
           >
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-8 pb-32 space-y-8 text-white scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-8 pb-32 space-y-8 text-white scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-transparent" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
             {/* Close X */}
             <div className="flex justify-end">
               <button
@@ -118,7 +118,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
             </div>
 
             {/* Date Header */}
-            <div className="text-center -mt-6">
+            <div className="text-center">
               <h2 className="text-4xl font-bold flex items-center justify-center gap-4">
                 <span>Month {yhwhDate.month}, Day {yhwhDate.day}</span>
               </h2>
