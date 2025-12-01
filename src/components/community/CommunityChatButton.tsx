@@ -16,7 +16,7 @@ export function CommunityChatButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
+        className="fixed bottom-32 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
         style={{
           background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)',
           color: 'white',
