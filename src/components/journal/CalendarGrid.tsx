@@ -8,7 +8,6 @@ import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { DayEntryPanel } from './DayEntryPanel';
 import { BirthdayManager } from './BirthdayManager';
 import { DateOptionsMenu } from './DateOptionsMenu';
 
@@ -57,9 +56,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
   const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
-  const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'notes' | 'media' | 'prayer' | 'life' | 'spiritual'>('notes');
   const [birthdays, setBirthdays] = useState<Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>>([]);
   const [showBirthdayManager, setShowBirthdayManager] = useState(false);
   
@@ -446,25 +443,6 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           }}
           selectedDate={selectedDay.date}
           yhwhDate={selectedDay.yhwhDate}
-          onSelectOption={(tab) => {
-            setSelectedTab(tab);
-            setIsOptionsMenuOpen(false);
-            setIsDayPanelOpen(true);
-          }}
-        />
-      )}
-
-      {/* Day Entry Panel */}
-      {selectedDay && (
-        <DayEntryPanel
-          isOpen={isDayPanelOpen}
-          onClose={() => {
-            setIsDayPanelOpen(false);
-            setSelectedDay(null);
-          }}
-          selectedDate={selectedDay.date}
-          yhwhDate={selectedDay.yhwhDate}
-          initialTab={selectedTab}
         />
       )}
     </Card>
