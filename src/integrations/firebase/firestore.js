@@ -123,6 +123,9 @@ export async function postToRemnantWall(postData) {
  * Get Remnant Wall posts (newest first)
  */
 export async function getRemnantWallPosts(limitCount = 50) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: [] };
+  }
   try {
     const wallRef = collection(db, "remnant_wall");
     const q = query(wallRef, orderBy("createdAt", "desc"), limit(limitCount));
@@ -144,6 +147,9 @@ export async function getRemnantWallPosts(limitCount = 50) {
  * Get Remnant Wall posts for specific YHWH date
  */
 export async function getRemnantWallPostsByDate(yhwhDate) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: [] };
+  }
   try {
     const wallRef = collection(db, "remnant_wall");
     const q = query(wallRef, where("yhwhDate", "==", yhwhDate), orderBy("createdAt", "desc"));
@@ -165,6 +171,9 @@ export async function getRemnantWallPostsByDate(yhwhDate) {
  * Like/unlike a Remnant Wall post
  */
 export async function toggleLikeRemnantPost(postId, userId) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const postRef = doc(db, "remnant_wall", postId);
     const postSnap = await getDoc(postRef);
@@ -197,6 +206,9 @@ export async function toggleLikeRemnantPost(postId, userId) {
  * Delete a Remnant Wall post (only by author)
  */
 export async function deleteRemnantPost(postId) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     await deleteDoc(doc(db, "remnant_wall", postId));
     return { success: true };
@@ -216,6 +228,9 @@ export async function deleteRemnantPost(postId) {
  * Create a Torah study group
  */
 export async function createTorahGroup(groupData) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const groupRef = doc(collection(db, "torah_groups"));
     await setDoc(groupRef, {
@@ -234,6 +249,9 @@ export async function createTorahGroup(groupData) {
  * Get all Torah groups
  */
 export async function getTorahGroups() {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: [] };
+  }
   try {
     const groupsRef = collection(db, "torah_groups");
     const querySnapshot = await getDocs(groupsRef);
@@ -260,6 +278,9 @@ export async function getTorahGroups() {
  * Post sunrise photo to live tequvah collection
  */
 export async function postTequvahPhoto(year, photoData) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const collectionName = `live_tequvah_${year}`;
     const photoRef = doc(collection(db, collectionName));
@@ -278,6 +299,9 @@ export async function postTequvahPhoto(year, photoData) {
  * Get live tequvah photos for a year
  */
 export async function getTequvahPhotos(year, limitCount = 100) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: [] };
+  }
   try {
     const collectionName = `live_tequvah_${year}`;
     const photosRef = collection(db, collectionName);
@@ -306,6 +330,9 @@ export async function getTequvahPhotos(year, limitCount = 100) {
  * Get user profile
  */
 export async function getUserProfile(userId) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: null };
+  }
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -324,6 +351,9 @@ export async function getUserProfile(userId) {
  * Update user profile
  */
 export async function updateUserProfile(userId, profileData) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
