@@ -85,10 +85,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     monthDaysInner: size * 0.28,
     weeksOuter: size * 0.27, // Yellow wheel (364 dots)
     weeksInner: size * 0.22,
-    daysOuter: size * 0.21,
-    daysInner: size * 0.16,
-    dayPartsOuter: size * 0.15, // New 18-part wheel
-    dayPartsInner: size * 0.08,
+    dayPartsOuter: size * 0.21, // 18-part wheel (moved above 7-day week)
+    dayPartsInner: size * 0.17,
+    daysOuter: size * 0.16, // 7-day week (moved down)
+    daysInner: size * 0.11,
+    centerHub: size * 0.08, // Center hub
   }), [size]);
 
   // Current leader index (0-3)
@@ -390,7 +391,77 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           })}
         </motion.g>
 
-        {/* ====== CIRCLE 5: 7 DAYS OF WEEK ====== */}
+        {/* ====== CIRCLE 5: 18 PARTS OF DAY (above 7-day week) ====== */}
+        <motion.g
+          animate={{ rotate: dayPartsRotation }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          style={{ transformOrigin: `${center}px ${center}px` }}
+        >
+          {Array.from({ length: 18 }, (_, i) => {
+            const partNumber = i + 1;
+            const startAngle = (i * (360 / 18) - 90) * (Math.PI / 180);
+            const endAngle = ((i + 1) * (360 / 18) - 90) * (Math.PI / 180);
+            const midAngle = ((i + 0.5) * (360 / 18) - 90) * (Math.PI / 180);
+            
+            const x1 = center + Math.cos(startAngle) * radii.dayPartsOuter;
+            const y1 = center + Math.sin(startAngle) * radii.dayPartsOuter;
+            const x2 = center + Math.cos(endAngle) * radii.dayPartsOuter;
+            const y2 = center + Math.sin(endAngle) * radii.dayPartsOuter;
+            const x3 = center + Math.cos(endAngle) * radii.dayPartsInner;
+            const y3 = center + Math.sin(endAngle) * radii.dayPartsInner;
+            const x4 = center + Math.cos(startAngle) * radii.dayPartsInner;
+            const y4 = center + Math.sin(startAngle) * radii.dayPartsInner;
+            
+            const isActive = partNumber === partOfDay;
+            
+            // Determine color based on which part of day (Day, Evening, Night, Morning)
+            let partColor = '#9ca3af';
+            if (partNumber <= dayParts) {
+              partColor = '#fbbf24'; // Day - golden
+            } else if (partNumber <= dayParts + 1) {
+              partColor = '#f97316'; // Evening - orange
+            } else if (partNumber <= dayParts + 1 + nightParts) {
+              partColor = '#1e3a5f'; // Night - dark blue
+            } else {
+              partColor = '#60a5fa'; // Morning - light blue
+            }
+            
+            return (
+              <g key={i}>
+                <path
+                  d={`
+                    M ${x1} ${y1}
+                    A ${radii.dayPartsOuter} ${radii.dayPartsOuter} 0 0 1 ${x2} ${y2}
+                    L ${x3} ${y3}
+                    A ${radii.dayPartsInner} ${radii.dayPartsInner} 0 0 0 ${x4} ${y4}
+                    Z
+                  `}
+                  fill={isActive ? partColor + 'CC' : partColor + '40'}
+                  stroke={partColor}
+                  strokeWidth={isActive ? 2 : 1}
+                />
+                
+                {/* Show part number for active part or every 3rd part */}
+                {(isActive || partNumber % 3 === 0) && (
+                  <text
+                    x={center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
+                    y={center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={isActive ? '#fff' : partColor}
+                    fontSize={size * 0.01}
+                    fontWeight={isActive ? 'bold' : 'normal'}
+                    transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}, ${center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)})`}
+                  >
+                    {partNumber}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </motion.g>
+
+        {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
         <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -451,10 +522,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             
             return (
               <g key={i}>
-                {/* Lines extending from center to yellow wheel (weeks circle) to form pie slices */}
+                {/* Pie slice lines extending from 7-day week to yellow wheel (weeks circle) */}
                 <line
-                  x1={center}
-                  y1={center}
+                  x1={center + Math.cos(startAngle) * radii.daysOuter}
+                  y1={center + Math.sin(startAngle) * radii.daysOuter}
                   x2={center + Math.cos(startAngle) * radii.weeksOuter}
                   y2={center + Math.sin(startAngle) * radii.weeksOuter}
                   stroke={isCurrentDay ? '#ef4444' : isSabbath ? '#fbbf24' : '#374151'}
@@ -463,8 +534,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                 />
                 {/* Additional line at end of day segment */}
                 <line
-                  x1={center}
-                  y1={center}
+                  x1={center + Math.cos(startAngle + daySegmentAngle) * radii.daysOuter}
+                  y1={center + Math.sin(startAngle + daySegmentAngle) * radii.daysOuter}
                   x2={center + Math.cos(startAngle + daySegmentAngle) * radii.weeksOuter}
                   y2={center + Math.sin(startAngle + daySegmentAngle) * radii.weeksOuter}
                   stroke={isCurrentDay ? '#ef4444' : isSabbath ? '#fbbf24' : '#374151'}
@@ -647,81 +718,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           })}
         </motion.g>
 
-        {/* ====== CIRCLE 6: 18 PARTS OF DAY ====== */}
-        <motion.g
-          animate={{ rotate: dayPartsRotation }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
-        >
-          {Array.from({ length: 18 }, (_, i) => {
-            const partNumber = i + 1;
-            const startAngle = (i * (360 / 18) - 90) * (Math.PI / 180);
-            const endAngle = ((i + 1) * (360 / 18) - 90) * (Math.PI / 180);
-            const midAngle = ((i + 0.5) * (360 / 18) - 90) * (Math.PI / 180);
-            
-            const x1 = center + Math.cos(startAngle) * radii.dayPartsOuter;
-            const y1 = center + Math.sin(startAngle) * radii.dayPartsOuter;
-            const x2 = center + Math.cos(endAngle) * radii.dayPartsOuter;
-            const y2 = center + Math.sin(endAngle) * radii.dayPartsOuter;
-            const x3 = center + Math.cos(endAngle) * radii.dayPartsInner;
-            const y3 = center + Math.sin(endAngle) * radii.dayPartsInner;
-            const x4 = center + Math.cos(startAngle) * radii.dayPartsInner;
-            const y4 = center + Math.sin(startAngle) * radii.dayPartsInner;
-            
-            const isActive = partNumber === partOfDay;
-            
-            // Determine color based on which part of day (Day, Evening, Night, Morning)
-            let partColor = '#9ca3af';
-            if (partNumber <= dayParts) {
-              partColor = '#fbbf24'; // Day - golden
-            } else if (partNumber <= dayParts + 1) {
-              partColor = '#f97316'; // Evening - orange
-            } else if (partNumber <= dayParts + 1 + nightParts) {
-              partColor = '#1e3a5f'; // Night - dark blue
-            } else {
-              partColor = '#60a5fa'; // Morning - light blue
-            }
-            
-            return (
-              <g key={i}>
-                <path
-                  d={`
-                    M ${x1} ${y1}
-                    A ${radii.dayPartsOuter} ${radii.dayPartsOuter} 0 0 1 ${x2} ${y2}
-                    L ${x3} ${y3}
-                    A ${radii.dayPartsInner} ${radii.dayPartsInner} 0 0 0 ${x4} ${y4}
-                    Z
-                  `}
-                  fill={isActive ? partColor + 'CC' : partColor + '40'}
-                  stroke={partColor}
-                  strokeWidth={isActive ? 2 : 1}
-                />
-                
-                {/* Show part number for active part or every 3rd part */}
-                {(isActive || partNumber % 3 === 0) && (
-                  <text
-                    x={center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
-                    y={center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill={isActive ? '#fff' : partColor}
-                    fontSize={size * 0.01}
-                    fontWeight={isActive ? 'bold' : 'normal'}
-                    transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${center + Math.cos(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)}, ${center + Math.sin(midAngle) * ((radii.dayPartsOuter + radii.dayPartsInner) / 2)})`}
-                  >
-                    {partNumber}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </motion.g>
-
         {/* Center hub */}
         <circle
           cx={center}
           cy={center}
-          r={radii.dayPartsInner - 5}
+          r={radii.daysInner - 5}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
