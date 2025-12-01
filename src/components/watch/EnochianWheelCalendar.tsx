@@ -20,7 +20,107 @@ const DAYS_PER_YEAR = 364;
 
 
 
+// Blood Drop Animation Component - drips from bottom bead to ground
+const BloodDrop = ({ isActive }: { isActive: boolean }) => {
+  if (!isActive) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 0, scale: 0 }}
+      animate={{ 
+        opacity: [0, 1, 1, 0.8, 0],
+        y: [0, 80, 200, 400, 500],
+        scale: [0, 0.8, 1, 1.2, 1],
+        x: [0, 1, -1, 2, 0]
+      }}
+      transition={{ 
+        duration: 4,
+        times: [0, 0.15, 0.4, 0.8, 1],
+        ease: [0.25, 0.1, 0.25, 1]
+      }}
+      className="absolute pointer-events-none z-50"
+      style={{
+        top: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        marginTop: '2px',
+      }}
+    >
+      {/* Main drop */}
+      <motion.div 
+        className="w-4 h-4 rounded-full"
+        style={{
+          background: 'radial-gradient(circle at 30% 30%, #ef4444, #dc2626 50%, #991b1b 100%)',
+          boxShadow: '0 0 15px #dc2626, 0 0 30px #991b1b, inset 0 2px 5px rgba(255,255,255,0.3)',
+        }}
+      />
+      {/* Dripping trail */}
+      <motion.div
+        initial={{ opacity: 0, scaleY: 0 }}
+        animate={{ 
+          opacity: [0, 0.9, 0.7, 0.5, 0],
+          scaleY: [0, 0.3, 0.7, 1, 1]
+        }}
+        transition={{ 
+          duration: 4,
+          times: [0, 0.1, 0.3, 0.6, 1]
+        }}
+        className="absolute top-0 left-1/2 -translate-x-1/2 origin-top"
+        style={{
+          width: '2px',
+          height: '500px',
+          background: 'linear-gradient(to bottom, rgba(220, 38, 38, 0.9), rgba(153, 27, 27, 0.6), rgba(127, 29, 29, 0.3))',
+        }}
+      />
+      {/* Splash effect at ground */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ 
+          opacity: [0, 0, 0, 0.8, 0.6, 0],
+          scale: [0, 0, 0, 1, 2, 3]
+        }}
+        transition={{ 
+          duration: 4,
+          times: [0, 0.7, 0.8, 0.85, 0.9, 1]
+        }}
+        className="absolute top-[500px] left-1/2 -translate-x-1/2 w-8 h-2 rounded-full blur-sm"
+        style={{
+          background: 'radial-gradient(ellipse, rgba(220, 38, 38, 0.6), transparent)',
+        }}
+      />
+    </motion.div>
+  );
+};
+
 const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  // Track part changes every 80 minutes (PART_MINUTES)
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        // New part began - trigger blood drop animation
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000); // Match animation duration
+      }
+      setCurrentPart(newPart);
+    };
+
+    // Initialize current part
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    // Check every minute for part changes
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Nisan pattern exactly as in your photo:
 
@@ -149,17 +249,17 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
           </motion.div>
           );
         })}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => {
+        {pastBeads.map((bead, index) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
+          const isBottomBead = index === pastBeads.length - 1;
           
           return (
             <motion.div
@@ -228,10 +328,14 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             )}
 
+            {/* Blood drop animation from bottom bead */}
+            {isBottomBead && (
+              <BloodDrop isActive={showBloodDrop} />
+            )}
+
           </motion.div>
           );
         })}
-
       </div>
 
 
@@ -255,6 +359,34 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  // Track part changes every 80 minutes (PART_MINUTES)
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        // New part began - trigger blood drop animation
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000); // Match animation duration
+      }
+      setCurrentPart(newPart);
+    };
+
+    // Initialize current part
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    // Check every minute for part changes
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Iyar = 30 days
 
@@ -431,19 +563,18 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
-
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => {
+        {pastBeads.map((bead, index) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
+          const isBottomBead = index === pastBeads.length - 1;
           
           return (
             <motion.div
@@ -538,10 +669,14 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             )}
 
+            {/* Blood drop animation from bottom bead */}
+            {isBottomBead && (
+              <BloodDrop isActive={showBloodDrop} />
+            )}
+
           </motion.div>
           );
         })}
-
       </div>
 
 
@@ -577,6 +712,31 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  // Track part changes every 80 minutes (PART_MINUTES)
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Sivan = 31 days
 
@@ -768,16 +928,16 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
           </motion.div>
           );
         })}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => {
+        {pastBeads.map((bead, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           
           return (
@@ -878,10 +1038,14 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             )}
 
+            {/* Blood drop animation from bottom bead */}
+            {isBottomBead && (
+              <BloodDrop isActive={showBloodDrop} />
+            )}
+
           </motion.div>
           );
         })}
-
       </div>
 
 
@@ -927,6 +1091,30 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Tammuz = 30 days
 
@@ -964,6 +1152,8 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     return {
 
       day: dayInMonth,
+
+      globalDay,
 
       color,
 
@@ -1136,22 +1326,22 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
-        ))}
-
+          );
+        })}
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
+        {pastBeads.map((bead, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          const curveAngle = getSolarCurveAngle(bead.globalDay);
+          return (
+            <motion.div
+              key={bead.day}
 
             animate={bead.isToday ? {
 
@@ -1271,9 +1461,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
 
@@ -1319,6 +1507,30 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Av = 30 days
 
@@ -1520,22 +1732,20 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
+        {pastBeads.map((bead, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
+            <motion.div
+              key={bead.day}
 
             animate={bead.isToday ? {
 
@@ -1645,9 +1855,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
 
@@ -1693,6 +1901,30 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Elul = 31 days
 
@@ -1896,22 +2128,20 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((bead) => (
-
-          <motion.div
-
-            key={bead.day}
+        {pastBeads.map((bead, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
+            <motion.div
+              key={bead.day}
 
             animate={bead.isToday ? {
 
@@ -2025,9 +2255,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
 
@@ -2089,6 +2317,30 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Tishrei = 31 days
 
@@ -2277,19 +2529,18 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((b) => (
-
+        {pastBeads.map((b, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
           <motion.div
 
             key={b.day}
@@ -2380,10 +2631,14 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             )}
 
+            {/* Blood drop animation from bottom bead */}
+            {isBottomBead && (
+              <BloodDrop isActive={showBloodDrop} />
+            )}
+
           </motion.div>
-
-        ))}
-
+          );
+        })}
       </div>
 
 
@@ -2417,6 +2672,30 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Cheshvan = 30 days
 
@@ -2595,19 +2874,18 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((b) => (
-
+        {pastBeads.map((b, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
           <motion.div
 
             key={b.day}
@@ -2703,9 +2981,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-
-        ))}
-
+          ))}
       </div>
 
 
@@ -2747,6 +3023,30 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Kislev = 31 days
 
@@ -2870,19 +3170,18 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((b) => (
-
+        {pastBeads.map((b, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
           <motion.div
 
             key={b.day}
@@ -2937,8 +3236,8 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-
-        ))}
+          );
+        })}
 
       </div>
 
@@ -2954,6 +3253,30 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Tevet = 30 days
 
@@ -3101,19 +3424,18 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-
         ))}
-
       </div>
 
       {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
-      <div className="flex flex-col" style={{ gap: '1mm' }}>
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>
 
-        {pastBeads.map((b) => (
-
+        {pastBeads.map((b, index) => {
+          const isBottomBead = index === pastBeads.length - 1;
+          return (
           <motion.div
 
             key={b.day}
@@ -3184,8 +3506,8 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-
-        ))}
+          );
+        })}
 
       </div>
 
@@ -3227,6 +3549,30 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Shevat = 30 days
 
@@ -3503,6 +3849,30 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+  const [showBloodDrop, setShowBloodDrop] = useState(false);
+  const [currentPart, setCurrentPart] = useState(0);
+  const { location } = useUserLocation();
+
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon]);
 
   // Adar = 31 days (in your 364-day system)
 
@@ -3665,8 +4035,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past beads */}
@@ -3748,8 +4117,7 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </span>
               </div>
             </motion.div>
-          );
-        })}
+        ))}
       </div>
 
 
@@ -4005,12 +4373,55 @@ const EnochianTimepiece = () => {
 
 
 
+  // Calculate wheel rotations based on the new system
+  // Sunrise start: 20 March 2025 at true sunrise Jerusalem = Day 1
+  const TEQUVAH_EPOCH = new Date('2025-03-20T05:37:00').getTime();
+  const now = currentTime.getTime();
+  const daysSinceEpoch = Math.floor((now - TEQUVAH_EPOCH) / 86400000);
+  const yhwhDay = ((daysSinceEpoch % 364) + 364) % 364 + 1; // 1-364
+  
+  // Get current time for parts and watches
+  const creatorTime = getCreatorTime(currentTime, location.lat, location.lon);
+  const secsSinceSunrise = (now % 86400000) / 1000; // seconds since midnight, simplified
+  
+  // Calculate leader (91-day quadrants)
+  const leader = Math.floor((yhwhDay - 1) / 91);
+  const weekday = ((yhwhDay + 2) % 7) || 7;
+  
+  // Anti-clockwise rotation (negative)
+  const anti = -1;
+  
+  // EXACT speeds from the wheel design
+  const wheelRotations = [
+    anti * (yhwhDay % 366) / 366 * 360,                    // Circle 1 – Sun (366 lines)
+    anti * leader / 4 * 360,                               // Circle 2 – 4 leaders (91 days each)
+    anti * leader / 4 * 360,                               // Circle 2 sub – same speed as leaders
+    anti * (yhwhDay - 1) / 364 * 360,                      // Circle 3 – 364-day year
+    anti * Math.floor((yhwhDay - 1) / 7) / 52 * 360,       // Circle 4 – 52 weeks
+    anti * (weekday - 1) / 7 * 360,                        // Circle 5 – 7-day week
+    anti * (secsSinceSunrise / (80 * 60) % 18) / 18 * 360, // Circle 6 – 18 parts of yowm
+    anti * (secsSinceSunrise / 21600 % 4) / 4 * 360,      // Circle 7 – 4 watches
+    anti * (secsSinceSunrise / 86400 % 1) * 360,          // Circle 8 – daily rotation
+    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,      // Circle 9 – current month days
+  ];
+
+  // Wheel radii and segments (10 circles)
+  const wheelData = [
+    { radius: 420, segments: 366, material: 'brass' },  // Circle 1 – Sun
+    { radius: 380, segments: 4, material: 'wood' },    // Circle 2 – Leaders
+    { radius: 360, segments: 4, material: 'wood' },     // Circle 2 sub
+    { radius: 340, segments: 364, material: 'brass' },  // Circle 3 – Year
+    { radius: 310, segments: 52, material: 'brass' },  // Circle 4 – Weeks
+    { radius: 280, segments: 7, material: 'wood' },     // Circle 5 – Week
+    { radius: 250, segments: 18, material: 'wood' },    // Circle 6 – Parts
+    { radius: 220, segments: 4, material: 'wood' },     // Circle 7 – Watches
+    { radius: 190, segments: 1, material: 'wood' },    // Circle 8 – Daily
+    { radius: 160, segments: 30, material: 'wood' },   // Circle 9 – Month days
+  ];
+
   const seasonRotation = ((enochianDate.dayOfYear - 1) / 91) * 90;
-
   const zodiacRotation = -((enochianDate.dayOfYear - 1) / 30.333) * 30;
-
   const greatRotation = -((enochianDate.dayOfYear - 1) / 91) * 90;
-
   const dayRotation = ((enochianDate.dayOfYear - 1) / 364) * 360;
 
   // Reusable Calendar Wheel Component
@@ -4043,14 +4454,93 @@ const EnochianTimepiece = () => {
           </filter>
           <radialGradient id={`abyss-${uniqueId}`}><stop offset="0%" stopColor="#1a0033"/><stop offset="100%" stopColor="#000"/></radialGradient>
           <linearGradient id={`bronze-${uniqueId}`}><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
+          <linearGradient id={`wood-${uniqueId}`}><stop offset="0%" stopColor="#3c2415"/><stop offset="100%" stopColor="#2a1810"/></linearGradient>
         </defs>
 
-        {[400, 370, 340, 310, 280, 250, 220, 190, 160, 130].map((r, i) => (
-          <g key={r} filter={`url(#abyssShadow-${uniqueId})`}>
-            <circle cx={center} cy={center} r={r} fill="none" stroke={`url(#bronze-${uniqueId})`} strokeWidth={i < 3 ? 14 : 8} opacity="0.9"/>
-            <circle cx={center} cy={center} r={r - 10} fill="none" stroke="#1e293b" strokeWidth="4" opacity="0.7"/>
-          </g>
-        ))}
+        {/* 10 Rotating Wheels */}
+        {wheelData.map((wheel, i) => {
+          const rotation = wheelRotations[i] || 0;
+          const strokeColor = wheel.material === 'brass' ? `url(#bronze-${uniqueId})` : `url(#wood-${uniqueId})`;
+          const strokeWidth = wheel.material === 'brass' ? 14 : 8;
+          
+          return (
+            <g 
+              key={`wheel-${i}`} 
+              transform={`rotate(${rotation}, ${center}, ${center})`}
+              filter={`url(#abyssShadow-${uniqueId})`}
+            >
+              <circle 
+                cx={center} 
+                cy={center} 
+                r={wheel.radius} 
+                fill="none" 
+                stroke={strokeColor} 
+                strokeWidth={strokeWidth} 
+                opacity="0.9"
+              />
+              <circle 
+                cx={center} 
+                cy={center} 
+                r={wheel.radius - 10} 
+                fill="none" 
+                stroke="#1e293b" 
+                strokeWidth="4" 
+                opacity="0.7"
+              />
+              {/* Draw segment markers */}
+              {Array.from({ length: wheel.segments }).map((_, segIndex) => {
+                const angle = (segIndex / wheel.segments) * 360 - 90;
+                const rad = (angle * Math.PI) / 180;
+                const x1 = center + wheel.radius * Math.cos(rad);
+                const y1 = center + wheel.radius * Math.sin(rad);
+                const x2 = center + (wheel.radius - 15) * Math.cos(rad);
+                const y2 = center + (wheel.radius - 15) * Math.sin(rad);
+                return (
+                  <line
+                    key={`seg-${segIndex}`}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke={strokeColor}
+                    strokeWidth="2"
+                    opacity="0.6"
+                  />
+                );
+              })}
+            </g>
+          );
+        })}
+
+        {/* 4 Leaders – 91-day quadrants (Circle 2) */}
+        {['Malki\'el (Lion)', 'Hemel-melek (Man)', 'Mel\'eyal (Ox)', 'Nar\'el (Eagle)'].map((leaderName, i) => {
+          const leaderRotation = wheelRotations[1]; // Use Circle 2 rotation
+          const quadrantAngle = i * 90;
+          const angle = (quadrantAngle + leaderRotation - 90) * Math.PI / 180;
+          const radius = 380;
+          const x = center + radius * Math.cos(angle);
+          const y = center + radius * Math.sin(angle);
+          
+          return (
+            <g key={`leader-${i}`} transform={`rotate(${leaderRotation}, ${center}, ${center})`}>
+              <path
+                d={`M ${center} ${center} L ${center + radius * Math.cos((i * 90 - 90) * Math.PI / 180)} ${center + radius * Math.sin((i * 90 - 90) * Math.PI / 180)} A ${radius} ${radius} 0 0 1 ${center + radius * Math.cos((i * 90) * Math.PI / 180)} ${center + radius * Math.sin((i * 90) * Math.PI / 180)} Z`}
+                fill={['#ff9500', '#0088ff', '#00cc88', '#cc00cc'][i]}
+                opacity="0.3"
+              />
+              <text
+                x={center + (radius - 30) * Math.cos((i * 90 - 45) * Math.PI / 180)}
+                y={center + (radius - 30) * Math.sin((i * 90 - 45) * Math.PI / 180)}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-xs font-bold fill-white"
+                transform={`rotate(${i * 90 - 45 + 90}, ${center + (radius - 30) * Math.cos((i * 90 - 45) * Math.PI / 180)}, ${center + (radius - 30) * Math.sin((i * 90 - 45) * Math.PI / 180)})`}
+              >
+                {leaderName.split(' ')[0]}
+              </text>
+            </g>
+          );
+        })}
 
         {['SPRING', 'SUMMER', 'FALL', 'WINTER'].map((s, i) => (
           <g key={s} filter={`url(#holyFire-${uniqueId})`} transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
@@ -4174,21 +4664,90 @@ const EnochianTimepiece = () => {
 
             <linearGradient id="bronze"><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
 
+            <linearGradient id="wood"><stop offset="0%" stopColor="#3c2415"/><stop offset="100%" stopColor="#2a1810"/></linearGradient>
+
           </defs>
 
 
 
-          {[400, 370, 340, 310, 280, 250, 220, 190, 160, 130].map((r, i) => (
+          {/* 10 Rotating Wheels - Main Display */}
+          {wheelData.map((wheel, i) => {
+            const rotation = wheelRotations[i] || 0;
+            const strokeColor = wheel.material === 'brass' ? 'url(#bronze)' : 'url(#wood)';
+            const strokeWidth = wheel.material === 'brass' ? 14 : 8;
+            
+            return (
+              <g 
+                key={`main-wheel-${i}`} 
+                transform={`rotate(${rotation}, ${center}, ${center})`}
+                filter="url(#abyssShadow)"
+              >
+                <circle 
+                  cx={center} 
+                  cy={center} 
+                  r={wheel.radius} 
+                  fill="none" 
+                  stroke={strokeColor} 
+                  strokeWidth={strokeWidth} 
+                  opacity="0.9"
+                />
+                <circle 
+                  cx={center} 
+                  cy={center} 
+                  r={wheel.radius - 10} 
+                  fill="none" 
+                  stroke="#1e293b" 
+                  strokeWidth="4" 
+                  opacity="0.7"
+                />
+                {/* Draw segment markers */}
+                {Array.from({ length: Math.min(wheel.segments, 100) }).map((_, segIndex) => {
+                  const angle = (segIndex / wheel.segments) * 360 - 90;
+                  const rad = (angle * Math.PI) / 180;
+                  const x1 = center + wheel.radius * Math.cos(rad);
+                  const y1 = center + wheel.radius * Math.sin(rad);
+                  const x2 = center + (wheel.radius - 15) * Math.cos(rad);
+                  const y2 = center + (wheel.radius - 15) * Math.sin(rad);
+                  return (
+                    <line
+                      key={`main-seg-${segIndex}`}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke={strokeColor}
+                      strokeWidth="2"
+                      opacity="0.6"
+                    />
+                  );
+                })}
+              </g>
+            );
+          })}
 
-            <g key={r} filter="url(#abyssShadow)">
-
-              <circle cx={center} cy={center} r={r} fill="none" stroke="url(#bronze)" strokeWidth={i < 3 ? 14 : 8} opacity="0.9"/>
-
-              <circle cx={center} cy={center} r={r - 10} fill="none" stroke="#1e293b" strokeWidth="4" opacity="0.7"/>
-
-            </g>
-
-          ))}
+          {/* 4 Leaders – 91-day quadrants (Circle 2) - Main Display */}
+          {['Malki\'el (Lion)', 'Hemel-melek (Man)', 'Mel\'eyal (Ox)', 'Nar\'el (Eagle)'].map((leaderName, i) => {
+            const leaderRotation = wheelRotations[1]; // Use Circle 2 rotation
+            return (
+              <g key={`main-leader-${i}`} transform={`rotate(${leaderRotation}, ${center}, ${center})`}>
+                <path
+                  d={`M ${center} ${center} L ${center + 380 * Math.cos((i * 90 - 90) * Math.PI / 180)} ${center + 380 * Math.sin((i * 90 - 90) * Math.PI / 180)} A 380 380 0 0 1 ${center + 380 * Math.cos((i * 90) * Math.PI / 180)} ${center + 380 * Math.sin((i * 90) * Math.PI / 180)} Z`}
+                  fill={['#ff9500', '#0088ff', '#00cc88', '#cc00cc'][i]}
+                  opacity="0.3"
+                />
+                <text
+                  x={center + 350 * Math.cos((i * 90 - 45) * Math.PI / 180)}
+                  y={center + 350 * Math.sin((i * 90 - 45) * Math.PI / 180)}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="text-xs font-bold fill-white"
+                  transform={`rotate(${i * 90 - 45 + 90}, ${center + 350 * Math.cos((i * 90 - 45) * Math.PI / 180)}, ${center + 350 * Math.sin((i * 90 - 45) * Math.PI / 180)})`}
+                >
+                  {leaderName.split(' ')[0]}
+                </text>
+              </g>
+            );
+          })}
 
 
 
@@ -4258,24 +4817,27 @@ const EnochianTimepiece = () => {
 
 
 
+          {/* Golden fixed Tequvah pointer */}
+          <g filter="url(#holyFire)">
+            <polygon
+              points={`${center},${center - 60} ${center - 8},${center + 20} ${center + 8},${center + 20}`}
+              fill="#ffff00"
+              opacity="0.9"
+              transform={`rotate(180, ${center}, ${center})`}
+            />
+          </g>
+
+          {/* Core */}
           <g filter="url(#abyssShadow)">
-
-            <circle cx={center} cy={center} r="140" fill="url(#abyss)"/>
-
-            <circle cx={center} cy={center} r="120" fill="#000" stroke="#fbbf24" strokeWidth="20" filter="url(#holyFire)"/>
-
-            <text x={center} y={center-30} textAnchor="middle" className="text-9xl font-black fill-amber-400" filter="url(#holyFire)">
-
+            <circle cx={center} cy={center} r="70" fill="#ffffff" opacity="0.1"/>
+            <circle cx={center} cy={center} r="60" fill="#ffffaa" opacity="0.3"/>
+            <circle cx={center} cy={center} r="50" fill="#000" stroke="#fbbf24" strokeWidth="10" filter="url(#holyFire)"/>
+            <text x={center} y={center-15} textAnchor="middle" className="text-6xl font-black fill-amber-400" filter="url(#holyFire)">
               {enochianDate.dayOfMonth}
-
             </text>
-
-            <text x={center} y={center+40} textAnchor="middle" className="text-4xl fill-pink-400 tracking-widest" filter="url(#holyFire)">
-
+            <text x={center} y={center+25} textAnchor="middle" className="text-xl fill-pink-400 tracking-widest" filter="url(#holyFire)">
               {enochianDate.dayPart.toUpperCase()}
-
             </text>
-
           </g>
 
 
