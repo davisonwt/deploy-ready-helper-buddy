@@ -416,7 +416,7 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   placeholder="Share encouragement..."
-                  className="bg-white/white/10 border-white/20 text-white placeholder:text-gray-400 flex-1"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1"
                 />
                 <input
                   type="file"
