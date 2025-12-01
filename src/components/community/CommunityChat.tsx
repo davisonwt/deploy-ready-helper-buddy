@@ -428,12 +428,17 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                   e.preventDefault()
                   if (isAuthenticated && newMessage.trim()) {
                     sendMessage()
+                  } else if (!isAuthenticated) {
+                    toast({
+                      title: 'Sign In Required',
+                      description: 'Please sign in with Firebase to send messages',
+                      variant: 'destructive',
+                    })
                   }
                 }
               }}
-              placeholder={isAuthenticated ? "Share encouragement..." : "Sign in to send messages..."}
-              disabled={!isAuthenticated}
-              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder={isAuthenticated ? "Share encouragement..." : "Type your message... (Sign in to send)"}
+              className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1"
             />
             
             <input
