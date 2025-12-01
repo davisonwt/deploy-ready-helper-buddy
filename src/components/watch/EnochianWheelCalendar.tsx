@@ -1733,8 +1733,7 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2131,8 +2130,7 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2534,8 +2532,7 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2880,8 +2877,7 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3178,8 +3174,7 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3245,7 +3240,8 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-        ))}
+          );
+        })}
 
       </div>
 
@@ -3432,8 +3428,7 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -3515,7 +3510,8 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
           </motion.div>
-        ))}
+          );
+        })}
 
       </div>
 
@@ -3736,7 +3732,8 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
                 </>
               )}
             </motion.div>
-        ))}
+          );
+        })}
 
       </div>
 
