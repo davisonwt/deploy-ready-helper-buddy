@@ -50,7 +50,6 @@ import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
 import AuthButton from "./firebase/AuthButton"
-import { Users } from 'lucide-react'
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
