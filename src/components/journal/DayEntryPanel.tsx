@@ -294,7 +294,12 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
   const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
     // Using Web Speech API for transcription
     return new Promise((resolve) => {
-      const recognition = new (window as any).webkitSpeechRecognition?.() || new (window as any).SpeechRecognition?.()
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+      if (!SpeechRecognition) {
+        resolve('Transcription not available')
+        return
+      }
+      const recognition = new SpeechRecognition()
       if (!recognition) {
         resolve('Transcription not available')
         return
