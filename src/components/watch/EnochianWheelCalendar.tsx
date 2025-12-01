@@ -4237,95 +4237,6 @@ const EnochianTimepiece = () => {
 
 
 
-  const zodiacWheel = [
-
-    { constellation: 'ARIES', tribe: 'Yehudah', banner: 'Lion', month: 'Nisan' },
-
-    { constellation: 'TAURUS', tribe: 'Yissakar', banner: 'Donkey', month: 'Iyar' },
-
-    { constellation: 'GEMINI', tribe: 'Zebulon', banner: 'Ship', month: 'Sivan' },
-
-    { constellation: 'CANCER', tribe: 'Reuben', banner: 'Man', month: 'Tammuz' },
-
-    { constellation: 'LEO', tribe: 'Simeon', banner: 'Sword', month: 'Av' },
-
-    { constellation: 'VIRGO', tribe: 'Gad', banner: 'Fire', month: 'Elul' },
-
-    { constellation: 'LIBRA', tribe: 'Ephraim', banner: 'Ox', month: 'Tishrei' },
-
-    { constellation: 'SCORPIO', tribe: 'Manasseh', banner: 'Unicorn', month: 'Cheshvan' },
-
-    { constellation: 'SAGITTARIUS', tribe: 'Benyamin', banner: 'Wolf', month: 'Kislev' },
-
-    { constellation: 'CAPRICORN', tribe: 'Dan', banner: 'Eagle', month: 'Tevet' },
-
-    { constellation: 'AQUARIUS', tribe: 'Asher', banner: 'Tree', month: 'Shevat' },
-
-    { constellation: 'PISCES', tribe: 'Naphtali', banner: 'Deer', month: 'Adar' }
-
-  ];
-
-
-
-  const greatWheel = ['ORION', 'HYDRA', 'CENTAURUS', 'PEGASUS'];
-
-
-
-  const size = 1000; // SVG viewBox size - optimized for 2/3 page width display
-
-  const center = size / 2;
-
-
-
-  const RadiantText = ({ text, radius, angle, size = 18, weight = 'bold', color = '#fbbf24' }: { text: string; radius: number; angle: number; size?: number; weight?: string; color?: string }) => {
-
-    const rad = (angle - 90) * Math.PI / 180;
-
-    const x = center + radius * Math.cos(rad);
-
-    const y = center + radius * Math.sin(rad);
-
-    const textRot = angle + (angle > 90 && angle < 270 ? 180 : 0);
-
-    return (
-
-      <text
-
-        x={x} y={y}
-
-        textAnchor="middle"
-
-        dominantBaseline="middle"
-
-        transform={`rotate(${textRot}, ${x}, ${y})`}
-
-        className={`${weight} tracking-widest`}
-
-        style={{
-
-          fontSize: `${size}px`,
-
-          fill: color,
-
-          filter: 'drop-shadow(0 0 12px currentColor)',
-
-          paintOrder: 'stroke fill',
-
-          stroke: 'black',
-
-          strokeWidth: 4,
-
-        }}
-
-      >
-
-        {text}
-
-      </text>
-
-    );
-
-  };
 
   // Update calendar date using the exact same logic as DashboardPage
   useEffect(() => {
@@ -4379,225 +4290,7 @@ const EnochianTimepiece = () => {
 
 
 
-  // Calculate wheel rotations based on the new system
-  // Sunrise start: 20 March 2025 at true sunrise Jerusalem = Day 1
-  const TEQUVAH_EPOCH = new Date('2025-03-20T05:37:00').getTime();
-  const now = currentTime.getTime();
-  const daysSinceEpoch = Math.floor((now - TEQUVAH_EPOCH) / 86400000);
-  const yhwhDay = ((daysSinceEpoch % 364) + 364) % 364 + 1; // 1-364
-  
-  // Get current time for parts and watches
-  const creatorTime = getCreatorTime(currentTime, location.lat, location.lon);
-  const secsSinceSunrise = (now % 86400000) / 1000; // seconds since midnight, simplified
-  
-  // Calculate leader (91-day quadrants)
-  const leader = Math.floor((yhwhDay - 1) / 91);
-  const weekday = ((yhwhDay + 2) % 7) || 7;
-  
-  // Anti-clockwise rotation (negative)
-  const anti = -1;
-  
-  // EXACT speeds from the wheel design - Updated to match new specifications
-  const wheelRotations = [
-    anti * (yhwhDay % 366) / 366 * 360,                    // Circle 1 – Sun (366 lines)
-    anti * leader / 4 * 360,                               // Circle 2 – 4 leaders (91 days each)
-    anti * leader / 4 * 360,                               // Circle 2 sub – same speed as leaders
-    anti * (yhwhDay - 1) / 364 * 360,                      // Circle 3 – 364-day year
-    anti * Math.floor((yhwhDay - 1) / 7) / 52 * 360,       // Circle 4 – 52 weeks
-    anti * (weekday - 1) / 7 * 360,                        // Circle 5 – 7-day week
-    anti * (secsSinceSunrise / (80 * 60) % 18) / 18 * 360, // Circle 6 – 18 parts of yowm
-    anti * (secsSinceSunrise / 21600 % 4) / 4 * 360,      // Circle 7 – 4 watches
-    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,      // Circle 8 – current month (30 days)
-    anti * (enochianDate.dayOfMonth - 1) / 30 * 360,       // Circle 9 – duplicate for visual (30 days)
-  ];
 
-  // Wheel radii and segments (10 circles) - Updated to match new specifications
-  // radius: [21,19.2,17.5,15.5,13.5,11.5,9.8,8.2,6.5,5] * 20 for SVG scale
-  // segs: [366,4,4,364,52,7,18,4,30,30]
-  // Material: i%2?wood:brass (alternating)
-  const wheelData = [
-    { radius: 420, segments: 366, material: 'brass' },  // Circle 1 – Sun (i=0, brass)
-    { radius: 384, segments: 4, material: 'wood' },     // Circle 2 – Leaders (i=1, wood)
-    { radius: 350, segments: 4, material: 'brass' },    // Circle 2 sub (i=2, brass)
-    { radius: 310, segments: 364, material: 'wood' },    // Circle 3 – Year (i=3, wood)
-    { radius: 270, segments: 52, material: 'brass' },   // Circle 4 – Weeks (i=4, brass)
-    { radius: 230, segments: 7, material: 'wood' },      // Circle 5 – Week (i=5, wood)
-    { radius: 196, segments: 18, material: 'brass' },    // Circle 6 – Parts (i=6, brass)
-    { radius: 164, segments: 4, material: 'wood' },      // Circle 7 – Watches (i=7, wood)
-    { radius: 130, segments: 30, material: 'brass' },    // Circle 8 – Month (i=8, brass)
-    { radius: 100, segments: 30, material: 'wood' },     // Circle 9 – Month duplicate (i=9, wood)
-  ];
-
-  const seasonRotation = ((enochianDate.dayOfYear - 1) / 91) * 90;
-  const zodiacRotation = -((enochianDate.dayOfYear - 1) / 30.333) * 30;
-  const greatRotation = -((enochianDate.dayOfYear - 1) / 91) * 90;
-  const dayRotation = ((enochianDate.dayOfYear - 1) / 364) * 360;
-
-  // Reusable Calendar Wheel Component
-  const CalendarWheel = ({ className = "", style = {}, id = "" }: { className?: string; style?: React.CSSProperties; id?: string }) => {
-    const uniqueId = id || `calendar-${Math.random().toString(36).substr(2, 9)}`;
-    return (
-    <motion.div 
-      initial={{ scale: 0.8, opacity: 0 }} 
-      animate={{ scale: 1, opacity: 1 }} 
-      transition={{ duration: 1.5 }}
-      className={`flex items-center justify-center ${className}`}
-      style={{ 
-        width: '66%',
-        height: '100%',
-        ...style
-      }}
-    >
-      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <filter id={`abyssShadow-${uniqueId}`} x="-200%" y="-200%" width="400%" height="400%">
-            <feDropShadow dx="30" dy="30" stdDeviation="20" floodColor="#000" floodOpacity="0.95"/>
-            <feDropShadow dx="60" dy="60" stdDeviation="50" floodColor="#000" floodOpacity="0.8"/>
-            <feDropShadow dx="90" dy="90" stdDeviation="80" floodColor="#000" floodOpacity="0.6"/>
-          </filter>
-          <filter id={`holyFire-${uniqueId}`}>
-            <feGaussianBlur stdDeviation="15" result="blur"/>
-            <feFlood floodColor="#fbbf24" floodOpacity="1"/>
-            <feComposite in2="blur" operator="in"/>
-            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <radialGradient id={`abyss-${uniqueId}`}><stop offset="0%" stopColor="#1a0033"/><stop offset="100%" stopColor="#000"/></radialGradient>
-          <linearGradient id={`bronze-${uniqueId}`}><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
-          <linearGradient id={`wood-${uniqueId}`}><stop offset="0%" stopColor="#3c2415"/><stop offset="100%" stopColor="#2a1810"/></linearGradient>
-        </defs>
-
-        {/* 10 Rotating Wheels */}
-        {wheelData.map((wheel, i) => {
-          const rotation = wheelRotations[i] || 0;
-          const strokeColor = wheel.material === 'brass' ? `url(#bronze-${uniqueId})` : `url(#wood-${uniqueId})`;
-          const strokeWidth = wheel.material === 'brass' ? 14 : 8;
-          
-          return (
-            <g 
-              key={`wheel-${i}`} 
-              transform={`rotate(${rotation}, ${center}, ${center})`}
-              filter={`url(#abyssShadow-${uniqueId})`}
-            >
-              <circle 
-                cx={center} 
-                cy={center} 
-                r={wheel.radius} 
-                fill="none" 
-                stroke={strokeColor} 
-                strokeWidth={strokeWidth} 
-                opacity="0.9"
-              />
-              <circle 
-                cx={center} 
-                cy={center} 
-                r={wheel.radius - 10} 
-                fill="none" 
-                stroke="#1e293b" 
-                strokeWidth="4" 
-                opacity="0.7"
-              />
-              {/* Draw segment markers */}
-              {Array.from({ length: wheel.segments }).map((_, segIndex) => {
-                const angle = (segIndex / wheel.segments) * 360 - 90;
-                const rad = (angle * Math.PI) / 180;
-                const x1 = center + wheel.radius * Math.cos(rad);
-                const y1 = center + wheel.radius * Math.sin(rad);
-                const x2 = center + (wheel.radius - 15) * Math.cos(rad);
-                const y2 = center + (wheel.radius - 15) * Math.sin(rad);
-                return (
-                  <line
-                    key={`seg-${segIndex}`}
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke={strokeColor}
-                    strokeWidth="2"
-                    opacity="0.6"
-                  />
-                );
-              })}
-            </g>
-          );
-        })}
-
-        {/* 4 Leaders – 91-day quadrants (Circle 2) - Updated radius to 19.2 * 20 = 384 */}
-        {['Malki\'el (Lion)', 'Hemel-melek (Man)', 'Mel\'eyal (Ox)', 'Nar\'el (Eagle)'].map((leaderName, i) => {
-          const leaderRotation = wheelRotations[1]; // Use Circle 2 rotation
-          const quadrantAngle = i * 90;
-          const angle = (quadrantAngle + leaderRotation - 90) * Math.PI / 180;
-          const radius = 384; // Updated to match new specification (19.2 * 20)
-          const x = center + radius * Math.cos(angle);
-          const y = center + radius * Math.sin(angle);
-          
-          return (
-            <g key={`leader-${i}`} transform={`rotate(${leaderRotation}, ${center}, ${center})`}>
-              <path
-                d={`M ${center} ${center} L ${center + radius * Math.cos((i * 90 - 90) * Math.PI / 180)} ${center + radius * Math.sin((i * 90 - 90) * Math.PI / 180)} A ${radius} ${radius} 0 0 1 ${center + radius * Math.cos((i * 90) * Math.PI / 180)} ${center + radius * Math.sin((i * 90) * Math.PI / 180)} Z`}
-                fill={['#ff9500', '#0088ff', '#00cc88', '#cc00cc'][i]}
-                opacity="0.3"
-              />
-              <text
-                x={center + (radius - 30) * Math.cos((i * 90 - 45) * Math.PI / 180)}
-                y={center + (radius - 30) * Math.sin((i * 90 - 45) * Math.PI / 180)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-xs font-bold fill-white"
-                transform={`rotate(${i * 90 - 45 + 90}, ${center + (radius - 30) * Math.cos((i * 90 - 45) * Math.PI / 180)}, ${center + (radius - 30) * Math.sin((i * 90 - 45) * Math.PI / 180)})`}
-              >
-                {leaderName.split(' ')[0]}
-              </text>
-            </g>
-          );
-        })}
-
-        {['SPRING', 'SUMMER', 'FALL', 'WINTER'].map((s, i) => (
-          <g key={s} filter={`url(#holyFire-${uniqueId})`} transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
-            <path d={`M ${center} ${center} L ${center + 430*Math.cos((i*90-90)*Math.PI/180)} ${center + 430*Math.sin((i*90-90)*Math.PI/180)} A 430 430 0 0 1 ${center + 430*Math.cos((i*90)*Math.PI/180)} ${center + 430*Math.sin((i*90)*Math.PI/180)} Z`}
-                  fill={['#10b981','#f59e0b','#ef4444','#3b82f6'][i]} opacity="0.3"/>
-            <RadiantText text={s} radius={470} angle={i*90 + 45} size={40} color="#fff"/>
-          </g>
-        ))}
-
-        <g filter={`url(#holyFire-${uniqueId})`} transform={`rotate(${zodiacRotation}, ${center}, ${center})`}>
-          {zodiacWheel.map((z, i) => (
-            <g key={i}>
-              <RadiantText text={z.constellation} radius={320} angle={i*30} size={24} color="#fbbf24"/>
-              <RadiantText text={z.tribe} radius={295} angle={i*30} size={18} color="#f59e0b"/>
-              <RadiantText text={z.banner} radius={270} angle={i*30} size={32} color="#fff"/>
-            </g>
-          ))}
-        </g>
-
-        <g filter={`url(#abyssShadow-${uniqueId})`} transform={`rotate(${greatRotation}, ${center}, ${center})`}>
-          {greatWheel.map((g, i) => (
-            <RadiantText key={g} text={g} radius={230} angle={i*90 + 45} size={36} color="#34d399"/>
-          ))}
-        </g>
-
-        <motion.g animate={{ y: [0, -30, 0] }} transition={{ duration: 6, repeat: Infinity }}
-                  transform={`rotate(${((enochianDate.dayOfYear - 1)/364)*360}, ${center}, ${center})`}>
-          <circle cx={center} cy={center-380} r="50" fill="#ec4899" filter={`url(#abyssShadow-${uniqueId})`}/>
-          <circle cx={center} cy={center-380} r="38" fill="#000" stroke="#fbbf24" strokeWidth="10" filter={`url(#holyFire-${uniqueId})`}/>
-          <text x={center} y={center-370} textAnchor="middle" className="text-6xl font-black fill-white" filter={`url(#holyFire-${uniqueId})`}>
-            {enochianDate.dayOfYear}
-          </text>
-        </motion.g>
-
-        <g filter={`url(#abyssShadow-${uniqueId})`}>
-          <circle cx={center} cy={center} r="140" fill={`url(#abyss-${uniqueId})`}/>
-          <circle cx={center} cy={center} r="120" fill="#000" stroke="#fbbf24" strokeWidth="20" filter={`url(#holyFire-${uniqueId})`}/>
-          <text x={center} y={center-30} textAnchor="middle" className="text-9xl font-black fill-amber-400" filter={`url(#holyFire-${uniqueId})`}>
-            {enochianDate.dayOfMonth}
-          </text>
-          <text x={center} y={center+40} textAnchor="middle" className="text-4xl fill-pink-400 tracking-widest" filter={`url(#holyFire-${uniqueId})`}>
-            {enochianDate.dayPart.toUpperCase()}
-          </text>
-        </g>
-      </svg>
-    </motion.div>
-    );
-  };
 
   return (
 
@@ -4623,247 +4316,16 @@ const EnochianTimepiece = () => {
       {/* Header - Compact */}
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="relative z-10 pt-4 pb-2 text-center">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-amber-300 via-yellow-500 to-pink-600 bg-clip-text text-transparent px-4">
-          THE CREATOR'S WHEEL
+          MONTH BEAD STRANDS
         </h1>
         <p className="text-base md:text-lg text-amber-200 mt-1 tracking-widest">Eternal • 364 • Aligned Forever</p>
       </motion.div>
 
-      {/* Main Content Container - Professional Layout */}
-      <div className="relative z-10 flex flex-row items-start justify-center w-full px-4 md:px-8 gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-        
-        {/* Calendar Wheel - LEFT SIDE - 2/3 width */}
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          transition={{ duration: 1.5 }}
-          className="flex items-center justify-center"
-          style={{ 
-            width: '66%',
-            height: '100%',
-            maxHeight: 'calc(100vh - 120px)'
-          }}
-        >
-          <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
-
-          <defs>
-
-            <filter id="abyssShadow" x="-200%" y="-200%" width="400%" height="400%">
-
-              <feDropShadow dx="30" dy="30" stdDeviation="20" floodColor="#000" floodOpacity="0.95"/>
-
-              <feDropShadow dx="60" dy="60" stdDeviation="50" floodColor="#000" floodOpacity="0.8"/>
-
-              <feDropShadow dx="90" dy="90" stdDeviation="80" floodColor="#000" floodOpacity="0.6"/>
-
-            </filter>
-
-            <filter id="holyFire">
-
-              <feGaussianBlur stdDeviation="15" result="blur"/>
-
-              <feFlood floodColor="#fbbf24" floodOpacity="1"/>
-
-              <feComposite in2="blur" operator="in"/>
-
-              <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-
-            </filter>
-
-            <radialGradient id="abyss"><stop offset="0%" stopColor="#1a0033"/><stop offset="100%" stopColor="#000"/></radialGradient>
-
-            <linearGradient id="bronze"><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
-
-            <linearGradient id="wood"><stop offset="0%" stopColor="#3c2415"/><stop offset="100%" stopColor="#2a1810"/></linearGradient>
-
-          </defs>
-
-
-
-          {/* 10 Rotating Wheels - Main Display */}
-          {wheelData.map((wheel, i) => {
-            const rotation = wheelRotations[i] || 0;
-            const strokeColor = wheel.material === 'brass' ? 'url(#bronze)' : 'url(#wood)';
-            const strokeWidth = wheel.material === 'brass' ? 14 : 8;
-            
-            return (
-              <g 
-                key={`main-wheel-${i}`} 
-                transform={`rotate(${rotation}, ${center}, ${center})`}
-                filter="url(#abyssShadow)"
-              >
-                <circle 
-                  cx={center} 
-                  cy={center} 
-                  r={wheel.radius} 
-                  fill="none" 
-                  stroke={strokeColor} 
-                  strokeWidth={strokeWidth} 
-                  opacity="0.9"
-                />
-                <circle 
-                  cx={center} 
-                  cy={center} 
-                  r={wheel.radius - 10} 
-                  fill="none" 
-                  stroke="#1e293b" 
-                  strokeWidth="4" 
-                  opacity="0.7"
-                />
-                {/* Draw segment markers */}
-                {Array.from({ length: Math.min(wheel.segments, 100) }).map((_, segIndex) => {
-                  const angle = (segIndex / wheel.segments) * 360 - 90;
-                  const rad = (angle * Math.PI) / 180;
-                  const x1 = center + wheel.radius * Math.cos(rad);
-                  const y1 = center + wheel.radius * Math.sin(rad);
-                  const x2 = center + (wheel.radius - 15) * Math.cos(rad);
-                  const y2 = center + (wheel.radius - 15) * Math.sin(rad);
-                  return (
-                    <line
-                      key={`main-seg-${segIndex}`}
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
-                      stroke={strokeColor}
-                      strokeWidth="2"
-                      opacity="0.6"
-                    />
-                  );
-                })}
-              </g>
-            );
-          })}
-
-          {/* 4 Leaders – 91-day quadrants (Circle 2) - Main Display */}
-          {['Malki\'el (Lion)', 'Hemel-melek (Man)', 'Mel\'eyal (Ox)', 'Nar\'el (Eagle)'].map((leaderName, i) => {
-            const leaderRotation = wheelRotations[1]; // Use Circle 2 rotation
-            return (
-              <g key={`main-leader-${i}`} transform={`rotate(${leaderRotation}, ${center}, ${center})`}>
-                <path
-                  d={`M ${center} ${center} L ${center + 380 * Math.cos((i * 90 - 90) * Math.PI / 180)} ${center + 380 * Math.sin((i * 90 - 90) * Math.PI / 180)} A 380 380 0 0 1 ${center + 380 * Math.cos((i * 90) * Math.PI / 180)} ${center + 380 * Math.sin((i * 90) * Math.PI / 180)} Z`}
-                  fill={['#ff9500', '#0088ff', '#00cc88', '#cc00cc'][i]}
-                  opacity="0.3"
-                />
-                <text
-                  x={center + 350 * Math.cos((i * 90 - 45) * Math.PI / 180)}
-                  y={center + 350 * Math.sin((i * 90 - 45) * Math.PI / 180)}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-xs font-bold fill-white"
-                  transform={`rotate(${i * 90 - 45 + 90}, ${center + 350 * Math.cos((i * 90 - 45) * Math.PI / 180)}, ${center + 350 * Math.sin((i * 90 - 45) * Math.PI / 180)})`}
-                >
-                  {leaderName.split(' ')[0]}
-                </text>
-              </g>
-            );
-          })}
-
-
-
-          {['SPRING', 'SUMMER', 'FALL', 'WINTER'].map((s, i) => (
-
-            <g key={s} filter="url(#holyFire)" transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
-
-              <path d={`M ${center} ${center} L ${center + 430*Math.cos((i*90-90)*Math.PI/180)} ${center + 430*Math.sin((i*90-90)*Math.PI/180)} A 430 430 0 0 1 ${center + 430*Math.cos((i*90)*Math.PI/180)} ${center + 430*Math.sin((i*90)*Math.PI/180)} Z`}
-
-                    fill={['#10b981','#f59e0b','#ef4444','#3b82f6'][i]} opacity="0.3"/>
-
-              <RadiantText text={s} radius={470} angle={i*90 + 45} size={40} color="#fff"/>
-
-            </g>
-
-          ))}
-
-
-
-          <g filter="url(#holyFire)" transform={`rotate(${zodiacRotation}, ${center}, ${center})`}>
-
-            {zodiacWheel.map((z, i) => (
-
-              <g key={i}>
-
-                <RadiantText text={z.constellation} radius={320} angle={i*30} size={24} color="#fbbf24"/>
-
-                <RadiantText text={z.tribe} radius={295} angle={i*30} size={18} color="#f59e0b"/>
-
-                <RadiantText text={z.banner} radius={270} angle={i*30} size={32} color="#fff"/>
-
-              </g>
-
-            ))}
-
-          </g>
-
-
-
-          <g filter="url(#abyssShadow)" transform={`rotate(${greatRotation}, ${center}, ${center})`}>
-
-            {greatWheel.map((g, i) => (
-
-              <RadiantText key={g} text={g} radius={230} angle={i*90 + 45} size={36} color="#34d399"/>
-
-            ))}
-
-          </g>
-
-
-
-          <motion.g animate={{ y: [0, -30, 0] }} transition={{ duration: 6, repeat: Infinity }}
-
-                    transform={`rotate(${((enochianDate.dayOfYear - 1)/364)*360}, ${center}, ${center})`}>
-
-            <circle cx={center} cy={center-380} r="50" fill="#ec4899" filter="url(#abyssShadow)"/>
-
-            <circle cx={center} cy={center-380} r="38" fill="#000" stroke="#fbbf24" strokeWidth="10" filter="url(#holyFire)"/>
-
-            <text x={center} y={center-370} textAnchor="middle" className="text-6xl font-black fill-white" filter="url(#holyFire)">
-
-              {enochianDate.dayOfYear}
-
-            </text>
-
-          </motion.g>
-
-
-
-          {/* Golden fixed Tequvah pointer */}
-          <g filter="url(#holyFire)">
-            <polygon
-              points={`${center},${center - 60} ${center - 8},${center + 20} ${center + 8},${center + 20}`}
-              fill="#ffff00"
-              opacity="0.9"
-              transform={`rotate(180, ${center}, ${center})`}
-            />
-          </g>
-
-          {/* Core */}
-          <g filter="url(#abyssShadow)">
-            <circle cx={center} cy={center} r="70" fill="#ffffff" opacity="0.1"/>
-            <circle cx={center} cy={center} r="60" fill="#ffffaa" opacity="0.3"/>
-            <circle cx={center} cy={center} r="50" fill="#000" stroke="#fbbf24" strokeWidth="10" filter="url(#holyFire)"/>
-            <text x={center} y={center-15} textAnchor="middle" className="text-6xl font-black fill-amber-400" filter="url(#holyFire)">
-              {enochianDate.dayOfMonth}
-            </text>
-            <text x={center} y={center+25} textAnchor="middle" className="text-xl fill-pink-400 tracking-widest" filter="url(#holyFire)">
-              {enochianDate.dayPart.toUpperCase()}
-            </text>
-          </g>
-
-
-
-
-              </svg>
-        </motion.div>
-
-
-
-        {/* Month Strand - RIGHT SIDE - Professional Purple Container */}
+      {/* Main Content Container - Centered Beads */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full px-4 md:px-8 gap-4 md:gap-8">
+        {/* Month Strand - Centered */}
         <div 
-          className="flex-shrink-0 flex flex-col items-center"
-          style={{ 
-            width: '30%',
-            maxWidth: '280px'
-          }}
+          className="flex-shrink-0 flex flex-col items-center w-full max-w-md"
         >
           {/* Only show current month beads */}
           {enochianDate.month === 1 && (
@@ -5006,9 +4468,8 @@ const EnochianTimepiece = () => {
       <div className="relative z-10 mt-32 space-y-32 px-4">
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 10 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-10" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month10Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5016,9 +4477,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 11 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-11" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month11Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5026,9 +4486,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 12 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-12" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month12Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5036,9 +4495,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 1 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-1" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month1Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5046,9 +4504,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 2 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-2" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month2Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5056,9 +4513,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 3 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-3" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month3Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5066,9 +4522,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 4 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-4" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month4Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5076,9 +4531,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 5 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-5" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month5Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5086,9 +4540,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 6 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-6" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month6Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5096,9 +4549,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 7 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-7" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month7Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5106,9 +4558,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 8 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-8" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month8Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5116,9 +4567,8 @@ const EnochianTimepiece = () => {
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 9 - Review</h2>
-          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
-            <CalendarWheel id="review-9" />
-            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
               <Month9Strand dayOfMonth={0} />
             </div>
           </div>
@@ -5170,7 +4620,7 @@ const EnochianTimepiece = () => {
           Year {enochianDate.year} • Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.eighteenPart}/18
         </p>
         <p className="text-base md:text-lg text-amber-200 mt-2">The Creator's wheels never lie • Forever in sync</p>
-        <p className="text-sm md:text-base text-yellow-400 mt-2">Day {enochianDate.dayOfYear} → Wheel at {dayRotation.toFixed(2)}°</p>
+        <p className="text-sm md:text-base text-yellow-400 mt-2">Day {enochianDate.dayOfYear}</p>
       </motion.div>
 
 
