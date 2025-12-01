@@ -5,7 +5,8 @@
 
 import { supabase } from '@/integrations/supabase/client'
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc, query, where, getDocs } from 'firebase/firestore'
-import { db, isFirebaseConfigured } from '@/integrations/firebase/config'
+import { db } from '@/integrations/firebase/config'
+import { isFirebaseConfigured } from '@/integrations/firebase/config'
 
 interface User {
   id: string
