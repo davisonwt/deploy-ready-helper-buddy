@@ -42,6 +42,7 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
   // Use Firebase auth for chat (required for Firestore)
   const user = firebaseAuth.user
   const isAuthenticated = firebaseAuth.isAuthenticated
+  const { autoSignIn } = firebaseAuth
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -552,6 +553,35 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
               <p className="text-xs text-gray-400 mb-2">
                 Sign in with Firebase to participate in the community
               </p>
+              <Button
+                onClick={async () => {
+                  try {
+                    const result = await autoSignIn()
+                    if (result.success) {
+                      toast({
+                        title: 'Signed In',
+                        description: 'You can now send messages!',
+                      })
+                    } else {
+                      toast({
+                        title: 'Sign In Failed',
+                        description: result.error || 'Please try again',
+                        variant: 'destructive',
+                      })
+                    }
+                  } catch (error: any) {
+                    toast({
+                      title: 'Error',
+                      description: error.message || 'Failed to sign in',
+                      variant: 'destructive',
+                    })
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+                size="sm"
+              >
+                Sign In Anonymously
+              </Button>
               <div className="flex justify-center gap-2 flex-wrap">
                 <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
                   <Send className="h-3 w-3 mr-1" />
