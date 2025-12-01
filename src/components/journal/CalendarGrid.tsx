@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DayEntryPanel } from './DayEntryPanel';
 import { BirthdayManager } from './BirthdayManager';
+import { DateOptionsMenu } from './DateOptionsMenu';
 
 interface CalendarGridProps {
   entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
@@ -57,6 +58,8 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
   const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
+  const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'notes' | 'media' | 'prayer' | 'life' | 'spiritual'>('notes');
   const [birthdays, setBirthdays] = useState<Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>>([]);
   const [showBirthdayManager, setShowBirthdayManager] = useState(false);
   
@@ -349,7 +352,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                 key={idx}
                 onClick={() => {
                   setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
-                  setIsDayPanelOpen(true);
+                  setIsOptionsMenuOpen(true);
                   if (onDateSelect) {
                     onDateSelect(day.gregorianDate);
                   }
@@ -433,6 +436,24 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
         </div>
       </CardContent>
       
+      {/* Date Options Menu */}
+      {selectedDay && (
+        <DateOptionsMenu
+          isOpen={isOptionsMenuOpen}
+          onClose={() => {
+            setIsOptionsMenuOpen(false);
+            setSelectedDay(null);
+          }}
+          selectedDate={selectedDay.date}
+          yhwhDate={selectedDay.yhwhDate}
+          onSelectOption={(tab) => {
+            setSelectedTab(tab);
+            setIsOptionsMenuOpen(false);
+            setIsDayPanelOpen(true);
+          }}
+        />
+      )}
+
       {/* Day Entry Panel */}
       {selectedDay && (
         <DayEntryPanel
@@ -443,6 +464,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           }}
           selectedDate={selectedDay.date}
           yhwhDate={selectedDay.yhwhDate}
+          initialTab={selectedTab}
         />
       )}
     </Card>

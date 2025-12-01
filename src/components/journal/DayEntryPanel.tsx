@@ -25,9 +25,10 @@ interface DayEntryPanelProps {
   onClose: () => void
   selectedDate: Date
   yhwhDate: ReturnType<typeof calculateCreatorDate>
+  initialTab?: 'notes' | 'media' | 'prayer' | 'life' | 'spiritual'
 }
 
-export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEntryPanelProps) {
+export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initialTab = 'notes' }: DayEntryPanelProps) {
   const { user: firebaseUser, isAuthenticated } = useFirebaseAuth()
   const { user: supabaseUser } = useAuth()
   const { toast } = useToast()
@@ -129,7 +130,21 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
   const [loadingAI, setLoadingAI] = useState(false)
   
   // Active tab
-  const [activeTab, setActiveTab] = useState('notes')
+  const [activeTab, setActiveTab] = useState(initialTab)
+  
+  // Update activeTab when initialTab changes (when panel opens with a specific tab)
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [isOpen, initialTab])
+  
+  // Update activeTab when initialTab changes (when panel opens with a specific tab)
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [isOpen, initialTab])
 
   const closePanel = () => {
     onClose()
