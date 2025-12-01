@@ -15,6 +15,7 @@ import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp,
 import { db } from '@/integrations/firebase/config'
 import { uploadUserPhoto, uploadVoiceNote } from '@/integrations/firebase/storage'
 import { useToast } from '@/hooks/use-toast'
+import { sendWelcomeMessageToChat } from '@/utils/setupChatForUsers'
 
 interface ChatMessage {
   id: string
@@ -116,15 +117,17 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
     }
   }, [user, isOpen, hasWelcomedUser])
 
-  // Load messages
+  // Load messages and ensure welcome message exists
   useEffect(() => {
     if (!isFirebaseConfigured || !isOpen) return
 
     const messagesRef = collection(db, 'community_chat')
     const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100))
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const msgs: ChatMessage[] = []
+      let hasWelcomeMessage = false
+      
       snapshot.forEach((doc) => {
         const data = doc.data()
         if (!data.isDeleted) {
@@ -132,8 +135,17 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
             id: doc.id,
             ...data,
           } as ChatMessage)
+          if (data.isWelcomeMessage && data.isSystemMessage) {
+            hasWelcomeMessage = true
+          }
         }
       })
+      
+      // If no welcome message exists, send one
+      if (!hasWelcomeMessage && msgs.length === 0) {
+        await sendWelcomeMessageToChat()
+      }
+      
       setMessages(msgs.reverse()) // Reverse to show oldest first
     })
 
