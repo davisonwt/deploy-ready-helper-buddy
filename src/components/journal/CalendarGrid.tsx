@@ -9,6 +9,7 @@ import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DayEntryPanel } from './DayEntryPanel';
+import { BirthdayManager } from './BirthdayManager';
 
 interface CalendarGridProps {
   entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
@@ -56,6 +57,8 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
   const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
   const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
+  const [birthdays, setBirthdays] = useState<Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>>([]);
+  const [showBirthdayManager, setShowBirthdayManager] = useState(false);
   
   // Get current YHWH date to determine which month to show
   const currentYhwhDate = useMemo(() => calculateCreatorDate(new Date()), []);
@@ -121,6 +124,40 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
     };
   }, [user, propEntries]);
 
+  // Load birthdays
+  useEffect(() => {
+    if (!user) return
+
+    const loadBirthdays = async () => {
+      const { data, error } = await supabase
+        .from('birthdays')
+        .select('yhwh_month, yhwh_day, person_name')
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error loading birthdays:', error)
+        return
+      }
+
+      setBirthdays(data || [])
+    }
+
+    loadBirthdays()
+
+    // Listen for changes
+    const channel = supabase
+      .channel('birthdays_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'birthdays', filter: `user_id=eq.${user.id}` },
+        () => loadBirthdays()
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+
   // Calculate calendar days for the YHWH month
   const calendarDays = useMemo(() => {
     const days: Array<{
@@ -128,6 +165,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
       yhwhDate: ReturnType<typeof calculateCreatorDate>;
       hasEntry: boolean;
       entry?: JournalEntry;
+      birthdays: Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>;
     }> = [];
 
     const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
@@ -160,16 +198,22 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
         e.yhwhDate.day === day
       );
 
+      // Find birthdays for this date (matches month and day, repeats every year)
+      const dayBirthdays = birthdays.filter(
+        b => b.yhwh_month === currentYhwhMonth && b.yhwh_day === day
+      )
+
       days.push({
         gregorianDate, // Keep original for display
         yhwhDate: yhwhDateWithFixedWeekday, // Use fixed weekday pattern
         hasEntry: !!entry,
         entry,
+        birthdays: dayBirthdays,
       });
     }
 
     return days;
-  }, [currentYhwhMonth, currentYhwhYear, entries]);
+  }, [currentYhwhMonth, currentYhwhYear, entries, birthdays]);
 
   // Get first day of month for grid positioning using YHWH calendar
   // Calculate weekday using fixed pattern based on day of year
@@ -253,10 +297,29 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button onClick={goToToday} variant="outline" size="sm">
-            Today
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={goToToday} variant="outline" size="sm">
+              Today
+            </Button>
+            <Button 
+              onClick={() => setShowBirthdayManager(!showBirthdayManager)} 
+              variant="outline" 
+              size="sm"
+            >
+              {showBirthdayManager ? 'Hide' : 'Manage'} Birthdays
+            </Button>
+          </div>
         </div>
+
+        {/* Birthday Manager */}
+        {showBirthdayManager && (
+          <div className="mb-6">
+            <BirthdayManager 
+              selectedYhwhMonth={currentYhwhMonth}
+              selectedYhwhDay={undefined}
+            />
+          </div>
+        )}
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-2">
@@ -295,6 +358,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   aspect-square p-2 rounded-lg border-2 transition-all
                   ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
                   ${day.hasEntry ? 'bg-success/10 hover:bg-success/20' : 'hover:bg-muted/50'}
+                  ${day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
                   ${isShabbatDay ? 'bg-yellow-500/20' : ''}
                   ${isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
@@ -321,9 +385,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   </div>
 
                   {/* Indicators */}
-                  <div className="flex gap-1 mt-1">
+                  <div className="flex gap-1 mt-1 flex-wrap justify-center">
                     {day.hasEntry && (
                       <BookOpen className="h-3 w-3 text-success" />
+                    )}
+                    {day.birthdays && day.birthdays.length > 0 && (
+                      <Badge className="bg-pink-500/20 text-pink-700 text-[8px] px-1 py-0" title={day.birthdays.map(b => b.person_name).join(', ')}>
+                        🎂 {day.birthdays.length}
+                      </Badge>
                     )}
                     {isShabbatDay && (
                       <Badge className="bg-yellow-500/20 text-yellow-700 text-[8px] px-1 py-0">
@@ -359,6 +428,10 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-primary bg-primary/10" />
             <span className="text-muted-foreground">Today</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-pink-500 bg-pink-500/10 ring-1 ring-pink-500/30" />
+            <span className="text-muted-foreground">Birthday</span>
           </div>
         </div>
       </CardContent>
