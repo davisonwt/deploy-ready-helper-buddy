@@ -313,91 +313,111 @@ function Layout({ children }) {
                 <span className="truncate text-center leading-tight">My Garden</span>
               </button>
 
-              {/* Grouped Navigation Dropdowns */}
-              {groupedNavigation.map((group) => {
-                const Icon = group.icon
-                const isGroupHighlighted = isGroupActive(group)
-                
-                return (
-                  <DropdownMenu key={group.name}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
-                          hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                          ${isGroupHighlighted ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
-                          ${group.className || ''}
-                        `}
-                    style={{
-                      backgroundColor: isGroupHighlighted ? currentTheme.accent : currentTheme.secondaryButton,
-                      borderColor: isGroupHighlighted ? currentTheme.accent : currentTheme.cardBorder,
-                      color: currentTheme.textPrimary,
-                      borderRadius: '21px',
-                      boxShadow: isGroupHighlighted
-                        ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
-                        : 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                      ringColor: currentTheme.accent,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isGroupHighlighted) {
-                        e.currentTarget.style.backgroundColor = currentTheme.accent;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isGroupHighlighted) {
-                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                        e.currentTarget.style.borderColor = currentTheme.cardBorder;
-                      }
-                    }}
-                      >
-                        <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
-                        <span className="truncate text-center leading-tight">{group.name}</span>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent 
-                      className="w-56 border shadow-lg z-[100]"
-                      align="start"
-                      sideOffset={4}
-                      style={{
-                        backgroundColor: currentTheme.cardBg,
-                        borderColor: currentTheme.cardBorder,
-                      }}
-                    >
-                      {group.items.map((item) => {
-                        const ItemIcon = item.icon
-                        return (
-                          <DropdownMenuItem 
-                            key={item.name}
-                            className="flex items-center space-x-3 px-3 py-2 text-sm transition-colors cursor-pointer"
-                            style={{
-                              backgroundColor: isActive(item.href) ? currentTheme.accent : 'transparent',
-                              color: currentTheme.textPrimary,
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isActive(item.href)) {
-                                e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isActive(item.href)) {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                              }
-                            }}
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              console.log('🧭 [NAV_SELECT]', { to: item.href, from: location.pathname });
-                              navigate(item.href);
-                            }}
-                          >
-                            <ItemIcon className="h-4 w-4" style={{ color: currentTheme.accent }} />
-                            <span>{item.name}</span>
-                          </DropdownMenuItem>
-                        )
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )
-              })}
+              {/* Let It Rain Button */}
+              <button
+                onClick={() => setIsLetItRainOpen(true)}
+                className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
+                  ${isActive('/tithing') || isActive('/free-will-gifting') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  tithing-tour
+                `}
+                style={{
+                  backgroundColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: (isActive('/tithing') || isActive('/free-will-gifting'))
+                    ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  ringColor: currentTheme.accent,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive('/tithing') && !isActive('/free-will-gifting')) {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive('/tithing') && !isActive('/free-will-gifting')) {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                  }
+                }}
+              >
+                <Cloud className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate text-center leading-tight">Let It Rain</span>
+              </button>
+
+              {/* Support Button */}
+              <button
+                onClick={() => setIsSupportOpen(true)}
+                className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
+                  ${isActive('/support-us') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  support-tour
+                `}
+                style={{
+                  backgroundColor: isActive('/support-us') ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: isActive('/support-us') ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: isActive('/support-us')
+                    ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  ringColor: currentTheme.accent,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive('/support-us')) {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive('/support-us')) {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                  }
+                }}
+              >
+                <Heart className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate text-center leading-tight">Support</span>
+              </button>
+
+              {/* Gosat's Button - Only show if admin/gosat */}
+              {shouldShowAdminButton && (
+                <button
+                  onClick={() => setIsGosatOpen(true)}
+                  className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                    hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
+                    ${isActive('/admin') || isActive('/gosat') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  `}
+                  style={{
+                    backgroundColor: (isActive('/admin') || isActive('/gosat')) ? currentTheme.accent : currentTheme.secondaryButton,
+                    borderColor: (isActive('/admin') || isActive('/gosat')) ? currentTheme.accent : currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                    borderRadius: '21px',
+                    boxShadow: (isActive('/admin') || isActive('/gosat'))
+                      ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                      : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                    ringColor: currentTheme.accent,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive('/admin') && !isActive('/gosat')) {
+                      e.currentTarget.style.backgroundColor = currentTheme.accent;
+                      e.currentTarget.style.borderColor = currentTheme.accent;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive('/admin') && !isActive('/gosat')) {
+                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                      e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                    }
+                  }}
+                >
+                  <Settings className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate text-center leading-tight">gosat's</span>
+                </button>
+              )}
             </nav>
             
             <div className="flex items-center space-x-4">
