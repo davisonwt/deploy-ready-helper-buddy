@@ -412,19 +412,48 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   strokeLinecap="butt"
                 />
                 
-                {/* Day label - properly centered and aligned with curve */}
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
-                  fontSize={size * 0.02}
-                  fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
-                  transform={`rotate(${textRotation}, ${x}, ${y})`}
-                >
-                  {day}
-                </text>
+                {/* Day label - centered in each segment */}
+                {dayNumber === 7 ? (
+                  // Shabbat: Show both Hebrew and English
+                  <g transform={`rotate(${textRotation}, ${x}, ${y})`}>
+                    <text
+                      x={x}
+                      y={y - size * 0.01}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
+                      fontSize={size * 0.018}
+                      fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                    >
+                      {day}
+                    </text>
+                    <text
+                      x={x}
+                      y={y + size * 0.01}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
+                      fontSize={size * 0.018}
+                      fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                    >
+                      Shabbat
+                    </text>
+                  </g>
+                ) : (
+                  // Regular days: Show number centered
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={isCurrentDay ? '#fff' : '#9ca3af'}
+                    fontSize={size * 0.025}
+                    fontWeight={isCurrentDay ? 'bold' : 'normal'}
+                    transform={`rotate(${textRotation}, ${x}, ${y})`}
+                  >
+                    {day}
+                  </text>
+                )}
               </g>
             );
           })}
