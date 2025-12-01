@@ -68,7 +68,7 @@ export function useFirebaseAuth() {
     signIn,
     signUp,
     signOut,
-    currentUser: getCurrentUser(),
+    currentUser: isFirebaseConfigured ? getCurrentUser() : null,
   };
 }
 
