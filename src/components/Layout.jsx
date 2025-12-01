@@ -270,9 +270,6 @@ function Layout({ children }) {
                         e.currentTarget.style.borderColor = currentTheme.cardBorder;
                       }
                     }}
-                    onClick={() => {
-                      console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname });
-                    }}
                   >
                     <Icon className="h-3 w-3 mr-1 flex-shrink-0" />
                     <span className="truncate text-center leading-tight">{item.name}</span>
@@ -617,7 +614,6 @@ function Layout({ children }) {
                       }
                     }}
                     onClick={() => { 
-                      console.log('🧭 [NAV_CLICK]', { to: item.href, from: location.pathname, mobile: true });
                       setIsMobileMenuOpen(false);
                     }}
                   >
