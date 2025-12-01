@@ -11,13 +11,16 @@ import {
   deleteObject,
   listAll,
 } from "firebase/storage";
-import { storage } from "./config";
+import { storage, isFirebaseConfigured } from "./config";
 
 /**
  * Upload photo to user's storage
  * Path: users/{userId}/photos/{filename}
  */
 export async function uploadUserPhoto(userId, file, onProgress = null) {
+  if (!isFirebaseConfigured || !storage) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const timestamp = Date.now();
     const filename = `photo_${timestamp}_${file.name}`;
@@ -61,6 +64,9 @@ export async function uploadUserPhoto(userId, file, onProgress = null) {
  * Path: users/{userId}/voice/{filename}
  */
 export async function uploadVoiceNote(userId, file, onProgress = null) {
+  if (!isFirebaseConfigured || !storage) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const timestamp = Date.now();
     const filename = `voice_${timestamp}_${file.name}`;
@@ -101,6 +107,9 @@ export async function uploadVoiceNote(userId, file, onProgress = null) {
  * Path: users/{userId}/videos/{filename}
  */
 export async function uploadVideo(userId, file, onProgress = null) {
+  if (!isFirebaseConfigured || !storage) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const timestamp = Date.now();
     const filename = `video_${timestamp}_${file.name}`;
