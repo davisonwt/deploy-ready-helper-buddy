@@ -310,12 +310,18 @@ export default function ProfilePage() {
         <div className="max-w-6xl mx-auto space-y-8 p-6">
           {/* Tabs for Profile and Journal */}
           <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto bg-card/80 border-2 border-border shadow-lg">
+              <TabsTrigger 
+                value="profile" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
                 <User className="h-4 w-4" />
                 Profile
               </TabsTrigger>
-              <TabsTrigger value="journal" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="journal" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
                 <Calendar className="h-4 w-4" />
                 Journal
               </TabsTrigger>

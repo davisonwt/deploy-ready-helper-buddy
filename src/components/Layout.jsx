@@ -31,7 +31,8 @@ import {
   Crown,
   Book,
   Library,
-  Music
+  Music,
+  Calendar
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -131,7 +132,8 @@ function Layout({ children }) {
   // Primary navigation (direct buttons) - colors will be set dynamically
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, className: 'dashboard-tour' },
-    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' }
+    { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' },
+    { name: "calendar", href: "/enochian-calendar-design", icon: Calendar, className: 'calendar-tour' }
   ]
 
   // Grouped navigation (dropdowns) - colors will be set dynamically
