@@ -39,6 +39,8 @@ import {
   TreePine
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import Journal from "../components/journal/Journal"
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -306,6 +308,20 @@ export default function ProfilePage() {
       {/* Content */}
       <div className={`relative z-10 transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-6xl mx-auto space-y-8 p-6">
+          {/* Tabs for Profile and Journal */}
+          <Tabs defaultValue="profile" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="journal" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Journal
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile" className="space-y-8">
           {/* Enhanced Header */}
           <div className="text-center">
             <div className="bg-card text-card-foreground backdrop-blur-md rounded-3xl p-8 mx-auto max-w-4xl border shadow-2xl">
@@ -1214,6 +1230,12 @@ export default function ProfilePage() {
               <cite className="text-sm text-muted-foreground">— 364yhvh Community Wisdom</cite>
             </CardContent>
           </Card>
+            </TabsContent>
+
+            <TabsContent value="journal">
+              <Journal />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
