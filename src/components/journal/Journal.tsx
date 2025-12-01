@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import CalendarGrid from './CalendarGrid';
 
 export interface JournalEntry {
@@ -71,6 +73,7 @@ const MOOD_COLORS = {
 
 export default function Journal() {
   const { location } = useUserLocation();
+  const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -80,23 +83,178 @@ export default function Journal() {
   const [content, setContent] = useState('');
   const [mood, setMood] = useState<JournalEntry['mood']>('neutral');
   const [tags, setTags] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [migrated, setMigrated] = useState(false);
 
-  // Load entries from localStorage
+  // Load entries from Supabase with real-time sync
   useEffect(() => {
-    const stored = localStorage.getItem('yhwh-journal-entries');
-    if (stored) {
-      try {
-        setEntries(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to load journal entries:', e);
-      }
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, []);
 
-  // Save entries to localStorage
-  const saveEntries = (newEntries: JournalEntry[]) => {
-    setEntries(newEntries);
-    localStorage.setItem('yhwh-journal-entries', JSON.stringify(newEntries));
+    const loadEntries = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch entries from Supabase
+        const { data, error } = await supabase
+          .from('journal_entries')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Convert Supabase format to JournalEntry format
+        const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => ({
+          id: entry.id,
+          yhwhDate: {
+            year: entry.yhwh_year,
+            month: entry.yhwh_month,
+            day: entry.yhwh_day,
+            weekDay: entry.yhwh_weekday,
+          },
+          gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          content: entry.content,
+          mood: entry.mood,
+          tags: entry.tags || [],
+          images: entry.images || [],
+          createdAt: entry.created_at,
+          updatedAt: entry.updated_at,
+          partOfYowm: entry.part_of_yowm,
+          watch: entry.watch,
+          isShabbat: entry.is_shabbat,
+          isTequvah: entry.is_tequvah,
+          feast: entry.feast,
+        }));
+
+        setEntries(formattedEntries);
+
+        // Migrate localStorage entries to Supabase (one-time)
+        if (!migrated) {
+          await migrateLocalStorageEntries(user.id);
+          setMigrated(true);
+        }
+      } catch (error) {
+        console.error('Failed to load journal entries:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEntries();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('journal_entries_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'journal_entries',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async () => {
+          // Reload entries when changes occur
+          const { data } = await supabase
+            .from('journal_entries')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (data) {
+            const formattedEntries: JournalEntry[] = data.map((entry: any) => ({
+              id: entry.id,
+              yhwhDate: {
+                year: entry.yhwh_year,
+                month: entry.yhwh_month,
+                day: entry.yhwh_day,
+                weekDay: entry.yhwh_weekday,
+              },
+              gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+              content: entry.content,
+              mood: entry.mood,
+              tags: entry.tags || [],
+              images: entry.images || [],
+              createdAt: entry.created_at,
+              updatedAt: entry.updated_at,
+              partOfYowm: entry.part_of_yowm,
+              watch: entry.watch,
+              isShabbat: entry.is_shabbat,
+              isTequvah: entry.is_tequvah,
+              feast: entry.feast,
+            }));
+            setEntries(formattedEntries);
+            
+            // Emit event for other components (calendar, wheel)
+            window.dispatchEvent(new CustomEvent('journalEntriesUpdated', { detail: formattedEntries }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, migrated]);
+
+  // Migrate localStorage entries to Supabase
+  const migrateLocalStorageEntries = async (userId: string) => {
+    try {
+      const stored = localStorage.getItem('yhwh-journal-entries');
+      if (!stored) return;
+
+      const localEntries: JournalEntry[] = JSON.parse(stored);
+      
+      for (const entry of localEntries) {
+        // Check if entry already exists
+        const { data: existing } = await supabase
+          .from('journal_entries')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('yhwh_year', entry.yhwhDate.year)
+          .eq('yhwh_month', entry.yhwhDate.month)
+          .eq('yhwh_day', entry.yhwhDate.day)
+          .single();
+
+        if (!existing) {
+          // Insert entry
+          await supabase.from('journal_entries').insert({
+            user_id: userId,
+            yhwh_year: entry.yhwhDate.year,
+            yhwh_month: entry.yhwhDate.month,
+            yhwh_day: entry.yhwhDate.day,
+            yhwh_weekday: entry.yhwhDate.weekDay,
+            yhwh_day_of_year: calculateCreatorDate(new Date(entry.createdAt)).dayOfYear,
+            gregorian_date: new Date(entry.createdAt).toISOString().split('T')[0],
+            content: entry.content,
+            mood: entry.mood,
+            tags: entry.tags || [],
+            images: entry.images || [],
+            part_of_yowm: entry.partOfYowm,
+            watch: entry.watch,
+            is_shabbat: entry.isShabbat || false,
+            is_tequvah: entry.isTequvah || false,
+            feast: entry.feast,
+          });
+        }
+      }
+
+      // Clear localStorage after migration
+      localStorage.removeItem('yhwh-journal-entries');
+    } catch (error) {
+      console.error('Failed to migrate localStorage entries:', error);
+    }
   };
 
   // Get current YHWH date
@@ -120,53 +278,87 @@ export default function Journal() {
   }, [entries, searchQuery, moodFilter]);
 
   // Create or update entry
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!user) return;
+
     const yhwhDate = calculateCreatorDate(selectedDate);
     const time = getCreatorTime(selectedDate, location?.lat, location?.lon);
-    const gregorianDate = selectedDate.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    const gregorianDateStr = selectedDate.toISOString().split('T')[0];
 
-    const entryData: JournalEntry = {
-      id: selectedEntry?.id || `entry-${Date.now()}`,
-      yhwhDate,
-      gregorianDate,
-      content,
-      mood,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-      createdAt: selectedEntry?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-    };
+    try {
+      const entryData = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear,
+        gregorian_date: gregorianDateStr,
+        content,
+        mood,
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        images: [],
+        part_of_yowm: time.part,
+        watch: Math.floor(time.part / 4.5) + 1,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false, // Can be calculated or set manually
+        feast: null,
+      };
 
-    if (selectedEntry) {
-      // Update existing entry
-      const updated = entries.map(e => e.id === selectedEntry.id ? entryData : e);
-      saveEntries(updated);
-    } else {
-      // Create new entry
-      saveEntries([...entries, entryData]);
+      if (selectedEntry) {
+        // Update existing entry
+        const { error } = await supabase
+          .from('journal_entries')
+          .update(entryData)
+          .eq('id', selectedEntry.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Create new entry (upsert to handle duplicates)
+        const { error } = await supabase
+          .from('journal_entries')
+          .upsert(entryData, {
+            onConflict: 'user_id,yhwh_year,yhwh_month,yhwh_day',
+          });
+
+        if (error) throw error;
+      }
+
+      // Reset form
+      setSelectedEntry(null);
+      setIsEditing(false);
+      setContent('');
+      setMood('neutral');
+      setTags('');
+      setSelectedDate(new Date());
+    } catch (error) {
+      console.error('Failed to save entry:', error);
+      alert('Failed to save entry. Please try again.');
     }
-
-    // Reset form
-    setSelectedEntry(null);
-    setIsEditing(false);
-    setContent('');
-    setMood('neutral');
-    setTags('');
-    setSelectedDate(new Date());
   };
 
   // Delete entry
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    
     if (confirm('Are you sure you want to delete this entry?')) {
-      saveEntries(entries.filter(e => e.id !== id));
-      if (selectedEntry?.id === id) {
-        setSelectedEntry(null);
-        setIsEditing(false);
+      try {
+        const { error } = await supabase
+          .from('journal_entries')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        if (selectedEntry?.id === id) {
+          setSelectedEntry(null);
+          setIsEditing(false);
+        }
+      } catch (error) {
+        console.error('Failed to delete entry:', error);
+        alert('Failed to delete entry. Please try again.');
       }
     }
   };
