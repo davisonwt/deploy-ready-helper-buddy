@@ -33,7 +33,10 @@ const ChatApp = lazy(() => import("./pages/ChatApp"));
 const GroveFeedPage = lazy(() => import("./pages/GroveFeedPage"));
 const CommunicationsHub = lazy(() => 
   import("./pages/CommunicationsHub").catch((error) => {
-    console.error('Failed to load CommunicationsHub:', error);
+    // Log error for debugging but don't expose to user in production
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to load CommunicationsHub:', error);
+    }
     return {
       default: () => (
         <div className="flex items-center justify-center min-h-screen">
