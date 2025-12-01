@@ -102,36 +102,19 @@ const calculateSabbathDays = (month: number): number[] => {
     dayOfYearForMonthStart += daysPerMonth[m - 1];
   }
   
-  // Calculate weekday for day 1 of the month
-  // Weekday cycles: 1,2,3,4,5,6,7,1,2,3,4,5,6,7...
-  // We need to calculate based on the current year
-  // Get current date to determine the year's starting weekday
-  const now = new Date();
-  const creatorDate = calculateCreatorDate(now);
-  
-  // Calculate weekday for day 1 of the month using actual calendar calculation
-  // Create a date that represents day 1 of the month in current year
-  const currentYear = creatorDate.year;
-  const yearsSinceEpoch = currentYear - 6028;
-  const daysFromYears = yearsSinceEpoch * 364; // 364 days per Creator year
-  const daysFromMonths = dayOfYearForMonthStart - 1;
-  const totalDaysFromEpoch = daysFromYears + daysFromMonths;
-  
-  // Calculate what date this corresponds to (epoch + totalDaysFromEpoch)
-  const epochDate = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
-  const targetDate = new Date(epochDate);
-  targetDate.setDate(targetDate.getDate() + totalDaysFromEpoch);
-  
-  // Get weekday for day 1 of the month
-  const monthStartDate = calculateCreatorDate(targetDate);
-  const weekdayOfMonthStart = monthStartDate.weekDay;
+  // Use the same weekday calculation as calculateCreatorDate
+  // Starting weekday for Year 6028 Month 1 Day 1 = 4
+  const STARTING_WEEKDAY_YEAR_6028 = 4;
   
   // Find which days in this month fall on weekday 7 (Shabbat)
   const sabbathDays: number[] = [];
   const daysInMonth = daysPerMonth[month - 1];
   
   for (let day = 1; day <= daysInMonth; day++) {
-    const weekday = ((weekdayOfMonthStart - 1 + (day - 1)) % 7) + 1;
+    // Calculate dayOfYear for this specific day
+    const dayOfYear = dayOfYearForMonthStart + (day - 1);
+    // Use the same formula as calculateCreatorDate
+    const weekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
     if (weekday === 7) {
       sabbathDays.push(day);
     }
