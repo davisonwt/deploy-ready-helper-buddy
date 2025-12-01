@@ -377,10 +377,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   {/* Gregorian date - SECONDARY */}
                   <div className="text-xs text-muted-foreground text-center leading-tight">
                     <div className="font-semibold">
-                      {day.gregorianDate.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      }).toUpperCase()}
+                      {day.gregorianDate.getFullYear()}/{String(day.gregorianDate.getMonth() + 1).padStart(2, '0')}/{String(day.gregorianDate.getDate()).padStart(2, '0')}
                     </div>
                   </div>
 
