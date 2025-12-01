@@ -101,12 +101,12 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
         />
 
         {/* Container for menu and form side-by-side */}
-        <div className="absolute inset-0 flex">
+        <div className="absolute inset-0 flex h-full">
           {/* Options Menu - Left Side */}
           <div
-            className={`${selectedForm ? 'w-80' : 'w-full max-w-md'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-all duration-500 pointer-events-auto overflow-y-auto translate-x-0`}
+            className={`${selectedForm ? 'w-80' : 'w-full max-w-md'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-all duration-500 pointer-events-auto flex flex-col h-full overflow-hidden`}
           >
-          <div className="p-8 pb-32 space-y-8 text-white">
+          <div className="flex-1 overflow-y-auto p-8 pb-32 space-y-8 text-white">
             {/* Close X */}
             <div className="flex justify-end">
               <button
