@@ -8,10 +8,11 @@ import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { DayEntryPanel } from './DayEntryPanel';
 
 interface CalendarGridProps {
   entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
-  onDateSelect: (date: Date) => void;
+  onDateSelect?: (date: Date) => void; // Made optional since we'll use panel
 }
 
 const WEEKDAYS = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Shabbat'];
@@ -53,6 +54,8 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
 export default function CalendarGrid({ entries: propEntries, onDateSelect }: CalendarGridProps) {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
+  const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
+  const [isDayPanelOpen, setIsDayPanelOpen] = useState(false);
   
   // Get current YHWH date to determine which month to show
   const currentYhwhDate = useMemo(() => calculateCreatorDate(new Date()), []);
@@ -353,6 +356,19 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           </div>
         </div>
       </CardContent>
+      
+      {/* Day Entry Panel */}
+      {selectedDay && (
+        <DayEntryPanel
+          isOpen={isDayPanelOpen}
+          onClose={() => {
+            setIsDayPanelOpen(false);
+            setSelectedDay(null);
+          }}
+          selectedDate={selectedDay.date}
+          yhwhDate={selectedDay.yhwhDate}
+        />
+      )}
     </Card>
   );
 }
