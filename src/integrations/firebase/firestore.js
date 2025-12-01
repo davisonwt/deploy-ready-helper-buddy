@@ -20,7 +20,7 @@ import {
   arrayRemove,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "./config";
+import { db, isFirebaseConfigured } from "./config";
 
 /**
  * ============================================
@@ -33,6 +33,9 @@ import { db } from "./config";
  * Path: journal/{userId}/{yhwhDate}
  */
 export async function saveJournalEntry(userId, yhwhDate, entryData) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const entryRef = doc(db, "journal", userId, "entries", yhwhDate);
     await setDoc(entryRef, {
@@ -51,6 +54,9 @@ export async function saveJournalEntry(userId, yhwhDate, entryData) {
  * Get journal entry for specific YHWH date
  */
 export async function getJournalEntry(userId, yhwhDate) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured", data: null };
+  }
   try {
     const entryRef = doc(db, "journal", userId, "entries", yhwhDate);
     const entrySnap = await getDoc(entryRef);
@@ -96,6 +102,9 @@ export async function getUserJournalEntries(userId, limitCount = 100) {
  * Post to Remnant Wall
  */
 export async function postToRemnantWall(postData) {
+  if (!isFirebaseConfigured || !db) {
+    return { success: false, error: "Firebase is not configured" };
+  }
   try {
     const wallRef = doc(collection(db, "remnant_wall"));
     await setDoc(wallRef, {
