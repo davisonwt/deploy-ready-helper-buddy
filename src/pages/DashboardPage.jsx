@@ -123,12 +123,15 @@ export default function DashboardPage() {
       
       const isBeforeSunrise = currentTimeMinutes < sunriseTimeMinutes
       
-      console.log(`[Dashboard] ===== SUNRISE CHECK =====`)
-      console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`)
-      console.log(`[Dashboard] Sunrise time: 05:13 (313 minutes)`)
-      console.log(`[Dashboard] Current time in minutes: ${currentTimeMinutes}`)
-      console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`)
-      console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`)
+      // Debug logs only in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard] ===== SUNRISE CHECK =====`)
+        console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`)
+        console.log(`[Dashboard] Sunrise time: 05:13 (313 minutes)`)
+        console.log(`[Dashboard] Current time in minutes: ${currentTimeMinutes}`)
+        console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`)
+        console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`)
+      }
       
       // If current time is before sunrise, we're still on the previous calendar day
       let effectiveYear = localYear
@@ -142,9 +145,13 @@ export default function DashboardPage() {
         effectiveYear = prevDayDate.getFullYear()
         effectiveMonth = prevDayDate.getMonth()
         effectiveDate = prevDayDate.getDate()
-        console.log(`[Dashboard] ⚠️ BEFORE SUNRISE - Using PREVIOUS day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Dashboard] ⚠️ BEFORE SUNRISE - Using PREVIOUS day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        }
       } else {
-        console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        }
       }
       
       // Calculate Creator date using PURE LOCAL date arithmetic (NO UTC, NO getTime())
@@ -187,9 +194,11 @@ export default function DashboardPage() {
         }
       }
       
-      console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
-      console.log(`[Dashboard] Epoch LOCAL: ${epochYear}-${epochMonth + 1}-${epochDate}`)
-      console.log(`[Dashboard] Days since epoch (PURE LOCAL): ${totalDays}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
+        console.log(`[Dashboard] Epoch LOCAL: ${epochYear}-${epochMonth + 1}-${epochDate}`)
+        console.log(`[Dashboard] Days since epoch (PURE LOCAL): ${totalDays}`)
+      }
       
       // Calculate Creator calendar date
       const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
@@ -219,7 +228,9 @@ export default function DashboardPage() {
       const weekDay = ((totalDays % 7) + 4) % 7 || 7
       
       const creatorDate = { year, month, day, weekDay }
-      console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`)
+      }
       const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
       
       // Calculate day of year
@@ -230,7 +241,9 @@ export default function DashboardPage() {
       }
       dayOfYear += creatorDate.day
       
-      console.log(`[Dashboard] Day of year calculated: ${dayOfYear}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard] Day of year calculated: ${dayOfYear}`)
+      }
       
       const dayInfo = getDayInfo(dayOfYear)
       
@@ -249,7 +262,9 @@ export default function DashboardPage() {
         timestamp: localTimestamp // Use LOCAL time string, not UTC ISO string
       }
       
-      console.log(`[Dashboard] Setting calendar data:`, newCalendarData)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Dashboard] Setting calendar data:`, newCalendarData)
+      }
       setCalendarData(newCalendarData)
     }
     
@@ -376,7 +391,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
+      }
       setError(null)
       
       // Fetch user profile
@@ -400,7 +417,9 @@ export default function DashboardPage() {
             setError(`Failed to load profile: ${errorMessage}`)
           } else {
             setProfile(data)
-            console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found')
+            if (process.env.NODE_ENV === 'development') {
+              console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found')
+            }
           }
         } catch (error) {
           const errorMessage = error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error'
@@ -417,7 +436,9 @@ export default function DashboardPage() {
       const fetchData = async () => {
         try {
           await fetchOrchards()
-          console.log('✅ Dashboard: Orchards fetched successfully')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Dashboard: Orchards fetched successfully')
+          }
         } catch (error) {
           console.error('❌ Dashboard: Error fetching orchards:', error)
           setError('Failed to load orchards')
@@ -427,11 +448,15 @@ export default function DashboardPage() {
       // Fetch user's bestowals
       const fetchUserBestowals = async () => {
         try {
-          console.log('🔍 Dashboard: Fetching user bestowals...')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 Dashboard: Fetching user bestowals...')
+          }
           const result = await getUserBestowals()
           if (result.success) {
             setUserBestowals(result.data)
-            console.log('✅ Dashboard: Bestowals fetched successfully:', result.data.length)
+            if (process.env.NODE_ENV === 'development') {
+              console.log('✅ Dashboard: Bestowals fetched successfully:', result.data.length)
+            }
           } else {
             console.error('❌ Dashboard: Failed to fetch bestowals:', result.error)
             setUserBestowals([])
@@ -459,7 +484,9 @@ export default function DashboardPage() {
   const fetchFollowerStats = async () => {
     if (!user?.id) return
     try {
-      console.log('🔍 Dashboard: Fetching follower stats...')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Dashboard: Fetching follower stats...')
+      }
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
@@ -485,7 +512,9 @@ export default function DashboardPage() {
         newFollowers: newFollowers?.length || 0
       }))
 
-      console.log('✅ Dashboard: Followers:', followers?.length || 0, 'New:', newFollowers?.length || 0)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Dashboard: Followers:', followers?.length || 0, 'New:', newFollowers?.length || 0)
+      }
     } catch (error) {
       console.error('❌ Dashboard: Error fetching follower stats:', error)
     }
@@ -493,11 +522,15 @@ export default function DashboardPage() {
 
   const fetchActiveUsers = async () => {
     try {
-      console.log('🔍 Dashboard: Fetching active users...')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Dashboard: Fetching active users...')
+      }
       // Get active users (users who have been active in the last 30 days)
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      console.log('📅 Dashboard: Looking for activity since:', thirtyDaysAgo.toISOString())
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📅 Dashboard: Looking for activity since:', thirtyDaysAgo.toISOString())
+      }
 
       // Get users who created orchards in last 30 days
       const { data: orchardUsers, error: orchardError } = await supabase
@@ -505,7 +538,9 @@ export default function DashboardPage() {
         .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('🌳 Dashboard: Orchard users:', orchardUsers?.length || 0, orchardError)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🌳 Dashboard: Orchard users:', orchardUsers?.length || 0, orchardError)
+      }
 
       // Get users who made bestowals in last 30 days
       const { data: bestowalUsers, error: bestowalError } = await supabase
@@ -513,7 +548,9 @@ export default function DashboardPage() {
         .select('bestower_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('💝 Dashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💝 Dashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError)
+      }
 
       // Get users who sent messages in last 30 days
       const { data: messageUsers, error: messageError } = await supabase
@@ -521,7 +558,9 @@ export default function DashboardPage() {
         .select('sender_id')
         .gte('created_at', thirtyDaysAgo.toISOString())
 
-      console.log('💬 Dashboard: Message users:', messageUsers?.length || 0, messageError)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('💬 Dashboard: Message users:', messageUsers?.length || 0, messageError)
+      }
 
       // Combine all unique user IDs
       const activeUserIds = new Set([
@@ -530,7 +569,9 @@ export default function DashboardPage() {
         ...(messageUsers?.map(u => u.sender_id) || [])
       ])
 
-      console.log('👥 Dashboard: Total active users:', activeUserIds.size)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('👥 Dashboard: Total active users:', activeUserIds.size)
+      }
       setActiveUsers(activeUserIds.size)
     } catch (error) {
       console.error('❌ Dashboard: Error fetching active users:', error)
@@ -561,7 +602,9 @@ export default function DashboardPage() {
 
   // Show loading screen while auth is loading or data is loading
   if (authLoading || orchardsLoading || bestowalsLoading) {
-    console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
+    }
     const theme = getCurrentTheme()
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
