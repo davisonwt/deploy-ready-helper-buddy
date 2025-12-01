@@ -62,6 +62,43 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate }: DayEn
   const [dreamEntry, setDreamEntry] = useState('')
   const [isNightMode, setIsNightMode] = useState(false)
   
+  // 12 Love & Peace Themes (rotating every 2 hours) - High frequency love & peace
+  const themes = [
+    { name: 'Divine Love', colors: ['rgb(127 29 29)', 'rgb(157 23 77)', 'rgb(88 28 135)'] },
+    { name: 'Peaceful Dawn', colors: ['rgb(30 58 138)', 'rgb(55 48 163)', 'rgb(88 28 135)'] },
+    { name: 'Golden Harmony', colors: ['rgb(120 53 15)', 'rgb(154 52 18)', 'rgb(127 29 29)'] },
+    { name: 'Serene Waters', colors: ['rgb(19 78 74)', 'rgb(14 116 144)', 'rgb(30 58 138)'] },
+    { name: 'Lavender Dreams', colors: ['rgb(88 28 135)', 'rgb(91 33 182)', 'rgb(112 26 117)'] },
+    { name: 'Sunset Peace', colors: ['rgb(124 45 18)', 'rgb(153 27 27)', 'rgb(157 23 77)'] },
+    { name: 'Emerald Tranquility', colors: ['rgb(6 78 59)', 'rgb(22 101 52)', 'rgb(19 78 74)'] },
+    { name: 'Crystal Clarity', colors: ['rgb(12 74 110)', 'rgb(30 64 175)', 'rgb(55 48 163)'] },
+    { name: 'Blossom Bliss', colors: ['rgb(131 24 67)', 'rgb(159 18 57)', 'rgb(127 29 29)'] },
+    { name: 'Moonlight Serenity', colors: ['rgb(15 23 42)', 'rgb(88 28 135)', 'rgb(55 48 163)'] },
+    { name: 'Sunrise Joy', colors: ['rgb(113 63 18)', 'rgb(154 52 18)', 'rgb(120 53 15)'] },
+    { name: 'Ocean Calm', colors: ['rgb(22 78 99)', 'rgb(30 64 175)', 'rgb(55 48 163)'] },
+  ]
+  
+  // Get current theme based on 2-hour rotation
+  const getCurrentTheme = () => {
+    const now = new Date()
+    const hours = now.getHours()
+    // 24 hours / 12 themes = 2 hours per theme
+    const themeIndex = Math.floor(hours / 2)
+    return themes[themeIndex]
+  }
+  
+  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+  
+  // Update theme every hour to check for 2-hour boundary
+  useEffect(() => {
+    const updateTheme = () => {
+      setCurrentTheme(getCurrentTheme())
+    }
+    updateTheme()
+    const interval = setInterval(updateTheme, 60 * 60 * 1000) // Check every hour
+    return () => clearInterval(interval)
+  }, [])
+  
   // Health / Fasting Tracker
   const [fastingType, setFastingType] = useState<'none' | 'water' | 'daniel' | 'full'>('none')
   const [waterIntake, setWaterIntake] = useState(0)
@@ -475,8 +512,28 @@ Meditate on the significance of this day in the Creator's calendar. What does th
           onClick={closePanel}
           className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
-        <div className={`absolute inset-y-0 left-0 w-full max-w-4xl bg-gradient-to-br ${isNightMode ? 'from-slate-950 via-purple-950 to-indigo-950' : 'from-purple-950 via-indigo-900 to-teal-900'} shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0`}>
-          <div className="p-8 pb-32 space-y-6 text-white">
+        <div 
+          className="absolute top-0 left-0 right-0 bottom-0 w-full max-w-4xl mx-auto shadow-2xl transform transition-all duration-1000 pointer-events-auto overflow-y-auto"
+          style={{
+            background: isNightMode 
+              ? 'linear-gradient(to bottom right, rgb(2 6 23), rgb(30 27 75), rgb(30 27 75))'
+              : `linear-gradient(to bottom right, ${currentTheme.colors[0]}, ${currentTheme.colors[1]}, ${currentTheme.colors[2]})`
+          }}
+        >
+          {/* Theme indicator - Sticky header */}
+          <div 
+            className="sticky top-0 z-10 backdrop-blur-sm border-b border-white/10 px-8 py-2 text-center"
+            style={{
+              background: `linear-gradient(to right, ${currentTheme.colors[0]}, ${currentTheme.colors[1]})`,
+              opacity: 0.95
+            }}
+          >
+            <p className="text-xs text-white/90 font-light">
+              ✨ {currentTheme.name} · Changes every 2 hours ✨
+            </p>
+          </div>
+          
+          <div className="p-8 pb-32 space-y-6 text-white min-h-full">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
