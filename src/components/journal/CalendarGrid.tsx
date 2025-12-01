@@ -284,7 +284,13 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             return (
               <motion.button
                 key={idx}
-                onClick={() => onDateSelect(day.gregorianDate)}
+                onClick={() => {
+                  setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
+                  setIsDayPanelOpen(true);
+                  if (onDateSelect) {
+                    onDateSelect(day.gregorianDate);
+                  }
+                }}
                 className={`
                   aspect-square p-2 rounded-lg border-2 transition-all
                   ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
