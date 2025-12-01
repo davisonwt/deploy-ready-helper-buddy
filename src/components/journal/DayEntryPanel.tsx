@@ -615,13 +615,13 @@ Meditate on the significance of this day in the Creator's calendar. What does th
 
   return (
     <>
-      <div className="fixed inset-0 z-50 pointer-events-auto">
+      <div className="fixed inset-0 z-50 pointer-events-auto overflow-hidden">
         <div
           onClick={closePanel}
           className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
         <div 
-          className="absolute top-0 left-0 right-0 bottom-0 w-full max-w-4xl mx-auto shadow-2xl transform transition-all duration-1000 pointer-events-auto overflow-y-auto"
+          className="absolute top-0 left-0 right-0 bottom-0 w-full max-w-4xl mx-auto shadow-2xl transform transition-all duration-1000 pointer-events-auto flex flex-col overflow-hidden"
           style={{
             background: isNightMode 
               ? 'linear-gradient(to bottom right, rgb(2 6 23), rgb(30 27 75), rgb(30 27 75))'
@@ -630,7 +630,7 @@ Meditate on the significance of this day in the Creator's calendar. What does th
         >
           {/* Theme indicator - Sticky header */}
           <div 
-            className="sticky top-0 z-10 backdrop-blur-sm border-b border-white/10 px-8 py-2 text-center"
+            className="sticky top-0 z-10 backdrop-blur-sm border-b border-white/10 px-8 py-2 text-center flex-shrink-0"
             style={{
               background: `linear-gradient(to right, ${currentTheme.colors[0]}, ${currentTheme.colors[1]})`,
               opacity: 0.95
@@ -641,7 +641,27 @@ Meditate on the significance of this day in the Creator's calendar. What does th
             </p>
           </div>
           
-          <div className="p-8 pb-32 space-y-6 text-white min-h-full">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto overscroll-contain scroll-smooth" style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(255, 255, 255, 0.3) transparent'
+          }}>
+            <style>{`
+              div::-webkit-scrollbar {
+                width: 8px;
+              }
+              div::-webkit-scrollbar-track {
+                background: transparent;
+              }
+              div::-webkit-scrollbar-thumb {
+                background-color: rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+              }
+              div::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(255, 255, 255, 0.5);
+              }
+            `}</style>
+            <div className="p-8 pb-32 space-y-6 text-white">
             {/* Header */}
             <div className="flex justify-between items-start">
               <div>
@@ -1093,6 +1113,7 @@ Meditate on the significance of this day in the Creator's calendar. What does th
                 </div>
               </TabsContent>
             </Tabs>
+            </div>
           </div>
         </div>
       </div>
