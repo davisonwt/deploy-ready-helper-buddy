@@ -1,0 +1,423 @@
+/**
+ * Community Chat Component
+ * Always-open chat for S2G community with Gosat moderation
+ */
+
+import { useState, useEffect, useRef } from 'react'
+import { Send, Mic, Image as ImageIcon, AlertTriangle, Trash2, Ban, Shield, X } from 'lucide-react'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Badge } from '../ui/badge'
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
+import { isFirebaseConfigured } from '@/integrations/firebase/config'
+import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '@/integrations/firebase/config'
+import { uploadUserPhoto, uploadVoiceNote } from '@/integrations/firebase/storage'
+import { useToast } from '@/hooks/use-toast'
+
+interface ChatMessage {
+  id: string
+  text?: string
+  photoURL?: string
+  voiceNoteURL?: string
+  authorUID: string
+  authorDisplayName: string
+  createdAt: any
+  editedAt?: any
+  warningCount?: number
+  isDeleted?: boolean
+}
+
+interface CommunityChatProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
+  const { user, isAuthenticated } = useFirebaseAuth()
+  const { toast } = useToast()
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isGosat, setIsGosat] = useState(false)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+
+  // Check if user is Gosat
+  useEffect(() => {
+    if (user && isFirebaseConfigured) {
+      // Check user's role in Firestore
+      const checkGosatStatus = async () => {
+        try {
+          const { getDoc, doc } = await import('firebase/firestore')
+          const userDoc = await getDoc(doc(db, 'users', user.uid))
+          if (userDoc.exists()) {
+            const userData = userDoc.data()
+            setIsGosat(userData.role === 'gosat' || userData.isGosat === true)
+          }
+        } catch (error) {
+          console.error('Error checking Gosat status:', error)
+        }
+      }
+      checkGosatStatus()
+    }
+  }, [user])
+
+  // Load messages
+  useEffect(() => {
+    if (!isFirebaseConfigured || !isOpen) return
+
+    const messagesRef = collection(db, 'community_chat')
+    const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100))
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs: ChatMessage[] = []
+      snapshot.forEach((doc) => {
+        const data = doc.data()
+        if (!data.isDeleted) {
+          msgs.push({
+            id: doc.id,
+            ...data,
+          } as ChatMessage)
+        }
+      })
+      setMessages(msgs.reverse()) // Reverse to show oldest first
+    })
+
+    return () => unsubscribe()
+  }, [isFirebaseConfigured, isOpen])
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // Send text message
+  const sendMessage = async () => {
+    if (!isFirebaseConfigured || !user || !newMessage.trim()) return
+
+    try {
+      await addDoc(collection(db, 'community_chat'), {
+        text: newMessage.trim(),
+        authorUID: user.uid,
+        authorDisplayName: user.displayName || user.email || 'Anonymous',
+        createdAt: serverTimestamp(),
+        warningCount: 0,
+        isDeleted: false,
+      })
+      setNewMessage('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to send message',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Send photo
+  const sendPhoto = async () => {
+    if (!isFirebaseConfigured || !user || !photoFile) return
+
+    try {
+      const result = await uploadUserPhoto(user.uid, photoFile)
+      if (result.success) {
+        await addDoc(collection(db, 'community_chat'), {
+          photoURL: result.url,
+          authorUID: user.uid,
+          authorDisplayName: user.displayName || user.email || 'Anonymous',
+          createdAt: serverTimestamp(),
+          warningCount: 0,
+          isDeleted: false,
+        })
+        setPhotoFile(null)
+      }
+    } catch (error) {
+      console.error('Error sending photo:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to send photo',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Record voice note
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
+
+        if (isFirebaseConfigured && user) {
+          const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' })
+          const result = await uploadVoiceNote(user.uid, file)
+
+          if (result.success) {
+            await addDoc(collection(db, 'community_chat'), {
+              voiceNoteURL: result.url,
+              authorUID: user.uid,
+              authorDisplayName: user.displayName || user.email || 'Anonymous',
+              createdAt: serverTimestamp(),
+              warningCount: 0,
+              isDeleted: false,
+            })
+          }
+        }
+
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (error) {
+      console.error('Error starting recording:', error)
+      toast({
+        title: 'Error',
+        description: 'Could not access microphone',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  // Gosat moderation functions
+  const warnUser = async (messageId: string, authorUID: string) => {
+    if (!isGosat) return
+
+    try {
+      const messageRef = doc(db, 'community_chat', messageId)
+      const messageDoc = await getDoc(messageRef)
+      const currentWarnings = messageDoc.data()?.warningCount || 0
+
+      await updateDoc(messageRef, {
+        warningCount: currentWarnings + 1,
+      })
+
+      toast({
+        title: 'Warning Issued',
+        description: 'User has been warned',
+      })
+    } catch (error) {
+      console.error('Error warning user:', error)
+    }
+  }
+
+  const deleteMessage = async (messageId: string) => {
+    if (!isGosat) return
+
+    try {
+      const messageRef = doc(db, 'community_chat', messageId)
+      await updateDoc(messageRef, {
+        isDeleted: true,
+        deletedAt: serverTimestamp(),
+        deletedBy: user?.uid,
+      })
+
+      toast({
+        title: 'Message Deleted',
+        description: 'Message has been removed',
+      })
+    } catch (error) {
+      console.error('Error deleting message:', error)
+    }
+  }
+
+  const banUser = async (authorUID: string) => {
+    if (!isGosat) return
+
+    try {
+      // Add user to banned list in Firestore
+      const bannedRef = doc(db, 'banned_users', authorUID)
+      await setDoc(bannedRef, {
+        bannedAt: serverTimestamp(),
+        bannedBy: user?.uid,
+        reason: 'Community guidelines violation',
+      })
+
+      toast({
+        title: 'User Banned',
+        description: 'User has been removed from community',
+      })
+    } catch (error) {
+      console.error('Error banning user:', error)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-auto">
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      />
+      <div className="absolute inset-y-0 right-0 w-full max-w-2xl bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-transform duration-500 pointer-events-auto flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-white/20 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-white">S2G Community</h2>
+            <p className="text-sm text-gray-300">Always open for encouragement & inspiration</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:scale-125 transition"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.length === 0 ? (
+            <div className="text-center text-gray-400 mt-8">
+              <p>No messages yet. Be the first to share!</p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`bg-white/10 rounded-lg p-4 ${
+                  msg.authorUID === user?.uid ? 'bg-blue-900/30' : ''
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold text-white">{msg.authorDisplayName}</p>
+                    <p className="text-xs text-gray-400">
+                      {msg.createdAt?.toDate?.()?.toLocaleTimeString() || 'Just now'}
+                    </p>
+                  </div>
+                  {isGosat && msg.authorUID !== user?.uid && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => warnUser(msg.id, msg.authorUID)}
+                        className="text-yellow-400 hover:text-yellow-300"
+                        title="Warn User"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteMessage(msg.id)}
+                        className="text-red-400 hover:text-red-300"
+                        title="Delete Message"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => banUser(msg.authorUID)}
+                        className="text-red-600 hover:text-red-500"
+                        title="Ban User"
+                      >
+                        <Ban className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {msg.warningCount > 0 && (
+                  <Badge className="bg-yellow-500/20 text-yellow-300 mb-2">
+                    {msg.warningCount} warning{msg.warningCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
+
+                {msg.text && <p className="text-white">{msg.text}</p>}
+                {msg.photoURL && (
+                  <img src={msg.photoURL} alt="Shared" className="mt-2 rounded-lg max-w-full" />
+                )}
+                {msg.voiceNoteURL && (
+                  <audio controls src={msg.voiceNoteURL} className="mt-2 w-full" />
+                )}
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        {isAuthenticated ? (
+          <div className="p-4 border-t border-white/20 space-y-2">
+            {photoFile && (
+              <div className="flex items-center gap-2 bg-white/10 p-2 rounded">
+                <img
+                  src={URL.createObjectURL(photoFile)}
+                  alt="Preview"
+                  className="h-16 w-16 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <p className="text-sm text-white">{photoFile.name}</p>
+                  <Button onClick={sendPhoto} size="sm" className="mt-1">
+                    Send Photo
+                  </Button>
+                </div>
+                <button
+                  onClick={() => setPhotoFile(null)}
+                  className="text-red-400"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                placeholder="Share encouragement..."
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                className="hidden"
+                id="photo-upload"
+              />
+              <label htmlFor="photo-upload">
+                <Button variant="outline" size="icon" asChild>
+                  <span>
+                    <ImageIcon className="h-4 w-4" />
+                  </span>
+                </Button>
+              </label>
+              {!isRecording ? (
+                <Button onClick={startRecording} variant="outline" size="icon">
+                  <Mic className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={stopRecording} variant="outline" size="icon" className="bg-red-600">
+                  <Mic className="h-4 w-4" />
+                </Button>
+              )}
+              <Button onClick={sendMessage}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 border-t border-white/20 text-center">
+            <p className="text-gray-300">Please sign in to participate</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
