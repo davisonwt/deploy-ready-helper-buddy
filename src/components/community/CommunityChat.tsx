@@ -441,9 +441,15 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Share encouragement..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      sendMessage()
+                    }
+                  }}
+                  placeholder={isFirebaseConfigured && user ? "Share encouragement..." : "Sign in to send messages..."}
+                  disabled={!isFirebaseConfigured || !user}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <input
                   type="file"
