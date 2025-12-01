@@ -459,7 +459,8 @@ Meditate on the significance of this day in the Creator's calendar. What does th
     return null
   }
 
-  const currentTime = getCreatorTime(selectedDate, location?.lat, location?.lon)
+  // Use default location coordinates (can be enhanced later with user location)
+  const currentTime = getCreatorTime(selectedDate, -26.2, 28.0)
   const isFeastDay = yhwhDate.weekDay === 7 || yhwhDate.day === 1 || yhwhDate.day === 15
 
   return (
