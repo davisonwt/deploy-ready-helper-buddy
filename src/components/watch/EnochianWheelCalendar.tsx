@@ -1327,8 +1327,7 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          );
-        })}
+        ))}
       </div>
 
       {/* 1cm gap between future and past days */}
@@ -2989,7 +2988,8 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
             )}
 
           </motion.div>
-          ))}
+          );
+        })}
       </div>
 
 
