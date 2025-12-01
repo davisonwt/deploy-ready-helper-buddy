@@ -45,7 +45,7 @@ import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
 import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
-import { CommunityChat } from "./community/CommunityChat"
+import { CommunityChatButton } from "./community/CommunityChatButton"
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
@@ -96,7 +96,6 @@ function Layout({ children }) {
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   const [isSupportOpen, setIsSupportOpen] = useState(false)
   const [isGosatOpen, setIsGosatOpen] = useState(false)
-  const [isCommunityChatOpen, setIsCommunityChatOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   const [jitsiCall, setJitsiCall] = useState(null)
 
@@ -418,31 +417,6 @@ function Layout({ children }) {
                 </button>
               )}
 
-              {/* Community Chat Button */}
-              <button
-                onClick={() => setIsCommunityChatOpen(true)}
-                className="flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
-                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                  hover:translate-y-[-2px]"
-                style={{
-                  color: currentTheme.textPrimary,
-                  backgroundColor: currentTheme.secondaryButton,
-                  borderColor: currentTheme.cardBorder,
-                  borderRadius: '21px',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = currentTheme.accent;
-                  e.currentTarget.style.borderColor = currentTheme.accent;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                  e.currentTarget.style.borderColor = currentTheme.cardBorder;
-                }}
-              >
-                <Users className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span className="truncate text-center leading-tight">Community</span>
-              </button>
             </nav>
             
             <div className="flex items-center space-x-4">
@@ -807,8 +781,8 @@ function Layout({ children }) {
       {/* Gosat Panel */}
       <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 
-      {/* Community Chat */}
-      <CommunityChat isOpen={isCommunityChatOpen} onClose={() => setIsCommunityChatOpen(false)} />
+      {/* Community Chat Floating Button */}
+      <CommunityChatButton />
 
       {/* Your Progress Button & Modal */}
       <ProgressButton />
