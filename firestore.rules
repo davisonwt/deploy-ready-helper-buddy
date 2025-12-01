@@ -79,6 +79,46 @@ service cloud.firestore {
       // Only owner can write
       allow write: if isOwner(userId);
     }
+    
+    // ============================================
+    // COMMUNITY CHAT
+    // ============================================
+    // Path: community_chat/{messageId}
+    match /community_chat/{messageId} {
+      // Anyone can read (public community chat)
+      allow read: if true;
+      
+      // Only authenticated users can create messages
+      // Must be the author
+      allow create: if isAuthenticated() 
+        && request.resource.data.authorUID == request.auth.uid
+        && request.resource.data.authorUID != null
+        && request.resource.data.createdAt != null;
+      
+      // Only author can update their own messages
+      // Gosats can also update (for moderation)
+      allow update: if isAuthenticated() 
+        && (resource.data.authorUID == request.auth.uid 
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+      
+      // Only author or Gosat can delete
+      allow delete: if isAuthenticated() 
+        && (resource.data.authorUID == request.auth.uid 
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+    }
+    
+    // ============================================
+    // BANNED USERS
+    // ============================================
+    // Path: banned_users/{userId}
+    match /banned_users/{userId} {
+      // Only Gosats can read/write
+      allow read, write: if isAuthenticated() 
+        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+    }
   }
 }
 
