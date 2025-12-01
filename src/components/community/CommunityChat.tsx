@@ -11,7 +11,7 @@ import { Badge } from '../ui/badge'
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
 import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc, updateDoc, getDoc, setDoc, where, getDocs } from 'firebase/firestore'
 import { db } from '@/integrations/firebase/config'
 import { uploadUserPhoto, uploadVoiceNote } from '@/integrations/firebase/storage'
 import { useToast } from '@/hooks/use-toast'
@@ -441,7 +441,11 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-semibold text-white">{msg.authorDisplayName}</p>
+                    <p className="font-semibold text-white">
+                      {isGosat || msg.authorUID === user?.uid 
+                        ? msg.authorDisplayName 
+                        : 'Anonymous User'}
+                    </p>
                     <p className="text-xs text-gray-400">
                       {msg.createdAt?.toDate?.()?.toLocaleTimeString() || 'Just now'}
                     </p>
