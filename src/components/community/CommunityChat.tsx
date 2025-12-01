@@ -39,9 +39,9 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
   const supabaseAuth = useAuth()
   const { toast } = useToast()
   
-  // Use Supabase auth if available, otherwise fall back to Firebase
-  const user = supabaseAuth.user || firebaseAuth.user
-  const isAuthenticated = supabaseAuth.isAuthenticated || firebaseAuth.isAuthenticated
+  // Use Firebase auth for chat (required for Firestore)
+  const user = firebaseAuth.user
+  const isAuthenticated = firebaseAuth.isAuthenticated
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isRecording, setIsRecording] = useState(false)
@@ -102,22 +102,49 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
 
   // Send text message
   const sendMessage = async () => {
-    if (!isFirebaseConfigured || !user || !newMessage.trim()) return
+    if (!newMessage.trim()) {
+      toast({
+        title: 'Empty Message',
+        description: 'Please enter a message',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Check if Firebase is configured and user is authenticated
+    if (!isFirebaseConfigured) {
+      toast({
+        title: 'Firebase Not Configured',
+        description: 'Chat requires Firebase to be set up. Please contact support.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!firebaseAuth.user) {
+      toast({
+        title: 'Sign In Required',
+        description: 'Please sign in with Firebase to send messages. Use the Auth button in the header.',
+        variant: 'destructive',
+      })
+      return
+    }
 
     try {
       await addDoc(collection(db, 'community_chat'), {
         text: newMessage.trim(),
-        authorUID: user.uid,
-        authorDisplayName: user.displayName || user.email || 'Anonymous',
+        authorUID: firebaseAuth.user.uid,
+        authorDisplayName: firebaseAuth.user.displayName || firebaseAuth.user.email || 'Anonymous',
         createdAt: serverTimestamp(),
         warningCount: 0,
         isDeleted: false,
       })
       setNewMessage('')
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
+    } catch (error: any) {
+      console.error('Error sending message:', error)
+      const errorMessage = error?.message || error?.code || 'Failed to send message'
       toast({
-        title: 'Error',
+        title: 'Error Sending Message',
         description: errorMessage,
         variant: 'destructive',
       })
@@ -453,8 +480,9 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
                 )}
                 <Button 
                   onClick={sendMessage} 
-                  className="bg-blue-600 hover:bg-blue-500"
-                  title="Send Message"
+                  disabled={!isFirebaseConfigured || !user || !newMessage.trim()}
+                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!isFirebaseConfigured ? "Firebase not configured" : !user ? "Sign in required" : "Send Message"}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
