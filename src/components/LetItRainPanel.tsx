@@ -68,7 +68,7 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
     { href: '/tithing', label: 'Tithing', color: 'bg-blue-600 hover:bg-blue-500', icon: HandHeart },
     { href: '/free-will-gifting', label: 'Free-Will Gift', color: 'bg-purple-600 hover:bg-purple-500', icon: Gift },
     { href: '#', label: 'Quick Rain 0.50', color: 'bg-green-600 hover:bg-green-500', onClick: quickRain },
-    { href: '#', label: 'Body Rain 1.00', color: 'bg-teal-600 hover:bg-teal-500', onClick: bodyAmount },
+    { href: '#', label: 'Body Rain 1.00', color: 'bg-teal-600 hover:bg-teal-500', onClick: rainAmount },
   ]
 
   if (!isOpen) {
