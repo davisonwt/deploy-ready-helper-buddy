@@ -87,7 +87,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       const angle = (i / 366) * 360 - 90;
       const rad = (angle * Math.PI) / 180;
       const isCurrentDay = i + 1 === dayOfYear;
-      const isSabbath = [4, 11, 18, 25].includes((i % 30) + 1); // Approximate sabbaths
+      // Shabbat is only on day 7 of the week, not based on day of month
+      const isSabbath = false; // Sun circle doesn't show Shabbat - only the 7-day wheel does
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -230,7 +231,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   filter={isActive ? 'url(#glow)' : undefined}
                 />
                 
-                {/* Leader symbol */}
+                {/* Leader symbol - centered and aligned with curve */}
                 <text
                   x={textX}
                   y={textY - 8}
@@ -239,12 +240,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   fill={leader.color}
                   fontSize={size * 0.02}
                   fontWeight="bold"
-                  transform={`rotate(${i * 90}, ${textX}, ${textY})`}
+                  transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
                 >
                   {leader.image === 'Lion' ? '🦁' : leader.image === 'Man' ? '👤' : leader.image === 'Ox' ? '🐂' : '🦅'}
                 </text>
                 
-                {/* Leader name */}
+                {/* Leader name - centered and aligned with curve */}
                 <text
                   x={textX}
                   y={textY + 8}
@@ -253,7 +254,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   fill={isActive ? '#fff' : leader.color}
                   fontSize={size * 0.015}
                   fontWeight={isActive ? 'bold' : 'normal'}
-                  transform={`rotate(${i * 90}, ${textX}, ${textY})`}
+                  transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
                 >
                   {leader.name}
                 </text>
@@ -384,13 +385,18 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           
           {/* 7 day segments */}
           {['1', '2', '3', '4', '5', '6', 'שבת'].map((day, i) => {
+            const dayNumber = i + 1;
             const startAngle = (i * (360 / 7) - 90) * (Math.PI / 180);
             const midAngle = ((i + 0.5) * (360 / 7) - 90) * (Math.PI / 180);
             const textRadius = (radii.daysOuter + radii.daysInner) / 2;
             const x = center + Math.cos(midAngle) * textRadius;
             const y = center + Math.sin(midAngle) * textRadius;
-            const isCurrentDay = i + 1 === dayOfWeek;
-            const isSabbath = i === 6;
+            const isCurrentDay = dayNumber === dayOfWeek;
+            // Shabbat (day 7) should only be yellow when it's the current day
+            const isSabbath = dayNumber === 7 && dayOfWeek === 7;
+            
+            // Calculate text rotation to align with curve
+            const textRotation = (midAngle * 180 / Math.PI) + 90;
             
             return (
               <g key={i}>
@@ -406,15 +412,16 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   strokeLinecap="butt"
                 />
                 
-                {/* Day label */}
+                {/* Day label - properly centered and aligned with curve */}
                 <text
                   x={x}
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill={isCurrentDay ? '#fff' : isSabbath ? '#fbbf24' : '#9ca3af'}
-                  fontSize={isSabbath ? size * 0.018 : size * 0.02}
+                  fontSize={size * 0.02}
                   fontWeight={isCurrentDay || isSabbath ? 'bold' : 'normal'}
+                  transform={`rotate(${textRotation}, ${x}, ${y})`}
                 >
                   {day}
                 </text>
@@ -475,7 +482,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   fill={isActive ? '#fff' : partColors[i]}
                   fontSize={size * 0.012}
                   fontWeight={isActive ? 'bold' : 'normal'}
-                  transform={`rotate(${i * 90}, ${textX}, ${textY})`}
+                  transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
                 >
                   {part}
                 </text>

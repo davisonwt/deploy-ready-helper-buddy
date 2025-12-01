@@ -92,6 +92,54 @@ const BloodDrop = ({ isActive }: { isActive: boolean }) => {
   );
 };
 
+// Helper function to calculate which days in a month fall on Shabbat (weekDay === 7)
+// Based on the current year's calendar structure
+const calculateSabbathDays = (month: number): number[] => {
+  // Calculate dayOfYear for day 1 of the month
+  const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  let dayOfYearForMonthStart = 1;
+  for (let m = 1; m < month; m++) {
+    dayOfYearForMonthStart += daysPerMonth[m - 1];
+  }
+  
+  // Calculate weekday for day 1 of the month
+  // Weekday cycles: 1,2,3,4,5,6,7,1,2,3,4,5,6,7...
+  // We need to calculate based on the current year
+  // Get current date to determine the year's starting weekday
+  const now = new Date();
+  const creatorDate = calculateCreatorDate(now);
+  
+  // Calculate weekday for day 1 of the month using actual calendar calculation
+  // Create a date that represents day 1 of the month in current year
+  const currentYear = creatorDate.year;
+  const yearsSinceEpoch = currentYear - 6028;
+  const daysFromYears = yearsSinceEpoch * 364; // 364 days per Creator year
+  const daysFromMonths = dayOfYearForMonthStart - 1;
+  const totalDaysFromEpoch = daysFromYears + daysFromMonths;
+  
+  // Calculate what date this corresponds to (epoch + totalDaysFromEpoch)
+  const epochDate = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
+  const targetDate = new Date(epochDate);
+  targetDate.setDate(targetDate.getDate() + totalDaysFromEpoch);
+  
+  // Get weekday for day 1 of the month
+  const monthStartDate = calculateCreatorDate(targetDate);
+  const weekdayOfMonthStart = monthStartDate.weekDay;
+  
+  // Find which days in this month fall on weekday 7 (Shabbat)
+  const sabbathDays: number[] = [];
+  const daysInMonth = daysPerMonth[month - 1];
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const weekday = ((weekdayOfMonthStart - 1 + (day - 1)) % 7) + 1;
+    if (weekday === 7) {
+      sabbathDays.push(day);
+    }
+  }
+  
+  return sabbathDays;
+};
+
 const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -122,35 +170,21 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     return () => clearInterval(interval);
   }, [location.lat, location.lon]);
 
-  // Nisan pattern exactly as in your photo:
-
-  // 1–3 = Blue (New Moon cycle start)
-
-  // 4   = Blue + Tekufah shadow (straight line)
-
-  // 7,14,21,28 = Yellow Sabbath
-
-  // Rest = Black
+  // Calculate Shabbat days for Month 1 based on actual weekday (only day 7 of week)
+  const sabbathDays = calculateSabbathDays(1);
 
   const beads = Array.from({ length: 30 }, (_, i) => {
-
     const day = i + 1;
-
     const globalDay = day; // Month 1 starts at global day 1
 
-    // Month 1 Sabbaths: Days 4, 11, 18, 25
-    const isSabbath = [4, 11, 18, 25].includes(day);
+    // Shabbat only when it's actually day 7 of the week
+    const isSabbath = sabbathDays.includes(day);
 
     const isFeast = day <= 4;                   // First 4 days = blue feast cycle
-
     const isTekufah = day === 4;                // Day 4 = special tekufah marker
 
-
-
     let color = '#1f2937';                      // Regular day (deep black)
-
-    if (isSabbath) color = '#fbbf24';           // Golden Sabbath
-
+    if (isSabbath) color = '#fbbf24';           // Golden Sabbath - only on actual Shabbat
     if (isFeast)   color = '#22d3ee';           // Turquoise feast
 
 
@@ -398,8 +432,9 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 30 + dayInMonth;           // Nisan = 30 days, so Iyar starts at global day 31
 
-    // Month 2 Sabbaths: Days 2, 9, 16, 23, 30
-    const isSabbath = [2, 9, 16, 23, 30].includes(dayInMonth);
+    // Calculate Shabbat days for Month 2 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth2 = calculateSabbathDays(2);
+    const isSabbath = sabbathDaysMonth2.includes(dayInMonth);
 
     const isFeast = dayInMonth === 14;           // Pesach Sheni (14th of Iyar)
 
@@ -749,8 +784,9 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 60 + dayInMonth;
 
-    // Month 3 Sabbaths: Days 7, 14, 21, 28
-    const isSabbath = [7, 14, 21, 28].includes(dayInMonth);
+    // Calculate Shabbat days for Month 3 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth3 = calculateSabbathDays(3);
+    const isSabbath = sabbathDaysMonth3.includes(dayInMonth);
 
     const isShavuot = dayInMonth === 6;                   // Torah given on 6th Sivan
 
@@ -1128,7 +1164,9 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     const globalDay = 91 + dayInMonth;
 
     // Month 4 Sabbaths: Days 4, 11, 18, 25
-    const isSabbath = [4, 11, 18, 25].includes(dayInMonth);
+    // Calculate Shabbat days based on actual weekday (only day 7 of week)
+    const sabbathDays = calculateSabbathDays(4);
+    const isSabbath = sabbathDays.includes(dayInMonth);
 
     const is17Tammuz     = dayInMonth === 17;                   // Fast — breach of Jerusalem walls
 
@@ -1544,7 +1582,9 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     const globalDay = 121 + dayInMonth;
 
     // Month 5 Sabbaths: Days 2, 9, 16, 23, 30
-    const isSabbath = [2, 9, 16, 23, 30].includes(dayInMonth);
+    // Calculate Shabbat days based on actual weekday (only day 7 of week)
+    const sabbathDays = calculateSabbathDays(5);
+    const isSabbath = sabbathDays.includes(dayInMonth);
 
     const is9Av          = dayInMonth === 9;                    // Destruction of both Temples
 
@@ -1938,8 +1978,9 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 151 + dayInMonth;
 
-    // Month 6 Sabbaths: Days 7, 14, 21, 28
-    const isSabbath = [7, 14, 21, 28].includes(dayInMonth);
+    // Calculate Shabbat days for Month 6 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth6 = calculateSabbathDays(6);
+    const isSabbath = sabbathDaysMonth6.includes(dayInMonth);
 
     const isLast12Days  = dayInMonth >= 19;                    // 12 days of return (tribe-by-tribe tradition)
 
@@ -2356,7 +2397,9 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     const globalDay = 182 + day;
 
     // Month 7 Sabbaths: Days 4, 11, 18, 25
-    const isSabbath = [4, 11, 18, 25].includes(day);
+    // Calculate Shabbat days based on actual weekday (only day 7 of week)
+    const sabbathDays = calculateSabbathDays(7);
+    const isSabbath = sabbathDays.includes(day);
 
     const isRoshHashana = day <= 2;                     // 1–2 Tishrei
 
@@ -2711,7 +2754,9 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     const globalDay = 213 + day;
 
     // Month 8 Sabbaths: Days 2, 9, 16, 23, 30
-    const isSabbath = [2, 9, 16, 23, 30].includes(day);
+    // Calculate Shabbat days based on actual weekday (only day 7 of week)
+    const sabbathDays = calculateSabbathDays(8);
+    const isSabbath = sabbathDays.includes(day);
 
     const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Israel)
 
@@ -3063,7 +3108,9 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
     const globalDay = 243 + day;
 
     // Month 9 Sabbaths: Days 7, 14, 21, 28
-    const isSabbath = [7, 14, 21, 28].includes(day);
+    // Calculate Shabbat days based on actual weekday (only day 7 of week)
+    const sabbathDays = calculateSabbathDays(9);
+    const isSabbath = sabbathDays.includes(day);
 
     let color = '#1f2937';                                 // Deep winter night
 
@@ -3292,8 +3339,9 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 274 + day;
 
-    // Month 10 Sabbaths: Days 4, 11, 18, 25
-    const isSabbath = [4, 11, 18, 25].includes(day);
+    // Calculate Shabbat days for Month 10 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth10 = calculateSabbathDays(10);
+    const isSabbath = sabbathDaysMonth10.includes(day);
 
     const is10Tevet       = day === 10;                    // Fast – siege of Jerusalem began
 
@@ -3588,8 +3636,9 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 304 + day;
 
-    // Month 11 Sabbaths: Days 2, 9, 16, 23, 30
-    const isSabbath = [2, 9, 16, 23, 30].includes(day);
+    // Calculate Shabbat days for Month 11 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth11 = calculateSabbathDays(11);
+    const isSabbath = sabbathDaysMonth11.includes(day);
 
     const isTuBShevat  = day === 15;                    // New Year for Trees – almond blossoms
 
@@ -3888,8 +3937,9 @@ const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
     const globalDay = 334 + day;
 
-    // Month 12 Sabbaths: Days 7, 14, 21, 28
-    const isSabbath = [7, 14, 21, 28].includes(day);
+    // Calculate Shabbat days for Month 12 based on actual weekday (only day 7 of week)
+    const sabbathDaysMonth12 = calculateSabbathDays(12);
+    const isSabbath = sabbathDaysMonth12.includes(day);
 
     const isPurim       = day === 14;                    // 14 Adar – Purim
 
