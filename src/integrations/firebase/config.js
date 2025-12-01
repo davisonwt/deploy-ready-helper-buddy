@@ -15,7 +15,15 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Firebase Configuration Object
-// TODO: Replace these placeholders with your actual Firebase config values
+// ⚠️ IMPORTANT: You MUST replace these placeholder values with your actual Firebase config!
+// 
+// To get your Firebase config:
+// 1. Go to https://console.firebase.google.com/
+// 2. Select your project (or create one)
+// 3. Click ⚙️ gear icon → Project settings
+// 4. Scroll to "Your apps" → Click Web icon (</>)
+// 5. Register app if needed, then copy the config values below
+
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY_HERE",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -26,8 +34,50 @@ const firebaseConfig = {
   measurementId: "YOUR_MEASUREMENT_ID" // Optional, for Analytics
 };
 
+// Validate that config values have been replaced
+const hasPlaceholders = 
+  firebaseConfig.apiKey.includes("YOUR_API_KEY") ||
+  firebaseConfig.projectId.includes("YOUR_PROJECT_ID") ||
+  firebaseConfig.appId.includes("YOUR_APP_ID");
+
+if (hasPlaceholders) {
+  console.error(`
+    ⚠️ FIREBASE CONFIG ERROR ⚠️
+    
+    You need to replace the placeholder values in:
+    src/integrations/firebase/config.js
+    
+    Get your Firebase config from:
+    https://console.firebase.google.com/ → Project Settings → Your apps → Web
+    
+    Current error: Invalid API key because placeholders are still in use.
+    
+    Replace these values:
+    - apiKey: "YOUR_API_KEY_HERE" → Your actual API key
+    - projectId: "YOUR_PROJECT_ID" → Your actual project ID
+    - appId: "YOUR_APP_ID" → Your actual app ID
+    - etc.
+  `);
+  
+  // Don't initialize Firebase with invalid config
+  throw new Error(
+    "Firebase config contains placeholder values. " +
+    "Please update src/integrations/firebase/config.js with your actual Firebase credentials. " +
+    "See console for details."
+  );
+}
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  throw new Error(
+    "Failed to initialize Firebase. " +
+    "Please check your Firebase config values in src/integrations/firebase/config.js"
+  );
+}
 
 // Initialize Firebase services
 export const auth = getAuth(app);
