@@ -4013,7 +4013,89 @@ const EnochianTimepiece = () => {
 
   const dayRotation = ((enochianDate.dayOfYear - 1) / 364) * 360;
 
+  // Reusable Calendar Wheel Component
+  const CalendarWheel = ({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) => (
+    <motion.div 
+      initial={{ scale: 0.8, opacity: 0 }} 
+      animate={{ scale: 1, opacity: 1 }} 
+      transition={{ duration: 1.5 }}
+      className={`flex items-center justify-center ${className}`}
+      style={{ 
+        width: '66%',
+        height: '100%',
+        ...style
+      }}
+    >
+      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="abyssShadow" x="-200%" y="-200%" width="400%" height="400%">
+            <feDropShadow dx="30" dy="30" stdDeviation="20" floodColor="#000" floodOpacity="0.95"/>
+            <feDropShadow dx="60" dy="60" stdDeviation="50" floodColor="#000" floodOpacity="0.8"/>
+            <feDropShadow dx="90" dy="90" stdDeviation="80" floodColor="#000" floodOpacity="0.6"/>
+          </filter>
+          <filter id="holyFire">
+            <feGaussianBlur stdDeviation="15" result="blur"/>
+            <feFlood floodColor="#fbbf24" floodOpacity="1"/>
+            <feComposite in2="blur" operator="in"/>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="abyss"><stop offset="0%" stopColor="#1a0033"/><stop offset="100%" stopColor="#000"/></radialGradient>
+          <linearGradient id="bronze"><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#92400e"/></linearGradient>
+        </defs>
 
+        {[400, 370, 340, 310, 280, 250, 220, 190, 160, 130].map((r, i) => (
+          <g key={r} filter="url(#abyssShadow)">
+            <circle cx={center} cy={center} r={r} fill="none" stroke="url(#bronze)" strokeWidth={i < 3 ? 14 : 8} opacity="0.9"/>
+            <circle cx={center} cy={center} r={r - 10} fill="none" stroke="#1e293b" strokeWidth="4" opacity="0.7"/>
+          </g>
+        ))}
+
+        {['SPRING', 'SUMMER', 'FALL', 'WINTER'].map((s, i) => (
+          <g key={s} filter="url(#holyFire)" transform={`rotate(${seasonRotation}, ${center}, ${center})`}>
+            <path d={`M ${center} ${center} L ${center + 430*Math.cos((i*90-90)*Math.PI/180)} ${center + 430*Math.sin((i*90-90)*Math.PI/180)} A 430 430 0 0 1 ${center + 430*Math.cos((i*90)*Math.PI/180)} ${center + 430*Math.sin((i*90)*Math.PI/180)} Z`}
+                  fill={['#10b981','#f59e0b','#ef4444','#3b82f6'][i]} opacity="0.3"/>
+            <RadiantText text={s} radius={470} angle={i*90 + 45} size={40} color="#fff"/>
+          </g>
+        ))}
+
+        <g filter="url(#holyFire)" transform={`rotate(${zodiacRotation}, ${center}, ${center})`}>
+          {zodiacWheel.map((z, i) => (
+            <g key={i}>
+              <RadiantText text={z.constellation} radius={320} angle={i*30} size={24} color="#fbbf24"/>
+              <RadiantText text={z.tribe} radius={295} angle={i*30} size={18} color="#f59e0b"/>
+              <RadiantText text={z.banner} radius={270} angle={i*30} size={32} color="#fff"/>
+            </g>
+          ))}
+        </g>
+
+        <g filter="url(#abyssShadow)" transform={`rotate(${greatRotation}, ${center}, ${center})`}>
+          {greatWheel.map((g, i) => (
+            <RadiantText key={g} text={g} radius={230} angle={i*90 + 45} size={36} color="#34d399"/>
+          ))}
+        </g>
+
+        <motion.g animate={{ y: [0, -30, 0] }} transition={{ duration: 6, repeat: Infinity }}
+                  transform={`rotate(${((enochianDate.dayOfYear - 1)/364)*360}, ${center}, ${center})`}>
+          <circle cx={center} cy={center-380} r="50" fill="#ec4899" filter="url(#abyssShadow)"/>
+          <circle cx={center} cy={center-380} r="38" fill="#000" stroke="#fbbf24" strokeWidth="10" filter="url(#holyFire)"/>
+          <text x={center} y={center-370} textAnchor="middle" className="text-6xl font-black fill-white" filter="url(#holyFire)">
+            {enochianDate.dayOfYear}
+          </text>
+        </motion.g>
+
+        <g filter="url(#abyssShadow)">
+          <circle cx={center} cy={center} r="140" fill="url(#abyss)"/>
+          <circle cx={center} cy={center} r="120" fill="#000" stroke="#fbbf24" strokeWidth="20" filter="url(#holyFire)"/>
+          <text x={center} y={center-30} textAnchor="middle" className="text-9xl font-black fill-amber-400" filter="url(#holyFire)">
+            {enochianDate.dayOfMonth}
+          </text>
+          <text x={center} y={center+40} textAnchor="middle" className="text-4xl fill-pink-400 tracking-widest" filter="url(#holyFire)">
+            {enochianDate.dayPart.toUpperCase()}
+          </text>
+        </g>
+      </svg>
+    </motion.div>
+  );
 
   return (
 
@@ -4353,78 +4435,121 @@ const EnochianTimepiece = () => {
       <div className="relative z-10 mt-32 space-y-32 px-4">
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 10 - Review</h2>
-          <div className="flex justify-center">
-            <Month10Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month10Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 11 - Review</h2>
-          <div className="flex justify-center">
-            <Month11Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month11Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 12 - Review</h2>
-          <div className="flex justify-center">
-            <Month12Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month12Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 1 - Review</h2>
-          <div className="flex justify-center">
-            <Month1Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month1Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 2 - Review</h2>
-          <div className="flex justify-center">
-            <Month2Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month2Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 3 - Review</h2>
-          <div className="flex justify-center">
-            <Month3Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month3Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 4 - Review</h2>
-          <div className="flex justify-center">
-            <Month4Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month4Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 5 - Review</h2>
-          <div className="flex justify-center">
-            <Month5Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month5Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 6 - Review</h2>
-          <div className="flex justify-center">
-            <Month6Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month6Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 7 - Review</h2>
-          <div className="flex justify-center">
-            <Month7Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month7Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
 
         <div className="border-t-4 border-amber-600/30 pt-16">
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 8 - Review</h2>
-          <div className="flex justify-center">
-            <Month8Strand dayOfMonth={0} />
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month8Strand dayOfMonth={0} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t-4 border-amber-600/30 pt-16">
+          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 9 - Review</h2>
+          <div className="flex flex-row items-start justify-center w-full gap-4 md:gap-8" style={{ minHeight: '95cm' }}>
+            <CalendarWheel />
+            <div className="flex-shrink-0 flex flex-col items-center" style={{ width: '30%', maxWidth: '280px' }}>
+              <Month9Strand dayOfMonth={0} />
+            </div>
           </div>
         </div>
       </div>
