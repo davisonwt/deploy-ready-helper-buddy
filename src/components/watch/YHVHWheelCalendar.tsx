@@ -189,11 +189,15 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Month 5 specific feast days
       const isMonth5FeastDay = month === 5 && dayInMonth === 3; // Day 3: Feast of New Wine
       
+      // Month 6 specific feast days
+      const isMonth6FeastDay = month === 6 && dayInMonth === 22; // Day 22: Feast of New Oil
+      const isMonth6WoodGathering = month === 6 && (dayInMonth >= 23 && dayInMonth <= 27); // Days 23-27: Wood Gathering Days
+      
       // General feast days (1st and 15th of other months)
-      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && (dayInMonth === 1 || dayInMonth === 15);
+      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && month !== 6 && (dayInMonth === 1 || dayInMonth === 15);
       
       // Combine feast days (but Shabbat overrides)
-      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isMonth5FeastDay || isGeneralFeastDay;
+      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isMonth5FeastDay || isMonth6FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -206,6 +210,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isFeastDay,
         isMonth2UnleavenedBread,
         isMonth3Day31,
+        isMonth6WoodGathering,
         isIntercalaryDay,
         weekday,
         angle,
@@ -305,11 +310,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             } else if (tick.isFirstDayOfMonth) {
               strokeColor = '#86efac'; // Light green for first day of month
               strokeWidth = 2;
+            } else if (tick.isMonth6WoodGathering) {
+              strokeColor = '#92400e'; // Brown for Month 6 Wood Gathering Days (days 23-27)
+              strokeWidth = 2;
             } else if (tick.isMonth2UnleavenedBread) {
               strokeColor = '#3b82f6'; // Darker blue for Month 2 Unleavened Bread (days 15-21)
               strokeWidth = 2;
             } else if (tick.isFeastDay) {
-              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1, Month 3 Shavuot, and general feast days)
+              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1, Month 3 Shavuot, Month 6 New Oil, and general feast days)
               strokeWidth = 2;
             }
             
