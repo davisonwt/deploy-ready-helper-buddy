@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -98,8 +98,27 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   // Calculate day/night parts for current day
   const { dayParts, nightParts } = calculateDayNightParts(dayOfYear);
   
+  // Calculate smooth rotation for outer wheel based on day progress
+  // Each day moves the wheel by 1/366th of a full rotation
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000); // Update every second for smooth animation
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Calculate progress through current day (0 to 1)
+  // Using Creator time system: 18 parts × 80 minutes = 1440 minutes = 24 hours
+  const creatorTime = getCreatorTime(currentTime);
+  const progressThroughDay = ((creatorTime.part - 1) * 80 + (creatorTime.minute - 1)) / 1440; // 0 to 1
+  
   // Rotation angles
-  const sunRotation = -(dayOfYear / 366) * 360;
+  // Outer wheel: rotates based on dayOfYear + progress through current day
+  // Each day = 360/366 degrees, so progress adds (360/366) * progressThroughDay
+  const sunRotation = -((dayOfYear - 1 + progressThroughDay) / 366) * 360;
   const leaderRotation = -(currentLeaderIndex * 90);
   const weeksRotation = -(dayOfYear / 364) * 360;
   const daysRotation = -((dayOfWeek - 1) / 7) * 360;
@@ -182,7 +201,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         {/* ====== CIRCLE 1: SUN CIRCLE (366 days) ====== */}
         <motion.g
           animate={{ rotate: sunRotation }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          transition={{ duration: 1, ease: 'linear' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
         >
           {/* Background ring */}
