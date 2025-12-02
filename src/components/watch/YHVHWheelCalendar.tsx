@@ -498,6 +498,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             );
           })}
         </motion.g>
+        </g>
 
         {/* ====== CIRCLE 3: MONTH DAYS (1-31 in 4 sections) ====== */}
         <g transform={`translate(${monthDaysOffset.x}, ${monthDaysOffset.y})`}>
@@ -675,6 +676,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             );
           })}
         </motion.g>
+        </g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
         <g transform={`translate(${daysOffset.x}, ${daysOffset.y})`}>
