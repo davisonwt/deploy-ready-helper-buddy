@@ -722,6 +722,18 @@ export default function DashboardPage() {
                 <div className="text-xs opacity-50 italic mt-2">
                   Creator's cadence never lies • forever in sync
                 </div>
+                <div className="flex justify-center pt-4">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="bg-amber-500/20 border border-amber-400/60 text-amber-100 hover:bg-amber-500/30"
+                  >
+                    <Link to="/remnants-wheel-calendar" className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Open Remnants Wheel Calendar
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
