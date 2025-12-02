@@ -192,6 +192,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Month 6 specific feast days
       const isMonth6FeastDay = month === 6 && dayInMonth === 22; // Day 22: Feast of New Oil
       const isMonth6WoodGathering = month === 6 && (dayInMonth >= 23 && dayInMonth <= 27); // Days 23-27: Wood Gathering Days
+      const isMonth6Day31 = month === 6 && dayInMonth === 31; // Day 31: Intercalary day
       
       // General feast days (1st and 15th of other months)
       const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && month !== 6 && (dayInMonth === 1 || dayInMonth === 15);
@@ -211,6 +212,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isMonth2UnleavenedBread,
         isMonth3Day31,
         isMonth6WoodGathering,
+        isMonth6Day31,
         isIntercalaryDay,
         weekday,
         angle,
@@ -301,8 +303,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             } else if (tick.isIntercalaryDay) {
               strokeColor = '#ec4899'; // Pink for intercalary days (365, 366)
               strokeWidth = 2;
-            } else if (tick.isMonth3Day31) {
-              strokeColor = '#ec4899'; // Pink for Month 3 Day 31 (intercalary-like day)
+            } else if (tick.isMonth3Day31 || tick.isMonth6Day31) {
+              strokeColor = '#ec4899'; // Pink for Month 3 Day 31 and Month 6 Day 31 (intercalary days)
               strokeWidth = 2;
             } else if (tick.isShabbat) {
               strokeColor = '#fbbf24'; // Yellow for Shabbat (day 7) - overrides other colors
