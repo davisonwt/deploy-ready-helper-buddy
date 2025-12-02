@@ -1,11 +1,10 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function calculateCreatorDate(date = new Date()) {
+const calculateCreatorDate = (inputDate) => {
+  const date = inputDate || new Date();
   const localYear = date.getFullYear();
   const localMonth = date.getMonth();
   const localDate = date.getDate();
@@ -17,93 +16,82 @@ function calculateCreatorDate(date = new Date()) {
 
   let effectiveYear = localYear;
   let effectiveMonth = localMonth;
-  let effectiveDate = localDate;
+  let effectiveDay = localDate;
 
   if (currentTimeMinutes < sunriseTimeMinutes) {
-    const prevDayDate = new Date(localYear, localMonth, localDate);
-    prevDayDate.setDate(prevDayDate.getDate() - 1);
-    effectiveYear = prevDayDate.getFullYear();
-    effectiveMonth = prevDayDate.getMonth();
-    effectiveDate = prevDayDate.getDate();
+    const prev = new Date(localYear, localMonth, localDate);
+    prev.setDate(prev.getDate() - 1);
+    effectiveYear = prev.getFullYear();
+    effectiveMonth = prev.getMonth();
+    effectiveDay = prev.getDate();
   }
 
-  const epochYear = 2025;
-  const epochMonth = 2;
-  const epochDate = 20;
-
-  let totalDays = 0;
-  let currentYear = epochYear;
-  let currentMonth = epochMonth;
-  let currentDate = epochDate;
-
-  const gregorianDaysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const epoch = { year: 2025, month: 2, day: 20 };
+  const gregorianDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 
-  while (
-    currentYear < effectiveYear ||
-    (currentYear === effectiveYear && currentMonth < effectiveMonth) ||
-    (currentYear === effectiveYear && currentMonth === effectiveMonth && currentDate < effectiveDate)
-  ) {
-    totalDays++;
-    currentDate++;
+  let totalDays = 0;
+  let current = { ...epoch };
 
-    let daysInCurrentMonth = gregorianDaysPerMonth[currentMonth];
-    if (currentMonth === 1 && isLeapYear(currentYear)) {
+  while (
+    current.year < effectiveYear ||
+    (current.year === effectiveYear && current.month < effectiveMonth) ||
+    (current.year === effectiveYear && current.month === effectiveMonth && current.day < effectiveDay)
+  ) {
+    totalDays += 1;
+    current.day += 1;
+
+    let daysInCurrentMonth = gregorianDays[current.month];
+    if (current.month === 1 && isLeapYear(current.year)) {
       daysInCurrentMonth = 29;
     }
 
-    if (currentDate > daysInCurrentMonth) {
-      currentDate = 1;
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
+    if (current.day > daysInCurrentMonth) {
+      current.day = 1;
+      current.month += 1;
+      if (current.month > 11) {
+        current.month = 0;
+        current.year += 1;
       }
     }
   }
 
-  const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  const sacredMonthLengths = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   let year = 6028;
   let remainingDays = totalDays;
 
   while (remainingDays >= 365) {
     remainingDays -= 365;
-    year++;
+    year += 1;
   }
 
   let month = 1;
   let day = remainingDays + 1;
 
-  while (day > daysPerMonth[month - 1]) {
-    day -= daysPerMonth[month - 1];
-    month++;
+  while (day > sacredMonthLengths[month - 1]) {
+    day -= sacredMonthLengths[month - 1];
+    month += 1;
     if (month > 12) {
       month = 1;
-      year++;
+      year += 1;
     }
   }
 
-  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   let dayOfYear = 0;
-  for (let i = 0; i < month - 1; i++) {
-    dayOfYear += monthDays[i];
+  for (let i = 0; i < month - 1; i += 1) {
+    dayOfYear += sacredMonthLengths[i];
   }
   dayOfYear += day;
 
-  const STARTING_WEEKDAY_YEAR_6028 = 4;
-  const weekDay = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
+  const STARTING_WEEKDAY = 4;
+  const weekDay = ((dayOfYear - 1 + STARTING_WEEKDAY - 1) % 7) + 1;
 
-  return {
-    year,
-    month,
-    day,
-    weekDay,
-    dayOfYear,
-  };
-}
+  return { year, month, day, weekDay, dayOfYear };
+};
 
-function getCreatorTime(date = new Date()) {
-  const sunriseMinutes = 320; // 5:20 AM local
+const getCreatorTime = (inputDate) => {
+  const date = inputDate || new Date();
+  const sunriseMinutes = 320;
   const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
   let elapsed = nowMinutes - sunriseMinutes;
@@ -115,17 +103,19 @@ function getCreatorTime(date = new Date()) {
   const ordinal = (n) => {
     if (n >= 11 && n <= 13) return 'th';
     const last = n % 10;
-    return last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th';
+    if (last === 1) return 'st';
+    if (last === 2) return 'nd';
+    if (last === 3) return 'rd';
+    return 'th';
   };
 
   const displayText = `${part}${ordinal(part)} part ${minute}${ordinal(minute)} min`;
 
   return { part, minute, displayText };
-}
+};
 
-function getWheelAngles(dayOfYear, progress) {
+const getWheelAngles = (dayOfYear, progress) => {
   const totalDays = dayOfYear - 1 + progress;
-
   return {
     sunRot: -(totalDays / 366) * 360,
     leaderRot: -Math.floor((dayOfYear - 1) / 91) * 90,
@@ -134,17 +124,13 @@ function getWheelAngles(dayOfYear, progress) {
     lunarRot: -(((dayOfYear - 1 + progress) % 354) / 354) * 360,
     partRot: -(progress * 360),
   };
-}
+};
 
-function buildDisplayLines(date, time, progress) {
-  const lines = [
-    `Year ${date.year} • Month ${date.month} • Day ${date.day}`,
-    `Weekday ${date.weekDay} • Part ${time.part}/18`,
-    `Day ${date.dayOfYear} of 364 • ${progress > 1 ? 'Overflow' : 'Regular Day'}`,
-  ];
-
-  return lines;
-}
+const buildDisplayLines = (date, time, progress) => [
+  `Year ${date.year} • Month ${date.month} • Day ${date.day}`,
+  `Weekday ${date.weekDay} • Part ${time.part}/18`,
+  `Day ${date.dayOfYear} of 364 • ${progress > 1 ? 'Overflow' : 'Regular Day'}`,
+];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
