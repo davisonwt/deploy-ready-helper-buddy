@@ -692,13 +692,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
-        <g transform={`translate(${finalDaysOffset.x}, ${finalDaysOffset.y})`}>
+        {/* Ensure perfect centering - only apply transform if offset is non-zero */}
+        <g transform={finalDaysOffset.x !== 0 || finalDaysOffset.y !== 0 ? `translate(${finalDaysOffset.x}, ${finalDaysOffset.y})` : undefined}>
           <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
         >
-          {/* Background ring */}
+          {/* Background ring - ensure perfect centering */}
           <circle
             cx={center}
             cy={center}
@@ -956,8 +957,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           </motion.g>
         </g>
 
-        {/* Center hub */}
-        <g transform={`translate(${centerHubOffset.x}, ${centerHubOffset.y})`}>
+        {/* Center hub - ensure perfect centering */}
+        {/* Only apply transform if offset is non-zero to avoid any transform issues */}
+        <g transform={centerHubOffset.x !== 0 || centerHubOffset.y !== 0 ? `translate(${centerHubOffset.x}, ${centerHubOffset.y})` : undefined}>
           <circle
             cx={center}
             cy={center}
