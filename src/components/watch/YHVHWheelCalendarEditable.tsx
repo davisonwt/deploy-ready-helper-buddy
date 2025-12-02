@@ -1,7 +1,15 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { YHVHWheelCalendar } from './YHVHWheelCalendar'
 import { useVisualEditor } from '@/contexts/VisualEditorContext'
 import { DraggableControls } from '../visual-editor/DraggableControls'
+
+// Import constants from wheel calendar
+const LEADERS = [
+  { name: "Malki'el", image: 'Lion', representative: 'Moses & Aaron', months: '1,2,3', color: '#fbbf24' },
+  { name: 'Hemel-melek', image: 'Man', representative: 'Kohath', months: '4,5,6', color: '#22c55e' },
+  { name: "Mel'eyal", image: 'Ox', representative: 'Gershon', months: '7,8,9', color: '#f97316' },
+  { name: "Nar'el", image: 'Eagle', representative: 'Moses & Merari', months: '10,11,12', color: '#3b82f6' },
+];
 
 interface YHVHWheelCalendarEditableProps {
   dayOfYear?: number

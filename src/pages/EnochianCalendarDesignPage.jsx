@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { YHVHWheelCalendarLive } from '@/components/watch/YHVHWheelCalendar';
+import { YHVHWheelCalendarEditable } from '@/components/watch/YHVHWheelCalendarEditable';
+import { useVisualEditor } from '@/contexts/VisualEditorContext';
 import EnochianWheelCalendar from '@/components/watch/EnochianWheelCalendar';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 
 export default function EnochianCalendarDesignPage() {
+  const { isEditorMode } = useVisualEditor();
   const [wheelPosition, setWheelPosition] = useState({ x: 0, y: 0 });
   const [beadsPosition, setBeadsPosition] = useState({ x: 0, y: 0 });
 
