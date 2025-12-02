@@ -75,7 +75,11 @@ export default function EnochianCalendarDesignPage() {
               
               {/* Wheel Calendar - responsive sizing */}
               <div className="flex justify-center">
-                <YHVHWheelCalendarLive size={Math.min(700, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 700)} />
+                {isEditorMode ? (
+                  <YHVHWheelCalendarEditable size={Math.min(700, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 700)} />
+                ) : (
+                  <YHVHWheelCalendarLive size={Math.min(700, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 700)} />
+                )}
               </div>
               
               {/* Legend */}

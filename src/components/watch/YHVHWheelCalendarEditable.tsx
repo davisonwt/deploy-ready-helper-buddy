@@ -22,8 +22,36 @@ interface YHVHWheelCalendarEditableProps {
 }
 
 export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps) {
-  const { isEditorMode, elementConfigs, updateElementConfig } = useVisualEditor()
+  const { isEditorMode, elementConfigs, updateElementConfig, setSelectedElementId } = useVisualEditor()
   const { size = 800 } = props
+
+  // Expose context to window for text click handler
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && isEditorMode) {
+      (window as any).__VISUAL_EDITOR_CONTEXT__ = {
+        setSelectedElementId,
+        updateElementConfig,
+        elementConfigs
+      }
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).__VISUAL_EDITOR_CONTEXT__
+      }
+    }
+  }, [isEditorMode, setSelectedElementId, updateElementConfig, elementConfigs])
+
+  // Listen for text selection events
+  React.useEffect(() => {
+    if (!isEditorMode) return
+    const handleSelect = (e: CustomEvent) => {
+      setSelectedElementId(e.detail.elementId)
+    }
+    window.addEventListener('visual-editor-select', handleSelect as EventListener)
+    return () => {
+      window.removeEventListener('visual-editor-select', handleSelect as EventListener)
+    }
+  }, [isEditorMode, setSelectedElementId])
 
   // Get configs for different elements
   const centerHubConfig = elementConfigs['wheel-center-hub'] || {}
