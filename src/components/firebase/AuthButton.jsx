@@ -19,36 +19,22 @@ import {
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-// Check if React dispatcher is ready
-function isReactReady() {
-  try {
-    // Check if React DevTools hook exists and dispatcher is available
-    if (typeof window !== 'undefined' && window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
-      const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-      // If dispatcher is null, React isn't ready
-      if (hook && hook.renderers && hook.renderers.size > 0) {
-        const renderer = Array.from(hook.renderers.values())[0];
-        if (renderer && renderer.findFiberByHostInstance) {
-          return true;
-        }
-      }
-    }
-    // Fallback: try to use useState - if it throws, React isn't ready
-    useState(() => {});
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
 export default function AuthButton() {
-  // Early return if React isn't ready
-  if (!isReactReady()) {
-    return null;
+  // All hooks must be called unconditionally at the top
+  // Wrap in try-catch to handle React dispatcher null errors
+  let authState;
+  try {
+    authState = useFirebaseAuth();
+  } catch (error) {
+    // If React dispatcher is null, return null to prevent crash
+    if (error?.message?.includes('useState') || error?.message?.includes('dispatcher')) {
+      console.warn('React dispatcher not ready, AuthButton returning null');
+      return null;
+    }
+    throw error; // Re-throw if it's a different error
   }
   
-  // All hooks must be called unconditionally at the top
-  const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = useFirebaseAuth();
+  const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = authState;
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
