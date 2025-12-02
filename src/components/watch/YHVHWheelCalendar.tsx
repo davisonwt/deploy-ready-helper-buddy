@@ -182,11 +182,15 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       );
       const isMonth2UnleavenedBread = month === 2 && (dayInMonth >= 15 && dayInMonth <= 21);
       
+      // Month 3 specific feast days
+      const isMonth3FeastDay = month === 3 && dayInMonth === 15; // Day 15: Shavuot
+      const isMonth3Day31 = month === 3 && dayInMonth === 31; // Day 31: Special intercalary-like day
+      
       // General feast days (1st and 15th of other months)
-      const isGeneralFeastDay = month !== 1 && month !== 2 && (dayInMonth === 1 || dayInMonth === 15);
+      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && (dayInMonth === 1 || dayInMonth === 15);
       
       // Combine feast days (but Shabbat overrides)
-      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isGeneralFeastDay;
+      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -198,6 +202,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isShabbat,
         isFeastDay,
         isMonth2UnleavenedBread,
+        isMonth3Day31,
         isIntercalaryDay,
         weekday,
         angle,
@@ -288,6 +293,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             } else if (tick.isIntercalaryDay) {
               strokeColor = '#ec4899'; // Pink for intercalary days (365, 366)
               strokeWidth = 2;
+            } else if (tick.isMonth3Day31) {
+              strokeColor = '#ec4899'; // Pink for Month 3 Day 31 (intercalary-like day)
+              strokeWidth = 2;
             } else if (tick.isShabbat) {
               strokeColor = '#fbbf24'; // Yellow for Shabbat (day 7) - overrides other colors
               strokeWidth = 2;
@@ -298,7 +306,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#3b82f6'; // Darker blue for Month 2 Unleavened Bread (days 15-21)
               strokeWidth = 2;
             } else if (tick.isFeastDay) {
-              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1 and general feast days)
+              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1, Month 3 Shavuot, and general feast days)
               strokeWidth = 2;
             }
             
