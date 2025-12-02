@@ -148,7 +148,7 @@ function Layout({ children }) {
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, className: 'dashboard-tour' },
     { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' },
-    { name: "364yhvh days", href: "/enochian-calendar-design", icon: Calendar, className: 'calendar-tour' }
+    { name: "364yhvh days", href: "/remnants-wheel-calendar", icon: Calendar, className: 'calendar-tour' }
   ]
 
   // Grouped navigation (dropdowns) - colors will be set dynamically
