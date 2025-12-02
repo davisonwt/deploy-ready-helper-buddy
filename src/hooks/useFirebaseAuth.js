@@ -14,44 +14,10 @@ import {
 } from "@/integrations/firebase/auth";
 import { isFirebaseConfigured } from "@/integrations/firebase/config";
 
-// Check if React dispatcher is ready
-function isReactDispatcherReady() {
-  try {
-    // Try to access React's internal dispatcher
-    // If useState throws or dispatcher is null, React isn't ready
-    const testState = useState;
-    if (!testState) return false;
-    
-    // Check React DevTools hook for dispatcher state
-    if (typeof window !== 'undefined' && window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
-      const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-      if (hook && hook.renderers && hook.renderers.size > 0) {
-        return true;
-      }
-    }
-    
-    // If we can call useState without error, dispatcher should be ready
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
 export function useFirebaseAuth() {
-  // Safety check for React dispatcher - return safe defaults if not ready
-  if (!isReactDispatcherReady()) {
-    console.warn("React dispatcher not ready, returning safe defaults");
-    return {
-      user: null,
-      loading: false,
-      isAuthenticated: false,
-      autoSignIn: async () => ({ success: false, error: "React not initialized" }),
-      signIn: async () => ({ success: false, error: "React not initialized" }),
-      signUp: async () => ({ success: false, error: "React not initialized" }),
-      signOut: async () => ({ success: false, error: "React not initialized" }),
-      currentUser: null,
-    };
-  }
+  // Note: We cannot check if React dispatcher is ready here because
+  // any check would require calling hooks, which would fail if dispatcher is null.
+  // The error boundary wrapper (AuthButtonWrapper) will catch dispatcher errors.
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
