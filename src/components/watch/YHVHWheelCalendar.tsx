@@ -820,11 +820,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                 
                 {/* Day number label - centered in the day segment */}
                 {(() => {
-                  const daySectionMidAngle = startAngle + dayAngle / 2;
+                  const daySegmentMidAngle = startAngle + daySegmentAngle / 2;
                   const textRadius = (radii.daysOuter + radii.daysInner) / 2;
-                  const x = center + Math.cos(daySectionMidAngle) * textRadius;
-                  const y = center + Math.sin(daySectionMidAngle) * textRadius;
-                  const textRotation = (daySectionMidAngle * 180 / Math.PI) + 90;
+                  const x = center + Math.cos(daySegmentMidAngle) * textRadius;
+                  const y = center + Math.sin(daySegmentMidAngle) * textRadius;
+                  const textRotation = (daySegmentMidAngle * 180 / Math.PI) + 90;
                   
                   return dayNumber === 7 ? (
                     // Shabbat: Show both Hebrew and English
