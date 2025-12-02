@@ -140,12 +140,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Day 1 of year = Day 4 of week, so we need to calculate from day of year
       const weekday = ((dayNumber - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       
-      // Day 1 of week = at triangle (12 o'clock position)
+      // Day 1 of week = at triangle (12 o'clock position) - Red
+      // Day 2 of week = Light blue
       // Day 4 of week = golden yellow (our 1st day of 364 day counting)
-      // Day 2 of week = also highlighted
+      // Shabbat (Day 7) = Pink
       const isDay1OfWeek = weekday === 1;
       const isDay2OfWeek = weekday === 2;
       const isDay4OfWeek = weekday === 4; // Golden yellow - our 1st day of 364 day counting
+      const isShabbat = weekday === 7; // Pink - Shabbat
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -156,6 +158,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isDay1OfWeek,
         isDay2OfWeek,
         isDay4OfWeek,
+        isShabbat,
         weekday,
         angle,
       };
@@ -242,6 +245,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#ef4444'; // Red for current day
               strokeWidth = 3;
               filter = 'url(#glow)';
+            } else if (tick.isShabbat) {
+              strokeColor = '#ec4899'; // Pink for Shabbat (day 7)
+              strokeWidth = 2;
             } else if (tick.isDay4OfWeek) {
               strokeColor = '#fbbf24'; // Golden yellow for day 4 of week (our 1st day of 364 day counting)
               strokeWidth = 2;
