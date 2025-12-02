@@ -427,6 +427,45 @@ export type Database = {
         }
         Relationships: []
       }
+      birthdays: {
+        Row: {
+          created_at: string
+          gregorian_date: string | null
+          id: string
+          notes: string | null
+          person_name: string
+          relationship: string | null
+          updated_at: string
+          user_id: string
+          yhwh_day: number
+          yhwh_month: number
+        }
+        Insert: {
+          created_at?: string
+          gregorian_date?: string | null
+          id?: string
+          notes?: string | null
+          person_name: string
+          relationship?: string | null
+          updated_at?: string
+          user_id: string
+          yhwh_day: number
+          yhwh_month: number
+        }
+        Update: {
+          created_at?: string
+          gregorian_date?: string | null
+          id?: string
+          notes?: string | null
+          person_name?: string
+          relationship?: string | null
+          updated_at?: string
+          user_id?: string
+          yhwh_day?: number
+          yhwh_month?: number
+        }
+        Relationships: []
+      }
       call_sessions: {
         Row: {
           accepted_at: string | null
@@ -1684,6 +1723,81 @@ export type Database = {
           id?: string
           source_id?: string | null
           source_type?: string | null
+        }
+        Relationships: []
+      }
+      journal_entries: {
+        Row: {
+          answered_prayers: Json | null
+          content: string | null
+          created_at: string
+          feast: string | null
+          gratitude: string | null
+          gregorian_date: string
+          id: string
+          images: string[] | null
+          is_shabbat: boolean | null
+          is_tequvah: boolean | null
+          mood: string | null
+          part_of_yowm: number | null
+          prayer_requests: Json | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          videos: string[] | null
+          voice_notes: string[] | null
+          watch: number | null
+          yhwh_day: number
+          yhwh_month: number
+          yhwh_year: number
+        }
+        Insert: {
+          answered_prayers?: Json | null
+          content?: string | null
+          created_at?: string
+          feast?: string | null
+          gratitude?: string | null
+          gregorian_date: string
+          id?: string
+          images?: string[] | null
+          is_shabbat?: boolean | null
+          is_tequvah?: boolean | null
+          mood?: string | null
+          part_of_yowm?: number | null
+          prayer_requests?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          videos?: string[] | null
+          voice_notes?: string[] | null
+          watch?: number | null
+          yhwh_day: number
+          yhwh_month: number
+          yhwh_year: number
+        }
+        Update: {
+          answered_prayers?: Json | null
+          content?: string | null
+          created_at?: string
+          feast?: string | null
+          gratitude?: string | null
+          gregorian_date?: string
+          id?: string
+          images?: string[] | null
+          is_shabbat?: boolean | null
+          is_tequvah?: boolean | null
+          mood?: string | null
+          part_of_yowm?: number | null
+          prayer_requests?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          videos?: string[] | null
+          voice_notes?: string[] | null
+          watch?: number | null
+          yhwh_day?: number
+          yhwh_month?: number
+          yhwh_year?: number
         }
         Relationships: []
       }

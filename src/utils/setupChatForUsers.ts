@@ -22,7 +22,7 @@ export async function getAllSupabaseUsers(): Promise<User[]> {
     // For now, we'll use a client-side approach that gets users from profiles table
     const { data: profiles, error } = await supabase
       .from('profiles')
-      .select('user_id, email, created_at')
+      .select('user_id, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -31,9 +31,9 @@ export async function getAllSupabaseUsers(): Promise<User[]> {
     }
 
     return (profiles || []).map(profile => ({
-      id: profile.user_id,
-      email: profile.email,
-      created_at: profile.created_at,
+      id: (profile as any).user_id,
+      email: `user-${(profile as any).user_id}@placeholder.com`, // Placeholder since profiles doesn't have email
+      created_at: (profile as any).created_at,
     }))
   } catch (error) {
     console.error('Error getting users:', error)
@@ -53,11 +53,11 @@ export async function ensureGosatUser(): Promise<string | null> {
   try {
     // Find a Gosat user in Supabase
     const { data: gosatProfile } = await supabase
-      .from('profiles')
-      .select('user_id, display_name, email')
+      .from('profiles' as any)
+      .select('user_id, display_name')
       .eq('role', 'gosat')
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (!gosatProfile) {
       // Create a system Gosat user in Firebase

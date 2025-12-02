@@ -76,7 +76,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
 
     const loadEntries = async () => {
       const { data } = await supabase
-        .from('journal_entries')
+        .from('journal_entries' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -130,7 +130,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
 
     const loadBirthdays = async () => {
       const { data, error } = await supabase
-        .from('birthdays')
+        .from('birthdays' as any)
         .select('yhwh_month, yhwh_day, person_name')
         .eq('user_id', user.id)
 
@@ -139,7 +139,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
         return
       }
 
-      setBirthdays(data || [])
+      setBirthdays(((data || []) as unknown) as { yhwh_month: number; yhwh_day: number; person_name: string; }[])
     }
 
     loadBirthdays()

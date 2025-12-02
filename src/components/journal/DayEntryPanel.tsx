@@ -15,6 +15,8 @@ import { getCreatorTime } from '@/utils/customTime'
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
 import { isFirebaseConfigured } from '@/integrations/firebase/config'
+import { db } from '@/integrations/firebase/config'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { saveJournalEntry, getJournalEntry, postToRemnantWall } from '@/integrations/firebase/firestore'
 import { uploadUserPhoto, uploadVoiceNote, uploadVideo } from '@/integrations/firebase/storage'
 import { supabase } from '@/integrations/supabase/client'
@@ -248,13 +250,13 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
         
         // Check if entry already exists
         const { data: existingEntry } = await supabase
-          .from('journal_entries')
+          .from('journal_entries' as any)
           .select('id')
           .eq('user_id', supabaseUser.id)
           .eq('yhwh_year', yhwhDate.year)
           .eq('yhwh_month', yhwhDate.month)
           .eq('yhwh_day', yhwhDate.day)
-          .single()
+          .maybeSingle()
         
         const entryPayload = {
           user_id: supabaseUser.id,
@@ -283,13 +285,13 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
         if (existingEntry) {
           // Update existing entry
           await supabase
-            .from('journal_entries')
+            .from('journal_entries' as any)
             .update(entryPayload)
-            .eq('id', existingEntry.id)
+            .eq('id', (existingEntry as any).id)
         } else {
           // Insert new entry
           await supabase
-            .from('journal_entries')
+            .from('journal_entries' as any)
             .insert(entryPayload)
         }
         
@@ -726,7 +728,7 @@ Meditate on the significance of this day in the Creator's calendar. What does th
             </div>
 
             {/* Tabs for all features */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
               <TabsList className="grid grid-cols-5 w-full bg-white/10">
                 <TabsTrigger value="notes">Notes</TabsTrigger>
                 <TabsTrigger value="media">Media</TabsTrigger>
