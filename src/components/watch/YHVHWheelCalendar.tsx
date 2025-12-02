@@ -145,7 +145,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   }, [center, radii, dayOfYear]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full relative w-full">
+    <div className="flex flex-col items-center justify-center relative w-full">
       {/* Small upside-down triangle indicator above wheel, between heading and wheel edge */}
       <div className="relative w-full flex justify-center mb-2">
         <div className="relative" style={{ width: size, height: size * 0.05 }}>
