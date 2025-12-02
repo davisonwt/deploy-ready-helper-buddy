@@ -172,7 +172,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Verify: Day 361 weekday = ((361-1+4-1)%7)+1 = (363%7)+1 = 6+1 = 7 ✓ (Sabbath)
       // So Day 361 is the 52nd Sabbath, and Days 362-363 are the two days after it (Days Out of Time)
       const isDaysOutOfTime = dayNumber === 362 || dayNumber === 363; // Dark purple - Days out of time (doot) after 52nd Sabbath
-      const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days (the extra 2 days at end)
+      const isIntercalaryDay = dayNumber === 366; // Pink - Intercalary day (Day 366 only, Day 365 is default color)
       const isTequvah = dayNumber === 1; // Day 1 of year = Day 4 of week = Tequvah (equinox) - White
       
       // Month 1 specific feast days
