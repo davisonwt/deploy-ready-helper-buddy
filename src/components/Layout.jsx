@@ -47,8 +47,8 @@ import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
 // Lazy load CommunityChatButton to avoid React initialization issues
 const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
-// Lazy load AuthButton to avoid React dispatcher initialization issues
-const LazyAuthButton = lazy(() => import("./firebase/AuthButton").then(m => ({ default: m.default })))
+// Lazy load AuthButton wrapper that handles React dispatcher errors
+const LazyAuthButton = lazy(() => import("./firebase/AuthButtonWrapper").then(m => ({ default: m.default })))
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
