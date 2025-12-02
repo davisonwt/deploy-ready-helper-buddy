@@ -101,14 +101,15 @@ try {
         });
       }
       
-      // Force hard reload after a brief delay to allow cleanup
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Force hard reload immediately - don't wait, don't initialize React
+      window.location.reload();
+      // Exit early to prevent React initialization
+      throw new Error('Duplicate React detected - reloading page');
     } catch (error) {
       console.error('Failed to clear caches:', error);
-      // If cleanup fails, still try to reload
+      // If cleanup fails, still try to reload and exit
       window.location.reload();
+      throw error; // Prevent React from initializing
     }
   }
 } catch (e) {
