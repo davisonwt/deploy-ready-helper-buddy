@@ -65,8 +65,8 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
           .single()
         
         if (data) {
-          setPrayerRequests(data.prayer_requests || [])
-          setAnsweredPrayers(data.answered_prayers || [])
+          setPrayerRequests(Array.isArray(data.prayer_requests) ? data.prayer_requests as string[] : [])
+          setAnsweredPrayers(Array.isArray(data.answered_prayers) ? data.answered_prayers as string[] : [])
         }
       } catch (error) {
         // Entry doesn't exist yet

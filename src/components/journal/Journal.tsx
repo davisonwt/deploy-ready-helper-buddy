@@ -99,7 +99,7 @@ export default function Journal() {
         
         // Fetch entries from Supabase
         const { data, error } = await supabase
-          .from('journal_entries')
+          .from('journal_entries' as any)
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
