@@ -741,18 +741,20 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           יהוה
         </text>
 
-        {/* Upside-down triangle indicator at top, pointing down to current day */}
+        {/* Small upside-down triangle indicator at top, outside wheels, pointing down */}
         {(() => {
           const topAngle = -90 * (Math.PI / 180); // Top of wheel (12 o'clock)
-          const triangleBaseRadius = radii.sunOuter + size * 0.03; // Position outside the sun circle
-          const trianglePointRadius = radii.sunOuter + size * 0.01; // Point extends closer to wheel
-          const triangleBaseWidth = size * 0.02; // Width of triangle base
+          const triangleBaseRadius = radii.sunOuter + size * 0.02; // Position outside the sun circle
+          const trianglePointRadius = radii.sunOuter + size * 0.005; // Point extends closer to wheel
+          const triangleBaseWidth = size * 0.008; // Small width of triangle base
           
-          // Calculate triangle points
-          const triangleTopLeftX = center + Math.cos(topAngle - Math.PI / 2) * triangleBaseWidth;
-          const triangleTopLeftY = center + Math.sin(topAngle - Math.PI / 2) * triangleBaseWidth;
-          const triangleTopRightX = center + Math.cos(topAngle + Math.PI / 2) * triangleBaseWidth;
-          const triangleTopRightY = center + Math.sin(topAngle + Math.PI / 2) * triangleBaseWidth;
+          // Calculate triangle points (upside-down triangle pointing down)
+          // Base of triangle (top, horizontal)
+          const triangleBaseLeftX = center + Math.cos(topAngle - Math.PI / 2) * triangleBaseWidth;
+          const triangleBaseLeftY = center + Math.sin(topAngle - Math.PI / 2) * triangleBaseWidth;
+          const triangleBaseRightX = center + Math.cos(topAngle + Math.PI / 2) * triangleBaseWidth;
+          const triangleBaseRightY = center + Math.sin(topAngle + Math.PI / 2) * triangleBaseWidth;
+          // Point of triangle (bottom, pointing down)
           const trianglePointX = center + Math.cos(topAngle) * trianglePointRadius;
           const trianglePointY = center + Math.sin(topAngle) * trianglePointRadius;
           
@@ -764,45 +766,45 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           
           return (
             <g>
-              {/* Upside-down triangle */}
+              {/* Small upside-down triangle - base at top, point at bottom */}
               <polygon
-                points={`${triangleTopLeftX},${triangleTopLeftY} ${triangleTopRightX},${triangleTopRightY} ${trianglePointX},${trianglePointY}`}
+                points={`${triangleBaseLeftX},${triangleBaseLeftY} ${triangleBaseRightX},${triangleBaseRightY} ${trianglePointX},${trianglePointY}`}
                 fill="#fbbf24"
                 stroke="#d97706"
-                strokeWidth={2}
+                strokeWidth={1}
                 opacity={0.9}
               />
               
-              {/* Line from triangle point to current day position */}
+              {/* Line from triangle point down to current day position */}
               <line
                 x1={trianglePointX}
                 y1={trianglePointY}
                 x2={currentDayX}
                 y2={currentDayY}
                 stroke="#fbbf24"
-                strokeWidth={1.5}
-                strokeDasharray="4,4"
-                opacity={0.6}
+                strokeWidth={1}
+                strokeDasharray="3,3"
+                opacity={0.5}
               />
               
               {/* Current day indicator dot */}
               <circle
                 cx={currentDayX}
                 cy={currentDayY}
-                r={size * 0.008}
+                r={size * 0.006}
                 fill="#ef4444"
                 stroke="#fff"
-                strokeWidth={1.5}
+                strokeWidth={1}
               />
               
               {/* Day number label below triangle point */}
               <text
                 x={trianglePointX}
-                y={trianglePointY + size * 0.025}
+                y={trianglePointY + size * 0.02}
                 textAnchor="middle"
                 dominantBaseline="top"
                 fill="#fbbf24"
-                fontSize={size * 0.015}
+                fontSize={size * 0.012}
                 fontWeight="bold"
               >
                 Day {dayOfYear}
