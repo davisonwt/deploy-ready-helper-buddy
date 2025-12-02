@@ -13,7 +13,7 @@ class AuthButtonErrorBoundary extends Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Check if this is a React dispatcher error - check multiple error properties
+    // Check if this is a React dispatcher error or module loading error
     const errorString = String(error);
     const errorMessage = error?.message || '';
     const errorStack = error?.stack || '';
@@ -28,7 +28,14 @@ class AuthButtonErrorBoundary extends Component {
       errorStack.includes('useState') ||
       errorStack.includes('dispatcher');
     
-    if (isDispatcherError) {
+    const isModuleLoadingError =
+      errorMessage.includes('error loading dynamically imported module') ||
+      errorMessage.includes('Loading failed for the module') ||
+      errorMessage.includes('NetworkError') ||
+      errorString.includes('error loading dynamically imported module') ||
+      errorString.includes('Loading failed for the module');
+    
+    if (isDispatcherError || isModuleLoadingError) {
       return { hasError: true, error };
     }
     // Re-throw other errors so they're handled by parent error boundaries
@@ -36,7 +43,7 @@ class AuthButtonErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Check if this is a React dispatcher error
+    // Check if this is a React dispatcher error or module loading error
     const errorString = String(error);
     const errorMessage = error?.message || '';
     const errorStack = error?.stack || '';
@@ -51,9 +58,16 @@ class AuthButtonErrorBoundary extends Component {
       errorStack.includes('useState') ||
       errorStack.includes('dispatcher');
     
-    if (isDispatcherError) {
-      // Silently handle dispatcher errors - don't log as error, just warn
-      console.warn('AuthButton: React dispatcher not ready, component will not render');
+    const isModuleLoadingError =
+      errorMessage.includes('error loading dynamically imported module') ||
+      errorMessage.includes('Loading failed for the module') ||
+      errorMessage.includes('NetworkError') ||
+      errorString.includes('error loading dynamically imported module') ||
+      errorString.includes('Loading failed for the module');
+    
+    if (isDispatcherError || isModuleLoadingError) {
+      // Silently handle these errors - don't log as error, just warn
+      console.warn('AuthButton: Module loading or React dispatcher issue, component will not render');
       return;
     }
     // Log other errors normally
