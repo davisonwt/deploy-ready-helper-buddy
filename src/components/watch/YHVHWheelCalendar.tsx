@@ -186,11 +186,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       const isMonth3FeastDay = month === 3 && dayInMonth === 15; // Day 15: Shavuot
       const isMonth3Day31 = month === 3 && dayInMonth === 31; // Day 31: Special intercalary-like day
       
+      // Month 5 specific feast days
+      const isMonth5FeastDay = month === 5 && dayInMonth === 3; // Day 3: Feast of New Wine
+      
       // General feast days (1st and 15th of other months)
-      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && (dayInMonth === 1 || dayInMonth === 15);
+      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && (dayInMonth === 1 || dayInMonth === 15);
       
       // Combine feast days (but Shabbat overrides)
-      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isGeneralFeastDay;
+      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isMonth5FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
