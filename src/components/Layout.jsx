@@ -423,9 +423,11 @@ function Layout({ children }) {
             
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
-                {/* Firebase Auth Button */}
+                {/* Firebase Auth Button - wrapped in error boundary to handle React init issues */}
                 <Suspense fallback={null}>
-                  <AuthButton />
+                  <ErrorBoundary fallback={null}>
+                    <AuthButton />
+                  </ErrorBoundary>
                 </Suspense>
                 
                 {/* Voice Commands Button */}

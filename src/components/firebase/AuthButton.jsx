@@ -20,27 +20,20 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 export default function AuthButton() {
-  // Ensure React is ready before using hooks
-  const [isReady, setIsReady] = useState(false);
-  
-  useEffect(() => {
-    // Small delay to ensure React dispatcher is initialized
-    const timer = setTimeout(() => setIsReady(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  if (!isReady) {
-    return null;
-  }
-  
+  // All hooks must be called unconditionally at the top
   const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = useFirebaseAuth();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
   
   // Don't render if Firebase is not configured
   if (!isFirebaseConfigured) {
     return null; // Return null to hide the button when Firebase isn't configured
   }
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
