@@ -11,6 +11,21 @@ interface WheelCalendarProps {
   dayOfWeek?: number;
   partOfDay?: number;
   size?: number;
+  customRadii?: Partial<{
+    sunOuter: number;
+    sunInner: number;
+    leadersOuter: number;
+    leadersInner: number;
+    monthDaysOuter: number;
+    monthDaysInner: number;
+    weeksOuter: number;
+    weeksInner: number;
+    dayPartsOuter: number;
+    dayPartsInner: number;
+    daysOuter: number;
+    daysInner: number;
+    centerHub: number;
+  }>;
 }
 
 // Leader data for the 4 quadrants
@@ -72,11 +87,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   dayOfWeek = 1,
   partOfDay = 1,
   size = 800,
+  customRadii,
 }) => {
   const center = size / 2;
   
   // Calculate radii for each wheel (outer to inner)
-  const radii = useMemo(() => ({
+  const baseRadii = {
     sunOuter: size * 0.48,
     sunInner: size * 0.44,
     leadersOuter: size * 0.43,
@@ -90,7 +106,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     daysOuter: size * 0.16, // 7-day week (moved down)
     daysInner: size * 0.11,
     centerHub: size * 0.08, // Center hub
-  }), [size]);
+  };
+  
+  const radii = useMemo(() => ({
+    ...baseRadii,
+    ...customRadii,
+  }), [size, customRadii]);
 
   // Current leader index (0-3)
   const currentLeaderIndex = getCurrentLeader(dayOfYear);
@@ -877,7 +898,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         <circle
           cx={center}
           cy={center}
-          r={radii.daysInner}
+          r={radii.daysInner - 5}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
