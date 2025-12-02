@@ -20,24 +20,8 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 export default function AuthButton() {
-  // Use state to track if React is ready
-  const [isReady, setIsReady] = useState(false);
-  
-  // Wait for React to be fully initialized
-  useEffect(() => {
-    // Small delay to ensure React dispatcher is ready
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Don't render hooks until React is ready
-  if (!isReady) {
-    return null;
-  }
-  
   // All hooks must be called unconditionally at the top
+  // If React dispatcher is null, these will throw - that's handled by error boundary
   const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = useFirebaseAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);

@@ -428,8 +428,8 @@ function Layout({ children }) {
             
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
-                {/* Firebase Auth Button - only render after mount to avoid React init issues */}
-                {isMounted && (
+                {/* Firebase Auth Button - only render after mount and React is ready */}
+                {isMounted && typeof window !== 'undefined' && document.readyState === 'complete' && (
                   <Suspense fallback={null}>
                     <LazyAuthButton />
                   </Suspense>
