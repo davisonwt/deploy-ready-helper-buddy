@@ -652,10 +652,10 @@ export default function DashboardPage() {
             zIndex: 1
           }}
         >
-          {/* User Icon, Text, Wheel Info, and Calendar - Side by Side in Same Container */}
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            {/* Left Side - User Icon and Info */}
-            <div className="flex flex-col gap-3 sm:gap-4 flex-1 min-w-0">
+          {/* User Icon and Info - Side by Side */}
+          <div className="flex flex-col gap-4 w-full">
+            {/* Top Section: User Icon and Welcome Info */}
+            <div className="flex items-center gap-4 sm:gap-6">
               {/* User Icon */}
               <div 
                 className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
@@ -677,9 +677,9 @@ export default function DashboardPage() {
                 )}
               </div>
               
-              {/* Welcome Message */}
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold py-2 sm:py-3 md:py-4 rounded-lg truncate" style={{ color: currentTheme.textPrimary }}>
+              {/* Welcome Message - Next to Icon */}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate" style={{ color: currentTheme.textPrimary }}>
                   Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg" style={{ color: currentTheme.textSecondary }}>
@@ -689,39 +689,41 @@ export default function DashboardPage() {
                   Payment Method: USDC (USD Coin)
                 </p>
               </div>
-
-              {/* Calendar Info Text */}
-              {calendarData && (
-                <div className="w-full space-y-2 mt-4" style={{ color: '#b48f50' }}>
-                  <div className="text-base sm:text-lg font-bold">
-                    Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
-                  </div>
-                  <div className="text-sm sm:text-base">
-                    Weekday {calendarData.weekday} • Part {calendarData.part}/18
-                  </div>
-                  <div className="text-xs sm:text-sm opacity-80">
-                    Day {calendarData.dayOfYear} of 364 • {calendarData.season}
-                  </div>
-                  <div className="text-xs font-mono opacity-60">
-                    {/* Display current LOCAL time - each user sees their own timezone */}
-                    {currentTime.toLocaleString(undefined, { 
-                      // Use user's LOCAL timezone - no hardcoded timezone!
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })}
-                  </div>
-                  <div className="text-xs opacity-50 italic mt-2">
-                    Creator's wheels never lie • forever in sync
-                  </div>
-                </div>
-              )}
-
             </div>
+
+            {/* Divider Line */}
+            <div className="w-full border-t my-4" style={{ borderColor: currentTheme.textSecondary + '40' }}></div>
+
+            {/* Calendar Info Text - Centered */}
+            {calendarData && (
+              <div className="w-full space-y-2 text-center" style={{ color: '#b48f50' }}>
+                <div className="text-base sm:text-lg font-bold">
+                  Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
+                </div>
+                <div className="text-sm sm:text-base">
+                  Weekday {calendarData.weekday} • Part {calendarData.part}/18
+                </div>
+                <div className="text-xs sm:text-sm opacity-80">
+                  Day {calendarData.dayOfYear} of 364 • {calendarData.season}
+                </div>
+                <div className="text-xs font-mono opacity-60">
+                  {/* Display current LOCAL time - each user sees their own timezone */}
+                  {currentTime.toLocaleString(undefined, { 
+                    // Use user's LOCAL timezone - no hardcoded timezone!
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </div>
+                <div className="text-xs opacity-50 italic mt-2">
+                  Creator's wheels never lie • forever in sync
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
