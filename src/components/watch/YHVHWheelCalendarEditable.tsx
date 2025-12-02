@@ -41,8 +41,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     centerHub: size * 0.08,
   }
 
-  // Apply editor overrides
-  const radii = {
+  // Apply editor overrides (use useMemo to prevent infinite re-renders)
+  const radii = React.useMemo(() => ({
     ...baseRadii,
     sunOuter: sunCircleConfig.radius ?? baseRadii.sunOuter,
     sunInner: sunCircleConfig.innerRadius ?? baseRadii.sunInner,
@@ -53,25 +53,53 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     daysOuter: daysCircleConfig.radius ?? baseRadii.daysOuter,
     daysInner: daysCircleConfig.innerRadius ?? baseRadii.daysInner,
     centerHub: centerHubConfig.radius ?? baseRadii.centerHub,
-  }
+  }), [
+    baseRadii,
+    sunCircleConfig.radius,
+    sunCircleConfig.innerRadius,
+    weeksCircleConfig.radius,
+    weeksCircleConfig.innerRadius,
+    dayPartsConfig.radius,
+    dayPartsConfig.innerRadius,
+    daysCircleConfig.radius,
+    daysCircleConfig.innerRadius,
+    centerHubConfig.radius
+  ])
 
-  // Build custom radii from editor configs
-  const customRadii = isEditorMode ? {
-    sunOuter: sunCircleConfig.radius,
-    sunInner: sunCircleConfig.innerRadius,
-    weeksOuter: weeksCircleConfig.radius,
-    weeksInner: weeksCircleConfig.innerRadius,
-    dayPartsOuter: dayPartsConfig.radius,
-    dayPartsInner: dayPartsConfig.innerRadius,
-    daysOuter: daysCircleConfig.radius,
-    daysInner: daysCircleConfig.innerRadius,
-    centerHub: centerHubConfig.radius,
-  } : undefined
+  // Build custom radii from editor configs (memoized to prevent infinite re-renders)
+  const customRadii = React.useMemo(() => {
+    if (!isEditorMode) return undefined
+    return {
+      sunOuter: sunCircleConfig.radius,
+      sunInner: sunCircleConfig.innerRadius,
+      weeksOuter: weeksCircleConfig.radius,
+      weeksInner: weeksCircleConfig.innerRadius,
+      dayPartsOuter: dayPartsConfig.radius,
+      dayPartsInner: dayPartsConfig.innerRadius,
+      daysOuter: daysCircleConfig.radius,
+      daysInner: daysCircleConfig.innerRadius,
+      centerHub: centerHubConfig.radius,
+    }
+  }, [
+    isEditorMode,
+    sunCircleConfig.radius,
+    sunCircleConfig.innerRadius,
+    weeksCircleConfig.radius,
+    weeksCircleConfig.innerRadius,
+    dayPartsConfig.radius,
+    dayPartsConfig.innerRadius,
+    daysCircleConfig.radius,
+    daysCircleConfig.innerRadius,
+    centerHubConfig.radius
+  ])
 
-  // Filter out undefined values
-  const filteredRadii = customRadii ? Object.fromEntries(
-    Object.entries(customRadii).filter(([_, v]) => v !== undefined)
-  ) : undefined
+  // Filter out undefined values (memoized)
+  const filteredRadii = React.useMemo(() => {
+    if (!customRadii) return undefined
+    return Object.fromEntries(
+      Object.entries(customRadii).filter(([_, v]) => v !== undefined)
+    )
+  }, [customRadii])
 
   // If editor mode is off, just render normally
   if (!isEditorMode) {

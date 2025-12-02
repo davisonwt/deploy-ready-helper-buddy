@@ -81,12 +81,20 @@ export function VisualEditorProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEY)
   }, [])
 
-  // Auto-save when configs change
+  // Auto-save when configs change (debounced to prevent infinite loops)
   useEffect(() => {
     if (Object.keys(elementConfigs).length > 0) {
-      saveConfig()
+      const timeoutId = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(elementConfigs))
+        } catch (error) {
+          console.error('Failed to auto-save visual editor config:', error)
+        }
+      }, 500) // Debounce by 500ms
+      
+      return () => clearTimeout(timeoutId)
     }
-  }, [elementConfigs, saveConfig])
+  }, [elementConfigs])
 
   const value = {
     isEditorMode,
