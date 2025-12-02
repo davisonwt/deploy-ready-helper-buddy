@@ -182,8 +182,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   const sunRotation = -((dayOfYear - 1 + progressThroughDay) / 366) * 360;
   const leaderRotation = -(currentLeaderIndex * 90);
   const weeksRotation = -(dayOfYear / 364) * 360;
-  const daysRotation = -((dayOfWeek - 1) / 7) * 360;
-  const dayPartsRotation = -((partOfDay - 1) / 18) * 360;
+  
+  // Continuous rotation that never jumps - prevents drift over hours
+  // Use totalDaysPassed instead of dayOfWeek to avoid jumps at midnight
+  const totalDaysPassed = dayOfYear - 1 + progressThroughDay;
+  const daysRotation = -(totalDaysPassed * (360 / 7));
+  const dayPartsRotation = -(progressThroughDay * 360);
 
   // Generate 366 tick marks for sun circle
   const sunTicks = useMemo(() => {
