@@ -967,76 +967,78 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* Small upside-down triangle at top, touching outer rim at 12 o'clock */}
-        {(() => {
-          const topAngle = -90 * (Math.PI / 180); // Top of wheel (12 o'clock)
-          const triangleBaseWidth = size * 0.015; // Small triangle base width
-          const triangleHeight = size * 0.02; // Triangle height
-          
-          // Triangle point touches the outer rim at 12 o'clock
-          const trianglePointX = center + Math.cos(topAngle) * radii.sunOuter;
-          const trianglePointY = center + Math.sin(topAngle) * radii.sunOuter;
-          
-          // Triangle base is above the point (outside the wheel)
-          const triangleBaseY = trianglePointY - triangleHeight;
-          const triangleBaseLeftX = trianglePointX - triangleBaseWidth / 2;
-          const triangleBaseRightX = trianglePointX + triangleBaseWidth / 2;
-          
-          // Current day position on sun circle
-          // Account for the rotation of the sun circle: the tick mark is at a fixed position
-          // on the rotating circle, so we need to add the rotation to get the fixed position
-          const currentDayAngle = ((dayOfYear - 1) / 366) * 360 - 90 + sunRotation;
-          const currentDayRad = (currentDayAngle * Math.PI) / 180;
-          const currentDayX = center + Math.cos(currentDayRad) * radii.sunOuter;
-          const currentDayY = center + Math.sin(currentDayRad) * radii.sunOuter;
-          
-          return (
-            <g>
-              {/* Small upside-down triangle - base at top, point touching wheel rim */}
-              <polygon
-                points={`${triangleBaseLeftX},${triangleBaseY} ${triangleBaseRightX},${triangleBaseY} ${trianglePointX},${trianglePointY}`}
-                fill="#fbbf24"
-                stroke="#d97706"
-                strokeWidth={1}
-                opacity={0.9}
-              />
-              
-              {/* Day number label above triangle base */}
-              <text
-                x={trianglePointX}
-                y={triangleBaseY - size * 0.01}
-                textAnchor="middle"
-                dominantBaseline="bottom"
-                fill="#fbbf24"
-                fontSize={size * 0.012}
-                fontWeight="bold"
-              >
-                Day {dayOfYear}
-              </text>
-              
-              {/* Line from triangle point down to current day position */}
-              <line
-                x1={trianglePointX}
-                y1={trianglePointY}
-                x2={currentDayX}
-                y2={currentDayY}
-                stroke="#fbbf24"
-                strokeWidth={1}
-                strokeDasharray="3,3"
-                opacity={0.5}
-              />
-              
-              {/* Current day indicator dot */}
-              <circle
-                cx={currentDayX}
-                cy={currentDayY}
-                r={size * 0.006}
-                fill="#ef4444"
-                stroke="#fff"
-                strokeWidth={1}
-              />
-            </g>
-          );
-        })()}
+        <g>
+          {(() => {
+            const topAngle = -90 * (Math.PI / 180); // Top of wheel (12 o'clock)
+            const triangleBaseWidth = size * 0.015; // Small triangle base width
+            const triangleHeight = size * 0.02; // Triangle height
+            
+            // Triangle point touches the outer rim at 12 o'clock
+            const trianglePointX = center + Math.cos(topAngle) * radii.sunOuter;
+            const trianglePointY = center + Math.sin(topAngle) * radii.sunOuter;
+            
+            // Triangle base is above the point (outside the wheel)
+            const triangleBaseY = trianglePointY - triangleHeight;
+            const triangleBaseLeftX = trianglePointX - triangleBaseWidth / 2;
+            const triangleBaseRightX = trianglePointX + triangleBaseWidth / 2;
+            
+            // Current day position on sun circle
+            // Account for the rotation of the sun circle: the tick mark is at a fixed position
+            // on the rotating circle, so we need to add the rotation to get the fixed position
+            const currentDayAngle = ((dayOfYear - 1) / 366) * 360 - 90 + sunRotation;
+            const currentDayRad = (currentDayAngle * Math.PI) / 180;
+            const currentDayX = center + Math.cos(currentDayRad) * radii.sunOuter;
+            const currentDayY = center + Math.sin(currentDayRad) * radii.sunOuter;
+            
+            return (
+              <>
+                {/* Small upside-down triangle - base at top, point touching wheel rim */}
+                <polygon
+                  points={`${triangleBaseLeftX},${triangleBaseY} ${triangleBaseRightX},${triangleBaseY} ${trianglePointX},${trianglePointY}`}
+                  fill="#fbbf24"
+                  stroke="#d97706"
+                  strokeWidth={1}
+                  opacity={0.9}
+                />
+                
+                {/* Day number label above triangle base */}
+                <text
+                  x={trianglePointX}
+                  y={triangleBaseY - size * 0.01}
+                  textAnchor="middle"
+                  dominantBaseline="bottom"
+                  fill="#fbbf24"
+                  fontSize={size * 0.012}
+                  fontWeight="bold"
+                >
+                  Day {dayOfYear}
+                </text>
+                
+                {/* Line from triangle point down to current day position */}
+                <line
+                  x1={trianglePointX}
+                  y1={trianglePointY}
+                  x2={currentDayX}
+                  y2={currentDayY}
+                  stroke="#fbbf24"
+                  strokeWidth={1}
+                  strokeDasharray="3,3"
+                  opacity={0.5}
+                />
+                
+                {/* Current day indicator dot */}
+                <circle
+                  cx={currentDayX}
+                  cy={currentDayY}
+                  r={size * 0.006}
+                  fill="#ef4444"
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              </>
+            );
+          })()}
+        </g>
       </svg>
     </div>
   );
