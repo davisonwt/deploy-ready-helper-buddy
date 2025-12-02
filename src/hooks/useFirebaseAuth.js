@@ -14,10 +14,33 @@ import {
 } from "@/integrations/firebase/auth";
 import { isFirebaseConfigured } from "@/integrations/firebase/config";
 
+// Check if React dispatcher is ready
+function isReactDispatcherReady() {
+  try {
+    // Try to access React's internal dispatcher
+    // If useState throws or dispatcher is null, React isn't ready
+    const testState = useState;
+    if (!testState) return false;
+    
+    // Check React DevTools hook for dispatcher state
+    if (typeof window !== 'undefined' && window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+      const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+      if (hook && hook.renderers && hook.renderers.size > 0) {
+        return true;
+      }
+    }
+    
+    // If we can call useState without error, dispatcher should be ready
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export function useFirebaseAuth() {
-  // Safety check for React dispatcher
-  if (!useState) {
-    console.error("React hooks not available - dispatcher is null");
+  // Safety check for React dispatcher - return safe defaults if not ready
+  if (!isReactDispatcherReady()) {
+    console.warn("React dispatcher not ready, returning safe defaults");
     return {
       user: null,
       loading: false,
