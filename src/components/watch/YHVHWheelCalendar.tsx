@@ -128,16 +128,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   const monthDaysOffset = ringOffsets?.monthDays || { x: 0, y: 0 };
   const weeksOffset = ringOffsets?.weeks || { x: 0, y: 0 };
   const dayPartsOffset = ringOffsets?.dayParts || { x: 0, y: 0 };
-  // IMPORTANT: When editor mode is ON, ringOffsets is provided and daysOffset comes from configs
-  // When editor mode is OFF, ringOffsets is undefined, so we need to use the same logic
-  // The key is: when editor mode is ON, it uses ringOffsets?.days which defaults to {x:0, y:0}
-  // But the actual rendering might be different. Let's ensure we always use the same calculation:
-  const daysOffset = ringOffsets?.days ?? { x: 0, y: 0 };
-  const centerHubOffset = ringOffsets?.centerHub ?? { x: 0, y: 0 };
-  
-  // Use the same offset calculation regardless of editor mode
-  // This ensures the wheel position is consistent
-  const finalDaysOffset = daysOffset;
+  const daysOffset = ringOffsets?.days || { x: 0, y: 0 };
+  const centerHubOffset = ringOffsets?.centerHub || { x: 0, y: 0 };
   
   // Calculate radii for each wheel (outer to inner)
   const baseRadii = {
@@ -696,7 +688,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK ====== */}
-        <g transform={`translate(${finalDaysOffset.x}, ${finalDaysOffset.y})`}>
+        <g transform={`translate(${daysOffset.x}, ${daysOffset.y})`}>
           <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
