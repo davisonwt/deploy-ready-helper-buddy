@@ -87,7 +87,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     weeksInner: size * 0.22,
     dayPartsOuter: size * 0.21, // 18-part wheel (moved above 7-day week)
     dayPartsInner: size * 0.17,
-    daysOuter: size * 0.16, // 7-day week (moved down)
+    daysOuter: size * 0.22, // 7-day week - touches yellow wheel inner edge
     daysInner: size * 0.11,
     centerHub: size * 0.08, // Center hub
   }), [size]);
