@@ -695,15 +695,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </motion.g>
         </g>
 
-        {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
-        {/* Ensure perfect centering - only apply transform if offset is non-zero */}
-        <g transform={finalDaysOffset.x !== 0 || finalDaysOffset.y !== 0 ? `translate(${finalDaysOffset.x}, ${finalDaysOffset.y})` : undefined}>
+        {/* ====== CIRCLE 6: 7 DAYS OF WEEK ====== */}
+        <g transform={`translate(${finalDaysOffset.x}, ${finalDaysOffset.y})`}>
           <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
         >
-          {/* Background ring - ensure perfect centering */}
+          {/* Background ring */}
           <circle
             cx={center}
             cy={center}
@@ -961,18 +960,17 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           </motion.g>
         </g>
 
-        {/* Center hub - ensure perfect centering and exact match with 7-day wheel inner edge */}
-        {/* Only apply transform if offset is non-zero to avoid any transform issues */}
-        <g transform={centerHubOffset.x !== 0 || centerHubOffset.y !== 0 ? `translate(${centerHubOffset.x}, ${centerHubOffset.y})` : undefined}>
+        {/* Center hub - always translate (even if 0,0) */}
+        <g transform={`translate(${centerHubOffset.x}, ${centerHubOffset.y})`}>
           <circle
             cx={center}
             cy={center}
-          r={radii.daysInner - 1}
-          fill="url(#goldGradient)"
-          stroke="#d97706"
-          strokeWidth={2}
-        />
-        
+            r={radii.daysInner - 1}
+            fill="url(#goldGradient)"
+            stroke="#d97706"
+            strokeWidth={2}
+          />
+          
           {/* Center text */}
           <text
             x={center}
