@@ -121,6 +121,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     // Also dispatch custom event as fallback
     window.dispatchEvent(new CustomEvent('visual-editor-select', { detail: { elementId } }));
   };
+  // When ringOffsets is undefined (editor mode off), all offsets are 0 for perfect centering
+  // When ringOffsets exists (editor mode on), use saved offsets or default to 0
   const sunOffset = ringOffsets?.sun || { x: 0, y: 0 };
   const leadersOffset = ringOffsets?.leaders || { x: 0, y: 0 };
   const monthDaysOffset = ringOffsets?.monthDays || { x: 0, y: 0 };
@@ -128,6 +130,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   const dayPartsOffset = ringOffsets?.dayParts || { x: 0, y: 0 };
   const daysOffset = ringOffsets?.days || { x: 0, y: 0 };
   const centerHubOffset = ringOffsets?.centerHub || { x: 0, y: 0 };
+  
+  // Ensure 7-day wheel is perfectly centered when not in editor mode
+  // This prevents any saved offsets from affecting the display
+  const finalDaysOffset = ringOffsets === undefined ? { x: 0, y: 0 } : daysOffset;
   
   // Calculate radii for each wheel (outer to inner)
   const baseRadii = {
@@ -686,7 +692,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
-        <g transform={`translate(${daysOffset.x}, ${daysOffset.y})`}>
+        <g transform={`translate(${finalDaysOffset.x}, ${finalDaysOffset.y})`}>
           <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}

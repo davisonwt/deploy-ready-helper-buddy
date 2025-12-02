@@ -137,38 +137,25 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     )
   }, [customRadii])
 
-  // Get ring offsets from configs
+  // Get ring offsets from configs - ONLY when editor mode is on
+  // When editor mode is off, always return undefined to ensure perfect centering
   const ringOffsets = useMemo(() => {
     if (!isEditorMode) return undefined
+    
+    // Get offsets, but ensure they default to 0 if not set
+    const getOffset = (config: any) => ({
+      x: config?.x ?? 0,
+      y: config?.y ?? 0
+    })
+    
     return {
-      sun: { 
-        x: sunCircleConfig.x ?? 0, 
-        y: sunCircleConfig.y ?? 0 
-      },
-      leaders: { 
-        x: elementConfigs['wheel-leaders-circle']?.x ?? 0, 
-        y: elementConfigs['wheel-leaders-circle']?.y ?? 0 
-      },
-      monthDays: { 
-        x: elementConfigs['wheel-month-days']?.x ?? 0, 
-        y: elementConfigs['wheel-month-days']?.y ?? 0 
-      },
-      weeks: { 
-        x: weeksCircleConfig.x ?? 0, 
-        y: weeksCircleConfig.y ?? 0 
-      },
-      dayParts: { 
-        x: dayPartsConfig.x ?? 0, 
-        y: dayPartsConfig.y ?? 0 
-      },
-      days: { 
-        x: daysCircleConfig.x ?? 0, 
-        y: daysCircleConfig.y ?? 0 
-      },
-      centerHub: { 
-        x: centerHubConfig.x ?? 0, 
-        y: centerHubConfig.y ?? 0 
-      },
+      sun: getOffset(sunCircleConfig),
+      leaders: getOffset(elementConfigs['wheel-leaders-circle']),
+      monthDays: getOffset(elementConfigs['wheel-month-days']),
+      weeks: getOffset(weeksCircleConfig),
+      dayParts: getOffset(dayPartsConfig),
+      days: getOffset(daysCircleConfig),
+      centerHub: getOffset(centerHubConfig),
     }
   }, [
     isEditorMode,
@@ -179,6 +166,30 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     centerHubConfig.x, centerHubConfig.y,
     elementConfigs
   ])
+  
+  // Reset wheel positions on mount if not in editor mode (clear any saved offsets)
+  React.useEffect(() => {
+    if (!isEditorMode) {
+      // Clear any saved position offsets for wheel elements to ensure perfect centering
+      const wheelElementIds = [
+        'wheel-sun-circle',
+        'wheel-leaders-circle',
+        'wheel-month-days',
+        'wheel-weeks-circle',
+        'wheel-day-parts',
+        'wheel-days-circle',
+        'wheel-center-hub'
+      ]
+      
+      wheelElementIds.forEach(id => {
+        const config = elementConfigs[id]
+        if (config && (config.x !== 0 || config.y !== 0)) {
+          // Reset position to center
+          updateElementConfig(id, { x: 0, y: 0 })
+        }
+      })
+    }
+  }, [isEditorMode]) // Only run when editor mode changes
 
   // Get text overrides from configs
   const textOverrides = useMemo(() => {

@@ -41,6 +41,8 @@ export function EditorModeToggle() {
               onClick={() => {
                 if (confirm('Reset all visual editor changes? This cannot be undone.')) {
                   resetAllConfigs()
+                  // Force reload to ensure clean state
+                  window.location.reload()
                 }
               }}
               className="bg-red-600 hover:bg-red-700 text-white shadow-lg"
@@ -48,6 +50,19 @@ export function EditorModeToggle() {
             >
               <RotateCcw className="w-4 h-4 mr-2" />
               Reset
+            </Button>
+            <Button
+              onClick={() => {
+                // Clear localStorage and reload to reset wheel positions
+                localStorage.removeItem('visual-editor-configs')
+                window.location.reload()
+              }}
+              className="bg-orange-600 hover:bg-orange-700 text-white shadow-lg"
+              size="sm"
+              title="Clear all saved positions and reload"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset Positions
             </Button>
           </>
         )}
