@@ -4576,7 +4576,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 10 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month10Strand dayOfMonth={0} />
+              <Month10Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4585,7 +4585,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 11 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month11Strand dayOfMonth={0} />
+              <Month11Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4594,7 +4594,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 12 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month12Strand dayOfMonth={0} />
+              <Month12Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4603,7 +4603,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 1 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month1Strand dayOfMonth={0} />
+              <Month1Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4612,7 +4612,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 2 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month2Strand dayOfMonth={0} />
+              <Month2Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4621,7 +4621,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 3 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month3Strand dayOfMonth={0} />
+              <Month3Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4630,7 +4630,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 4 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month4Strand dayOfMonth={0} />
+              <Month4Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4639,7 +4639,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 5 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month5Strand dayOfMonth={0} />
+              <Month5Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4648,7 +4648,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 6 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month6Strand dayOfMonth={0} />
+              <Month6Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4657,7 +4657,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 7 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month7Strand dayOfMonth={0} />
+              <Month7Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4666,7 +4666,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 8 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month8Strand dayOfMonth={0} />
+              <Month8Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>
@@ -4675,7 +4675,7 @@ const EnochianTimepiece = () => {
           <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 9 - Review</h2>
           <div className="flex flex-col items-center justify-center w-full">
             <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month9Strand dayOfMonth={0} />
+              <Month9Strand dayOfMonth={0} year={0} />
             </div>
           </div>
         </div>

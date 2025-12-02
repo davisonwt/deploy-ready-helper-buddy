@@ -54,7 +54,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
 
     const loadBirthdays = async () => {
       const { data, error } = await supabase
-        .from('birthdays')
+        .from('birthdays' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('yhwh_month', { ascending: true })
@@ -65,7 +65,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
         return
       }
 
-      setBirthdays(data || [])
+      setBirthdays((data as unknown) as Birthday[] || [])
     }
 
     loadBirthdays()
@@ -103,7 +103,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
       if (editingId) {
         // Update existing
         const { error } = await supabase
-          .from('birthdays')
+          .from('birthdays' as any)
           .update({
             person_name: formData.person_name.trim(),
             yhwh_month: formData.yhwh_month,
@@ -120,7 +120,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
       } else {
         // Create new
         const { error } = await supabase
-          .from('birthdays')
+          .from('birthdays' as any)
           .insert({
             user_id: user.id,
             person_name: formData.person_name.trim(),
@@ -169,7 +169,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
 
     try {
       const { error } = await supabase
-        .from('birthdays')
+        .from('birthdays' as any)
         .delete()
         .eq('id', id)
         .eq('user_id', user.id)

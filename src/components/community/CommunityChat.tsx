@@ -198,8 +198,9 @@ export function CommunityChat({ isOpen, onClose }: CommunityChatProps) {
       return
     }
 
+    const messageText = newMessage.trim()
+    
     try {
-      const messageText = newMessage.trim()
       setNewMessage('') // Clear input immediately for better UX
       
       await addDoc(collection(db, 'community_chat'), {
