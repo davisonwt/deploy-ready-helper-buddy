@@ -165,7 +165,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Identify special days
       const isFirstDayOfMonth = firstDaysOfMonths.includes(dayNumber);
       const isShabbat = weekday === 7; // Yellow - Shabbat
-      const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days
+      const isDaysOutOfTime = dayNumber === 365 || dayNumber === 366; // Dark purple - Days out of time (doot)
+      const isIntercalaryDay = false; // Days 365-366 are now days out of time, not intercalary
       const isTequvah = dayNumber === 1; // Day 1 of year = Day 4 of week = Tequvah (equinox) - White
       
       // Month 1 specific feast days
@@ -217,6 +218,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isFirstDayOfMonth,
         isShabbat,
         isTequvah,
+        isDaysOutOfTime,
         isFeastDay,
         isMonth2UnleavenedBread,
         isMonth3Day31,
@@ -313,8 +315,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             } else if (tick.isTequvah) {
               strokeColor = '#ffffff'; // White for Tequvah (Day 1 of year = Day 4 of week = equinox)
               strokeWidth = 2;
+            } else if (tick.isDaysOutOfTime) {
+              strokeColor = '#6b21a8'; // Dark purple for days out of time (doot) - days 365, 366
+              strokeWidth = 2;
             } else if (tick.isIntercalaryDay) {
-              strokeColor = '#ec4899'; // Pink for intercalary days (365, 366)
+              strokeColor = '#ec4899'; // Pink for intercalary days (no longer used for 365-366)
               strokeWidth = 2;
             } else if (tick.isMonth3Day31 || tick.isMonth6Day31) {
               strokeColor = '#ec4899'; // Pink for Month 3 Day 31 and Month 6 Day 31 (intercalary days)
