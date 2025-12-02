@@ -57,6 +57,11 @@ function Layout({ children }) {
   // All hooks must be at the top level
   const location = useLocation()
   const navigate = useNavigate()
+  const [isMounted, setIsMounted] = useState(false)
+  
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
   const [isAdminOrGosat, setIsAdminOrGosat] = useState(false)
@@ -422,8 +427,8 @@ function Layout({ children }) {
             
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
-                {/* Firebase Auth Button */}
-                <AuthButton />
+                {/* Firebase Auth Button - only render after mount to avoid React init issues */}
+                {isMounted && <AuthButton />}
                 
                 {/* Voice Commands Button */}
                 <button
