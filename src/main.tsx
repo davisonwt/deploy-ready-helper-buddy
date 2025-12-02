@@ -17,6 +17,18 @@ import * as ReactDOMPkg from "react-dom";
 import '@/utils/confetti'; // Initialize confetti utility
 import { startGardenParticles } from '@/utils/confetti';
 
+// Verify Standards Mode before React initialization
+if (typeof document !== 'undefined') {
+  if (document.compatMode !== 'CSS1Compat') {
+    console.error('❌ CRITICAL: Quirks Mode detected! React may not work correctly.');
+    console.error('Document mode:', document.compatMode);
+    console.error('DOCTYPE:', document.doctype ? document.doctype.name : 'MISSING');
+    // Don't block initialization, but log the error
+  } else {
+    console.log('✅ Standards Mode confirmed');
+  }
+}
+
 // Extend Window interface for cache clearing
 declare global {
   interface Window {

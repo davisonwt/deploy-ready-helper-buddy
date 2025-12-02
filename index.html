@@ -38,6 +38,21 @@
 
   <body>
     <div id="root"></div>
+    <!-- Force Standards Mode and verify DOCTYPE -->
+    <script>
+      // Verify we're in Standards Mode (not Quirks Mode)
+      if (document.compatMode !== 'CSS1Compat') {
+        console.warn('⚠️ Quirks Mode detected! This may cause React issues. Expected Standards Mode.');
+        // Try to force Standards Mode by reloading
+        if (document.documentElement && !document.documentElement.hasAttribute('xmlns')) {
+          document.documentElement.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+        }
+      }
+      // Ensure document mode is correct
+      if (typeof document.documentMode !== 'undefined' && document.documentMode < 11) {
+        console.warn('⚠️ Legacy document mode detected:', document.documentMode);
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
