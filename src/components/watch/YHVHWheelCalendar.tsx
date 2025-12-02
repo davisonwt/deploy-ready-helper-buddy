@@ -877,7 +877,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         <circle
           cx={center}
           cy={center}
-          r={radii.daysInner - 5}
+          r={radii.daysInner}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
