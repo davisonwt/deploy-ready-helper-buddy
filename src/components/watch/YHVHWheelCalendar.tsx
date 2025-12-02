@@ -489,9 +489,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   fontSize={size * 0.015}
                   fontWeight={isActive ? 'bold' : 'normal'}
                   transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
-                  data-editable="true"
-                  data-element-id={`leader-name-${i}`}
-                  style={{ cursor: textOverrides ? 'pointer' : 'default' }}
+                  onClick={(e) => handleTextClick(`leader-name-${i}`, e)}
+                  style={{ cursor: isEditorMode ? 'pointer' : 'default' }}
                 >
                   {textOverrides?.[`leader-name-${i}`] ?? leader.name}
                 </text>
@@ -789,8 +788,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                       fontSize={size * 0.012}
                       fontWeight={isCurrentDay ? 'bold' : 'normal'}
                       transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                      onClick={(e) => handleTextClick(`day-part-day-${i}`, e)}
+                      style={{ cursor: isEditorMode ? 'pointer' : 'default' }}
                     >
-                      Day
+                      {textOverrides?.[`day-part-day-${i}`] ?? 'Day'}
                     </text>
                   );
                 })()}
