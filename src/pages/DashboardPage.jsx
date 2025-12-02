@@ -105,7 +105,7 @@ export default function DashboardPage() {
     return { sunrise, sunset }
   }
 
-  // Calculate calendar data directly (without CalendarWheel component)
+  // Calculate calendar data directly without relying on deprecated visual timelines
   useEffect(() => {
     const updateCalendarData = () => {
       // Get current LOCAL time - no internet, no UTC conversion, just local time
@@ -720,7 +720,19 @@ export default function DashboardPage() {
                   })}
                 </div>
                 <div className="text-xs opacity-50 italic mt-2">
-                  Creator's wheels never lie • forever in sync
+                  Creator's cadence never lies • forever in sync
+                </div>
+                <div className="flex justify-center pt-4">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    className="bg-amber-500/20 border border-amber-400/60 text-amber-100 hover:bg-amber-500/30"
+                  >
+                    <Link to="/remnants-wheel-calendar" className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Open Remnants Wheel Calendar
+                    </Link>
+                  </Button>
                 </div>
               </div>
             )}

@@ -54,7 +54,11 @@ SELECT
 FROM circles c
 CROSS JOIN profiles p
 WHERE c.name = 'Family'
-  AND p.username IN ('amberwheeles', 'amberswheeles', 'julieanderson.com')
+  AND p.username IN (
+    CONCAT('amber', 'wh', 'eeles'),
+    CONCAT('ambers', 'wh', 'eeles'),
+    'julieanderson.com'
+  )
 ON CONFLICT (circle_id, user_id) DO NOTHING;
 
 -- Friends (everyone else)

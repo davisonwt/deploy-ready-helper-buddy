@@ -20,7 +20,7 @@ The Firebase config file still has placeholder values instead of your actual Fir
 3. Scroll down to **"Your apps"** section
 4. If you don't have a web app yet:
    - Click the **Web icon** (`</>`)
-   - Register your app with nickname: "Remnant Wheel Calendar"
+   - Register your app with nickname: "Remnant Calendar"
    - Click **"Register app"**
 5. You'll see your Firebase config object like this:
 

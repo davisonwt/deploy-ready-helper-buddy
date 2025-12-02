@@ -16,7 +16,7 @@ This means the config file still has placeholder values. You need to replace the
 ### Step 2: Create or Select Project
 - **If you don't have a project:**
   1. Click **"Add project"** or **"Create a project"**
-  2. Enter project name: `Remnant Wheel Calendar` (or any name)
+  2. Enter project name: `Remnant Calendar` (or any name)
   3. Click **"Continue"**
   4. Enable/disable Google Analytics (optional)
   5. Click **"Create project"**
@@ -30,7 +30,7 @@ This means the config file still has placeholder values. You need to replace the
 1. In your Firebase project, look for the **"</>"** (Web) icon
 2. Click on it (or go to Project Settings → Your apps → Add app → Web)
 3. Register your app:
-   - App nickname: `Remnant Wheel Calendar Web`
+   - App nickname: `Remnant Calendar Web`
    - Firebase Hosting: **Skip** (optional, can add later)
 4. Click **"Register app"**
 

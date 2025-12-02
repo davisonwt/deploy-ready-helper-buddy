@@ -196,7 +196,7 @@ export default function Journal() {
             }));
             setEntries(formattedEntries);
             
-            // Emit event for other components (calendar, wheel)
+            // Emit event for other calendar-aware components
             window.dispatchEvent(new CustomEvent('journalEntriesUpdated', { detail: formattedEntries }));
           }
         }

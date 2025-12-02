@@ -2,14 +2,14 @@
 
 ## 🔥 Firebase Configuration Required
 
-Your Remnant Wheel Calendar app is now ready for Firebase! Follow these steps to complete the setup:
+Your Remnant Calendar app is now ready for Firebase! Follow these steps to complete the setup:
 
 ### Step 1: Create Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click **"Add project"** or select an existing project
 3. Follow the setup wizard:
-   - Enter project name (e.g., "Remnant Wheel Calendar")
+   - Enter project name (e.g., "Remnant Calendar")
    - Enable/disable Google Analytics (optional)
    - Click **"Create project"**
 
@@ -42,7 +42,7 @@ Your Remnant Wheel Calendar app is now ready for Firebase! Follow these steps to
 2. Scroll down to **"Your apps"** section
 3. Click the **Web** icon (`</>`)
 4. Register your app:
-   - App nickname: "Remnant Wheel Calendar Web"
+   - App nickname: "Remnant Calendar Web"
    - Firebase Hosting: Skip for now (optional)
 5. Click **"Register app"**
 6. Copy the `firebaseConfig` object values
@@ -144,7 +144,7 @@ Before going live, ensure you have:
 
 ## 🚀 You're Ready!
 
-Once you've completed these steps, your Remnant Wheel Calendar will be fully connected to Firebase with:
+Once you've completed these steps, your Remnant Calendar will be fully connected to Firebase with:
 - ✅ Anonymous + Email/Password authentication
 - ✅ Private journal entries synced across devices
 - ✅ Public Remnant Wall feed

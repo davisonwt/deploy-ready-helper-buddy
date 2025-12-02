@@ -1,7 +1,7 @@
 /**
  * Calendar Now API Endpoint
  * 
- * Returns current server timestamp and calendar data for CalendarWheel component.
+ * Returns current server timestamp and calendar data for the bead calendar widget.
  * This ensures server-side computed angles match client-side rendering for SEO.
  */
 

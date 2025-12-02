@@ -31,7 +31,7 @@ Supabase Edge Functions require authentication by default. Even if your function
 
 ## Alternative: Use Anon Key in Requests
 
-If you can't disable JWT verification, the CalendarWheel component already sends the anon key. Make sure your environment variables are set:
+If you can't disable JWT verification, the bead calendar UI already sends the anon key. Make sure your environment variables are set:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
@@ -58,7 +58,7 @@ If you can't find the JWT verification setting:
 ## Current Status
 
 ✅ Function code updated (uses Deno.serve)
-✅ CalendarWheel component sends auth headers
+✅ Bead calendar UI sends auth headers
 ✅ Config file has `verify_jwt = false`
 ⏳ **Need to disable JWT verification in Dashboard**
 

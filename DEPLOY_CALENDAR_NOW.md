@@ -65,8 +65,8 @@ The function is configured with:
 
 ## Next Steps
 
-Once deployed, the CalendarWheel component will automatically use this endpoint:
+Once deployed, the bead calendar UI will automatically use this endpoint:
 - Frontend code is already configured to call: `/api/calendar/now`
 - Vite proxy is configured to route to Supabase Edge Function
-- Component will fallback to client-side calculation if server unavailable
+- Client display will fallback to client-side calculation if server unavailable
 

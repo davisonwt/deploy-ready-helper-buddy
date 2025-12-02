@@ -1,4 +1,4 @@
--- Create journal_entries table for syncing calendar, journal, and wheel calendar
+-- Create journal_entries table for syncing calendar and journal timelines
 -- This allows users to add entries to calendar days that sync across all components
 -- Enables sow2grow to write books about users' lives
 
