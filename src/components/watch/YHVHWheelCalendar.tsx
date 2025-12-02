@@ -126,12 +126,26 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
 
   // Generate 366 tick marks for sun circle
   const sunTicks = useMemo(() => {
+    // Calculate weekday for each day
+    // Starting weekday for Year 6028 Month 1 Day 1 = Day 4 (from dashboardCalendar.ts)
+    const STARTING_WEEKDAY_YEAR_6028 = 4;
+    
     return Array.from({ length: 366 }, (_, i) => {
+      const dayNumber = i + 1;
       const angle = (i / 366) * 360 - 90;
       const rad = (angle * Math.PI) / 180;
-      const isCurrentDay = i + 1 === dayOfYear;
-      // Shabbat is only on day 7 of the week, not based on day of month
-      const isSabbath = false; // Sun circle doesn't show Shabbat - only the 7-day wheel does
+      const isCurrentDay = dayNumber === dayOfYear;
+      
+      // Calculate weekday for this day (1-7, where 7 is Shabbat)
+      // Day 1 of year = Day 4 of week, so we need to calculate from day of year
+      const weekday = ((dayNumber - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
+      
+      // Day 1 of week = at triangle (12 o'clock position)
+      // Day 4 of week = golden yellow (our 1st day of 364 day counting)
+      // Day 2 of week = also highlighted
+      const isDay1OfWeek = weekday === 1;
+      const isDay2OfWeek = weekday === 2;
+      const isDay4OfWeek = weekday === 4; // Golden yellow - our 1st day of 364 day counting
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -139,7 +153,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         x2: center + Math.cos(rad) * radii.sunOuter,
         y2: center + Math.sin(rad) * radii.sunOuter,
         isCurrentDay,
-        isSabbath,
+        isDay1OfWeek,
+        isDay2OfWeek,
+        isDay4OfWeek,
+        weekday,
         angle,
       };
     });
@@ -215,18 +232,40 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           />
           
           {/* 366 tick marks */}
-          {sunTicks.map((tick, i) => (
-            <line
-              key={i}
-              x1={tick.x1}
-              y1={tick.y1}
-              x2={tick.x2}
-              y2={tick.y2}
-              stroke={tick.isCurrentDay ? '#ef4444' : tick.isSabbath ? '#fbbf24' : '#4b5563'}
-              strokeWidth={tick.isCurrentDay ? 3 : 1}
-              filter={tick.isCurrentDay ? 'url(#glow)' : undefined}
-            />
-          ))}
+          {sunTicks.map((tick, i) => {
+            // Determine stroke color based on day type
+            let strokeColor = '#4b5563'; // Default gray
+            let strokeWidth = 1;
+            let filter = undefined;
+            
+            if (tick.isCurrentDay) {
+              strokeColor = '#ef4444'; // Red for current day
+              strokeWidth = 3;
+              filter = 'url(#glow)';
+            } else if (tick.isDay4OfWeek) {
+              strokeColor = '#fbbf24'; // Golden yellow for day 4 of week (our 1st day of 364 day counting)
+              strokeWidth = 2;
+            } else if (tick.isDay2OfWeek) {
+              strokeColor = '#60a5fa'; // Light blue for day 2 of week
+              strokeWidth = 2;
+            } else if (tick.isDay1OfWeek) {
+              strokeColor = '#ef4444'; // Red for day 1 of week (at triangle)
+              strokeWidth = 2;
+            }
+            
+            return (
+              <line
+                key={i}
+                x1={tick.x1}
+                y1={tick.y1}
+                x2={tick.x2}
+                y2={tick.y2}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                filter={filter}
+              />
+            );
+          })}
         </motion.g>
 
         {/* ====== CIRCLE 2: LEADERS CIRCLE (4 quadrants) ====== */}
