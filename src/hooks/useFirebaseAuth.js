@@ -15,6 +15,21 @@ import {
 import { isFirebaseConfigured } from "@/integrations/firebase/config";
 
 export function useFirebaseAuth() {
+  // Safety check for React dispatcher
+  if (!useState) {
+    console.error("React hooks not available - dispatcher is null");
+    return {
+      user: null,
+      loading: false,
+      isAuthenticated: false,
+      autoSignIn: async () => ({ success: false, error: "React not initialized" }),
+      signIn: async () => ({ success: false, error: "React not initialized" }),
+      signUp: async () => ({ success: false, error: "React not initialized" }),
+      signOut: async () => ({ success: false, error: "React not initialized" }),
+      currentUser: null,
+    };
+  }
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

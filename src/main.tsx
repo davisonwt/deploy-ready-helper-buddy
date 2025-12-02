@@ -80,13 +80,35 @@ try {
   // Detect duplicate React instances
   const duplication = logReactDiagnostics(React, ReactDOMPkg);
   if (duplication?.hasDuplicate) {
-    // Prevent SW from re-registering; user can call window.disableServiceWorkerAndReload()
+    // Aggressive fix: immediately clear all caches and reload
+    console.error('⚠️ CRITICAL: Duplicate React detected. Clearing caches and reloading...');
+    
     try {
+      // Set flag to prevent SW from re-registering
       localStorage.setItem('sw:disabled', '1');
-      console.warn('⚠️ Duplicate React detected. Service worker disabled for this session. Run window.disableServiceWorkerAndReload() to purge caches and reload.');
-    } catch (swError) {
-      // Silently fail if localStorage is unavailable
-      console.warn('Failed to set sw:disabled flag:', swError);
+      
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.unregister());
+        });
+      }
+      
+      // Clear all caches
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+      
+      // Force hard reload after a brief delay to allow cleanup
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Failed to clear caches:', error);
+      // If cleanup fails, still try to reload
+      window.location.reload();
     }
   }
 } catch (e) {
