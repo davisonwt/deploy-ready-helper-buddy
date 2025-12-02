@@ -912,7 +912,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           const triangleBaseRightX = trianglePointX + triangleBaseWidth / 2;
           
           // Current day position on sun circle
-          const currentDayAngle = ((dayOfYear - 1) / 366) * 360 - 90;
+          // Account for the rotation of the sun circle: the tick mark is at a fixed position
+          // on the rotating circle, so we need to add the rotation to get the fixed position
+          const currentDayAngle = ((dayOfYear - 1) / 366) * 360 - 90 + sunRotation;
           const currentDayRad = (currentDayAngle * Math.PI) / 180;
           const currentDayX = center + Math.cos(currentDayRad) * radii.sunOuter;
           const currentDayY = center + Math.sin(currentDayRad) * radii.sunOuter;
