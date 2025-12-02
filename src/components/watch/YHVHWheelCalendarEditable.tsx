@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { YHVHWheelCalendar } from './YHVHWheelCalendar'
 import { useVisualEditor } from '@/contexts/VisualEditorContext'
 import { DraggableControls } from '../visual-editor/DraggableControls'
@@ -101,15 +101,77 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     )
   }, [customRadii])
 
+  // Get ring offsets from configs
+  const ringOffsets = useMemo(() => {
+    if (!isEditorMode) return undefined
+    return {
+      sun: { 
+        x: sunCircleConfig.x ?? 0, 
+        y: sunCircleConfig.y ?? 0 
+      },
+      leaders: { 
+        x: elementConfigs['wheel-leaders-circle']?.x ?? 0, 
+        y: elementConfigs['wheel-leaders-circle']?.y ?? 0 
+      },
+      monthDays: { 
+        x: elementConfigs['wheel-month-days']?.x ?? 0, 
+        y: elementConfigs['wheel-month-days']?.y ?? 0 
+      },
+      weeks: { 
+        x: weeksCircleConfig.x ?? 0, 
+        y: weeksCircleConfig.y ?? 0 
+      },
+      dayParts: { 
+        x: dayPartsConfig.x ?? 0, 
+        y: dayPartsConfig.y ?? 0 
+      },
+      days: { 
+        x: daysCircleConfig.x ?? 0, 
+        y: daysCircleConfig.y ?? 0 
+      },
+      centerHub: { 
+        x: centerHubConfig.x ?? 0, 
+        y: centerHubConfig.y ?? 0 
+      },
+    }
+  }, [
+    isEditorMode,
+    sunCircleConfig.x, sunCircleConfig.y,
+    weeksCircleConfig.x, weeksCircleConfig.y,
+    dayPartsConfig.x, dayPartsConfig.y,
+    daysCircleConfig.x, daysCircleConfig.y,
+    centerHubConfig.x, centerHubConfig.y,
+    elementConfigs
+  ])
+
+  // Get text overrides from configs
+  const textOverrides = useMemo(() => {
+    if (!isEditorMode) return undefined
+    const overrides: Record<string, string> = {}
+    Object.entries(elementConfigs).forEach(([id, config]) => {
+      if (config.type === 'text' && config.text) {
+        overrides[id] = config.text
+      }
+    })
+    return Object.keys(overrides).length > 0 ? overrides : undefined
+  }, [isEditorMode, elementConfigs])
+
   // If editor mode is off, just render normally
   if (!isEditorMode) {
     return <YHVHWheelCalendar {...props} />
   }
 
+  const center = size / 2
+
   // In editor mode, wrap with controls
   return (
     <div className="relative">
-      <YHVHWheelCalendar {...props} customRadii={filteredRadii} />
+      <YHVHWheelCalendar 
+        {...props} 
+        customRadii={filteredRadii}
+        ringOffsets={ringOffsets}
+        textOverrides={textOverrides}
+      />
       
       {/* Editor controls overlay */}
       <div className="absolute inset-0 pointer-events-none">
@@ -117,15 +179,25 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
         <DraggableControls
           elementId="wheel-center-hub"
           elementType="circle"
+          defaultX={center}
+          defaultY={center}
           defaultRadius={baseRadii.centerHub}
+          allowDrag={true}
           allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-center-hub', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'circle' 
+            })
+          }}
           onRadiusChange={(radius) => {
             updateElementConfig('wheel-center-hub', { radius, type: 'circle' })
           }}
           className="absolute"
           style={{
-            left: '50%',
-            top: '50%',
+            left: `${center + (centerHubConfig.x ?? 0)}px`,
+            top: `${center + (centerHubConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${radii.centerHub * 2}px`,
             height: `${radii.centerHub * 2}px`,
@@ -140,8 +212,18 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
         <DraggableControls
           elementId="wheel-sun-circle"
           elementType="ring"
+          defaultX={center}
+          defaultY={center}
           defaultRadius={baseRadii.sunOuter}
+          allowDrag={true}
           allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-sun-circle', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
           onRadiusChange={(radius) => {
             updateElementConfig('wheel-sun-circle', { 
               radius, 
@@ -151,8 +233,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           }}
           className="absolute"
           style={{
-            left: '50%',
-            top: '50%',
+            left: `${center + (sunCircleConfig.x ?? 0)}px`,
+            top: `${center + (sunCircleConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${radii.sunOuter * 2}px`,
             height: `${radii.sunOuter * 2}px`,
@@ -163,12 +245,82 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           <div className="w-full h-full border-2 border-dashed border-yellow-400 opacity-50" />
         </DraggableControls>
 
+        {/* Leaders Circle Control */}
+        <DraggableControls
+          elementId="wheel-leaders-circle"
+          elementType="ring"
+          defaultX={center}
+          defaultY={center}
+          defaultRadius={baseRadii.leadersOuter}
+          allowDrag={true}
+          allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-leaders-circle', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
+          className="absolute"
+          style={{
+            left: `${center + (elementConfigs['wheel-leaders-circle']?.x ?? 0)}px`,
+            top: `${center + (elementConfigs['wheel-leaders-circle']?.y ?? 0)}px`,
+            transform: 'translate(-50%, -50%)',
+            width: `${baseRadii.leadersOuter * 2}px`,
+            height: `${baseRadii.leadersOuter * 2}px`,
+            borderRadius: '50%',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="w-full h-full border-2 border-dashed border-orange-400 opacity-50" />
+        </DraggableControls>
+
+        {/* Month Days Control */}
+        <DraggableControls
+          elementId="wheel-month-days"
+          elementType="ring"
+          defaultX={center}
+          defaultY={center}
+          defaultRadius={baseRadii.monthDaysOuter}
+          allowDrag={true}
+          allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-month-days', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
+          className="absolute"
+          style={{
+            left: `${center + (elementConfigs['wheel-month-days']?.x ?? 0)}px`,
+            top: `${center + (elementConfigs['wheel-month-days']?.y ?? 0)}px`,
+            transform: 'translate(-50%, -50%)',
+            width: `${baseRadii.monthDaysOuter * 2}px`,
+            height: `${baseRadii.monthDaysOuter * 2}px`,
+            borderRadius: '50%',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="w-full h-full border-2 border-dashed border-cyan-400 opacity-50" />
+        </DraggableControls>
+
         {/* Weeks Circle Control */}
         <DraggableControls
           elementId="wheel-weeks-circle"
           elementType="ring"
+          defaultX={center}
+          defaultY={center}
           defaultRadius={baseRadii.weeksOuter}
+          allowDrag={true}
           allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-weeks-circle', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
           onRadiusChange={(radius) => {
             updateElementConfig('wheel-weeks-circle', { 
               radius, 
@@ -178,8 +330,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           }}
           className="absolute"
           style={{
-            left: '50%',
-            top: '50%',
+            left: `${center + (weeksCircleConfig.x ?? 0)}px`,
+            top: `${center + (weeksCircleConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${radii.weeksOuter * 2}px`,
             height: `${radii.weeksOuter * 2}px`,
@@ -190,12 +342,52 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           <div className="w-full h-full border-2 border-dashed border-green-400 opacity-50" />
         </DraggableControls>
 
+        {/* Day Parts Control */}
+        <DraggableControls
+          elementId="wheel-day-parts"
+          elementType="ring"
+          defaultX={center}
+          defaultY={center}
+          defaultRadius={baseRadii.dayPartsOuter}
+          allowDrag={true}
+          allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-day-parts', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
+          className="absolute"
+          style={{
+            left: `${center + (dayPartsConfig.x ?? 0)}px`,
+            top: `${center + (dayPartsConfig.y ?? 0)}px`,
+            transform: 'translate(-50%, -50%)',
+            width: `${baseRadii.dayPartsOuter * 2}px`,
+            height: `${baseRadii.dayPartsOuter * 2}px`,
+            borderRadius: '50%',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="w-full h-full border-2 border-dashed border-pink-400 opacity-50" />
+        </DraggableControls>
+
         {/* Days Circle Control */}
         <DraggableControls
           elementId="wheel-days-circle"
           elementType="ring"
+          defaultX={center}
+          defaultY={center}
           defaultRadius={baseRadii.daysOuter}
+          allowDrag={true}
           allowRadiusChange={true}
+          onPositionChange={(x, y) => {
+            updateElementConfig('wheel-days-circle', { 
+              x: x - center, 
+              y: y - center, 
+              type: 'ring' 
+            })
+          }}
           onRadiusChange={(radius) => {
             updateElementConfig('wheel-days-circle', { 
               radius, 
@@ -205,8 +397,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           }}
           className="absolute"
           style={{
-            left: '50%',
-            top: '50%',
+            left: `${center + (daysCircleConfig.x ?? 0)}px`,
+            top: `${center + (daysCircleConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${radii.daysOuter * 2}px`,
             height: `${radii.daysOuter * 2}px`,

@@ -26,6 +26,16 @@ interface WheelCalendarProps {
     daysInner: number;
     centerHub: number;
   }>;
+  ringOffsets?: Partial<{
+    sun: { x: number; y: number };
+    leaders: { x: number; y: number };
+    monthDays: { x: number; y: number };
+    weeks: { x: number; y: number };
+    dayParts: { x: number; y: number };
+    days: { x: number; y: number };
+    centerHub: { x: number; y: number };
+  }>;
+  textOverrides?: Record<string, string>;
 }
 
 // Leader data for the 4 quadrants
@@ -88,8 +98,17 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   partOfDay = 1,
   size = 800,
   customRadii,
+  ringOffsets,
+  textOverrides,
 }) => {
   const center = size / 2;
+  const sunOffset = ringOffsets?.sun || { x: 0, y: 0 };
+  const leadersOffset = ringOffsets?.leaders || { x: 0, y: 0 };
+  const monthDaysOffset = ringOffsets?.monthDays || { x: 0, y: 0 };
+  const weeksOffset = ringOffsets?.weeks || { x: 0, y: 0 };
+  const dayPartsOffset = ringOffsets?.dayParts || { x: 0, y: 0 };
+  const daysOffset = ringOffsets?.days || { x: 0, y: 0 };
+  const centerHubOffset = ringOffsets?.centerHub || { x: 0, y: 0 };
   
   // Calculate radii for each wheel (outer to inner)
   const baseRadii = {
@@ -312,11 +331,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         <circle cx={center} cy={center} r={size * 0.49} fill="url(#wheelBg)" stroke="#333" strokeWidth={2} />
 
         {/* ====== CIRCLE 1: SUN CIRCLE (366 days) ====== */}
-        <motion.g
-          animate={{ rotate: sunRotation }}
-          transition={{ duration: 1, ease: 'linear' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
-        >
+        <g transform={`translate(${sunOffset.x}, ${sunOffset.y})`}>
+          <motion.g
+            animate={{ rotate: sunRotation }}
+            transition={{ duration: 1, ease: 'linear' }}
+            style={{ transformOrigin: `${center}px ${center}px` }}
+          >
           {/* Background ring */}
           <circle
             cx={center}
@@ -384,10 +404,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               />
             );
           })}
-        </motion.g>
+          </motion.g>
+        </g>
 
         {/* ====== CIRCLE 2: LEADERS CIRCLE (4 quadrants) ====== */}
-        <motion.g
+        <g transform={`translate(${leadersOffset.x}, ${leadersOffset.y})`}>
+          <motion.g
           animate={{ rotate: leaderRotation }}
           transition={{ duration: 1, ease: 'easeOut' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
@@ -464,7 +486,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </motion.g>
 
         {/* ====== CIRCLE 3: MONTH DAYS (1-31 in 4 sections) ====== */}
-        <g>
+        <g transform={`translate(${monthDaysOffset.x}, ${monthDaysOffset.y})`}>
           {/* Background ring */}
           <circle
             cx={center}
@@ -517,11 +539,12 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 4: 52 WEEKS (364 dots) ====== */}
-        <motion.g
-          animate={{ rotate: weeksRotation }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
-        >
+        <g transform={`translate(${weeksOffset.x}, ${weeksOffset.y})`}>
+          <motion.g
+            animate={{ rotate: weeksRotation }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{ transformOrigin: `${center}px ${center}px` }}
+          >
           {/* Background ring */}
           <circle
             cx={center}
@@ -565,14 +588,16 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               </text>
             );
           })}
-        </motion.g>
+          </motion.g>
+        </g>
 
         {/* ====== CIRCLE 5: 18 PARTS OF DAY (above 7-day week) ====== */}
-        <motion.g
-          animate={{ rotate: dayPartsRotation }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
-        >
+        <g transform={`translate(${dayPartsOffset.x}, ${dayPartsOffset.y})`}>
+          <motion.g
+            animate={{ rotate: dayPartsRotation }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            style={{ transformOrigin: `${center}px ${center}px` }}
+          >
           {Array.from({ length: 18 }, (_, i) => {
             const partNumber = i + 1;
             const startAngle = (i * (360 / 18) - 90) * (Math.PI / 180);
@@ -638,7 +663,8 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </motion.g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK (moved down) ====== */}
-        <motion.g
+        <g transform={`translate(${daysOffset.x}, ${daysOffset.y})`}>
+          <motion.g
           animate={{ rotate: daysRotation }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
           style={{ transformOrigin: `${center}px ${center}px` }}
@@ -892,30 +918,33 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               </g>
             );
           })}
-        </motion.g>
+          </motion.g>
+        </g>
 
         {/* Center hub */}
-        <circle
-          cx={center}
-          cy={center}
+        <g transform={`translate(${centerHubOffset.x}, ${centerHubOffset.y})`}>
+          <circle
+            cx={center}
+            cy={center}
           r={radii.daysInner - 5}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
         />
         
-        {/* Center text */}
-        <text
-          x={center}
-          y={center}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="#1a1a2e"
-          fontSize={size * 0.02}
-          fontWeight="bold"
-        >
-          יהוה
-        </text>
+          {/* Center text */}
+          <text
+            x={center}
+            y={center}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#1a1a2e"
+            fontSize={size * 0.02}
+            fontWeight="bold"
+          >
+            {textOverrides?.['center-text'] ?? 'יהוה'}
+          </text>
+        </g>
 
         {/* Small upside-down triangle at top, touching outer rim at 12 o'clock */}
         {(() => {
