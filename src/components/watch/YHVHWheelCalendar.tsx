@@ -194,11 +194,18 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       const isMonth6WoodGathering = month === 6 && (dayInMonth >= 23 && dayInMonth <= 27); // Days 23-27: Wood Gathering Days
       const isMonth6Day31 = month === 6 && dayInMonth === 31; // Day 31: Intercalary day
       
+      // Month 7 specific feast days
+      const isMonth7FeastDay = month === 7 && (
+        dayInMonth === 1 || // Day 1: Yowm Teruah
+        (dayInMonth >= 9 && dayInMonth <= 10) || // Days 9-10: Yowm Kippur (evening to evening)
+        (dayInMonth >= 15 && dayInMonth <= 22) // Days 15-22: Sukkot
+      );
+      
       // General feast days (1st and 15th of other months)
-      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && month !== 6 && (dayInMonth === 1 || dayInMonth === 15);
+      const isGeneralFeastDay = month !== 1 && month !== 2 && month !== 3 && month !== 5 && month !== 6 && month !== 7 && (dayInMonth === 1 || dayInMonth === 15);
       
       // Combine feast days (but Shabbat overrides)
-      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isMonth5FeastDay || isMonth6FeastDay || isGeneralFeastDay;
+      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isMonth3FeastDay || isMonth5FeastDay || isMonth6FeastDay || isMonth7FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
