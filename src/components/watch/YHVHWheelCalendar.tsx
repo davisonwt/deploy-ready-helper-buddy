@@ -174,11 +174,19 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         (dayInMonth >= 15 && dayInMonth <= 21) // Days 15-21: Feast of Unleavened Bread
       );
       
+      // Month 2 specific feast days (darker blue for Unleavened Bread)
+      const isMonth2FeastDay = month === 2 && (
+        dayInMonth === 10 || // Day 10: Pick lamb (for those who missed Month 1)
+        dayInMonth === 14 || // Day 14: Pesach
+        (dayInMonth >= 15 && dayInMonth <= 21) // Days 15-21: Unleavened Bread (darker blue)
+      );
+      const isMonth2UnleavenedBread = month === 2 && (dayInMonth >= 15 && dayInMonth <= 21);
+      
       // General feast days (1st and 15th of other months)
-      const isGeneralFeastDay = month !== 1 && (dayInMonth === 1 || dayInMonth === 15);
+      const isGeneralFeastDay = month !== 1 && month !== 2 && (dayInMonth === 1 || dayInMonth === 15);
       
       // Combine feast days (but Shabbat overrides)
-      const isFeastDay = isMonth1FeastDay || isGeneralFeastDay;
+      const isFeastDay = isMonth1FeastDay || isMonth2FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -189,6 +197,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isFirstDayOfMonth,
         isShabbat,
         isFeastDay,
+        isMonth2UnleavenedBread,
         isIntercalaryDay,
         weekday,
         angle,
@@ -285,8 +294,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
             } else if (tick.isFirstDayOfMonth) {
               strokeColor = '#86efac'; // Light green for first day of month
               strokeWidth = 2;
+            } else if (tick.isMonth2UnleavenedBread) {
+              strokeColor = '#3b82f6'; // Darker blue for Month 2 Unleavened Bread (days 15-21)
+              strokeWidth = 2;
             } else if (tick.isFeastDay) {
-              strokeColor = '#93c5fd'; // Light blue for feast days (1st and 15th of month)
+              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1 and general feast days)
               strokeWidth = 2;
             }
             
