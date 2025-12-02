@@ -54,6 +54,6 @@ Expected response:
 ## Current Status
 
 ✅ Function code updated to handle public requests
-✅ CalendarWheel component sends auth headers (works either way)
+✅ Bead calendar UI sends auth headers (works either way)
 ⏳ Need to configure function in Dashboard to disable JWT verification
 

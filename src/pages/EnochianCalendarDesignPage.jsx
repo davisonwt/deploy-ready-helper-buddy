@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import EnochianWheelCalendar from '@/components/watch/EnochianWheelCalendar';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function EnochianCalendarDesignPage() {
   const [beadsPosition, setBeadsPosition] = useState({ x: 0, y: 0 });
@@ -58,15 +58,29 @@ export default function EnochianCalendarDesignPage() {
             whileHover={{ scale: 1.01 }}
             whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
           >
-            <div className="glass-card p-4 rounded-3xl bg-purple-900/30 border border-purple-500/30 w-full shadow-xl border-2 hover:border-purple-500/60 transition-colors">
-              <h2 className="text-lg md:text-xl font-bold text-center text-purple-300 mb-4">
-                Month Bead Strands
+            <div className="glass-card p-6 rounded-3xl bg-purple-900/30 border border-purple-500/30 w-full shadow-xl border-2 hover:border-purple-500/60 transition-colors space-y-4 text-center">
+              <h2 className="text-xl font-bold text-purple-200">
+                Wheel timelines retired — bead strands remain
               </h2>
-              
-              {/* Scrollable container for bead strands */}
-              <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-purple-900/30">
-                <EnochianWheelCalendar />
+              <p className="text-sm text-purple-100 leading-relaxed">
+                The Enochian wheel calendars have been permanently removed. Your bead string timelines are
+                still alive inside the Smooth Bead Clock experience.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button asChild variant="secondary" className="bg-amber-600/80 hover:bg-amber-500 text-white">
+                  <Link to="/sow2grow-calendar">
+                    Open Smooth Bead Clock
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="text-purple-200 border-purple-500/60 hover:bg-purple-500/10">
+                  <Link to="/tequfah-clock">
+                    View Tequfah Clock
+                  </Link>
+                </Button>
               </div>
+              <p className="text-xs text-purple-200/70">
+                Drag this card anywhere. Position is saved locally so your layout stays personal.
+              </p>
             </div>
           </motion.div>
           

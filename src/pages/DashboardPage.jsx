@@ -105,7 +105,7 @@ export default function DashboardPage() {
     return { sunrise, sunset }
   }
 
-  // Calculate calendar data directly (without CalendarWheel component)
+  // Calculate calendar data directly without the legacy wheel component
   useEffect(() => {
     const updateCalendarData = () => {
       // Get current LOCAL time - no internet, no UTC conversion, just local time
