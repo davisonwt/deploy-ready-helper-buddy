@@ -128,12 +128,15 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   const monthDaysOffset = ringOffsets?.monthDays || { x: 0, y: 0 };
   const weeksOffset = ringOffsets?.weeks || { x: 0, y: 0 };
   const dayPartsOffset = ringOffsets?.dayParts || { x: 0, y: 0 };
-  const daysOffset = ringOffsets?.days || { x: 0, y: 0 };
-  const centerHubOffset = ringOffsets?.centerHub || { x: 0, y: 0 };
+  // IMPORTANT: When editor mode is ON, ringOffsets is provided and daysOffset comes from configs
+  // When editor mode is OFF, ringOffsets is undefined, so we need to use the same logic
+  // The key is: when editor mode is ON, it uses ringOffsets?.days which defaults to {x:0, y:0}
+  // But the actual rendering might be different. Let's ensure we always use the same calculation:
+  const daysOffset = ringOffsets?.days ?? { x: 0, y: 0 };
+  const centerHubOffset = ringOffsets?.centerHub ?? { x: 0, y: 0 };
   
-  // When editor mode is ON, use the offset from configs (which corrects the centering)
-  // When editor mode is OFF, use the SAME offset that editor mode uses (the corrected position)
-  // This ensures the wheel stays in the correct position whether editor is on or off
+  // Use the same offset calculation regardless of editor mode
+  // This ensures the wheel position is consistent
   const finalDaysOffset = daysOffset;
   
   // Calculate radii for each wheel (outer to inner)
