@@ -840,12 +840,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                       fontSize={size * 0.012}
                       fontWeight={isCurrentDay ? 'bold' : 'normal'}
                       transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
-                      onClick={(e) => {
-                        if (isEditorMode && setSelectedElementId) {
-                          e.stopPropagation();
-                          setSelectedElementId(`day-part-night-${i}`);
-                        }
-                      }}
+                      onClick={(e) => handleTextClick(`day-part-night-${i}`, e)}
                       style={{ cursor: isEditorMode ? 'pointer' : 'default' }}
                     >
                       {textOverrides?.[`day-part-night-${i}`] ?? 'Night'}
@@ -882,8 +877,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                       fontSize={size * 0.012}
                       fontWeight={isCurrentDay ? 'bold' : 'normal'}
                       transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                      onClick={(e) => handleTextClick(`day-part-morning-${i}`, e)}
+                      style={{ cursor: isEditorMode ? 'pointer' : 'default' }}
                     >
-                      Morning
+                      {textOverrides?.[`day-part-morning-${i}`] ?? 'Morning'}
                     </text>
                   );
                 })()}
