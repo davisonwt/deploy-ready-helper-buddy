@@ -101,6 +101,18 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   ringOffsets,
   textOverrides,
 }) => {
+  // Try to get editor mode (may not be available)
+  let isEditorMode = false;
+  let setSelectedElementId: ((id: string | null) => void) | null = null;
+  try {
+    const { useVisualEditor } = require('@/contexts/VisualEditorContext');
+    const editor = useVisualEditor();
+    isEditorMode = editor.isEditorMode;
+    setSelectedElementId = editor.setSelectedElementId;
+  } catch (e) {
+    // Editor context not available
+  }
+
   const center = size / 2;
   const sunOffset = ringOffsets?.sun || { x: 0, y: 0 };
   const leadersOffset = ringOffsets?.leaders || { x: 0, y: 0 };
@@ -477,8 +489,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                   fontSize={size * 0.015}
                   fontWeight={isActive ? 'bold' : 'normal'}
                   transform={`rotate(${midAngle * 180 / Math.PI + 90}, ${textX}, ${textY})`}
+                  data-editable="true"
+                  data-element-id={`leader-name-${i}`}
+                  style={{ cursor: textOverrides ? 'pointer' : 'default' }}
                 >
-                  {leader.name}
+                  {textOverrides?.[`leader-name-${i}`] ?? leader.name}
                 </text>
               </g>
             );
@@ -824,8 +839,15 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
                       fontSize={size * 0.012}
                       fontWeight={isCurrentDay ? 'bold' : 'normal'}
                       transform={`rotate(${sectionMidAngle * 180 / Math.PI + 90}, ${labelX}, ${labelY})`}
+                      onClick={(e) => {
+                        if (isEditorMode && setSelectedElementId) {
+                          e.stopPropagation();
+                          setSelectedElementId(`day-part-night-${i}`);
+                        }
+                      }}
+                      style={{ cursor: isEditorMode ? 'pointer' : 'default' }}
                     >
-                      Night
+                      {textOverrides?.[`day-part-night-${i}`] ?? 'Night'}
                     </text>
                   );
                 })()}
@@ -1067,6 +1089,19 @@ export const YHVHWheelCalendarLive: React.FC<{ size?: number }> = ({ size = 800 
     return () => clearInterval(interval);
   }, []);
 
+  // Use editable version if editor mode is available
+  try {
+    // Dynamically import to avoid circular dependencies
+    const { useVisualEditor } = require('@/contexts/VisualEditorContext');
+    const { isEditorMode } = useVisualEditor();
+    if (isEditorMode) {
+      const { YHVHWheelCalendarEditable } = require('./YHVHWheelCalendarEditable');
+      return <YHVHWheelCalendarEditable {...calendarData} size={size} />;
+    }
+  } catch (e) {
+    // Editor context not available, use regular version
+  }
+  
   return <YHVHWheelCalendar {...calendarData} size={size} />;
 };
 
