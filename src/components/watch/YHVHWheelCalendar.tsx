@@ -130,6 +130,17 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     // Starting weekday for Year 6028 Month 1 Day 1 = Day 4 (from dashboardCalendar.ts)
     const STARTING_WEEKDAY_YEAR_6028 = 4;
     
+    // Month structure: [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31] = 364 days
+    const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+    
+    // Calculate first day of each month
+    const firstDaysOfMonths: number[] = [];
+    let cumulativeDays = 0;
+    for (let m = 0; m < 12; m++) {
+      firstDaysOfMonths.push(cumulativeDays + 1);
+      cumulativeDays += daysPerMonth[m];
+    }
+    
     return Array.from({ length: 366 }, (_, i) => {
       const dayNumber = i + 1;
       const angle = (i / 366) * 360 - 90;
@@ -140,14 +151,22 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Day 1 of year = Day 4 of week, so we need to calculate from day of year
       const weekday = ((dayNumber - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       
-      // Day 1 of week = at triangle (12 o'clock position) - Red
-      // Day 2 of week = Light blue
-      // Day 4 of week = golden yellow (our 1st day of 364 day counting)
-      // Shabbat (Day 7) = Pink
-      const isDay1OfWeek = weekday === 1;
-      const isDay2OfWeek = weekday === 2;
-      const isDay4OfWeek = weekday === 4; // Golden yellow - our 1st day of 364 day counting
-      const isShabbat = weekday === 7; // Pink - Shabbat
+      // Calculate which month and day of month this is
+      let month = 1;
+      let dayInMonth = dayNumber;
+      for (let m = 0; m < 12; m++) {
+        if (dayInMonth <= daysPerMonth[m]) {
+          month = m + 1;
+          break;
+        }
+        dayInMonth -= daysPerMonth[m];
+      }
+      
+      // Identify special days
+      const isFirstDayOfMonth = firstDaysOfMonths.includes(dayNumber);
+      const isShabbat = weekday === 7; // Yellow - Shabbat
+      const isFeastDay = dayInMonth === 1 || dayInMonth === 15; // Light blue - Feast days (1st and 15th of month)
+      const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
@@ -155,10 +174,10 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         x2: center + Math.cos(rad) * radii.sunOuter,
         y2: center + Math.sin(rad) * radii.sunOuter,
         isCurrentDay,
-        isDay1OfWeek,
-        isDay2OfWeek,
-        isDay4OfWeek,
+        isFirstDayOfMonth,
         isShabbat,
+        isFeastDay,
+        isIntercalaryDay,
         weekday,
         angle,
       };
@@ -236,7 +255,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           
           {/* 366 tick marks */}
           {sunTicks.map((tick, i) => {
-            // Determine stroke color based on day type
+            // Determine stroke color based on day type (priority order matters)
             let strokeColor = '#4b5563'; // Default gray
             let strokeWidth = 1;
             let filter = undefined;
@@ -245,17 +264,17 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#ef4444'; // Red for current day
               strokeWidth = 3;
               filter = 'url(#glow)';
+            } else if (tick.isIntercalaryDay) {
+              strokeColor = '#ec4899'; // Pink for intercalary days (365, 366)
+              strokeWidth = 2;
             } else if (tick.isShabbat) {
-              strokeColor = '#ec4899'; // Pink for Shabbat (day 7)
+              strokeColor = '#fbbf24'; // Yellow for Shabbat (day 7) - overrides other colors
               strokeWidth = 2;
-            } else if (tick.isDay4OfWeek) {
-              strokeColor = '#fbbf24'; // Golden yellow for day 4 of week (our 1st day of 364 day counting)
+            } else if (tick.isFirstDayOfMonth) {
+              strokeColor = '#86efac'; // Light green for first day of month
               strokeWidth = 2;
-            } else if (tick.isDay2OfWeek) {
-              strokeColor = '#60a5fa'; // Light blue for day 2 of week
-              strokeWidth = 2;
-            } else if (tick.isDay1OfWeek) {
-              strokeColor = '#ef4444'; // Red for day 1 of week (at triangle)
+            } else if (tick.isFeastDay) {
+              strokeColor = '#93c5fd'; // Light blue for feast days (1st and 15th of month)
               strokeWidth = 2;
             }
             
