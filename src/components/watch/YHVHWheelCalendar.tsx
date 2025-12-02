@@ -165,8 +165,14 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Identify special days
       const isFirstDayOfMonth = firstDaysOfMonths.includes(dayNumber);
       const isShabbat = weekday === 7; // Yellow - Shabbat
-      const isDaysOutOfTime = dayNumber === 365 || dayNumber === 366; // Dark purple - Days out of time (doot)
-      const isIntercalaryDay = false; // Days 365-366 are now days out of time, not intercalary
+      
+      // Calculate which Sabbath number this is (if it's a Sabbath)
+      // Day 1 = weekday 4, so Day 4 = weekday 7 (1st Sabbath)
+      // 52nd Sabbath = 4 + (52-1)*7 = 4 + 357 = 361
+      // Verify: Day 361 weekday = ((361-1+4-1)%7)+1 = (363%7)+1 = 6+1 = 7 ✓ (Sabbath)
+      // So Day 361 is the 52nd Sabbath, and Days 362-363 are the two days after it (Days Out of Time)
+      const isDaysOutOfTime = dayNumber === 362 || dayNumber === 363; // Dark purple - Days out of time (doot) after 52nd Sabbath
+      const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days (the extra 2 days at end)
       const isTequvah = dayNumber === 1; // Day 1 of year = Day 4 of week = Tequvah (equinox) - White
       
       // Month 1 specific feast days
