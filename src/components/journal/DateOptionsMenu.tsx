@@ -19,29 +19,6 @@ interface DateOptionsMenuProps {
 export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSelectOption }: DateOptionsMenuProps) {
   const [selectedForm, setSelectedForm] = useState<'notes' | 'media' | 'prayer' | 'life' | 'spiritual' | null>(null)
 
-  if (!isOpen) return null
-
-  const closeMenu = () => {
-    setSelectedForm(null)
-    onClose()
-    document.body.style.overflow = ''
-  }
-
-  const handleOptionSelect = (optionId: 'notes' | 'media' | 'prayer' | 'life' | 'spiritual') => {
-    setSelectedForm(optionId)
-    onSelectOption?.(optionId)
-  }
-
-  const handleFormClose = () => {
-    setSelectedForm(null)
-  }
-
-  const handleFormSave = () => {
-    // Form saved, can keep menu open or close
-    // For now, keep menu open so user can add more entries
-  }
-
-  // Handle body scroll when menu opens/closes
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -53,6 +30,27 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
       document.body.style.overflow = ''
     }
   }, [isOpen])
+
+  const handleOptionSelect = (optionId: 'notes' | 'media' | 'prayer' | 'life' | 'spiritual') => {
+    setSelectedForm(optionId)
+    onSelectOption?.(optionId)
+  }
+
+  const handleFormClose = () => {
+    setSelectedForm(null)
+  }
+
+  const handleFormSave = () => {
+    setSelectedForm(null)
+    onClose()
+  }
+
+  const closeMenu = () => {
+    setSelectedForm(null)
+    onClose()
+  }
+
+  if (!isOpen) return null
 
   const options = [
     { 
