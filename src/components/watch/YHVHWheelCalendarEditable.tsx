@@ -137,11 +137,10 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     )
   }, [customRadii])
 
-  // Get ring offsets from configs - ONLY when editor mode is on
-  // When editor mode is off, always return undefined to ensure perfect centering
+  // Get ring offsets from configs
+  // IMPORTANT: Always return ringOffsets (even when editor mode is off) so the wheel uses the same positioning logic
+  // When editor mode is off, all offsets will be 0, but the structure is the same
   const ringOffsets = useMemo(() => {
-    if (!isEditorMode) return undefined
-    
     // Get offsets, but ensure they default to 0 if not set
     const getOffset = (config: any) => ({
       x: config?.x ?? 0,
