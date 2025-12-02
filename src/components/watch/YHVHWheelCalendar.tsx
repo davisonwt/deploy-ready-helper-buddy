@@ -740,6 +740,76 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         >
           יהוה
         </text>
+
+        {/* Upside-down triangle indicator at top, pointing down to current day */}
+        {(() => {
+          const topAngle = -90 * (Math.PI / 180); // Top of wheel (12 o'clock)
+          const triangleBaseRadius = radii.sunOuter + size * 0.03; // Position outside the sun circle
+          const trianglePointRadius = radii.sunOuter + size * 0.01; // Point extends closer to wheel
+          const triangleBaseWidth = size * 0.02; // Width of triangle base
+          
+          // Calculate triangle points
+          const triangleTopLeftX = center + Math.cos(topAngle - Math.PI / 2) * triangleBaseWidth;
+          const triangleTopLeftY = center + Math.sin(topAngle - Math.PI / 2) * triangleBaseWidth;
+          const triangleTopRightX = center + Math.cos(topAngle + Math.PI / 2) * triangleBaseWidth;
+          const triangleTopRightY = center + Math.sin(topAngle + Math.PI / 2) * triangleBaseWidth;
+          const trianglePointX = center + Math.cos(topAngle) * trianglePointRadius;
+          const trianglePointY = center + Math.sin(topAngle) * trianglePointRadius;
+          
+          // Current day position on sun circle
+          const currentDayAngle = ((dayOfYear - 1) / 366) * 360 - 90;
+          const currentDayRad = (currentDayAngle * Math.PI) / 180;
+          const currentDayX = center + Math.cos(currentDayRad) * radii.sunOuter;
+          const currentDayY = center + Math.sin(currentDayRad) * radii.sunOuter;
+          
+          return (
+            <g>
+              {/* Upside-down triangle */}
+              <polygon
+                points={`${triangleTopLeftX},${triangleTopLeftY} ${triangleTopRightX},${triangleTopRightY} ${trianglePointX},${trianglePointY}`}
+                fill="#fbbf24"
+                stroke="#d97706"
+                strokeWidth={2}
+                opacity={0.9}
+              />
+              
+              {/* Line from triangle point to current day position */}
+              <line
+                x1={trianglePointX}
+                y1={trianglePointY}
+                x2={currentDayX}
+                y2={currentDayY}
+                stroke="#fbbf24"
+                strokeWidth={1.5}
+                strokeDasharray="4,4"
+                opacity={0.6}
+              />
+              
+              {/* Current day indicator dot */}
+              <circle
+                cx={currentDayX}
+                cy={currentDayY}
+                r={size * 0.008}
+                fill="#ef4444"
+                stroke="#fff"
+                strokeWidth={1.5}
+              />
+              
+              {/* Day number label below triangle point */}
+              <text
+                x={trianglePointX}
+                y={trianglePointY + size * 0.025}
+                textAnchor="middle"
+                dominantBaseline="top"
+                fill="#fbbf24"
+                fontSize={size * 0.015}
+                fontWeight="bold"
+              >
+                Day {dayOfYear}
+              </text>
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );
