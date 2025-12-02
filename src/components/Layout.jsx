@@ -50,8 +50,7 @@ const CommunityChatButton = lazy(() => import("./community/CommunityChatButton")
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
-// Lazy load AuthButton to avoid React initialization issues
-const AuthButton = lazy(() => import("./firebase/AuthButton"))
+import AuthButton from "./firebase/AuthButton"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -424,9 +423,7 @@ function Layout({ children }) {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
                 {/* Firebase Auth Button */}
-                <Suspense fallback={null}>
-                  <AuthButton />
-                </Suspense>
+                <AuthButton />
                 
                 {/* Voice Commands Button */}
                 <button
