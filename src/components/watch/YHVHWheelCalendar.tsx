@@ -100,15 +100,23 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     window.dispatchEvent(new CustomEvent('visual-editor-select', { detail: { elementId } }));
   };
   
-  // === FORCE ALL OFFSETS TO EXIST (even zero) ===
+  // === SAFE OFFSET HANDLING (crash-proof) ===
+  const getOffset = (key: keyof NonNullable<typeof ringOffsets>) => {
+    const val = ringOffsets?.[key];
+    return {
+      x: typeof val?.x === 'number' ? val.x : 0,
+      y: typeof val?.y === 'number' ? val.y : 0,
+    };
+  };
+
   const offsets = {
-    sun: ringOffsets?.sun ?? { x: 0, y: 0 },
-    leaders: ringOffsets?.leaders ?? { x: 0, y: 0 },
-    monthDays: ringOffsets?.monthDays ?? { x: 0, y: 0 },
-    weeks: ringOffsets?.weeks ?? { x: 0, y: 0 },
-    dayParts: ringOffsets?.dayParts ?? { x: 0, y: 0 },
-    days: ringOffsets?.days ?? { x: 0, y: 0 },
-    centerHub: ringOffsets?.centerHub ?? { x: 0, y: 0 },
+    sun: getOffset('sun'),
+    leaders: getOffset('leaders'),
+    monthDays: getOffset('monthDays'),
+    weeks: getOffset('weeks'),
+    dayParts: getOffset('dayParts'),
+    days: getOffset('days'),
+    centerHub: getOffset('centerHub'),
   };
   
   // Calculate radii for each wheel (outer to inner)
@@ -154,9 +162,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   
   const sunRotation = -(totalDays / 366) * 360;
   const weeksRotation = -(totalDays / 364) * 360;
-  const daysRotation = -(totalDays * (360 / 7));        // ← perfect 7-day
-  const dayPartsRotation = -(progressThroughDay * 360);    // ← perfect 18-part
-  const leaderRotation = -Math.floor(dayOfYear / 91.0001) * 90;
+  const daysRotation = -(totalDays * (360 / 7));
+  const dayPartsRotation = -(progressThroughDay * 360);
+  const leaderRotation = -Math.floor((dayOfYear - 1) / 91) * 90;
 
   // Generate 366 tick marks for sun circle
   const sunTicks = useMemo(() => {
