@@ -107,11 +107,18 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   // We'll use a simpler approach: check if textOverrides is provided (indicates editor mode)
   const isEditorMode = !!textOverrides;
   
-  // Handler for text element clicks - will be set by editable wrapper
+  // Handler for text element clicks - use context if available
   const handleTextClick = (elementId: string, e: React.MouseEvent<SVGTextElement>) => {
     if (!isEditorMode) return;
     e.stopPropagation();
-    // Dispatch custom event that editable wrapper can listen to
+    // Try to use context directly if available
+    if (typeof window !== 'undefined' && (window as any).__VISUAL_EDITOR_CONTEXT__) {
+      const context = (window as any).__VISUAL_EDITOR_CONTEXT__;
+      if (context.setSelectedElementId) {
+        context.setSelectedElementId(elementId);
+      }
+    }
+    // Also dispatch custom event as fallback
     window.dispatchEvent(new CustomEvent('visual-editor-select', { detail: { elementId } }));
   };
   const sunOffset = ringOffsets?.sun || { x: 0, y: 0 };

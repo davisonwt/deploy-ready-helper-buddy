@@ -114,9 +114,35 @@ export function PropertyPanel() {
           </div>
         )}
 
+        {config.innerRadius !== undefined && (
+          <div>
+            <Label className="text-gray-300 text-sm">Inner Radius</Label>
+            <Input
+              type="number"
+              value={config.innerRadius}
+              onChange={(e) => handleChange('innerRadius', parseFloat(e.target.value) || 0)}
+              className="bg-gray-800 text-white mt-1"
+            />
+          </div>
+        )}
+
+        {/* Text editing for text elements */}
+        {config.type === 'text' && (
+          <div>
+            <Label className="text-gray-300 text-sm">Text Content</Label>
+            <Input
+              type="text"
+              value={config.text || ''}
+              onChange={(e) => handleChange('text', e.target.value)}
+              className="bg-gray-800 text-white mt-1"
+              placeholder="Enter text..."
+            />
+          </div>
+        )}
+
         {/* Custom properties */}
         {Object.entries(config).map(([key, value]) => {
-          if (['id', 'type', 'x', 'y', 'width', 'height', 'radius'].includes(key)) return null
+          if (['id', 'type', 'x', 'y', 'width', 'height', 'radius', 'innerRadius', 'text'].includes(key)) return null
           return (
             <div key={key}>
               <Label className="text-gray-300 text-sm capitalize">{key}</Label>
