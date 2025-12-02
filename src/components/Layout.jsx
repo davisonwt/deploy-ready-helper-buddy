@@ -47,10 +47,11 @@ import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
 // Lazy load CommunityChatButton to avoid React initialization issues
 const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
+// Lazy load AuthButton to avoid React dispatcher initialization issues
+const LazyAuthButton = lazy(() => import("./firebase/AuthButton").then(m => ({ default: m.default })))
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
-import AuthButton from "./firebase/AuthButton"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -428,7 +429,11 @@ function Layout({ children }) {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
                 {/* Firebase Auth Button - only render after mount to avoid React init issues */}
-                {isMounted && <AuthButton />}
+                {isMounted && (
+                  <Suspense fallback={null}>
+                    <LazyAuthButton />
+                  </Suspense>
+                )}
                 
                 {/* Voice Commands Button */}
                 <button
