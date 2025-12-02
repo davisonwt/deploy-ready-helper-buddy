@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { useBasket } from "@/hooks/useBasket"
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, Suspense, lazy } from 'react'
 import { supabase } from "@/integrations/supabase/client"
 import {
   Sprout, 
@@ -45,7 +45,8 @@ import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
 import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
-import { CommunityChatButton } from "./community/CommunityChatButton"
+// Lazy load CommunityChatButton to avoid React initialization issues
+const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
@@ -781,8 +782,10 @@ function Layout({ children }) {
       {/* Gosat Panel */}
       <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 
-      {/* Community Chat Floating Button */}
-      <CommunityChatButton />
+      {/* Community Chat Floating Button - Lazy loaded to avoid React init issues */}
+      <Suspense fallback={null}>
+        <CommunityChatButton />
+      </Suspense>
 
       {/* Your Progress Button & Modal */}
       <ProgressButton />

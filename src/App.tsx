@@ -156,6 +156,8 @@ import { ProductBasketProvider } from "./contexts/ProductBasketContext";
 import { AlbumBuilderProvider } from "./contexts/AlbumBuilderContext";
 import { LiveSessionPlaylistProvider } from "./contexts/LiveSessionPlaylistContext";
 import { AppContextProvider } from "./contexts/AppContext";
+import { VisualEditorProvider } from "./contexts/VisualEditorContext";
+import { EditorModeToggle } from "./components/visual-editor/EditorModeToggle";
 import LiveActivityWidget from "./components/LiveActivityWidget";
 import FloatingBasketButton from "./components/products/FloatingBasketButton";
 import "./utils/errorDetection"; // Initialize error detection
@@ -183,6 +185,7 @@ const App = () => (
   }}>
     <AuthProvider>
       <AppContextProvider>
+        <VisualEditorProvider>
         <CallManagerProvider>
         <BasketProvider>
             <ProductBasketProvider>
@@ -190,6 +193,7 @@ const App = () => (
                 <LiveSessionPlaylistProvider>
                   <TooltipProvider>
               <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
+                <EditorModeToggle />
                 <NavigationMonitor />
                 <DeadLinkDetector />
                 <Toaster />
@@ -860,8 +864,9 @@ const App = () => (
         </LiveSessionPlaylistProvider>
         </AlbumBuilderProvider>
         </ProductBasketProvider>
-      </BasketProvider>
-      </CallManagerProvider>
+        </BasketProvider>
+        </CallManagerProvider>
+        </VisualEditorProvider>
     </AppContextProvider>
   </AuthProvider>
 </EnhancedErrorBoundary>

@@ -3,14 +3,24 @@
  * Always visible floating button to open S2G Community Chat
  */
 
-import { useState } from 'react'
+import { useState, Suspense, lazy, useEffect } from 'react'
 import { MessageSquare } from 'lucide-react'
-import { CommunityChat } from './CommunityChat'
-import { getCurrentTheme } from '@/utils/dashboardThemes'
+
+// Lazy load CommunityChat to avoid initialization issues
+const CommunityChat = lazy(() => import('./CommunityChat').then(module => ({ default: module.CommunityChat })))
 
 export function CommunityChatButton() {
   const [isOpen, setIsOpen] = useState(false)
-  const currentTheme = getCurrentTheme()
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Ensure component only renders after React is fully initialized
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return null
+  }
 
   return (
     <>
@@ -28,7 +38,11 @@ export function CommunityChatButton() {
         <span className="font-semibold text-sm">s2g chatapp all</span>
       </button>
 
-      <CommunityChat isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {isOpen && (
+        <Suspense fallback={null}>
+          <CommunityChat isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        </Suspense>
+      )}
     </>
   )
 }
