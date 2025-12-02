@@ -165,8 +165,20 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       // Identify special days
       const isFirstDayOfMonth = firstDaysOfMonths.includes(dayNumber);
       const isShabbat = weekday === 7; // Yellow - Shabbat
-      const isFeastDay = dayInMonth === 1 || dayInMonth === 15; // Light blue - Feast days (1st and 15th of month)
       const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days
+      
+      // Month 1 specific feast days
+      const isMonth1FeastDay = month === 1 && (
+        dayInMonth === 10 || // Day 10: Pick the lamb
+        dayInMonth === 14 || // Day 14: Slaughter the lamb (evening)
+        (dayInMonth >= 15 && dayInMonth <= 21) // Days 15-21: Feast of Unleavened Bread
+      );
+      
+      // General feast days (1st and 15th of other months)
+      const isGeneralFeastDay = month !== 1 && (dayInMonth === 1 || dayInMonth === 15);
+      
+      // Combine feast days (but Shabbat overrides)
+      const isFeastDay = isMonth1FeastDay || isGeneralFeastDay;
       
       return {
         x1: center + Math.cos(rad) * radii.sunInner,
