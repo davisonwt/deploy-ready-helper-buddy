@@ -1123,7 +1123,17 @@ export const YHVHWheelCalendarLive: React.FC<{ size?: number }> = ({ size = 800 
     // Editor context not available, use regular version
   }
   
-  return <YHVHWheelCalendar {...calendarData} size={size} />;
+  // Always pass ringOffsets with zero values to ensure consistent positioning
+  // This matches the behavior when editor mode is on
+  return <YHVHWheelCalendar {...calendarData} size={size} ringOffsets={{
+    sun: { x: 0, y: 0 },
+    leaders: { x: 0, y: 0 },
+    monthDays: { x: 0, y: 0 },
+    weeks: { x: 0, y: 0 },
+    dayParts: { x: 0, y: 0 },
+    days: { x: 0, y: 0 },
+    centerHub: { x: 0, y: 0 }
+  }} />;
 };
 
 export default YHVHWheelCalendarLive;
