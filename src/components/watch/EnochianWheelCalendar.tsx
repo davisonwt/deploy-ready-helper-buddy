@@ -7,6 +7,7 @@ import { Sun, Moon } from 'lucide-react';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { BeadPopup } from './BeadPopup';
 
 
 
@@ -123,9 +124,10 @@ const calculateSabbathDays = (month: number): number[] => {
   return sabbathDays;
 };
 
-const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const { location } = useUserLocation();
 
   // Track part changes every 80 minutes (PART_MINUTES)
@@ -213,7 +215,9 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
 
               style={{
 
@@ -295,7 +299,9 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
 
               style={{
 
@@ -367,6 +373,17 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       </div>
 
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+
     </div>
 
   );
@@ -375,9 +392,10 @@ const Month1Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const { location } = useUserLocation();
 
   // Track part changes every 80 minutes (PART_MINUTES)
@@ -506,7 +524,9 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
               style={{
 
@@ -614,7 +634,9 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
               style={{
 
@@ -722,6 +744,17 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       </p>
 
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+
     </div>
 
   );
@@ -730,9 +763,10 @@ const Month2Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const { location } = useUserLocation();
 
   // Track part changes every 80 minutes (PART_MINUTES)
@@ -868,7 +902,9 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
               style={{
 
@@ -981,7 +1017,9 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
               style={{
 
@@ -1102,6 +1140,17 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       </motion.p>
 
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+
     </div>
 
   );
@@ -1110,7 +1159,8 @@ const Month3Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -1252,7 +1302,9 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 4, day: bead.day })}
 
               style={{
 
@@ -1386,7 +1438,9 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+
+              onClick={() => setSelectedBead({ year, month: 4, day: bead.day })}
 
               style={{
 
@@ -1520,6 +1574,17 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
       </motion.p>
 
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+
     </div>
 
   );
@@ -1528,7 +1593,8 @@ const Month4Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -1925,7 +1991,8 @@ const Month5Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -2343,7 +2410,8 @@ const Month6Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -2700,7 +2768,8 @@ const Month7Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -3054,7 +3123,8 @@ const Month8Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -3286,7 +3356,8 @@ const Month9Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -3583,7 +3654,8 @@ const Month10Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -3884,7 +3956,8 @@ const Month11Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
 
 
 
-const Month12Strand = ({ dayOfMonth }: { dayOfMonth: number }) => {
+const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
@@ -4368,7 +4441,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4379,7 +4452,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month2Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month2Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4390,7 +4463,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month3Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month3Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4401,7 +4474,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month4Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month4Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4412,7 +4485,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month5Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month5Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4423,7 +4496,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month6Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month6Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4434,7 +4507,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month7Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month7Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4445,7 +4518,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month8Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month8Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4456,7 +4529,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month9Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month9Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4467,7 +4540,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month10Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month10Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4478,7 +4551,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month11Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month11Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
 
@@ -4489,7 +4562,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month12Strand dayOfMonth={enochianDate.dayOfMonth} />
+              <Month12Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
             </motion.div>
           )}
         </div>
