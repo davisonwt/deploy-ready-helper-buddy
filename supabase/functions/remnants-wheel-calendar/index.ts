@@ -7,20 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface CreatorCalendarDate {
-  year: number;
-  month: number;
-  day: number;
-  weekDay: number;
-  dayOfYear: number;
-}
-
-interface CustomTime {
-  part: number;
-  minute: number;
-}
-
-function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDate {
+function calculateCreatorDate(date = new Date()) {
   const localYear = date.getFullYear();
   const localMonth = date.getMonth();
   const localDate = date.getDate();
@@ -52,7 +39,7 @@ function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDate {
   let currentDate = epochDate;
 
   const gregorianDaysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const isLeapYear = (year: number) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 
   while (
     currentYear < effectiveYear ||
@@ -117,7 +104,7 @@ function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDate {
   };
 }
 
-function getCreatorTime(date: Date = new Date()): CustomTime & { displayText: string } {
+function getCreatorTime(date = new Date()) {
   const sunriseMinutes = 320; // 5:20 AM local
   const nowMinutes = date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
 
@@ -127,7 +114,7 @@ function getCreatorTime(date: Date = new Date()): CustomTime & { displayText: st
   const part = Math.floor(elapsed / 80) + 1;
   const minute = Math.floor(elapsed % 80) + 1;
 
-  const ordinal = (n: number) => {
+  const ordinal = (n) => {
     if (n >= 11 && n <= 13) return 'th';
     const last = n % 10;
     return last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th';
@@ -138,7 +125,7 @@ function getCreatorTime(date: Date = new Date()): CustomTime & { displayText: st
   return { part, minute, displayText };
 }
 
-function getWheelAngles(dayOfYear: number, progress: number) {
+function getWheelAngles(dayOfYear, progress) {
   const totalDays = dayOfYear - 1 + progress;
 
   return {
@@ -151,7 +138,7 @@ function getWheelAngles(dayOfYear: number, progress: number) {
   };
 }
 
-function buildDisplayLines(date: CreatorCalendarDate, time: CustomTime, progress: number) {
+function buildDisplayLines(date, time, progress) {
   const lines = [
     `Year ${date.year} • Month ${date.month} • Day ${date.day}`,
     `Weekday ${date.weekDay} • Part ${time.part}/18`,
