@@ -11,31 +11,9 @@ interface WheelCalendarProps {
   dayOfWeek?: number;
   partOfDay?: number;
   size?: number;
-  customRadii?: Partial<{
-    sunOuter: number;
-    sunInner: number;
-    leadersOuter: number;
-    leadersInner: number;
-    monthDaysOuter: number;
-    monthDaysInner: number;
-    weeksOuter: number;
-    weeksInner: number;
-    dayPartsOuter: number;
-    dayPartsInner: number;
-    daysOuter: number;
-    daysInner: number;
-    centerHub: number;
-  }>;
-  ringOffsets?: Partial<{
-    sun: { x: number; y: number };
-    leaders: { x: number; y: number };
-    monthDays: { x: number; y: number };
-    weeks: { x: number; y: number };
-    dayParts: { x: number; y: number };
-    days: { x: number; y: number };
-    centerHub: { x: number; y: number };
-  }>;
-  textOverrides?: Record<string, string>;
+  customRadii?: any;
+  ringOffsets?: any;
+  textOverrides?: any;
 }
 
 // Leader data for the 4 quadrants
@@ -121,15 +99,17 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
     // Also dispatch custom event as fallback
     window.dispatchEvent(new CustomEvent('visual-editor-select', { detail: { elementId } }));
   };
-  // When ringOffsets is undefined (editor mode off), all offsets are 0 for perfect centering
-  // When ringOffsets exists (editor mode on), use saved offsets or default to 0
-  const sunOffset = ringOffsets?.sun || { x: 0, y: 0 };
-  const leadersOffset = ringOffsets?.leaders || { x: 0, y: 0 };
-  const monthDaysOffset = ringOffsets?.monthDays || { x: 0, y: 0 };
-  const weeksOffset = ringOffsets?.weeks || { x: 0, y: 0 };
-  const dayPartsOffset = ringOffsets?.dayParts || { x: 0, y: 0 };
-  const daysOffset = ringOffsets?.days || { x: 0, y: 0 };
-  const centerHubOffset = ringOffsets?.centerHub || { x: 0, y: 0 };
+  
+  // === FORCE ALL OFFSETS TO EXIST (even zero) ===
+  const offsets = {
+    sun: ringOffsets?.sun ?? { x: 0, y: 0 },
+    leaders: ringOffsets?.leaders ?? { x: 0, y: 0 },
+    monthDays: ringOffsets?.monthDays ?? { x: 0, y: 0 },
+    weeks: ringOffsets?.weeks ?? { x: 0, y: 0 },
+    dayParts: ringOffsets?.dayParts ?? { x: 0, y: 0 },
+    days: ringOffsets?.days ?? { x: 0, y: 0 },
+    centerHub: ringOffsets?.centerHub ?? { x: 0, y: 0 },
+  };
   
   // Calculate radii for each wheel (outer to inner)
   const baseRadii = {
@@ -159,35 +139,24 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
   // Calculate day/night parts for current day
   const { dayParts, nightParts } = calculateDayNightParts(dayOfYear);
   
-  // Calculate smooth rotation for outer wheel based on day progress
-  // Each day moves the wheel by 1/366th of a full rotation
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
+  // === REAL-TIME CLOCK (smooth second-by-second) ===
+  const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000); // Update every second for smooth animation
-    
-    return () => clearInterval(interval);
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
   }, []);
   
-  // Calculate progress through current day (0 to 1)
-  // Using Creator time system: 18 parts × 80 minutes = 1440 minutes = 24 hours
-  const creatorTime = getCreatorTime(currentTime);
-  const progressThroughDay = ((creatorTime.part - 1) * 80 + (creatorTime.minute - 1)) / 1440; // 0 to 1
+  const { part, minute } = getCreatorTime(now);
+  const progressThroughDay = ((part - 1) * 80 + (minute - 1)) / 1440; // 0 to 1
   
-  // Rotation angles
-  // Outer wheel: rotates based on dayOfYear + progress through current day
-  // Each day = 360/366 degrees, so progress adds (360/366) * progressThroughDay
-  const sunRotation = -((dayOfYear - 1 + progressThroughDay) / 366) * 360;
-  const leaderRotation = -(currentLeaderIndex * 90);
-  const weeksRotation = -(dayOfYear / 364) * 360;
+  // === CONTINUOUS ROTATIONS (no jumps, no drift) ===
+  const totalDays = dayOfYear - 1 + progressThroughDay;
   
-  // Continuous rotation that never jumps - prevents drift over hours
-  // Use totalDaysPassed instead of dayOfWeek to avoid jumps at midnight
-  const totalDaysPassed = dayOfYear - 1 + progressThroughDay;
-  const daysRotation = -(totalDaysPassed * (360 / 7));
-  const dayPartsRotation = -(progressThroughDay * 360);
+  const sunRotation = -(totalDays / 366) * 360;
+  const weeksRotation = -(totalDays / 364) * 360;
+  const daysRotation = -(totalDays * (360 / 7));        // ← perfect 7-day
+  const dayPartsRotation = -(progressThroughDay * 360);    // ← perfect 18-part
+  const leaderRotation = -Math.floor(dayOfYear / 91.0001) * 90;
 
   // Generate 366 tick marks for sun circle
   const sunTicks = useMemo(() => {
@@ -356,11 +325,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         <circle cx={center} cy={center} r={size * 0.49} fill="url(#wheelBg)" stroke="#333" strokeWidth={2} />
 
         {/* ====== CIRCLE 1: SUN CIRCLE (366 days) ====== */}
-        <g transform={`translate(${sunOffset.x}, ${sunOffset.y})`}>
+        <g transform={`translate(${offsets.sun.x}, ${offsets.sun.y})`}>
           <motion.g
             animate={{ rotate: sunRotation }}
-            transition={{ duration: 1, ease: 'linear' }}
-            style={{ transformOrigin: `${center}px ${center}px` }}
+            transition={{ type: "tween", ease: "linear", duration: 1 }}
+            style={{ transformOrigin: "50% 50%" }}
           >
           {/* Background ring */}
           <circle
@@ -433,11 +402,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 2: LEADERS CIRCLE (4 quadrants) ====== */}
-        <g transform={`translate(${leadersOffset.x}, ${leadersOffset.y})`}>
+        <g transform={`translate(${offsets.leaders.x}, ${offsets.leaders.y})`}>
           <motion.g
           animate={{ rotate: leaderRotation }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
+          style={{ transformOrigin: "50% 50%" }}
         >
           {LEADERS.map((leader, i) => {
             const startAngle = (i * 90 - 90) * (Math.PI / 180);
@@ -514,7 +483,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 3: MONTH DAYS (1-31 in 4 sections) ====== */}
-        <g transform={`translate(${monthDaysOffset.x}, ${monthDaysOffset.y})`}>
+        <g transform={`translate(${offsets.monthDays.x}, ${offsets.monthDays.y})`}>
           {/* Background ring */}
           <circle
             cx={center}
@@ -567,11 +536,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 4: 52 WEEKS (364 dots) ====== */}
-        <g transform={`translate(${weeksOffset.x}, ${weeksOffset.y})`}>
+        <g transform={`translate(${offsets.weeks.x}, ${offsets.weeks.y})`}>
           <motion.g
             animate={{ rotate: weeksRotation }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            style={{ transformOrigin: `${center}px ${center}px` }}
+            style={{ transformOrigin: "50% 50%" }}
           >
           {/* Background ring */}
           <circle
@@ -620,11 +589,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 5: 18 PARTS OF DAY (above 7-day week) ====== */}
-        <g transform={`translate(${dayPartsOffset.x}, ${dayPartsOffset.y})`}>
+        <g transform={`translate(${offsets.dayParts.x}, ${offsets.dayParts.y})`}>
           <motion.g
             animate={{ rotate: dayPartsRotation }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            style={{ transformOrigin: `${center}px ${center}px` }}
+            style={{ transformOrigin: "50% 50%" }}
           >
           {Array.from({ length: 18 }, (_, i) => {
             const partNumber = i + 1;
@@ -692,11 +661,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* ====== CIRCLE 6: 7 DAYS OF WEEK ====== */}
-        <g transform={`translate(${daysOffset.x}, ${daysOffset.y})`}>
+        <g transform={`translate(${offsets.days.x}, ${offsets.days.y})`}>
           <motion.g
           animate={{ rotate: daysRotation }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          style={{ transformOrigin: `${center}px ${center}px` }}
+          transition={{ type: "tween", ease: "linear", duration: 0.8 }}
+          style={{ transformOrigin: "50% 50%" }}
         >
           {/* Background ring */}
           <circle
@@ -957,7 +926,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         </g>
 
         {/* Center hub - always translate (even if 0,0) */}
-        <g transform={`translate(${centerHubOffset.x}, ${centerHubOffset.y})`}>
+        <g transform={`translate(${offsets.centerHub.x}, ${offsets.centerHub.y})`}>
           <circle
             cx={center}
             cy={center}
