@@ -957,13 +957,13 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           </motion.g>
         </g>
 
-        {/* Center hub - ensure perfect centering */}
+        {/* Center hub - ensure perfect centering and exact match with 7-day wheel inner edge */}
         {/* Only apply transform if offset is non-zero to avoid any transform issues */}
         <g transform={centerHubOffset.x !== 0 || centerHubOffset.y !== 0 ? `translate(${centerHubOffset.x}, ${centerHubOffset.y})` : undefined}>
           <circle
             cx={center}
             cy={center}
-          r={radii.daysInner}
+          r={radii.daysInner - 1}
           fill="url(#goldGradient)"
           stroke="#d97706"
           strokeWidth={2}
