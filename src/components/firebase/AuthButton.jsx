@@ -34,11 +34,6 @@ export default function AuthButton() {
   if (!isFirebaseConfigured) {
     return null; // Return null to hide the button when Firebase isn't configured
   }
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
 
   // Auto-sign in anonymously on mount if not authenticated
   useEffect(() => {
