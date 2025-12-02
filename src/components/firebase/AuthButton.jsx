@@ -20,6 +20,19 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 export default function AuthButton() {
+  // Ensure React is ready before using hooks
+  const [isReady, setIsReady] = useState(false);
+  
+  useEffect(() => {
+    // Small delay to ensure React dispatcher is initialized
+    const timer = setTimeout(() => setIsReady(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (!isReady) {
+    return null;
+  }
+  
   const { user, loading, isAuthenticated, autoSignIn, signUp, signIn, signOut } = useFirebaseAuth();
   
   // Don't render if Firebase is not configured
