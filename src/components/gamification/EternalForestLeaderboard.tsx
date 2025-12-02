@@ -247,14 +247,6 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
     }
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    setCamera((prev) => ({
-      ...prev,
-      zoom: Math.max(0.5, Math.min(3, prev.zoom - e.deltaY * 0.001)),
-    }));
-  };
-
   return (
     <div className={`relative w-full h-screen overflow-hidden bg-slate-900 ${className}`}>
       <canvas
@@ -263,7 +255,6 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
-        onWheel={handleWheel}
         style={{ cursor: dragging ? 'grabbing' : 'grab' }}
       />
       
@@ -273,7 +264,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         </h1>
         <p className="text-2xl opacity-80">Every soul is a tree. Watch the garden grow.</p>
         <p className="text-sm opacity-60 mt-2">
-          Drag to explore • Scroll to zoom • {users.length} trees growing
+          Drag to explore • {users.length} trees growing
         </p>
       </div>
     </div>

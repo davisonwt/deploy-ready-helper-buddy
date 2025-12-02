@@ -135,7 +135,6 @@ const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPa
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
-const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 
 // Lazy load admin pages (only accessed by admins)
@@ -216,14 +215,6 @@ const App = () => (
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
               <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
-              <Route path="/enochian-calendar-design" element={
-                <Layout>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <EnochianCalendarDesignPage />
-                  </Suspense>
-                </Layout>
-              } />
-              
               {/* Debug route for auth issues */}
               <Route path="/auth-debug" element={
                 <Suspense fallback={<div>Loading...</div>}>

@@ -105,7 +105,7 @@ export default function DashboardPage() {
     return { sunrise, sunset }
   }
 
-  // Calculate calendar data directly without the legacy wheel component
+  // Calculate calendar data directly without relying on deprecated visual timelines
   useEffect(() => {
     const updateCalendarData = () => {
       // Get current LOCAL time - no internet, no UTC conversion, just local time
@@ -720,7 +720,7 @@ export default function DashboardPage() {
                   })}
                 </div>
                 <div className="text-xs opacity-50 italic mt-2">
-                  Creator's wheels never lie • forever in sync
+                  Creator's cadence never lies • forever in sync
                 </div>
               </div>
             )}
