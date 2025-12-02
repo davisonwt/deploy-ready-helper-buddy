@@ -53,7 +53,7 @@ export function EditorModeToggle() {
             </Button>
             <Button
               onClick={() => {
-                // Clear localStorage and reload to reset wheel positions
+                // Clear localStorage and reload to reset saved positions
                 localStorage.removeItem('visual-editor-configs')
                 window.location.reload()
               }}
