@@ -74,7 +74,7 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
     if (supabaseUser) {
       try {
         const { data } = await supabase
-          .from('journal_entries')
+          .from('journal_entries' as any)
           .select('mood, tags, gratitude')
           .eq('user_id', supabaseUser.id)
           .eq('yhwh_year', yhwhDate.year)
@@ -83,9 +83,9 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
           .maybeSingle()
         
         if (data) {
-          setMood(data.mood || null)
-          setFamilyTags(data.tags || [])
-          setGratitude(data.gratitude || '')
+          setMood(((data as any).mood || null) as any)
+          setFamilyTags(((data as any).tags || []) as string[])
+          setGratitude(((data as any).gratitude || '') as string)
         }
       } catch (error) {
         // Entry doesn't exist yet
@@ -158,7 +158,7 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
         const gregorianDateStr = selectedDate.toISOString().split('T')[0]
         
         const { data: existingEntry } = await supabase
-          .from('journal_entries')
+          .from('journal_entries' as any)
           .select('id')
           .eq('user_id', supabaseUser.id)
           .eq('yhwh_year', yhwhDate.year)
@@ -185,12 +185,12 @@ export function LifeForm({ selectedDate, yhwhDate, onClose, onSave }: LifeFormPr
         
         if (existingEntry) {
           await supabase
-            .from('journal_entries')
+            .from('journal_entries' as any)
             .update(entryPayload)
-            .eq('id', existingEntry.id)
+            .eq('id', (existingEntry as any).id)
         } else {
           await supabase
-            .from('journal_entries')
+            .from('journal_entries' as any)
             .insert(entryPayload)
         }
         

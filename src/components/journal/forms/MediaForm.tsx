@@ -69,19 +69,19 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     if (supabaseUser) {
       try {
         const { data } = await supabase
-          .from('journal_entries')
+          .from('journal_entries' as any)
           .select('images, voice_notes, videos')
           .eq('user_id', supabaseUser.id)
           .eq('yhwh_year', yhwhDate.year)
           .eq('yhwh_month', yhwhDate.month)
           .eq('yhwh_day', yhwhDate.day)
-          .single()
+          .maybeSingle()
         
         if (data) {
-          setPhotos(data.images || [])
-          setVideos(data.videos || [])
-          if (data.voice_notes) {
-            setVoiceNotes(data.voice_notes.map((url: string) => ({ url, transcript: '', duration: 0 })))
+          setPhotos(((data as any).images || []) as string[])
+          setVideos(((data as any).videos || []) as string[])
+          if ((data as any).voice_notes) {
+            setVoiceNotes(((data as any).voice_notes as string[]).map((url: string) => ({ url, transcript: '', duration: 0 })))
           }
         }
       } catch (error) {
