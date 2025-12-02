@@ -299,6 +299,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
           {/* 366 tick marks */}
           {sunTicks.map((tick, i) => {
             // Determine stroke color based on day type (priority order matters)
+            // Day 4 of week (weekday === 4) should be gray by default, blue if feast day, never yellow
             let strokeColor = '#4b5563'; // Default gray
             let strokeWidth = 1;
             let filter = undefined;
@@ -314,6 +315,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#ec4899'; // Pink for Month 3 Day 31 and Month 6 Day 31 (intercalary days)
               strokeWidth = 2;
             } else if (tick.isShabbat) {
+              // Only Shabbat (weekday === 7) gets yellow, not day 4 of week
               strokeColor = '#fbbf24'; // Yellow for Shabbat (day 7) - overrides other colors
               strokeWidth = 2;
             } else if (tick.isFirstDayOfMonth) {
@@ -326,9 +328,11 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#3b82f6'; // Darker blue for Month 2 Unleavened Bread (days 15-21)
               strokeWidth = 2;
             } else if (tick.isFeastDay) {
-              strokeColor = '#93c5fd'; // Light blue for feast days (Month 1, Month 3 Shavuot, Month 6 New Oil, and general feast days)
+              // Feast days get blue (including day 4 of week if it's a feast day)
+              strokeColor = '#93c5fd'; // Light blue for feast days
               strokeWidth = 2;
             }
+            // Day 4 of week (weekday === 4) that is not a feast day will remain gray (default)
             
             return (
               <line
