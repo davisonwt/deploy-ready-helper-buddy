@@ -166,6 +166,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
       const isFirstDayOfMonth = firstDaysOfMonths.includes(dayNumber);
       const isShabbat = weekday === 7; // Yellow - Shabbat
       const isIntercalaryDay = dayNumber === 365 || dayNumber === 366; // Pink - Intercalary days
+      const isTequvah = dayNumber === 1; // Day 1 of year = Day 4 of week = Tequvah (equinox) - White
       
       // Month 1 specific feast days
       const isMonth1FeastDay = month === 1 && (
@@ -215,6 +216,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
         isCurrentDay,
         isFirstDayOfMonth,
         isShabbat,
+        isTequvah,
         isFeastDay,
         isMonth2UnleavenedBread,
         isMonth3Day31,
@@ -308,6 +310,9 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#ef4444'; // Red for current day
               strokeWidth = 3;
               filter = 'url(#glow)';
+            } else if (tick.isTequvah) {
+              strokeColor = '#ffffff'; // White for Tequvah (Day 1 of year = Day 4 of week = equinox)
+              strokeWidth = 2;
             } else if (tick.isIntercalaryDay) {
               strokeColor = '#ec4899'; // Pink for intercalary days (365, 366)
               strokeWidth = 2;
@@ -332,7 +337,7 @@ export const YHVHWheelCalendar: React.FC<WheelCalendarProps> = ({
               strokeColor = '#93c5fd'; // Light blue for feast days
               strokeWidth = 2;
             }
-            // Day 4 of week (weekday === 4) that is not a feast day will remain gray (default)
+            // Day 4 of week (weekday === 4) that is not a feast day or Tequvah will remain gray (default)
             
             return (
               <line
