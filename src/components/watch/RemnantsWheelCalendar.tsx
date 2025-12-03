@@ -156,17 +156,45 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     center: size / 2 - padding - 360,
   };
 
-  // Rotation calculations (all wheels rotate to show current position at top)
-  const rotations = {
-    wheel1: -((calendarData.dayOfYear - 1) / 364) * 360, // Man's Count
-    wheel2: -((calendarData.dayOfYear - 1) / 364) * 360, // Month Days
-    wheel3: -((calendarData.lunarDay - 1) / 354) * 360,  // Moon Days
-    wheel4: -((calendarData.week - 1) / 52) * 360,       // 52 Weeks
-    wheel5: -(calendarData.month - 1) * 30,              // 12 Monthly Leaders
-    wheel6: -(calendarData.season - 1) * 90,             // 4 Seasonal Leaders
-    wheel7: -(calendarData.part18 - 1) * 20,             // 18 Parts
-    wheel8: 0, // 4 Parts - no rotation, variable sizing handles position
-  };
+  // Rotation calculations - all wheels rotate to show current position at TOP (12 o'clock)
+  // Negative rotation brings the current segment to the top
+  const rotations = useMemo(() => {
+    // Calculate day within current season (1-91)
+    const seasonStartDay = (calendarData.season - 1) * 91 + 1;
+    const dayInSeason = calendarData.dayOfYear - seasonStartDay + 1;
+    
+    // Calculate day within current week (1-7)
+    const dayInWeek = calendarData.weekDay; // 1-7
+    
+    // Calculate day within current month
+    const dayInMonth = calendarData.dayOfMonth;
+    const daysInCurrentMonth = MONTH_DAYS[calendarData.month - 1];
+    
+    // For 18-part wheel, include time progression within the current part
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const partDuration = (24 * 60) / 18; // ~80 minutes per part
+    const progressInPart = (totalMinutes % partDuration) / partDuration;
+    const part18Precise = calendarData.part18 - 1 + progressInPart;
+    
+    // For 4-part wheel, calculate based on actual sun position
+    const { part4Angles } = calendarData;
+    // Find current position within the 4-part cycle based on time of day
+    const dayFraction = totalMinutes / (24 * 60);
+    const currentAngle = dayFraction * 360;
+    
+    return {
+      wheel1: -((calendarData.dayOfYear - 1) / 364) * 360, // Man's Count - by day
+      wheel2: -((calendarData.dayOfYear - 1) / 364) * 360, // Month Days - by day
+      wheel3: -((calendarData.lunarDay - 1) / 354) * 360,  // Moon Days - by lunar day
+      wheel4: -(((calendarData.week - 1) * 7 + (dayInWeek - 1)) / 364) * 360, // 52 Weeks - by day within year
+      wheel5: -(((calendarData.month - 1) + (dayInMonth - 1) / daysInCurrentMonth) / 12) * 360, // Monthly Leaders - precise within month
+      wheel6: -((calendarData.dayOfYear - 1) / 364) * 360, // 4 Seasonal Leaders - by day (91 days per leader)
+      wheel7: -(part18Precise / 18) * 360, // 18 Parts - precise with time
+      wheel8: -currentAngle, // 4 Parts - rotate based on time of day
+    };
+  }, [calendarData, currentTime]);
 
   // Handle hover - STATIONARY TOOLTIP (no position tracking)
   const handleHover = useCallback((type: string, data: any) => {
@@ -725,7 +753,11 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     const textRadius = (radii.wheel8Outer + radii.wheel8Inner) / 2;
 
     return (
-      <g>
+      <motion.g
+        animate={{ rotate: rotations.wheel8 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+        style={{ transformOrigin: `${cx}px ${cy}px` }}
+      >
         {parts.map((part, i) => {
           const startAngle = part.startAngle;
           const endAngle = startAngle + part.angle;
@@ -777,7 +809,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             </g>
           );
         })}
-      </g>
+      </motion.g>
     );
   };
 
