@@ -242,38 +242,31 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {onViewProfile && (
-              <DropdownMenuItem onClick={onViewProfile}>
-                <Info className="h-4 w-4 mr-2" />
-                View {roomType === 'direct' ? 'Profile' : 'Group Info'}
-              </DropdownMenuItem>
-            )}
-            {roomType === 'group' && onInvite && (
+          <DropdownMenuContent 
+            align="end" 
+            className="w-48 z-[9999] bg-popover border border-border shadow-lg"
+          >
+            <DropdownMenuItem onClick={onViewProfile}>
+              <Info className="h-4 w-4 mr-2" />
+              View {roomType === 'direct' ? 'Profile' : 'Group Info'}
+            </DropdownMenuItem>
+            {roomType === 'group' && (
               <DropdownMenuItem onClick={onInvite}>
                 <Users className="h-4 w-4 mr-2" />
                 Add Participants
               </DropdownMenuItem>
             )}
-            {onMute && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onMute}>
-                  Mute Notifications
-                </DropdownMenuItem>
-              </>
-            )}
-            {onDelete && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={onDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Delete Chat
-                </DropdownMenuItem>
-              </>
-            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onMute}>
+              Mute Notifications
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              Delete Chat
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

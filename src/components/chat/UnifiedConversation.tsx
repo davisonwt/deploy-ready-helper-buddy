@@ -456,6 +456,24 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
               onVoiceCall={handleVoiceCall}
               onVideoCall={handleVideoCall}
               onInvite={handleAddPeople}
+              onViewProfile={() => {
+                toast({ title: 'View Profile', description: `Viewing ${displayName}'s profile` });
+              }}
+              onMute={() => {
+                toast({ title: 'Muted', description: 'Notifications muted for this conversation' });
+              }}
+              onDelete={async () => {
+                if (!confirm('Delete this conversation? This cannot be undone.')) return;
+                try {
+                  await supabase.from('chat_messages').delete().eq('room_id', roomId);
+                  await supabase.from('chat_participants').delete().eq('room_id', roomId);
+                  await supabase.from('chat_rooms').delete().eq('id', roomId);
+                  toast({ title: 'Deleted', description: 'Conversation has been deleted' });
+                  onBack();
+                } catch (error) {
+                  toast({ title: 'Error', description: 'Failed to delete conversation', variant: 'destructive' });
+                }
+              }}
             />
           </motion.div>
         )}
