@@ -13,6 +13,7 @@ import { ArrowLeft, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface RelationshipLayerChatAppProps {
   onCompleteOnboarding?: () => void;
@@ -326,26 +327,29 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
     }
   };
 
+  // Embedded JaaS call state
+  const [showJitsiCall, setShowJitsiCall] = useState(false);
+  const [jitsiRoomName, setJitsiRoomName] = useState('');
+  const [jitsiCallType, setJitsiCallType] = useState<'audio' | 'video'>('audio');
+
   const handleStartCall = async (userId: string, callType: 'audio' | 'video') => {
     if (!user) return;
     
     try {
-      // Generate unique room name for Jitsi
+      // Generate unique room name for JaaS
       const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let roomName = '';
-      for (let i = 0; i < 12; i++) {
+      let roomName = `S2G_Call_`;
+      for (let i = 0; i < 10; i++) {
         roomName += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       
-      const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-      const jitsiUrl = `https://${jitsiDomain}/${roomName}${callType === 'audio' ? '?config.startAudioOnly=true' : ''}`;
-      
-      // Open Jitsi in new window
-      window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+      setJitsiRoomName(roomName);
+      setJitsiCallType(callType);
+      setShowJitsiCall(true);
       
       toast({
-        title: `${callType === 'audio' ? 'Voice' : 'Video'} call started`,
-        description: 'Call window opened in new tab',
+        title: `${callType === 'audio' ? 'Voice' : 'Video'} call starting`,
+        description: 'Connecting to call...',
       });
     } catch (error) {
       console.error('Error starting call:', error);
@@ -355,6 +359,11 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
         variant: 'destructive',
       });
     }
+  };
+
+  const handleEndJitsiCall = () => {
+    setShowJitsiCall(false);
+    setJitsiRoomName('');
   };
 
   const handleNavigateToTraining = (userId: string) => {
@@ -374,6 +383,17 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
       description: 'Opening radio station',
     });
   };
+
+  // Show embedded JaaS call if active
+  if (showJitsiCall && jitsiRoomName) {
+    return (
+      <JitsiRoom
+        roomName={jitsiRoomName}
+        displayName={user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User'}
+        onLeave={handleEndJitsiCall}
+      />
+    );
+  }
 
   // Show glassmorphism dashboard
   if (showDashboard && !showOnboarding) {

@@ -25,6 +25,7 @@ import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface ChatRoomProps {
   roomId: string;
@@ -616,17 +617,28 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
     }
   };
 
-  // REMOVED: React call flow - using direct Jitsi links instead
-  const handleCallClick = () => {
-    // Generate room name and open Jitsi
+  // Handle call click - uses embedded JaaS call
+  const [showJitsiCall, setShowJitsiCall] = useState(false);
+  const [jitsiRoomName, setJitsiRoomName] = useState('');
+
+  const handleCallClick = (callType: 'audio' | 'video' = 'audio') => {
+    // Generate unique room name for JaaS
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let roomName = '';
-    for (let i = 0; i < 12; i++) {
+    let roomName = `S2G_${roomId.replace(/-/g, '').slice(0, 8)}_`;
+    for (let i = 0; i < 8; i++) {
       roomName += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || '197.245.26.199';
-    const jitsiUrl = `https://${jitsiDomain}/${roomName}`;
-    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+    setJitsiRoomName(roomName);
+    setShowJitsiCall(true);
+    toast({
+      title: 'Starting call',
+      description: 'Connecting to call...',
+    });
+  };
+
+  const handleEndJitsiCall = () => {
+    setShowJitsiCall(false);
+    setJitsiRoomName('');
   };
 
 
@@ -635,6 +647,17 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // Show embedded JaaS call if active
+  if (showJitsiCall && jitsiRoomName) {
+    return (
+      <JitsiRoom
+        roomName={jitsiRoomName}
+        displayName={user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'User'}
+        onLeave={handleEndJitsiCall}
+      />
     );
   }
 
