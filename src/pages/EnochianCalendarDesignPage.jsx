@@ -281,11 +281,11 @@ export default function EnochianCalendarDesignPage() {
                     </div>
                   </div>
 
-                  {/* Month Range */}
+                  {/* Month Range - reversed to match bead placement */}
                   <div className="text-center">
                     <p className="text-white/40 text-sm">Months</p>
                     <p className="text-2xl md:text-3xl font-black text-white">
-                      {season.months[0]} - {season.months[2]}
+                      {season.months[2]} - {season.months[0]}
                     </p>
                   </div>
 
@@ -330,14 +330,18 @@ export default function EnochianCalendarDesignPage() {
                           />
                         )}
                         
-                        {/* Month Bead Strand - Compact */}
-                        <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                          <div className="transform scale-[0.65] origin-top">
-                            <MonthComponent 
-                              dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0} 
-                              year={enochianDate.year}
-                            />
+                        {/* Month Bead Strand - Compact uniform height */}
+                        <div className="h-[200px] overflow-hidden rounded-xl bg-gradient-to-b from-black/40 to-black/60 relative">
+                          <div className="w-full h-full flex justify-center overflow-hidden">
+                            <div className="transform scale-[0.32] origin-top -mt-4">
+                              <MonthComponent 
+                                dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0} 
+                                year={enochianDate.year}
+                              />
+                            </div>
                           </div>
+                          {/* Fade out at bottom */}
+                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black to-transparent pointer-events-none" />
                         </div>
                       </motion.div>
                     );
