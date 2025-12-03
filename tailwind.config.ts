@@ -152,11 +152,17 @@ export default {
 					900: 'hsl(var(--charcoal-900))',
 				},
 			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
+		width: {
+			'13': '3.25rem',
+		},
+		height: {
+			'13': '3.25rem',
+		},
+		borderRadius: {
+			lg: 'var(--radius)',
+			md: 'calc(var(--radius) - 2px)',
+			sm: 'calc(var(--radius) - 4px)'
+		},
 			keyframes: {
 				'accordion-down': {
 					from: {
