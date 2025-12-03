@@ -3,22 +3,22 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings } from 'lucide-react';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
+import { JAAS_CONFIG } from '@/lib/jitsi-config';
 
 interface JitsiRoomProps {
   roomName: string;
   displayName?: string;
-  domain?: string;
   onLeave?: () => void;
   isModerator?: boolean;
+  jwt?: string;
 }
 
 export default function JitsiRoom({
   roomName,
   displayName = 'Guest',
-  domain = JITSI_CONFIG.domain,
   onLeave,
   isModerator = false,
+  jwt,
 }: JitsiRoomProps) {
   const jitsiContainer = useRef<HTMLDivElement>(null);
   const jitsiApi = useRef<any>(null);
@@ -29,8 +29,11 @@ export default function JitsiRoom({
   const [isHandRaised, setIsHandRaised] = useState(false);
   const { toast } = useToast();
 
+  // Generate JaaS room name
+  const jaasRoomName = JAAS_CONFIG.getRoomName(roomName);
+
   useEffect(() => {
-    // Load Jitsi Meet API script
+    // Load JaaS API script
     const loadJitsiScript = () => {
       if (window.JitsiMeetExternalAPI) {
         initializeJitsi();
@@ -38,13 +41,13 @@ export default function JitsiRoom({
       }
 
       const script = document.createElement('script');
-      script.src = `https://${domain}/external_api.js`;
+      script.src = JAAS_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
         toast({
           title: 'Error',
-          description: 'Failed to load Jitsi Meet. Please check your internet connection.',
+          description: 'Failed to load JaaS. Please check your internet connection.',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -56,37 +59,27 @@ export default function JitsiRoom({
       if (!jitsiContainer.current) return;
 
       try {
-        const options = {
-          roomName,
+        const options: any = {
+          roomName: jaasRoomName,
           width: '100%',
           height: '100%',
           parentNode: jitsiContainer.current,
           userInfo: {
             displayName,
-            email: '',
           },
           configOverwrite: {
             startWithAudioMuted: false,
             startWithVideoMuted: false,
-            enableWelcomePage: false,
             prejoinPageEnabled: false,
             disableDeepLinking: true,
             enableClosePage: false,
             defaultLanguage: 'en',
-            hideConferenceSubject: false,
-            subject: roomName,
-            enableLayerSuspension: true,
             resolution: 720,
             constraints: {
               video: {
-                height: {
-                  ideal: 720,
-                  max: 1080,
-                  min: 240,
-                },
+                height: { ideal: 720, max: 1080, min: 240 },
               },
             },
-            // Mobile optimization
             disableAudioLevels: false,
             enableNoAudioDetection: true,
             enableNoisyMicDetection: true,
@@ -98,42 +91,28 @@ export default function JitsiRoom({
             TOOLBAR_BUTTONS: [
               'microphone',
               'camera',
-              'closedcaptions',
               'desktop',
               'fullscreen',
-              'fodeviceselection',
               'hangup',
-              'profile',
               'chat',
-              'recording',
-              'livestreaming',
-              'etherpad',
-              'sharedvideo',
               'settings',
               'raisehand',
               'videoquality',
               'filmstrip',
-              'invite',
-              'feedback',
-              'stats',
-              'shortcuts',
               'tileview',
-              'videobackgroundblur',
-              'download',
-              'help',
-              'mute-everyone',
-              'security',
             ],
-            SETTINGS_SECTIONS: ['devices', 'language', 'moderator', 'profile', 'calendar'],
+            SETTINGS_SECTIONS: ['devices', 'language', 'profile'],
             MOBILE_APP_PROMO: false,
-            DISPLAY_WELCOME_PAGE_CONTENT: false,
-            HIDE_INVITE_MORE_HEADER: false,
             DEFAULT_REMOTE_DISPLAY_NAME: 'Participant',
-            VERTICAL_FILMSTRIP: false,
           },
         };
 
-        jitsiApi.current = new window.JitsiMeetExternalAPI(domain, options);
+        // Add JWT if provided for premium features
+        if (jwt || JAAS_CONFIG.jwt) {
+          options.jwt = jwt || JAAS_CONFIG.jwt;
+        }
+
+        jitsiApi.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
 
         // Event listeners
         jitsiApi.current.addListener('videoConferenceJoined', () => {
@@ -196,7 +175,7 @@ export default function JitsiRoom({
         jitsiApi.current = null;
       }
     };
-  }, [roomName, displayName, domain, toast]);
+  }, [jaasRoomName, displayName, toast]);
 
   const handleLeave = () => {
     if (jitsiApi.current) {

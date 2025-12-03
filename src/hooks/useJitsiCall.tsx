@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
+import { JAAS_CONFIG } from '@/lib/jitsi-config';
 
 interface JitsiCallOptions {
   callSession: {
@@ -37,10 +37,10 @@ export function useJitsiCall({
 
   const durationIntervalRef = useRef<number | null>(null);
 
-  // Generate unique room name for this call
-  const roomName = JITSI_CONFIG.generateRoomName('call', callSession.id);
+  // Generate unique room name for this call using JaaS format
+  const roomName = JAAS_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
 
-  // Load Jitsi script and initialize
+  // Load JaaS script and initialize
   useEffect(() => {
     const loadJitsiScript = () => {
       if (window.JitsiMeetExternalAPI) {
@@ -49,7 +49,7 @@ export function useJitsiCall({
       }
 
       const script = document.createElement('script');
-      script.src = `https://${JITSI_CONFIG.domain}/external_api.js`;
+      script.src = JAAS_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
@@ -67,15 +67,35 @@ export function useJitsiCall({
       if (!jitsiContainerRef.current) return;
 
       try {
-        const options: any = JITSI_CONFIG.createJitsiOptions(
+        const configOverwrite = callType === 'audio' 
+          ? { startWithVideoMuted: true, startWithAudioMuted: false }
+          : { startWithVideoMuted: false, startWithAudioMuted: false };
+
+        const options: any = {
           roomName,
-          displayName,
-          callType
-        );
+          parentNode: jitsiContainerRef.current,
+          width: '100%',
+          height: '100%',
+          userInfo: { displayName },
+          configOverwrite: {
+            ...configOverwrite,
+            prejoinPageEnabled: false,
+            disableDeepLinking: true,
+            enableClosePage: false,
+          },
+          interfaceConfigOverwrite: {
+            SHOW_JITSI_WATERMARK: false,
+            TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup', 'settings', 'desktop', 'fullscreen'],
+            MOBILE_APP_PROMO: false,
+          },
+        };
 
-        options.parentNode = jitsiContainerRef.current;
+        // Add JWT if available for premium features
+        if (JAAS_CONFIG.jwt) {
+          options.jwt = JAAS_CONFIG.jwt;
+        }
 
-        jitsiApiRef.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
+        jitsiApiRef.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
 
         // Event listeners
         jitsiApiRef.current.addListener('videoConferenceJoined', () => {
