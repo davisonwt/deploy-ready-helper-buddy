@@ -3,6 +3,9 @@
  * WhatsApp-style unified communication experience
  */
 
+// Main ChatApp (WhatsApp-style unified hub)
+export { ChatApp } from './ChatApp';
+
 // Core conversation components
 export { UnifiedConversation } from './UnifiedConversation';
 export { ConversationHeader } from './ConversationHeader';
