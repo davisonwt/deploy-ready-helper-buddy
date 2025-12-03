@@ -259,9 +259,10 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
             </DropdownMenuTrigger>
             
             <DropdownMenuContent 
-              className="w-56 bg-background/95 backdrop-blur-xl border-primary/30 z-[100]"
+              className="w-56 bg-background/95 backdrop-blur-xl border-primary/30 z-[9999]"
               align="center"
               sideOffset={8}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="px-3 py-2 border-b border-primary/20">
                 <p className="font-semibold text-sm text-foreground">{member.full_name || member.display_name}</p>
@@ -325,7 +326,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
                     <UserPlus className="h-4 w-4 mr-2 text-indigo-500" />
                     Add to Another Circle
                   </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="bg-background/95 backdrop-blur-xl border-primary/30">
+                  <DropdownMenuSubContent className="bg-background/95 backdrop-blur-xl border-primary/30 z-[10000]">
                     {circles
                       .filter(c => c.id !== circleId)
                       .map(circle => (

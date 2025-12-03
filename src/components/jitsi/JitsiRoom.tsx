@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus } from 'lucide-react';
 import { JAAS_CONFIG } from '@/lib/jitsi-config';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 declare global {
   interface Window {
@@ -26,6 +31,7 @@ export default function JitsiRoom({
   isModerator = false,
   jwt,
 }: JitsiRoomProps) {
+  const { user } = useAuth();
   const jitsiContainer = useRef<HTMLDivElement>(null);
   const jitsiApi = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,10 +39,51 @@ export default function JitsiRoom({
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [participantCount, setParticipantCount] = useState(1);
   const [isHandRaised, setIsHandRaised] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const { toast } = useToast();
 
   // Generate JaaS room name
   const jaasRoomName = JAAS_CONFIG.getRoomName(roomName);
+
+  // Load available users for invite
+  const loadAvailableUsers = async () => {
+    if (!user) return;
+    setLoadingUsers(true);
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, avatar_url, first_name, last_name')
+        .neq('user_id', user.id)
+        .limit(50);
+      if (error) throw error;
+      setAvailableUsers(profiles || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleInviteUser = async (invitedUser: any) => {
+    // Copy room link to clipboard and show toast with invite info
+    const roomLink = `${window.location.origin}/communications-hub?joinCall=${roomName}`;
+    try {
+      await navigator.clipboard.writeText(roomLink);
+      toast({
+        title: 'Invite sent!',
+        description: `Room link copied. Share it with ${invitedUser.display_name || invitedUser.first_name || 'the user'} to join the call.`,
+      });
+    } catch {
+      toast({
+        title: 'Invite ready',
+        description: `Ask ${invitedUser.display_name || invitedUser.first_name || 'the user'} to join room: ${roomName}`,
+      });
+    }
+    setShowInviteDialog(false);
+  };
+
 
   useEffect(() => {
     // Load JaaS API script
@@ -238,6 +285,20 @@ export default function JitsiRoom({
               <span className="text-sm font-medium">{participantCount}</span>
             </div>
 
+            {/* Invite Users */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                loadAvailableUsers();
+                setShowInviteDialog(true);
+              }}
+              className="rounded-full h-12 w-12"
+              title="Invite users to call"
+            >
+              <UserPlus className="h-5 w-5" />
+            </Button>
+
             {/* Audio Toggle */}
             <Button
               variant={isAudioMuted ? 'destructive' : 'secondary'}
@@ -285,6 +346,52 @@ export default function JitsiRoom({
           </div>
         </Card>
       </div>
+
+      {/* Invite Users Dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite Users to Call</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-80">
+            {loadingUsers ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : availableUsers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No users available to invite</p>
+            ) : (
+              <div className="space-y-2">
+                {availableUsers.map((invitedUser) => (
+                  <div
+                    key={invitedUser.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                    onClick={() => handleInviteUser(invitedUser)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={invitedUser.avatar_url} />
+                        <AvatarFallback>
+                          {(invitedUser.display_name || invitedUser.first_name || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">
+                          {invitedUser.display_name || `${invitedUser.first_name || ''} ${invitedUser.last_name || ''}`.trim() || 'User'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Invite
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
