@@ -363,15 +363,6 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      <div className="mt-12 text-amber-200 text-center">
-
-        <p>Blue = First 4 days of new cycle</p>
-
-        <p>Day 4 = Tekufah • The straight shadow falls</p>
-
-        <p>Yellow = Sabbath • Day 7,14,21,28</p>
-
-      </div>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -722,27 +713,6 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      {/* Legend */}
-
-      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm text-center">
-
-        <div>Yellow = Sabbath (6, 13, 20, 27)</div>
-
-        <div>Turquoise = 14th • Pesach Sheni</div>
-
-        <div>Amber = 18th • Lag BaOmer</div>
-
-        <div>Black = Regular days</div>
-
-      </div>
-
-
-
-      <p className="mt-8 text-amber-300 italic text-sm">
-
-        The second cord — month of healing, second chances, and hidden fire.
-
-      </p>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -1108,37 +1078,6 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      {/* Sacred Legend */}
-
-      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm font-medium text-center">
-
-        <div>Yellow = Sabbath (5,12,19,26)</div>
-
-        <div>Pink Fire = 6th • Shavuot • Torah Given</div>
-
-        <div>Purple = 5th • Day of Preparation</div>
-
-        <div>Soft Pink = 7th • Afterglow of Revelation</div>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0 }}
-
-        animate={{ opacity: 1 }}
-
-        transition={{ delay: 2 }}
-
-        className="mt-6 text-xs md:text-sm text-amber-300 italic font-light tracking-wider"
-
-      >
-
-        "And the mountain burned with fire unto the heart of heaven…"
-
-      </motion.p>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -1542,37 +1481,6 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      {/* Legend */}
-
-      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-amber-100 text-xs md:text-sm font-medium text-center">
-
-        <div>Yellow = Shabbat (3,10,17,24)</div>
-
-        <div>Blood Red = 17th • Fast of Tammuz</div>
-
-        <div>False Gold = 16th • Golden Calf sin</div>
-
-        <div>Ash Grey = Three Weeks of mourning begin</div>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0 }}
-
-        animate={{ opacity: 1 }}
-
-        transition={{ delay: 2 }}
-
-        className="mt-12 text-3xl text-red-400 italic font-light tracking-wider"
-
-      >
-
-        "And Moses saw the calf… and he broke the tablets…"
-
-      </motion.p>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -1951,37 +1859,6 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      {/* Legend */}
-
-      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-gray-300 text-xs md:text-sm font-medium text-center">
-
-        <div>Yellow = Shabbat (1,8,15,22,29)</div>
-
-        <div>Blackest Red = 9th • Both Temples Destroyed</div>
-
-        <div>Dark Slate = First 8 days • Nine Days of mourning</div>
-
-        <div>Ash Grey = After 9th • Mourning lingers</div>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0, y: 30 }}
-
-        animate={{ opacity: 1, y: 0 }}
-
-        transition={{ delay: 3 }}
-
-        className="mt-8 text-xs md:text-sm text-red-500 italic font-light tracking-widest text-center max-w-2xl"
-
-      >
-
-        "By the rivers of Babylon, there we sat and wept…"
-
-      </motion.p>
 
     </div>
 
@@ -2354,53 +2231,6 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      {/* Legend */}
-
-      <div className="mt-6 md:mt-8 grid grid-cols-2 gap-4 md:gap-6 text-cyan-200 text-xs md:text-sm font-medium text-center">
-
-        <div>Yellow = Shabbat (6,13,20,27)</div>
-
-        <div>Royal Pink = 29th • The King Returns</div>
-
-        <div>Turquoise = Days 19–30 • Twelve Tribes Return</div>
-
-        <div>Blue glow = Daily Shofar (weekdays)</div>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0, y: 40 }}
-
-        animate={{ opacity: 1, y: 0 }}
-
-        transition={{ delay: 3 }}
-
-        className="mt-8 text-xs md:text-sm text-pink-400 italic font-light tracking-widest text-center"
-
-      >
-
-        "I am my Beloved's, and my Beloved is mine."
-
-      </motion.p>
-
-
-
-      <motion.div 
-
-        animate={{ opacity: [0.4, 1, 0.4] }}
-
-        transition={{ duration: 4, repeat: Infinity }}
-
-        className="mt-4 text-xs md:text-sm text-cyan-300"
-
-      >
-
-        The shofar calls… the King is in the field.
-
-      </motion.div>
 
     </div>
 
@@ -2740,25 +2570,6 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      <div className="mt-12 text-center space-y-2 text-xs md:text-sm text-amber-200">
-
-        <p>1–2 Red • Rosh Hashana – The King is crowned</p>
-
-        <p>10 White • Yom Kippur – Sealed in the Book of Life</p>
-
-        <p>15–21 Emerald • Sukkot – Joy of the clouds of glory</p>
-
-        <p>22–23 Violet • Shemini Atzeret & Simchat Torah</p>
-
-      </div>
-
-
-
-      <motion.p className="mt-8 text-xs md:text-sm font-light text-amber-400 italic">
-
-        "In the seventh month… you shall afflict your souls… and rejoice with the Torah."
-
-      </motion.p>
 
     </div>
 
@@ -3087,33 +2898,6 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-      <div className="mt-28 text-center space-y-6 text-xl text-gray-400">
-
-        <p>Yellow = Sabbath (2,9,16,23,30)</p>
-
-        <p>Cyan = 7th • Prayers for rain begin in the Land</p>
-
-        <p>Hidden Fire = 23rd • Future laying of Third Temple cornerstone</p>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0 }}
-
-        animate={{ opacity: [0.4, 1, 0.4] }}
-
-        transition={{ duration: 8, repeat: Infinity }}
-
-        className="mt-8 text-xs md:text-sm text-orange-500 italic font-light tracking-widest"
-
-      >
-
-        "Mar-Cheshvan" … yet the seeds of redemption are planted here.
-
-      </motion.p>
 
     </div>
 
@@ -3619,32 +3403,6 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
-      <div className="mt-32 text-center space-y-6 text-xl text-gray-400">
-
-        <p>Yellow = Sabbath (7,14,21,28)</p>
-
-
-        <p>Iron Grey = 10 Tevet • Siege of Jerusalem began</p>
-
-      </div>
-
-
-
-      <motion.p 
-
-        initial={{ opacity: 0 }}
-
-        animate={{ opacity: 1 }}
-
-        transition={{ delay: 2 }}
-
-        className="mt-8 text-xs md:text-sm text-gray-300 italic font-light tracking-widest"
-
-      >
-
-        Even as the walls closed in, the light refused to die.
-
-      </motion.p>
 
     </div>
 
@@ -3930,23 +3688,6 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               })}
       </div>
 
-      <motion.div className="mt-36 text-center space-y-8">
-
-        <p className="text-5xl text-pink-300 font-light">15 Shevat • Tu B'Shevat</p>
-
-        <p className="text-7xl font-bold bg-gradient-to-r from-pink-400 to-white bg-clip-text text-transparent">
-
-          The almond tree awakens
-
-        </p>
-
-        <p className="text-3xl italic text-pink-200 mt-12 max-w-2xl">
-
-          "For behold, the winter is past… the blossoms appear on the earth."
-
-        </p>
-
-      </motion.div>
 
     </div>
 
@@ -4234,29 +3975,6 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
-      <motion.div className="mt-40 text-center space-y-10">
-
-        <p className="text-6xl text-pink-400 font-light">14 Adar • PURIM</p>
-
-        <p className="text-8xl font-black bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-
-          Joy Increased
-
-        </p>
-
-        <p className="text-4xl italic text-pink-200 mt-16 max-w-3xl">
-
-          "When Adar enters, we increase in joy."
-
-        </p>
-
-        <p className="text-5xl text-amber-300 mt-12">
-
-          The final strand completes the circle.
-
-        </p>
-
-      </motion.div>
 
     </div>
 
