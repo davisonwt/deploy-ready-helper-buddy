@@ -72,7 +72,6 @@ const describeWedge = (cx: number, cy: number, innerR: number, outerR: number, s
 export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hoveredElement, setHoveredElement] = useState<{ type: string; data: any } | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // Update time every second
   useEffect(() => {
@@ -169,10 +168,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     wheel8: 0, // 4 Parts - no rotation, variable sizing handles position
   };
 
-  // Handle hover
-  const handleHover = useCallback((type: string, data: any, event: React.MouseEvent) => {
+  // Handle hover - STATIONARY TOOLTIP (no position tracking)
+  const handleHover = useCallback((type: string, data: any) => {
     setHoveredElement({ type, data });
-    setTooltipPosition({ x: event.clientX, y: event.clientY });
   }, []);
 
   const handleHoverEnd = useCallback(() => {
@@ -237,7 +235,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           return (
             <g
               key={`mans-${dayOfYear}`}
-              onMouseEnter={(e) => handleHover('mansCount', { dayOfYear, mansCount, dayType }, e)}
+              onMouseEnter={() => handleHover('mansCount', { dayOfYear, mansCount, dayType })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
@@ -310,7 +308,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           return (
             <g
               key={`monthday-${dayOfYear}`}
-              onMouseEnter={(e) => handleHover('day', { dayOfYear, month, dayOfMonth, dayType }, e)}
+              onMouseEnter={() => handleHover('day', { dayOfYear, month, dayOfMonth, dayType })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
@@ -371,8 +369,11 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           // Show more numbers for better visibility
           const showNumber = day === 1 || day % 15 === 0 || day === 354 || isCurrent;
 
+          // Add hover for moon days too
+          const handleMoonHover = () => handleHover('moon', { day, isCurrent, isDay354 });
+
           return (
-            <g key={`lunar-${day}`}>
+            <g key={`lunar-${day}`} onMouseEnter={handleMoonHover} onMouseLeave={handleHoverEnd} style={{ cursor: 'pointer' }}>
               <path
                 d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
                 fill={isDay354 ? COLORS.MOON_354 : isCurrent ? COLORS.CURRENT_HIGHLIGHT : 'hsl(260, 30%, 20%)'}
@@ -380,6 +381,15 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 stroke="hsl(260, 20%, 30%)"
                 strokeWidth="0.2"
               />
+              {isCurrent && (
+                <path
+                  d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  filter="url(#glow)"
+                />
+              )}
               {showNumber && (
                 <text
                   x={textPos.x}
@@ -426,6 +436,15 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 stroke="hsl(220, 20%, 30%)"
                 strokeWidth="0.3"
               />
+              {isCurrent && (
+                <path
+                  d={describeWedge(cx, cy, radii.wheel4Inner, radii.wheel4Outer, weekStartAngle, weekEndAngle)}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  filter="url(#glow)"
+                />
+              )}
               {/* Week number */}
               <text
                 x={textPos.x}
@@ -488,7 +507,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           return (
             <g
               key={`month-${leader.month}`}
-              onMouseEnter={(e) => handleHover('month', leader, e)}
+              onMouseEnter={() => handleHover('month', leader)}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
@@ -554,7 +573,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           return (
             <g
               key={leader.name}
-              onMouseEnter={(e) => handleHover('season', leader, e)}
+              onMouseEnter={() => handleHover('season', leader)}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
@@ -636,6 +655,15 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 stroke="hsl(200, 20%, 40%)"
                 strokeWidth="0.5"
               />
+              {isCurrent && (
+                <path
+                  d={describeWedge(cx, cy, radii.wheel7Inner, radii.wheel7Outer, startAngle, endAngle)}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  filter="url(#glow)"
+                />
+              )}
               <text
                 x={textPos.x}
                 y={textPos.y}
@@ -869,17 +897,17 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             />
           </svg>
 
-          {/* Hover Tooltip */}
+          {/* Stationary Hover Tooltip - positioned at bottom-left of wheel */}
           <AnimatePresence>
             {hoveredElement && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl max-w-xs"
+                className="absolute z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl max-w-xs"
                 style={{
-                  left: Math.min(tooltipPosition.x + 10, window.innerWidth - 250),
-                  top: tooltipPosition.y + 10,
+                  left: 20,
+                  bottom: 20,
                 }}
               >
                 {hoveredElement.type === 'season' && (
@@ -913,6 +941,13 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                     <p className="text-xs capitalize" style={{ color: getDayColor(hoveredElement.data.dayType) }}>
                       {hoveredElement.data.dayType}
                     </p>
+                  </div>
+                )}
+                {hoveredElement.type === 'moon' && (
+                  <div>
+                    <h4 className="font-bold text-primary">Moon Day: {hoveredElement.data.day}</h4>
+                    {hoveredElement.data.isDay354 && <p className="text-sm text-pink-400">Special Day 354</p>}
+                    {hoveredElement.data.isCurrent && <p className="text-sm text-amber-400">Current Day</p>}
                   </div>
                 )}
               </motion.div>
