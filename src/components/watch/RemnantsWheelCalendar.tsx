@@ -1,5 +1,5 @@
 'use client';
-
+// Wheels in Itself - Stationary tooltips, day starts at sunrise
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
