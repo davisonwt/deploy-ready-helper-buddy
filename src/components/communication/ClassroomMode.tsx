@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { CreateClassroomDialog } from './CreateClassroomDialog';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface ClassroomSession {
   id: string;
@@ -29,11 +30,12 @@ interface ClassroomSession {
 }
 
 export const ClassroomMode: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [sessions, setSessions] = useState<ClassroomSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [activeSession, setActiveSession] = useState<ClassroomSession | null>(null);
 
   useEffect(() => {
     loadSessions();
@@ -62,12 +64,53 @@ export const ClassroomMode: React.FC = () => {
     }
   };
 
-  const joinSession = async (sessionId: string) => {
+  const joinSession = (session: ClassroomSession) => {
+    setActiveSession(session);
     toast({
       title: 'Joining Classroom',
-      description: 'Opening interactive classroom session...',
+      description: `Connecting to ${session.title}...`,
     });
   };
+
+  const leaveSession = () => {
+    setActiveSession(null);
+    toast({
+      title: 'Left Classroom',
+      description: 'You have left the classroom session.',
+    });
+  };
+
+  // Show JitsiRoom when in active session
+  if (activeSession) {
+    const isInstructor = user?.id === activeSession.instructor_id;
+    const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Student';
+    const roomName = `classroom_${activeSession.id.replace(/-/g, '')}`;
+
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 glass-card mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">{activeSession.title}</h2>
+            <p className="text-white/70 text-sm">
+              {isInstructor ? 'You are the instructor' : `Instructor: ${activeSession.profiles?.display_name || 'Unknown'}`}
+            </p>
+          </div>
+          <Badge variant={isInstructor ? 'default' : 'outline'} className="text-white">
+            {isInstructor ? 'Instructor' : 'Student'}
+          </Badge>
+        </div>
+        
+        <div className="flex-1 min-h-[600px]">
+          <JitsiRoom
+            roomName={roomName}
+            displayName={displayName}
+            onLeave={leaveSession}
+            isModerator={isInstructor}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -171,7 +214,7 @@ export const ClassroomMode: React.FC = () => {
                       </div>
 
                       <Button 
-                        onClick={() => joinSession(session.id)}
+                        onClick={() => joinSession(session)}
                         className="gap-2"
                       >
                         <Video className="w-4 h-4" />

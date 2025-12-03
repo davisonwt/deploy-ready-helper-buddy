@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus } from 'lucide-react';
+import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus, Headphones } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ScheduleRadioSlotDialog } from './ScheduleRadioSlotDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface Track {
   id: string;
@@ -36,7 +37,7 @@ interface Stream {
 
 export const RadioMode: React.FC = () => {
   const { toast: toastNotification } = useToast();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [streams, setStreams] = useState<Stream[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +46,7 @@ export const RadioMode: React.FC = () => {
   const [volume, setVolume] = useState([75]);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [activeStream, setActiveStream] = useState<Stream | null>(null);
 
   useEffect(() => {
     loadContent();
@@ -83,6 +85,22 @@ export const RadioMode: React.FC = () => {
     toastNotification({
       title: 'Now Playing',
       description: `${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
+    });
+  };
+
+  const joinStream = (stream: Stream) => {
+    setActiveStream(stream);
+    toastNotification({
+      title: 'Joining Live Stream',
+      description: `Connecting to ${stream.title}...`,
+    });
+  };
+
+  const leaveStream = () => {
+    setActiveStream(null);
+    toastNotification({
+      title: 'Left Stream',
+      description: 'You have left the live broadcast.',
     });
   };
 
@@ -159,6 +177,44 @@ export const RadioMode: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Show JitsiRoom when in active stream
+  if (activeStream) {
+    const isDJ = user?.id === activeStream.user_id;
+    const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Listener';
+    const roomName = `radio_${activeStream.id.replace(/-/g, '')}`;
+
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 glass-card mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">{activeStream.title}</h2>
+            <p className="text-white/70 text-sm">
+              {isDJ ? 'You are the DJ' : 'Live Radio Broadcast'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="destructive" className="animate-pulse">LIVE</Badge>
+            {activeStream.viewer_count !== null && (
+              <Badge variant="outline" className="text-white">
+                <Users className="w-3 h-3 mr-1" />
+                {activeStream.viewer_count}
+              </Badge>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex-1 min-h-[600px]">
+          <JitsiRoom
+            roomName={roomName}
+            displayName={displayName}
+            onLeave={leaveStream}
+            isModerator={isDJ}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -263,7 +319,10 @@ export const RadioMode: React.FC = () => {
                       </div>
                     </div>
 
-                    <Button>Listen</Button>
+                    <Button onClick={() => joinStream(stream)} className="gap-2">
+                      <Headphones className="w-4 h-4" />
+                      Listen Live
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

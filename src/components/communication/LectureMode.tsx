@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { ScheduleLectureDialog } from './ScheduleLectureDialog';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface LectureHall {
   id: string;
@@ -27,10 +29,12 @@ interface LectureHall {
 }
 
 export const LectureMode: React.FC = () => {
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [lectures, setLectures] = useState<LectureHall[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [activeLecture, setActiveLecture] = useState<LectureHall | null>(null);
 
   useEffect(() => {
     loadLectures();
@@ -59,12 +63,53 @@ export const LectureMode: React.FC = () => {
     }
   };
 
-  const attendLecture = async (lectureId: string) => {
+  const attendLecture = (lecture: LectureHall) => {
+    setActiveLecture(lecture);
     toast({
       title: 'Joining Lecture',
-      description: 'Opening lecture hall...',
+      description: `Connecting to ${lecture.title}...`,
     });
   };
+
+  const leaveLecture = () => {
+    setActiveLecture(null);
+    toast({
+      title: 'Left Lecture',
+      description: 'You have left the lecture hall.',
+    });
+  };
+
+  // Show JitsiRoom when in active lecture
+  if (activeLecture) {
+    const isPresenter = user?.id === activeLecture.presenter_id;
+    const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Attendee';
+    const roomName = `lecture_${activeLecture.id.replace(/-/g, '')}`;
+
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between p-4 glass-card mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">{activeLecture.title}</h2>
+            <p className="text-white/70 text-sm">
+              {isPresenter ? 'You are the presenter' : `Presenter: ${activeLecture.profiles?.display_name || 'Unknown'}`}
+            </p>
+          </div>
+          <Badge variant={isPresenter ? 'default' : 'outline'} className="text-white">
+            {isPresenter ? 'Presenter' : 'Attendee'}
+          </Badge>
+        </div>
+        
+        <div className="flex-1 min-h-[600px]">
+          <JitsiRoom
+            roomName={roomName}
+            displayName={displayName}
+            onLeave={leaveLecture}
+            isModerator={isPresenter}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -163,7 +208,7 @@ export const LectureMode: React.FC = () => {
 
                       <div className="flex gap-2">
                         <Button 
-                          onClick={() => attendLecture(lecture.id)}
+                          onClick={() => attendLecture(lecture)}
                           className="gap-2"
                         >
                           <Presentation className="w-4 h-4" />
