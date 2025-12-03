@@ -34,7 +34,7 @@ export default function EnochianCalendarDesignPage() {
       <div className="container mx-auto pt-6 pb-4">
         <div className="flex items-center justify-center gap-4 mb-4">
           <h1 className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent">
-            YHVH's Wheel Within Wheels Calendar
+            Ed's Beads
           </h1>
           <Button
             onClick={handleResetPositions}

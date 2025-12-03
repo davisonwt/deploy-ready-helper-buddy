@@ -6,20 +6,11 @@ import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 
 const LEADERS = [
-  { name: "MALKIEL", meaning: "My King is El", face: "Lion", color: "#f59e0b" },
-  { name: "CHALAM-MELEK", meaning: "Strength of King", face: "Man", color: "#10b981" },
-  { name: "MELEKIEL", meaning: "King of El", face: "Ox", color: "#ef4444" },
-  { name: "NARIEL", meaning: "Light of El", face: "Eagle", color: "#3b82f6" },
+  { name: "malkiel", meaning: "lion", face: "1", season: "hilu'yaseph", color: "#f59e0b" },
+  { name: "nar'el", meaning: "eagle", face: "4", season: "", color: "#3b82f6" },
+  { name: "meleyal", meaning: "ox", face: "3", season: "asfa'el", color: "#ef4444" },
+  { name: "hemel melek", meaning: "man", face: "2", season: "", color: "#10b981" },
 ];
-
-const MONTH_ANGELS = [
-  "ADNARIEL","YAHSHUAEL","ELOMIEL",
-  "BARKAEL","ZELEBSAEL","HILU-YAHSEPH",
-  "ADNARIEL","YAHSHUAEL","ELOMIEL",
-  "BARKAEL","GIDAIEL","KIEL"
-];
-
-const MONTH_LENGTHS = [30,30,31,30,30,31,30,30,31,30,30,31];
 
 interface RemnantsWheelCalendarProps {
   size?: number;
@@ -40,171 +31,247 @@ export default function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalen
   const progress = ((time.part - 1) * 80 + (time.minute - 1)) / 1440;
   const totalDays = dayOfYear - 1 + progress;
 
-  const sunRot     = -(totalDays / 366) * 360;
-  const leaderRot  = -Math.floor((dayOfYear - 1) / 91) * 90;
-  const civilRot   = -(totalDays / 364) * 360;
-  const weekRot    = -(totalDays * (360 / 7));
-  const lunarRot   = -((dayOfYear - 1 + progress) % 354 / 354) * 360;
-  const partRot    = -(progress * 360);
+  // Create curved text path arcs
+  const createArcPath = (radius: number, startAngle: number, endAngle: number, clockwise: boolean = true) => {
+    const start = (startAngle - 90) * Math.PI / 180;
+    const end = (endAngle - 90) * Math.PI / 180;
+    const x1 = c + radius * Math.cos(start);
+    const y1 = c + radius * Math.sin(start);
+    const x2 = c + radius * Math.cos(end);
+    const y2 = c + radius * Math.sin(end);
+    const largeArc = Math.abs(endAngle - startAngle) > 180 ? 1 : 0;
+    const sweep = clockwise ? 1 : 0;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${x2} ${y2}`;
+  };
+
+  // Outer sun ring radius
+  const sunRadius = size * 0.47;
+  const leaderRadius = size * 0.40;
+  const numberRadius = size * 0.33;
+  const moonRadius = size * 0.22;
+  const weekRadius = size * 0.27;
 
   return (
     <div className="flex items-center justify-center">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-2xl">
         <defs>
-          <radialGradient id="space"><stop offset="0%" stopColor="#0f0722"/><stop offset="100%" stopColor="#000"/></radialGradient>
-          <linearGradient id="gold"><stop offset="0%" stopColor="#fbbf24"/><stop offset="100%" stopColor="#d97706"/></linearGradient>
+          <radialGradient id="spaceGrad">
+            <stop offset="0%" stopColor="#0f0722"/>
+            <stop offset="100%" stopColor="#000"/>
+          </radialGradient>
+          
+          {/* Outer sun text paths - 4 arcs around the circle */}
+          <path id="sunPathTop" d={createArcPath(sunRadius, -45, 45)} fill="none" />
+          <path id="sunPathRight" d={createArcPath(sunRadius, 45, 135)} fill="none" />
+          <path id="sunPathBottom" d={createArcPath(sunRadius, 135, 225)} fill="none" />
+          <path id="sunPathLeft" d={createArcPath(sunRadius, 225, 315)} fill="none" />
+          
+          {/* Leader section arcs */}
+          <path id="leaderPath1" d={createArcPath(leaderRadius, -45, 45)} fill="none" />
+          <path id="leaderPath2" d={createArcPath(leaderRadius, 45, 135)} fill="none" />
+          <path id="leaderPath3" d={createArcPath(leaderRadius, 135, 225)} fill="none" />
+          <path id="leaderPath4" d={createArcPath(leaderRadius, 225, 315)} fill="none" />
+          
+          {/* Moon ring text paths */}
+          <path id="moonPathTop" d={createArcPath(moonRadius, -45, 45)} fill="none" />
+          <path id="moonPathRight" d={createArcPath(moonRadius, 45, 135)} fill="none" />
+          <path id="moonPathBottom" d={createArcPath(moonRadius, 135, 225)} fill="none" />
+          <path id="moonPathLeft" d={createArcPath(moonRadius, 225, 315)} fill="none" />
+          
+          {/* Full circle paths for numbers */}
+          <path id="numberCircle" d={`M ${c} ${c - numberRadius} A ${numberRadius} ${numberRadius} 0 1 1 ${c - 0.01} ${c - numberRadius}`} fill="none" />
+          <path id="weekCircle" d={`M ${c} ${c - weekRadius} A ${weekRadius} ${weekRadius} 0 1 1 ${c - 0.01} ${c - weekRadius}`} fill="none" />
         </defs>
 
-        <circle cx={c} cy={c} r={size * 0.5} fill="url(#space)" />
+        {/* Background */}
+        <circle cx={c} cy={c} r={size * 0.5} fill="url(#spaceGrad)" />
 
-        {/* 1 – Outer Sun (366 days) */}
-        <g>
-          <motion.g animate={{ rotate: sunRot }} transition={{ ease: "linear", duration: 1 }} style={{ transformOrigin: "50% 50%" }}>
-            {Array.from({ length: 366 }, (_, i) => {
-              const day = i + 1;
-              const angle = (i / 366) * 360 - 90;
-              const rad = angle * Math.PI / 180;
-              const r1 = size * 0.46;
-              const r2 = size * 0.49;
+        {/* Grid lines for reference (subtle) */}
+        <line x1={c} y1={0} x2={c} y2={size} stroke="#333" strokeWidth="0.5" />
+        <line x1={0} y1={c} x2={size} y2={c} stroke="#333" strokeWidth="0.5" />
+        <line x1={c - size*0.35} y1={c - size*0.35} x2={c + size*0.35} y2={c + size*0.35} stroke="#333" strokeWidth="0.5" />
+        <line x1={c + size*0.35} y1={c - size*0.35} x2={c - size*0.35} y2={c + size*0.35} stroke="#333" strokeWidth="0.5" />
 
-              const isShabbat = (day + 3) % 7 === 0;
-              const isTwoBeforeNewYear = day === 365 || day === 366;
-              const isNewYear = day === 1;
+        {/* Outer Sun Ring (366 days) - Orange */}
+        <circle cx={c} cy={c} r={sunRadius} fill="none" stroke="#f97316" strokeWidth={size * 0.03} />
+        
+        {/* Sun ring labels - "366 sun 365" curving around */}
+        <text fill="#f97316" fontSize={size * 0.028} fontWeight="bold">
+          <textPath href="#sunPathTop" startOffset="25%" textAnchor="middle">
+            hilu'yaseph 366 sun 365
+          </textPath>
+        </text>
+        <text fill="#f97316" fontSize={size * 0.028} fontWeight="bold">
+          <textPath href="#sunPathRight" startOffset="50%" textAnchor="middle">
+            366 sun 365
+          </textPath>
+        </text>
+        <text fill="#f97316" fontSize={size * 0.028} fontWeight="bold">
+          <textPath href="#sunPathBottom" startOffset="50%" textAnchor="middle">
+            asfa'el 366 sun 365
+          </textPath>
+        </text>
+        <text fill="#f97316" fontSize={size * 0.028} fontWeight="bold">
+          <textPath href="#sunPathLeft" startOffset="50%" textAnchor="middle">
+            366 sun 365
+          </textPath>
+        </text>
 
-              let color = "#4b5563";
-              let width = 1.5;
-              if (isTwoBeforeNewYear) { color = "#4c1d95"; width = 5; }
-              else if (isShabbat)     { color = "#fbbf24"; width = 4; }
-              else if (isNewYear)     { color = "#ffffff"; width = 6; }
+        {/* 4 Leader Sections with curved text */}
+        {/* Leader 1: malkiel (top) - Yellow */}
+        <path d={createArcPath(leaderRadius - size*0.02, -45, 45)} fill="none" stroke="#fbbf24" strokeWidth={size * 0.04} />
+        <text fill="#fbbf24" fontSize={size * 0.032} fontWeight="bold">
+          <textPath href="#leaderPath1" startOffset="50%" textAnchor="middle">
+            lion malkiel 1
+          </textPath>
+        </text>
+        
+        {/* Leader 2: nar'el (right) - Yellow */}
+        <path d={createArcPath(leaderRadius - size*0.02, 45, 135)} fill="none" stroke="#fbbf24" strokeWidth={size * 0.04} />
+        <text fill="#fbbf24" fontSize={size * 0.032} fontWeight="bold">
+          <textPath href="#leaderPath2" startOffset="50%" textAnchor="middle">
+            eagle nar'el 4
+          </textPath>
+        </text>
+        
+        {/* Leader 3: meleyal (bottom) - Yellow */}
+        <path d={createArcPath(leaderRadius - size*0.02, 135, 225)} fill="none" stroke="#fbbf24" strokeWidth={size * 0.04} />
+        <text fill="#fbbf24" fontSize={size * 0.032} fontWeight="bold">
+          <textPath href="#leaderPath3" startOffset="50%" textAnchor="middle">
+            ox meleyal 3
+          </textPath>
+        </text>
+        
+        {/* Leader 4: hemel melek (left) - Yellow */}
+        <path d={createArcPath(leaderRadius - size*0.02, 225, 315)} fill="none" stroke="#fbbf24" strokeWidth={size * 0.04} />
+        <text fill="#fbbf24" fontSize={size * 0.032} fontWeight="bold">
+          <textPath href="#leaderPath4" startOffset="50%" textAnchor="middle">
+            man hemel melek 2
+          </textPath>
+        </text>
 
-              return (
-                <line key={i}
-                  x1={c + Math.cos(rad)*r1} y1={c + Math.sin(rad)*r1}
-                  x2={c + Math.cos(rad)*r2} y2={c + Math.sin(rad)*r2}
-                  stroke={day === dayOfYear ? "#ef4444" : color}
-                  strokeWidth={day === dayOfYear ? 8 : width}
-                />
-              );
-            })}
-          </motion.g>
-        </g>
+        {/* Week numbers ring (52 weeks) - Green */}
+        <circle cx={c} cy={c} r={weekRadius} fill="none" stroke="#22c55e" strokeWidth={size * 0.025} />
+        
+        {/* Week numbers curving around - show every 4 weeks */}
+        {Array.from({ length: 52 }, (_, i) => {
+          const weekNum = i + 1;
+          const angle = (i / 52) * 360 - 90;
+          const rad = angle * Math.PI / 180;
+          const x = c + weekRadius * Math.cos(rad);
+          const y = c + weekRadius * Math.sin(rad);
+          // Rotate text to follow curve
+          const rotation = angle + 90;
+          
+          return (
+            <text
+              key={i}
+              x={x}
+              y={y}
+              fill="#22c55e"
+              fontSize={size * 0.018}
+              fontWeight="bold"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              transform={`rotate(${rotation} ${x} ${y})`}
+            >
+              {weekNum}
+            </text>
+          );
+        })}
 
-        {/* 2 – 4 Leaders */}
-        <g>
-          <motion.g animate={{ rotate: leaderRot }} style={{ transformOrigin: "50% 50%" }}>
-            {LEADERS.map((l,i) => {
-              const a = i*90 - 90;
-              const rad = a * Math.PI / 180;
-              return (
-                <g key={i}>
-                  <text x={c + Math.cos(rad)*size*0.42} y={c + Math.sin(rad)*size*0.42}
-                        textAnchor="middle" dominantBaseline="middle"
-                        fill={l.color} fontSize={size*0.034} fontWeight="bold">{l.name}</text>
-                  <text x={c + Math.cos(rad)*size*0.38} y={c + Math.sin(rad)*size*0.38}
-                        textAnchor="middle" fill="#ddd" fontSize={size*0.018}>
-                    {l.meaning} • {l.face}
-                  </text>
-                </g>
-              );
-            })}
-          </motion.g>
-        </g>
+        {/* Moon Ring (354 days) - Magenta */}
+        <circle cx={c} cy={c} r={moonRadius} fill="none" stroke="#d946ef" strokeWidth={size * 0.025} />
+        
+        {/* Moon tick marks */}
+        {Array.from({ length: 354 }, (_, i) => {
+          const angle = (i / 354) * 360 - 90;
+          const rad = angle * Math.PI / 180;
+          const r1 = moonRadius - size * 0.015;
+          const r2 = moonRadius + size * 0.015;
+          return (
+            <line
+              key={i}
+              x1={c + r1 * Math.cos(rad)}
+              y1={c + r1 * Math.sin(rad)}
+              x2={c + r2 * Math.cos(rad)}
+              y2={c + r2 * Math.sin(rad)}
+              stroke="#d946ef"
+              strokeWidth={i % 30 === 0 ? 2 : 0.5}
+              opacity={0.7}
+            />
+          );
+        })}
+        
+        {/* Moon labels curving */}
+        <text fill="#d946ef" fontSize={size * 0.024} fontWeight="bold">
+          <textPath href="#moonPathTop" startOffset="50%" textAnchor="middle">
+            354 moon 354
+          </textPath>
+        </text>
+        <text fill="#d946ef" fontSize={size * 0.024} fontWeight="bold">
+          <textPath href="#moonPathRight" startOffset="50%" textAnchor="middle">
+            354 moon 354
+          </textPath>
+        </text>
+        <text fill="#d946ef" fontSize={size * 0.024} fontWeight="bold">
+          <textPath href="#moonPathBottom" startOffset="50%" textAnchor="middle">
+            354 moon 354
+          </textPath>
+        </text>
+        <text fill="#d946ef" fontSize={size * 0.024} fontWeight="bold">
+          <textPath href="#moonPathLeft" startOffset="50%" textAnchor="middle">
+            354 moon 354
+          </textPath>
+        </text>
 
-        {/* 3–5 – Civil Year (months, angels, weeks, day numbers) */}
-        <g>
-          <motion.g animate={{ rotate: civilRot }} style={{ transformOrigin: "50% 50%" }}>
-            {/* Month Angels */}
-            {MONTH_ANGELS.map((name,i) => {
-              const start = MONTH_LENGTHS.slice(0,i).reduce((a,b)=>a+b,0);
-              const angle = (start + MONTH_LENGTHS[i]/2) / 364 * 360 - 90;
-              const rad = angle * Math.PI / 180;
-              return (
-                <text key={i} x={c + Math.cos(rad)*size*0.33} y={c + Math.sin(rad)*size*0.33}
-                      textAnchor="middle" dominantBaseline="middle"
-                      fill="#c4b5fd" fontSize={size*0.024} fontWeight="bold">{name}</text>
-              );
-            })}
+        {/* Inner information area */}
+        <circle cx={c} cy={c} r={size * 0.15} fill="#0a0a15" stroke="#444" strokeWidth={1} />
+        
+        {/* Center labels */}
+        <text x={c} y={c - size * 0.08} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          solstice "el anak" beginning 7th month, civil...
+        </text>
+        <text x={c} y={c - size * 0.05} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          8" leap year yearly / every year is
+        </text>
+        <text x={c} y={c - size * 0.02} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          364d / 52w of 7d cycle of creation
+        </text>
+        <text x={c} y={c + size * 0.02} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          12 months of 30d = 360 + 4 = 364
+        </text>
+        <text x={c} y={c + size * 0.05} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          4 season/quadrants 91d each 7x13
+        </text>
+        <text x={c} y={c + size * 0.08} textAnchor="middle" fill="#888" fontSize={size * 0.016}>
+          zodiac = 12 months + sign / tribe
+        </text>
 
-            {/* Week dots */}
-            {Array.from({length:364},(_,i) => {
-              const a = i/364*360-90;
-              const rad = a*Math.PI/180;
-              return <circle key={i} cx={c + Math.cos(rad)*size*0.28} cy={c + Math.sin(rad)*size*0.28} r={2.5}
-                             fill={(i+1)%7===0?"#fbbf24":"#6b7280"} />;
-            })}
+        {/* Current day marker */}
+        {(() => {
+          const angle = (totalDays / 366) * 360 - 90;
+          const rad = angle * Math.PI / 180;
+          return (
+            <circle
+              cx={c + sunRadius * Math.cos(rad)}
+              cy={c + sunRadius * Math.sin(rad)}
+              r={size * 0.015}
+              fill="#ef4444"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+          );
+        })()}
 
-            {/* Day-of-month numbers */}
-            {(() => {
-              let day = 1;
-              return MONTH_LENGTHS.flatMap((len, monthIdx) => Array.from({length:len},(_,i) => {
-                const currentDay = day + i;
-                const a = (currentDay - 1)/364*360-90;
-                const rad = a*Math.PI/180;
-                const el = <text key={`${monthIdx}-${i}`} x={c + Math.cos(rad)*size*0.23} y={c + Math.sin(rad)*size*0.23}
-                                 textAnchor="middle" dominantBaseline="middle"
-                                 fill="#e0f2fe" fontSize={size*0.018}>{i+1}</text>;
-                if (i === len - 1) day += len;
-                return el;
-              }));
-            })()}
-          </motion.g>
-        </g>
+        {/* Corner labels for zodiac/tribes */}
+        <text x={c} y={size * 0.06} textAnchor="middle" fill="#f97316" fontSize={size * 0.018}>aries / yehudah</text>
+        <text x={size * 0.94} y={c} textAnchor="end" fill="#f97316" fontSize={size * 0.018}>cancer / ephraim</text>
+        <text x={c} y={size * 0.95} textAnchor="middle" fill="#f97316" fontSize={size * 0.018}>libra / scorpio</text>
+        <text x={size * 0.06} y={c} textAnchor="start" fill="#f97316" fontSize={size * 0.018}>capricorn / aquarius</text>
 
-        {/* 6 – 354-day Lunar Wheel + Asfa'el */}
-        <g>
-          <motion.g animate={{ rotate: lunarRot }} style={{ transformOrigin: "50% 50%" }}>
-            {Array.from({length:354},(_,i) => {
-              const a = i/354*360-90;
-              const rad = a*Math.PI/180;
-              return <circle key={i} cx={c + Math.cos(rad)*size*0.16} cy={c + Math.sin(rad)*size*0.16} r={1.8} fill="#c3dafe"/>;
-            })}
-            <text x={c} y={c-size*0.12} textAnchor="middle" fill="#93c5fd" fontSize={size*0.028} fontWeight="bold">ASFAEL • El Gathers</text>
-          </motion.g>
-        </g>
-
-        {/* 7 – Four Parts of Day */}
-        <g>
-          <motion.g animate={{ rotate: partRot }} style={{ transformOrigin: "50% 50%" }}>
-            {["DAY","EVENING","NIGHT","MORNING"].map((p,i) => {
-              const a = i*90-90;
-              const rad = a*Math.PI/180;
-              return (
-                <text key={i} x={c + Math.cos(rad)*size*0.08} y={c + Math.sin(rad)*size*0.08}
-                      textAnchor="middle" dominantBaseline="middle"
-                      fill="#fcd34d" fontSize={size*0.045} fontWeight="bold">{p}</text>
-              );
-            })}
-          </motion.g>
-        </g>
-
-        {/* 7-Day Week (Shabbat wheel) */}
-        <g>
-          <motion.g animate={{ rotate: weekRot }} style={{ transformOrigin: "50% 50%" }}>
-            {['1','2','3','4','5','6','SABBATH'].map((d,i) => {
-              const a = i*(360/7)-90;
-              const rad = a*Math.PI/180;
-              const r = size*0.10;
-              const x = c + Math.cos(rad)*r;
-              const y = c + Math.sin(rad)*r;
-              return (
-                <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-                      fill={i===6?"#fbbf24":"#e5e7eb"}
-                      fontSize={i===6?size*0.06:size*0.045} fontWeight="bold"
-                      transform={`rotate(${i*51.4286 + 90} ${x} ${y})`}>{d}</text>
-              );
-            })}
-          </motion.g>
-        </g>
-
-        {/* Center Hub */}
-        <circle cx={c} cy={c} r={size*0.05} fill="url(#gold)" stroke="#d97706" strokeWidth={6}/>
-        <text x={c} y={c} textAnchor="middle" dominantBaseline="middle"
-              fill="#1a1a2e" fontSize={size*0.08} fontWeight="bold">YHVH</text>
-
-        {/* Current day red marker */}
-        <circle cx={c + Math.cos((totalDays/366*360-90)*Math.PI/180)*size*0.48}
-                cy={c + Math.sin((totalDays/366*360-90)*Math.PI/180)*size*0.48}
-                r={14} fill="#ef4444"/>
+        {/* 12 Raphael markers at top */}
+        <text x={c + size * 0.15} y={size * 0.12} textAnchor="middle" fill="#f59e0b" fontSize={size * 0.016}>12 raphael</text>
       </svg>
     </div>
   );
