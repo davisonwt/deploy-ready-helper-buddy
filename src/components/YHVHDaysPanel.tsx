@@ -36,7 +36,7 @@ export function YHVHDaysPanel({ isOpen, onClose }: YHVHDaysPanelProps) {
     { 
       href: '/wheels-in-itself', 
       title: 'Wheels in Itself', 
-      subtitle: 'YHVH 6-wheel rotating calendar',
+      subtitle: 'YHVH 8-wheel rotating calendar',
       icon: Calendar,
       gradient: 'from-amber-600 to-orange-600'
     }
