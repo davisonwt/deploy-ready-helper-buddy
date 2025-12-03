@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { useVisualEditor, ElementConfig } from '@/contexts/VisualEditorContext'
 
 interface EditableTextProps {
   elementId: string
@@ -34,7 +34,7 @@ export function EditableText({
   const inputRef = useRef<HTMLInputElement>(null)
   const textRef = useRef<SVGTextElement>(null)
 
-  const config = elementConfigs[elementId] || {}
+  const config: ElementConfig = elementConfigs[elementId] || { id: elementId, type: 'text' }
   const displayText = config.text ?? text
   const configX = config.x ?? x
   const configY = config.y ?? y

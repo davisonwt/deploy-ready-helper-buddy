@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react'
 import { YHVHWheelCalendar } from './YHVHWheelCalendar'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { useVisualEditor, ElementConfig } from '@/contexts/VisualEditorContext'
 import { DraggableControls } from '../visual-editor/DraggableControls'
 
 // Import constants from wheel calendar
@@ -53,12 +53,15 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     }
   }, [isEditorMode, setSelectedElementId])
 
-  // Get configs for different elements
-  const centerHubConfig = elementConfigs['wheel-center-hub'] || {}
-  const sunCircleConfig = elementConfigs['wheel-sun-circle'] || {}
-  const weeksCircleConfig = elementConfigs['wheel-weeks-circle'] || {}
-  const dayPartsConfig = elementConfigs['wheel-day-parts'] || {}
-  const daysCircleConfig = elementConfigs['wheel-days-circle'] || {}
+  // Get configs for different elements with proper typing
+  const defaultConfig: ElementConfig = { id: '', type: '' }
+  const centerHubConfig: ElementConfig = elementConfigs['wheel-center-hub'] || defaultConfig
+  const sunCircleConfig: ElementConfig = elementConfigs['wheel-sun-circle'] || defaultConfig
+  const weeksCircleConfig: ElementConfig = elementConfigs['wheel-weeks-circle'] || defaultConfig
+  const dayPartsConfig: ElementConfig = elementConfigs['wheel-day-parts'] || defaultConfig
+  const daysCircleConfig: ElementConfig = elementConfigs['wheel-days-circle'] || defaultConfig
+  const leadersCircleConfig: ElementConfig = elementConfigs['wheel-leaders-circle'] || defaultConfig
+  const monthDaysConfig: ElementConfig = elementConfigs['wheel-month-days'] || defaultConfig
 
   // Calculate radii with overrides from editor
   const baseRadii = {
@@ -142,15 +145,15 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
   // When editor mode is off, all offsets will be 0, but the structure is the same
   const ringOffsets = useMemo(() => {
     // Get offsets, but ensure they default to 0 if not set
-    const getOffset = (config: any) => ({
+    const getOffset = (config: ElementConfig) => ({
       x: config?.x ?? 0,
       y: config?.y ?? 0
     })
     
     return {
       sun: getOffset(sunCircleConfig),
-      leaders: getOffset(elementConfigs['wheel-leaders-circle']),
-      monthDays: getOffset(elementConfigs['wheel-month-days']),
+      leaders: getOffset(leadersCircleConfig),
+      monthDays: getOffset(monthDaysConfig),
       weeks: getOffset(weeksCircleConfig),
       dayParts: getOffset(dayPartsConfig),
       days: getOffset(daysCircleConfig),
@@ -163,7 +166,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
     dayPartsConfig.x, dayPartsConfig.y,
     daysCircleConfig.x, daysCircleConfig.y,
     centerHubConfig.x, centerHubConfig.y,
-    elementConfigs
+    leadersCircleConfig.x, leadersCircleConfig.y,
+    monthDaysConfig.x, monthDaysConfig.y
   ])
   
   // Reset wheel positions on mount if not in editor mode (clear any saved offsets)
@@ -309,8 +313,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           }}
           className="absolute"
           style={{
-            left: `${center + (elementConfigs['wheel-leaders-circle']?.x ?? 0)}px`,
-            top: `${center + (elementConfigs['wheel-leaders-circle']?.y ?? 0)}px`,
+            left: `${center + (leadersCircleConfig.x ?? 0)}px`,
+            top: `${center + (leadersCircleConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${baseRadii.leadersOuter * 2}px`,
             height: `${baseRadii.leadersOuter * 2}px`,
@@ -339,8 +343,8 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
           }}
           className="absolute"
           style={{
-            left: `${center + (elementConfigs['wheel-month-days']?.x ?? 0)}px`,
-            top: `${center + (elementConfigs['wheel-month-days']?.y ?? 0)}px`,
+            left: `${center + (monthDaysConfig.x ?? 0)}px`,
+            top: `${center + (monthDaysConfig.y ?? 0)}px`,
             transform: 'translate(-50%, -50%)',
             width: `${baseRadii.monthDaysOuter * 2}px`,
             height: `${baseRadii.monthDaysOuter * 2}px`,

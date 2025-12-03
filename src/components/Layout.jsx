@@ -45,6 +45,7 @@ import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
 import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
+import { YHVHDaysPanel } from "./YHVHDaysPanel"
 // Lazy load CommunityChatButton to avoid React initialization issues
 const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
 // Lazy load AuthButton wrapper that handles React dispatcher errors
@@ -103,6 +104,7 @@ function Layout({ children }) {
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   const [isSupportOpen, setIsSupportOpen] = useState(false)
   const [isGosatOpen, setIsGosatOpen] = useState(false)
+  const [isYHVHDaysOpen, setIsYHVHDaysOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   const [jitsiCall, setJitsiCall] = useState(null)
 
@@ -148,8 +150,13 @@ function Layout({ children }) {
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, className: 'dashboard-tour' },
     { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' },
-    { name: "364yhvh days", href: "/enochian-calendar-design", icon: Calendar, className: 'calendar-tour' }
   ]
+
+  // Check if current path matches 364yhvh routes
+  const isYHVHDaysActive = () => {
+    const yhvhRoutes = ['/enochian-calendar-design', '/wheels-in-itself']
+    return yhvhRoutes.some(route => location.pathname === route)
+  }
 
   // Grouped navigation (dropdowns) - colors will be set dynamically
   // NOTE: "My Content" has been replaced with "My Garden" panel - removed from here
@@ -282,6 +289,41 @@ function Layout({ children }) {
                   </Link>
                 )
               })}
+
+              {/* 364yhvh Days Button */}
+              <button
+                onClick={() => setIsYHVHDaysOpen(true)}
+                className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
+                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
+                  ${isYHVHDaysActive() ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  calendar-tour
+                `}
+                style={{
+                  backgroundColor: isYHVHDaysActive() ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: isYHVHDaysActive() ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: isYHVHDaysActive()
+                    ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  ringColor: currentTheme.accent,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isYHVHDaysActive()) {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isYHVHDaysActive()) {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
+                  }
+                }}
+              >
+                <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate text-center leading-tight">364yhvh days</span>
+              </button>
 
               {/* My Garden Button - replaces old "My Content" dropdown */}
               <button
@@ -785,6 +827,9 @@ function Layout({ children }) {
       
       {/* Let It Rain Panel */}
       <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+      
+      {/* 364yhvh Days Panel */}
+      <YHVHDaysPanel isOpen={isYHVHDaysOpen} onClose={() => setIsYHVHDaysOpen(false)} />
       
       {/* Support Panel */}
       <SupportPanel isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
