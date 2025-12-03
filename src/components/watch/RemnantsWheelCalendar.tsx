@@ -157,42 +157,48 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   };
 
   // Rotation calculations - all wheels rotate to show current position at TOP (12 o'clock)
-  // Negative rotation brings the current segment to the top
+  // IMPORTANT: Day starts at SUNRISE, not midnight!
   const rotations = useMemo(() => {
-    // Calculate day within current season (1-91)
-    const seasonStartDay = (calendarData.season - 1) * 91 + 1;
-    const dayInSeason = calendarData.dayOfYear - seasonStartDay + 1;
+    // Get sunrise time for today (hardcoded ~6:00 AM as baseline, adjusted by season)
+    const { sunTimes } = calendarData;
+    const sunriseHour = sunTimes.sunrise; // e.g., 6.0 for 6:00 AM
     
-    // Calculate day within current week (1-7)
-    const dayInWeek = calendarData.weekDay; // 1-7
+    // Calculate current time as hours since SUNRISE (not midnight!)
+    const currentHour = currentTime.getHours() + currentTime.getMinutes() / 60;
     
-    // Calculate day within current month
+    // Hours since sunrise (can be negative if before sunrise = previous day)
+    let hoursSinceSunrise = currentHour - sunriseHour;
+    if (hoursSinceSunrise < 0) {
+      hoursSinceSunrise += 24; // Wrap around - we're in the previous calendar day
+    }
+    
+    // Day fraction based on sunrise (0 = sunrise, 0.5 = ~12 hours after sunrise, 1 = next sunrise)
+    const dayFractionFromSunrise = hoursSinceSunrise / 24;
+    
+    // For 18-part wheel: each part is 24/18 = 1.333 hours
+    const partDuration = 24 / 18;
+    const part18Precise = hoursSinceSunrise / partDuration;
+    
+    // For 4-part wheel: calculate angle based on time since sunrise
+    // Sunrise is at angle 0 (top), progresses clockwise through the day
+    const currentAngle = dayFractionFromSunrise * 360;
+    
+    // Calculate day within current month for monthly leaders
     const dayInMonth = calendarData.dayOfMonth;
     const daysInCurrentMonth = MONTH_DAYS[calendarData.month - 1];
     
-    // For 18-part wheel, include time progression within the current part
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const partDuration = (24 * 60) / 18; // ~80 minutes per part
-    const progressInPart = (totalMinutes % partDuration) / partDuration;
-    const part18Precise = calendarData.part18 - 1 + progressInPart;
-    
-    // For 4-part wheel, calculate based on actual sun position
-    const { part4Angles } = calendarData;
-    // Find current position within the 4-part cycle based on time of day
-    const dayFraction = totalMinutes / (24 * 60);
-    const currentAngle = dayFraction * 360;
+    // Calculate day within current week (1-7)
+    const dayInWeek = calendarData.weekDay;
     
     return {
       wheel1: -((calendarData.dayOfYear - 1) / 364) * 360, // Man's Count - by day
       wheel2: -((calendarData.dayOfYear - 1) / 364) * 360, // Month Days - by day
       wheel3: -((calendarData.lunarDay - 1) / 354) * 360,  // Moon Days - by lunar day
       wheel4: -(((calendarData.week - 1) * 7 + (dayInWeek - 1)) / 364) * 360, // 52 Weeks - by day within year
-      wheel5: -(((calendarData.month - 1) + (dayInMonth - 1) / daysInCurrentMonth) / 12) * 360, // Monthly Leaders - precise within month
-      wheel6: -((calendarData.dayOfYear - 1) / 364) * 360, // 4 Seasonal Leaders - by day (91 days per leader)
-      wheel7: -(part18Precise / 18) * 360, // 18 Parts - precise with time
-      wheel8: -currentAngle, // 4 Parts - rotate based on time of day
+      wheel5: -(((calendarData.month - 1) + (dayInMonth - 1) / daysInCurrentMonth) / 12) * 360, // Monthly Leaders
+      wheel6: -((calendarData.dayOfYear - 1) / 364) * 360, // 4 Seasonal Leaders - by day
+      wheel7: -(part18Precise / 18) * 360, // 18 Parts - based on time since SUNRISE
+      wheel8: -currentAngle, // 4 Parts - rotate based on time since SUNRISE
     };
   }, [calendarData, currentTime]);
 
