@@ -207,7 +207,7 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
   }
 
   return (
-    <div className="flex flex-wrap gap-6 justify-center">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
       {members.map((member) => {
         const tags = [];
         if (member.is_sower) tags.push('Sower');
@@ -217,40 +217,45 @@ export function CircleMembersList({ circleId, onStartChat, onStartCall, onNaviga
         return (
           <DropdownMenu key={member.user_id}>
             <DropdownMenuTrigger asChild>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="cursor-pointer"
+              <button
+                type="button"
+                className="cursor-pointer focus:outline-none w-36 h-36 relative"
               >
-                <Card className="overflow-visible hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full aspect-square w-48 h-48 bg-transparent">
-                  <CardContent className="p-4 flex flex-col items-center justify-center h-full">
-                    <div className="mb-2 z-10 flex-shrink-0">
-                      <Avatar className="h-16 w-16 border-2 border-primary/10">
-                        <AvatarImage src={member.avatar_url} />
-                        <AvatarFallback className="text-xl bg-gradient-to-br from-primary/50 to-primary/20">
-                          {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-
-                    <h3 className="font-bold text-xs text-center mb-1 line-clamp-1 px-2 text-white z-10 flex-shrink-0">
-                      {member.full_name || member.display_name || 'User'}
-                    </h3>
-
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center mb-2 z-10 flex-shrink-0">
-                        {tags.map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-[10px] px-1 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full h-full"
+                >
+                  <Card className="overflow-hidden hover:shadow-xl transition-all glass-card border-2 border-primary/30 hover:border-primary/50 rounded-full w-full h-full bg-transparent">
+                    <CardContent className="p-3 flex flex-col items-center justify-center h-full">
+                      <div className="mb-1 flex-shrink-0">
+                        <Avatar className="h-12 w-12 border-2 border-primary/10">
+                          <AvatarImage src={member.avatar_url} />
+                          <AvatarFallback className="text-lg bg-gradient-to-br from-primary/50 to-primary/20">
+                            {(member.full_name || member.display_name || 'U').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
+
+                      <h3 className="font-bold text-[10px] text-center mb-1 line-clamp-1 px-1 text-foreground flex-shrink-0">
+                        {member.full_name || member.display_name || 'User'}
+                      </h3>
+
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 justify-center flex-shrink-0">
+                          {tags.map((tag, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-[8px] px-1 py-0">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </button>
             </DropdownMenuTrigger>
             
             <DropdownMenuContent 
