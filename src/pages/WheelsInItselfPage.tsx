@@ -1,5 +1,6 @@
 import React from 'react';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
+import { LocationVerification } from '@/components/calendar/LocationVerification';
 
 export default function WheelsInItselfPage() {
   return (
@@ -9,9 +10,10 @@ export default function WheelsInItselfPage() {
         <h1 className="text-3xl md:text-4xl font-bold text-center bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent mb-2">
           Wheels in Itself
         </h1>
-        <p className="text-center text-gray-400 text-lg">
+        <p className="text-center text-gray-400 text-lg mb-4">
           YHVH's 8-Wheel Rotating Calendar System
         </p>
+        <LocationVerification />
       </div>
 
       {/* Main content */}
