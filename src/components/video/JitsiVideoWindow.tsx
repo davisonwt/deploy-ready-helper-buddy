@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
+import { JAAS_CONFIG, getJaaSInterfaceConfig, getVideoCallConfig } from '@/lib/jitsi-config';
 
-// Remove global Window declaration - it conflicts with jitsi types
+declare global {
+  interface Window {
+    JitsiMeetExternalAPI: any;
+  }
+}
 
 interface JitsiVideoWindowProps {
   isOpen: boolean;
@@ -25,17 +30,17 @@ export function JitsiVideoWindow({
   useEffect(() => {
     if (!isOpen || !jitsiMeetRef.current) return;
 
-    // Load Jitsi external API script if not already loaded
+    // Load JaaS API script if not already loaded
     if (!window.JitsiMeetExternalAPI) {
       const script = document.createElement('script');
-      script.src = 'https://meet.jit.si/external_api.js';
+      script.src = JAAS_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = () => {
-        initializeJitsi();
+        initializeJaaS();
       };
       document.body.appendChild(script);
     } else {
-      initializeJitsi();
+      initializeJaaS();
     }
 
     return () => {
@@ -46,43 +51,37 @@ export function JitsiVideoWindow({
     };
   }, [isOpen, roomName, displayName, password]);
 
-  const initializeJitsi = () => {
+  const initializeJaaS = () => {
     if (!jitsiMeetRef.current || !window.JitsiMeetExternalAPI) return;
 
     // Clear any existing content
     jitsiMeetRef.current.innerHTML = '';
 
-    const domain = 'meet.jit.si';
-    const options = {
-      roomName: `S2G-${roomName}`,
+    const jaasRoomName = JAAS_CONFIG.getRoomName(`S2G-${roomName}`);
+    const options: any = {
+      roomName: jaasRoomName,
       width: '100%',
       height: '100%',
       parentNode: jitsiMeetRef.current,
       interfaceConfigOverwrite: {
+        ...getJaaSInterfaceConfig(),
         filmStripOnly: false,
-        SHOW_JITSI_WATERMARK: false,
         DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-        TOOLBAR_BUTTONS: [
-          'microphone',
-          'camera',
-          'fullscreen',
-          'fodeviceselection',
-          'hangup',
-          'chat',
-          'tileview',
-          'raisehand',
-        ],
       },
       userInfo: { displayName, email: '' },
       password: password || undefined,
       configOverwrite: {
-        startWithAudioMuted: false,
+        ...getVideoCallConfig(),
         startWithVideoMuted: true,
-        disableDeepLinking: true,
       },
     };
 
-    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(domain, options);
+    // Add JWT if available
+    if (JAAS_CONFIG.jwt) {
+      options.jwt = JAAS_CONFIG.jwt;
+    }
+
+    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
 
     // Garden-style UI touches
     jitsiAPIRef.current.addEventListener('videoConferenceJoined', () => {
@@ -141,7 +140,7 @@ export function JitsiVideoWindow({
   );
 }
 
-// Global function to start Jitsi call (for use from anywhere)
+// Global function to start JaaS call (for use from anywhere)
 export function startJitsiCall(
   roomName: string,
   displayName: string = 'Sower',
@@ -154,4 +153,3 @@ export function startJitsiCall(
     })
   );
 }
-

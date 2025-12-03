@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { JitsiCall } from '@/components/JitsiCall';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 interface GroupChatRoomEnhancedProps {
   roomId: string;
@@ -166,11 +166,10 @@ export function GroupChatRoomEnhanced({
       {/* Active Call Overlay */}
       {activeCall && (
         <div className="absolute inset-0 bg-background z-50">
-          <JitsiCall
+          <JitsiRoom
             roomName={`${roomId}-${activeCall}`}
-            userInfo={{ displayName: roomName, email: '' }}
+            displayName={roomName}
             onLeave={handleEndCall}
-            isAudioOnly={activeCall === 'voice' || activeCall === 'radio'}
           />
         </div>
       )}
