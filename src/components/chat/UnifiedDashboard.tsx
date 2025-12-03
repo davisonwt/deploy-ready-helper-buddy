@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft, Home, CircleDot } from 'lucide-react';
+import { MessageSquare, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicationModes';
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
-import { CommunityForums } from './CommunityForums';
-import { ChatListView } from './ChatListView';
-import { RelationshipLayerChatApp } from './RelationshipLayerChatApp';
+import { ChatApp } from './ChatApp';
 import { ClassroomMode } from '../communication/ClassroomMode';
 import { LectureMode } from '../communication/LectureMode';
 import { TrainingMode } from '../communication/TrainingMode';
@@ -23,9 +21,7 @@ interface ModeConfig {
 }
 
 const modes: ModeConfig[] = [
-  { id: 'circles', icon: <CircleDot className="w-5 h-5" />, label: 'Circles', color: 'from-purple-500/20 to-purple-500/5' },
-  { id: 'chat', icon: <MessageCircle className="w-5 h-5" />, label: '1-on-1 Chats', color: 'from-primary/20 to-primary/5' },
-  { id: 'community', icon: <Users className="w-5 h-5" />, label: 'Community', color: 'from-cyan-500/20 to-cyan-500/5' },
+  { id: 'chatapp', icon: <MessageSquare className="w-5 h-5" />, label: 'ChatApp', color: 'from-primary/20 to-primary/5' },
   { id: 'classroom', icon: <BookOpen className="w-5 h-5" />, label: 'Classrooms', color: 'from-success/20 to-success/5' },
   { id: 'lecture', icon: <GraduationCap className="w-5 h-5" />, label: 'Lectures', color: 'from-info/20 to-info/5' },
   { id: 'training', icon: <Dumbbell className="w-5 h-5" />, label: 'Training', color: 'from-warning/20 to-warning/5' },
@@ -44,12 +40,11 @@ export const UnifiedDashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeMode) {
-      case 'circles':
-        return <RelationshipLayerChatApp />;
+      case 'chatapp':
       case 'chat':
-        return <ChatListView />;
+      case 'circles':
       case 'community':
-        return <CommunityForums />;
+        return <ChatApp />;
       case 'classroom':
         return <ClassroomMode />;
       case 'lecture':
@@ -59,7 +54,7 @@ export const UnifiedDashboard: React.FC = () => {
       case 'radio':
         return <RadioMode />;
       default:
-        return null;
+        return <ChatApp />;
     }
   };
 

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type CommunicationMode = 
+  | 'chatapp'
   | 'circles'
   | 'chat' 
   | 'community' 
@@ -23,9 +24,10 @@ interface CommunicationModeStore {
 export const useCommunicationModes = create<CommunicationModeStore>()(
   persist(
     (set) => ({
-      activeMode: 'chat',
+      activeMode: 'chatapp',
       setActiveMode: (mode) => set({ activeMode: mode, isTransitioning: true }),
       unreadCounts: {
+        chatapp: 0,
         circles: 0,
         chat: 0,
         community: 0,
