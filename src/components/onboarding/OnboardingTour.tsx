@@ -166,7 +166,7 @@ const OnboardingTour = () => {
       />
       
       {!run && !preferences?.onboarding_complete && (
-        <Button onClick={startTour} className="fixed top-52 right-6 z-50 shadow-lg bg-green-600 hover:bg-green-700 text-white">
+        <Button onClick={startTour} className="fixed top-52 right-6 z-50 shadow-lg transition-all duration-300 bg-green-600/20 hover:bg-green-600 text-white/50 hover:text-white border border-green-400/30 hover:border-green-400 hover:shadow-xl">
           Start Tour
         </Button>
       )}

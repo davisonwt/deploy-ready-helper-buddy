@@ -38,7 +38,7 @@ export function StatsFloatingButton() {
                   setShowTooltip(false);
                   navigate('/stats');
                 }}
-                className="h-14 w-14 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-2xl border-2 border-amber-400 transition-all hover:scale-110"
+                className="h-14 w-14 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500 hover:to-orange-500 shadow-lg border-2 border-amber-400/30 hover:border-amber-400 transition-all duration-300 hover:scale-110 hover:shadow-2xl"
                 aria-label="View My Stats"
               >
                 <BarChart3 className="h-6 w-6 text-white" />

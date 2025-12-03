@@ -173,7 +173,7 @@ const HelpModal = () => {
         <Button 
           variant="default" 
           size="icon"
-          className="fixed top-64 right-6 z-50 shadow-lg hover:shadow-xl transition-shadow bg-teal-600 hover:bg-teal-700 text-white"
+          className="fixed top-64 right-6 z-50 shadow-lg hover:shadow-xl transition-all duration-300 bg-teal-600/20 hover:bg-teal-600 text-white/50 hover:text-white border border-teal-400/30 hover:border-teal-400"
           aria-label="Help & Documentation"
         >
           <HelpCircle className="h-5 w-5" />
