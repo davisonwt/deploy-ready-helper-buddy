@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MessageCircle, Users, Phone, Video, MoreVertical } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +36,7 @@ interface ChatConversation {
 export const ChatListView: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -44,6 +46,16 @@ export const ChatListView: React.FC = () => {
   const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
+
+  // Handle room parameter from URL
+  useEffect(() => {
+    const roomId = searchParams.get('room');
+    if (roomId && !selectedRoomId) {
+      setSelectedRoomId(roomId);
+      // Clear the URL parameter after opening
+      setSearchParams({});
+    }
+  }, [searchParams, selectedRoomId, setSearchParams]);
 
   useEffect(() => {
     loadConversations();

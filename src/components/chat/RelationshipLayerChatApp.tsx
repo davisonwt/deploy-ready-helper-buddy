@@ -310,8 +310,8 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
 
       if (error) throw error;
 
-      // Navigate to chat app with the room
-      navigate(`/chatapp?room=${roomId}`);
+      // Navigate to communications hub with the room
+      navigate(`/communications-hub?room=${roomId}`);
       
       toast({
         title: 'Chat opened',
@@ -367,20 +367,22 @@ export function RelationshipLayerChatApp({ onCompleteOnboarding }: RelationshipL
   };
 
   const handleNavigateToTraining = (userId: string) => {
-    // Navigate to training/classroom modules
-    navigate('/chatapp?mode=training');
+    // Navigate to training mode in communications hub
+    navigate('/communications-hub');
+    // Set mode via the useCommunicationModes hook would need to be integrated,
+    // For now just navigate and show toast
     toast({
       title: 'Training',
-      description: 'Opening training modules',
+      description: 'Switch to Training mode from the mode selector above',
     });
   };
 
   const handleNavigateToRadio = (userId: string) => {
-    // Navigate to radio page
-    navigate('/radio');
+    // Navigate to radio mode in communications hub  
+    navigate('/communications-hub');
     toast({
       title: 'Radio',
-      description: 'Opening radio station',
+      description: 'Switch to Radio mode from the mode selector above',
     });
   };
 
