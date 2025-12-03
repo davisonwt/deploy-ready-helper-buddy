@@ -69,10 +69,6 @@ export default function EnochianCalendarDesignPage() {
             whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
           >
             <div className="glass-card p-6 rounded-3xl w-full max-w-4xl shadow-xl border-2 border-amber-500/20 hover:border-amber-500/40 transition-colors">
-              <h2 className="text-xl md:text-2xl font-bold text-center text-amber-400 mb-6">
-                6 Concentric Wheels
-              </h2>
-              
               {/* Wheel Calendar - responsive sizing */}
               <div className="flex justify-center">
                 {isEditorMode ? (
@@ -80,34 +76,6 @@ export default function EnochianCalendarDesignPage() {
                 ) : (
                   <YHVHWheelCalendarLive size={Math.min(700, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 700)} />
                 )}
-              </div>
-              
-              {/* Legend */}
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-300">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-amber-500" />
-                  <span>Outer: 366 Days (Sun)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500" />
-                  <span>4 Leaders (91 days each)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-500" />
-                  <span>Day of Month (1-31)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-gray-500" />
-                  <span>52 Weeks (364 dots)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-red-500" />
-                  <span>7 Days of Week</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-orange-500" />
-                  <span>Inner: 4 Parts of Day</span>
-                </div>
               </div>
             </div>
           </motion.div>
