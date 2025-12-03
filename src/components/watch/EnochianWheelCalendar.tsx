@@ -515,12 +515,17 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
 
                 boxShadow: bead.isToday
@@ -537,7 +542,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
                   : '0 12px 40px rgba(0,0,0,0.9), inset 0 6px 20px rgba(255,255,255,0.3)',
 
-                transform: 'translateZ(30px)'
+                transform: 'none'
 
               }}
 
@@ -625,12 +630,17 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
 
                 boxShadow: bead.isToday
@@ -647,7 +657,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
                   : '0 12px 40px rgba(0,0,0,0.9), inset 0 6px 20px rgba(255,255,255,0.3)',
 
-                transform: 'translateZ(30px)'
+                transform: 'none'
 
               }}
 
@@ -872,12 +882,17 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
 
                 boxShadow: bead.isShavuot
@@ -890,7 +905,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
                   : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3)',
 
-                transform: 'translateZ(30px)',
+                transform: 'none',
                 ...(bead.isShavuot && { border: '8px solid #fff' })
 
               }}
@@ -987,12 +1002,17 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
 
                 boxShadow: bead.isShavuot
@@ -1005,7 +1025,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
                   : '0 15px 50px rgba(0,0,0,0.9), inset 0 8px 25px rgba(255,255,255,0.3)',
 
-                transform: 'translateZ(30px)',
+                transform: 'none',
                 ...(bead.isShavuot && { border: '8px solid #fff' })
 
               }}
@@ -3269,10 +3289,15 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
 
                 boxShadow: 
@@ -3284,7 +3309,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
                   '0 30px 100px rgba(0,0,0,0.95), inset 0 15px 50px rgba(255,255,255,0.15)',
 
-                transform: 'translateZ(110px)'
+                transform: 'none'
 
               }}
 
@@ -3351,10 +3376,15 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
-
+                width: '44px',
+                height: '44px',
+                minWidth: '44px',
+                minHeight: '44px',
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
                 background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
 
                 boxShadow: 
@@ -3366,7 +3396,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
                   '0 30px 100px rgba(0,0,0,0.95), inset 0 15px 50px rgba(255,255,255,0.15)',
 
-                transform: 'translateZ(110px)'
+                transform: 'none'
 
               }}
 
