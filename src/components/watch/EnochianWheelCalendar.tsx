@@ -3027,7 +3027,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
 
               style={{
 
@@ -3093,7 +3093,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
 
               style={{
 
@@ -3545,7 +3545,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
@@ -3554,7 +3554,8 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
                     b.isToday ? '0 0 220px #ec4899' :
                     '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
-                  transform: 'translateZ(140px)'
+                  transform: 'translateZ(140px)',
+                  aspectRatio: '1 / 1'
                 }}
               >
                 {/* Almond blossoms blooming on Tu B'Shevat */}
@@ -3635,7 +3636,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
@@ -3644,7 +3645,8 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     b.isTuBShevat ? '0 0 200px #fff, 0 0 400px #fdb5cd, inset 0 0 100px #fff' :
                     b.isToday ? '0 0 220px #ec4899' :
                     '0 35px 120px rgba(0,0,0,0.9), inset 0 18px 60px rgba(255,255,255,0.3)',
-                  transform: 'translateZ(140px)'
+                  transform: 'translateZ(140px)',
+                  aspectRatio: '1 / 1'
                 }}
               >
                 {/* Almond blossoms blooming on Tu B'Shevat */}
@@ -3847,7 +3849,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
@@ -3855,7 +3857,8 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
                     b.isToday ? '0 0 250px #ec4899' :
                     '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
-                  transform: 'translateZ(160px)'
+                  transform: 'translateZ(160px)',
+                  aspectRatio: '1 / 1'
                 }}
               >
                 {/* Purim celebration – confetti & groggers */}
@@ -3930,7 +3933,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
@@ -3938,7 +3941,8 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
                     b.isToday ? '0 0 250px #ec4899' :
                     '0 40px 140px rgba(0,0,0,0.9), inset 0 20px 70px rgba(255,255,255,0.4)',
-                  transform: 'translateZ(160px)'
+                  transform: 'translateZ(160px)',
+                  aspectRatio: '1 / 1'
                 }}
               >
                 {/* Purim celebration – confetti & groggers */}
