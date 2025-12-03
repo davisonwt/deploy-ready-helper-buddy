@@ -1,7 +1,19 @@
 /**
  * Jitsi Meet Configuration Utilities
  * Provides centralized configuration for all Jitsi integrations
+ * Supports both self-hosted Jitsi and JaaS (8x8)
  */
+
+// JaaS (8x8) Configuration
+export const JAAS_CONFIG = {
+  appId: 'vpaas-magic-cookie-f5f6bee4f16440d4b49cd8668f03d55d',
+  domain: '8x8.vc',
+  getScriptUrl: () => `https://8x8.vc/${JAAS_CONFIG.appId}/external_api.js`,
+  getRoomName: (roomName: string) => `${JAAS_CONFIG.appId}/${roomName}`,
+  // JWT can be set for premium features (recording, outbound calls, etc.)
+  jwt: null as string | null,
+  setJwt: (token: string | null) => { JAAS_CONFIG.jwt = token; },
+};
 
 export const JITSI_CONFIG = {
   domain: (typeof window !== 'undefined' 
