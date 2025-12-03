@@ -186,7 +186,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full">
 
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
 
@@ -215,7 +215,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
 
@@ -299,7 +299,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
 
@@ -472,7 +472,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30 w-full">
 
       <motion.h2 
 
@@ -515,7 +515,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
@@ -625,7 +625,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 2, day: bead.day })}
 
@@ -825,7 +825,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40 w-full">
 
       <motion.h2 
 
@@ -872,7 +872,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
@@ -987,7 +987,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 3, day: bead.day })}
 
@@ -1190,7 +1190,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60 w-full">
 
       <motion.h2 
 
@@ -1241,7 +1241,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 4, day: bead.day })}
 
@@ -1377,7 +1377,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
 
               onClick={() => setSelectedBead({ year, month: 4, day: bead.day })}
 
@@ -1593,7 +1593,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80 w-full">
 
       <motion.h2 
 
@@ -1646,7 +1646,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -1769,7 +1769,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -1957,7 +1957,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60 w-full">
 
       <motion.h2 
 
@@ -2010,7 +2010,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2137,7 +2137,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2340,7 +2340,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600 w-full">
 
       <motion.h2 
 
@@ -2391,7 +2391,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2494,7 +2494,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2663,7 +2663,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700 w-full">
 
       <motion.h2 
 
@@ -2716,7 +2716,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2823,7 +2823,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -2979,7 +2979,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50 w-full">
 
       <motion.h2 
 
@@ -3217,7 +3217,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800 w-full">
 
       <motion.h2 
 
@@ -3269,7 +3269,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -3351,7 +3351,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
 
               style={{
 
@@ -3491,7 +3491,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40 w-full">
 
       <motion.h2 
 
@@ -3545,7 +3545,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
@@ -3635,7 +3635,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
@@ -3790,7 +3790,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full" style={{ minHeight: '95cm' }}>
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full">
 
       <motion.h2 
 
@@ -3847,7 +3847,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
@@ -3930,7 +3930,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-6 h-6 md:w-8 md:h-8 rounded-full border-2 md:border-3 border-black overflow-hidden flex items-center justify-center"
+                className="relative w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black overflow-hidden flex items-center justify-center"
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
