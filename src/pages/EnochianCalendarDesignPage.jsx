@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Sun, Leaf, Snowflake, Flower } from 'lucide-react';
+import { RotateCcw, Sun, Leaf, Snowflake, Flower, MapPin } from 'lucide-react';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getCreatorTime } from '@/utils/customTime';
+import { useUserLocation } from '@/hooks/useUserLocation';
 import {
   Month1Strand,
   Month2Strand,
@@ -20,8 +22,9 @@ import {
 } from '@/components/watch/EnochianWheelCalendar';
 
 // Season data with hemisphere info
-const SEASONS = [
+const BASE_SEASONS = [
   {
+    id: 1,
     months: [1, 2, 3],
     northern: 'Spring',
     southern: 'Fall',
@@ -33,6 +36,7 @@ const SEASONS = [
     bgAccent: 'bg-emerald-500/10'
   },
   {
+    id: 2,
     months: [4, 5, 6],
     northern: 'Summer',
     southern: 'Winter',
@@ -44,6 +48,7 @@ const SEASONS = [
     bgAccent: 'bg-amber-500/10'
   },
   {
+    id: 3,
     months: [7, 8, 9],
     northern: 'Fall',
     southern: 'Spring',
@@ -55,6 +60,7 @@ const SEASONS = [
     bgAccent: 'bg-orange-500/10'
   },
   {
+    id: 4,
     months: [10, 11, 12],
     northern: 'Winter',
     southern: 'Summer',
@@ -82,29 +88,66 @@ const MonthComponents = {
   12: Month12Strand
 };
 
+// Part of day names
+const PART_NAMES = [
+  'Boker 1', 'Boker 2', 'Boker 3', 
+  'Tzohorayim 1', 'Tzohorayim 2', 'Tzohorayim 3',
+  'Tzohorayim 4', 'Tzohorayim 5', 'Tzohorayim 6',
+  'Erev 1', 'Erev 2', 'Erev 3',
+  'Laylah 1', 'Laylah 2', 'Laylah 3',
+  'Laylah 4', 'Laylah 5', 'Laylah 6'
+];
+
 export default function EnochianCalendarDesignPage() {
+  const { location, loading: locationLoading } = useUserLocation();
   const [enochianDate, setEnochianDate] = useState({
-    year: 6028, month: 1, dayOfMonth: 1
+    year: 6028, month: 1, dayOfMonth: 1, part: 1, dayOfYear: 1
   });
 
+  // Update calendar based on location
   useEffect(() => {
     const updateDate = () => {
       const now = new Date();
       const creatorDate = calculateCreatorDate(now);
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      
       setEnochianDate({
         year: creatorDate.year,
         month: creatorDate.month,
-        dayOfMonth: creatorDate.day
+        dayOfMonth: creatorDate.day,
+        part: creatorTime.part,
+        dayOfYear: creatorDate.dayOfYear
       });
     };
+    
     updateDate();
-    const interval = setInterval(updateDate, 60000);
+    const interval = setInterval(updateDate, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [location.lat, location.lon]);
 
-  const handleResetPositions = () => {
+  // Reorder seasons to put current month's season first
+  const orderedSeasons = useMemo(() => {
+    const currentSeasonIndex = BASE_SEASONS.findIndex(
+      season => season.months.includes(enochianDate.month)
+    );
+    
+    if (currentSeasonIndex === -1) return BASE_SEASONS;
+    
+    // Rotate array so current season is first
+    const reordered = [
+      ...BASE_SEASONS.slice(currentSeasonIndex),
+      ...BASE_SEASONS.slice(0, currentSeasonIndex)
+    ];
+    
+    return reordered;
+  }, [enochianDate.month]);
+
+  const handleRefresh = () => {
     window.location.reload();
   };
+
+  // Determine hemisphere based on latitude
+  const isNorthernHemisphere = location.lat >= 0;
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0a0a15] via-[#1a1a2e] to-[#0a0a15] overflow-x-hidden">
@@ -144,9 +187,34 @@ export default function EnochianCalendarDesignPage() {
           <p className="text-lg md:text-xl text-amber-200/80 tracking-widest">
             364 Days • Eternal Alignment • Sunrise to Sunrise
           </p>
+          
+          {/* Current Time Info */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
+            <div className="bg-black/40 px-4 py-2 rounded-full border border-amber-500/30">
+              <span className="text-amber-300 font-bold">
+                Year {enochianDate.year} • Month {enochianDate.month} • Day {enochianDate.dayOfMonth}
+              </span>
+            </div>
+            <div className="bg-black/40 px-4 py-2 rounded-full border border-cyan-500/30">
+              <span className="text-cyan-300 font-bold">
+                Part {enochianDate.part}/18 • {PART_NAMES[enochianDate.part - 1] || 'Unknown'}
+              </span>
+            </div>
+          </div>
+
+          {/* Location Status */}
+          <div className="flex items-center gap-2 text-sm">
+            <MapPin className={`w-4 h-4 ${location.verified ? 'text-green-400' : 'text-yellow-400'}`} />
+            <span className={location.verified ? 'text-green-300' : 'text-yellow-300'}>
+              {location.verified ? 'Location verified' : 'Location not verified'} 
+              ({location.lat.toFixed(2)}°, {location.lon.toFixed(2)}°)
+              {isNorthernHemisphere ? ' • Northern Hemisphere' : ' • Southern Hemisphere'}
+            </span>
+          </div>
+
           <div className="flex items-center gap-4">
             <Button
-              onClick={handleResetPositions}
+              onClick={handleRefresh}
               variant="outline"
               size="sm"
               className="gap-2 border-amber-500/30 hover:border-amber-500/60 text-amber-300"
@@ -159,20 +227,46 @@ export default function EnochianCalendarDesignPage() {
         <LocationVerification />
       </div>
 
-      {/* Seasonal Grid */}
+      {/* Current Month Indicator */}
+      <div className="container mx-auto px-4 mb-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center p-4 bg-pink-500/20 rounded-2xl border border-pink-500/40"
+        >
+          <p className="text-pink-300 font-bold text-lg">
+            📍 Current: Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.part}
+          </p>
+          <p className="text-pink-200/60 text-sm mt-1">
+            Current season shown first below
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Seasonal Grid - Current season first */}
       <div className="container mx-auto px-4 pb-12 relative z-10">
-        {SEASONS.map((season, seasonIndex) => {
+        {orderedSeasons.map((season, seasonIndex) => {
           const NorthIcon = season.northIcon;
           const SouthIcon = season.southIcon;
+          const isCurrentSeason = season.months.includes(enochianDate.month);
           
           return (
             <motion.div
-              key={seasonIndex}
+              key={season.id}
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: seasonIndex * 0.15 }}
-              className={`mb-8 rounded-3xl overflow-hidden border-2 ${season.borderColor} shadow-2xl`}
+              transition={{ delay: seasonIndex * 0.1 }}
+              className={`mb-8 rounded-3xl overflow-hidden border-2 ${season.borderColor} shadow-2xl ${
+                isCurrentSeason ? 'ring-4 ring-pink-500/50 shadow-pink-500/30' : ''
+              }`}
             >
+              {/* Current Season Badge */}
+              {isCurrentSeason && (
+                <div className="bg-pink-500 text-white text-center py-2 font-bold tracking-wider">
+                  ✨ CURRENT SEASON ✨
+                </div>
+              )}
+
               {/* Season Header - Split Hemisphere Display */}
               <div className={`bg-gradient-to-r ${season.gradient} p-4 md:p-6`}>
                 <div className="flex items-center justify-between">
@@ -181,7 +275,9 @@ export default function EnochianCalendarDesignPage() {
                     <NorthIcon className={`w-8 h-8 ${season.textColor}`} />
                     <div>
                       <p className="text-sm text-white/60 uppercase tracking-wider">Northern</p>
-                      <p className={`text-xl md:text-2xl font-bold ${season.textColor}`}>{season.northern}</p>
+                      <p className={`text-xl md:text-2xl font-bold ${season.textColor} ${
+                        isNorthernHemisphere ? 'underline decoration-2' : ''
+                      }`}>{season.northern}</p>
                     </div>
                   </div>
 
@@ -197,7 +293,9 @@ export default function EnochianCalendarDesignPage() {
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="text-sm text-white/60 uppercase tracking-wider">Southern</p>
-                      <p className={`text-xl md:text-2xl font-bold ${season.textColor}`}>{season.southern}</p>
+                      <p className={`text-xl md:text-2xl font-bold ${season.textColor} ${
+                        !isNorthernHemisphere ? 'underline decoration-2' : ''
+                      }`}>{season.southern}</p>
                     </div>
                     <SouthIcon className={`w-8 h-8 ${season.textColor}`} />
                   </div>
@@ -319,17 +417,16 @@ export default function EnochianCalendarDesignPage() {
           </div>
         </motion.div>
 
-        {/* Current Date Footer */}
+        {/* Footer Note */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
           className="mt-8 text-center"
         >
-          <p className="text-2xl font-bold text-amber-300">
-            Year {enochianDate.year} • Month {enochianDate.month} • Day {enochianDate.dayOfMonth}
+          <p className="text-amber-200/60">
+            Day begins at sunrise, not midnight • Location determines sunrise time
           </p>
-          <p className="text-amber-200/60 mt-2">Day begins at sunrise, not midnight</p>
         </motion.div>
       </div>
     </div>
