@@ -557,6 +557,8 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
 
   // Render Wheel 6: 4 Seasonal Leaders
   const renderWheel6SeasonalLeaders = () => {
+    const textRadius = (radii.wheel6Outer + radii.wheel6Inner) / 2;
+    
     return (
       <motion.g
         animate={{ rotate: rotations.wheel6 }}
@@ -567,8 +569,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           const startAngle = i * 90;
           const endAngle = (i + 1) * 90;
           const midAngle = startAngle + 45;
-          const textPos = polarToCartesian(cx, cy, (radii.wheel6Outer + radii.wheel6Inner) / 2, midAngle);
           const isCurrent = calendarData.season === i + 1;
+          const pathId = `season-path-${i}`;
+          const namePathId = `season-name-path-${i}`;
+          const repPathId = `season-rep-path-${i}`;
 
           return (
             <g
@@ -593,36 +597,54 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   filter="url(#glow)"
                 />
               )}
+              {/* Curved text paths */}
+              <defs>
+                <path
+                  id={pathId}
+                  d={describeArc(cx, cy, textRadius - 12, startAngle + 5, endAngle - 5)}
+                  fill="none"
+                />
+                <path
+                  id={namePathId}
+                  d={describeArc(cx, cy, textRadius, startAngle + 5, endAngle - 5)}
+                  fill="none"
+                />
+                <path
+                  id={repPathId}
+                  d={describeArc(cx, cy, textRadius + 12, startAngle + 5, endAngle - 5)}
+                  fill="none"
+                />
+              </defs>
+              {/* Creature name (curved) */}
               <text
-                x={textPos.x}
-                y={textPos.y - 10}
-                textAnchor="middle"
                 fill="white"
                 fontSize="10"
                 fontWeight="bold"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
-                {leader.creature}
+                <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
+                  {leader.creature}
+                </textPath>
               </text>
+              {/* Leader name (curved) */}
               <text
-                x={textPos.x}
-                y={textPos.y + 5}
-                textAnchor="middle"
                 fill="white"
                 fontSize="8"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
-                {leader.name}
+                <textPath href={`#${namePathId}`} startOffset="50%" textAnchor="middle">
+                  {leader.name}
+                </textPath>
               </text>
+              {/* Representative (curved) */}
               <text
-                x={textPos.x}
-                y={textPos.y + 18}
-                textAnchor="middle"
                 fill="hsl(220, 20%, 80%)"
                 fontSize="6"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
-                {leader.representative}
+                <textPath href={`#${repPathId}`} startOffset="50%" textAnchor="middle">
+                  {leader.representative}
+                </textPath>
               </text>
             </g>
           );
@@ -685,7 +707,6 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   // Render Wheel 8: 4 Parts of Day (VARIABLE SIZE based on sunrise/sunset)
   const renderWheel8Parts4Variable = () => {
     const { part4Angles } = calendarData;
-    const partNames = ['Morning', 'Day', 'Evening', 'Night'];
     const colors = [
       'hsl(200, 60%, 60%)',  // Morning - Light Blue
       'hsl(45, 80%, 50%)',   // Day - Golden
@@ -701,14 +722,18 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
       { name: 'Night', angle: part4Angles.night, startAngle: part4Angles.startAngles.night, color: colors[3], index: 3 },
     ];
 
+    const textRadius = (radii.wheel8Outer + radii.wheel8Inner) / 2;
+
     return (
       <g>
         {parts.map((part, i) => {
           const startAngle = part.startAngle;
           const endAngle = startAngle + part.angle;
-          const midAngle = startAngle + part.angle / 2;
-          const textPos = polarToCartesian(cx, cy, (radii.wheel8Outer + radii.wheel8Inner) / 2, midAngle);
           const isCurrent = calendarData.part4 === part.index;
+          const pathId = `part4-path-${part.name}`;
+          
+          // Only show text if the segment is large enough (angle > 15 degrees)
+          const showText = part.angle > 15;
 
           return (
             <g key={`part4-${part.name}`}>
@@ -728,18 +753,27 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   filter="url(#glow)"
                 />
               )}
-              <text
-                x={textPos.x}
-                y={textPos.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill="white"
-                fontSize="8"
-                fontWeight="bold"
-                style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
-              >
-                {part.name}
-              </text>
+              {showText && (
+                <>
+                  <defs>
+                    <path
+                      id={pathId}
+                      d={describeArc(cx, cy, textRadius, startAngle + 2, endAngle - 2)}
+                      fill="none"
+                    />
+                  </defs>
+                  <text
+                    fill="white"
+                    fontSize="8"
+                    fontWeight="bold"
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
+                  >
+                    <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
+                      {part.name}
+                    </textPath>
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
