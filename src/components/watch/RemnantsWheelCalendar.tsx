@@ -889,9 +889,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             {renderCenter()}
             {renderDaysOutOfTime()}
 
-            {/* Current position indicator at top */}
+            {/* Current position indicator at top - pointing DOWN toward wheel */}
             <polygon
-              points={`${cx},${padding + 5} ${cx - 8},${padding + 20} ${cx + 8},${padding + 20}`}
+              points={`${cx},${padding + 25} ${cx - 8},${padding + 10} ${cx + 8},${padding + 10}`}
               fill={COLORS.CURRENT_HIGHLIGHT}
               filter="url(#glow)"
             />
