@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { JAAS_CONFIG } from '@/lib/jitsi-config';
+import { JAAS_CONFIG, getAudioCallConfig, getVideoCallConfig, getJaaSInterfaceConfig } from '@/lib/jitsi-config';
+
+declare global {
+  interface Window {
+    JitsiMeetExternalAPI: any;
+  }
+}
 
 interface JitsiCallOptions {
   callSession: {

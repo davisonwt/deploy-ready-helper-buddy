@@ -20,7 +20,7 @@ import {
   Radio
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
+import { JAAS_CONFIG } from '@/lib/jitsi-config';
 
 interface LiveVideoCallInterfaceProps {
   liveSession: {
@@ -55,7 +55,7 @@ export function LiveVideoCallInterface({
   const displayName = currentUser?.display_name || currentUser?.email || 'Radio Host';
   
   // Generate unique room name for this radio session
-  const roomName = JITSI_CONFIG.generateRoomName('radio_session', liveSession.id);
+  const roomName = `radio_session_${liveSession.id.replace(/-/g, '')}`;
 
   // Calculate total participant count
   useEffect(() => {

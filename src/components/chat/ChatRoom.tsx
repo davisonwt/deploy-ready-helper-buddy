@@ -21,7 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
 import { DonateModal } from './DonateModal';
 import { useCallManager } from '@/hooks/useCallManager';
-import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -848,7 +847,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       {/* Jitsi Call - Show when call is accepted */}
       {currentCall && currentCall.status === 'accepted' && (
         <div className="p-4 border-b">
-          <JitsiCall
+          <JitsiRoom
             roomName={currentCall.id.replace(/-/g, '').substring(0, 12)}
             onLeave={() => {
               if (currentCall?.id) {
