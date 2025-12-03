@@ -320,7 +320,7 @@ export const ChatApp: React.FC = () => {
   }
 
   return (
-    <div className="glass-panel rounded-2xl h-[calc(100vh-220px)] flex flex-col overflow-hidden">
+    <div className="glass-panel rounded-2xl min-h-[500px] max-h-[calc(100vh-220px)] flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-center justify-between mb-4">
@@ -478,12 +478,12 @@ export const ChatApp: React.FC = () => {
         </TabsContent>
 
         {/* Circles Tab */}
-        <TabsContent value="circles" className="flex-1 overflow-hidden m-0">
+        <TabsContent value="circles" className="flex-1 overflow-y-auto m-0">
           <RelationshipLayerChatApp />
         </TabsContent>
 
         {/* Community Tab */}
-        <TabsContent value="community" className="flex-1 overflow-hidden m-0">
+        <TabsContent value="community" className="flex-1 overflow-y-auto m-0">
           <CommunityForums />
         </TabsContent>
       </Tabs>
