@@ -4745,3 +4745,19 @@ const EnochianTimepiece = () => {
 
 
 export default EnochianTimepiece;
+
+// Export individual month strands for external use
+export {
+  Month1Strand,
+  Month2Strand,
+  Month3Strand,
+  Month4Strand,
+  Month5Strand,
+  Month6Strand,
+  Month7Strand,
+  Month8Strand,
+  Month9Strand,
+  Month10Strand,
+  Month11Strand,
+  Month12Strand
+};
