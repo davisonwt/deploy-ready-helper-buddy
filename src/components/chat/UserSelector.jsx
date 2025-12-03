@@ -8,7 +8,7 @@ import { MessageSquare, Phone, Video, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { JitsiCall } from '@/components/JitsiCall';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
 const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
   const { user } = useAuth();
@@ -205,7 +205,7 @@ const UserSelector = ({ onSelectUser, onStartDirectChat, onStartCall }) => {
       {/* Jitsi Call */}
       {showJitsi && (
         <div className="p-4 border-t">
-          <JitsiCall
+          <JitsiRoom
             roomName={crypto.randomUUID().slice(0, 12)}
             onLeave={() => setShowJitsi(false)}
           />
