@@ -282,24 +282,44 @@ export function getLunarDay(solarDayOfYear: number, year: number): number {
   return lunarDay;
 }
 
-// Calculate 18-part of day based on time
-export function get18PartOfDay(hours: number, minutes: number): number {
+// Calculate 18-part of day based on time - DAY STARTS AT SUNRISE (default 6 AM)
+export function get18PartOfDay(hours: number, minutes: number, sunriseHour: number = 6): number {
   // Each part is 80 minutes (1440 minutes / 18 = 80)
-  const totalMinutes = hours * 60 + minutes;
-  return Math.floor(totalMinutes / 80) + 1;
+  // Calculate minutes since SUNRISE, not midnight
+  const currentMinutes = hours * 60 + minutes;
+  const sunriseMinutes = sunriseHour * 60;
+  
+  let minutesSinceSunrise = currentMinutes - sunriseMinutes;
+  if (minutesSinceSunrise < 0) {
+    minutesSinceSunrise += 24 * 60; // Before sunrise = end of previous day
+  }
+  
+  return Math.floor(minutesSinceSunrise / 80) + 1;
 }
 
-// Calculate 4-part of day based on time (equal 90-degree segments for now)
-export function get4PartOfDay(hours: number, minutes: number): number {
-  // Approximate: Day (6-12), Evening (12-18), Night (18-24), Morning (0-6)
-  if (hours >= 6 && hours < 12) return 1; // Day
-  if (hours >= 12 && hours < 18) return 2; // Evening
-  if (hours >= 18 && hours < 24) return 3; // Night
-  return 4; // Morning (0-6)
+// Calculate 4-part of day based on time - DAY STARTS AT SUNRISE
+// Morning: First light to sunrise | Day: Sunrise to sunset | Evening: Sunset to darkness | Night: Darkness to first light
+export function get4PartOfDay(hours: number, minutes: number, sunriseHour: number = 6, sunsetHour: number = 18): number {
+  const currentHour = hours + minutes / 60;
+  const twilightDuration = 0.75; // ~45 minutes
+  
+  const firstLightHour = sunriseHour - twilightDuration;
+  const darknessHour = sunsetHour + twilightDuration;
+  
+  // Morning: first light until sunrise
+  if (currentHour >= firstLightHour && currentHour < sunriseHour) return 4; // Morning
+  // Day: sunrise until sunset
+  if (currentHour >= sunriseHour && currentHour < sunsetHour) return 1; // Day
+  // Evening: sunset until darkness
+  if (currentHour >= sunsetHour && currentHour < darknessHour) return 2; // Evening
+  // Night: darkness until first light
+  return 3; // Night
 }
 
 /**
  * Calculate variable 4-part day angles based on sunrise/sunset times
+ * DAY STARTS AT SUNRISE - angle 0 = sunrise (not midnight!)
+ * 
  * CORRECT DEFINITION:
  * - Morning: From first light on eastern horizon until sun's top edge appears (dawn twilight ~45 mins)
  * - Day: From sunrise (sun top edge visible) until sunset (sun goes under horizon)
@@ -316,7 +336,6 @@ export function calculate4PartAngles(
   solarNoonHour: number = 12
 ): { day: number; evening: number; night: number; morning: number; startAngles: { day: number; evening: number; night: number; morning: number } } {
   // Twilight duration varies seasonally, approximately 45 minutes to 1 hour
-  // Civil twilight is when sun is 0-6 degrees below horizon
   const twilightDuration = 0.75; // ~45 minutes in hours
   
   // Calculate durations in hours based on CORRECT definitions:
@@ -333,18 +352,16 @@ export function calculate4PartAngles(
   const eveningAngle = (eveningLength / total) * 360;
   const nightAngle = (nightLength / total) * 360;
   
-  // Calculate start angles
-  // Morning starts when first light appears (before sunrise)
-  const morningStartHour = sunriseHour - twilightDuration;
-  // Evening starts at sunset
-  const eveningStartHour = sunsetHour;
-  // Night starts after twilight ends
-  const nightStartHour = sunsetHour + twilightDuration;
-  // Day starts at sunrise
-  const dayStartHour = sunriseHour;
+  // Start angles relative to SUNRISE (0 degrees = sunrise, not midnight!)
+  // Day starts at 0 (sunrise)
+  // Evening starts after Day
+  // Night starts after Evening
+  // Morning starts before Day (end of cycle)
   
-  // Convert hours to angles (0 = midnight at top, going clockwise)
-  const hourToAngle = (hour: number) => ((hour % 24) / 24) * 360;
+  const dayStartAngle = 0; // Sunrise = 0 degrees
+  const eveningStartAngle = dayAngle; // After day ends
+  const nightStartAngle = dayAngle + eveningAngle; // After evening ends
+  const morningStartAngle = 360 - morningAngle; // Before sunrise (wraps around)
   
   return {
     day: dayAngle,
@@ -352,10 +369,10 @@ export function calculate4PartAngles(
     night: nightAngle,
     morning: morningAngle,
     startAngles: {
-      morning: hourToAngle(morningStartHour),  // Starts before sunrise (first light)
-      day: hourToAngle(dayStartHour),           // Starts at sunrise
-      evening: hourToAngle(eveningStartHour),   // Starts at sunset
-      night: hourToAngle(nightStartHour),       // Starts when darkness falls
+      day: dayStartAngle,           // 0 = Sunrise
+      evening: eveningStartAngle,   // Starts at sunset
+      night: nightStartAngle,       // Starts when darkness falls
+      morning: morningStartAngle,   // Starts before sunrise (first light)
     }
   };
 }
