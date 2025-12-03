@@ -136,6 +136,7 @@ const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAcces
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
+const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 
 // Lazy load admin pages (only accessed by admins)
@@ -220,6 +221,13 @@ const App = () => (
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
                     <EnochianCalendarDesignPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/wheels-in-itself" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <WheelsInItselfPage />
                   </Suspense>
                 </Layout>
               } />

@@ -8,7 +8,9 @@ export interface ElementConfig {
   width?: number
   height?: number
   radius?: number
-  [key: string]: any // Allow custom properties
+  innerRadius?: number
+  text?: string
+  [key: string]: string | number | undefined // Allow custom properties
 }
 
 interface VisualEditorContextType {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { useVisualEditor, ElementConfig } from '@/contexts/VisualEditorContext'
 import { X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -10,7 +10,7 @@ export function PropertyPanel() {
 
   if (!selectedElementId) return null
 
-  const config = elementConfigs[selectedElementId] || {}
+  const config: ElementConfig = elementConfigs[selectedElementId] || { id: selectedElementId, type: 'unknown' }
 
   const handleChange = (key: string, value: any) => {
     updateElementConfig(selectedElementId, { [key]: value })
