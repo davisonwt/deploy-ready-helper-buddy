@@ -289,11 +289,83 @@ export function get18PartOfDay(hours: number, minutes: number): number {
   return Math.floor(totalMinutes / 80) + 1;
 }
 
-// Calculate 4-part of day based on time
+// Calculate 4-part of day based on time (equal 90-degree segments for now)
 export function get4PartOfDay(hours: number, minutes: number): number {
   // Approximate: Day (6-12), Evening (12-18), Night (18-24), Morning (0-6)
   if (hours >= 6 && hours < 12) return 1; // Day
   if (hours >= 12 && hours < 18) return 2; // Evening
   if (hours >= 18 && hours < 24) return 3; // Night
   return 4; // Morning (0-6)
+}
+
+/**
+ * Calculate variable 4-part day angles based on sunrise/sunset times
+ * Day and night lengths vary with seasons
+ * @param sunriseHour - Hour of sunrise (e.g., 6.5 for 6:30 AM)
+ * @param sunsetHour - Hour of sunset (e.g., 18.5 for 6:30 PM)
+ * @param solarNoonHour - Hour of solar noon (e.g., 12.5)
+ * @returns Object with angle sizes for each part of day in degrees
+ */
+export function calculate4PartAngles(
+  sunriseHour: number = 6,
+  sunsetHour: number = 18,
+  solarNoonHour: number = 12
+): { day: number; evening: number; night: number; morning: number; startAngles: { day: number; evening: number; night: number; morning: number } } {
+  // Calculate durations in hours
+  const dayLength = solarNoonHour - sunriseHour;       // Sunrise to noon
+  const eveningLength = sunsetHour - solarNoonHour;   // Noon to sunset
+  const nightLength = 24 - sunsetHour;                 // Sunset to midnight
+  const morningLength = sunriseHour;                   // Midnight to sunrise
+  
+  const total = dayLength + eveningLength + nightLength + morningLength; // Should = 24
+  
+  // Convert to angles (360 degrees total)
+  const dayAngle = (dayLength / total) * 360;
+  const eveningAngle = (eveningLength / total) * 360;
+  const nightAngle = (nightLength / total) * 360;
+  const morningAngle = (morningLength / total) * 360;
+  
+  // Calculate start angles (starting from top = midnight)
+  // Order: Morning (midnight to sunrise), Day (sunrise to noon), Evening (noon to sunset), Night (sunset to midnight)
+  return {
+    day: dayAngle,
+    evening: eveningAngle,
+    night: nightAngle,
+    morning: morningAngle,
+    startAngles: {
+      morning: 0,                                    // Starts at midnight (top)
+      day: morningAngle,                             // Starts at sunrise
+      evening: morningAngle + dayAngle,              // Starts at noon
+      night: morningAngle + dayAngle + eveningAngle, // Starts at sunset
+    }
+  };
+}
+
+/**
+ * Get approximate sunrise/sunset hours based on day of year and season
+ * Uses simplified calculation - can be enhanced with actual location data
+ */
+export function getSeasonalSunTimes(dayOfYear: number): { sunrise: number; sunset: number; solarNoon: number } {
+  // Approximate seasonal variation
+  // Day 1 = Spring equinox-ish, Day 91 = Summer solstice-ish, etc.
+  
+  // Summer solstice around day 91 (longest day)
+  // Winter solstice around day 273 (shortest day)
+  
+  const baseLength = 12; // Hours of daylight at equinox
+  const variation = 3;   // Max hours variation from equinox
+  
+  // Calculate position in year (0 = winter solstice equivalent)
+  // Shift so day 91 = summer solstice (longest day)
+  const angle = ((dayOfYear - 91 + 364) % 364) / 364 * 2 * Math.PI;
+  const daylightHours = baseLength + variation * Math.cos(angle);
+  
+  const halfDaylight = daylightHours / 2;
+  const solarNoon = 12; // Keep solar noon at 12 for simplicity
+  
+  return {
+    sunrise: solarNoon - halfDaylight,
+    sunset: solarNoon + halfDaylight,
+    solarNoon: solarNoon
+  };
 }
