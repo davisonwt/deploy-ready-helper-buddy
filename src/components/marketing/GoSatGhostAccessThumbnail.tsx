@@ -34,7 +34,7 @@ export function GoSatGhostAccessThumbnail() {
                 lineHeight: '1',
                 fontWeight: '800'
               }}>
-                2SG
+                s2g
               </div>
               <div className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 mt-1" style={{
                 textShadow: '0 0 15px rgba(255,215,0,0.6), 0 0 30px rgba(255,215,0,0.3)',
@@ -152,7 +152,7 @@ export function GoSatGhostAccessThumbnail() {
         <p className="text-xs text-amber-200/90 text-center font-light" style={{
           textShadow: '0 0 10px rgba(0,0,0,0.5)'
         }}>
-          Ensuring a safe, on-brand 2SG ecosystem • Powered by GoSat Guardians
+          Ensuring a safe, on-brand s2g ecosystem • Powered by GoSat Guardians
         </p>
       </div>
     </div>

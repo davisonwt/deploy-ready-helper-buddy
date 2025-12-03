@@ -112,7 +112,7 @@ export function AmbassadorThumbnail() {
     }
     
     if (!formData.currentRole) {
-      setSubmitError('Please select your current 2SG role');
+      setSubmitError('Please select your current s2g role');
       return false;
     }
     
@@ -137,7 +137,7 @@ export function AmbassadorThumbnail() {
     }
     
     if (!formData.whyRepresent.trim() || formData.whyRepresent.trim().length < 50) {
-      setSubmitError('Please provide a thoughtful answer (at least 50 characters) explaining why you want to represent 2SG');
+      setSubmitError('Please provide a thoughtful answer (at least 50 characters) explaining why you want to represent s2g');
       return false;
     }
     
@@ -261,7 +261,7 @@ export function AmbassadorThumbnail() {
             lineHeight: '1',
             fontWeight: '800'
           }}>
-            2SG
+                s2g
           </div>
           <div className="text-sm font-semibold mt-1" style={{ 
             color: currentTheme.accentLight,
@@ -329,7 +329,7 @@ export function AmbassadorThumbnail() {
             color: currentTheme.textPrimary,
             textShadow: `0 2px 4px ${currentTheme.shadow}`
           }}>
-            Become a 2SG Ambassador
+            Become a s2g Ambassador
           </h1>
           
           {/* Subtitle */}
@@ -473,10 +473,10 @@ export function AmbassadorThumbnail() {
               )}
             </div>
 
-            {/* Current 2SG Role */}
+            {/* Current s2g Role */}
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
-                Current 2SG Role <span style={{ color: '#ef4444' }}>*</span>
+                Current s2g Role <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select 
                 required
@@ -603,10 +603,10 @@ export function AmbassadorThumbnail() {
               />
             </div>
 
-            {/* Why I want to represent 2SG */}
+            {/* Why I want to represent s2g */}
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: currentTheme.textPrimary }}>
-                Why I want to represent 2SG <span style={{ color: '#ef4444' }}>*</span>
+                Why I want to represent s2g <span style={{ color: '#ef4444' }}>*</span>
                 <span className="text-xs font-normal ml-1" style={{ color: currentTheme.textSecondary }}>
                   (Minimum 50 characters - be thoughtful and specific)
                 </span>
@@ -616,7 +616,7 @@ export function AmbassadorThumbnail() {
                 required
                 minLength={50}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent resize-none"
-                placeholder="Tell us about your passion for the 2SG community, your vision, and how you plan to represent us..."
+                placeholder="Tell us about your passion for the s2g community, your vision, and how you plan to represent us..."
                 value={formData.whyRepresent}
                 onChange={(e) => setFormData({ ...formData, whyRepresent: e.target.value })}
                 style={{
