@@ -319,14 +319,14 @@ export default function ProfilePage() {
                   className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   <User className="h-4 w-4" />
-                  Profile
+                  My Profile
                 </TabsTrigger>
                 <TabsTrigger 
                   value="journal" 
                   className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   <Calendar className="h-4 w-4" />
-                  Journal
+                  My Journal
                 </TabsTrigger>
                 <TabsTrigger 
                   value="recipes" 
