@@ -4244,6 +4244,42 @@ export type Database = {
         }
         Relationships: []
       }
+      recipes: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          ingredients: string | null
+          instructions: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          ingredients?: string | null
+          instructions?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          ingredients?: string | null
+          instructions?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           commission_amount: number

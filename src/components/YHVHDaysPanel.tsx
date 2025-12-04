@@ -101,15 +101,6 @@ export function YHVHDaysPanel({ isOpen, onClose }: YHVHDaysPanelProps) {
             })}
           </div>
 
-          {/* Decorative element */}
-          <div className="mt-12 text-center">
-            <div className="inline-block p-8 bg-gradient-to-r from-amber-500/20 to-purple-500/20 rounded-full">
-              <div className="text-6xl">🌍</div>
-              <p className="mt-4 text-amber-200 font-medium">
-                Wheels within wheels, as in Ezekiel
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

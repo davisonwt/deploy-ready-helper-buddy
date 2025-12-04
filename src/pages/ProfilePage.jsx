@@ -41,6 +41,7 @@ import {
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import Journal from "../components/journal/Journal"
+import RecipesPage from "./RecipesPage"
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -312,7 +313,7 @@ export default function ProfilePage() {
           {/* Tabs for Profile and Journal */}
           <div className="flex justify-center mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="flex justify-center gap-2 bg-card/80 border-2 border-border shadow-lg">
+              <TabsList className="flex justify-center gap-4 bg-card/80 border-2 border-border shadow-lg">
                 <TabsTrigger 
                   value="profile" 
                   className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -326,6 +327,13 @@ export default function ProfilePage() {
                 >
                   <Calendar className="h-4 w-4" />
                   Journal
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="recipes" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  My Recipes
                 </TabsTrigger>
               </TabsList>
 
@@ -1242,6 +1250,10 @@ export default function ProfilePage() {
 
               <TabsContent value="journal" className="mt-6">
                 <Journal />
+              </TabsContent>
+
+              <TabsContent value="recipes" className="mt-6">
+                <RecipesPage />
               </TabsContent>
             </Tabs>
           </div>
