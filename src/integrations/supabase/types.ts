@@ -4249,34 +4249,40 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
+          image_url: string | null
           ingredients: string | null
           instructions: string | null
           tags: string[] | null
           title: string
           updated_at: string
           user_id: string
+          video_url: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           ingredients?: string | null
           instructions?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string
           user_id: string
+          video_url?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           ingredients?: string | null
           instructions?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
