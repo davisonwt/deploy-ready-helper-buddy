@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { X, FileText, Image, Heart, Users, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { NotesForm } from './forms/NotesForm'
@@ -7,6 +7,12 @@ import { PrayerForm } from './forms/PrayerForm'
 import { LifeForm } from './forms/LifeForm'
 import { SpiritualForm } from './forms/SpiritualForm'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface DateOptionsMenuProps {
   isOpen: boolean
@@ -18,18 +24,6 @@ interface DateOptionsMenuProps {
 
 export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSelectOption }: DateOptionsMenuProps) {
   const [selectedForm, setSelectedForm] = useState<'notes' | 'media' | 'prayer' | 'life' | 'spiritual' | null>(null)
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isOpen])
 
   const handleOptionSelect = (optionId: 'notes' | 'media' | 'prayer' | 'life' | 'spiritual') => {
     setSelectedForm(optionId)
@@ -49,8 +43,6 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
     setSelectedForm(null)
     onClose()
   }
-
-  if (!isOpen) return null
 
   const options = [
     { 
@@ -91,122 +83,98 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
   ]
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Fixed backdrop - doesn't scroll */}
-      <div
-        onClick={closeMenu}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
-      />
+    <Dialog open={isOpen} onOpenChange={(open) => !open && closeMenu()}>
+      <DialogContent className="max-w-md sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 border-purple-700 p-0">
+        <div className={`${selectedForm ? 'flex flex-col sm:flex-row gap-4' : ''}`}>
+          {/* Main Options Panel */}
+          <div className={`${selectedForm ? 'sm:w-80 flex-shrink-0' : 'w-full'} p-6`}>
+            <DialogHeader className="mb-6">
+              <DialogTitle className="text-center text-white">
+                <h2 className="text-3xl font-bold">
+                  Month {yhwhDate.month}, Day {yhwhDate.day}
+                </h2>
+                <p className="text-yellow-300 text-lg mt-2 font-normal">
+                  {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
+                </p>
+                <p className="text-sm text-gray-300 mt-1 font-normal">
+                  {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </DialogTitle>
+            </DialogHeader>
 
-      {/* Scrollable container - covers full viewport */}
-      <div className="fixed inset-0 overflow-y-auto">
-        {/* Content wrapper with padding for scroll space */}
-        <div className="min-h-full py-6 px-4 flex items-start justify-center">
-          {/* Options Menu Panel */}
-          <div
-            className={`relative z-10 ${selectedForm ? 'flex gap-4 w-full max-w-4xl' : 'w-full max-w-md'}`}
-          >
-            {/* Main Options Panel */}
-            <div className={`${selectedForm ? 'w-80 flex-shrink-0' : 'w-full'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 rounded-2xl shadow-2xl`}>
-              {/* Close Button */}
-              <div className="flex justify-end p-4">
-                <button
-                  onClick={closeMenu}
-                  className="text-white hover:scale-110 transition bg-white/20 rounded-full p-2"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="px-6 pb-8 space-y-6 text-white">
-                {/* Date Header */}
-                <div className="text-center">
-                  <h2 className="text-3xl font-bold">
-                    Month {yhwhDate.month}, Day {yhwhDate.day}
-                  </h2>
-                  <p className="text-yellow-300 text-lg mt-2">
-                    {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
-                  </p>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                </div>
-
-                {/* Options grid */}
-                <div className="space-y-4 pb-4">
-                  {options.map((option, index) => {
-                    const Icon = option.icon
-                    return (
-                      <motion.button
-                        key={option.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
-                        className={`${option.color} rounded-2xl p-5 text-left w-full transition-all hover:scale-[1.02] shadow-lg`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <Icon className="h-7 w-7 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="font-bold text-lg">{option.label}</div>
-                            <div className="text-sm opacity-90">{option.description}</div>
-                          </div>
-                        </div>
-                      </motion.button>
-                    )
-                  })}
-                </div>
-              </div>
+            {/* Options grid */}
+            <div className="space-y-4">
+              {options.map((option, index) => {
+                const Icon = option.icon
+                return (
+                  <motion.button
+                    key={option.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
+                    className={`${option.color} rounded-2xl p-5 text-left w-full transition-all hover:scale-[1.02] shadow-lg text-white`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <Icon className="h-7 w-7 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="font-bold text-lg">{option.label}</div>
+                        <div className="text-sm opacity-90">{option.description}</div>
+                      </div>
+                    </div>
+                  </motion.button>
+                )
+              })}
             </div>
-
-            {/* Form Panel - Right Side (when form is selected) */}
-            {selectedForm && (
-              <div className="flex-1 bg-black/50 rounded-2xl overflow-hidden">
-                {selectedForm === 'notes' && (
-                  <NotesForm
-                    selectedDate={selectedDate}
-                    yhwhDate={yhwhDate}
-                    onClose={handleFormClose}
-                    onSave={handleFormSave}
-                  />
-                )}
-                {selectedForm === 'media' && (
-                  <MediaForm
-                    selectedDate={selectedDate}
-                    yhwhDate={yhwhDate}
-                    onClose={handleFormClose}
-                    onSave={handleFormSave}
-                  />
-                )}
-                {selectedForm === 'prayer' && (
-                  <PrayerForm
-                    selectedDate={selectedDate}
-                    yhwhDate={yhwhDate}
-                    onClose={handleFormClose}
-                    onSave={handleFormSave}
-                  />
-                )}
-                {selectedForm === 'life' && (
-                  <LifeForm
-                    selectedDate={selectedDate}
-                    yhwhDate={yhwhDate}
-                    onClose={handleFormClose}
-                    onSave={handleFormSave}
-                  />
-                )}
-                {selectedForm === 'spiritual' && (
-                  <SpiritualForm
-                    selectedDate={selectedDate}
-                    yhwhDate={yhwhDate}
-                    onClose={handleFormClose}
-                    onSave={handleFormSave}
-                  />
-                )}
-              </div>
-            )}
           </div>
+
+          {/* Form Panel - Right Side (when form is selected) */}
+          {selectedForm && (
+            <div className="flex-1 bg-black/50 rounded-2xl overflow-hidden min-h-[400px]">
+              {selectedForm === 'notes' && (
+                <NotesForm
+                  selectedDate={selectedDate}
+                  yhwhDate={yhwhDate}
+                  onClose={handleFormClose}
+                  onSave={handleFormSave}
+                />
+              )}
+              {selectedForm === 'media' && (
+                <MediaForm
+                  selectedDate={selectedDate}
+                  yhwhDate={yhwhDate}
+                  onClose={handleFormClose}
+                  onSave={handleFormSave}
+                />
+              )}
+              {selectedForm === 'prayer' && (
+                <PrayerForm
+                  selectedDate={selectedDate}
+                  yhwhDate={yhwhDate}
+                  onClose={handleFormClose}
+                  onSave={handleFormSave}
+                />
+              )}
+              {selectedForm === 'life' && (
+                <LifeForm
+                  selectedDate={selectedDate}
+                  yhwhDate={yhwhDate}
+                  onClose={handleFormClose}
+                  onSave={handleFormSave}
+                />
+              )}
+              {selectedForm === 'spiritual' && (
+                <SpiritualForm
+                  selectedDate={selectedDate}
+                  yhwhDate={yhwhDate}
+                  onClose={handleFormClose}
+                  onSave={handleFormSave}
+                />
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
