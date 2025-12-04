@@ -91,121 +91,118 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
   ]
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Dark backdrop */}
       <div
         onClick={closeMenu}
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
       />
 
-      {/* Scrollable container */}
-      <div className="relative z-10 h-full w-full overflow-y-auto">
-        <div className="min-h-full flex">
-          {/* Options Menu - Left Side */}
-          <div
-            className={`${selectedForm ? 'w-80 flex-shrink-0' : 'w-full max-w-md mx-auto'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl`}
-          >
-            {/* Fixed Close Button at top */}
-            <div className="sticky top-0 z-20 bg-purple-950/90 backdrop-blur-sm py-4 px-6">
-              <div className="flex justify-end">
-                <button
-                  onClick={closeMenu}
-                  className="text-white hover:scale-110 transition bg-white/20 rounded-full p-2"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="px-6 pb-8 space-y-6 text-white">
-              {/* Date Header */}
-              <div className="text-center">
-                <h2 className="text-3xl font-bold">
-                  Month {yhwhDate.month}, Day {yhwhDate.day}
-                </h2>
-                <p className="text-yellow-300 text-lg mt-2">
-                  {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
-                </p>
-                <p className="text-sm text-gray-300 mt-1">
-                  {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-
-              {/* Options grid */}
-              <div className="space-y-4 pb-8">
-                {options.map((option, index) => {
-                  const Icon = option.icon
-                  return (
-                    <motion.button
-                      key={option.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
-                      className={`${option.color} rounded-2xl p-5 text-left w-full transition-all hover:scale-[1.02] shadow-lg`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <Icon className="h-7 w-7 mt-0.5 flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="font-bold text-lg">{option.label}</div>
-                          <div className="text-sm opacity-90">{option.description}</div>
-                        </div>
-                      </div>
-                    </motion.button>
-                  )
-                })}
-              </div>
+      {/* Scrollable content container */}
+      <div className="relative z-10 min-h-full flex">
+        {/* Options Menu - Left Side */}
+        <div
+          className={`${selectedForm ? 'w-80 flex-shrink-0' : 'w-full max-w-md mx-auto'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl`}
+        >
+          {/* Sticky Close Button */}
+          <div className="sticky top-0 z-20 bg-purple-950/90 backdrop-blur-sm py-4 px-6">
+            <div className="flex justify-end">
+              <button
+                onClick={closeMenu}
+                className="text-white hover:scale-110 transition bg-white/20 rounded-full p-2"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
           </div>
-
-          {/* Form Panel - Right Side (when form is selected) */}
-          {selectedForm && (
-            <div className="flex-1 bg-black/50 min-h-full">
-              {selectedForm === 'notes' && (
-                <NotesForm
-                  selectedDate={selectedDate}
-                  yhwhDate={yhwhDate}
-                  onClose={handleFormClose}
-                  onSave={handleFormSave}
-                />
-              )}
-              {selectedForm === 'media' && (
-                <MediaForm
-                  selectedDate={selectedDate}
-                  yhwhDate={yhwhDate}
-                  onClose={handleFormClose}
-                  onSave={handleFormSave}
-                />
-              )}
-              {selectedForm === 'prayer' && (
-                <PrayerForm
-                  selectedDate={selectedDate}
-                  yhwhDate={yhwhDate}
-                  onClose={handleFormClose}
-                  onSave={handleFormSave}
-                />
-              )}
-              {selectedForm === 'life' && (
-                <LifeForm
-                  selectedDate={selectedDate}
-                  yhwhDate={yhwhDate}
-                  onClose={handleFormClose}
-                  onSave={handleFormSave}
-                />
-              )}
-              {selectedForm === 'spiritual' && (
-                <SpiritualForm
-                  selectedDate={selectedDate}
-                  yhwhDate={yhwhDate}
-                  onClose={handleFormClose}
-                  onSave={handleFormSave}
-                />
-              )}
+          
+          <div className="px-6 pb-8 space-y-6 text-white">
+            {/* Date Header */}
+            <div className="text-center">
+              <h2 className="text-3xl font-bold">
+                Month {yhwhDate.month}, Day {yhwhDate.day}
+              </h2>
+              <p className="text-yellow-300 text-lg mt-2">
+                {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
+              </p>
+              <p className="text-sm text-gray-300 mt-1">
+                {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
             </div>
-          )}
+
+            {/* Options grid */}
+            <div className="space-y-4 pb-8">
+              {options.map((option, index) => {
+                const Icon = option.icon
+                return (
+                  <motion.button
+                    key={option.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
+                    className={`${option.color} rounded-2xl p-5 text-left w-full transition-all hover:scale-[1.02] shadow-lg`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <Icon className="h-7 w-7 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="font-bold text-lg">{option.label}</div>
+                        <div className="text-sm opacity-90">{option.description}</div>
+                      </div>
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
         </div>
+
+        {/* Form Panel - Right Side (when form is selected) */}
+        {selectedForm && (
+          <div className="flex-1 bg-black/50 min-h-full">
+            {selectedForm === 'notes' && (
+              <NotesForm
+                selectedDate={selectedDate}
+                yhwhDate={yhwhDate}
+                onClose={handleFormClose}
+                onSave={handleFormSave}
+              />
+            )}
+            {selectedForm === 'media' && (
+              <MediaForm
+                selectedDate={selectedDate}
+                yhwhDate={yhwhDate}
+                onClose={handleFormClose}
+                onSave={handleFormSave}
+              />
+            )}
+            {selectedForm === 'prayer' && (
+              <PrayerForm
+                selectedDate={selectedDate}
+                yhwhDate={yhwhDate}
+                onClose={handleFormClose}
+                onSave={handleFormSave}
+              />
+            )}
+            {selectedForm === 'life' && (
+              <LifeForm
+                selectedDate={selectedDate}
+                yhwhDate={yhwhDate}
+                onClose={handleFormClose}
+                onSave={handleFormSave}
+              />
+            )}
+            {selectedForm === 'spiritual' && (
+              <SpiritualForm
+                selectedDate={selectedDate}
+                yhwhDate={yhwhDate}
+                onClose={handleFormClose}
+                onSave={handleFormSave}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
