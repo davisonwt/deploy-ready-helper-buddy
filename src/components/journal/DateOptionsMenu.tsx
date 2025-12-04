@@ -91,79 +91,76 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
   ]
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 z-50 pointer-events-auto h-screen w-screen">
-        {/* Dark backdrop */}
-        <div
-          onClick={closeMenu}
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
-        />
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Dark backdrop */}
+      <div
+        onClick={closeMenu}
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+      />
 
-        {/* Container for menu and form side-by-side - positioned at top */}
-        <div className="absolute top-0 left-0 right-0 bottom-0 flex h-screen w-screen overflow-hidden">
+      {/* Scrollable container */}
+      <div className="relative z-10 h-full w-full overflow-y-auto">
+        <div className="min-h-full flex">
           {/* Options Menu - Left Side */}
           <div
-            className={`${selectedForm ? 'w-80' : 'w-full max-w-md'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-all duration-500 pointer-events-auto flex flex-col h-screen`}
+            className={`${selectedForm ? 'w-80 flex-shrink-0' : 'w-full max-w-md mx-auto'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl`}
           >
-          {/* Sticky Close X Button */}
-          <div className="sticky top-0 z-10 bg-gradient-to-b from-purple-950 to-transparent pb-4 pt-4 px-8">
-            <div className="flex justify-end">
-              <button
-                onClick={closeMenu}
-                className="text-4xl hover:scale-125 transition bg-white/10 rounded-full p-2"
-              >
-                <X className="w-8 h-8" />
-              </button>
+            {/* Fixed Close Button at top */}
+            <div className="sticky top-0 z-20 bg-purple-950/90 backdrop-blur-sm py-4 px-6">
+              <div className="flex justify-end">
+                <button
+                  onClick={closeMenu}
+                  className="text-white hover:scale-110 transition bg-white/20 rounded-full p-2"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto overscroll-contain px-8 pb-32 space-y-8 text-white" style={{ 
-            WebkitOverflowScrolling: 'touch', 
-            scrollBehavior: 'smooth'
-          }}>
+            
+            <div className="px-6 pb-8 space-y-6 text-white">
+              {/* Date Header */}
+              <div className="text-center">
+                <h2 className="text-3xl font-bold">
+                  Month {yhwhDate.month}, Day {yhwhDate.day}
+                </h2>
+                <p className="text-yellow-300 text-lg mt-2">
+                  {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
+                </p>
+                <p className="text-sm text-gray-300 mt-1">
+                  {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
 
-            {/* Date Header */}
-            <div className="text-center">
-              <h2 className="text-4xl font-bold flex items-center justify-center gap-4">
-                <span>Month {yhwhDate.month}, Day {yhwhDate.day}</span>
-              </h2>
-              <p className="text-yellow-300 text-lg mt-3">
-                {yhwhDate.weekDay === 7 ? 'Shabbat' : `Day ${yhwhDate.weekDay}`} · Year {yhwhDate.year}
-              </p>
-              <p className="text-sm text-gray-300 mt-1">
-                {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
-
-            {/* Options grid */}
-            <div className="space-y-4">
-              {options.map((option, index) => {
-                const Icon = option.icon
-                return (
-                  <motion.button
-                    key={option.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
-                    className={`${option.color} rounded-3xl p-6 text-left w-full transition-all hover:scale-105 shadow-xl`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <Icon className="h-8 w-8 mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-bold text-xl mb-1">{option.label}</div>
-                        <div className="text-sm opacity-90">{option.description}</div>
+              {/* Options grid */}
+              <div className="space-y-4 pb-8">
+                {options.map((option, index) => {
+                  const Icon = option.icon
+                  return (
+                    <motion.button
+                      key={option.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      onClick={() => handleOptionSelect(option.id as 'notes' | 'media' | 'prayer' | 'life' | 'spiritual')}
+                      className={`${option.color} rounded-2xl p-5 text-left w-full transition-all hover:scale-[1.02] shadow-lg`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <Icon className="h-7 w-7 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="font-bold text-lg">{option.label}</div>
+                          <div className="text-sm opacity-90">{option.description}</div>
+                        </div>
                       </div>
-                    </div>
-                  </motion.button>
-                )
-              })}
+                    </motion.button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
           </div>
 
           {/* Form Panel - Right Side (when form is selected) */}
           {selectedForm && (
-            <div className="flex-1 bg-black/50 pointer-events-auto overflow-y-auto h-screen">
+            <div className="flex-1 bg-black/50 min-h-full">
               {selectedForm === 'notes' && (
                 <NotesForm
                   selectedDate={selectedDate}
@@ -207,6 +204,7 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
             </div>
           )}
         </div>
+      </div>
     </div>
   )
 }
