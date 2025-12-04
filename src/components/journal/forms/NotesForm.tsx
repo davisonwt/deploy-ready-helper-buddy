@@ -184,12 +184,6 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
       <div className="flex-shrink-0 p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Add Notes</h2>
-          <button
-            onClick={onClose}
-            className="text-2xl hover:scale-125 transition"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
         <p className="text-sm text-gray-300">
           Month {yhwhDate.month}, Day {yhwhDate.day} · {selectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
