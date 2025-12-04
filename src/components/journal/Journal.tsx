@@ -420,7 +420,7 @@ export default function Journal() {
       </div>
 
       <Tabs defaultValue="entries" className="space-y-4">
-        <TabsList>
+        <TabsList className="gap-4">
           <TabsTrigger value="entries">
             <FileText className="h-4 w-4 mr-2" />
             Entries

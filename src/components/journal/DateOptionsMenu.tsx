@@ -104,19 +104,22 @@ export function DateOptionsMenu({ isOpen, onClose, selectedDate, yhwhDate, onSel
           <div
             className={`${selectedForm ? 'w-80' : 'w-full max-w-md'} bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-all duration-500 pointer-events-auto flex flex-col h-screen`}
           >
-          <div className="flex-1 overflow-y-auto overscroll-contain p-8 pb-32 space-y-8 text-white" style={{ 
-            WebkitOverflowScrolling: 'touch', 
-            scrollBehavior: 'smooth'
-          }}>
-            {/* Close X */}
+          {/* Sticky Close X Button */}
+          <div className="sticky top-0 z-10 bg-gradient-to-b from-purple-950 to-transparent pb-4 pt-4 px-8">
             <div className="flex justify-end">
               <button
                 onClick={closeMenu}
-                className="text-4xl hover:scale-125 transition"
+                className="text-4xl hover:scale-125 transition bg-white/10 rounded-full p-2"
               >
                 <X className="w-8 h-8" />
               </button>
             </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto overscroll-contain px-8 pb-32 space-y-8 text-white" style={{ 
+            WebkitOverflowScrolling: 'touch', 
+            scrollBehavior: 'smooth'
+          }}>
 
             {/* Date Header */}
             <div className="text-center">
