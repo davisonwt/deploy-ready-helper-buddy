@@ -401,9 +401,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
-  // Render Wheel 3: 354 Lunar/Moon Days
-  const renderWheel3MoonDays = () => {
-    const lunarDays = Array.from({ length: 354 }, (_, i) => i + 1);
+  // Render Wheel 3: YHVH's Count (264 days displayed)
+  const renderWheel3YHVHCount = () => {
+    // YHVH's count goes from 1-264
+    const yhvhDays = Array.from({ length: 264 }, (_, i) => i + 1);
 
     return (
       <motion.g
@@ -411,27 +412,29 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
         transition={{ duration: 1, ease: "easeInOut" }}
         style={{ transformOrigin: `${cx}px ${cy}px` }}
       >
-        {lunarDays.map((day) => {
-          const startAngle = ((day - 1) / 354) * 360;
-          const endAngle = (day / 354) * 360;
+        {yhvhDays.map((day) => {
+          const startAngle = ((day - 1) / 264) * 360;
+          const endAngle = (day / 264) * 360;
           const midAngle = (startAngle + endAngle) / 2;
-          const isCurrent = calendarData.lunarDay === day;
-          const isDay354 = day === 354;
+          // Calculate which day of year this corresponds to (roughly)
+          const correspondingDayOfYear = Math.ceil((day / 264) * 364);
+          const isCurrent = correspondingDayOfYear === calendarData.dayOfYear || day === 264;
+          const isDay264 = day === 264;
           const textPos = polarToCartesian(cx, cy, (radii.wheel3Outer + radii.wheel3Inner) / 2, midAngle);
 
           // Show more numbers for better visibility
-          const showNumber = day === 1 || day % 15 === 0 || day === 354 || isCurrent;
+          const showNumber = day === 1 || day % 22 === 0 || day === 264 || isCurrent;
 
-          // Add hover for moon days too
-          const handleMoonHover = () => handleHover('moon', { day, isCurrent, isDay354 });
+          // Add hover for YHVH count
+          const handleYHVHHover = () => handleHover('yhvhCount', { day, isCurrent, isDay264 });
 
           return (
-            <g key={`lunar-${day}`} onMouseEnter={handleMoonHover} onMouseLeave={handleHoverEnd} style={{ cursor: 'pointer' }}>
+            <g key={`yhvh-${day}`} onMouseEnter={handleYHVHHover} onMouseLeave={handleHoverEnd} style={{ cursor: 'pointer' }}>
               <path
                 d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
-                fill={isDay354 ? COLORS.MOON_354 : isCurrent ? COLORS.CURRENT_HIGHLIGHT : 'hsl(260, 30%, 20%)'}
-                fillOpacity={isCurrent || isDay354 ? 0.9 : 0.4}
-                stroke="hsl(260, 20%, 30%)"
+                fill={isDay264 ? 'hsl(280, 60%, 50%)' : isCurrent ? COLORS.CURRENT_HIGHLIGHT : 'hsl(280, 30%, 20%)'}
+                fillOpacity={isCurrent || isDay264 ? 0.9 : 0.4}
+                stroke="hsl(280, 20%, 30%)"
                 strokeWidth="0.2"
               />
               {isCurrent && (
@@ -451,7 +454,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   dominantBaseline="middle"
                   fill="white"
                   fontSize="5"
-                  fontWeight={isCurrent || isDay354 ? 'bold' : 'normal'}
+                  fontWeight={isCurrent || isDay264 ? 'bold' : 'normal'}
                 >
                   {day}
                 </text>
@@ -926,6 +929,115 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
+  // Render Shadow Line on Month 1 Day 1 (NOT on month 9)
+  const renderShadowLine = () => {
+    // Shadow line only appears on Month 1 Day 1 (day of year 1)
+    // Calculate angle for day 1 of month 1
+    const dayOfYearForShadow = 1; // Month 1, Day 1
+    const shadowAngle = ((dayOfYearForShadow - 1) / 364) * 360 + rotations.wheel2;
+    
+    const startPoint = polarToCartesian(cx, cy, radii.outerText - 10, shadowAngle);
+    const endPoint = polarToCartesian(cx, cy, radii.wheel4Outer, shadowAngle);
+
+    return (
+      <motion.g>
+        {/* Shadow line with special glow effect */}
+        <motion.line
+          x1={startPoint.x}
+          y1={startPoint.y}
+          x2={endPoint.x}
+          y2={endPoint.y}
+          stroke="hsl(220, 60%, 40%)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          filter="url(#shadowGlow)"
+          initial={{ opacity: 0.5 }}
+          animate={{ 
+            opacity: [0.5, 1, 0.5],
+            strokeWidth: [4, 6, 4]
+          }}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        {/* Inner bright line */}
+        <motion.line
+          x1={startPoint.x}
+          y1={startPoint.y}
+          x2={endPoint.x}
+          y2={endPoint.y}
+          stroke="hsl(220, 80%, 70%)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          initial={{ opacity: 0.8 }}
+          animate={{ 
+            opacity: [0.8, 1, 0.8]
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </motion.g>
+    );
+  };
+
+  // Render special effect for 1st Sabbath (day 7)
+  const renderFirstSabbathEffect = () => {
+    // 1st Sabbath is day 7 of month 1
+    const firstSabbathDay = 7;
+    const sabbathAngle = ((firstSabbathDay - 1) / 364) * 360 + rotations.wheel2;
+    
+    const outerPoint = polarToCartesian(cx, cy, radii.wheel1Outer + 5, sabbathAngle);
+    const innerPoint = polarToCartesian(cx, cy, radii.wheel2Inner - 5, sabbathAngle);
+
+    return (
+      <motion.g>
+        {/* Pulsing golden ring around 1st Sabbath */}
+        <motion.circle
+          cx={(outerPoint.x + innerPoint.x) / 2}
+          cy={(outerPoint.y + innerPoint.y) / 2}
+          r="15"
+          fill="none"
+          stroke={COLORS.SABBATH}
+          strokeWidth="2"
+          filter="url(#sabbathGlow)"
+          initial={{ scale: 0.8, opacity: 0.5 }}
+          animate={{ 
+            scale: [0.8, 1.2, 0.8],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ 
+            duration: 2.5, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        {/* Inner star burst effect */}
+        <motion.circle
+          cx={(outerPoint.x + innerPoint.x) / 2}
+          cy={(outerPoint.y + innerPoint.y) / 2}
+          r="8"
+          fill={COLORS.SABBATH}
+          fillOpacity="0.3"
+          initial={{ scale: 1 }}
+          animate={{ 
+            scale: [1, 1.5, 1],
+            fillOpacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </motion.g>
+    );
+  };
+
   const seasonLeader = SEASONAL_LEADERS[calendarData.season - 1];
   const monthLeader = MONTHLY_LEADERS[calendarData.month - 1];
 
@@ -963,6 +1075,26 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
+              <filter id="shadowGlow" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="6" result="coloredBlur" />
+                <feFlood floodColor="hsl(220, 70%, 60%)" floodOpacity="0.7" result="glowColor" />
+                <feComposite in="glowColor" in2="coloredBlur" operator="in" result="softGlow" />
+                <feMerge>
+                  <feMergeNode in="softGlow" />
+                  <feMergeNode in="softGlow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <filter id="sabbathGlow" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="5" result="coloredBlur" />
+                <feFlood floodColor={COLORS.SABBATH} floodOpacity="0.8" result="glowColor" />
+                <feComposite in="glowColor" in2="coloredBlur" operator="in" result="softGlow" />
+                <feMerge>
+                  <feMergeNode in="softGlow" />
+                  <feMergeNode in="softGlow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
               <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="hsl(220, 30%, 15%)" />
                 <stop offset="100%" stopColor="hsl(220, 30%, 5%)" />
@@ -976,7 +1108,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             {renderOuterText()}
             {renderWheel1MansCount()}      {/* Man's Count (1-4, 1-360) */}
             {renderWheel2MonthDays()}       {/* Month Days (30/30/31 pattern) */}
-            {renderWheel3MoonDays()}        {/* Moon Days (1-354) */}
+            {renderWheel3YHVHCount()}       {/* YHVH's Count (1-264) */}
             {renderWheel4Weeks()}           {/* 52 Weeks with numbers */}
             {renderWheel5MonthlyLeaders()}  {/* 12 Monthly Leaders */}
             {renderWheel6SeasonalLeaders()} {/* 4 Seasonal Leaders */}
@@ -984,6 +1116,8 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             {renderWheel8Parts4Variable()}  {/* 4 Parts of Day (VARIABLE) */}
             {renderCenter()}
             {renderDaysOutOfTime()}
+            {renderShadowLine()}            {/* Shadow line on Month 1 Day 1 */}
+            {renderFirstSabbathEffect()}    {/* Special effect on 1st Sabbath */}
 
             {/* Current position indicator at top - pointing DOWN toward wheel */}
             <polygon
@@ -1039,10 +1173,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                     </p>
                   </div>
                 )}
-                {hoveredElement.type === 'moon' && (
+                {hoveredElement.type === 'yhvhCount' && (
                   <div>
-                    <h4 className="font-bold text-primary">Moon Day: {hoveredElement.data.day}</h4>
-                    {hoveredElement.data.isDay354 && <p className="text-sm text-pink-400">Special Day 354</p>}
+                    <h4 className="font-bold text-primary">YHVH's Count: {hoveredElement.data.day}</h4>
+                    {hoveredElement.data.isDay264 && <p className="text-sm text-purple-400">Special Day 264</p>}
                     {hoveredElement.data.isCurrent && <p className="text-sm text-amber-400">Current Day</p>}
                   </div>
                 )}
@@ -1063,7 +1197,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           <div className="flex justify-center gap-4 text-sm text-muted-foreground">
             <span>Man's Count: {calendarData.mansCount}</span>
             <span>•</span>
-            <span>Moon Day: {calendarData.lunarDay}</span>
+            <span>YHVH's Count: 264</span>
             <span>•</span>
             <span>Week: {calendarData.week}</span>
           </div>
