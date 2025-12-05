@@ -1,6 +1,6 @@
 'use client';
-// Wheels in Itself - Stationary tooltips, day starts at sunrise
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+// Wheels in Itself - Cursor-following tooltips, day starts at sunrise
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   SEASONAL_LEADERS,
@@ -72,6 +72,8 @@ const describeWedge = (cx: number, cy: number, innerR: number, outerR: number, s
 export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hoveredElement, setHoveredElement] = useState<{ type: string; data: any } | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Update time every second
   useEffect(() => {
@@ -202,10 +204,27 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     };
   }, [calendarData, currentTime]);
 
-  // Handle hover - STATIONARY TOOLTIP (no position tracking)
-  const handleHover = useCallback((type: string, data: any) => {
+  // Handle hover - track mouse position for cursor-following tooltip
+  const handleHover = useCallback((type: string, data: any, e?: React.MouseEvent) => {
     setHoveredElement({ type, data });
+    if (e && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
   }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (hoveredElement && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  }, [hoveredElement]);
 
   const handleHoverEnd = useCallback(() => {
     setHoveredElement(null);
@@ -914,7 +933,12 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     <TooltipProvider>
       <div className="flex flex-col items-center">
         {/* Main Wheel */}
-        <div className="relative" style={{ width: size, height: size }}>
+        <div 
+          ref={containerRef}
+          className="relative" 
+          style={{ width: size, height: size }}
+          onMouseMove={handleMouseMove}
+        >
           <svg
             width={size}
             height={size}
@@ -969,17 +993,17 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             />
           </svg>
 
-          {/* Stationary Hover Tooltip - positioned at bottom-left of wheel */}
+          {/* Cursor-following Hover Tooltip */}
           <AnimatePresence>
             {hoveredElement && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl max-w-xs"
+                className="absolute z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl max-w-xs pointer-events-none"
                 style={{
-                  left: 20,
-                  bottom: 20,
+                  left: Math.min(mousePosition.x + 15, size - 200),
+                  top: Math.min(mousePosition.y + 15, size - 100),
                 }}
               >
                 {hoveredElement.type === 'season' && (

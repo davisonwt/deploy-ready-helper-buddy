@@ -249,12 +249,10 @@ export function getWeekdayName(dayOfWeek: number): string {
   return `Day ${dayOfWeek}`;
 }
 
-// Helper to calculate man's count (1,2,3,4 then 1,2,3...360)
+// Helper to calculate man's count - direct day of year count
 export function getMansCount(dayOfYear: number): number {
-  // First 4 days are 1,2,3,4
-  if (dayOfYear <= 4) return dayOfYear;
-  // After that, restart from 1 and count to 360
-  return dayOfYear - 4;
+  // Man's count equals the day of year directly
+  return dayOfYear;
 }
 
 // Calculate current season (1-4) from day of year
