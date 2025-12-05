@@ -312,22 +312,60 @@ export const CommunityForums: React.FC = () => {
   const handleVote = async (postId: string, voteType: 'upvote' | 'downvote') => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast({
+          title: "Login Required",
+          description: "Please login to vote on posts",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Check if user already voted
-      const { data: existingVote } = await supabase
+      const { data: existingVote, error: voteError } = await supabase
         .from('community_post_votes')
         .select('*')
         .eq('post_id', postId)
         .eq('user_id', user.id)
         .maybeSingle();
 
+      if (voteError) {
+        console.error('Error checking vote:', voteError);
+        return;
+      }
+
+      // Get current post to update counts
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+
+      let newUpvotes = post.upvotes;
+      let newDownvotes = post.downvotes;
+
       if (existingVote) {
-        // Update vote
-        await supabase
-          .from('community_post_votes')
-          .update({ vote_type: voteType })
-          .eq('id', existingVote.id);
+        // If clicking same vote type, remove the vote
+        if (existingVote.vote_type === voteType) {
+          await supabase
+            .from('community_post_votes')
+            .delete()
+            .eq('id', existingVote.id);
+          
+          if (voteType === 'upvote') newUpvotes--;
+          else newDownvotes--;
+        } else {
+          // Changing vote
+          await supabase
+            .from('community_post_votes')
+            .update({ vote_type: voteType })
+            .eq('id', existingVote.id);
+          
+          if (voteType === 'upvote') {
+            newUpvotes++;
+            newDownvotes--;
+          } else {
+            newDownvotes++;
+            newUpvotes--;
+          }
+        }
       } else {
         // Create new vote
         await supabase
@@ -337,11 +375,34 @@ export const CommunityForums: React.FC = () => {
             user_id: user.id,
             vote_type: voteType,
           });
+        
+        if (voteType === 'upvote') newUpvotes++;
+        else newDownvotes++;
       }
 
-      fetchPosts();
+      // Update post counts
+      await supabase
+        .from('community_posts')
+        .update({ 
+          upvotes: Math.max(0, newUpvotes), 
+          downvotes: Math.max(0, newDownvotes) 
+        })
+        .eq('id', postId);
+
+      // Update local state immediately for responsive UI
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, upvotes: Math.max(0, newUpvotes), downvotes: Math.max(0, newDownvotes) }
+          : p
+      ));
+
     } catch (error) {
       console.error('Error voting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record vote",
+        variant: "destructive"
+      });
     }
   };
 
