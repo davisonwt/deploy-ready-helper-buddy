@@ -138,6 +138,7 @@ const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
 const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
+const MemryPage = lazy(() => import("./pages/MemryPage"));
 
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
@@ -660,6 +661,15 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <ProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* s2g Memry - TikTok-like social media */}
+              <Route path="/memry" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <MemryPage />
                   </Layout>
                 </ProtectedRoute>
               } />
