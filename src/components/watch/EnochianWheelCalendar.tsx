@@ -124,13 +124,27 @@ const calculateSabbathDays = (month: number): number[] => {
   return sabbathDays;
 };
 
+// Types for extended beads in Month 1
+interface ExtendedBead {
+  day: number;
+  displayNumber: number;
+  globalDay: number;
+  color: string;
+  isToday: boolean;
+  isTekufah: boolean;
+  isSabbath: boolean;
+  isFirstSabbath: boolean;
+  isFromMonth12: boolean;
+  label: string;
+  isNewYearStart: boolean;
+}
+
 const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const { location } = useUserLocation();
 
-  // Track part changes every 80 minutes (PART_MINUTES)
   useEffect(() => {
     const updatePart = () => {
       const now = new Date();
@@ -138,69 +152,112 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
       const newPart = creatorTime.part;
       
       if (newPart !== currentPart && currentPart !== 0) {
-        // New part began - trigger blood drop animation
         setShowBloodDrop(true);
-        setTimeout(() => setShowBloodDrop(false), 4000); // Match animation duration
+        setTimeout(() => setShowBloodDrop(false), 4000);
       }
       setCurrentPart(newPart);
     };
 
-    // Initialize current part
     const now = new Date();
     const creatorTime = getCreatorTime(now, location.lat, location.lon);
     setCurrentPart(creatorTime.part);
     
-    // Check every minute for part changes
     const interval = setInterval(updatePart, 60000);
     return () => clearInterval(interval);
   }, [location.lat, location.lon]);
 
-  // Calculate Shabbat days for Month 1 based on actual weekday (only day 7 of week)
   const sabbathDays = calculateSabbathDays(1);
 
-  const beads = Array.from({ length: 30 }, (_, i) => {
+  // Build 33 beads: 3 from month 12 (days 29, 30, 31) + 30 from month 1
+  const beads: ExtendedBead[] = [];
+  
+  // First 3 beads are days 29, 30, 31 from month 12 (new week cycle days 1, 2, 3)
+  for (let i = 0; i < 3; i++) {
+    const day12 = 29 + i; // 29, 30, 31
+    const weekCycleDay = i + 1; // 1, 2, 3
+    const yhvhCount = i + 1; // 1, 2, 3
+    
+    beads.push({
+      day: day12,
+      displayNumber: day12,
+      globalDay: 334 + day12, // Month 12 global offset
+      color: '#1f2937',
+      isToday: false, // These are from previous year
+      isTekufah: false,
+      isSabbath: false,
+      isFirstSabbath: false,
+      isFromMonth12: true,
+      isNewYearStart: false,
+      label: `day ${day12} of the 12th month day ${weekCycleDay} of the new years new week cycle and day ${yhvhCount} count of yhvh's 364 days`
+    });
+  }
+  
+  // Next 30 beads are days 1-30 from month 1
+  for (let i = 0; i < 30; i++) {
     const day = i + 1;
-    const globalDay = day; // Month 1 starts at global day 1
-
-    // Shabbat only when it's actually day 7 of the week
+    const weekCycleDay = i + 4; // Continues from 4, 5, 6, 7, then 1, 2, etc.
+    const yhvhCount = i + 4; // Continues from 4
+    const mansCount = i + 1; // 1, 2, 3...
+    
     const isSabbath = sabbathDays.includes(day);
+    const isFeast = day <= 4;
+    const isTekufah = day === 1; // Day 1 is the tequvah with shadow line
+    const isFirstSabbath = day === 4; // Day 4 is first sabbath
+    
+    let color = '#1f2937';
+    if (isSabbath) color = '#fbbf24';
+    if (isFeast) color = '#22d3ee';
+    
+    let label = '';
+    if (day === 1) {
+      label = `day 1 of the 1st month day 4 of the new years new week cycle and day 4 count of yhvh's 364 days and day 1 of mans 364 days`;
+    } else if (day === 2) {
+      label = `day 2 of the 1st month day 5 of the new years new week cycle and day 5 count of yhvh's 364 days and day 2 of mans 364 days`;
+    } else if (day === 3) {
+      label = `day 3 of the 1st month day 6 of the new years new week cycle and day 6 count of yhvh's 364 days and day 3 of mans 364 days`;
+    } else if (day === 4) {
+      label = `day 4 of the 1st month the first sabbath of the new years the 7th day of the new week cycle and day 7 count of yhvh's 364 days and day 4 of mans 364 days`;
+    } else {
+      const actualWeekCycleDay = ((weekCycleDay - 1) % 7) + 1;
+      label = `day ${day} of the 1st month day ${actualWeekCycleDay} of week cycle and day ${yhvhCount} count of yhvh's 364 days and day ${mansCount} of mans 364 days`;
+    }
+    
+    beads.push({
+      day,
+      displayNumber: day,
+      globalDay: day,
+      color,
+      isToday: day === dayOfMonth,
+      isTekufah,
+      isSabbath,
+      isFirstSabbath,
+      isFromMonth12: false,
+      isNewYearStart: day === 1,
+      label
+    });
+  }
 
-    const isFeast = day <= 4;                   // First 4 days = blue feast cycle
-    const isTekufah = day === 4;                // Day 4 = special tekufah marker
+  // Reverse so day 1 of month 1 is at bottom
+  const reversedBeads = [...beads].reverse();
 
-    let color = '#1f2937';                      // Regular day (deep black)
-    if (isSabbath) color = '#fbbf24';           // Golden Sabbath - only on actual Shabbat
-    if (isFeast)   color = '#22d3ee';           // Turquoise feast
-
-
-
-    return { day, globalDay, color, isToday: day === dayOfMonth, isTekufah };
-
-  }).reverse(); // Reverse so day 1 is at bottom, day 30 at top
-
-  // Split beads into future (uncounted) and past (counted) days
-  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
-  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
-
-
+  // Split into future and past
+  const currentActualDay = dayOfMonth + 3; // Account for the 3 extra beads
+  const futureBeads = reversedBeads.slice(0, reversedBeads.length - currentActualDay);
+  const pastBeads = reversedBeads.slice(reversedBeads.length - currentActualDay);
 
   return (
-
     <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full">
-
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
-
+      <p className="text-xs text-amber-200/60 mb-2">33 Beads (includes days 29-31 from Month 12)</p>
       
-
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
-
         {futureBeads.map((bead) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           
           return (
             <motion.div
-              key={bead.day}
+              key={`${bead.isFromMonth12 ? 'm12-' : ''}${bead.displayNumber}`}
               style={{
                 transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
                 transformOrigin: "center bottom",
@@ -208,83 +265,80 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               animate={bead.isToday ? {
                 scale: [1, 1.5, 1],
                 boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
+              } : bead.isFirstSabbath ? {
+                boxShadow: ["0 0 30px #fbbf24", "0 0 60px #f59e0b", "0 0 30px #fbbf24"]
               } : {}}
-              transition={{ duration: 0 }}
-              className="relative flex items-center justify-center"
+              transition={{ duration: 2, repeat: Infinity }}
+              className="relative flex items-center gap-2"
             >
-
-            <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-
-              onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
-
-              style={{
-
-                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
-                boxShadow: bead.isToday 
-
-                  ? '0 0 60px #ec4899, inset 0 0 30px #fff'
-
-                  : bead.isTekufah
-
-                  ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
-
-                  : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
-
-                transform: 'translateZ(30px)'
-
-              }}
-
-            >
-              <span className="text-xs font-bold text-amber-300 relative z-10">
-                {bead.day}
-              </span>
-            </div>
-
-            {bead.isTekufah && (
-
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-
-                <div className="w-2 h-full bg-cyan-400/80" /> {/* Tekufah straight line */}
-
+              <div
+                className={`w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${bead.isFromMonth12 ? 'opacity-70' : ''}`}
+                onClick={() => !bead.isFromMonth12 && setSelectedBead({ year, month: 1, day: bead.displayNumber })}
+                style={{
+                  background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+                  boxShadow: bead.isToday 
+                    ? '0 0 60px #ec4899, inset 0 0 30px #fff'
+                    : bead.isTekufah
+                    ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
+                    : bead.isFirstSabbath
+                    ? '0 0 40px #fbbf24, inset 0 0 20px #fff'
+                    : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
+                  transform: 'translateZ(30px)'
+                }}
+              >
+                <span className="text-xs font-bold text-amber-300 relative z-10">
+                  {bead.displayNumber}
+                </span>
+                
+                {/* Horizontal shadow line for tequvah day 1 */}
+                {bead.isTekufah && (
+                  <motion.div 
+                    className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
               </div>
 
-            )}
+              {/* Label text beside bead */}
+              <div className="text-[8px] md:text-[9px] text-amber-200/80 max-w-[200px] leading-tight">
+                {bead.label}
+              </div>
 
-            {bead.isToday && (
-
-              <motion.div
-
-                animate={{ rotate: 360 }}
-
-                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-
-                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
-
-              />
-
-            )}
-
-          </motion.div>
+              {bead.isToday && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
+                  style={{ left: 0, width: '44px', height: '44px' }}
+                />
+              )}
+              
+              {/* Special glow effect for first sabbath */}
+              {bead.isFirstSabbath && (
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute w-16 h-16 rounded-full bg-amber-400/30 blur-lg pointer-events-none"
+                  style={{ left: '-6px', top: '-6px' }}
+                />
+              )}
+            </motion.div>
           );
         })}
       </div>
 
-      {/* 1cm gap between future and past days */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
       <div className="flex flex-col relative" style={{ gap: '1mm' }}>
-
         {pastBeads.map((bead, index) => {
           const curveAngle = getSolarCurveAngle(bead.globalDay);
           const isBottomBead = index === pastBeads.length - 1;
           
           return (
             <motion.div
-              key={bead.day}
+              key={`past-${bead.isFromMonth12 ? 'm12-' : ''}${bead.displayNumber}`}
               style={{
                 transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
                 transformOrigin: "center bottom",
@@ -292,79 +346,73 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               animate={bead.isToday ? {
                 scale: [1, 1.5, 1],
                 boxShadow: ["0 0 20px #fff", "0 0 80px #ec4899", "0 0 20px #fff"]
+              } : bead.isFirstSabbath ? {
+                boxShadow: ["0 0 30px #fbbf24", "0 0 60px #f59e0b", "0 0 30px #fbbf24"]
               } : {}}
-              transition={{ duration: 0 }}
-              className="relative flex items-center justify-center"
+              transition={{ duration: 2, repeat: Infinity }}
+              className="relative flex items-center gap-2"
             >
-
-            <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-
-              onClick={() => setSelectedBead({ year, month: 1, day: bead.day })}
-
-              style={{
-
-                background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
-                boxShadow: bead.isToday 
-
-                  ? '0 0 60px #ec4899, inset 0 0 30px #fff'
-
-                  : bead.isTekufah
-
-                  ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
-
-                  : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
-
-                transform: 'translateZ(30px)'
-
-              }}
-
-            >
-              <span className="text-xs font-bold text-amber-300 relative z-10">
-                {bead.day}
-              </span>
-            </div>
-
-            {bead.isTekufah && (
-
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-
-                <div className="w-2 h-full bg-cyan-400/80" /> {/* Tekufah straight line */}
-
+              <div
+                className={`w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${bead.isFromMonth12 ? 'opacity-70' : ''}`}
+                onClick={() => !bead.isFromMonth12 && setSelectedBead({ year, month: 1, day: bead.displayNumber })}
+                style={{
+                  background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+                  boxShadow: bead.isToday 
+                    ? '0 0 60px #ec4899, inset 0 0 30px #fff'
+                    : bead.isTekufah
+                    ? '0 0 40px #06b6d4, 0 0 0 8px #000 inset'
+                    : bead.isFirstSabbath
+                    ? '0 0 40px #fbbf24, inset 0 0 20px #fff'
+                    : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.2)',
+                  transform: 'translateZ(30px)'
+                }}
+              >
+                <span className="text-xs font-bold text-amber-300 relative z-10">
+                  {bead.displayNumber}
+                </span>
+                
+                {/* Horizontal shadow line for tequvah day 1 */}
+                {bead.isTekufah && (
+                  <motion.div 
+                    className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
               </div>
 
-            )}
+              {/* Label text beside bead */}
+              <div className="text-[8px] md:text-[9px] text-amber-200/80 max-w-[200px] leading-tight">
+                {bead.label}
+              </div>
 
-            {bead.isToday && (
+              {bead.isToday && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
+                  style={{ left: 0, width: '44px', height: '44px' }}
+                />
+              )}
+              
+              {/* Special glow effect for first sabbath */}
+              {bead.isFirstSabbath && (
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute w-16 h-16 rounded-full bg-amber-400/30 blur-lg pointer-events-none"
+                  style={{ left: '-6px', top: '-6px' }}
+                />
+              )}
 
-              <motion.div
-
-                animate={{ rotate: 360 }}
-
-                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-
-                className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
-
-              />
-
-            )}
-
-            {/* Blood drop animation from bottom bead */}
-            {isBottomBead && (
-              <BloodDrop isActive={showBloodDrop} />
-            )}
-
-          </motion.div>
+              {isBottomBead && (
+                <BloodDrop isActive={showBloodDrop} />
+              )}
+            </motion.div>
           );
         })}
       </div>
 
-
-
-
-      {/* Bead Popup */}
       {selectedBead && (
         <BeadPopup
           isOpen={!!selectedBead}
@@ -374,13 +422,9 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           day={selectedBead.day}
         />
       )}
-
     </div>
-
   );
-
 };
-
 
 
 const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
@@ -3729,6 +3773,22 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
+// Types for Month 12 extended beads
+interface Month12Bead {
+  day: number;
+  globalDay: number;
+  color: string;
+  isToday: boolean;
+  isSabbath: boolean;
+  isPurim: boolean;
+  isShushanPurim: boolean;
+  isAdarJoy: boolean;
+  isLastSabbath: boolean;
+  isDaysOutOfTime: boolean;
+  isNewWeekCycle: boolean;
+  label: string;
+}
+
 const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
@@ -3756,91 +3816,68 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
     return () => clearInterval(interval);
   }, [location.lat, location.lon]);
 
-  // Adar = 31 days (in your 364-day system)
+  const sabbathDaysMonth12 = calculateSabbathDays(12);
 
-  // Global day starts at 335 (304 + 30 + 1)
-
-  const beads = Array.from({ length: 31 }, (_, i) => {
-
-                  const day = i + 1;
-
+  const beads: Month12Bead[] = Array.from({ length: 31 }, (_, i) => {
+    const day = i + 1;
     const globalDay = 334 + day;
 
-    // Calculate Shabbat days for Month 12 based on actual weekday (only day 7 of week)
-    const sabbathDaysMonth12 = calculateSabbathDays(12);
     const isSabbath = sabbathDaysMonth12.includes(day);
+    const isPurim = day === 14;
+    const isShushanPurim = day === 15;
+    const isAdarJoy = day >= 13;
+    const isLastSabbath = day === 28; // Day 28 is the 52nd sabbath, YHVH's day 364
+    const isDaysOutOfTime = day === 28; // After day 28 comes the days out of time
+    const isNewWeekCycle = day >= 29; // Days 29, 30, 31 are the new week cycle
 
-    const isPurim       = day === 14;                    // 14 Adar – Purim
+    let color = '#1f2937';
+    if (isSabbath) color = '#fbbf24';
+    if (isPurim) color = '#ec4899';
+    if (isShushanPurim) color = '#a78bfa';
+    if (isAdarJoy && !isPurim && !isShushanPurim && !isSabbath) color = '#f0abfc';
+    if (isLastSabbath) color = '#9333ea'; // Royal purple for last sabbath
+    if (isNewWeekCycle) color = '#8b5cf6'; // Purple for days out of time
 
-    const isShushanPurim= day === 15;                    // 15 Adar – Shushan Purim
-
-    const isAdarJoy     = day >= 13;                     // Joy increases from 13th onward
-
-
-
-    let color = '#1f2937';                               // Night before the dawn
-
-    if (isSabbath)          color = '#fbbf24';           // Golden Sabbath
-
-    if (isPurim)            color = '#ec4899';           // Royal pink – Esther's victory
-
-    if (isShushanPurim)     color = '#a78bfa';           // Purple – the walled city's extra day
-
-    if (isAdarJoy && !isPurim && !isShushanPurim && !isSabbath)
-
-                            color = '#f0abfc';           // Light pink – the joy spreads
-
-
+    let label = '';
+    if (day === 28) {
+      label = "yhvh's day 364 sabbath 52";
+    } else if (day === 29) {
+      label = "Asfa'el - El adds: the lengthening of the day | day 1 of new week cycle";
+    } else if (day === 30) {
+      label = "day 2 of new week cycle";
+    } else if (day === 31) {
+      label = "day 3 of the new week cycle";
+    }
 
     return {
-
       day,
-
       globalDay,
-
       color,
-
       isToday: day === dayOfMonth,
-
       isSabbath,
-
       isPurim,
-
       isShushanPurim,
-
-      isAdarJoy
-
+      isAdarJoy,
+      isLastSabbath,
+      isDaysOutOfTime,
+      isNewWeekCycle,
+      label
     };
+  }).reverse();
 
-  }).reverse(); // Reverse so day 1 is at bottom, day 31 at top
-
-  // Split beads into future (uncounted) and past (counted) days
   const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
   const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
 
-
-
   return (
-
     <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full">
-
       <motion.h2 
-
         initial={{ scale: 0, rotate: -720 }}
-
         animate={{ scale: 1, rotate: 0 }}
-
         transition={{ duration: 4, type: "spring", stiffness: 50 }}
-
-        className="text-9xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-16 tracking-widest drop-shadow-2xl"
-
+        className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl"
       >
-
-        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-amber-400 bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 12</h2>
-
+        MONTH 12
       </motion.h2>
-
-
 
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
@@ -3854,35 +3891,33 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 transformOrigin: "center bottom",
               }}
               animate={
-
                 b.isToday ? { scale: [1, 2.5, 1] } :
-
-                b.isPurim ? { 
-
-                  scale: [1, 1.3, 1],
-
-                  rotate: [0, 360],
-
-                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
-
+                b.isLastSabbath ? { 
+                  boxShadow: ["0 0 40px #9333ea", "0 0 80px #a855f7", "0 0 40px #9333ea"]
                 } :
-
+                b.isNewWeekCycle ? { 
+                  boxShadow: ["0 0 30px #8b5cf6", "0 0 60px #a78bfa", "0 0 30px #8b5cf6"]
+                } :
+                b.isPurim ? { 
+                  scale: [1, 1.3, 1],
+                  rotate: [0, 360],
+                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
+                } :
                 b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
-
                 b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
-
                 {}
-
               }
-              transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
-              className="relative flex items-center justify-center"
+              transition={{ duration: b.isPurim ? 3 : 2, repeat: Infinity }}
+              className="relative flex items-center gap-2"
             >
-              {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                onClick={() => setSelectedBead({ year, month: 12, day: b.day })}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
+                    b.isLastSabbath ? '0 0 60px #9333ea, inset 0 0 20px #fff' :
+                    b.isNewWeekCycle ? '0 0 50px #8b5cf6, inset 0 0 15px #fff' :
                     b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
                     b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
                     b.isToday ? '0 0 250px #ec4899' :
@@ -3891,7 +3926,6 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                   aspectRatio: '1 / 1'
                 }}
               >
-                {/* Purim celebration – confetti & groggers */}
                 {b.isPurim && (
                   <>
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -3912,18 +3946,22 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     </div>
                   </>
                 )}
-
-                {/* Day number */}
                 <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
                   {b.day}
                 </span>
               </div>
+
+              {/* Label beside bead for special days */}
+              {b.label && (
+                <div className="text-[8px] md:text-[9px] text-purple-200/90 max-w-[200px] leading-tight font-medium">
+                  {b.label}
+                </div>
+              )}
             </motion.div>
           );
         })}
       </div>
 
-      {/* 1cm gap between future and past beads */}
       <div style={{ height: '1cm' }} />
 
       {/* Past days (counted) - at bottom */}
@@ -3938,35 +3976,33 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 transformOrigin: "center bottom",
               }}
               animate={
-
                 b.isToday ? { scale: [1, 2.5, 1] } :
-
-                b.isPurim ? { 
-
-                  scale: [1, 1.3, 1],
-
-                  rotate: [0, 360],
-
-                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
-
+                b.isLastSabbath ? { 
+                  boxShadow: ["0 0 40px #9333ea", "0 0 80px #a855f7", "0 0 40px #9333ea"]
                 } :
-
+                b.isNewWeekCycle ? { 
+                  boxShadow: ["0 0 30px #8b5cf6", "0 0 60px #a78bfa", "0 0 30px #8b5cf6"]
+                } :
+                b.isPurim ? { 
+                  scale: [1, 1.3, 1],
+                  rotate: [0, 360],
+                  boxShadow: ["0 0 160px #ec4899", "0 0 300px #fff", "0 0 160px #ec4899"]
+                } :
                 b.isShushanPurim ? { boxShadow: ["0 0 200px #a78bfa", "0 0 400px #e879f9"] } :
-
                 b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
-
                 {}
-
               }
-              transition={{ duration: b.isPurim ? 3 : 4, repeat: Infinity }}
-              className="relative flex items-center justify-center"
+              transition={{ duration: b.isPurim ? 3 : 2, repeat: Infinity }}
+              className="relative flex items-center gap-2"
             >
-              {/* Main Bead – explodes into joy on Purim */}
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                onClick={() => setSelectedBead({ year, month: 12, day: b.day })}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
+                    b.isLastSabbath ? '0 0 60px #9333ea, inset 0 0 20px #fff' :
+                    b.isNewWeekCycle ? '0 0 50px #8b5cf6, inset 0 0 15px #fff' :
                     b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
                     b.isShushanPurim ? '0 0 280px #a78bfa, 0 0 450px #f0abfc' :
                     b.isToday ? '0 0 250px #ec4899' :
@@ -3975,7 +4011,6 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                   aspectRatio: '1 / 1'
                 }}
               >
-                {/* Purim celebration – confetti & groggers */}
                 {b.isPurim && (
                   <>
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -3996,24 +4031,33 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     </div>
                   </>
                 )}
-
-                {/* Day number */}
                 <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
                   {b.day}
                 </span>
               </div>
+
+              {/* Label beside bead for special days */}
+              {b.label && (
+                <div className="text-[8px] md:text-[9px] text-purple-200/90 max-w-[200px] leading-tight font-medium">
+                  {b.label}
+                </div>
+              )}
             </motion.div>
           );
         })}
       </div>
 
-
-
-
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
 
 

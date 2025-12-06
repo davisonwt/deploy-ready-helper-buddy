@@ -32,7 +32,8 @@ import {
   Book,
   Library,
   Music,
-  Calendar
+  Calendar,
+  Camera
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -150,6 +151,7 @@ function Layout({ children }) {
   const primaryNavigation = [
     { name: "dashboard", href: "/dashboard", icon: Home, className: 'dashboard-tour' },
     { name: "chatapp", href: "/communications-hub", icon: MessageSquare, className: 'chatapp-tour' },
+    { name: "s2g memry", href: "/memry", icon: Camera, className: 'memry-tour' },
   ]
 
   // Check if current path matches 364yhvh routes
