@@ -3776,6 +3776,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 // Types for Month 12 extended beads
 interface Month12Bead {
   day: number;
+  displayNumber: number | string;
   globalDay: number;
   color: string;
   isToday: boolean;
@@ -3785,8 +3786,11 @@ interface Month12Bead {
   isAdarJoy: boolean;
   isLastSabbath: boolean;
   isDaysOutOfTime: boolean;
+  isDaysOutOfTime1: boolean;
+  isDaysOutOfTime2: boolean;
   isNewWeekCycle: boolean;
   label: string;
+  beadType: 'regular' | 'daysOutOfTime1' | 'daysOutOfTime2' | 'newWeekCycle';
 }
 
 const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
@@ -3818,39 +3822,34 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   const sabbathDaysMonth12 = calculateSabbathDays(12);
 
-  const beads: Month12Bead[] = Array.from({ length: 31 }, (_, i) => {
-    const day = i + 1;
+  // Build extended beads: 28 regular days + 2 days out of time + 3 new week cycle days = 33 total
+  const beads: Month12Bead[] = [];
+  
+  // First: Regular days 1-28
+  for (let i = 1; i <= 28; i++) {
+    const day = i;
     const globalDay = 334 + day;
-
     const isSabbath = sabbathDaysMonth12.includes(day);
     const isPurim = day === 14;
     const isShushanPurim = day === 15;
     const isAdarJoy = day >= 13;
-    const isLastSabbath = day === 28; // Day 28 is the 52nd sabbath, YHVH's day 364
-    const isDaysOutOfTime = day === 28; // After day 28 comes the days out of time
-    const isNewWeekCycle = day >= 29; // Days 29, 30, 31 are the new week cycle
+    const isLastSabbath = day === 28;
 
     let color = '#1f2937';
     if (isSabbath) color = '#fbbf24';
     if (isPurim) color = '#ec4899';
     if (isShushanPurim) color = '#a78bfa';
     if (isAdarJoy && !isPurim && !isShushanPurim && !isSabbath) color = '#f0abfc';
-    if (isLastSabbath) color = '#9333ea'; // Royal purple for last sabbath
-    if (isNewWeekCycle) color = '#8b5cf6'; // Purple for days out of time
+    if (isLastSabbath) color = '#9333ea';
 
     let label = '';
     if (day === 28) {
       label = "yhvh's day 364 sabbath 52";
-    } else if (day === 29) {
-      label = "Asfa'el - El adds: the lengthening of the day | day 1 of new week cycle";
-    } else if (day === 30) {
-      label = "day 2 of new week cycle";
-    } else if (day === 31) {
-      label = "day 3 of the new week cycle";
     }
 
-    return {
+    beads.push({
       day,
+      displayNumber: day,
       globalDay,
       color,
       isToday: day === dayOfMonth,
@@ -3859,14 +3858,96 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
       isShushanPurim,
       isAdarJoy,
       isLastSabbath,
-      isDaysOutOfTime,
-      isNewWeekCycle,
-      label
-    };
-  }).reverse();
+      isDaysOutOfTime: false,
+      isDaysOutOfTime1: false,
+      isDaysOutOfTime2: false,
+      isNewWeekCycle: false,
+      label,
+      beadType: 'regular'
+    });
+  }
 
-  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
-  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+  // Second: Days Out of Time (2 beads after day 28)
+  // Bead 1: If tequvah on 2nd day of 7th month, 1 day added (not counted)
+  beads.push({
+    day: 0,
+    displayNumber: 'DOT1',
+    globalDay: 362,
+    color: '#4c1d95', // Deep purple for days out of time
+    isToday: false,
+    isSabbath: false,
+    isPurim: false,
+    isShushanPurim: false,
+    isAdarJoy: false,
+    isLastSabbath: false,
+    isDaysOutOfTime: true,
+    isDaysOutOfTime1: true,
+    isDaysOutOfTime2: false,
+    isNewWeekCycle: false,
+    label: "Asfa'el - Day out of time 1: if the tequvah appears on the 2nd day of the 7th month only 1 day is added and this day is not counted",
+    beadType: 'daysOutOfTime1'
+  });
+
+  // Bead 2: If tequvah on 3rd day of 7th month, 2nd day also added (not counted)
+  beads.push({
+    day: 0,
+    displayNumber: 'DOT2',
+    globalDay: 363,
+    color: '#581c87', // Even deeper purple
+    isToday: false,
+    isSabbath: false,
+    isPurim: false,
+    isShushanPurim: false,
+    isAdarJoy: false,
+    isLastSabbath: false,
+    isDaysOutOfTime: true,
+    isDaysOutOfTime1: false,
+    isDaysOutOfTime2: true,
+    isNewWeekCycle: false,
+    label: "Asfa'el - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
+    beadType: 'daysOutOfTime2'
+  });
+
+  // Third: Days 29, 30, 31 (new week cycle)
+  for (let i = 29; i <= 31; i++) {
+    const day = i;
+    const globalDay = 334 + day;
+    const weekCycleDay = i - 28; // 1, 2, 3
+
+    beads.push({
+      day,
+      displayNumber: day,
+      globalDay,
+      color: '#8b5cf6', // Purple for new week cycle
+      isToday: day === dayOfMonth,
+      isSabbath: false,
+      isPurim: false,
+      isShushanPurim: false,
+      isAdarJoy: false,
+      isLastSabbath: false,
+      isDaysOutOfTime: false,
+      isDaysOutOfTime1: false,
+      isDaysOutOfTime2: false,
+      isNewWeekCycle: true,
+      label: `day ${weekCycleDay} of new week cycle`,
+      beadType: 'newWeekCycle'
+    });
+  }
+
+  // Reverse so day 1 is at bottom
+  const reversedBeads = [...beads].reverse();
+
+  // For future/past split, consider beadType - days out of time are always shown
+  const futureBeads = reversedBeads.filter(bead => 
+    (bead.beadType === 'regular' && bead.day > dayOfMonth) || 
+    bead.beadType === 'daysOutOfTime1' || 
+    bead.beadType === 'daysOutOfTime2' ||
+    (bead.beadType === 'newWeekCycle' && bead.day > dayOfMonth)
+  );
+  const pastBeads = reversedBeads.filter(bead => 
+    (bead.beadType === 'regular' && bead.day <= dayOfMonth) ||
+    (bead.beadType === 'newWeekCycle' && bead.day <= dayOfMonth)
+  );
 
   return (
     <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full">
@@ -3881,17 +3962,24 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
-        {futureBeads.map((b) => {
+        {futureBeads.map((b, idx) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
+          const beadKey = b.beadType === 'daysOutOfTime1' ? 'dot1' : 
+                         b.beadType === 'daysOutOfTime2' ? 'dot2' : 
+                         `day-${b.day}`;
           return (
             <motion.div
-              key={b.day}
+              key={beadKey}
               style={{
                 transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
                 transformOrigin: "center bottom",
               }}
               animate={
                 b.isToday ? { scale: [1, 2.5, 1] } :
+                b.isDaysOutOfTime ? {
+                  boxShadow: ["0 0 50px #4c1d95", "0 0 100px #581c87", "0 0 50px #4c1d95"],
+                  scale: [1, 1.1, 1]
+                } :
                 b.isLastSabbath ? { 
                   boxShadow: ["0 0 40px #9333ea", "0 0 80px #a855f7", "0 0 40px #9333ea"]
                 } :
@@ -3907,15 +3995,23 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
                 {}
               }
-              transition={{ duration: b.isPurim ? 3 : 2, repeat: Infinity }}
+              transition={{ duration: b.isPurim ? 3 : b.isDaysOutOfTime ? 3 : 2, repeat: Infinity }}
               className="relative flex items-center gap-2"
             >
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                onClick={() => setSelectedBead({ year, month: 12, day: b.day })}
+                className={`relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${
+                  b.isDaysOutOfTime ? 'border-purple-900' : 'border-black'
+                }`}
+                onClick={() => b.beadType === 'regular' || b.beadType === 'newWeekCycle' 
+                  ? setSelectedBead({ year, month: 12, day: b.day }) 
+                  : null}
+                title={b.label}
                 style={{
-                  background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  background: b.isDaysOutOfTime 
+                    ? `radial-gradient(circle at 30% 30%, #a78bfa, ${b.color})`
+                    : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
+                    b.isDaysOutOfTime ? '0 0 60px #4c1d95, inset 0 0 25px rgba(167,139,250,0.5)' :
                     b.isLastSabbath ? '0 0 60px #9333ea, inset 0 0 20px #fff' :
                     b.isNewWeekCycle ? '0 0 50px #8b5cf6, inset 0 0 15px #fff' :
                     b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
@@ -3946,17 +4042,23 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     </div>
                   </>
                 )}
-                <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
-                  {b.day}
+                {b.isDaysOutOfTime && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-purple-200 pointer-events-none text-center px-1"
+                  >
+                    {b.isDaysOutOfTime1 ? 'DOT 1' : 'DOT 2'}
+                  </motion.div>
+                )}
+                <span className={`text-xs font-bold drop-shadow-2xl relative z-10 ${
+                  b.isDaysOutOfTime ? 'text-purple-100' : 'text-pink-300'
+                }`}>
+                  {b.isDaysOutOfTime ? '' : b.displayNumber}
                 </span>
               </div>
 
-              {/* Label beside bead for special days */}
-              {b.label && (
-                <div className="text-[8px] md:text-[9px] text-purple-200/90 max-w-[200px] leading-tight font-medium">
-                  {b.label}
-                </div>
-              )}
+              {/* No label text - info shown only on click via popup */}
             </motion.div>
           );
         })}
@@ -3968,9 +4070,10 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {pastBeads.map((b) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
+          const beadKey = `past-day-${b.day}`;
           return (
             <motion.div
-              key={b.day}
+              key={beadKey}
               style={{
                 transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
                 transformOrigin: "center bottom",
@@ -3998,6 +4101,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               <div
                 className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
                 onClick={() => setSelectedBead({ year, month: 12, day: b.day })}
+                title={b.label}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
                   boxShadow: 
@@ -4032,16 +4136,11 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                   </>
                 )}
                 <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
-                  {b.day}
+                  {b.displayNumber}
                 </span>
               </div>
 
-              {/* Label beside bead for special days */}
-              {b.label && (
-                <div className="text-[8px] md:text-[9px] text-purple-200/90 max-w-[200px] leading-tight font-medium">
-                  {b.label}
-                </div>
-              )}
+              {/* No label text - info shown only on click via popup */}
             </motion.div>
           );
         })}
