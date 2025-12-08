@@ -269,11 +269,12 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 boxShadow: ["0 0 30px #fbbf24", "0 0 60px #f59e0b", "0 0 30px #fbbf24"]
               } : {}}
               transition={{ duration: 2, repeat: Infinity }}
-              className="relative flex items-center gap-2"
+              className="relative flex items-center justify-center"
             >
               <div
                 className={`w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${bead.isFromMonth12 ? 'opacity-70' : ''}`}
                 onClick={() => !bead.isFromMonth12 && setSelectedBead({ year, month: 1, day: bead.displayNumber })}
+                title={bead.label}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
                   boxShadow: bead.isToday 
@@ -298,11 +299,6 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                 )}
-              </div>
-
-              {/* Label text beside bead */}
-              <div className="text-[8px] md:text-[9px] text-amber-200/80 max-w-[200px] leading-tight">
-                {bead.label}
               </div>
 
               {bead.isToday && (
@@ -350,11 +346,12 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 boxShadow: ["0 0 30px #fbbf24", "0 0 60px #f59e0b", "0 0 30px #fbbf24"]
               } : {}}
               transition={{ duration: 2, repeat: Infinity }}
-              className="relative flex items-center gap-2"
+              className="relative flex items-center justify-center"
             >
               <div
                 className={`w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${bead.isFromMonth12 ? 'opacity-70' : ''}`}
                 onClick={() => !bead.isFromMonth12 && setSelectedBead({ year, month: 1, day: bead.displayNumber })}
+                title={bead.label}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
                   boxShadow: bead.isToday 
@@ -379,11 +376,6 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                 )}
-              </div>
-
-              {/* Label text beside bead */}
-              <div className="text-[8px] md:text-[9px] text-amber-200/80 max-w-[200px] leading-tight">
-                {bead.label}
               </div>
 
               {bead.isToday && (

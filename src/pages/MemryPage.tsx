@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
-  MoreHorizontal, Music, Volume2, VolumeX
+  MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
 
 interface MemryPost {
   id: string;
@@ -32,6 +33,7 @@ interface MemryPost {
     display_name: string;
     avatar_url: string;
     username: string;
+    wallet_address?: string;
   };
   user_liked?: boolean;
   user_bookmarked?: boolean;
@@ -50,19 +52,23 @@ interface Comment {
 
 export default function MemryPage() {
   const [posts, setPosts] = useState<MemryPost[]>([]);
+  const [allPosts, setAllPosts] = useState<MemryPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPostIndex, setCurrentPostIndex] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showDonateModal, setShowDonateModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<MemryPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'profile'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [donateAmount, setDonateAmount] = useState([5]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
   // New post state
   const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe'>('photo');
@@ -77,21 +83,43 @@ export default function MemryPage() {
   useEffect(() => {
     fetchUser();
     fetchPosts();
+    loadLikedPosts();
   }, []);
+
+  // Filter posts to only show loved ones in feed
+  useEffect(() => {
+    if (activeTab === 'feed') {
+      // Show only loved posts for the user's feed
+      const lovedPosts = allPosts.filter(post => likedPostIds.has(post.id) || post.user_liked);
+      setPosts(lovedPosts.length > 0 ? lovedPosts : allPosts);
+    } else {
+      setPosts(allPosts);
+    }
+  }, [activeTab, allPosts, likedPostIds]);
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
   };
 
+  const loadLikedPosts = async () => {
+    // Load liked post IDs from localStorage for now
+    const stored = localStorage.getItem('memry_liked_posts');
+    if (stored) {
+      setLikedPostIds(new Set(JSON.parse(stored)));
+    }
+  };
+
+  const saveLikedPosts = (ids: Set<string>) => {
+    localStorage.setItem('memry_liked_posts', JSON.stringify([...ids]));
+  };
+
   const fetchPosts = async () => {
     try {
-      // For now, we'll use a mock data approach since we need to create the table
-      // In production, this would fetch from supabase
       setLoading(false);
       
       // Mock data for demonstration
-      setPosts([
+      const mockPosts: MemryPost[] = [
         {
           id: '1',
           user_id: 'mock',
@@ -104,7 +132,8 @@ export default function MemryPage() {
           profiles: {
             display_name: 'Sarah Kitchen',
             avatar_url: '',
-            username: 'sarahcooks'
+            username: 'sarahcooks',
+            wallet_address: '0x1234...abcd'
           }
         },
         {
@@ -122,7 +151,8 @@ export default function MemryPage() {
           profiles: {
             display_name: 'Chef Marcus',
             avatar_url: '',
-            username: 'chefmarcus'
+            username: 'chefmarcus',
+            wallet_address: '0x5678...efgh'
           }
         },
         {
@@ -137,21 +167,67 @@ export default function MemryPage() {
           profiles: {
             display_name: 'Food Lover',
             avatar_url: '',
-            username: 'foodlover'
+            username: 'foodlover',
+            wallet_address: '0x9abc...ijkl'
           }
         }
-      ]);
+      ];
+      setAllPosts(mockPosts);
+      setPosts(mockPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
   };
 
   const handleLike = async (postId: string) => {
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { ...post, likes_count: post.user_liked ? post.likes_count - 1 : post.likes_count + 1, user_liked: !post.user_liked }
-        : post
+    const post = posts.find(p => p.id === postId);
+    const isCurrentlyLiked = post?.user_liked || likedPostIds.has(postId);
+    
+    // Update posts state
+    setPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, likes_count: isCurrentlyLiked ? p.likes_count - 1 : p.likes_count + 1, user_liked: !isCurrentlyLiked }
+        : p
     ));
+    setAllPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, likes_count: isCurrentlyLiked ? p.likes_count - 1 : p.likes_count + 1, user_liked: !isCurrentlyLiked }
+        : p
+    ));
+    
+    // Update liked posts set
+    const newLikedIds = new Set(likedPostIds);
+    if (isCurrentlyLiked) {
+      newLikedIds.delete(postId);
+      toast({
+        title: "Removed from your feed",
+        description: "This post won't appear in your personalized feed"
+      });
+    } else {
+      newLikedIds.add(postId);
+      toast({
+        title: "Added to your feed! ❤️",
+        description: "This creator's content will appear in your feed"
+      });
+    }
+    setLikedPostIds(newLikedIds);
+    saveLikedPosts(newLikedIds);
+  };
+
+  const handleDonate = (post: MemryPost) => {
+    setSelectedPost(post);
+    setShowDonateModal(true);
+  };
+
+  const confirmDonate = async () => {
+    if (!selectedPost) return;
+    
+    toast({
+      title: "Donation sent! 💝",
+      description: `$${donateAmount[0]} USDT sent to ${selectedPost.profiles?.display_name}`
+    });
+    setShowDonateModal(false);
+    setDonateAmount([5]);
   };
 
   const handleBookmark = async (postId: string) => {
@@ -333,18 +409,30 @@ export default function MemryPage() {
                   </div>
                 </motion.div>
 
-                {/* Like */}
+                {/* Love (Like) */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleLike(currentPost.id)}
                   className="flex flex-col items-center gap-1"
                 >
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    currentPost.user_liked ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'
+                    currentPost.user_liked || likedPostIds.has(currentPost.id) ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'
                   }`}>
-                    <Heart className={`w-6 h-6 ${currentPost.user_liked ? 'text-white fill-white' : 'text-white'}`} />
+                    <Heart className={`w-6 h-6 ${currentPost.user_liked || likedPostIds.has(currentPost.id) ? 'text-white fill-white' : 'text-white'}`} />
                   </div>
                   <span className="text-white text-xs font-semibold drop-shadow">{currentPost.likes_count}</span>
+                </motion.button>
+
+                {/* Donate */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleDonate(currentPost)}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+                    <Gift className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-white text-xs font-semibold drop-shadow">Donate</span>
                 </motion.button>
 
                 {/* Comment */}
@@ -662,6 +750,81 @@ export default function MemryPage() {
             >
               <Send className="w-4 h-4" />
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Donate Modal */}
+      <Dialog open={showDonateModal} onOpenChange={setShowDonateModal}>
+        <DialogContent className="max-w-md bg-gradient-to-b from-[#FFF5E6] to-[#FFECD2] border-none rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-orange-800 flex items-center gap-2">
+              <Gift className="w-6 h-6 text-emerald-500" />
+              Donate to Creator
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Creator Info */}
+            <div className="flex items-center gap-4 p-4 bg-white/50 rounded-2xl">
+              <Avatar className="w-16 h-16 border-2 border-emerald-400">
+                <AvatarImage src={selectedPost?.profiles?.avatar_url} />
+                <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white text-xl">
+                  {selectedPost?.profiles?.display_name?.[0] || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-bold text-lg text-orange-800">{selectedPost?.profiles?.display_name}</h3>
+                <p className="text-sm text-orange-500">@{selectedPost?.profiles?.username}</p>
+              </div>
+            </div>
+
+            {/* Amount Slider */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-orange-700 font-medium">Donation Amount</span>
+                <span className="text-2xl font-black text-emerald-600">${donateAmount[0]} USDT</span>
+              </div>
+              <Slider
+                value={donateAmount}
+                onValueChange={setDonateAmount}
+                min={0.5}
+                max={100}
+                step={0.5}
+                className="py-4"
+              />
+              <div className="flex justify-between text-xs text-orange-400">
+                <span>$0.50</span>
+                <span>$100</span>
+              </div>
+            </div>
+
+            {/* Quick Amount Buttons */}
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 5, 10, 25].map((amount) => (
+                <Button
+                  key={amount}
+                  variant="outline"
+                  onClick={() => setDonateAmount([amount])}
+                  className={`border-orange-300 ${donateAmount[0] === amount ? 'bg-emerald-100 border-emerald-400' : ''}`}
+                >
+                  ${amount}
+                </Button>
+              ))}
+            </div>
+
+            {/* Confirm Button */}
+            <Button
+              onClick={confirmDonate}
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-6 rounded-2xl"
+            >
+              <Gift className="w-5 h-5 mr-2" />
+              Send ${donateAmount[0]} USDT
+            </Button>
+
+            <p className="text-xs text-center text-orange-400">
+              15% goes to platform (10% tithing + 5% admin)
+            </p>
           </div>
         </DialogContent>
       </Dialog>
