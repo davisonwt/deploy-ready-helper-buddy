@@ -120,13 +120,15 @@ export function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDa
   }
   dayOfYear += day;
   
-  // Weekday: Fixed pattern - each year has 364 days (52 weeks), so the pattern repeats exactly
-  // Calculate weekday based on day of year (1-364) within the current year, not total days from epoch
-  // Formula: weekday = ((dayOfYear - 1) + startingWeekday - 1) % 7 + 1
-  // Starting weekday for Year 6028 Month 1 Day 1 = 4 (ensures Month 9 Day 1 = Day 243 = Day 1 of week)
-  // Verification: Month 9 Day 1 = Day 243, (4 + 242) % 7 = (4 + 4) % 7 = 1 ✓
-  const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
-  const weekDay = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
+  // Weekday calculation:
+  // The sacred calendar has Month 1 Day 1 = Day 4 of the week
+  // Each week has 7 days, year has 364 days (52 complete weeks)
+  // Month 9 Day 1 should be Day 1 of the week (beginning of week)
+  // Month 9 starts at day 244 (30+30+31+30+30+31+30+30+1 = 244)
+  // Formula: weekDay = ((dayOfYear - 1 + 3) % 7) + 1
+  // This ensures: Day 1 = weekDay 4, Day 4 = weekDay 7 (sabbath), etc.
+  // Verification: Day 244 (Month 9 Day 1) = ((244 - 1 + 3) % 7) + 1 = (246 % 7) + 1 = 1 ✓
+  const weekDay = ((dayOfYear - 1 + 3) % 7) + 1;
   
   return {
     year,
