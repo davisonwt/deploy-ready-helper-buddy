@@ -6053,8 +6053,8 @@ export type Database = {
         }[]
       }
       get_ai_usage_today:
-        | { Args: { user_id_param?: string }; Returns: number }
         | { Args: never; Returns: number }
+        | { Args: { user_id_param?: string }; Returns: number }
       get_all_user_profiles: {
         Args: never
         Returns: {
@@ -6308,8 +6308,8 @@ export type Database = {
         Returns: boolean
       }
       increment_ai_usage:
-        | { Args: { user_id_param?: string }; Returns: number }
         | { Args: never; Returns: undefined }
+        | { Args: { user_id_param?: string }; Returns: number }
       increment_orchard_views: {
         Args: { orchard_uuid: string }
         Returns: undefined
