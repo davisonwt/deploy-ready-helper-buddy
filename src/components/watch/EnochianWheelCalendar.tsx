@@ -1562,6 +1562,25 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
+  
+  // Blood drop animation trigger
+  useEffect(() => {
+    const updatePart = () => {
+      const now = new Date();
+      const creatorTime = getCreatorTime(now, location.lat, location.lon);
+      const newPart = creatorTime.part;
+      if (newPart !== currentPart && currentPart !== 0) {
+        setShowBloodDrop(true);
+        setTimeout(() => setShowBloodDrop(false), 4000);
+      }
+      setCurrentPart(newPart);
+    };
+    const now = new Date();
+    const creatorTime = getCreatorTime(now, location.lat, location.lon);
+    setCurrentPart(creatorTime.part);
+    const interval = setInterval(updatePart, 60000);
+    return () => clearInterval(interval);
+  }, [location.lat, location.lon, currentPart]);
 
   useEffect(() => {
     const updatePart = () => {
@@ -1699,30 +1718,20 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           >
 
             {/* Main Bead */}
-
             <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
-
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 5, day: bead.day })}
+              title={`Day ${bead.day} of Month 5`}
               style={{
-
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
                 boxShadow: bead.is9Av
-
                   ? '0 0 180px #450a0a, 0 0 300px #000, inset 0 0 80px #000'
-
                   : bead.isToday
-
                   ? '0 0 140px #dc2626, inset 0 0 60px #fff'
-
                   : '0 20px 60px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.1)',
-
                 transform: 'translateZ(30px)',
                 ...(bead.is9Av && { border: '12px solid #000' })
-
               }}
-
             >
               <span className="text-xs font-bold text-amber-300 relative z-10">
                 {bead.day}
@@ -1822,30 +1831,20 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           >
 
             {/* Main Bead */}
-
             <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
-
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 5, day: bead.day })}
+              title={`Day ${bead.day} of Month 5`}
               style={{
-
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
                 boxShadow: bead.is9Av
-
                   ? '0 0 180px #450a0a, 0 0 300px #000, inset 0 0 80px #000'
-
                   : bead.isToday
-
                   ? '0 0 140px #dc2626, inset 0 0 60px #fff'
-
                   : '0 20px 60px rgba(0,0,0,0.95), inset 0 10px 30px rgba(255,255,255,0.1)',
-
                 transform: 'translateZ(30px)',
                 ...(bead.is9Av && { border: '12px solid #000' })
-
               }}
-
             >
               <span className="text-xs font-bold text-amber-300 relative z-10">
                 {bead.day}
@@ -1914,15 +1913,19 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
       </div>
 
 
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -2063,30 +2066,20 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           >
 
             {/* Main Bead */}
-
             <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
-
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 6, day: bead.day })}
+              title={`Day ${bead.day} of Month 6`}
               style={{
-
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
                 boxShadow: bead.is29Elul
-
                   ? '0 0 180px #ec4899, 0 0 300px #fff, inset 0 0 80px #fff'
-
                   : bead.isToday
-
                   ? '0 0 140px #ec4899, inset 0 0 60px #fff'
-
                   : '0 20px 60px rgba(0,0,0,0.9), inset 0 10px 30px rgba(255,255,255,0.3)',
-
                 transform: 'translateZ(30px)',
                 ...(bead.is29Elul && { border: '12px solid #fff' })
-
               }}
-
             >
               <span className="text-xs font-bold text-amber-300 relative z-10">
                 {bead.day}
@@ -2190,30 +2183,20 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           >
 
             {/* Main Bead */}
-
             <div
-
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
-
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 6, day: bead.day })}
+              title={`Day ${bead.day} of Month 6`}
               style={{
-
                 background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
-
                 boxShadow: bead.is29Elul
-
                   ? '0 0 180px #ec4899, 0 0 300px #fff, inset 0 0 80px #fff'
-
                   : bead.isToday
-
                   ? '0 0 140px #ec4899, inset 0 0 60px #fff'
-
                   : '0 20px 60px rgba(0,0,0,0.9), inset 0 10px 30px rgba(255,255,255,0.3)',
-
                 transform: 'translateZ(30px)',
                 ...(bead.is29Elul && { border: '12px solid #fff' })
-
               }}
-
             >
               <span className="text-xs font-bold text-amber-300 relative z-10">
                 {bead.day}
@@ -2285,16 +2268,19 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
         })}
       </div>
 
-
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -2624,16 +2610,19 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
         })}
       </div>
 
-
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -2952,16 +2941,19 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
         })}
       </div>
 
-
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -3185,16 +3177,19 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
       </div>
 
-
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -3467,16 +3462,19 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
       </div>
 
-
-
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -3756,14 +3754,19 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               })}
       </div>
 
-
+      {/* Bead Popup */}
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
     </div>
-
   );
-
 };
-
-
 
 // Types for Month 12 extended beads
 interface Month12Bead {
