@@ -2433,7 +2433,9 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 7, day: b.day })}
+              title={`Day ${b.day} of Month 7`}
 
               style={{
 
@@ -2536,7 +2538,9 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 7, day: b.day })}
+              title={`Day ${b.day} of Month 7`}
 
               style={{
 
@@ -2761,14 +2765,15 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 8, day: b.day })}
+              title={`Day ${b.day} of Month 8`}
 
               style={{
 
                 background: `radial-gradient(circle at 30% 30%, #444, ${b.color})`,
 
                 boxShadow: 
-
                   b.is23Cheshvan ? '0 0 180px #f59e0b, 0 0 300px #ff8c00, inset 0 0 80px #fff' :
 
                   b.is7Cheshvan   ? '0 0 80px #22d3ee, inset 0 0 40px #67e8f9' :
@@ -2868,7 +2873,9 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 8, day: b.day })}
+              title={`Day ${b.day} of Month 8`}
 
               style={{
 
@@ -3075,7 +3082,9 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 9, day: b.day })}
+              title={`Day ${b.day} of Month 9`}
 
               style={{
 
@@ -3141,7 +3150,9 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
             <div
 
-              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+              className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 9, day: b.day })}
+              title={`Day ${b.day} of Month 9`}
 
               style={{
 
@@ -3320,7 +3331,9 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 10, day: b.day })}
+              title={`Day ${b.day} of Month 10`}
 
               style={{
                 width: '44px',
@@ -3407,7 +3420,9 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
             <div
 
-              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center"
+              className="rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => setSelectedBead({ year, month: 10, day: b.day })}
+              title={`Day ${b.day} of Month 10`}
 
               style={{
                 width: '44px',
@@ -3609,7 +3624,9 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                onClick={() => setSelectedBead({ year, month: 11, day: b.day })}
+                title={`Day ${b.day} of Month 11`}
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
@@ -3700,7 +3717,9 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
             >
               {/* Main Bead – becomes an almond blossom on 15 Shevat */}
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center"
+                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+                onClick={() => setSelectedBead({ year, month: 11, day: b.day })}
+                title={`Day ${b.day} of Month 11`}
                 style={{
                   background: b.isTuBShevat 
                     ? `radial-gradient(circle at 50% 30%, #fff, #fdb5cd)` 
