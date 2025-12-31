@@ -4890,6 +4890,38 @@ export type Database = {
         }
         Relationships: []
       }
+      song_votes: {
+        Row: {
+          created_at: string
+          id: string
+          song_id: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          song_id: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          song_id?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_votes_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sowers: {
         Row: {
           bio: string | null
@@ -5956,6 +5988,45 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_playlists: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          rank_data: Json
+          song_ids: string[]
+          theme: string | null
+          title: string
+          total_voters: number
+          total_votes: number
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          rank_data?: Json
+          song_ids: string[]
+          theme?: string | null
+          title: string
+          total_voters?: number
+          total_votes?: number
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          rank_data?: Json
+          song_ids?: string[]
+          theme?: string | null
+          title?: string
+          total_voters?: number
+          total_votes?: number
+          week_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -6068,6 +6139,7 @@ export type Database = {
         }[]
       }
       get_current_radio_show: { Args: never; Returns: Json }
+      get_current_week_id: { Args: never; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
@@ -6229,6 +6301,10 @@ export type Database = {
         Args: { session_id_param: string }
         Returns: string
       }
+      get_song_vote_count: {
+        Args: { song_id_param: string; week_id_param?: string }
+        Returns: number
+      }
       get_trending_streams: {
         Args: { limit_count?: number }
         Returns: {
@@ -6286,6 +6362,21 @@ export type Database = {
         Returns: {
           avatar_url: string
           display_name: string
+        }[]
+      }
+      get_user_remaining_votes: {
+        Args: { user_id_param?: string }
+        Returns: number
+      }
+      get_weekly_leaderboard: {
+        Args: { limit_count?: number }
+        Returns: {
+          artist_name: string
+          file_url: string
+          rank: number
+          song_id: string
+          track_title: string
+          vote_count: number
         }[]
       }
       grant_bootstrap_admin: {
