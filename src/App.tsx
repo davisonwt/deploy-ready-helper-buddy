@@ -140,6 +140,11 @@ const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
 
+// 364ttt - Weekly Torah Top Ten
+const TorahTopTenPage = lazy(() => import("./pages/TorahTopTenPage"));
+const VotingPage = lazy(() => import("./pages/VotingPage"));
+const AlbumDetailPage = lazy(() => import("./pages/AlbumDetailPage"));
+
 // Lazy load admin pages (only accessed by admins)
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
@@ -568,10 +573,39 @@ const App = () => (
                  </ProtectedRoute>
                } />
 
-              {/* Clubhouse - Live Audio Conversations */}
+               {/* Clubhouse - Live Audio Conversations */}
               <Route path="/clubhouse" element={
                 <ProtectedRoute>
                   <ClubhousePage />
+                </ProtectedRoute>
+              } />
+
+              {/* 364ttt - Weekly Torah Top Ten */}
+              <Route path="/364ttt" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <TorahTopTenPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/364ttt/vote" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <VotingPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/364ttt/album/:weekId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <AlbumDetailPage />
+                    </Suspense>
+                  </Layout>
                 </ProtectedRoute>
               } />
 
