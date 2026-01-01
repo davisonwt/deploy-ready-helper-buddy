@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
-  MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift
+  MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
+  ArrowLeft, ChevronUp, ChevronDown
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -322,13 +324,22 @@ export default function MemryPage() {
 
   const currentPost = posts[currentPostIndex];
 
-  const handleScroll = (direction: 'up' | 'down') => {
-    if (direction === 'down' && currentPostIndex < posts.length - 1) {
-      setCurrentPostIndex(prev => prev + 1);
-    } else if (direction === 'up' && currentPostIndex > 0) {
-      setCurrentPostIndex(prev => prev - 1);
+  const handleScroll = useCallback((direction: 'up' | 'down') => {
+    if (posts.length === 0) return;
+    
+    if (direction === 'down') {
+      setCurrentPostIndex(prev => Math.min(prev + 1, posts.length - 1));
+    } else if (direction === 'up') {
+      setCurrentPostIndex(prev => Math.max(prev - 1, 0));
     }
-  };
+  }, [posts.length]);
+
+  // Reset currentPostIndex when posts change
+  useEffect(() => {
+    if (currentPostIndex >= posts.length && posts.length > 0) {
+      setCurrentPostIndex(posts.length - 1);
+    }
+  }, [posts.length, currentPostIndex]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
@@ -341,9 +352,20 @@ export default function MemryPage() {
           className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-gradient-to-b from-black/30 to-transparent"
         >
           <div className="flex items-center justify-between max-w-lg mx-auto">
-            <h1 className="text-2xl font-black text-white drop-shadow-lg tracking-tight">
-              s2g memry
-            </h1>
+            <div className="flex items-center gap-3">
+              <Link to="/dashboard">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/20"
+                >
+                  <ArrowLeft className="w-6 h-6" />
+                </Button>
+              </Link>
+              <h1 className="text-2xl font-black text-white drop-shadow-lg tracking-tight">
+                s2g memry
+              </h1>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
