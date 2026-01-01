@@ -73,7 +73,7 @@ export default function MemryPage() {
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
 
   // New post state
-  const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe'>('photo');
+  const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe' | 'music'>('photo');
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostFile, setNewPostFile] = useState<File | null>(null);
   const [newPostPreview, setNewPostPreview] = useState<string>('');
@@ -102,90 +102,116 @@ export default function MemryPage() {
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
-  };
-
-  const loadLikedPosts = async () => {
-    // Load liked post IDs from localStorage for now
-    const stored = localStorage.getItem('memry_liked_posts');
-    if (stored) {
-      setLikedPostIds(new Set(JSON.parse(stored)));
+    if (user) {
+      // Load user's liked posts from database
+      const { data: likes } = await supabase
+        .from('memry_likes')
+        .select('post_id')
+        .eq('user_id', user.id);
+      if (likes) {
+        setLikedPostIds(new Set(likes.map(l => l.post_id)));
+      }
     }
   };
 
+  const loadLikedPosts = async () => {
+    // This is now handled in fetchUser for logged-in users
+  };
+
   const saveLikedPosts = (ids: Set<string>) => {
-    localStorage.setItem('memry_liked_posts', JSON.stringify([...ids]));
+    // No longer using localStorage - using database
   };
 
   const fetchPosts = async () => {
     try {
+      // Fetch posts from database
+      const { data: dbPosts, error } = await supabase
+        .from('memry_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching posts:', error);
+        setLoading(false);
+        return;
+      }
+
+      if (!dbPosts || dbPosts.length === 0) {
+        setAllPosts([]);
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch profiles for all unique user_ids
+      const userIds = [...new Set(dbPosts.map(p => p.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, username')
+        .in('id', userIds);
+
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, p])
+      );
+
+      // Transform to MemryPost format
+      const transformedPosts: MemryPost[] = dbPosts.map(post => {
+        const profile = profilesMap.get(post.user_id);
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          content_type: post.content_type as 'photo' | 'video' | 'recipe',
+          media_url: post.media_url,
+          thumbnail_url: post.thumbnail_url,
+          caption: post.caption || '',
+          recipe_title: post.recipe_title,
+          recipe_ingredients: post.recipe_ingredients,
+          recipe_instructions: post.recipe_instructions,
+          likes_count: post.likes_count,
+          comments_count: post.comments_count,
+          created_at: post.created_at,
+          profiles: profile ? {
+            display_name: profile.display_name || 'Anonymous',
+            avatar_url: profile.avatar_url || '',
+            username: profile.username || 'user'
+          } : {
+            display_name: 'Anonymous',
+            avatar_url: '',
+            username: 'user'
+          }
+        };
+      });
+
+      setAllPosts(transformedPosts);
+      setPosts(transformedPosts);
       setLoading(false);
-      
-      // Mock data for demonstration
-      const mockPosts: MemryPost[] = [
-        {
-          id: '1',
-          user_id: 'mock',
-          content_type: 'photo',
-          media_url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-          caption: 'Beautiful homemade breakfast to start the day! 🌅',
-          likes_count: 234,
-          comments_count: 45,
-          created_at: new Date().toISOString(),
-          profiles: {
-            display_name: 'Sarah Kitchen',
-            avatar_url: '',
-            username: 'sarahcooks',
-            wallet_address: '0x1234...abcd'
-          }
-        },
-        {
-          id: '2',
-          user_id: 'mock',
-          content_type: 'recipe',
-          media_url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800',
-          caption: 'My grandmother\'s secret pancake recipe 🥞',
-          recipe_title: 'Fluffy Pancakes',
-          recipe_ingredients: ['2 cups flour', '2 eggs', '1 cup milk', '2 tbsp sugar', '1 tsp vanilla'],
-          recipe_instructions: 'Mix dry ingredients. Add wet ingredients. Cook on medium heat until golden.',
-          likes_count: 892,
-          comments_count: 123,
-          created_at: new Date().toISOString(),
-          profiles: {
-            display_name: 'Chef Marcus',
-            avatar_url: '',
-            username: 'chefmarcus',
-            wallet_address: '0x5678...efgh'
-          }
-        },
-        {
-          id: '3',
-          user_id: 'mock',
-          content_type: 'photo',
-          media_url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800',
-          caption: 'Pizza night with the family! 🍕❤️',
-          likes_count: 567,
-          comments_count: 89,
-          created_at: new Date().toISOString(),
-          profiles: {
-            display_name: 'Food Lover',
-            avatar_url: '',
-            username: 'foodlover',
-            wallet_address: '0x9abc...ijkl'
-          }
-        }
-      ];
-      setAllPosts(mockPosts);
-      setPosts(mockPosts);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setLoading(false);
     }
   };
 
   const handleLike = async (postId: string) => {
-    const post = posts.find(p => p.id === postId);
-    const isCurrentlyLiked = post?.user_liked || likedPostIds.has(postId);
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like posts",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const isCurrentlyLiked = likedPostIds.has(postId);
     
-    // Update posts state
+    // Optimistic update
+    const newLikedIds = new Set(likedPostIds);
+    if (isCurrentlyLiked) {
+      newLikedIds.delete(postId);
+    } else {
+      newLikedIds.add(postId);
+    }
+    setLikedPostIds(newLikedIds);
+
     setPosts(prev => prev.map(p => 
       p.id === postId 
         ? { ...p, likes_count: isCurrentlyLiked ? p.likes_count - 1 : p.likes_count + 1, user_liked: !isCurrentlyLiked }
@@ -196,24 +222,27 @@ export default function MemryPage() {
         ? { ...p, likes_count: isCurrentlyLiked ? p.likes_count - 1 : p.likes_count + 1, user_liked: !isCurrentlyLiked }
         : p
     ));
-    
-    // Update liked posts set
-    const newLikedIds = new Set(likedPostIds);
+
+    // Database update
     if (isCurrentlyLiked) {
-      newLikedIds.delete(postId);
+      await supabase
+        .from('memry_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', user.id);
       toast({
-        title: "Removed from your feed",
+        title: "Removed from favorites",
         description: "This post won't appear in your personalized feed"
       });
     } else {
-      newLikedIds.add(postId);
+      await supabase
+        .from('memry_likes')
+        .insert({ post_id: postId, user_id: user.id });
       toast({
-        title: "Added to your feed! ❤️",
+        title: "Added to favorites! ❤️",
         description: "This creator's content will appear in your feed"
       });
     }
-    setLikedPostIds(newLikedIds);
-    saveLikedPosts(newLikedIds);
   };
 
   const handleDonate = (post: MemryPost) => {
@@ -233,52 +262,130 @@ export default function MemryPage() {
   };
 
   const handleBookmark = async (postId: string) => {
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { ...post, user_bookmarked: !post.user_bookmarked }
-        : post
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to bookmark posts",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const post = posts.find(p => p.id === postId);
+    const isBookmarked = post?.user_bookmarked;
+
+    // Optimistic update
+    setPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, user_bookmarked: !p.user_bookmarked }
+        : p
     ));
-    toast({
-      title: "Saved!",
-      description: "Added to your collection"
-    });
+
+    if (isBookmarked) {
+      await supabase
+        .from('memry_bookmarks')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', user.id);
+      toast({
+        title: "Removed from collection"
+      });
+    } else {
+      await supabase
+        .from('memry_bookmarks')
+        .insert({ post_id: postId, user_id: user.id });
+      toast({
+        title: "Saved!",
+        description: "Added to your collection"
+      });
+    }
   };
 
-  const openComments = (post: MemryPost) => {
+  const openComments = async (post: MemryPost) => {
     setSelectedPost(post);
     setShowCommentsModal(true);
-    // Fetch comments for this post
-    setComments([
-      {
-        id: '1',
-        user_id: 'mock',
-        content: 'This looks amazing! 😍',
-        created_at: new Date().toISOString(),
-        profiles: { display_name: 'Happy User', avatar_url: '' }
-      },
-      {
-        id: '2',
-        user_id: 'mock',
-        content: 'Can\'t wait to try this recipe!',
-        created_at: new Date().toISOString(),
-        profiles: { display_name: 'Foodie Fan', avatar_url: '' }
-      }
-    ]);
+    
+    // Fetch real comments from database
+    const { data: commentsData } = await supabase
+      .from('memry_comments')
+      .select('*')
+      .eq('post_id', post.id)
+      .order('created_at', { ascending: true });
+
+    if (commentsData && commentsData.length > 0) {
+      // Fetch profiles for commenters
+      const userIds = [...new Set(commentsData.map(c => c.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', userIds);
+
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, p])
+      );
+
+      const transformedComments: Comment[] = commentsData.map(c => {
+        const profile = profilesMap.get(c.user_id);
+        return {
+          id: c.id,
+          user_id: c.user_id,
+          content: c.content,
+          created_at: c.created_at,
+          profiles: profile ? {
+            display_name: profile.display_name || 'Anonymous',
+            avatar_url: profile.avatar_url || ''
+          } : {
+            display_name: 'Anonymous',
+            avatar_url: ''
+          }
+        };
+      });
+      setComments(transformedComments);
+    } else {
+      setComments([]);
+    }
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !user || !selectedPost) return;
     
+    const { data: newCommentData, error } = await supabase
+      .from('memry_comments')
+      .insert({
+        post_id: selectedPost.id,
+        user_id: user.id,
+        content: newComment.trim()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Could not post comment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Add to local state
     const comment: Comment = {
-      id: Date.now().toString(),
-      user_id: user?.id || 'mock',
-      content: newComment,
+      id: newCommentData.id,
+      user_id: user.id,
+      content: newComment.trim(),
       created_at: new Date().toISOString(),
       profiles: { display_name: 'You', avatar_url: '' }
     };
     
     setComments(prev => [...prev, comment]);
     setNewComment('');
+    
+    // Update comment count in posts
+    setPosts(prev => prev.map(p => 
+      p.id === selectedPost.id 
+        ? { ...p, comments_count: p.comments_count + 1 }
+        : p
+    ));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,10 +401,19 @@ export default function MemryPage() {
   };
 
   const handleCreatePost = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to create posts",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!newPostFile && newPostType !== 'recipe') {
       toast({
         title: "Missing media",
-        description: "Please select a photo or video",
+        description: "Please select a photo, video, or music file",
         variant: "destructive"
       });
       return;
@@ -305,13 +421,53 @@ export default function MemryPage() {
 
     setUploading(true);
     
-    // Simulate upload
-    setTimeout(() => {
+    try {
+      let mediaUrl = '';
+      
+      if (newPostFile) {
+        // Upload file to storage
+        const fileExt = newPostFile.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('memry-media')
+          .upload(fileName, newPostFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('memry-media')
+          .getPublicUrl(fileName);
+        
+        mediaUrl = urlData.publicUrl;
+      }
+
+      // Create post in database
+      const { error: postError } = await supabase
+        .from('memry_posts')
+        .insert({
+          user_id: user.id,
+          content_type: newPostType,
+          media_url: mediaUrl || 'https://via.placeholder.com/400',
+          caption: newPostCaption,
+          recipe_title: newPostType === 'recipe' ? recipeTitle : null,
+          recipe_ingredients: newPostType === 'recipe' ? recipeIngredients.split('\n').filter(i => i.trim()) : null,
+          recipe_instructions: newPostType === 'recipe' ? recipeInstructions : null
+        });
+
+      if (postError) {
+        throw postError;
+      }
+
       toast({
         title: "Posted! 🎉",
         description: "Your memry has been shared with the community"
       });
-      setUploading(false);
+      
+      // Reset form and refresh posts
       setShowCreateModal(false);
       setNewPostFile(null);
       setNewPostPreview('');
@@ -319,7 +475,18 @@ export default function MemryPage() {
       setRecipeTitle('');
       setRecipeIngredients('');
       setRecipeInstructions('');
-    }, 2000);
+      fetchPosts();
+      
+    } catch (error: any) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not create post",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const currentPost = posts[currentPostIndex];
@@ -620,14 +787,17 @@ export default function MemryPage() {
           <div className="space-y-4">
             {/* Type Selection */}
             <Tabs value={newPostType} onValueChange={(v) => setNewPostType(v as any)}>
-              <TabsList className="grid grid-cols-3 bg-orange-100">
-                <TabsTrigger value="photo" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+              <TabsList className="grid grid-cols-4 bg-orange-100">
+                <TabsTrigger value="photo" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-xs">
                   <Camera className="w-4 h-4 mr-1" /> Photo
                 </TabsTrigger>
-                <TabsTrigger value="video" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <TabsTrigger value="video" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-xs">
                   <Video className="w-4 h-4 mr-1" /> Video
                 </TabsTrigger>
-                <TabsTrigger value="recipe" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <TabsTrigger value="music" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-xs">
+                  <Music className="w-4 h-4 mr-1" /> Music
+                </TabsTrigger>
+                <TabsTrigger value="recipe" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white text-xs">
                   <ChefHat className="w-4 h-4 mr-1" /> Recipe
                 </TabsTrigger>
               </TabsList>
@@ -638,7 +808,13 @@ export default function MemryPage() {
               {newPostPreview ? (
                 <div className="relative aspect-square rounded-2xl overflow-hidden">
                   {newPostType === 'video' ? (
-                    <video src={newPostPreview} className="w-full h-full object-cover" />
+                    <video src={newPostPreview} className="w-full h-full object-cover" controls />
+                  ) : newPostType === 'music' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500">
+                      <Music className="w-16 h-16 text-white mb-4" />
+                      <audio src={newPostPreview} controls className="w-4/5" />
+                      <p className="text-white text-sm mt-2">{newPostFile?.name}</p>
+                    </div>
                   ) : (
                     <img src={newPostPreview} alt="Preview" className="w-full h-full object-cover" />
                   )}
@@ -653,12 +829,18 @@ export default function MemryPage() {
                 <label className="aspect-square rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-100 transition-colors">
                   <input
                     type="file"
-                    accept={newPostType === 'video' ? 'video/*' : 'image/*'}
+                    accept={
+                      newPostType === 'video' ? 'video/*' : 
+                      newPostType === 'music' ? 'audio/*' : 
+                      'image/*'
+                    }
                     className="hidden"
                     onChange={handleFileSelect}
                   />
                   {newPostType === 'video' ? (
                     <Video className="w-12 h-12 text-orange-300 mb-2" />
+                  ) : newPostType === 'music' ? (
+                    <Music className="w-12 h-12 text-orange-300 mb-2" />
                   ) : (
                     <Camera className="w-12 h-12 text-orange-300 mb-2" />
                   )}

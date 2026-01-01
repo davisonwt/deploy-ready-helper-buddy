@@ -2268,6 +2268,144 @@ export type Database = {
         }
         Relationships: []
       }
+      memry_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memry_bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "memry_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memry_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memry_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "memry_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memry_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memry_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "memry_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memry_posts: {
+        Row: {
+          caption: string | null
+          comments_count: number
+          content_type: string
+          created_at: string
+          id: string
+          likes_count: number
+          media_url: string
+          recipe_ingredients: string[] | null
+          recipe_instructions: string | null
+          recipe_title: string | null
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          comments_count?: number
+          content_type: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          media_url: string
+          recipe_ingredients?: string[] | null
+          recipe_instructions?: string | null
+          recipe_title?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          comments_count?: number
+          content_type?: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          media_url?: string
+          recipe_ingredients?: string[] | null
+          recipe_instructions?: string | null
+          recipe_title?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_streaks: {
         Row: {
           id: string
