@@ -882,19 +882,19 @@ export default function MemryPage() {
                   placeholder="Recipe title..."
                   value={recipeTitle}
                   onChange={(e) => setRecipeTitle(e.target.value)}
-                  className="bg-white/50 border-orange-200"
+                  className="bg-white/50 border-orange-200 text-orange-900 placeholder:text-orange-400"
                 />
                 <Textarea
                   placeholder="Ingredients (one per line)..."
                   value={recipeIngredients}
                   onChange={(e) => setRecipeIngredients(e.target.value)}
-                  className="bg-white/50 border-orange-200 min-h-[80px]"
+                  className="bg-white/50 border-orange-200 min-h-[80px] text-orange-900 placeholder:text-orange-400"
                 />
                 <Textarea
                   placeholder="Instructions..."
                   value={recipeInstructions}
                   onChange={(e) => setRecipeInstructions(e.target.value)}
-                  className="bg-white/50 border-orange-200 min-h-[80px]"
+                  className="bg-white/50 border-orange-200 min-h-[80px] text-orange-900 placeholder:text-orange-400"
                 />
               </div>
             )}
@@ -904,7 +904,7 @@ export default function MemryPage() {
               placeholder="Write a caption... ✨"
               value={newPostCaption}
               onChange={(e) => setNewPostCaption(e.target.value)}
-              className="bg-white/50 border-orange-200 min-h-[80px]"
+              className="bg-white/50 border-orange-200 min-h-[80px] text-orange-900 placeholder:text-orange-400"
             />
 
             {/* Post Button */}
