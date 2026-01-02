@@ -22,7 +22,8 @@ import {
   BarChart3,
   Trophy,
   Shield,
-  Loader2
+  Loader2,
+  Music
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -954,6 +955,23 @@ export default function DashboardPage() {
                       <User className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
                     )}
                     <span className="text-sm sm:text-base">My Profile</span>
+                  </div>
+                </Button>
+              </Link>
+
+              {/* 364ttt - Torah Top Ten */}
+              <Link to="/364ttt">
+                <Button 
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                    color: '#fff',
+                    borderColor: '#8b5cf6',
+                  }}
+                >
+                  <div className="text-center">
+                    <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                    <span className="text-sm sm:text-base">364ttt</span>
                   </div>
                 </Button>
               </Link>

@@ -21,7 +21,7 @@ import { Slider } from '@/components/ui/slider';
 interface MemryPost {
   id: string;
   user_id: string;
-  content_type: 'photo' | 'video' | 'recipe';
+  content_type: 'photo' | 'video' | 'recipe' | 'music';
   media_url: string;
   thumbnail_url?: string;
   caption: string;
@@ -160,7 +160,7 @@ export default function MemryPage() {
         return {
           id: post.id,
           user_id: post.user_id,
-          content_type: post.content_type as 'photo' | 'video' | 'recipe',
+          content_type: post.content_type as 'photo' | 'video' | 'recipe' | 'music',
           media_url: post.media_url,
           thumbnail_url: post.thumbnail_url,
           caption: post.caption || '',
@@ -560,7 +560,7 @@ export default function MemryPage() {
                 else handleScroll('up');
               }}
             >
-              {/* Background Image/Video */}
+              {/* Background Image/Video/Music */}
               <div className="absolute inset-0">
                 {currentPost.content_type === 'video' ? (
                   <video
@@ -572,6 +572,17 @@ export default function MemryPage() {
                     muted={isMuted}
                     playsInline
                   />
+                ) : currentPost.content_type === 'music' ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+                    <Music className="w-24 h-24 text-white/80 mb-6" />
+                    <audio 
+                      src={currentPost.media_url} 
+                      controls 
+                      autoPlay
+                      className="w-4/5 max-w-sm"
+                    />
+                    <p className="text-white/80 text-sm mt-4">🎵 Audio Track</p>
+                  </div>
                 ) : (
                   <img
                     src={currentPost.media_url}
