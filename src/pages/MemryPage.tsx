@@ -391,12 +391,25 @@ export default function MemryPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Clean up previous preview URL if it was an object URL
+      if (newPostPreview && newPostPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(newPostPreview);
+      }
+      
       setNewPostFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setNewPostPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      
+      // Use createObjectURL for video/audio for better codec support
+      if (file.type.startsWith('video/') || file.type.startsWith('audio/')) {
+        const objectUrl = URL.createObjectURL(file);
+        setNewPostPreview(objectUrl);
+      } else {
+        // Use data URL for images (works better for small files)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setNewPostPreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
