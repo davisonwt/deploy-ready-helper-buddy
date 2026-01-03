@@ -45,19 +45,9 @@ export function AudioSnippetPlayer({
 
       const audio = audioRef.current;
       
-      // Create audio context for better control
-      if (!contextRef.current) {
-        contextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      
-      const audioContext = contextRef.current;
-      const source = audioContext.createMediaElementSource(audio);
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0.7;
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
+      // Simple playback without AudioContext to avoid connection issues
       audio.currentTime = 0;
+      audio.volume = 0.7;
       await audio.play();
       setPlaying(true);
 

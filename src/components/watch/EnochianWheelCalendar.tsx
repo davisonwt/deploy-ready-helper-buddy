@@ -3898,7 +3898,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
     isDaysOutOfTime1: true,
     isDaysOutOfTime2: false,
     isNewWeekCycle: false,
-    label: "Asfa'el - Day out of time 1: if the tequvah appears on the 2nd day of the 7th month only 1 day is added and this day is not counted",
+    label: "Helo-Yaseph (the 6th month's name) - Day out of time 1: if the tequvah appears on the 2nd day of the 7th month only 1 day is added and this day is not counted",
     beadType: 'daysOutOfTime1'
   });
 
@@ -3918,7 +3918,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
     isDaysOutOfTime1: false,
     isDaysOutOfTime2: true,
     isNewWeekCycle: false,
-    label: "Asfa'el - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
+    label: "Helo-Yaseph (the 6th month's name) - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
     beadType: 'daysOutOfTime2'
   });
 
@@ -4606,6 +4606,7 @@ const EnochianTimepiece = () => {
               <span className="text-xl md:text-2xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
             </div>
             <p className="text-center mt-4 text-base md:text-xl text-gray-400">Helo-Yaseph • Yah is adding</p>
+            <p className="text-center text-sm text-gray-500">the 6th month's name</p>
                 </div>
 
           {/* Asfa'el — appears only on +2 years */}
