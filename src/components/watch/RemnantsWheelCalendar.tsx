@@ -259,11 +259,13 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
-  // Render Wheel 1: Man's Count (1,2,3,4 then 1-360) - OUTERMOST
+  // Render Wheel 1: Man's Count (1-361 + 2 dot days) - OUTERMOST
   const renderWheel1MansCount = () => {
-    const allDays = Array.from({ length: 364 }, (_, i) => ({
+    // Man's count: 361 regular days + 2 dot days = 363 total slots
+    const totalSlots = 363;
+    const allDays = Array.from({ length: 361 }, (_, i) => ({
       dayOfYear: i + 1,
-      mansCount: getMansCount(i + 1),
+      mansCount: i + 1, // Man's count is 1-361
     }));
 
     return (
@@ -272,9 +274,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
         transition={{ duration: 1, ease: "easeInOut" }}
         style={{ transformOrigin: `${cx}px ${cy}px` }}
       >
+        {/* Regular 361 days */}
         {allDays.map(({ dayOfYear, mansCount }) => {
-          const startAngle = ((dayOfYear - 1) / 364) * 360;
-          const endAngle = (dayOfYear / 364) * 360;
+          const startAngle = ((dayOfYear - 1) / totalSlots) * 360;
+          const endAngle = (dayOfYear / totalSlots) * 360;
           const midAngle = (startAngle + endAngle) / 2;
           const { month, day: dayOfMonth } = getMonthAndDay(dayOfYear);
           const dayType = getDayType(month, dayOfMonth);
@@ -283,7 +286,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
 
           // Show numbers more frequently for visibility
-          const showNumber = mansCount <= 4 || mansCount % 10 === 0 || isCurrent;
+          const showNumber = mansCount <= 4 || mansCount % 30 === 0 || mansCount === 361 || isCurrent;
 
           return (
             <g
@@ -324,6 +327,80 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             </g>
           );
         })}
+        
+        {/* Dot 1: Helo-Yaseph (after day 361) */}
+        {(() => {
+          const dotIndex = 361; // Position after day 361
+          const startAngle = (dotIndex / totalSlots) * 360;
+          const endAngle = ((dotIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-dot1-helo-yaseph"
+              onMouseEnter={() => handleHover('dotDay', { name: 'Helo-Yaseph', description: "The 6th month's name - Day out of time 1", dotNumber: 1, wheel: "Man's Count" })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(45, 90%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(45, 80%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="hsl(45, 20%, 15%)"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                •1
+              </text>
+            </g>
+          );
+        })()}
+        
+        {/* Dot 2: Asfa'el (after Helo-Yaseph) */}
+        {(() => {
+          const dotIndex = 362; // Position after dot 1
+          const startAngle = (dotIndex / totalSlots) * 360;
+          const endAngle = ((dotIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-dot2-asfael"
+              onMouseEnter={() => handleHover('dotDay', { name: "Asfa'el", description: "Day out of time 2 - Added if tequvah appears on 3rd day of 7th month", dotNumber: 2, wheel: "Man's Count" })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(280, 70%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(280, 60%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                •2
+              </text>
+            </g>
+          );
+        })()}
       </motion.g>
     );
   };
@@ -401,10 +478,11 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
-  // Render Wheel 3: YHVH's Count (264 days displayed)
+  // Render Wheel 3: YHVH's Count (364 days + 2 dot days)
   const renderWheel3YHVHCount = () => {
-    // YHVH's count goes from 1-264
-    const yhvhDays = Array.from({ length: 264 }, (_, i) => i + 1);
+    // YHVH's count goes from 1-364, plus 2 special dot days (Helo-Yaseph and Asfa'el)
+    const totalSlots = 366; // 364 regular days + 2 dot days
+    const yhvhDays = Array.from({ length: 364 }, (_, i) => i + 1);
 
     return (
       <motion.g
@@ -412,28 +490,27 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
         transition={{ duration: 1, ease: "easeInOut" }}
         style={{ transformOrigin: `${cx}px ${cy}px` }}
       >
+        {/* Regular 364 days */}
         {yhvhDays.map((day) => {
-          const startAngle = ((day - 1) / 264) * 360;
-          const endAngle = (day / 264) * 360;
+          const startAngle = ((day - 1) / totalSlots) * 360;
+          const endAngle = (day / totalSlots) * 360;
           const midAngle = (startAngle + endAngle) / 2;
-          // Calculate which day of year this corresponds to (roughly)
-          const correspondingDayOfYear = Math.ceil((day / 264) * 364);
-          const isCurrent = correspondingDayOfYear === calendarData.dayOfYear || day === 264;
-          const isDay264 = day === 264;
+          const isCurrent = calendarData.dayOfYear === day;
+          const isDay364 = day === 364;
           const textPos = polarToCartesian(cx, cy, (radii.wheel3Outer + radii.wheel3Inner) / 2, midAngle);
 
           // Show more numbers for better visibility
-          const showNumber = day === 1 || day % 22 === 0 || day === 264 || isCurrent;
+          const showNumber = day === 1 || day % 30 === 0 || day === 364 || isCurrent;
 
           // Add hover for YHVH count
-          const handleYHVHHover = () => handleHover('yhvhCount', { day, isCurrent, isDay264 });
+          const handleYHVHHover = () => handleHover('yhvhCount', { day, isCurrent, isDay364 });
 
           return (
             <g key={`yhvh-${day}`} onMouseEnter={handleYHVHHover} onMouseLeave={handleHoverEnd} style={{ cursor: 'pointer' }}>
               <path
                 d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
-                fill={isDay264 ? 'hsl(280, 60%, 50%)' : isCurrent ? COLORS.CURRENT_HIGHLIGHT : 'hsl(280, 30%, 20%)'}
-                fillOpacity={isCurrent || isDay264 ? 0.9 : 0.4}
+                fill={isDay364 ? 'hsl(280, 60%, 50%)' : isCurrent ? COLORS.CURRENT_HIGHLIGHT : 'hsl(280, 30%, 20%)'}
+                fillOpacity={isCurrent || isDay364 ? 0.9 : 0.4}
                 stroke="hsl(280, 20%, 30%)"
                 strokeWidth="0.2"
               />
@@ -454,7 +531,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   dominantBaseline="middle"
                   fill="white"
                   fontSize="5"
-                  fontWeight={isCurrent || isDay264 ? 'bold' : 'normal'}
+                  fontWeight={isCurrent || isDay364 ? 'bold' : 'normal'}
                 >
                   {day}
                 </text>
@@ -462,6 +539,80 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             </g>
           );
         })}
+        
+        {/* Dot 1: Helo-Yaseph (after day 364) */}
+        {(() => {
+          const dotIndex = 364; // Position after day 364
+          const startAngle = (dotIndex / totalSlots) * 360;
+          const endAngle = ((dotIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel3Outer + radii.wheel3Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="yhvh-dot1-helo-yaseph"
+              onMouseEnter={() => handleHover('dotDay', { name: 'Helo-Yaseph', description: "The 6th month's name - Day out of time 1", dotNumber: 1, wheel: 'YHVH' })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
+                fill="hsl(45, 90%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(45, 80%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="hsl(45, 20%, 15%)"
+                fontSize="4"
+                fontWeight="bold"
+              >
+                •1
+              </text>
+            </g>
+          );
+        })()}
+        
+        {/* Dot 2: Asfa'el (after Helo-Yaseph) */}
+        {(() => {
+          const dotIndex = 365; // Position after dot 1
+          const startAngle = (dotIndex / totalSlots) * 360;
+          const endAngle = ((dotIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel3Outer + radii.wheel3Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="yhvh-dot2-asfael"
+              onMouseEnter={() => handleHover('dotDay', { name: "Asfa'el", description: "Day out of time 2 - Added if tequvah appears on 3rd day of 7th month", dotNumber: 2, wheel: 'YHVH' })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel3Inner, radii.wheel3Outer, startAngle, endAngle)}
+                fill="hsl(280, 70%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(280, 60%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="4"
+                fontWeight="bold"
+              >
+                •2
+              </text>
+            </g>
+          );
+        })()}
       </motion.g>
     );
   };
@@ -1106,9 +1257,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
 
             {/* Render all wheels (NEW ORDER - outside to inside) */}
             {renderOuterText()}
-            {renderWheel1MansCount()}      {/* Man's Count (1-4, 1-360) */}
+            {renderWheel1MansCount()}      {/* Man's Count (1-361 + 2 dot days) */}
             {renderWheel2MonthDays()}       {/* Month Days (30/30/31 pattern) */}
-            {renderWheel3YHVHCount()}       {/* YHVH's Count (1-264) */}
+            {renderWheel3YHVHCount()}       {/* YHVH's Count (1-364 + 2 dot days) */}
             {renderWheel4Weeks()}           {/* 52 Weeks with numbers */}
             {renderWheel5MonthlyLeaders()}  {/* 12 Monthly Leaders */}
             {renderWheel6SeasonalLeaders()} {/* 4 Seasonal Leaders */}
@@ -1176,8 +1327,16 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 {hoveredElement.type === 'yhvhCount' && (
                   <div>
                     <h4 className="font-bold text-primary">YHVH's Count: {hoveredElement.data.day}</h4>
-                    {hoveredElement.data.isDay264 && <p className="text-sm text-purple-400">Special Day 264</p>}
+                    {hoveredElement.data.isDay364 && <p className="text-sm text-purple-400">Special Day 364</p>}
                     {hoveredElement.data.isCurrent && <p className="text-sm text-amber-400">Current Day</p>}
+                  </div>
+                )}
+                {hoveredElement.type === 'dotDay' && (
+                  <div>
+                    <h4 className="font-bold text-primary">{hoveredElement.data.name}</h4>
+                    <p className="text-sm text-purple-300">Dot {hoveredElement.data.dotNumber}</p>
+                    <p className="text-sm text-muted-foreground">{hoveredElement.data.description}</p>
+                    <p className="text-xs text-muted-foreground">Wheel: {hoveredElement.data.wheel}</p>
                   </div>
                 )}
               </motion.div>
@@ -1195,9 +1354,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             {getWeekdayName(calendarData.weekDay)} ({monthLeader.tribe})
           </p>
           <div className="flex justify-center gap-4 text-sm text-muted-foreground">
-            <span>Man's Count: {calendarData.mansCount}</span>
+            <span>Man's Count: {calendarData.mansCount} / 361</span>
             <span>•</span>
-            <span>YHVH's Count: 264</span>
+            <span>YHVH's Count: {calendarData.dayOfYear} / 364</span>
             <span>•</span>
             <span>Week: {calendarData.week}</span>
           </div>
