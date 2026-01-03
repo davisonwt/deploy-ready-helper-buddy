@@ -3918,7 +3918,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
     isDaysOutOfTime1: false,
     isDaysOutOfTime2: true,
     isNewWeekCycle: false,
-    label: "Helo-Yaseph (the 6th month's name) - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
+    label: "Asfa'el - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
     beadType: 'daysOutOfTime2'
   });
 
