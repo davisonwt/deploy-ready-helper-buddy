@@ -970,7 +970,7 @@ export default function MemryPage() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-              className="bg-white/50 border-orange-200"
+              className="bg-white/50 border-orange-200 text-orange-900 placeholder:text-orange-400"
             />
             <Button
               onClick={handleAddComment}

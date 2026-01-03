@@ -69,7 +69,8 @@ export const MONTHLY_LEADERS = [
 
 // Leader of Days Out of Time
 export const INFINITY_LEADER = {
-  name: "Asfa'el",
+  name: "Helo-Yaseph",
+  description: "the 6th month's name",
   role: "Leader of the Days Out of Time (Infinity)"
 };
 

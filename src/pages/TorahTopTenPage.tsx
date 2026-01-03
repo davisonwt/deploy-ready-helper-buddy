@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '@/components/Layout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +44,6 @@ export default function TorahTopTenPage() {
   };
 
   return (
-    <Layout>
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         {/* Hero Section */}
         <section className="relative py-16 px-4 text-center overflow-hidden">
@@ -254,6 +253,5 @@ export default function TorahTopTenPage() {
 
         <audio ref={audioRef} onEnded={() => setPlayingId(null)} className="hidden" />
       </div>
-    </Layout>
   );
 }
