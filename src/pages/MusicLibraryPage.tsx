@@ -86,12 +86,12 @@ export default function MusicLibraryPage() {
   });
 
   // Fetch all public community music - ALL tracks from ALL users
-  const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
+  const { data: communityMusic = [], isLoading: loadingCommunity, error: communityError } = useQuery({
     queryKey: ['community-music'],
     queryFn: async () => {
       console.log('🎵 Fetching community music...');
       
-      // Get ALL tracks regardless of user
+      // Get ALL public tracks - using explicit policy-compatible query
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*')
@@ -100,7 +100,13 @@ export default function MusicLibraryPage() {
 
       if (error) {
         console.error('❌ Error fetching community tracks:', error);
-        throw error;
+        // Don't throw - return empty array to prevent UI crash
+        return [];
+      }
+      
+      if (!tracks || tracks.length === 0) {
+        console.log('ℹ️ No public tracks found');
+        return [];
       }
       
       console.log('✅ Raw tracks fetched:', tracks?.length || 0);
@@ -300,6 +306,10 @@ export default function MusicLibraryPage() {
                       <div className='flex items-center justify-center py-12'>
                         <Loader2 className='w-8 h-8 animate-spin text-white' />
                       </div>
+                    ) : communityError ? (
+                      <div className='text-center py-8 text-white/70'>
+                        <p>Unable to load community music. Please try again later.</p>
+                      </div>
                     ) : (
                       <MusicLibraryTable 
                         tracks={communityMusic} 
@@ -366,6 +376,10 @@ export default function MusicLibraryPage() {
                     {loadingCommunity ? (
                       <div className='flex items-center justify-center py-12'>
                         <Loader2 className='w-8 h-8 animate-spin text-white' />
+                      </div>
+                    ) : communityError ? (
+                      <div className='text-center py-8 text-white/70'>
+                        <p>Unable to load community music. Please try again later.</p>
                       </div>
                     ) : (
                       <MusicLibraryTable 

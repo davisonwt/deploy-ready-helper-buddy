@@ -259,10 +259,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
-  // Render Wheel 1: Man's Count (1-361 + 2 dot days) - OUTERMOST
+  // Render Wheel 1: Man's Count (1-361 + 2 dot days + 3 additional days = 366 total slots) - OUTERMOST
   const renderWheel1MansCount = () => {
-    // Man's count: 361 regular days + 2 dot days = 363 total slots
-    const totalSlots = 363;
+    // Man's count: 361 regular days + 2 dot days + 3 additional days (362-364) = 366 total slots
+    const totalSlots = 366;
     const allDays = Array.from({ length: 361 }, (_, i) => ({
       dayOfYear: i + 1,
       mansCount: i + 1, // Man's count is 1-361
@@ -397,6 +397,132 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 fontWeight="bold"
               >
                 •2
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Day 362: YHVH's Day 1, Week Day 1 */}
+        {(() => {
+          const dayIndex = 363; // Position after dot 2
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-362"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 362, 
+                yhvhDay: 1, 
+                weekDay: 1, 
+                description: "Day 362 of Man's count - YHVH's Day 1 of His year count - Day 1 of the new week cycle" 
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 80%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(200, 70%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                362
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Day 363: YHVH's Day 2, Week Day 2 */}
+        {(() => {
+          const dayIndex = 364; // Position after day 362
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-363"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 363, 
+                yhvhDay: 2, 
+                weekDay: 2, 
+                description: "Day 363 of Man's count - YHVH's Day 2 of His year count - Day 2 of the new week cycle" 
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 80%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(200, 70%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                363
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Day 364: YHVH's Day 3, Week Day 3 */}
+        {(() => {
+          const dayIndex = 365; // Position after day 363
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-364"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 364, 
+                yhvhDay: 3, 
+                weekDay: 3, 
+                description: "Day 364 of Man's count - YHVH's Day 3 of His year count - Day 3 of the new week cycle" 
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 80%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(200, 70%, 40%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                364
               </text>
             </g>
           );
@@ -1337,6 +1463,14 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                     <p className="text-sm text-purple-300">Dot {hoveredElement.data.dotNumber}</p>
                     <p className="text-sm text-muted-foreground">{hoveredElement.data.description}</p>
                     <p className="text-xs text-muted-foreground">Wheel: {hoveredElement.data.wheel}</p>
+                  </div>
+                )}
+                {hoveredElement.type === 'specialDay' && (
+                  <div>
+                    <h4 className="font-bold text-primary">Man's Day {hoveredElement.data.mansDay}</h4>
+                    <p className="text-sm text-blue-300">YHVH's Day {hoveredElement.data.yhvhDay}</p>
+                    <p className="text-sm text-green-300">Week Day {hoveredElement.data.weekDay}</p>
+                    <p className="text-sm text-muted-foreground">{hoveredElement.data.description}</p>
                   </div>
                 )}
               </motion.div>
