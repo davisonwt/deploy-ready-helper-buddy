@@ -14,6 +14,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { launchConfetti } from '@/utils/confetti';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 
 
 interface MusicTrack {
@@ -74,7 +75,7 @@ export function MusicLibraryTable({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handlePreview = (track: MusicTrack) => {
+  const handlePreview = async (track: MusicTrack) => {
     if (playingTrack === track.id) {
       audioElement?.pause();
       setPlayingTrack(null);
@@ -87,30 +88,37 @@ export function MusicLibraryTable({
       audioElement.currentTime = 0;
     }
 
-    // Create new audio element for 30-second preview
-    const audio = new Audio(track.preview_url || track.file_url);
-    audio.volume = 0.7;
-    
-    // Limit to 30 seconds for preview
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime >= 30) {
-        audio.pause();
+    try {
+      const src = await resolveAudioUrl(track.preview_url || track.file_url, { bucketForKeys: 'music-tracks' });
+
+      // Create new audio element for 30-second preview
+      const audio = new Audio(src);
+      (audio as any).crossOrigin = 'anonymous';
+      audio.volume = 0.7;
+
+      // Limit to 30 seconds for preview
+      audio.addEventListener('timeupdate', () => {
+        if (audio.currentTime >= 30) {
+          audio.pause();
+          setPlayingTrack(null);
+          toast.info(`Preview ended. Bestow ${formatAmount(2)} to download the full track.`);
+        }
+      });
+
+      audio.addEventListener('ended', () => {
         setPlayingTrack(null);
-        toast.info(`Preview ended. Bestow ${formatAmount(2)} to download the full track.`);
-      }
-    });
+      });
 
-    audio.addEventListener('ended', () => {
-      setPlayingTrack(null);
-    });
-
-    audio.play().catch(() => {
+      await audio.play();
+      setAudioElement(audio);
+      setPlayingTrack(track.id);
+    } catch (e) {
+      console.error('Failed to play preview:', e);
       toast.error('Failed to play preview');
-    });
-
-    setAudioElement(audio);
-    setPlayingTrack(track.id);
+      setPlayingTrack(null);
+    }
   };
+
 
   const handleBestowal = async (track: MusicTrack, e?: React.MouseEvent) => {
     if (e) {
