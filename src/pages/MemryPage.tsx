@@ -676,11 +676,44 @@ export default function MemryPage() {
                 {/* Share */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
+                  onClick={async () => {
+                    const shareUrl = `${window.location.origin}/memry?post=${currentPost.id}`;
+                    const shareData = {
+                      title: 'S2G Memry',
+                      text: currentPost.caption || `Check out this post by ${currentPost.profiles?.display_name}`,
+                      url: shareUrl
+                    };
+                    
+                    try {
+                      if (navigator.share) {
+                        await navigator.share(shareData);
+                        toast({
+                          title: "Shared!",
+                          description: "Post shared successfully"
+                        });
+                      } else {
+                        await navigator.clipboard.writeText(shareUrl);
+                        toast({
+                          title: "Link copied!",
+                          description: "Share link copied to clipboard"
+                        });
+                      }
+                    } catch (error: any) {
+                      if (error.name !== 'AbortError') {
+                        await navigator.clipboard.writeText(shareUrl);
+                        toast({
+                          title: "Link copied!",
+                          description: "Share link copied to clipboard"
+                        });
+                      }
+                    }
+                  }}
                   className="flex flex-col items-center gap-1"
                 >
                   <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                     <Share2 className="w-6 h-6 text-white" />
                   </div>
+                  <span className="text-white text-xs font-semibold drop-shadow">Share</span>
                 </motion.button>
 
                 {/* Sound toggle for videos */}

@@ -259,10 +259,13 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
     );
   };
 
-  // Render Wheel 1: Man's Count (1-361 + 2 dot days + 3 additional days = 366 total slots) - OUTERMOST
+  // Render Wheel 1: Man's Count - OUTERMOST
+  // Structure per user: 361 regular days, 2 dot days, then days 362, 363, then 364 (which is YHVH day 4/week 4/Man's 1 Tequvah)
+  // Then: week 5/Man's 2, week 6/Man's 3, Sabbath/Man's 4
+  // Total slots: 361 + 2 + 2 + 1 + 3 = 369, but we'll use 368 for cleaner math
+  // Actually: 361 + 2 dots + 362 + 363 + 364(Tequvah/Man's1) + Man's2 + Man's3 + Man's4(Sabbath) = 361 + 2 + 5 = 368
   const renderWheel1MansCount = () => {
-    // Man's count: 361 regular days + 2 dot days + 3 additional days (362-364) = 366 total slots
-    const totalSlots = 366;
+    const totalSlots = 369; // 361 regular + 2 dots + 6 (362, 363, Tequvah/Man's1, Man's2, Man's3, Sabbath/Man's4)
     const allDays = Array.from({ length: 361 }, (_, i) => ({
       dayOfYear: i + 1,
       mansCount: i + 1, // Man's count is 1-361
@@ -402,7 +405,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 362: YHVH's Day 1, Week Day 1 */}
+        {/* Day 362: YHVH's Day 2, Week Day 2 */}
         {(() => {
           const dayIndex = 363; // Position after dot 2
           const startAngle = (dayIndex / totalSlots) * 360;
@@ -415,9 +418,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               key="mans-day-362"
               onMouseEnter={() => handleHover('specialDay', { 
                 mansDay: 362, 
-                yhvhDay: 1, 
-                weekDay: 1, 
-                description: "Day 362 of Man's count - YHVH's Day 1 of His year count - Day 1 of the new week cycle" 
+                yhvhDay: 2, 
+                weekDay: 2, 
+                description: "Day 362 of Man's previous year count - YHVH's Day 2 - Week Day 2" 
               })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
@@ -444,9 +447,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 363: YHVH's Day 2, Week Day 2 */}
+        {/* Day 363: YHVH's Day 3, Week Day 3 */}
         {(() => {
-          const dayIndex = 364; // Position after day 362
+          const dayIndex = 364;
           const startAngle = (dayIndex / totalSlots) * 360;
           const endAngle = ((dayIndex + 1) / totalSlots) * 360;
           const midAngle = (startAngle + endAngle) / 2;
@@ -457,9 +460,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               key="mans-day-363"
               onMouseEnter={() => handleHover('specialDay', { 
                 mansDay: 363, 
-                yhvhDay: 2, 
-                weekDay: 2, 
-                description: "Day 363 of Man's count - YHVH's Day 2 of His year count - Day 2 of the new week cycle" 
+                yhvhDay: 3, 
+                weekDay: 3, 
+                description: "Day 363 of Man's previous year count - YHVH's Day 3 - Week Day 3" 
               })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
@@ -486,9 +489,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 364: YHVH's Day 3, Week Day 3 */}
+        {/* Day 364 = YHVH Day 4 = Week Day 4 = Man's Day 1 = TEQUVAH (Equinox) */}
         {(() => {
-          const dayIndex = 365; // Position after day 363
+          const dayIndex = 365;
           const startAngle = (dayIndex / totalSlots) * 360;
           const endAngle = ((dayIndex + 1) / totalSlots) * 360;
           const midAngle = (startAngle + endAngle) / 2;
@@ -496,21 +499,68 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           
           return (
             <g 
-              key="mans-day-364"
+              key="tequvah-day"
               onMouseEnter={() => handleHover('specialDay', { 
-                mansDay: 364, 
-                yhvhDay: 3, 
-                weekDay: 3, 
-                description: "Day 364 of Man's count - YHVH's Day 3 of His year count - Day 3 of the new week cycle" 
+                mansDay: 1, 
+                yhvhDay: 4, 
+                weekDay: 4,
+                monthDay: 1,
+                month: 1,
+                description: "TEQUVAH (Equinox) - The Straight-Line Shadow Day - YHVH's Day 4 / Week Day 4 / Man's Day 1 of the 1st Month",
+                isTequvah: true
               })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
               <path
                 d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
-                fill="hsl(200, 80%, 50%)"
+                fill="hsl(45, 100%, 55%)"
+                fillOpacity={1}
+                stroke="hsl(45, 90%, 40%)"
+                strokeWidth="1"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="hsl(45, 20%, 15%)"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                1
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Man's Day 2 = Week Day 5 = YHVH Day 5 */}
+        {(() => {
+          const dayIndex = 366;
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-2"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 2, 
+                yhvhDay: 5, 
+                weekDay: 5,
+                monthDay: 2,
+                month: 1,
+                description: "Man's Day 2 of the 1st Month - Week Day 5 - YHVH's Day 5"
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 70%, 45%)"
                 fillOpacity={0.9}
-                stroke="hsl(200, 70%, 40%)"
+                stroke="hsl(200, 60%, 35%)"
                 strokeWidth="0.5"
               />
               <text
@@ -522,7 +572,96 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 fontSize="5"
                 fontWeight="bold"
               >
-                364
+                2
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Man's Day 3 = Week Day 6 = YHVH Day 6 */}
+        {(() => {
+          const dayIndex = 367;
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-3"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 3, 
+                yhvhDay: 6, 
+                weekDay: 6,
+                monthDay: 3,
+                month: 1,
+                description: "Man's Day 3 of the 1st Month - Week Day 6 - YHVH's Day 6"
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 70%, 45%)"
+                fillOpacity={0.9}
+                stroke="hsl(200, 60%, 35%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                3
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* Man's Day 4 = SABBATH = Week Day 7 = YHVH Day 7 */}
+        {(() => {
+          const dayIndex = 368; // Last slot
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="sabbath-day"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 4, 
+                yhvhDay: 7, 
+                weekDay: 7,
+                monthDay: 4,
+                month: 1,
+                description: "SABBATH - Man's Day 4 of the 1st Month - Week Day 7 - YHVH's Day 7",
+                isSabbath: true
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(45, 80%, 50%)"
+                fillOpacity={1}
+                stroke="hsl(45, 70%, 40%)"
+                strokeWidth="1"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="hsl(45, 20%, 15%)"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                4
               </text>
             </g>
           );

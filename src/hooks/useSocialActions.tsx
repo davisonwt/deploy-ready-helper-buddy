@@ -151,6 +151,89 @@ export function useSocialActions() {
     }
   };
 
+  const voteForTrack = async (trackId: string) => {
+    if (!user) {
+      toast.error('Please login to vote');
+      return { success: false, voted: false };
+    }
+
+    try {
+      setLoading(true);
+      // Get current week ID for voting
+      const now = new Date();
+      const weekId = `${now.getFullYear()}-W${Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)}`;
+      
+      // Check if already voted this week
+      const { data: existingVote } = await supabase
+        .from('song_votes')
+        .select('id')
+        .eq('song_id', trackId)
+        .eq('user_id', user.id)
+        .eq('week_id', weekId)
+        .maybeSingle();
+
+      if (existingVote) {
+        // Remove vote
+        const { error } = await supabase
+          .from('song_votes')
+          .delete()
+          .eq('id', existingVote.id);
+        
+        if (error) throw error;
+        toast.success('Vote removed');
+        return { success: true, voted: false };
+      } else {
+        // Add vote
+        const { error } = await supabase
+          .from('song_votes')
+          .insert({ 
+            song_id: trackId, 
+            user_id: user.id,
+            week_id: weekId
+          });
+
+        if (error) throw error;
+        toast.success('Voted for Torah Top Ten! 🎵');
+        return { success: true, voted: true };
+      }
+    } catch (error: any) {
+      console.error('Vote error:', error);
+      toast.error('Failed to vote');
+      return { success: false, voted: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const shareTrack = async (trackId: string, title: string, artist?: string) => {
+    try {
+      const url = `${window.location.origin}/music-library?track=${trackId}`;
+      const shareText = `Check out "${title}"${artist ? ` by ${artist}` : ''} on S2G Music!`;
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: shareText, url });
+          toast.success('Shared successfully!');
+          return { success: true };
+        } catch (error: any) {
+          if (error.name !== 'AbortError') {
+            await navigator.clipboard.writeText(url);
+            toast.success('Link copied to clipboard!');
+          }
+          return { success: false };
+        }
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied to clipboard!');
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Share track error:', error);
+      toast.error('Failed to share');
+      return { success: false };
+    }
+  };
+
   const shareContent = async (type: 'product' | 'orchard', id: string, title: string) => {
     try {
       const url = `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${id}`;
@@ -194,6 +277,8 @@ export function useSocialActions() {
     unfollowUser,
     likeProduct,
     likeOrchard,
+    voteForTrack,
+    shareTrack,
     shareContent,
     loading
   };

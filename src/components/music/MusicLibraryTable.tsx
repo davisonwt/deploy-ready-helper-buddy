@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Share2, Download, DollarSign, Play, Pause, Edit } from 'lucide-react';
+import { Heart, Share2, Download, DollarSign, Play, Pause, Edit, ThumbsUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
+import { useSocialActions } from '@/hooks/useSocialActions';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { EditTrackModal } from './EditTrackModal';
@@ -56,10 +57,12 @@ export function MusicLibraryTable({
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const musicPurchase = useMusicPurchase();
+  const { voteForTrack, shareTrack, loading: socialLoading } = useSocialActions();
   const queryClient = useQueryClient();
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
+  const [votedTracks, setVotedTracks] = useState<Set<string>>(new Set());
   
   // Safely extract functions with fallbacks
   const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
@@ -67,6 +70,28 @@ export function MusicLibraryTable({
   const hookProcessing = musicPurchase?.processing || false;
   const [localProcessing, setLocalProcessing] = useState(false);
   const processing = hookProcessing || localProcessing;
+
+  // Load user's existing votes on mount
+  useEffect(() => {
+    const loadUserVotes = async () => {
+      if (!user) return;
+      
+      const now = new Date();
+      const weekId = `${now.getFullYear()}-W${Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)}`;
+      
+      const { data: votes } = await supabase
+        .from('song_votes')
+        .select('song_id')
+        .eq('user_id', user.id)
+        .eq('week_id', weekId);
+      
+      if (votes) {
+        setVotedTracks(new Set(votes.map(v => v.song_id)));
+      }
+    };
+    
+    loadUserVotes();
+  }, [user]);
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return 'N/A';
@@ -89,12 +114,28 @@ export function MusicLibraryTable({
     }
 
     try {
+      // Resolve the audio URL (may need signed URL for Supabase storage)
       const src = await resolveAudioUrl(track.preview_url || track.file_url, { bucketForKeys: 'music-tracks' });
+      
+      if (!src) {
+        toast.error('Audio file not available');
+        return;
+      }
+
+      console.log('Playing audio from:', src);
 
       // Create new audio element for 30-second preview
-      const audio = new Audio(src);
-      (audio as any).crossOrigin = 'anonymous';
+      const audio = new Audio();
+      audio.crossOrigin = 'anonymous';
       audio.volume = 0.7;
+      audio.preload = 'auto';
+
+      // Add error handler
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', audio.error);
+        toast.error('Failed to load audio. The file may not be available.');
+        setPlayingTrack(null);
+      });
 
       // Limit to 30 seconds for preview
       audio.addEventListener('timeupdate', () => {
@@ -109,9 +150,21 @@ export function MusicLibraryTable({
         setPlayingTrack(null);
       });
 
-      await audio.play();
-      setAudioElement(audio);
-      setPlayingTrack(track.id);
+      audio.addEventListener('canplaythrough', async () => {
+        try {
+          await audio.play();
+          setAudioElement(audio);
+          setPlayingTrack(track.id);
+        } catch (playError) {
+          console.error('Play error:', playError);
+          toast.error('Failed to play audio');
+          setPlayingTrack(null);
+        }
+      }, { once: true });
+
+      // Set source after adding listeners
+      audio.src = src;
+      audio.load();
     } catch (e) {
       console.error('Failed to play preview:', e);
       toast.error('Failed to play preview');
@@ -161,42 +214,32 @@ export function MusicLibraryTable({
     }
   };
 
-  const handleFollow = (djId: string) => {
-    toast.info('Follow feature coming soon!');
-  };
-
-  const handleShare = async (track: MusicTrack, e?: React.MouseEvent) => {
+  const handleVote = async (track: MusicTrack, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     
-    try {
-      const shareData = {
-        title: track.track_title,
-        text: `Check out ${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
-        url: window.location.href
-      };
-      
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-          toast.success('Shared successfully!');
-        } catch (error: any) {
-          if (error.name !== 'AbortError') {
-            // Fallback to clipboard
-            await navigator.clipboard.writeText(window.location.href);
-            toast.success('Link copied to clipboard!');
-          }
+    const result = await voteForTrack(track.id);
+    if (result.success) {
+      setVotedTracks(prev => {
+        const newSet = new Set(prev);
+        if (result.voted) {
+          newSet.add(track.id);
+        } else {
+          newSet.delete(track.id);
         }
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard!');
-      }
-    } catch (error) {
-      console.error('Share error:', error);
-      toast.error('Failed to share');
+        return newSet;
+      });
     }
+  };
+
+  const handleShareTrack = async (track: MusicTrack, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    await shareTrack(track.id, track.track_title, track.artist_name || undefined);
   };
 
   const handleDownload = async (track: MusicTrack) => {
@@ -361,27 +404,26 @@ export function MusicLibraryTable({
                     {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   </Button>
 
+                  {/* Vote for Torah Top Ten */}
                   <Button
                     size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFollow(track.dj_id);
-                    }}
-                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                    variant={votedTracks.has(track.id) ? "default" : "ghost"}
+                    onClick={(e) => handleVote(track, e)}
+                    disabled={!user || socialLoading}
+                    className={`h-8 gap-1 ${votedTracks.has(track.id) ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'text-white hover:bg-white/20'}`}
+                    title="Vote for Torah Top Ten"
                   >
-                    <Heart className="h-4 w-4" />
+                    <ThumbsUp className={`h-4 w-4 ${votedTracks.has(track.id) ? 'fill-current' : ''}`} />
+                    <span className="text-xs">Vote</span>
                   </Button>
 
+                  {/* Share */}
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleShare(track, e);
-                    }}
+                    onClick={(e) => handleShareTrack(track, e)}
                     className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                    title="Share track"
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
