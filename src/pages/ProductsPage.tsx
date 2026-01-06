@@ -8,6 +8,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { SocialActionButtons } from '@/components/social/SocialActionButtons';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -133,6 +135,93 @@ export default function ProductsPage() {
 
   const allProducts = data?.pages.flatMap(page => page) || [];
   const quickPicks = allProducts.slice(0, 4);
+
+  // 30s preview playback (one at a time)
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewStopTimerRef = useRef<number | null>(null);
+  const [previewPlayingId, setPreviewPlayingId] = useState<string | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+
+  const stopPreview = useCallback(() => {
+    const audio = previewAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    if (previewStopTimerRef.current) {
+      window.clearTimeout(previewStopTimerRef.current);
+      previewStopTimerRef.current = null;
+    }
+    setPreviewPlayingId(null);
+  }, []);
+
+  useEffect(() => {
+    return () => stopPreview();
+  }, [stopPreview]);
+
+  const getPreviewSourceUrl = useCallback(async (product: any): Promise<string> => {
+    // Prefer an explicit preview URL if available, otherwise fall back to the main file.
+    let url: string | undefined = product.preview_url || product.file_url;
+
+    // If this is an album manifest, preview the first track.
+    if (url && isAlbum(product) && String(url).includes('manifest.json')) {
+      try {
+        const res = await fetch(url);
+        const manifest = await res.json();
+        url = manifest?.tracks?.[0]?.url || url;
+      } catch {
+        // Fall back to manifest URL
+      }
+    }
+
+    if (!url) throw new Error('Missing preview URL');
+    return resolveAudioUrl(url);
+  }, []);
+
+  const handlePlay30s = useCallback(
+    async (product: any, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (previewPlayingId === product.id) {
+        stopPreview();
+        return;
+      }
+
+      stopPreview();
+      setPreviewLoadingId(product.id);
+
+      try {
+        const resolvedUrl = await getPreviewSourceUrl(product);
+
+        if (!previewAudioRef.current) {
+          previewAudioRef.current = new Audio();
+        }
+
+        const audio = previewAudioRef.current;
+        audio.src = resolvedUrl;
+        audio.currentTime = 0;
+        audio.volume = 0.85;
+
+        await audio.play();
+        setPreviewPlayingId(product.id);
+
+        previewStopTimerRef.current = window.setTimeout(() => {
+          stopPreview();
+          toast.info('Preview ended. Bestow to access the full track!');
+        }, 30_000);
+
+        audio.onended = () => stopPreview();
+      } catch (err) {
+        console.error('Preview playback error:', err);
+        toast.error('Failed to play 30s preview');
+        stopPreview();
+      } finally {
+        setPreviewLoadingId(null);
+      }
+    },
+    [getPreviewSourceUrl, previewPlayingId, stopPreview]
+  );
 
   const handleFilter = (filterType: string) => {
     setActiveFilter(filterType);
@@ -415,8 +504,16 @@ export default function ProductsPage() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
                 {product.type === 'music' && (
-                  <button className="absolute top-4 right-4 bg-teal-500 p-4 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-125">
-                    Play 30s
+                  <button
+                    onClick={(e) => handlePlay30s(product, e)}
+                    className="absolute top-4 right-4 bg-teal-500 p-4 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-125"
+                    aria-label="Play 30 second preview"
+                  >
+                    {previewLoadingId === product.id
+                      ? 'Loading…'
+                      : previewPlayingId === product.id
+                        ? 'Stop'
+                        : 'Play 30s'}
                   </button>
                 )}
               </div>
@@ -448,6 +545,22 @@ export default function ProductsPage() {
                     Bestow
                   </button>
                 </div>
+
+                {/* Like / Share / Follow */}
+                {product?.sowers?.user_id && (
+                  <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                    <SocialActionButtons
+                      type="product"
+                      itemId={product.id}
+                      ownerId={product.sowers.user_id}
+                      ownerName={product.sowers.display_name}
+                      title={product.title}
+                      likeCount={product.like_count || 0}
+                      isOwner={false}
+                      variant="compact"
+                    />
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
