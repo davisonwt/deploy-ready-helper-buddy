@@ -1,8 +1,9 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Music, Loader2, Play, Pause, Heart, Download, Users, Clock, TrendingUp, Eye } from 'lucide-react';
+import { useSocialActions } from '@/hooks/useSocialActions';
+import { Music, Loader2, Play, Pause, Heart, Download, Users, Clock, TrendingUp, Eye, Share2, MessageCircle, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,9 +15,12 @@ import { launchConfetti } from '@/utils/confetti';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
+  const { shareTrack, voteForTrack, likeProduct, loading: socialLoading } = useSocialActions();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [audioRefs, setAudioRefs] = useState<Map<string, HTMLAudioElement>>(new Map());
   const [playbackPositions, setPlaybackPositions] = useState<Map<string, number>>(new Map());
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [votedTracks, setVotedTracks] = useState<Set<string>>(new Set());
   const PREVIEW_DURATION = 30; // 30 seconds preview
 
   // Fetch music from BOTH s2g_library_items AND dj_music_tracks
@@ -545,8 +549,8 @@ export default function S2GCommunityMusicPage() {
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className='flex items-center gap-2 mt-4'>
+                        {/* Action Buttons with Social Features */}
+                        <div className='flex items-center gap-2 mt-4 flex-wrap'>
                           <Button
                             size='sm'
                             className={`flex-1 ${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}

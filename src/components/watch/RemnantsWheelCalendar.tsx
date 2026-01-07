@@ -405,7 +405,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 362: YHVH's Day 2, Week Day 2 */}
+        {/* Day 362 = YHVH Day 1 = Week Day 1 */}
         {(() => {
           const dayIndex = 363; // Position after dot 2
           const startAngle = (dayIndex / totalSlots) * 360;
@@ -418,9 +418,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               key="mans-day-362"
               onMouseEnter={() => handleHover('specialDay', { 
                 mansDay: 362, 
-                yhvhDay: 2, 
-                weekDay: 2, 
-                description: "Day 362 of Man's previous year count - YHVH's Day 2 - Week Day 2" 
+                yhvhDay: 1, 
+                weekDay: 1, 
+                description: "Day 362 = YHVH's Day 1 = Week Day 1" 
               })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
@@ -489,9 +489,51 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 364 = YHVH Day 4 = Week Day 4 = Man's Day 1 = TEQUVAH (Equinox) */}
+        {/* Day 364 = YHVH Day 3 = Week Day 3 */}
         {(() => {
           const dayIndex = 365;
+          const startAngle = (dayIndex / totalSlots) * 360;
+          const endAngle = ((dayIndex + 1) / totalSlots) * 360;
+          const midAngle = (startAngle + endAngle) / 2;
+          const textPos = polarToCartesian(cx, cy, (radii.wheel1Outer + radii.wheel1Inner) / 2, midAngle);
+          
+          return (
+            <g 
+              key="mans-day-364"
+              onMouseEnter={() => handleHover('specialDay', { 
+                mansDay: 364, 
+                yhvhDay: 3, 
+                weekDay: 3,
+                description: "Day 364 = YHVH's Day 3 = Week Day 3"
+              })}
+              onMouseLeave={handleHoverEnd}
+              style={{ cursor: 'pointer' }}
+            >
+              <path
+                d={describeWedge(cx, cy, radii.wheel1Inner, radii.wheel1Outer, startAngle, endAngle)}
+                fill="hsl(200, 80%, 50%)"
+                fillOpacity={0.9}
+                stroke="hsl(200, 60%, 35%)"
+                strokeWidth="0.5"
+              />
+              <text
+                x={textPos.x}
+                y={textPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="white"
+                fontSize="5"
+                fontWeight="bold"
+              >
+                364
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* TEQUVAH = YHVH Day 4 = Week Day 4 = Man's Day 1 (NEW YEAR) */}
+        {(() => {
+          const dayIndex = 366;
           const startAngle = (dayIndex / totalSlots) * 360;
           const endAngle = ((dayIndex + 1) / totalSlots) * 360;
           const midAngle = (startAngle + endAngle) / 2;
@@ -506,7 +548,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 weekDay: 4,
                 monthDay: 1,
                 month: 1,
-                description: "TEQUVAH (Equinox) - The Straight-Line Shadow Day - YHVH's Day 4 / Week Day 4 / Man's Day 1 of the 1st Month",
+                description: "TEQUVAH (Equinox) - YHVH's Day 4 = Week Day 4 = Man's Day 1 of the 1st Month - NEW YEAR",
                 isTequvah: true
               })}
               onMouseLeave={handleHoverEnd}
