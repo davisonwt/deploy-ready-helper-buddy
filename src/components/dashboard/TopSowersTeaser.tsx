@@ -33,31 +33,49 @@ export function TopSowersTeaser() {
     try {
       setLoading(true);
       
-      // Fetch top 3 sowers by XP (this week)
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      
-      // For now, we'll use a simplified query - in production you'd have an XP/leaderboard table
+      // Fetch top 3 sowers by XP from user_points table
+      const { data: topUsers, error } = await supabase
+        .from('user_points')
+        .select('user_id, total_points, level')
+        .order('total_points', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      // Get profiles for top users
+      const userIds = (topUsers || []).map(u => u.user_id);
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
-        .limit(3);
+        .in('user_id', userIds);
 
-      // Mock XP data - in production this would come from a gamification/XP table
-      const mockTopSowers: TopSower[] = (profiles || []).slice(0, 3).map((p, i) => ({
-        id: p.user_id,
-        username: p.display_name || 'Anonymous',
-        avatar_url: p.avatar_url,
-        xp: (3 - i) * 1000 + Math.floor(Math.random() * 500),
-        rank: i + 1
-      }));
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-      setTopSowers(mockTopSowers);
+      const realTopSowers: TopSower[] = (topUsers || []).slice(0, 3).map((u, i) => {
+        const profile = profileMap.get(u.user_id);
+        return {
+          id: u.user_id,
+          username: profile?.display_name || 'Anonymous',
+          avatar_url: profile?.avatar_url,
+          xp: u.total_points || 0,
+          rank: i + 1
+        };
+      });
+
+      setTopSowers(realTopSowers);
 
       // Get user's rank
       if (user?.id) {
-        // Mock user rank - in production calculate from leaderboard
-        setUserRank({ rank: 14, gap: 2 });
+        const userIndex = (topUsers || []).findIndex(u => u.user_id === user.id);
+        if (userIndex >= 0) {
+          const nextUser = topUsers?.[userIndex - 1];
+          const gap = nextUser ? (nextUser.total_points - (topUsers?.[userIndex]?.total_points || 0)) : 0;
+          setUserRank({ rank: userIndex + 1, gap: Math.max(1, gap) });
+        } else {
+          // User not in top 10, estimate rank
+          const { count } = await supabase.from('user_points').select('*', { count: 'exact', head: true });
+          setUserRank({ rank: Math.min((count || 100) + 1, 999), gap: 100 });
+        }
       }
     } catch (error) {
       console.error('Error fetching top sowers:', error);
