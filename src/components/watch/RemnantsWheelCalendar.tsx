@@ -291,10 +291,26 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           // Show numbers more frequently for visibility
           const showNumber = mansCount <= 4 || mansCount % 30 === 0 || mansCount === 361 || isCurrent;
 
+          // Calculate YHVH's day (runs 3 days ahead of Man's count)
+          // Man's Day 1 = YHVH's Day 4, so YHVH day = Man's day + 3
+          const yhvhDay = mansCount + 3;
+          // Calculate week number (1-52) and if it's a sabbath
+          const weekNumber = Math.ceil(mansCount / 7);
+          const isSabbath = mansCount % 7 === 0;
+          const weekDay = mansCount % 7 === 0 ? 7 : mansCount % 7;
+
           return (
             <g
               key={`mans-${dayOfYear}`}
-              onMouseEnter={() => handleHover('mansCount', { dayOfYear, mansCount, dayType })}
+              onMouseEnter={() => handleHover('mansCount', { 
+                dayOfYear, 
+                mansCount, 
+                dayType,
+                yhvhDay,
+                weekNumber,
+                isSabbath,
+                weekDay
+              })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}
             >
@@ -1624,9 +1640,15 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 )}
                 {hoveredElement.type === 'mansCount' && (
                   <div>
-                    <h4 className="font-bold text-primary">Man's Count: {hoveredElement.data.mansCount}</h4>
-                    <p className="text-sm">Day of Year: {hoveredElement.data.dayOfYear}</p>
-                    <p className="text-xs capitalize" style={{ color: getDayColor(hoveredElement.data.dayType) }}>
+                    <h4 className="font-bold text-primary">Man's Day {hoveredElement.data.mansCount}</h4>
+                    <p className="text-sm text-blue-300">YHVH's Day {hoveredElement.data.yhvhDay}</p>
+                    <p className="text-sm text-green-300">Week Day {hoveredElement.data.weekDay}</p>
+                    {hoveredElement.data.isSabbath && (
+                      <p className="text-sm text-purple-400 font-semibold">
+                        Sabbath #{hoveredElement.data.weekNumber}
+                      </p>
+                    )}
+                    <p className="text-xs capitalize mt-1" style={{ color: getDayColor(hoveredElement.data.dayType) }}>
                       {hoveredElement.data.dayType}
                     </p>
                   </div>
