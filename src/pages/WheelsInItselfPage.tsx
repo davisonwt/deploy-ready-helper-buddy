@@ -1,8 +1,19 @@
 import React from 'react';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
-import { LocationVerification } from '@/components/calendar/LocationVerification';
 
 export default function WheelsInItselfPage() {
+  const [wheelSize, setWheelSize] = React.useState(700);
+  
+  React.useEffect(() => {
+    const updateSize = () => {
+      const maxSize = Math.min(window.innerWidth * 0.85, 800);
+      setWheelSize(maxSize);
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0a0a15] via-[#1a1a2e] to-[#0a0a15] overflow-x-hidden">
       {/* Header */}
@@ -13,13 +24,12 @@ export default function WheelsInItselfPage() {
         <p className="text-center text-gray-400 text-lg mb-4">
           YHVH's 8-Wheel Rotating Calendar System
         </p>
-        <LocationVerification />
       </div>
 
       {/* Main content */}
       <div className="container mx-auto px-4 pb-8 flex justify-center">
-        <div className="glass-card p-6 rounded-3xl shadow-xl border-2 border-amber-500/20">
-          <RemnantsWheelCalendar size={Math.min(800, typeof window !== 'undefined' ? window.innerWidth * 0.85 : 800)} />
+        <div className="bg-black/40 p-6 rounded-3xl shadow-xl border-2 border-amber-500/20">
+          <RemnantsWheelCalendar size={wheelSize} />
         </div>
       </div>
       
