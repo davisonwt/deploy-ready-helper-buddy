@@ -447,7 +447,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
 
-        {/* Day 363: YHVH's Day 3, Week Day 3 */}
+        {/* Day 363 = YHVH's Day 2 = Week Day 2 */}
         {(() => {
           const dayIndex = 364;
           const startAngle = (dayIndex / totalSlots) * 360;
@@ -460,9 +460,9 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               key="mans-day-363"
               onMouseEnter={() => handleHover('specialDay', { 
                 mansDay: 363, 
-                yhvhDay: 3, 
-                weekDay: 3, 
-                description: "Day 363 of Man's previous year count - YHVH's Day 3 - Week Day 3" 
+                yhvhDay: 2, 
+                weekDay: 2, 
+                description: "Day 363 = YHVH's Day 2 = Week Day 2" 
               })}
               onMouseLeave={handleHoverEnd}
               style={{ cursor: 'pointer' }}

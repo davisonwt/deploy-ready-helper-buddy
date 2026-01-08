@@ -553,7 +553,7 @@ export default function S2GCommunityMusicPage() {
                         <div className='flex items-center gap-2 mt-4 flex-wrap'>
                           <Button
                             size='sm'
-                            className={`flex-1 ${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+                            className={`${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
                             onClick={() => handlePlay(item)}
                           >
                             {isPlaying ? (
@@ -564,7 +564,7 @@ export default function S2GCommunityMusicPage() {
                             ) : (
                               <>
                                 <Play className='w-4 h-4 mr-2' />
-                                {accessGranted ? 'Play Full' : 'Preview 30s'}
+                                {accessGranted ? 'Play' : '30s'}
                               </>
                             )}
                           </Button>
@@ -589,6 +589,75 @@ export default function S2GCommunityMusicPage() {
                               {isGiveaway ? 'Claim Free' : 'Bestow'}
                             </Button>
                           )}
+
+                          {/* Social Action Buttons */}
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className={`border-white/20 hover:bg-white/20 ${likedTracks.has(item.id) ? 'text-red-400' : 'text-white'}`}
+                            onClick={async () => {
+                              if (!user) {
+                                toast.error('Please login to like');
+                                return;
+                              }
+                              await likeProduct(item.id);
+                              setLikedTracks(prev => {
+                                const updated = new Set(prev);
+                                if (updated.has(item.id)) {
+                                  updated.delete(item.id);
+                                } else {
+                                  updated.add(item.id);
+                                }
+                                return updated;
+                              });
+                            }}
+                          >
+                            <Heart className={`w-4 h-4 ${likedTracks.has(item.id) ? 'fill-current' : ''}`} />
+                          </Button>
+
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className={`border-white/20 hover:bg-white/20 ${votedTracks.has(item.id) ? 'text-yellow-400' : 'text-white'}`}
+                            onClick={async () => {
+                              if (!user) {
+                                toast.error('Please login to vote');
+                                return;
+                              }
+                              await voteForTrack(item.id);
+                              setVotedTracks(prev => {
+                                const updated = new Set(prev);
+                                if (!updated.has(item.id)) {
+                                  updated.add(item.id);
+                                  launchConfetti();
+                                }
+                                return updated;
+                              });
+                            }}
+                            disabled={votedTracks.has(item.id)}
+                          >
+                            <Star className={`w-4 h-4 ${votedTracks.has(item.id) ? 'fill-current' : ''}`} />
+                          </Button>
+
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className='border-white/20 text-white hover:bg-white/20'
+                            onClick={() => shareTrack(item.id, item.title, item.artist)}
+                          >
+                            <Share2 className='w-4 h-4' />
+                          </Button>
+
+                          <Button
+                            size='sm'
+                            variant='ghost'
+                            className='border-white/20 text-white hover:bg-white/20'
+                            onClick={() => {
+                              toast.info('Comments coming soon!');
+                            }}
+                          >
+                            <MessageCircle className='w-4 h-4' />
+                          </Button>
                         </div>
                       </div>
                     </div>
