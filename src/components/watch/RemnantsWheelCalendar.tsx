@@ -294,10 +294,12 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           // Calculate YHVH's day (runs 3 days ahead of Man's count)
           // Man's Day 1 = YHVH's Day 4, so YHVH day = Man's day + 3
           const yhvhDay = mansCount + 3;
-          // Calculate week number (1-52) and if it's a sabbath
-          const weekNumber = Math.ceil(mansCount / 7);
-          const isSabbath = mansCount % 7 === 0;
-          const weekDay = mansCount % 7 === 0 ? 7 : mansCount % 7;
+          // Week calculation: Day 1 = Week Day 4 (since year starts mid-week after Tequvah)
+          // Day 361 = Week Day 7 = Sabbath #52
+          // Formula: weekDay = ((mansCount + 2) % 7) + 1 gives Day 1 = 4, Day 361 = 7
+          const weekNumber = Math.ceil((mansCount + 3) / 7);
+          const weekDay = ((mansCount + 2) % 7) + 1; // Day 1 = 4, Day 361 = 7
+          const isSabbath = weekDay === 7;
 
           return (
             <g
