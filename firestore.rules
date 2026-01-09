@@ -13,6 +13,28 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // Helper function to check if user has gosat role from PROTECTED collection
+    // This collection can only be written by existing gosats/admins
+    function isGosat() {
+      return isAuthenticated() 
+        && exists(/databases/$(database)/documents/user_roles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.role == 'gosat';
+    }
+    
+    // ============================================
+    // PROTECTED USER ROLES (Admin-only writes)
+    // ============================================
+    // Path: user_roles/{userId}
+    // This collection stores verified roles that ONLY admins/gosats can modify
+    match /user_roles/{userId} {
+      // Anyone can read (for role verification)
+      allow read: if true;
+      
+      // Only existing gosats can create/update/delete roles
+      // This prevents self-assignment of gosat role
+      allow write: if isGosat();
+    }
+    
     // ============================================
     // PRIVATE JOURNAL ENTRIES
     // ============================================
@@ -69,15 +91,20 @@ service cloud.firestore {
     }
     
     // ============================================
-    // USER PROFILES
+    // USER PROFILES (Public data only)
     // ============================================
     // Path: users/{userId}
+    // NOTE: role/isGosat fields here are NOT used for authorization
+    // Use user_roles collection for role-based access
     match /users/{userId} {
       // Anyone can read (for display names, countries, etc.)
       allow read: if true;
       
-      // Only owner can write
-      allow write: if isOwner(userId);
+      // Only owner can write their profile
+      // SECURITY: Users cannot set role/isGosat fields (use user_roles instead)
+      allow write: if isOwner(userId)
+        && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+        && (!('isGosat' in request.resource.data) || request.resource.data.isGosat == resource.data.isGosat);
     }
     
     // ============================================
@@ -96,17 +123,13 @@ service cloud.firestore {
         && request.resource.data.createdAt != null;
       
       // Only author can update their own messages
-      // Gosats can also update (for moderation)
+      // Gosats can also update (for moderation) - uses PROTECTED user_roles collection
       allow update: if isAuthenticated() 
-        && (resource.data.authorUID == request.auth.uid 
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+        && (resource.data.authorUID == request.auth.uid || isGosat());
       
-      // Only author or Gosat can delete
+      // Only author or Gosat can delete - uses PROTECTED user_roles collection
       allow delete: if isAuthenticated() 
-        && (resource.data.authorUID == request.auth.uid 
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+        && (resource.data.authorUID == request.auth.uid || isGosat());
     }
     
     // ============================================
@@ -114,10 +137,8 @@ service cloud.firestore {
     // ============================================
     // Path: banned_users/{userId}
     match /banned_users/{userId} {
-      // Only Gosats can read/write
-      allow read, write: if isAuthenticated() 
-        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'gosat'
-            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isGosat == true);
+      // Only Gosats can read/write - uses PROTECTED user_roles collection
+      allow read, write: if isGosat();
     }
   }
 }
