@@ -6,15 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { use364ttt, getTimeUntilWeekEnd } from '@/hooks/use364ttt';
 import { useAuth } from '@/hooks/useAuth';
-import { Play, Pause, Music, Trophy, Clock, ChevronRight, Heart, Star } from 'lucide-react';
+import { Play, Pause, Music, Trophy, Clock, ChevronRight, Heart, Star, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { toast } from 'sonner';
 
 export default function TorahTopTenPage() {
   const { user } = useAuth();
   const { weekId, leaderboard, leaderboardLoading, previousPlaylists, remainingVotes, hasVotedFor, vote, isVoting } = use364ttt();
   const [timeLeft, setTimeLeft] = useState(getTimeUntilWeekEnd());
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update countdown every minute
   useEffect(() => {
@@ -24,16 +28,55 @@ export default function TorahTopTenPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handlePlay = (songId: string, url: string) => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, []);
+
+  const handlePlay = async (songId: string, url: string) => {
     if (playingId === songId) {
       audioRef.current?.pause();
+      audioRef.current!.currentTime = 0;
       setPlayingId(null);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.play();
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+
+    if (!audioRef.current || !url) return;
+
+    try {
+      setLoadingId(songId);
+      
+      // Resolve Supabase storage URL to signed URL
+      const resolvedUrl = await resolveAudioUrl(url, { bucketForKeys: 'music-tracks' });
+      
+      audioRef.current.src = resolvedUrl;
+      audioRef.current.load();
+      audioRef.current.currentTime = 0;
+      audioRef.current.volume = 0.7;
+      await audioRef.current.play();
       setPlayingId(songId);
+
+      // Stop after 30 seconds
+      timeoutRef.current = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setPlayingId(null);
+      }, 30000);
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      toast.error('Failed to play audio preview');
+      setPlayingId(null);
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -175,8 +218,11 @@ export default function TorahTopTenPage() {
                             size="icon"
                             onClick={() => handlePlay(song.song_id, song.file_url)}
                             className="shrink-0"
+                            disabled={loadingId === song.song_id}
                           >
-                            {playingId === song.song_id ? (
+                            {loadingId === song.song_id ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : playingId === song.song_id ? (
                               <Pause className="w-5 h-5" />
                             ) : (
                               <Play className="w-5 h-5" />
