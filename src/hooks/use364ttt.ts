@@ -110,14 +110,13 @@ export function use364ttt() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Fetch all songs for voting
+  // Fetch all songs for voting (all user-uploaded tracks)
   const { data: allSongs = [], isLoading: songsLoading } = useQuery({
     queryKey: ['364ttt-all-songs'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('dj_music_tracks')
-        .select('id, track_title, artist_name, file_url, dj_id, created_at')
-        .eq('is_public', true)
+        .select('id, track_title, artist_name, file_url, dj_id, created_at, preview_url')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
