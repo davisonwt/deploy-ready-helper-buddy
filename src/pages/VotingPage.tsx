@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '@/components/Layout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,27 +45,25 @@ export default function VotingPage() {
 
   if (!user) {
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center px-4">
-          <Card className="max-w-md w-full">
-            <CardContent className="py-12 text-center">
-              <Music className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl font-bold mb-2">Sign in to Vote</h2>
-              <p className="text-muted-foreground mb-6">
-                You need to be logged in to vote for your favorite Torah songs.
-              </p>
-              <Link to="/auth">
-                <Button>Sign In</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="py-12 text-center">
+            <Music className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-bold mb-2">Sign in to Vote</h2>
+            <p className="text-muted-foreground mb-6">
+              You need to be logged in to vote for your favorite Torah songs.
+            </p>
+            <Link to="/auth">
+              <Button>Sign In</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
@@ -179,6 +177,6 @@ export default function VotingPage() {
 
         <audio ref={audioRef} onEnded={() => setPlayingId(null)} className="hidden" />
       </div>
-    </Layout>
+    </>
   );
 }
