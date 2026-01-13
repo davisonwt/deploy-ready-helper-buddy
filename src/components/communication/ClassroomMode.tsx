@@ -26,7 +26,7 @@ interface ClassroomSession {
   profiles?: {
     display_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 }
 
 export const ClassroomMode: React.FC = () => {
@@ -43,6 +43,7 @@ export const ClassroomMode: React.FC = () => {
 
   const loadSessions = async () => {
     try {
+      // First try with profile join
       const { data, error } = await supabase
         .from('classroom_sessions')
         .select(`
@@ -55,8 +56,27 @@ export const ClassroomMode: React.FC = () => {
         .order('scheduled_at', { ascending: true })
         .limit(20);
 
-      if (error) throw error;
-      setSessions(data || []);
+      if (error) {
+        console.error('Error loading classroom sessions:', error);
+        // Fallback: load without profile join
+        const fallbackResult = await supabase
+          .from('classroom_sessions')
+          .select('*')
+          .order('scheduled_at', { ascending: true })
+          .limit(20);
+        
+        if (fallbackResult.data) {
+          // Add empty profiles to satisfy interface
+          const sessionsWithProfiles = fallbackResult.data.map(s => ({
+            ...s,
+            profiles: null
+          }));
+          setSessions(sessionsWithProfiles as ClassroomSession[]);
+        }
+      } else {
+        console.log('Loaded classroom sessions:', data);
+        setSessions((data || []) as ClassroomSession[]);
+      }
     } catch (error) {
       console.error('Error loading sessions:', error);
     } finally {

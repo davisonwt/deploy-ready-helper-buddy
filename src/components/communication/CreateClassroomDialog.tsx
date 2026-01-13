@@ -36,6 +36,13 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
 
     setLoading(true);
     try {
+      // Get the user's profile ID
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
       const { error } = await supabase.from('classroom_sessions').insert({
         title: formData.title,
         description: formData.description,
@@ -43,6 +50,7 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
         duration_minutes: formData.duration_minutes,
         max_participants: formData.max_participants,
         instructor_id: user.id,
+        instructor_profile_id: profileData?.id || null,
         status: 'scheduled',
       });
 
