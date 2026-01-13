@@ -161,14 +161,20 @@ export default function JitsiRoom({
         };
 
         // Add JWT if provided for premium features
-        if (jwt || JAAS_CONFIG.jwt) {
-          options.jwt = jwt || JAAS_CONFIG.jwt;
+        const jwtToken = jwt || JAAS_CONFIG.jwt;
+        if (jwtToken) {
+          console.log('🔐 [JITSI] Using JWT token for authentication');
+          options.jwt = jwtToken;
+        } else {
+          console.warn('⚠️ [JITSI] No JWT token provided - some features may be limited');
         }
 
+        console.log('🚀 [JITSI] Initializing JaaS with room:', jaasRoomName);
         jitsiApi.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
 
         // Event listeners
         jitsiApi.current.addListener('videoConferenceJoined', () => {
+          console.log('✅ [JITSI] Conference joined successfully');
           setIsLoading(false);
           toast({
             title: 'Connected',
@@ -177,7 +183,39 @@ export default function JitsiRoom({
         });
 
         jitsiApi.current.addListener('videoConferenceLeft', () => {
+          console.log('📞 [JITSI] Conference left');
           handleLeave();
+        });
+
+        // Error event listeners
+        jitsiApi.current.addListener('errorOccurred', (error: any) => {
+          console.error('❌ [JITSI] Error occurred:', error);
+          toast({
+            title: 'Connection Error',
+            description: error.message || 'An error occurred during the call',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+        });
+
+        jitsiApi.current.addListener('connectionFailed', (error: any) => {
+          console.error('❌ [JITSI] Connection failed:', error);
+          toast({
+            title: 'Connection Failed',
+            description: 'Unable to connect to the video service. Please check your internet connection.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+        });
+
+        jitsiApi.current.addListener('authenticationRequired', () => {
+          console.error('❌ [JITSI] Authentication required - JWT token may be invalid or expired');
+          toast({
+            title: 'Authentication Required',
+            description: 'Your session has expired. Please refresh the page and try again.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
         });
 
         jitsiApi.current.addListener('participantJoined', () => {
@@ -202,14 +240,16 @@ export default function JitsiRoom({
             setIsHandRaised(handRaised);
           }
         });
-      } catch (error) {
-        console.error('Error initializing Jitsi:', error);
+      } catch (error: any) {
+        console.error('❌ [JITSI] Error initializing Jitsi:', error);
         toast({
-          title: 'Error',
-          description: 'Failed to initialize video room',
+          title: 'Failed to Initialize',
+          description: error?.message || 'Could not start the video room. Please refresh and try again.',
           variant: 'destructive',
         });
         setIsLoading(false);
+        // If initialization fails, call onLeave to exit gracefully
+        setTimeout(() => onLeave?.(), 2000);
       }
     };
 
