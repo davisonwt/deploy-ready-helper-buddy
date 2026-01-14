@@ -7,6 +7,8 @@ import { Heart, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { BinancePayButton } from '@/components/payment/BinancePayButton';
+import { NowPaymentsButton } from '@/components/payment/NowPaymentsButton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availablePockets, growerId }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
@@ -88,20 +90,57 @@ const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availableP
           </div>
         </div>
 
-        <BinancePayButton
-          orchardId={orchardId}
-          amount={totalAmount}
-          pocketsCount={pocketsCount}
-          message={message}
-          growerId={growerId}
-          disabled={!user || availablePockets === 0}
-          onSuccess={() => {
-            toast({
-              title: 'Payment Initiated!',
-              description: 'Complete the payment in your Binance app'
-            });
-          }}
-        />
+        <Tabs defaultValue="crypto" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="crypto">Pay with Crypto</TabsTrigger>
+            <TabsTrigger value="binance">Binance Pay</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="crypto" className="mt-4">
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Pay with 300+ cryptocurrencies using NOWPayments. No Binance account required.
+              </p>
+              <NowPaymentsButton
+                orchardId={orchardId}
+                amount={totalAmount}
+                pocketsCount={pocketsCount}
+                message={message}
+                growerId={growerId}
+                disabled={!user || availablePockets === 0}
+                className="w-full"
+                onSuccess={() => {
+                  toast({
+                    title: 'Payment Initiated!',
+                    description: 'Complete the payment on the NOWPayments checkout page'
+                  });
+                }}
+              />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="binance" className="mt-4">
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Pay directly with your Binance account for instant transfers.
+              </p>
+              <BinancePayButton
+                orchardId={orchardId}
+                amount={totalAmount}
+                pocketsCount={pocketsCount}
+                message={message}
+                growerId={growerId}
+                disabled={!user || availablePockets === 0}
+                onSuccess={() => {
+                  toast({
+                    title: 'Payment Initiated!',
+                    description: 'Complete the payment in your Binance app'
+                  });
+                }}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
