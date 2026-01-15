@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-idempotency-key',
 };
 
+// S2G Platform Wallet Addresses (Option B - Platform Wallets)
+const S2G_WALLETS = {
+  // Main Holdings Wallet - receives all product/orchard bestowals (USDC on Solana)
+  HOLDINGS: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaM',
+  // Admin/Tithings Wallet - receives platform fees, tithings, free-will gifts (USDT on Solana)
+  ADMIN: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaN',
+};
+
 interface CreateOrderRequest {
   orchardId: string;
   amount: number;
@@ -14,6 +22,7 @@ interface CreateOrderRequest {
   currency?: string;
   successUrl?: string;
   cancelUrl?: string;
+  paymentType?: 'bestowal' | 'tithing' | 'freewill'; // Determines which wallet receives funds
 }
 
 serve(async (req) => {
@@ -187,7 +196,7 @@ serve(async (req) => {
         success_url: finalSuccessUrl,
         cancel_url: finalCancelUrl,
         is_fixed_rate: true,
-        is_fee_paid_by_user: false,
+        is_fee_paid_by_user: true, // All fees paid by bestower as per requirements
       }),
     });
 

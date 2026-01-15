@@ -94,7 +94,7 @@ const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
-const BinancePayTestPage = lazy(() => import("./pages/BinancePayTestPage"));
+// BinancePayTestPage removed - using NOWPayments only
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
 const RadioSessions = lazy(() => import("./pages/RadioSessions"));
 const LiveRooms = lazy(() => import("./pages/LiveRooms"));
@@ -716,13 +716,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              <Route path="/binance-pay-test" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <BinancePayTestPage />
-                  </Layout>
-                </ProtectedRoute>
-              } />
+              {/* Binance Pay test page removed - using NOWPayments only */}
               
               {/* Admin Routes */}
               <Route path="/admin/analytics" element={
