@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coins, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { useCryptomusPay } from '@/hooks/useCryptomusPay';
+import { useNowPaymentsPay } from '@/hooks/useNowPaymentsPay';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +34,7 @@ export function BestowalCoin({
   const [sliderValue, setSliderValue] = useState([initialAmount || 0.5]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [emojiRain, setEmojiRain] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
-  const { initiateCryptomusPayment, processing } = useCryptomusPay();
+  const { createPayment, isLoading } = useNowPaymentsPay();
 
   const handleCoinClick = () => {
     if (disabled) return;
@@ -71,33 +71,27 @@ export function BestowalCoin({
         return;
       }
 
-      // Trigger payment directly
-      const paymentResult = await initiateCryptomusPayment({
+      // Trigger payment with NOWPayments
+      await createPayment({
         orchardId: assetId,
         amount: amount,
         pocketsCount: 1,
-        currency: 'USDC',
-        network: 'TRC20',
+        onSuccess: (bestowalId, invoiceUrl) => {
+          // Show confetti
+          launchConfetti();
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 3000);
+
+          // Show thank you message
+          toast.success(`Thank you! ${senderName || 'Sender'} will receive ${amount} USDC`);
+
+          // Close slider
+          setShowSlider(false);
+
+          // Callback
+          onBestowalComplete?.(amount);
+        },
       });
-
-      if (paymentResult?.paymentUrl) {
-        // Show confetti
-        launchConfetti();
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-
-        // Show thank you message
-        toast.success(`Thank you! ${senderName || 'Sender'} will receive ${amount} USDC`);
-
-        // Close slider
-        setShowSlider(false);
-
-        // Callback
-        onBestowalComplete?.(amount);
-
-        // Open payment page
-        window.open(paymentResult.paymentUrl, '_blank');
-      }
     } catch (error) {
       console.error('Bestowal error:', error);
       toast.error('Failed to process bestowal');
@@ -139,7 +133,7 @@ export function BestowalCoin({
       >
         <Button
           onClick={handleCoinClick}
-          disabled={disabled || processing}
+          disabled={disabled || isLoading}
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 rounded-full relative"
@@ -213,10 +207,10 @@ export function BestowalCoin({
                 </Button>
                 <Button
                   onClick={handleBestowal}
-                  disabled={processing}
+                  disabled={isLoading}
                   className="flex-1 bg-primary"
                 >
-                  {processing ? 'Processing...' : 'Bestow'}
+                  {isLoading ? 'Processing...' : 'Bestow'}
                 </Button>
               </div>
             </motion.div>
@@ -226,4 +220,3 @@ export function BestowalCoin({
     </>
   );
 }
-

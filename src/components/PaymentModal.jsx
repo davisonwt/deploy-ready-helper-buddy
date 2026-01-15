@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { X, Info } from 'lucide-react';
+import { X, Info, CreditCard, Wallet, Building2 } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
-import { BinancePayButton } from './payment/BinancePayButton';
+import { NowPaymentsButton } from './payment/NowPaymentsButton';
 
 const PaymentModal = ({ 
   isOpen, 
@@ -55,7 +55,7 @@ const PaymentModal = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              All payments are processed through Binance Pay using USDC
+              Pay with crypto, cards, bank transfer, PayPal, and more. All fees included in invoice.
             </AlertDescription>
           </Alert>
 
@@ -70,11 +70,35 @@ const PaymentModal = ({
             </div>
           </div>
 
-          <BinancePayButton
+          {/* Payment options info */}
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+            <h4 className="font-medium text-sm">Available Payment Methods:</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Wallet className="h-3.5 w-3.5" />
+                <span>300+ Cryptocurrencies</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Credit/Debit Cards</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                <span>Bank Transfers</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">💳</span>
+                <span>PayPal & More</span>
+              </div>
+            </div>
+          </div>
+
+          <NowPaymentsButton
             orchardId={orchardId}
             amount={amount}
             pocketsCount={pocketsCount}
             growerId={growerId}
+            className="w-full"
             onSuccess={() => {
               if (onPaymentComplete) {
                 onPaymentComplete();

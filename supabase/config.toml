@@ -35,18 +35,14 @@ jwt_expiry = 3600
 [functions]
 enabled = true
 
-[functions.create-paypal-order]
-verify_jwt = true
-
-[functions.capture-paypal-payment]
+# NOWPayments - Primary Payment Integration
+[functions.nowpayments-webhook]
 verify_jwt = false
 
-[functions.create-stripe-payment]
-verify_jwt = true
+[functions.create-nowpayments-order]
+verify_jwt = false
 
-[functions.create-eft-payment]
-verify_jwt = true
-
+# Email Functions
 [functions.send-welcome-email]
 verify_jwt = false
 
@@ -65,6 +61,7 @@ verify_jwt = false
 [functions.send-bestowal-notifications]
 verify_jwt = false
 
+# AI Content Generation
 [functions.generate-script]
 verify_jwt = true
 
@@ -77,12 +74,13 @@ verify_jwt = true
 [functions.generate-marketing-tips]
 verify_jwt = true
 
-[functions.test-simple]
+[functions.generate-community-offering]
+verify_jwt = true
+
+[functions.generate-weekly-playlist]
 verify_jwt = false
 
-[functions.verify-chatapp]
-verify_jwt = false
-
+# Media & Music
 [functions.purchase-media]
 verify_jwt = true
 
@@ -92,35 +90,12 @@ verify_jwt = true
 [functions.download-album]
 verify_jwt = true
 
-[functions.link-binance-wallet]
-verify_jwt = true
+# Utility Functions
+[functions.test-simple]
+verify_jwt = false
 
-[functions.refresh-binance-wallet-balance]
-verify_jwt = true
-
-[functions.create-binance-wallet-topup]
-verify_jwt = true
-
-[functions.create-binance-pay-order]
-verify_jwt = true
+[functions.verify-chatapp]
+verify_jwt = false
 
 [functions.distribute-bestowal]
 verify_jwt = true
-
-[functions.generate-community-offering]
-verify_jwt = true
-
-[functions.create-cryptomus-payment]
-verify_jwt = true
-
-[functions.cryptomus-webhook]
-verify_jwt = false
-
-[functions.generate-weekly-playlist]
-verify_jwt = false
-
-[functions.nowpayments-webhook]
-verify_jwt = false
-
-[functions.create-nowpayments-order]
-verify_jwt = false
