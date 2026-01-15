@@ -31,8 +31,6 @@ import { supabase } from "@/integrations/supabase/client"
 import LiveActivityWidget from '@/components/LiveActivityWidget'
 import { GamificationHUD } from '@/components/gamification/GamificationHUD'
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
-// Binance Pay - no wallet connection needed
-import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
 import { getCreatorTime } from '@/utils/customTime'
 import { getCreatorDateSync } from '@/utils/customCalendar'
 import { getDayInfo } from '@/utils/sacredCalendar'
@@ -741,15 +739,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <div className="lg:col-span-1 wallet-tour">
-            <BinanceWalletManager 
-              className="shadow-xl backdrop-blur-xl"
-              style={{
-                backgroundColor: currentTheme.cardBg,
-                borderColor: currentTheme.cardBorder,
-              }}
-            />
-          </div>
 
           {/* Global Timezone Support */}
           <Card 
