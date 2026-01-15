@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
-import { FiatOnRamp } from '@/components/FiatOnRamp'
+
 
 export default function VideoGifting({ video, onGiftSent }) {
   const { user } = useAuth()
