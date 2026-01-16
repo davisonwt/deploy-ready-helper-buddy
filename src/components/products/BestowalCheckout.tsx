@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ShoppingCart, Trash2, LogIn, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import { NowPaymentsButton } from '@/components/payment/NowPaymentsButton';
+import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, clearBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
-  const [processing, setProcessing] = useState(false);
+  const navigate = useNavigate();
   
   // Debug: Log basket items
   useEffect(() => {
@@ -22,61 +23,31 @@ export default function BestowalCheckout() {
     console.log('🛒 BestowalCheckout: localStorage productBasket', localStorage.getItem('productBasket'));
   }, [basketItems]);
 
-  const handleBestow = async () => {
-    if (!user) {
-      toast.error('Please login to complete bestowal');
-      return;
-    }
+  // Calculate distribution breakdown
+  const tithingAmount = totalAmount * 0.10;
+  const adminFee = totalAmount * 0.05;
+  const creatorsAmount = totalAmount * 0.70;
+  const whispersAmount = totalAmount * 0.15;
 
-    setProcessing(true);
+  // Prepare product items for payment
+  const productItems = basketItems.map(item => ({
+    id: item.id,
+    title: item.title,
+    price: Number(item.price),
+    sower_id: item.sower_id,
+  }));
 
-    try {
-      // Process each item in basket using secure edge function
-      for (const item of basketItems) {
-        const amount = Number(item.price);
+  const handlePaymentSuccess = (bestowalId: string, invoiceUrl: string) => {
+    console.log('✅ Payment initiated:', { bestowalId, invoiceUrl });
+    playSoundEffect('bestow', 0.7);
+    floatingScore(totalAmount);
+    launchConfetti();
+    // Basket will be cleared after successful payment via webhook
+    // or user can clear manually after returning
+  };
 
-        // Call edge function to handle bestowal completion, messaging, and accounting
-        const { data, error } = await supabase.functions.invoke('complete-product-bestowal', {
-          body: {
-            productId: item.id,
-            amount: amount,
-            sowerId: item.sower_id,
-          },
-        });
-
-        if (error) {
-          console.error('Product bestowal error:', error);
-          throw new Error(error.message || 'Failed to complete bestowal');
-        }
-
-        if (!data?.success) {
-          throw new Error(data?.message || 'Bestowal completion failed');
-        }
-
-        // Award XP for bestowal (100 XP per product) - use type assertion
-        if (user) {
-          try {
-            await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
-          } catch (err) {
-            console.warn('XP award not available:', err);
-          }
-        }
-      }
-
-      // Show floating score for total amount
-      playSoundEffect('bestow', 0.7)
-      floatingScore(totalAmount);
-      launchConfetti();
-      toast.success('Bestowal completed successfully!', {
-        description: 'Thank you for supporting our sowers! Check your chat for invoice and messages.'
-      });
-      clearBasket();
-    } catch (error) {
-      console.error('Bestowal error:', error);
-      toast.error(error instanceof Error ? error.message : 'Bestowal failed. Please try again.');
-    } finally {
-      setProcessing(false);
-    }
+  const handlePaymentError = (error: Error) => {
+    console.error('❌ Payment error:', error);
   };
 
   if (basketItems.length === 0) {
@@ -156,48 +127,63 @@ export default function BestowalCheckout() {
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Tithing (10%)</span>
-            <span className="text-purple-400">${(totalAmount * 0.10).toFixed(2)}</span>
+            <span className="text-purple-400">${tithingAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Admin Fee (5%)</span>
-            <span>${(totalAmount * 0.05).toFixed(2)}</span>
+            <span>${adminFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>To Creators (70%)</span>
-            <span className="text-primary">${(totalAmount * 0.70).toFixed(2)}</span>
+            <span className="text-primary">${creatorsAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>To Product Whispers (15%)</span>
-            <span className="text-accent">${(totalAmount * 0.15).toFixed(2)}</span>
+            <span className="text-accent">${whispersAmount.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
-            <span>${totalAmount.toFixed(2)} USDC</span>
+            <span>${totalAmount.toFixed(2)} USD</span>
           </div>
         </div>
 
-        <Button
-          onClick={handleBestow}
-          disabled={processing}
-          className="w-full"
-          size="lg"
-        >
-          {processing ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Complete Bestowal
-            </>
-          )}
-        </Button>
+        {/* Payment Info */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Payment via NOWPayments - pay with crypto, card, bank transfer, or PayPal. 
+            All fees are included in the total.
+          </AlertDescription>
+        </Alert>
+
+        {!user ? (
+          <Button
+            onClick={() => navigate('/auth')}
+            className="w-full"
+            size="lg"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Login to Complete Bestowal
+          </Button>
+        ) : (
+          <NowPaymentsButton
+            amount={totalAmount}
+            paymentType="product"
+            productItems={productItems}
+            disabled={basketItems.length === 0}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+            className="w-full"
+            buttonText="Complete Bestowal"
+            variant="default"
+            size="lg"
+          />
+        )}
 
         <p className="text-xs text-center text-muted-foreground">
-          By completing this bestowal, you support creators and help grow the community
+          By completing this bestowal, you support creators and help grow the community.
+          Funds are held securely until delivery is confirmed.
         </p>
       </CardContent>
     </Card>
