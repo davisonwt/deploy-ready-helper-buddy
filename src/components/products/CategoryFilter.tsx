@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, FileText, Palette, Grid3x3, Disc, Disc3 } from 'lucide-react';
+import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen } from 'lucide-react';
 
 interface CategoryFilterProps {
   selectedCategory: string;
@@ -23,7 +23,8 @@ export default function CategoryFilter({
     { value: 'all', label: 'All', icon: Grid3x3 },
     { value: 'music', label: 'Music', icon: Music },
     { value: 'art', label: 'Art', icon: Palette },
-    { value: 'file', label: 'Files', icon: FileText }
+    { value: 'file', label: 'Files', icon: FileText },
+    { value: 'book', label: 'Books', icon: BookOpen }
   ];
 
   const categories = [
@@ -47,8 +48,8 @@ export default function CategoryFilter({
     <div className="mb-12 space-y-6">
       {/* Type Filter */}
       <div className="flex justify-center">
-        <Tabs value={selectedType} onValueChange={onTypeChange} className="w-full max-w-2xl">
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
+        <Tabs value={selectedType} onValueChange={onTypeChange} className="w-full max-w-3xl">
+          <TabsList className="grid w-full grid-cols-5 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
             {types.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}
