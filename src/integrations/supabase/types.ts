@@ -5060,6 +5060,71 @@ export type Database = {
           },
         ]
       }
+      sower_books: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          genre: string | null
+          id: string
+          is_available: boolean | null
+          isbn: string | null
+          language: string | null
+          page_count: number | null
+          published_date: string | null
+          publisher: string | null
+          purchase_link: string | null
+          sower_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          id?: string
+          is_available?: boolean | null
+          isbn?: string | null
+          language?: string | null
+          page_count?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          purchase_link?: string | null
+          sower_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          id?: string
+          is_available?: boolean | null
+          isbn?: string | null
+          language?: string | null
+          page_count?: number | null
+          published_date?: string | null
+          publisher?: string | null
+          purchase_link?: string | null
+          sower_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sower_books_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "sowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sowers: {
         Row: {
           bio: string | null
