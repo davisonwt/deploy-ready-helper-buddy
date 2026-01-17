@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
+import SowerBooksSection from '@/components/products/SowerBooksSection';
 import { Loader2, Package, Upload, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -166,6 +167,9 @@ export default function MyProductsPage() {
         </div>
 
         <div className='container mx-auto px-4 py-8'>
+          {/* Sower Books Section */}
+          <SowerBooksSection />
+
           {products && products.length > 0 ? (
             <>
               {/* Category Filter */}
