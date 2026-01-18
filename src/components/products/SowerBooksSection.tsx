@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, BookOpen, Plus, Pencil, Trash2, ExternalLink } from 'lucide-react';
+import { Loader2, BookOpen, Plus, Pencil, Trash2, ExternalLink, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +28,7 @@ interface SowerBook {
   isbn: string | null;
   description: string | null;
   cover_image_url: string | null;
+  image_urls: string[];
   published_date: string | null;
   publisher: string | null;
   page_count: number | null;
@@ -65,6 +66,8 @@ const emptyFormData: BookFormData = {
   purchase_link: '',
 };
 
+const MAX_IMAGES = 3;
+
 export default function SowerBooksSection() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -72,6 +75,9 @@ export default function SowerBooksSection() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<SowerBook | null>(null);
   const [formData, setFormData] = useState<BookFormData>(emptyFormData);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch sower profile and books
   const { data: sowerData, isLoading: sowerLoading } = useQuery({
@@ -104,6 +110,66 @@ export default function SowerBooksSection() {
     enabled: !!sowerData?.id
   });
 
+  // Upload image to storage
+  const uploadImage = async (file: File): Promise<string | null> => {
+    if (!user?.id) return null;
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    
+    const { error } = await supabase.storage
+      .from('book-images')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+    
+    if (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('book-images')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remainingSlots = MAX_IMAGES - uploadedImages.length;
+    if (remainingSlots <= 0) {
+      toast({ title: `Maximum ${MAX_IMAGES} images allowed`, variant: 'destructive' });
+      return;
+    }
+
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    setIsUploading(true);
+
+    try {
+      const uploadPromises = filesToUpload.map(file => uploadImage(file));
+      const urls = await Promise.all(uploadPromises);
+      const validUrls = urls.filter((url): url is string => url !== null);
+      
+      setUploadedImages(prev => [...prev, ...validUrls]);
+      toast({ title: `${validUrls.length} image(s) uploaded successfully` });
+    } catch (error) {
+      toast({ title: 'Failed to upload image', description: String(error), variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Create book mutation
   const createBookMutation = useMutation({
     mutationFn: async (data: BookFormData) => {
@@ -115,7 +181,8 @@ export default function SowerBooksSection() {
         title: data.title,
         isbn: data.isbn || null,
         description: data.description || null,
-        cover_image_url: data.cover_image_url || null,
+        cover_image_url: uploadedImages[0] || data.cover_image_url || null,
+        image_urls: uploadedImages,
         published_date: data.published_date || null,
         publisher: data.publisher || null,
         page_count: data.page_count ? parseInt(data.page_count) : null,
@@ -143,7 +210,8 @@ export default function SowerBooksSection() {
         title: data.title,
         isbn: data.isbn || null,
         description: data.description || null,
-        cover_image_url: data.cover_image_url || null,
+        cover_image_url: uploadedImages[0] || data.cover_image_url || null,
+        image_urls: uploadedImages,
         published_date: data.published_date || null,
         publisher: data.publisher || null,
         page_count: data.page_count ? parseInt(data.page_count) : null,
@@ -182,6 +250,7 @@ export default function SowerBooksSection() {
   const resetForm = () => {
     setFormData(emptyFormData);
     setEditingBook(null);
+    setUploadedImages([]);
     setIsDialogOpen(false);
   };
 
@@ -199,6 +268,7 @@ export default function SowerBooksSection() {
       language: book.language || 'English',
       purchase_link: book.purchase_link || '',
     });
+    setUploadedImages(book.image_urls || []);
     setIsDialogOpen(true);
   };
 
@@ -227,6 +297,14 @@ export default function SowerBooksSection() {
     return null; // User is not a sower
   }
 
+  // Get display image for a book (first uploaded image, or cover_image_url, or null)
+  const getBookCoverImage = (book: SowerBook): string | null => {
+    if (book.image_urls && book.image_urls.length > 0) {
+      return book.image_urls[0];
+    }
+    return book.cover_image_url;
+  };
+
   return (
     <section className='mb-16'>
       <div className='flex items-center justify-between mb-6'>
@@ -238,7 +316,7 @@ export default function SowerBooksSection() {
           <DialogTrigger asChild>
             <Button
               className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
-              onClick={() => { setEditingBook(null); setFormData(emptyFormData); }}
+              onClick={() => { setEditingBook(null); setFormData(emptyFormData); setUploadedImages([]); }}
             >
               <Plus className='w-4 h-4 mr-2' />
               Add Book
@@ -284,7 +362,7 @@ export default function SowerBooksSection() {
                     id='publisher'
                     value={formData.publisher}
                     onChange={(e) => setFormData({ ...formData, publisher: e.target.value })}
-                    placeholder='Publisher name'
+                    placeholder='Publisher name (optional)'
                   />
                 </div>
                 <div>
@@ -315,16 +393,91 @@ export default function SowerBooksSection() {
                     placeholder='English'
                   />
                 </div>
+
+                {/* Image Upload Section */}
                 <div className='col-span-2'>
-                  <Label htmlFor='cover_image_url'>Cover Image URL</Label>
-                  <Input
-                    id='cover_image_url'
-                    type='url'
-                    value={formData.cover_image_url}
-                    onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                    placeholder='https://example.com/cover.jpg'
-                  />
+                  <Label>Book Images (up to {MAX_IMAGES})</Label>
+                  <div className='mt-2 space-y-3'>
+                    {/* Uploaded images preview */}
+                    {uploadedImages.length > 0 && (
+                      <div className='flex flex-wrap gap-3'>
+                        {uploadedImages.map((url, index) => (
+                          <div key={index} className='relative group'>
+                            <img
+                              src={url}
+                              alt={`Book image ${index + 1}`}
+                              className='w-24 h-32 object-cover rounded-lg border border-border'
+                            />
+                            <button
+                              type='button'
+                              onClick={() => removeImage(index)}
+                              className='absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity'
+                            >
+                              <X className='w-3 h-3' />
+                            </button>
+                            {index === 0 && (
+                              <span className='absolute bottom-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded'>
+                                Cover
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Upload button */}
+                    {uploadedImages.length < MAX_IMAGES && (
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type='file'
+                          accept='image/*'
+                          multiple
+                          onChange={handleFileSelect}
+                          className='hidden'
+                          id='book-image-upload'
+                        />
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className='w-full'
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className='w-4 h-4 mr-2' />
+                              Upload Images ({uploadedImages.length}/{MAX_IMAGES})
+                            </>
+                          )}
+                        </Button>
+                        <p className='text-xs text-muted-foreground mt-1'>
+                          First image will be used as the cover. Accepts JPG, PNG, WebP.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Fallback URL input if no uploads */}
+                {uploadedImages.length === 0 && (
+                  <div className='col-span-2'>
+                    <Label htmlFor='cover_image_url'>Or Enter Cover Image URL</Label>
+                    <Input
+                      id='cover_image_url'
+                      type='url'
+                      value={formData.cover_image_url}
+                      onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
+                      placeholder='https://example.com/cover.jpg'
+                    />
+                  </div>
+                )}
+
                 <div className='col-span-2'>
                   <Label htmlFor='purchase_link'>Purchase Link</Label>
                   <Input
@@ -332,7 +485,7 @@ export default function SowerBooksSection() {
                     type='url'
                     value={formData.purchase_link}
                     onChange={(e) => setFormData({ ...formData, purchase_link: e.target.value })}
-                    placeholder='https://amazon.com/your-book'
+                    placeholder='https://amazon.com/your-book (optional)'
                   />
                 </div>
                 <div className='col-span-2'>
@@ -353,7 +506,7 @@ export default function SowerBooksSection() {
                 <Button type='button' variant='outline' onClick={resetForm}>
                   Cancel
                 </Button>
-                <Button type='submit' disabled={isSaving}>
+                <Button type='submit' disabled={isSaving || isUploading}>
                   {isSaving && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
                   {editingBook ? 'Update Book' : 'Add Book'}
                 </Button>
@@ -381,9 +534,9 @@ export default function SowerBooksSection() {
                     >
                       <Card className='backdrop-blur-md bg-white/10 border-white/20 overflow-hidden h-full'>
                         <div className='aspect-[2/3] relative'>
-                          {book.cover_image_url ? (
+                          {getBookCoverImage(book) ? (
                             <img
-                              src={book.cover_image_url}
+                              src={getBookCoverImage(book)!}
                               alt={book.title}
                               className='w-full h-full object-cover'
                             />
@@ -393,6 +546,13 @@ export default function SowerBooksSection() {
                               title={book.title}
                               className='w-full h-full'
                             />
+                          )}
+                          {/* Image count badge */}
+                          {book.image_urls && book.image_urls.length > 1 && (
+                            <div className='absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1'>
+                              <ImageIcon className='w-3 h-3' />
+                              {book.image_urls.length}
+                            </div>
                           )}
                         </div>
                         <CardContent className='p-4'>

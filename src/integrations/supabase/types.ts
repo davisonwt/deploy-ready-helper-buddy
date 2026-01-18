@@ -5067,6 +5067,7 @@ export type Database = {
           description: string | null
           genre: string | null
           id: string
+          image_urls: string[]
           is_available: boolean | null
           isbn: string | null
           language: string | null
@@ -5085,6 +5086,7 @@ export type Database = {
           description?: string | null
           genre?: string | null
           id?: string
+          image_urls?: string[]
           is_available?: boolean | null
           isbn?: string | null
           language?: string | null
@@ -5103,6 +5105,7 @@ export type Database = {
           description?: string | null
           genre?: string | null
           id?: string
+          image_urls?: string[]
           is_available?: boolean | null
           isbn?: string | null
           language?: string | null
