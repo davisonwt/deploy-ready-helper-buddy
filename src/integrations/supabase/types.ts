@@ -466,6 +466,98 @@ export type Database = {
         }
         Relationships: []
       }
+      book_orders: {
+        Row: {
+          admin_fee: number
+          bestowal_amount: number
+          bestower_id: string
+          book_id: string
+          city: string
+          country: string
+          created_at: string
+          delivered_at: string | null
+          delivery_notes: string | null
+          email: string
+          full_name: string
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string | null
+          phone: string | null
+          postal_code: string
+          shipped_at: string | null
+          sower_id: string
+          state: string
+          street_address: string
+          tithing_amount: number
+          total_amount: number
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_fee: number
+          bestowal_amount: number
+          bestower_id: string
+          book_id: string
+          city: string
+          country: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          email: string
+          full_name: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          postal_code: string
+          shipped_at?: string | null
+          sower_id: string
+          state: string
+          street_address: string
+          tithing_amount: number
+          total_amount: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_fee?: number
+          bestowal_amount?: number
+          bestower_id?: string
+          book_id?: string
+          city?: string
+          country?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_notes?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          phone?: string | null
+          postal_code?: string
+          shipped_at?: string | null
+          sower_id?: string
+          state?: string
+          street_address?: string
+          tithing_amount?: number
+          total_amount?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_orders_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_sessions: {
         Row: {
           accepted_at: string | null
@@ -5062,13 +5154,16 @@ export type Database = {
       }
       sower_books: {
         Row: {
+          bestowal_value: number | null
           cover_image_url: string | null
           created_at: string
+          delivery_type: string | null
           description: string | null
           genre: string | null
           id: string
           image_urls: string[]
           is_available: boolean | null
+          is_public: boolean | null
           isbn: string | null
           language: string | null
           page_count: number | null
@@ -5081,13 +5176,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bestowal_value?: number | null
           cover_image_url?: string | null
           created_at?: string
+          delivery_type?: string | null
           description?: string | null
           genre?: string | null
           id?: string
           image_urls?: string[]
           is_available?: boolean | null
+          is_public?: boolean | null
           isbn?: string | null
           language?: string | null
           page_count?: number | null
@@ -5100,13 +5198,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bestowal_value?: number | null
           cover_image_url?: string | null
           created_at?: string
+          delivery_type?: string | null
           description?: string | null
           genre?: string | null
           id?: string
           image_urls?: string[]
           is_available?: boolean | null
+          is_public?: boolean | null
           isbn?: string | null
           language?: string | null
           page_count?: number | null
