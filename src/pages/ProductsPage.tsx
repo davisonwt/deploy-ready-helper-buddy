@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
+import { Loader2, Music, Book, Image, Video, TrendingUp, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { SocialActionButtons } from '@/components/social/SocialActionButtons';
+import CommunityBookCard from '@/components/products/CommunityBookCard';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -88,6 +89,29 @@ export default function ProductsPage() {
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
 
+  // Fetch community books (sower_books with is_public=true and bestowal_value > 0)
+  const { data: communityBooks } = useQuery({
+    queryKey: ['community-books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sower_books')
+        .select(`
+          *,
+          sowers:sower_id (
+            user_id,
+            display_name,
+            logo_url
+          )
+        `)
+        .eq('is_public', true)
+        .gt('bestowal_value', 0)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const {
     data,
     fetchNextPage,
@@ -112,7 +136,7 @@ export default function ProductsPage() {
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
       // Apply category filter
-      if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
+      if (selectedCategory !== 'all' && selectedCategory !== 'trending' && selectedCategory !== 'book') {
         query = query.eq('category', selectedCategory);
       }
 
@@ -471,6 +495,13 @@ export default function ProductsPage() {
             Videos
           </button>
           <button
+            onClick={() => handleFilter('book')}
+            className={`filter-btn ${activeFilter === 'book' ? 'active' : ''}`}
+          >
+            <BookOpen className="w-4 h-4 mr-1 inline" />
+            Books
+          </button>
+          <button
             onClick={() => handleFilter('trending')}
             className={`filter-btn ${activeFilter === 'trending' ? 'active' : ''}`}
           >
@@ -478,6 +509,23 @@ export default function ProductsPage() {
           </button>
         </div>
 
+        {/* Books Section - Show when 'book' filter is active */}
+        {selectedCategory === 'book' && communityBooks && communityBooks.length > 0 && (
+          <div className="mb-12">
+            <h3 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
+              <BookOpen className="w-8 h-8" />
+              Community Books
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {communityBooks.map((book: any) => (
+                <CommunityBookCard key={book.id} book={{...book, sower: book.sowers}} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products Grid - hide when viewing books */}
+        {selectedCategory !== 'book' && (
         <div id="creations-container" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 px-6 pb-20">
           {allProducts.map((product, index) => (
             <motion.div
@@ -565,6 +613,7 @@ export default function ProductsPage() {
             </motion.div>
           ))}
         </div>
+        )}
 
         {/* Infinite scroll trigger element */}
         <div ref={observerTarget} className="h-10" />

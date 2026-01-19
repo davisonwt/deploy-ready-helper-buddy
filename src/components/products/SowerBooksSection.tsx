@@ -36,6 +36,9 @@ interface SowerBook {
   language: string | null;
   purchase_link: string | null;
   is_available: boolean;
+  bestowal_value: number | null;
+  delivery_type: 'physical' | 'digital' | 'both' | null;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +54,7 @@ interface BookFormData {
   genre: string;
   language: string;
   purchase_link: string;
+  bestowal_value: string;
 }
 
 const emptyFormData: BookFormData = {
@@ -64,6 +68,7 @@ const emptyFormData: BookFormData = {
   genre: '',
   language: 'English',
   purchase_link: '',
+  bestowal_value: '',
 };
 
 const MAX_IMAGES = 3;
@@ -189,6 +194,9 @@ export default function SowerBooksSection() {
         genre: data.genre || null,
         language: data.language || 'English',
         purchase_link: data.purchase_link || null,
+        bestowal_value: data.bestowal_value ? parseFloat(data.bestowal_value) : 0,
+        delivery_type: 'physical',
+        is_public: true,
       });
       
       if (error) throw error;
@@ -218,6 +226,7 @@ export default function SowerBooksSection() {
         genre: data.genre || null,
         language: data.language || 'English',
         purchase_link: data.purchase_link || null,
+        bestowal_value: data.bestowal_value ? parseFloat(data.bestowal_value) : 0,
       }).eq('id', id);
       
       if (error) throw error;
@@ -267,6 +276,7 @@ export default function SowerBooksSection() {
       genre: book.genre || '',
       language: book.language || 'English',
       purchase_link: book.purchase_link || '',
+      bestowal_value: book.bestowal_value?.toString() || '',
     });
     setUploadedImages(book.image_urls || []);
     setIsDialogOpen(true);
@@ -478,8 +488,36 @@ export default function SowerBooksSection() {
                   </div>
                 )}
 
+                {/* Bestowal Value */}
                 <div className='col-span-2'>
-                  <Label htmlFor='purchase_link'>Purchase Link</Label>
+                  <Label htmlFor='bestowal_value'>Bestowal Value (USDC) *</Label>
+                  <Input
+                    id='bestowal_value'
+                    type='number'
+                    step='0.01'
+                    min='0'
+                    value={formData.bestowal_value}
+                    onChange={(e) => setFormData({ ...formData, bestowal_value: e.target.value })}
+                    placeholder='Enter base price for bestowal'
+                    required
+                  />
+                  {formData.bestowal_value && parseFloat(formData.bestowal_value) > 0 && (
+                    <div className='mt-2 p-3 bg-purple-500/20 border border-purple-400/50 rounded-lg'>
+                      <p className='text-sm text-white'>
+                        <span className='font-semibold'>Total charged to bestower:</span>{' '}
+                        <span className='text-lg font-bold'>
+                          ${(parseFloat(formData.bestowal_value) * 1.15).toFixed(2)} USDC
+                        </span>
+                      </p>
+                      <p className='text-xs text-white/70 mt-1'>
+                        Includes 10% tithing + 5% admin fee
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className='col-span-2'>
+                  <Label htmlFor='purchase_link'>External Purchase Link (optional)</Label>
                   <Input
                     id='purchase_link'
                     type='url'
@@ -559,6 +597,15 @@ export default function SowerBooksSection() {
                           <h3 className='font-bold text-white truncate mb-1'>{book.title}</h3>
                           {book.isbn && (
                             <p className='text-xs text-white/60 mb-2'>ISBN: {book.isbn}</p>
+                          )}
+                          {/* Bestowal Price */}
+                          {book.bestowal_value && book.bestowal_value > 0 && (
+                            <div className='mb-2 p-2 bg-purple-500/30 border border-purple-400/50 rounded'>
+                              <p className='text-lg font-bold text-white'>
+                                ${(book.bestowal_value * 1.15).toFixed(2)} USDC
+                              </p>
+                              <p className='text-xs text-white/60'>Physical delivery</p>
+                            </div>
                           )}
                           {book.genre && (
                             <span className='inline-block px-2 py-0.5 text-xs bg-white/20 rounded text-white mb-2'>
