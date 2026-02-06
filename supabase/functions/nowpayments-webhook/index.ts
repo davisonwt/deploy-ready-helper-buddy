@@ -7,10 +7,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-nowpayments-sig',
 };
 
+// NOWPayments whitelisted IP addresses
+const NOWPAYMENTS_IPS = [
+  '51.89.194.21',
+  '51.75.77.69',
+  '138.201.172.58',
+  '65.21.158.36',
+];
+
 // S2G Platform Wallet Addresses
 const S2G_WALLETS = {
   HOLDINGS: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaM',
   ADMIN: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaN',
+};
+
+// Distribution percentages
+const DISTRIBUTION = {
+  ORCHARD: {
+    GROWER: 0.85,     // 85% to grower/sower
+    TITHING: 0.10,    // 10% tithing
+    ADMIN: 0.05,      // 5% admin fee
+  },
+  PRODUCT: {
+    CREATOR: 0.70,    // 70% to creators
+    WHISPERS: 0.15,   // 15% to product whispers
+    TITHING: 0.10,    // 10% tithing
+    ADMIN: 0.05,      // 5% admin fee
+  }
 };
 
 interface NOWPaymentsIPN {
@@ -30,6 +53,28 @@ interface NOWPaymentsIPN {
   actually_paid_at_fiat: number;
   outcome_amount: number;
   outcome_currency: string;
+}
+
+function getClientIP(req: Request): string {
+  // Check various headers for the real IP
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  const xForwardedFor = req.headers.get('x-forwarded-for');
+  const xRealIP = req.headers.get('x-real-ip');
+  
+  if (cfConnectingIP) return cfConnectingIP;
+  if (xForwardedFor) return xForwardedFor.split(',')[0].trim();
+  if (xRealIP) return xRealIP;
+  
+  return 'unknown';
+}
+
+function isWhitelistedIP(ip: string): boolean {
+  // In development/testing, allow all IPs
+  const isDev = Deno.env.get('ENVIRONMENT') === 'development';
+  if (isDev) return true;
+  
+  // Check if IP is in whitelist
+  return NOWPAYMENTS_IPS.includes(ip);
 }
 
 async function verifySignature(payload: string, signature: string, secret: string): Promise<boolean> {
@@ -60,6 +105,49 @@ async function verifySignature(payload: string, signature: string, secret: strin
   }
 }
 
+async function updateSowerBalance(
+  supabase: any,
+  userId: string,
+  amount: number,
+  type: 'add_available' | 'add_pending' | 'move_pending_to_available'
+): Promise<void> {
+  // Get or create sower balance record
+  const { data: existing } = await supabase
+    .from('sower_balances')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (!existing) {
+    // Create new balance record
+    await supabase.from('sower_balances').insert({
+      user_id: userId,
+      available_balance: type === 'add_available' ? amount : 0,
+      pending_balance: type === 'add_pending' ? amount : 0,
+      total_earned: amount,
+    });
+  } else {
+    // Update existing balance
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    
+    if (type === 'add_available') {
+      updates.available_balance = existing.available_balance + amount;
+      updates.total_earned = existing.total_earned + amount;
+    } else if (type === 'add_pending') {
+      updates.pending_balance = existing.pending_balance + amount;
+    } else if (type === 'move_pending_to_available') {
+      updates.pending_balance = Math.max(0, existing.pending_balance - amount);
+      updates.available_balance = existing.available_balance + amount;
+      updates.total_earned = existing.total_earned + amount;
+    }
+
+    await supabase
+      .from('sower_balances')
+      .update(updates)
+      .eq('user_id', userId);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -73,6 +161,18 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    // Verify IP whitelist
+    const clientIP = getClientIP(req);
+    console.log('📥 [NOWPayments Webhook] Request from IP:', clientIP);
+
+    if (!isWhitelistedIP(clientIP)) {
+      console.error('❌ IP not whitelisted:', clientIP);
+      return new Response(
+        JSON.stringify({ error: 'IP not whitelisted' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const rawBody = await req.text();
     const signature = req.headers.get('x-nowpayments-sig');
 
@@ -203,10 +303,16 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
 
-      // For completed payments, mark as ready for distribution (funds held)
+      // For completed payments, mark as ready for distribution and update sower balance
       if (paymentStatus === 'completed') {
         updateData.hold_reason = 'awaiting_courier_pickup';
-        // Distribution happens manually after courier confirms pickup
+        
+        // Calculate and credit sower's balance (grower gets 85%)
+        if (growerUserId) {
+          const growerAmount = ipnData.price_amount * DISTRIBUTION.ORCHARD.GROWER;
+          console.log(`💰 Crediting grower ${growerUserId} with $${growerAmount.toFixed(2)}`);
+          await updateSowerBalance(supabase, growerUserId, growerAmount, 'add_available');
+        }
       }
 
       const { error: updateError } = await supabase
@@ -223,6 +329,27 @@ serve(async (req) => {
     } else {
       // Handle product/tithe/freewill payments
       console.log(`📦 Non-orchard payment received: ${orderId}`);
+      
+      // For product payments, credit creators
+      if (orderId.startsWith('product_') && paymentStatus === 'completed') {
+        // Get product bestowal data from payment_audit_log or stored metadata
+        const { data: auditLog } = await supabase
+          .from('payment_audit_log')
+          .select('metadata')
+          .eq('metadata->>bestowal_id', orderId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (auditLog?.metadata?.product_items) {
+          // Credit each product creator
+          for (const product of auditLog.metadata.product_items) {
+            const creatorAmount = product.price * DISTRIBUTION.PRODUCT.CREATOR;
+            console.log(`💰 Crediting creator ${product.sower_id} with $${creatorAmount.toFixed(2)}`);
+            await updateSowerBalance(supabase, product.sower_id, creatorAmount, 'add_available');
+          }
+        }
+      }
       
       // Log it in payment_transactions regardless
       bestowal = { 

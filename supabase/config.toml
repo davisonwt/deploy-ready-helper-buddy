@@ -99,3 +99,10 @@ verify_jwt = false
 
 [functions.distribute-bestowal]
 verify_jwt = true
+
+# NOWPayments Payout Functions
+[functions.create-nowpayments-payout]
+verify_jwt = false
+
+[functions.nowpayments-payout-webhook]
+verify_jwt = false
