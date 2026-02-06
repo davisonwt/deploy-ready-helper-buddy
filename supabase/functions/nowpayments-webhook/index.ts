@@ -21,19 +21,12 @@ const S2G_WALLETS = {
   ADMIN: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaN',
 };
 
-// Distribution percentages
+// Distribution percentages - Sowers get 85% by default
+// If whisperer is active, they get agreed % from the sower's 85%
 const DISTRIBUTION = {
-  ORCHARD: {
-    GROWER: 0.85,     // 85% to grower/sower
-    TITHING: 0.10,    // 10% tithing
-    ADMIN: 0.05,      // 5% admin fee
-  },
-  PRODUCT: {
-    CREATOR: 0.70,    // 70% to creators
-    WHISPERS: 0.15,   // 15% to product whispers
-    TITHING: 0.10,    // 10% tithing
-    ADMIN: 0.05,      // 5% admin fee
-  }
+  BASE_SOWER: 0.85,     // 85% to sower (minus whisperer if active)
+  TITHING: 0.10,        // 10% tithing
+  ADMIN: 0.05,          // 5% admin fee
 };
 
 interface NOWPaymentsIPN {
@@ -307,11 +300,54 @@ serve(async (req) => {
       if (paymentStatus === 'completed') {
         updateData.hold_reason = 'awaiting_courier_pickup';
         
-        // Calculate and credit sower's balance (grower gets 85%)
+        // Calculate and credit sower's balance (grower gets 85% minus whisperer if active)
         if (growerUserId) {
-          const growerAmount = ipnData.price_amount * DISTRIBUTION.ORCHARD.GROWER;
-          console.log(`💰 Crediting grower ${growerUserId} with $${growerAmount.toFixed(2)}`);
-          await updateSowerBalance(supabase, growerUserId, growerAmount, 'add_available');
+          let sowerAmount = ipnData.price_amount * DISTRIBUTION.BASE_SOWER;
+          
+          // Check if there's a whisperer assignment for this orchard
+          const { data: whispererAssignment } = await supabase
+            .from('product_whisperer_assignments')
+            .select('*, whisperers(user_id, display_name)')
+            .eq('orchard_id', bestowal.orchard_id)
+            .eq('status', 'active')
+            .single();
+          
+          if (whispererAssignment && whispererAssignment.whisperers) {
+            // Calculate whisperer commission from the sower's 85%
+            const whispererPercent = whispererAssignment.commission_percent / 100;
+            const whispererAmount = ipnData.price_amount * whispererPercent;
+            sowerAmount = ipnData.price_amount * DISTRIBUTION.BASE_SOWER - whispererAmount;
+            
+            console.log(`💰 Whisperer ${whispererAssignment.whisperers.display_name} earns $${whispererAmount.toFixed(2)} (${whispererAssignment.commission_percent}%)`);
+            
+            // Credit whisperer balance
+            const whispererUserId = whispererAssignment.whisperers.user_id;
+            await updateSowerBalance(supabase, whispererUserId, whispererAmount, 'add_available');
+            
+            // Record whisperer earning
+            await supabase.from('whisperer_earnings').insert({
+              whisperer_id: whispererAssignment.whisperer_id,
+              assignment_id: whispererAssignment.id,
+              bestowal_id: bestowal.id,
+              amount: whispererAmount,
+              commission_percent: whispererAssignment.commission_percent,
+              status: 'processed',
+              processed_at: new Date().toISOString(),
+            });
+            
+            // Update assignment stats
+            await supabase
+              .from('product_whisperer_assignments')
+              .update({
+                total_bestowals: (whispererAssignment.total_bestowals || 0) + 1,
+                total_earned: (whispererAssignment.total_earned || 0) + whispererAmount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', whispererAssignment.id);
+          }
+          
+          console.log(`💰 Crediting sower ${growerUserId} with $${sowerAmount.toFixed(2)}`);
+          await updateSowerBalance(supabase, growerUserId, sowerAmount, 'add_available');
         }
       }
 
@@ -330,7 +366,7 @@ serve(async (req) => {
       // Handle product/tithe/freewill payments
       console.log(`📦 Non-orchard payment received: ${orderId}`);
       
-      // For product payments, credit creators
+      // For product payments, credit creators (85% minus whisperer if active)
       if (orderId.startsWith('product_') && paymentStatus === 'completed') {
         // Get product bestowal data from payment_audit_log or stored metadata
         const { data: auditLog } = await supabase
@@ -344,7 +380,38 @@ serve(async (req) => {
         if (auditLog?.metadata?.product_items) {
           // Credit each product creator
           for (const product of auditLog.metadata.product_items) {
-            const creatorAmount = product.price * DISTRIBUTION.PRODUCT.CREATOR;
+            let creatorAmount = product.price * DISTRIBUTION.BASE_SOWER;
+            
+            // Check for whisperer assignment
+            const { data: whispererAssignment } = await supabase
+              .from('product_whisperer_assignments')
+              .select('*, whisperers(user_id, display_name)')
+              .eq('product_id', product.id)
+              .eq('status', 'active')
+              .single();
+            
+            if (whispererAssignment && whispererAssignment.whisperers) {
+              const whispererPercent = whispererAssignment.commission_percent / 100;
+              const whispererAmount = product.price * whispererPercent;
+              creatorAmount = product.price * DISTRIBUTION.BASE_SOWER - whispererAmount;
+              
+              console.log(`💰 Whisperer earns $${whispererAmount.toFixed(2)} from product ${product.id}`);
+              
+              // Credit whisperer
+              await updateSowerBalance(supabase, whispererAssignment.whisperers.user_id, whispererAmount, 'add_available');
+              
+              // Record earning
+              await supabase.from('whisperer_earnings').insert({
+                whisperer_id: whispererAssignment.whisperer_id,
+                assignment_id: whispererAssignment.id,
+                bestowal_id: orderId,
+                amount: whispererAmount,
+                commission_percent: whispererAssignment.commission_percent,
+                status: 'processed',
+                processed_at: new Date().toISOString(),
+              });
+            }
+            
             console.log(`💰 Crediting creator ${product.sower_id} with $${creatorAmount.toFixed(2)}`);
             await updateSowerBalance(supabase, product.sower_id, creatorAmount, 'add_available');
           }

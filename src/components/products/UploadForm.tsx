@@ -11,6 +11,21 @@ import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
+import { WhispererSelector } from './WhispererSelector';
+
+interface Whisperer {
+  id: string;
+  user_id: string;
+  display_name: string;
+  bio: string | null;
+  specialties: string[] | null;
+  total_earnings: number;
+  total_products_promoted: number;
+  is_verified: boolean;
+  profile?: {
+    avatar_url: string | null;
+  } | null;
+}
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -31,6 +46,11 @@ export default function UploadForm() {
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
+  
+  // Whisperer state
+  const [whispererEnabled, setWhispererEnabled] = useState(false);
+  const [selectedWhisperer, setSelectedWhisperer] = useState<Whisperer | null>(null);
+  const [whispererCommission, setWhispererCommission] = useState(15);
 
   const handleZipUpload = async (file: File) => {
     if (!file.name.endsWith('.zip')) {
@@ -267,8 +287,8 @@ export default function UploadForm() {
       const basePrice = parseFloat(String(formData.price)) || 0;
       const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
 
-      // Create product
-      const { error: productError } = await supabase
+      // Create product with whisperer settings
+      const { data: newProduct, error: productError } = await supabase
         .from('products')
         .insert({
           sower_id: sowerId,
@@ -280,10 +300,32 @@ export default function UploadForm() {
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrlPublic,
-          tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
-        });
+          tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType],
+          has_whisperer: whispererEnabled && !!selectedWhisperer,
+          whisperer_commission_percent: whispererEnabled && selectedWhisperer ? whispererCommission : null,
+        })
+        .select()
+        .single();
 
       if (productError) throw productError;
+      
+      // Create whisperer assignment if enabled
+      if (whispererEnabled && selectedWhisperer && newProduct) {
+        const { error: assignmentError } = await supabase
+          .from('product_whisperer_assignments')
+          .insert({
+            product_id: newProduct.id,
+            whisperer_id: selectedWhisperer.id,
+            sower_id: user.id,
+            commission_percent: whispererCommission,
+            status: 'active',
+          });
+        
+        if (assignmentError) {
+          console.error('Whisperer assignment error:', assignmentError);
+          // Don't fail the upload, just log it
+        }
+      }
 
       // Award XP for uploading product (100 XP) - use type assertion for RPC
       if (user) {
@@ -662,6 +704,16 @@ export default function UploadForm() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
+
+            {/* Whisperer Section */}
+            <WhispererSelector
+              enabled={whispererEnabled}
+              onEnabledChange={setWhispererEnabled}
+              selectedWhisperer={selectedWhisperer}
+              onWhispererSelect={setSelectedWhisperer}
+              commissionPercent={whispererCommission}
+              onCommissionChange={setWhispererCommission}
+            />
 
             <Button type="submit" disabled={uploading} className="w-full" size="lg">
               {uploading ? (
