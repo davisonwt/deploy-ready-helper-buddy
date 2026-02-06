@@ -2620,6 +2620,7 @@ export type Database = {
           features: string[] | null
           filled_pockets: number
           follower_count: number | null
+          has_whisperer: boolean | null
           how_it_helps: string | null
           id: string
           images: string[] | null
@@ -2644,6 +2645,7 @@ export type Database = {
           verification_status: Database["public"]["Enums"]["verification_status"]
           video_url: string | null
           views: number
+          whisperer_commission_percent: number | null
           why_needed: string | null
         }
         Insert: {
@@ -2660,6 +2662,7 @@ export type Database = {
           features?: string[] | null
           filled_pockets?: number
           follower_count?: number | null
+          has_whisperer?: boolean | null
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
@@ -2684,6 +2687,7 @@ export type Database = {
           verification_status?: Database["public"]["Enums"]["verification_status"]
           video_url?: string | null
           views?: number
+          whisperer_commission_percent?: number | null
           why_needed?: string | null
         }
         Update: {
@@ -2700,6 +2704,7 @@ export type Database = {
           features?: string[] | null
           filled_pockets?: number
           follower_count?: number | null
+          has_whisperer?: boolean | null
           how_it_helps?: string | null
           id?: string
           images?: string[] | null
@@ -2724,6 +2729,7 @@ export type Database = {
           verification_status?: Database["public"]["Enums"]["verification_status"]
           video_url?: string | null
           views?: number
+          whisperer_commission_percent?: number | null
           why_needed?: string | null
         }
         Relationships: [
@@ -3327,6 +3333,80 @@ export type Database = {
           },
         ]
       }
+      product_whisperer_assignments: {
+        Row: {
+          book_id: string | null
+          commission_percent: number
+          created_at: string | null
+          id: string
+          orchard_id: string | null
+          product_id: string | null
+          sower_id: string
+          status: string | null
+          total_bestowals: number | null
+          total_earned: number | null
+          updated_at: string | null
+          whisperer_id: string
+        }
+        Insert: {
+          book_id?: string | null
+          commission_percent: number
+          created_at?: string | null
+          id?: string
+          orchard_id?: string | null
+          product_id?: string | null
+          sower_id: string
+          status?: string | null
+          total_bestowals?: number | null
+          total_earned?: number | null
+          updated_at?: string | null
+          whisperer_id: string
+        }
+        Update: {
+          book_id?: string | null
+          commission_percent?: number
+          created_at?: string | null
+          id?: string
+          orchard_id?: string | null
+          product_id?: string | null
+          sower_id?: string
+          status?: string | null
+          total_bestowals?: number | null
+          total_earned?: number | null
+          updated_at?: string | null
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_whisperer_assignments_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_whisperer_assignments_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_whisperer_assignments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_whisperer_assignments_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           bestowal_count: number | null
@@ -3338,6 +3418,7 @@ export type Database = {
           duration: number | null
           file_url: string
           follower_count: number | null
+          has_whisperer: boolean | null
           id: string
           is_featured: boolean | null
           license_type: string | null
@@ -3350,6 +3431,7 @@ export type Database = {
           title: string
           type: string | null
           updated_at: string | null
+          whisperer_commission_percent: number | null
         }
         Insert: {
           bestowal_count?: number | null
@@ -3361,6 +3443,7 @@ export type Database = {
           duration?: number | null
           file_url: string
           follower_count?: number | null
+          has_whisperer?: boolean | null
           id?: string
           is_featured?: boolean | null
           license_type?: string | null
@@ -3373,6 +3456,7 @@ export type Database = {
           title: string
           type?: string | null
           updated_at?: string | null
+          whisperer_commission_percent?: number | null
         }
         Update: {
           bestowal_count?: number | null
@@ -3384,6 +3468,7 @@ export type Database = {
           duration?: number | null
           file_url?: string
           follower_count?: number | null
+          has_whisperer?: boolean | null
           id?: string
           is_featured?: boolean | null
           license_type?: string | null
@@ -3396,6 +3481,7 @@ export type Database = {
           title?: string
           type?: string | null
           updated_at?: string | null
+          whisperer_commission_percent?: number | null
         }
         Relationships: [
           {
@@ -5205,6 +5291,7 @@ export type Database = {
           delivery_type: string | null
           description: string | null
           genre: string | null
+          has_whisperer: boolean | null
           id: string
           image_urls: string[]
           is_available: boolean | null
@@ -5219,6 +5306,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          whisperer_commission_percent: number | null
         }
         Insert: {
           bestowal_value?: number | null
@@ -5227,6 +5315,7 @@ export type Database = {
           delivery_type?: string | null
           description?: string | null
           genre?: string | null
+          has_whisperer?: boolean | null
           id?: string
           image_urls?: string[]
           is_available?: boolean | null
@@ -5241,6 +5330,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          whisperer_commission_percent?: number | null
         }
         Update: {
           bestowal_value?: number | null
@@ -5249,6 +5339,7 @@ export type Database = {
           delivery_type?: string | null
           description?: string | null
           genre?: string | null
+          has_whisperer?: boolean | null
           id?: string
           image_urls?: string[]
           is_available?: boolean | null
@@ -5263,6 +5354,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          whisperer_commission_percent?: number | null
         }
         Relationships: [
           {
@@ -6438,6 +6530,116 @@ export type Database = {
           week_id?: string
         }
         Relationships: []
+      }
+      whisperer_earnings: {
+        Row: {
+          amount: number
+          assignment_id: string | null
+          bestowal_id: string
+          commission_percent: number
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          status: string | null
+          whisperer_id: string
+        }
+        Insert: {
+          amount: number
+          assignment_id?: string | null
+          bestowal_id: string
+          commission_percent: number
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          whisperer_id: string
+        }
+        Update: {
+          amount?: number
+          assignment_id?: string | null
+          bestowal_id?: string
+          commission_percent?: number
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperer_earnings_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "product_whisperer_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_earnings_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whisperers: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          profile_id: string | null
+          specialties: string[] | null
+          total_earnings: number | null
+          total_products_promoted: number | null
+          updated_at: string | null
+          user_id: string
+          wallet_address: string | null
+          wallet_type: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          profile_id?: string | null
+          specialties?: string[] | null
+          total_earnings?: number | null
+          total_products_promoted?: number | null
+          updated_at?: string | null
+          user_id: string
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          profile_id?: string | null
+          specialties?: string[] | null
+          total_earnings?: number | null
+          total_products_promoted?: number | null
+          updated_at?: string | null
+          user_id?: string
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
