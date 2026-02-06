@@ -5152,6 +5152,51 @@ export type Database = {
           },
         ]
       }
+      sower_balances: {
+        Row: {
+          available_balance: number | null
+          created_at: string
+          currency: string | null
+          id: string
+          last_payout_at: string | null
+          pending_balance: number | null
+          total_earned: number | null
+          total_withdrawn: number | null
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+          wallet_type: string | null
+        }
+        Insert: {
+          available_balance?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          last_payout_at?: string | null
+          pending_balance?: number | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Update: {
+          available_balance?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          last_payout_at?: string | null
+          pending_balance?: number | null
+          total_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Relationships: []
+      }
       sower_books: {
         Row: {
           bestowal_value: number | null
@@ -5228,6 +5273,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sower_payouts: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string | null
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          payout_batch_id: string | null
+          payout_provider: string | null
+          payout_reference: string | null
+          processed_at: string | null
+          requested_at: string
+          status: string | null
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wallet_type: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payout_batch_id?: string | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wallet_type?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payout_batch_id?: string | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wallet_type?: string | null
+        }
+        Relationships: []
       }
       sowers: {
         Row: {
