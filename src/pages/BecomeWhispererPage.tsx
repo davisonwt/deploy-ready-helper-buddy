@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { WhispererProfileForm } from '@/components/whisperers/WhispererProfileForm';
+import { WhispererInvitationsPanel } from '@/components/whisperers/WhispererInvitationsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -200,6 +201,13 @@ export default function BecomeWhispererPage() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Invitations Panel - only show for existing whisperers */}
+        {existingProfile && (
+          <div className="mb-8">
+            <WhispererInvitationsPanel />
+          </div>
         )}
 
         {/* Form */}
