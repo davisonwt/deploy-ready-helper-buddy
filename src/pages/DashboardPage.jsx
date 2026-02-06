@@ -23,7 +23,8 @@ import {
   Trophy,
   Shield,
   Loader2,
-  Music
+  Music,
+  Megaphone
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -961,6 +962,23 @@ export default function DashboardPage() {
                   <div className="text-center">
                     <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
                     <span className="text-sm sm:text-base">364ttt</span>
+                  </div>
+                </Button>
+              </Link>
+
+              {/* Become a Whisperer */}
+              <Link to="/become-whisperer">
+                <Button 
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: currentTheme.primaryButton,
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.accent,
+                  }}
+                >
+                  <div className="text-center">
+                    <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                    <span className="text-sm sm:text-base">Become a Whisperer</span>
                   </div>
                 </Button>
               </Link>

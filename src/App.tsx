@@ -104,6 +104,7 @@ const CreateLiveRoomPage = lazy(() => import("./pages/CreateLiveRoomPage"));
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
+const BecomeWhispererPage = lazy(() => import("./pages/BecomeWhispererPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
@@ -856,6 +857,17 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <ProductBasketPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Whisperer (Marketing Agent) Route */}
+              <Route path="/become-whisperer" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <BecomeWhispererPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>

@@ -6590,7 +6590,9 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_verified: boolean | null
+          portfolio_url: string | null
           profile_id: string | null
+          social_links: Json | null
           specialties: string[] | null
           total_earnings: number | null
           total_products_promoted: number | null
@@ -6606,7 +6608,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          portfolio_url?: string | null
           profile_id?: string | null
+          social_links?: Json | null
           specialties?: string[] | null
           total_earnings?: number | null
           total_products_promoted?: number | null
@@ -6622,7 +6626,9 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_verified?: boolean | null
+          portfolio_url?: string | null
           profile_id?: string | null
+          social_links?: Json | null
           specialties?: string[] | null
           total_earnings?: number | null
           total_products_promoted?: number | null
