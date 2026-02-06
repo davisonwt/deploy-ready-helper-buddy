@@ -11,21 +11,7 @@ import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
-import { WhispererSelector } from './WhispererSelector';
-
-interface Whisperer {
-  id: string;
-  user_id: string;
-  display_name: string;
-  bio: string | null;
-  specialties: string[] | null;
-  total_earnings: number;
-  total_products_promoted: number;
-  is_verified: boolean;
-  profile?: {
-    avatar_url: string | null;
-  } | null;
-}
+import { WhispererSelector, PendingInvitation } from './WhispererSelector';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -47,10 +33,17 @@ export default function UploadForm() {
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
   
-  // Whisperer state
+  // Whisperer invitation state
   const [whispererEnabled, setWhispererEnabled] = useState(false);
-  const [selectedWhisperer, setSelectedWhisperer] = useState<Whisperer | null>(null);
-  const [whispererCommission, setWhispererCommission] = useState(15);
+  const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([]);
+
+  const handleAddInvitation = (invitation: PendingInvitation) => {
+    setPendingInvitations(prev => [...prev, invitation]);
+  };
+
+  const handleRemoveInvitation = (whispererId: string) => {
+    setPendingInvitations(prev => prev.filter(inv => inv.whisperer.id !== whispererId));
+  };
 
   const handleZipUpload = async (file: File) => {
     if (!file.name.endsWith('.zip')) {
@@ -301,30 +294,34 @@ export default function UploadForm() {
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrlPublic,
           tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType],
-          has_whisperer: whispererEnabled && !!selectedWhisperer,
-          whisperer_commission_percent: whispererEnabled && selectedWhisperer ? whispererCommission : null,
+          has_whisperer: whispererEnabled && pendingInvitations.length > 0,
+          whisperer_commission_percent: null, // Will be set per-whisperer after they accept
         })
         .select()
         .single();
 
       if (productError) throw productError;
       
-      // Create whisperer assignment if enabled
-      if (whispererEnabled && selectedWhisperer && newProduct) {
-        const { error: assignmentError } = await supabase
-          .from('product_whisperer_assignments')
-          .insert({
-            product_id: newProduct.id,
-            whisperer_id: selectedWhisperer.id,
-            sower_id: user.id,
-            commission_percent: whispererCommission,
-            status: 'active',
-          });
-        
-        if (assignmentError) {
-          console.error('Whisperer assignment error:', assignmentError);
-          // Don't fail the upload, just log it
+      // Create whisperer invitations if enabled
+      if (whispererEnabled && pendingInvitations.length > 0 && newProduct) {
+        for (const inv of pendingInvitations) {
+          const { error: invitationError } = await supabase
+            .from('whisperer_invitations')
+            .insert({
+              product_id: newProduct.id,
+              sower_id: user.id,
+              whisperer_id: inv.whisperer.id,
+              proposed_commission_percent: inv.commissionPercent,
+              message: inv.message || null,
+              status: 'pending',
+            });
+          
+          if (invitationError) {
+            console.error('Whisperer invitation error:', invitationError);
+            // Don't fail the upload, just log it
+          }
         }
+        toast.success(`Sent ${pendingInvitations.length} whisperer invitation(s)`);
       }
 
       // Award XP for uploading product (100 XP) - use type assertion for RPC
@@ -709,10 +706,10 @@ export default function UploadForm() {
             <WhispererSelector
               enabled={whispererEnabled}
               onEnabledChange={setWhispererEnabled}
-              selectedWhisperer={selectedWhisperer}
-              onWhispererSelect={setSelectedWhisperer}
-              commissionPercent={whispererCommission}
-              onCommissionChange={setWhispererCommission}
+              pendingInvitations={pendingInvitations}
+              onAddInvitation={handleAddInvitation}
+              onRemoveInvitation={handleRemoveInvitation}
+              maxWhisperers={3}
             />
 
             <Button type="submit" disabled={uploading} className="w-full" size="lg">

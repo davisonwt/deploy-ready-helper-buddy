@@ -2627,6 +2627,7 @@ export type Database = {
           intended_pockets: number | null
           like_count: number | null
           location: string | null
+          max_whisperers: number | null
           orchard_type: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
           payment_processing_fee: number
@@ -2669,6 +2670,7 @@ export type Database = {
           intended_pockets?: number | null
           like_count?: number | null
           location?: string | null
+          max_whisperers?: number | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value: number
           payment_processing_fee?: number
@@ -2711,6 +2713,7 @@ export type Database = {
           intended_pockets?: number | null
           like_count?: number | null
           location?: string | null
+          max_whisperers?: number | null
           orchard_type?: Database["public"]["Enums"]["orchard_type"]
           original_seed_value?: number
           payment_processing_fee?: number
@@ -3339,6 +3342,7 @@ export type Database = {
           commission_percent: number
           created_at: string | null
           id: string
+          invitation_id: string | null
           orchard_id: string | null
           product_id: string | null
           sower_id: string
@@ -3353,6 +3357,7 @@ export type Database = {
           commission_percent: number
           created_at?: string | null
           id?: string
+          invitation_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           sower_id: string
@@ -3367,6 +3372,7 @@ export type Database = {
           commission_percent?: number
           created_at?: string | null
           id?: string
+          invitation_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           sower_id?: string
@@ -3382,6 +3388,13 @@ export type Database = {
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_whisperer_assignments_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "whisperer_invitations"
             referencedColumns: ["id"]
           },
           {
@@ -3423,6 +3436,7 @@ export type Database = {
           is_featured: boolean | null
           license_type: string | null
           like_count: number | null
+          max_whisperers: number | null
           metadata: Json | null
           play_count: number | null
           price: number | null
@@ -3448,6 +3462,7 @@ export type Database = {
           is_featured?: boolean | null
           license_type?: string | null
           like_count?: number | null
+          max_whisperers?: number | null
           metadata?: Json | null
           play_count?: number | null
           price?: number | null
@@ -3473,6 +3488,7 @@ export type Database = {
           is_featured?: boolean | null
           license_type?: string | null
           like_count?: number | null
+          max_whisperers?: number | null
           metadata?: Json | null
           play_count?: number | null
           price?: number | null
@@ -5298,6 +5314,7 @@ export type Database = {
           is_public: boolean | null
           isbn: string | null
           language: string | null
+          max_whisperers: number | null
           page_count: number | null
           published_date: string | null
           publisher: string | null
@@ -5322,6 +5339,7 @@ export type Database = {
           is_public?: boolean | null
           isbn?: string | null
           language?: string | null
+          max_whisperers?: number | null
           page_count?: number | null
           published_date?: string | null
           publisher?: string | null
@@ -5346,6 +5364,7 @@ export type Database = {
           is_public?: boolean | null
           isbn?: string | null
           language?: string | null
+          max_whisperers?: number | null
           page_count?: number | null
           published_date?: string | null
           publisher?: string | null
@@ -6575,6 +6594,83 @@ export type Database = {
           },
           {
             foreignKeyName: "whisperer_earnings_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whisperer_invitations: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          message: string | null
+          orchard_id: string | null
+          product_id: string | null
+          proposed_commission_percent: number
+          responded_at: string | null
+          sower_id: string
+          status: string
+          updated_at: string
+          whisperer_id: string
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          orchard_id?: string | null
+          product_id?: string | null
+          proposed_commission_percent: number
+          responded_at?: string | null
+          sower_id: string
+          status?: string
+          updated_at?: string
+          whisperer_id: string
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          orchard_id?: string | null
+          product_id?: string | null
+          proposed_commission_percent?: number
+          responded_at?: string | null
+          sower_id?: string
+          status?: string
+          updated_at?: string
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperer_invitations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_invitations_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_invitations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_invitations_whisperer_id_fkey"
             columns: ["whisperer_id"]
             isOneToOne: false
             referencedRelation: "whisperers"
