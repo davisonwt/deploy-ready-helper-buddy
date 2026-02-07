@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Compass, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, Compass, ZoomIn, ZoomOut } from 'lucide-react';
 import { UserTree, TreeBounds, Camera, ForestConfig } from './eternal-forest/types';
 import { calculateForestLayout, getWorldTreePosition } from './eternal-forest/layoutUtils';
 import { drawEnvironment, drawClouds, drawWorldTree, drawTree, drawParticles } from './eternal-forest/drawingUtils';
@@ -21,6 +22,7 @@ const FOREST_CONFIG: ForestConfig = {
 };
 
 export function EternalForestLeaderboard({ className = '' }: EternalForestLeaderboardProps) {
+  const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [users, setUsers] = useState<UserTree[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -286,6 +288,14 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
 
       {/* Controls */}
       <div className="fixed top-8 right-8 z-10 flex flex-col gap-2">
+        <Button
+          onClick={() => navigate('/dashboard')}
+          variant="outline"
+          className="bg-background/80 backdrop-blur-md hover:bg-background"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
         <Button
           onClick={findMyTree}
           variant="secondary"
