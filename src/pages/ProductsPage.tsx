@@ -135,8 +135,11 @@ export default function ProductsPage() {
         `)
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
-      // Apply category filter
-      if (selectedCategory !== 'all' && selectedCategory !== 'trending' && selectedCategory !== 'book') {
+      // Apply category/type filter
+      if (selectedCategory === 'music') {
+        // Music filter uses the 'type' column
+        query = query.eq('type', 'music');
+      } else if (selectedCategory !== 'all' && selectedCategory !== 'trending' && selectedCategory !== 'book') {
         query = query.eq('category', selectedCategory);
       }
 
