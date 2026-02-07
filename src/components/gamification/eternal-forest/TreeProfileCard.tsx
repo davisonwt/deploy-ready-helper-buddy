@@ -71,7 +71,7 @@ export function TreeProfileCard({ user, onClose, rank }: TreeProfileCardProps) {
         </div>
         
         <Button asChild className="w-full">
-          <Link to={`/sower/${user.id}`}>
+          <Link to={`/member/${user.id}`}>
             <User className="h-4 w-4 mr-2" />
             View Full Profile
           </Link>
