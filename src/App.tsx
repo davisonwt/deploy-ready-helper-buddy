@@ -151,6 +151,12 @@ const CommunityDriversPage = lazy(() => import("./pages/CommunityDriversPage"));
 const DriverDashboardPage = lazy(() => import("./pages/DriverDashboardPage"));
 const MyDriverRequestsPage = lazy(() => import("./pages/MyDriverRequestsPage"));
 
+// Community Service Providers
+const RegisterServicesPage = lazy(() => import("./pages/RegisterServicesPage"));
+const CommunityServicesPage = lazy(() => import("./pages/CommunityServicesPage"));
+const ServiceProviderDashboardPage = lazy(() => import("./pages/ServiceProviderDashboardPage"));
+const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage"));
+
 // 364ttt - Weekly Torah Top Ten
 const TorahTopTenPage = lazy(() => import("./pages/TorahTopTenPage"));
 const VotingPage = lazy(() => import("./pages/VotingPage"));
@@ -812,6 +818,47 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <MyDriverRequestsPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Community Service Providers */}
+              <Route path="/register-services" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <RegisterServicesPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/community-services" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <CommunityServicesPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/service-provider-dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ServiceProviderDashboardPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/my-service-requests" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyServiceRequestsPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>
