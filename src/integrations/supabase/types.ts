@@ -5407,6 +5407,217 @@ export type Database = {
           },
         ]
       }
+      service_provider_availability: {
+        Row: {
+          available_date: string
+          created_at: string
+          id: string
+          locations_available: string[] | null
+          notes: string | null
+          provider_id: string
+          time_slots: string[] | null
+        }
+        Insert: {
+          available_date: string
+          created_at?: string
+          id?: string
+          locations_available?: string[] | null
+          notes?: string | null
+          provider_id: string
+          time_slots?: string[] | null
+        }
+        Update: {
+          available_date?: string
+          created_at?: string
+          id?: string
+          locations_available?: string[] | null
+          notes?: string | null
+          provider_id?: string
+          time_slots?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_availability_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_providers: {
+        Row: {
+          city: string | null
+          contact_email: string
+          contact_phone: string
+          country: string | null
+          created_at: string
+          custom_services: string[] | null
+          description: string | null
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          no_income_confirmed: boolean
+          portfolio_images: string[] | null
+          service_areas: string[] | null
+          services_offered: string[]
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          contact_email: string
+          contact_phone: string
+          country?: string | null
+          created_at?: string
+          custom_services?: string[] | null
+          description?: string | null
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          no_income_confirmed?: boolean
+          portfolio_images?: string[] | null
+          service_areas?: string[] | null
+          services_offered?: string[]
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          contact_email?: string
+          contact_phone?: string
+          country?: string | null
+          created_at?: string
+          custom_services?: string[] | null
+          description?: string | null
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          no_income_confirmed?: boolean
+          portfolio_images?: string[] | null
+          service_areas?: string[] | null
+          services_offered?: string[]
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      service_quote_requests: {
+        Row: {
+          created_at: string
+          id: string
+          job_description: string
+          location: string
+          notes: string | null
+          preferred_date: string | null
+          preferred_time: string | null
+          provider_id: string
+          requester_id: string
+          service_needed: string
+          status: string
+          updated_at: string
+          urgency: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_description: string
+          location: string
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          provider_id: string
+          requester_id: string
+          service_needed: string
+          status?: string
+          updated_at?: string
+          urgency?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_description?: string
+          location?: string
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          provider_id?: string
+          requester_id?: string
+          service_needed?: string
+          status?: string
+          updated_at?: string
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_quote_requests_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_quotes: {
+        Row: {
+          created_at: string
+          currency: string
+          estimated_duration: string | null
+          id: string
+          message: string | null
+          provider_id: string
+          quote_amount: number
+          request_id: string
+          status: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          estimated_duration?: string | null
+          id?: string
+          message?: string | null
+          provider_id: string
+          quote_amount: number
+          request_id: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          estimated_duration?: string | null
+          id?: string
+          message?: string | null
+          provider_id?: string
+          quote_amount?: number
+          request_id?: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_quotes_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "service_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_quotes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_documents: {
         Row: {
           created_at: string

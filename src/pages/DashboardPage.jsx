@@ -25,7 +25,8 @@ import {
   Loader2,
   Music,
   Megaphone,
-  Car
+  Car,
+  Wrench
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -1014,6 +1015,23 @@ export default function DashboardPage() {
                   <div className="text-center">
                     <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
                     <span className="text-sm sm:text-base">Become a S2G Driver</span>
+                  </div>
+                </Button>
+              </Link>
+
+              {/* Offer Your Services */}
+              <Link to="/register-services">
+                <Button 
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: '#fff',
+                    borderColor: '#f59e0b',
+                  }}
+                >
+                  <div className="text-center">
+                    <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                    <span className="text-sm sm:text-base">Offer Your Services</span>
                   </div>
                 </Button>
               </Link>

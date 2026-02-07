@@ -80,6 +80,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
     
     { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
+    { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
     { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
     { 
       onClick: () => {
