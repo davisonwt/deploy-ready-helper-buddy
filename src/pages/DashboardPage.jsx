@@ -41,6 +41,8 @@ import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAcce
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
 import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser'
+import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt'
+import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard'
 
 
 export default function DashboardPage() {
@@ -288,8 +290,7 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Binance Pay - no wallet state needed
-
+  // NOWPayments - no wallet state needed
   useEffect(() => {
     let mounted = true
     const loadRoles = async () => {
@@ -729,6 +730,16 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        {/* Wallet Setup Prompt Banner */}
+        <div className="mb-6">
+          <WalletSetupPrompt variant="card" />
+        </div>
+
+        {/* My Earnings Balance Card */}
+        <div className="mb-6">
+          <SowerBalanceCard compact />
+        </div>
+
         {/* Addictive Stats Cards */}
         <div className="mb-6">
           <StatsCards />

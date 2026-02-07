@@ -20,7 +20,7 @@ export default function PaymentSuccessPage() {
         </CardHeader>
         <CardContent className="space-y-6 text-center">
           <p className="text-muted-foreground">
-            Thank you for supporting this orchard. Binance Pay is confirming the transaction and we&apos;ll distribute your bestowal automatically according to the bestowal map.
+            Thank you for supporting this orchard. Your payment is being confirmed and we&apos;ll distribute your bestowal automatically according to the bestowal map.
           </p>
 
           {bestowalId && (
