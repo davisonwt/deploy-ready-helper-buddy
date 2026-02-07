@@ -145,6 +145,10 @@ const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
 
+// Community Drivers
+const RegisterVehiclePage = lazy(() => import("./pages/RegisterVehiclePage"));
+const CommunityDriversPage = lazy(() => import("./pages/CommunityDriversPage"));
+
 // 364ttt - Weekly Torah Top Ten
 const TorahTopTenPage = lazy(() => import("./pages/TorahTopTenPage"));
 const VotingPage = lazy(() => import("./pages/VotingPage"));
@@ -766,6 +770,27 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <WalletSettingsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Community Drivers */}
+              <Route path="/register-vehicle" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <RegisterVehiclePage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/community-drivers" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <CommunityDriversPage />
+                    </Suspense>
                   </Layout>
                 </ProtectedRoute>
               } />

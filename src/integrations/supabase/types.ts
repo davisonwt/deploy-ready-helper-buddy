@@ -1193,6 +1193,51 @@ export type Database = {
         }
         Relationships: []
       }
+      community_drivers: {
+        Row: {
+          contact_email: string
+          contact_phone: string
+          created_at: string
+          full_name: string
+          id: string
+          no_income_confirmed: boolean
+          status: string
+          updated_at: string
+          user_id: string
+          vehicle_description: string
+          vehicle_images: string[] | null
+          vehicle_type: string
+        }
+        Insert: {
+          contact_email: string
+          contact_phone: string
+          created_at?: string
+          full_name: string
+          id?: string
+          no_income_confirmed?: boolean
+          status?: string
+          updated_at?: string
+          user_id: string
+          vehicle_description: string
+          vehicle_images?: string[] | null
+          vehicle_type: string
+        }
+        Update: {
+          contact_email?: string
+          contact_phone?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          no_income_confirmed?: boolean
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_description?: string
+          vehicle_images?: string[] | null
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
       community_post_replies: {
         Row: {
           author_id: string
