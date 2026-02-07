@@ -43,6 +43,7 @@ import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
 import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser'
 import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt'
 import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard'
+import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert'
 
 
 export default function DashboardPage() {
@@ -642,6 +643,11 @@ export default function DashboardPage() {
     <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
       {/* Content wrapper */}
       <div className="relative z-10">
+        {/* Security Questions Alert */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-4">
+          <SecurityQuestionsAlert />
+        </div>
+        
         {/* Welcome Section with Profile Picture - Mobile Responsive */}
         <div 
           className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl"

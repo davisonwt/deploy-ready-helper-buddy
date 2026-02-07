@@ -42,6 +42,8 @@ import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import Journal from "../components/journal/Journal"
 import RecipesPage from "./RecipesPage"
+import SecurityQuestionsAlert from "../components/auth/SecurityQuestionsAlert"
+import SecuritySettingsCard from "../components/profile/SecuritySettingsCard"
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth()
@@ -338,6 +340,9 @@ export default function ProfilePage() {
               </TabsList>
 
               <TabsContent value="profile" className="mt-6 space-y-8">
+          {/* Security Questions Alert for users without setup */}
+          <SecurityQuestionsAlert />
+          
           {/* Enhanced Header */}
           <div className="text-center">
             <div className="bg-card text-card-foreground backdrop-blur-md rounded-3xl p-8 mx-auto max-w-4xl border shadow-2xl">
@@ -1207,6 +1212,9 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Security Settings Card */}
+          <SecuritySettingsCard />
           
           {/* Enhanced Community Standing */}
           <Card className="bg-gradient-to-br from-primary/5 via-card to-secondary/5 border-primary/20 shadow-2xl">
