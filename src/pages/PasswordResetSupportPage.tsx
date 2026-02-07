@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Lock, Mail, CheckCircle, Shield, Loader2, HelpCircle } from "lucide-react";
+import { ArrowLeft, Lock, Mail, CheckCircle, Shield, Loader2, HelpCircle, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Step = "email" | "questions" | "success";
+type Step = "email" | "questions" | "success" | "request-submitted";
 
 interface SecurityQuestions {
   question_1: string;
@@ -28,6 +28,9 @@ export default function PasswordResetSupportPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [noQuestions, setNoQuestions] = useState(false);
+  const [showAdminRequest, setShowAdminRequest] = useState(false);
+  const [adminRequestPassword, setAdminRequestPassword] = useState("");
+  const [adminRequestConfirm, setAdminRequestConfirm] = useState("");
   const navigate = useNavigate();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -41,6 +44,7 @@ export default function PasswordResetSupportPage() {
     setLoading(true);
     setError("");
     setNoQuestions(false);
+    setShowAdminRequest(false);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("password-reset-with-security", {
@@ -111,6 +115,77 @@ export default function PasswordResetSupportPage() {
       setLoading(false);
     }
   };
+
+  // Handle admin request submission for legacy users
+  const handleAdminRequestSubmit = async () => {
+    if (!adminRequestPassword || adminRequestPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    if (adminRequestPassword !== adminRequestConfirm) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("password-reset-request", {
+        body: { email: email.trim().toLowerCase(), newPassword: adminRequestPassword }
+      });
+
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
+
+      setStep("request-submitted");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Request submitted state (for legacy users)
+  if (step === "request-submitted") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/95 backdrop-blur-lg border-0 shadow-2xl">
+          <CardContent className="pt-8 pb-8 text-center space-y-6">
+            <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center">
+              <MessageSquare className="h-8 w-8 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-amber-700 mb-2">Request Submitted!</h2>
+              <p className="text-muted-foreground mb-4">
+                Your password reset request has been submitted for review.
+              </p>
+              <Alert className="bg-blue-50 border-blue-200 text-left">
+                <Shield className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-700 text-sm">
+                  <strong>Next steps:</strong>
+                  <ol className="list-decimal ml-4 mt-2 space-y-1">
+                    <li>A Gosat admin will contact you via ChatApp</li>
+                    <li>They'll verify your identity through conversation</li>
+                    <li>Once verified, they'll approve your password reset</li>
+                    <li>You'll then be able to log in with your new password</li>
+                  </ol>
+                </AlertDescription>
+              </Alert>
+            </div>
+            <Button
+              onClick={() => navigate("/login")}
+              variant="outline"
+              className="w-full"
+            >
+              Return to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Success state
   if (step === "success") {
@@ -339,12 +414,78 @@ export default function PasswordResetSupportPage() {
               </Button>
 
               {noQuestions ? (
-                <Alert className="bg-amber-50 border-amber-200">
-                  <Shield className="h-4 w-4 text-amber-700" />
-                  <AlertDescription className="text-amber-800 text-sm">
-                    This account hasnt set up security questions yet. For now, password resets for this account must be handled by support.
-                  </AlertDescription>
-                </Alert>
+                <div className="space-y-4">
+                  <Alert className="bg-amber-50 border-amber-200">
+                    <Shield className="h-4 w-4 text-amber-700" />
+                    <AlertDescription className="text-amber-800 text-sm">
+                      This account hasn't set up security questions yet. You can request a manual password reset from a Gosat admin.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {!showAdminRequest ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={() => setShowAdminRequest(true)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Request Admin Password Reset
+                    </Button>
+                  ) : (
+                    <div className="space-y-4 border-t pt-4">
+                      <h4 className="font-medium text-amber-700 flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Set Your New Password
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Enter the password you'd like to use. A Gosat admin will verify your identity via ChatApp before approving.
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm">New Password</Label>
+                        <Input
+                          type="password"
+                          value={adminRequestPassword}
+                          onChange={(e) => setAdminRequestPassword(e.target.value)}
+                          placeholder="Enter new password (min 8 characters)"
+                          disabled={loading}
+                          minLength={8}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm">Confirm Password</Label>
+                        <Input
+                          type="password"
+                          value={adminRequestConfirm}
+                          onChange={(e) => setAdminRequestConfirm(e.target.value)}
+                          placeholder="Confirm new password"
+                          disabled={loading}
+                        />
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        onClick={handleAdminRequestSubmit}
+                        className="w-full bg-amber-500 hover:bg-amber-600"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <span className="flex items-center">
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Submitting Request...
+                          </span>
+                        ) : (
+                          <>
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Submit Reset Request
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Alert className="bg-blue-50 border-blue-200">
                   <Shield className="h-4 w-4 text-blue-600" />
