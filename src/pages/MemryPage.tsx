@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
-  ArrowLeft, ChevronUp, ChevronDown
+  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,11 +17,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 
 interface MemryPost {
   id: string;
   user_id: string;
-  content_type: 'photo' | 'video' | 'recipe' | 'music';
+  content_type: 'photo' | 'video' | 'recipe' | 'music' | 'marketing_video' | 'new_product' | 'new_orchard';
   media_url: string;
   thumbnail_url?: string;
   caption: string;
@@ -31,6 +32,8 @@ interface MemryPost {
   likes_count: number;
   comments_count: number;
   created_at: string;
+  orchard_id?: string;
+  product_id?: string;
   profiles?: {
     display_name: string;
     avatar_url: string;
@@ -39,6 +42,8 @@ interface MemryPost {
   };
   user_liked?: boolean;
   user_bookmarked?: boolean;
+  is_notification?: boolean;
+  notification_type?: 'new_product' | 'new_orchard' | 'marketing_video';
 }
 
 interface Comment {
@@ -53,6 +58,7 @@ interface Comment {
 }
 
 export default function MemryPage() {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<MemryPost[]>([]);
   const [allPosts, setAllPosts] = useState<MemryPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,31 +138,57 @@ export default function MemryPage() {
 
       if (error) {
         console.error('Error fetching posts:', error);
-        setLoading(false);
-        return;
       }
 
-      if (!dbPosts || dbPosts.length === 0) {
-        setAllPosts([]);
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
+      // Fetch marketing videos (approved ones with orchard_id)
+      const { data: marketingVideos } = await supabase
+        .from('community_videos')
+        .select('*, profiles:uploader_profile_id(display_name, avatar_url, username)')
+        .eq('status', 'approved')
+        .not('orchard_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      // Fetch profiles for all unique user_ids
-      const userIds = [...new Set(dbPosts.map(p => p.user_id))];
+      // Fetch recent products (last 7 days as "new" notifications)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data: recentProducts } = await supabase
+        .from('products')
+        .select('*')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Fetch recent orchards (last 7 days as "new" notifications)
+      const { data: recentOrchards } = await supabase
+        .from('orchards')
+        .select('*')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Get all unique user IDs for profile lookup
+      const allUserIds = [
+        ...(dbPosts || []).map(p => p.user_id),
+        ...(recentProducts || []).map(p => p.sower_id).filter(Boolean),
+        ...(recentOrchards || []).map(o => o.user_id).filter(Boolean)
+      ].filter(Boolean) as string[];
+
+      const uniqueUserIds = [...new Set(allUserIds)];
+      
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, username')
-        .in('id', userIds);
+        .select('id, user_id, display_name, avatar_url, username')
+        .in('user_id', uniqueUserIds);
 
-      const profilesMap = new Map(
-        (profilesData || []).map(p => [p.id, p])
+      const profilesByUserId = new Map(
+        (profilesData || []).map(p => [p.user_id, p])
       );
 
-      // Transform to MemryPost format
-      const transformedPosts: MemryPost[] = dbPosts.map(post => {
-        const profile = profilesMap.get(post.user_id);
+      // Transform memry_posts
+      const transformedPosts: MemryPost[] = (dbPosts || []).map(post => {
+        const profile = profilesByUserId.get(post.user_id);
         return {
           id: post.id,
           user_id: post.user_id,
@@ -182,8 +214,93 @@ export default function MemryPage() {
         };
       });
 
-      setAllPosts(transformedPosts);
-      setPosts(transformedPosts);
+      // Transform marketing videos to MemryPost format
+      const videosPosts: MemryPost[] = (marketingVideos || []).map(video => ({
+        id: `video-${video.id}`,
+        user_id: video.uploader_id,
+        content_type: 'marketing_video' as const,
+        media_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+        caption: video.title || '',
+        likes_count: video.like_count || 0,
+        comments_count: video.comment_count || 0,
+        created_at: video.created_at,
+        orchard_id: video.orchard_id,
+        is_notification: false,
+        profiles: video.profiles ? {
+          display_name: video.profiles.display_name || 'Sower',
+          avatar_url: video.profiles.avatar_url || '',
+          username: video.profiles.username || 'sower'
+        } : {
+          display_name: 'Sower',
+          avatar_url: '',
+          username: 'sower'
+        }
+      }));
+
+      // Transform recent products to notification posts
+      const productPosts: MemryPost[] = (recentProducts || []).map(product => {
+        const profile = product.sower_id ? profilesByUserId.get(product.sower_id) : null;
+        return {
+          id: `product-${product.id}`,
+          user_id: product.sower_id || '',
+          content_type: 'new_product' as const,
+          media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
+          caption: `🌱 NEW SEED: ${product.title}`,
+          likes_count: product.like_count || 0,
+          comments_count: 0,
+          created_at: product.created_at || new Date().toISOString(),
+          product_id: product.id,
+          is_notification: true,
+          notification_type: 'new_product',
+          profiles: profile ? {
+            display_name: profile.display_name || 'Sower',
+            avatar_url: profile.avatar_url || '',
+            username: profile.username || 'sower'
+          } : {
+            display_name: 'Sower',
+            avatar_url: '',
+            username: 'sower'
+          }
+        };
+      });
+
+      // Transform recent orchards to notification posts
+      const orchardPosts: MemryPost[] = (recentOrchards || []).map(orchard => {
+        const profile = profilesByUserId.get(orchard.user_id);
+        const coverImage = orchard.images && orchard.images.length > 0 
+          ? orchard.images[0] 
+          : '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+        return {
+          id: `orchard-${orchard.id}`,
+          user_id: orchard.user_id,
+          content_type: 'new_orchard' as const,
+          media_url: coverImage,
+          caption: `🌳 NEW ORCHARD: ${orchard.title}`,
+          likes_count: orchard.like_count || 0,
+          comments_count: 0,
+          created_at: orchard.created_at,
+          orchard_id: orchard.id,
+          is_notification: true,
+          notification_type: 'new_orchard',
+          profiles: profile ? {
+            display_name: profile.display_name || 'Sower',
+            avatar_url: profile.avatar_url || '',
+            username: profile.username || 'sower'
+          } : {
+            display_name: 'Sower',
+            avatar_url: '',
+            username: 'sower'
+          }
+        };
+      });
+
+      // Combine all posts and sort by created_at
+      const allCombinedPosts = [...transformedPosts, ...videosPosts, ...productPosts, ...orchardPosts]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setAllPosts(allCombinedPosts);
+      setPosts(allCombinedPosts);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -575,7 +692,7 @@ export default function MemryPage() {
             >
               {/* Background Image/Video/Music */}
               <div className="absolute inset-0">
-                {currentPost.content_type === 'video' ? (
+                {currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video' ? (
                   <video
                     ref={videoRef}
                     src={currentPost.media_url}
@@ -595,6 +712,30 @@ export default function MemryPage() {
                       className="w-4/5 max-w-sm"
                     />
                     <p className="text-white/80 text-sm mt-4">🎵 Audio Track</p>
+                  </div>
+                ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' ? (
+                  <div className="w-full h-full relative">
+                    <img
+                      src={currentPost.media_url}
+                      alt={currentPost.caption}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Notification badge overlay */}
+                    <div className="absolute top-20 left-4 right-4 z-10">
+                      <Badge 
+                        className={`px-4 py-2 text-sm font-bold ${
+                          currentPost.content_type === 'new_product' 
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500' 
+                            : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                        } text-white animate-pulse`}
+                      >
+                        {currentPost.content_type === 'new_product' ? (
+                          <><ShoppingBag className="w-4 h-4 mr-2 inline" /> NEW SEED AVAILABLE</>
+                        ) : (
+                          <><Trees className="w-4 h-4 mr-2 inline" /> NEW ORCHARD PLANTED</>
+                        )}
+                      </Badge>
+                    </div>
                   </div>
                 ) : (
                   <img
@@ -717,7 +858,7 @@ export default function MemryPage() {
                 </motion.button>
 
                 {/* Sound toggle for videos */}
-                {currentPost.content_type === 'video' && (
+                {(currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video') && (
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setIsMuted(!isMuted)}
@@ -747,6 +888,24 @@ export default function MemryPage() {
                         Recipe
                       </span>
                     )}
+                    {currentPost.content_type === 'marketing_video' && (
+                      <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white font-semibold">
+                        <Video className="w-3 h-3 inline mr-1" />
+                        Marketing
+                      </span>
+                    )}
+                    {currentPost.content_type === 'new_product' && (
+                      <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs text-white font-semibold">
+                        <ShoppingBag className="w-3 h-3 inline mr-1" />
+                        New Seed
+                      </span>
+                    )}
+                    {currentPost.content_type === 'new_orchard' && (
+                      <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-xs text-white font-semibold">
+                        <Trees className="w-3 h-3 inline mr-1" />
+                        New Orchard
+                      </span>
+                    )}
                   </div>
                   
                   {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
@@ -771,6 +930,43 @@ export default function MemryPage() {
                         📝 {currentPost.recipe_ingredients.slice(0, 3).join(' • ')}
                         {currentPost.recipe_ingredients.length > 3 && ' • ...'}
                       </p>
+                    </motion.div>
+                  )}
+
+                  {/* View buttons for special content types */}
+                  {(currentPost.content_type === 'marketing_video' || currentPost.content_type === 'new_orchard') && currentPost.orchard_id && (
+                    <motion.div 
+                      className="mt-3"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button
+                        onClick={() => navigate(`/orchard/${currentPost.orchard_id}`)}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold"
+                        size="sm"
+                      >
+                        <Trees className="w-4 h-4 mr-2" />
+                        View Orchard & Bestow
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {currentPost.content_type === 'new_product' && currentPost.product_id && (
+                    <motion.div 
+                      className="mt-3"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <Button
+                        onClick={() => navigate(`/products`)}
+                        className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold"
+                        size="sm"
+                      >
+                        <ShoppingBag className="w-4 h-4 mr-2" />
+                        View Product & Bestow
+                      </Button>
                     </motion.div>
                   )}
                 </motion.div>
