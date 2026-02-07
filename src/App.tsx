@@ -98,6 +98,7 @@ const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 // BinancePayTestPage removed - using NOWPayments only
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
+const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
 const RadioSessions = lazy(() => import("./pages/RadioSessions"));
 const LiveRooms = lazy(() => import("./pages/LiveRooms"));
 const RadioGenerator = lazy(() => import("./pages/RadioGenerator"));
@@ -587,12 +588,20 @@ const App = () => (
                } />
                
                <Route path="/sower/:id" element={
-                 <ProtectedRoute>
-                   <Layout>
-                     <SowerProfile />
-                   </Layout>
-                 </ProtectedRoute>
-               } />
+                  <ProtectedRoute>
+                    <Layout>
+                      <SowerProfile />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/member/:id" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <PublicProfilePage />
+                    </Layout>
+                  </ProtectedRoute>
+                } />
                
                <Route path="/radio-sessions" element={
                  <ProtectedRoute>
