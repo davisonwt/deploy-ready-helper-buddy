@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, BookOpen, Plus, Pencil, Trash2, ExternalLink, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Loader2, BookOpen, Plus, Pencil, Trash2, ExternalLink, Upload, X, Image as ImageIcon, PauseCircle, PlayCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +40,7 @@ interface SowerBook {
   bestowal_value: number | null;
   delivery_type: 'physical' | 'digital' | 'both' | null;
   is_public: boolean;
+  status: 'active' | 'paused' | null;
   created_at: string;
   updated_at: string;
 }
@@ -253,6 +255,36 @@ export default function SowerBooksSection() {
     },
     onError: (error) => {
       toast({ title: 'Failed to delete book', description: String(error), variant: 'destructive' });
+    }
+  });
+
+  // Pause book mutation
+  const pauseBookMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('sower_books').update({ status: 'paused' }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sower-books'] });
+      toast({ title: 'Book paused - hidden from marketplace' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to pause book', description: String(error), variant: 'destructive' });
+    }
+  });
+
+  // Relaunch book mutation
+  const relaunchBookMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('sower_books').update({ status: 'active' }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sower-books'] });
+      toast({ title: 'Book relaunched - now visible in marketplace' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to relaunch book', description: String(error), variant: 'destructive' });
     }
   });
 
@@ -617,38 +649,94 @@ export default function SowerBooksSection() {
                               {book.description}
                             </p>
                           )}
-                          <div className='flex items-center gap-2'>
-                            {book.purchase_link && (
+                          {/* Status Badge */}
+                          {(book.status === 'paused') && (
+                            <Badge variant="secondary" className="w-fit bg-yellow-500/20 text-yellow-200 border-yellow-400/50 mb-2">
+                              <PauseCircle className="w-3 h-3 mr-1" />
+                              Paused
+                            </Badge>
+                          )}
+                          
+                          {/* Action Buttons */}
+                          <div className='flex flex-col gap-2'>
+                            <div className='flex items-center gap-2'>
                               <Button
                                 size='sm'
                                 variant='outline'
                                 className='flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20'
-                                onClick={() => window.open(book.purchase_link!, '_blank')}
+                                onClick={() => handleEdit(book)}
                               >
-                                <ExternalLink className='w-3 h-3 mr-1' />
-                                Buy
+                                <Pencil className='w-3 h-3 mr-1' />
+                                Edit
                               </Button>
-                            )}
+                              
+                              {(book.status === 'paused') ? (
+                                <Button
+                                  size='sm'
+                                  variant='outline'
+                                  className='flex-1 border-green-400/50 text-green-300 hover:bg-green-500/20'
+                                  onClick={() => relaunchBookMutation.mutate(book.id)}
+                                  disabled={relaunchBookMutation.isPending}
+                                >
+                                  {relaunchBookMutation.isPending ? (
+                                    <Loader2 className='w-3 h-3 animate-spin' />
+                                  ) : (
+                                    <>
+                                      <PlayCircle className='w-3 h-3 mr-1' />
+                                      Relaunch
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <Button
+                                  size='sm'
+                                  variant='outline'
+                                  className='flex-1 border-yellow-400/50 text-yellow-300 hover:bg-yellow-500/20'
+                                  onClick={() => pauseBookMutation.mutate(book.id)}
+                                  disabled={pauseBookMutation.isPending}
+                                >
+                                  {pauseBookMutation.isPending ? (
+                                    <Loader2 className='w-3 h-3 animate-spin' />
+                                  ) : (
+                                    <>
+                                      <PauseCircle className='w-3 h-3 mr-1' />
+                                      Pause
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                            
                             <Button
-                              size='icon'
-                              variant='ghost'
-                              className='text-white hover:bg-white/20'
-                              onClick={() => handleEdit(book)}
-                            >
-                              <Pencil className='w-4 h-4' />
-                            </Button>
-                            <Button
-                              size='icon'
-                              variant='ghost'
-                              className='text-white hover:bg-red-500/50'
+                              size='sm'
+                              variant='outline'
+                              className='w-full border-red-500/50 text-red-400 hover:bg-red-500/20'
                               onClick={() => {
                                 if (confirm('Delete this book?')) {
                                   deleteBookMutation.mutate(book.id);
                                 }
                               }}
+                              disabled={deleteBookMutation.isPending}
                             >
-                              <Trash2 className='w-4 h-4' />
+                              {deleteBookMutation.isPending ? (
+                                <Loader2 className='w-3 h-3 mr-2 animate-spin' />
+                              ) : (
+                                <Trash2 className='w-3 h-3 mr-2' />
+                              )}
+                              Delete
                             </Button>
+                            
+                            {book.purchase_link && (
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                className='w-full bg-white/10 border-white/30 text-white hover:bg-white/20'
+                                onClick={() => window.open(book.purchase_link!, '_blank')}
+                              >
+                                <ExternalLink className='w-3 h-3 mr-1' />
+                                View External Link
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

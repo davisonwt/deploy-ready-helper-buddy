@@ -5368,6 +5368,7 @@ export type Database = {
           publisher: string | null
           purchase_link: string | null
           sower_id: string
+          status: string | null
           title: string
           updated_at: string
           user_id: string
@@ -5393,6 +5394,7 @@ export type Database = {
           publisher?: string | null
           purchase_link?: string | null
           sower_id: string
+          status?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -5418,6 +5420,7 @@ export type Database = {
           publisher?: string | null
           purchase_link?: string | null
           sower_id?: string
+          status?: string | null
           title?: string
           updated_at?: string
           user_id?: string
