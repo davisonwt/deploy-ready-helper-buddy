@@ -437,7 +437,7 @@ export default function LoginPage() {
                   Cancel
                 </Button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
