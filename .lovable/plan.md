@@ -1,129 +1,196 @@
 
-# Eternal Forest Redesign Plan
+# Community Drivers Registration Feature
 
 ## Overview
-Transform the Eternal Forest from a flat, scattered grid into a beautiful, meaningful visualization where trees are arranged in an organic orchard pattern with clear visual hierarchy based on user activity levels.
-
-## Current Problems
-- Trees positioned in a basic grid with random offsets (looks chaotic)
-- No visual distinction between active and new users (everyone is L1)
-- No ground, sky, or environment (trees float in void)
-- No interactivity (can't click trees to view profiles)
-- Camera starts off-center
+Create a new section in sow2growapp.com where users without income can register their vehicles (car, truck, bike, van) to offer community services like deliveries, passenger transport, or hauling. Other community members ("sowers") can browse and hire these drivers.
 
 ---
 
-## Proposed Improvements
+## Feature Components
 
-### 1. Organic Circular/Spiral Layout
-Instead of a grid, arrange trees in concentric rings emanating from a central "World Tree" (community tree):
+### 1. Database Schema
+Create a new `community_drivers` table in Supabase to store vehicle registrations:
 
-**Layout Logic:**
-- **Center**: A large golden "Community Tree" representing the whole platform
-- **Inner Ring**: Top 10 contributors (largest, most vibrant trees)
-- **Second Ring**: Next 20 users
-- **Outer Rings**: Remaining users in expanding circles
-
-This creates a natural "orchard" feel where the most active members are at the heart of the community.
-
-### 2. Enhanced Tree Visuals
-- **Multiple tree shapes**: Different canopy styles based on user type (rounded, pointed, layered)
-- **Level-based sizing**: Even L1 trees get slight variation based on XP within level
-- **Ambient particles**: Floating leaves, sparkles for high-level trees
-- **Shadows on ground**: Each tree casts a soft shadow
-
-### 3. Environment Background
-Add visual atmosphere:
-- **Gradient sky**: Dark blue at top fading to forest green at horizon
-- **Ground plane**: Green/brown textured ground with grass hints
-- **Subtle clouds**: Drifting clouds in the background
-- **Day/night cycle**: Optional - based on real time
-
-### 4. Click-to-View Profile
-- Detect which tree was clicked
-- Show a popup card with:
-  - User's profile picture
-  - Display name
-  - Level & XP
-  - "View Profile" button linking to their profile page
-
-### 5. "Find My Tree" Button
-- Add a button that auto-pans and zooms to the current user's tree
-- Highlights their tree with a gentle glow pulse
-
-### 6. Legend/Key Panel
-Small overlay showing:
-- Tree size = Level
-- Color vibrancy = Activity
-- Golden glow = Top 10
-
----
-
-## Technical Implementation
-
-### Files to Modify
-1. **`src/components/gamification/EternalForestLeaderboard.tsx`**
-   - Rewrite positioning algorithm from grid to spiral/circular
-   - Add environment drawing (sky gradient, ground)
-   - Improve tree rendering with shadows and variety
-   - Add click detection for tree interaction
-   - Add "Find My Tree" button
-   - Add selected tree popup overlay
-
-### New Positioning Algorithm
 ```text
-Trees arranged in concentric rings:
-
-         ○ ○ ○ ○ ○         ← Outer ring (newer users)
-       ○           ○
-     ○   ○ ○ ○ ○ ○   ○     ← Middle ring
-    ○  ○           ○  ○
-    ○ ○   ● ● ●   ○ ○     ← Inner ring (active users)
-    ○  ○  ●   ●  ○  ○
-    ○ ○   ● ★ ●   ○ ○     ★ = World Tree (center)
-    ○  ○  ●   ●  ○  ○
-    ○ ○   ● ● ●   ○ ○
-     ○   ○ ○ ○ ○ ○   ○
-       ○           ○
-         ○ ○ ○ ○ ○
+Table: community_drivers
++----------------------+-------------+--------------------------------+
+| Column               | Type        | Description                    |
++----------------------+-------------+--------------------------------+
+| id                   | uuid (PK)   | Primary key                    |
+| user_id              | uuid        | Foreign key to auth.users      |
+| full_name            | text        | Driver's full name             |
+| contact_phone        | text        | Contact phone number           |
+| contact_email        | text        | Contact email                  |
+| vehicle_type         | text        | Car, Truck, Bike, Van, Other   |
+| vehicle_description  | text        | Vehicle details                |
+| vehicle_images       | text[]      | Array of image URLs (up to 3)  |
+| no_income_confirmed  | boolean     | Declaration checkbox           |
+| status               | text        | pending/approved/rejected      |
+| created_at           | timestamptz | Registration timestamp         |
+| updated_at           | timestamptz | Last update timestamp          |
++----------------------+-------------+--------------------------------+
 ```
 
-### Ring Calculation
-- Ring 0: World Tree (center)
-- Ring 1: Users 1-8 (top contributors)
-- Ring 2: Users 9-24
-- Ring 3: Users 25-48
-- Each ring has `8 * ringNumber` positions evenly spaced
+Row Level Security (RLS) policies:
+- Users can read all approved drivers (for browsing)
+- Users can only create/update their own registration
+- Admins can manage all registrations
 
-### Enhanced Tree Drawing
-- Draw ground shadow first (ellipse below trunk)
-- Trunk with wood grain texture
-- Multi-layered canopy (3 overlapping circles for depth)
-- Ambient glow for top performers
+### 2. Frontend Components
 
-### Click Detection
-- On canvas click, calculate which tree bounding box was hit
-- Store tree bounds during render for hit testing
-- Show profile card as React overlay (not canvas-drawn)
+#### New Page: `/register-vehicle`
+Location: `src/pages/RegisterVehiclePage.tsx`
+
+A multi-step form with:
+- **Step 1: Personal Information**
+  - Full Name (required)
+  - Contact Phone (required)
+  - Contact Email (auto-filled from logged-in user)
+  
+- **Step 2: Vehicle Information**
+  - Vehicle Type (dropdown: Car, Truck, Bike, Van, Other)
+  - Vehicle Description (textarea)
+  
+- **Step 3: Upload Vehicle Photos**
+  - Drag-and-drop zone for up to 3 images
+  - JPEG/PNG only, max 5MB each
+  - Live thumbnail previews
+  
+- **Step 4: Declaration & Submit**
+  - No-Income Declaration checkbox
+  - Terms acceptance
+  - Submit button
+
+#### New Page: `/community-drivers`
+Location: `src/pages/CommunityDriversPage.tsx`
+
+Browse and hire drivers:
+- Grid of driver cards with vehicle photos
+- Filter by vehicle type
+- Search by location/name
+- "Contact Driver" button (opens chat or shows contact info)
+
+#### New Components
+- `src/components/drivers/VehicleRegistrationForm.tsx` - Multi-step registration form
+- `src/components/drivers/DriverCard.tsx` - Display card for each driver
+- `src/components/drivers/VehicleImageUpload.tsx` - Image upload with previews
+- `src/components/drivers/DriverFilters.tsx` - Filtering controls
+
+### 3. Backend: Edge Function
+Create `supabase/functions/notify-driver-registration/index.ts`
+
+Handles:
+- Sending confirmation email to the registering driver
+- Sending notification to admins about new registration
+- Uses existing Brevo email integration
+
+### 4. Storage
+Use existing `orchard-images` storage bucket for vehicle photos (organized in a `drivers/` subfolder).
 
 ---
 
-## Summary of Changes
+## Implementation Details
 
-| Feature | Current | Proposed |
-|---------|---------|----------|
-| Layout | Random grid | Concentric rings with hierarchy |
-| Environment | Empty black | Sky gradient + ground |
-| Tree variety | All same shape | 3+ shapes based on level |
-| Interactivity | Drag/zoom only | Click to view profile |
-| Navigation | Manual | "Find My Tree" button |
-| Visual hierarchy | Minimal | Top users prominently centered |
+### Authentication Check
+The registration page will be protected using the existing `ProtectedRoute` component, ensuring only logged-in users can access it.
+
+### Form Validation
+Using Zod schema validation:
+- Name: 2-100 characters, trimmed
+- Phone: Valid phone format
+- Email: Valid email format
+- Vehicle Description: 10-500 characters
+- Images: Max 3 files, each under 5MB, JPEG/PNG only
+- No-Income checkbox: Must be checked
+
+### Image Upload Flow
+1. User selects images (up to 3)
+2. Client-side validation (size, type)
+3. Preview thumbnails displayed
+4. On form submit, upload to Supabase Storage
+5. Store returned URLs in `vehicle_images` array
+
+### Duplicate Prevention
+- One registration per user (enforced by unique constraint on `user_id`)
+- If user already registered, show "Edit Registration" instead of "New Registration"
+
+### UI Design
+Following existing app patterns:
+- Tailwind CSS for styling
+- Card-based layout matching other forms
+- Responsive design (mobile-first)
+- Community-focused messaging with encouraging copy
+- Success/error toast notifications using sonner
 
 ---
 
-## Benefits
-- **Meaningful visualization**: Position reflects contribution level
-- **Beautiful aesthetic**: Feels like a real growing orchard
-- **Engaging**: Users want to "grow toward the center"
-- **Discoverable**: Easy to find and learn about community members
-- **Gamification boost**: Visual reward for leveling up (move closer to center)
+## File Changes Summary
+
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/pages/RegisterVehiclePage.tsx` | Registration form page |
+| `src/pages/CommunityDriversPage.tsx` | Browse drivers page |
+| `src/components/drivers/VehicleRegistrationForm.tsx` | Multi-step form component |
+| `src/components/drivers/DriverCard.tsx` | Driver display card |
+| `src/components/drivers/VehicleImageUpload.tsx` | Image upload component |
+| `src/components/drivers/DriverFilters.tsx` | Filter controls |
+| `supabase/functions/notify-driver-registration/index.ts` | Email notification function |
+
+### Modified Files
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add routes for `/register-vehicle` and `/community-drivers` |
+
+### Database Migration
+Create `community_drivers` table with RLS policies.
+
+---
+
+## Technical Notes
+
+### Why Supabase (not Firestore)?
+This project uses Supabase as its primary backend for data persistence, authentication, and storage. While Firebase/Firestore is configured, the app's main data flows through Supabase. This feature will follow the same pattern.
+
+### Email Integration
+Uses the existing `send_brevo_email` edge function already configured in the project with the `BREVO_API_KEY` secret.
+
+### Security Considerations
+- RLS policies ensure users can only modify their own registrations
+- Input validation on both client and server side
+- File type and size restrictions for uploads
+- No-income declaration stored for audit purposes
+
+---
+
+## User Journey
+
+```text
+Logged-in User                                           System
+      |                                                     |
+      |---> Navigate to /register-vehicle ---------------->|
+      |                                                     |
+      |<--- Display multi-step form ----------------------<|
+      |                                                     |
+      |---> Fill personal info, vehicle details ---------->|
+      |                                                     |
+      |---> Upload up to 3 vehicle photos --------------->|
+      |                                                     |
+      |---> Check no-income declaration, submit ---------->|
+      |                                                     |
+      |                    [Validate & Save to Supabase]   |
+      |                    [Send confirmation email]        |
+      |                    [Notify admins]                  |
+      |                                                     |
+      |<--- Success message, redirect to /community-drivers<|
+      |                                                     |
+```
+
+---
+
+## Encouraging Messaging Examples
+
+- Header: "Help Grow Our Community by Offering Your Vehicle for Gigs!"
+- Subtext: "Connect with fellow sowers who need deliveries, transport, or hauling services"
+- Success: "Welcome to the Community Drivers network! Your registration is under review."
+- CTA: "Start Earning While Helping Your Community"
