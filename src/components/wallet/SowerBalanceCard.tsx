@@ -117,12 +117,12 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <p className="mb-2">Set up your payout wallet to start tracking earnings and receive payments.</p>
-              <Link to="/wallet-settings">
-                <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" asChild>
+                <Link to="/wallet-settings">
                   <Settings className="h-4 w-4" />
                   Set Up Wallet
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -172,12 +172,14 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
             </p>
           )}
           {!hasWallet && (
-            <Link to="/wallet-settings" className="block mt-3">
-              <Button variant="outline" size="sm" className="w-full gap-2">
-                <Settings className="h-4 w-4" />
-                Set Up Payout Wallet
+            <div className="mt-3">
+              <Button variant="outline" size="sm" className="w-full gap-2" asChild>
+                <Link to="/wallet-settings">
+                  <Settings className="h-4 w-4" />
+                  Set Up Payout Wallet
+                </Link>
               </Button>
-            </Link>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -250,22 +252,22 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
                 {balance.wallet_address?.slice(0, 8)}...{balance.wallet_address?.slice(-6)}
               </span>
             </div>
-            <Link to="/wallet-settings">
-              <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/wallet-settings">
                 <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         ) : (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
               <span>Set up your payout wallet to withdraw earnings</span>
-              <Link to="/wallet-settings">
-                <Button variant="outline" size="sm" className="ml-2">
+              <Button variant="outline" size="sm" className="ml-2" asChild>
+                <Link to="/wallet-settings">
                   Set Up
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </AlertDescription>
           </Alert>
         )}
