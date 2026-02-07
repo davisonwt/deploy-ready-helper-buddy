@@ -18,14 +18,21 @@ function playSound(soundKey: keyof typeof SFX, volume = 0.7) {
   if (!SFX[soundKey]) return
   if (!audioUnlocked) return // Wait for user interaction
 
-  if (!audioCache[soundKey]) {
-    audioCache[soundKey] = new Audio(SFX[soundKey])
-    audioCache[soundKey].preload = 'auto'
-  }
+  try {
+    if (!audioCache[soundKey]) {
+      const audio = new Audio()
+      audio.crossOrigin = 'anonymous'
+      audio.src = SFX[soundKey]
+      audio.preload = 'auto'
+      audioCache[soundKey] = audio
+    }
 
-  const sfx = audioCache[soundKey].cloneNode() as HTMLAudioElement
-  sfx.volume = volume
-  sfx.play().catch(() => {}) // Ignore errors (user hasn't interacted yet, etc.)
+    const sfx = audioCache[soundKey].cloneNode() as HTMLAudioElement
+    sfx.volume = volume
+    sfx.play().catch(() => {}) // Ignore errors (CORS, user hasn't interacted, etc.)
+  } catch {
+    // Silently fail if audio can't load (CORS issues with external CDN)
+  }
 }
 
 // AUTO-PLAY ON FIRST USER INTERACTION (required by browsers)
