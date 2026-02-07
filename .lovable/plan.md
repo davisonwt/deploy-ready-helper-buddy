@@ -1,148 +1,129 @@
 
-# Password Reset via Gosat Support Chat - Implementation Plan
+# Eternal Forest Redesign Plan
 
-## Problem Summary
-The "Go to Support Chat" button on the login page's Forgot Password modal doesn't work. When clicked, nothing happens because:
+## Overview
+Transform the Eternal Forest from a flat, scattered grid into a beautiful, meaningful visualization where trees are arranged in an organic orchard pattern with clear visual hierarchy based on user activity levels.
 
-1. The button tries to create an anonymous session via `loginAnonymously()`
-2. Supabase returns error: **"Anonymous sign-ins are disabled"**
-3. The function fails silently and never navigates to the support chat
+## Current Problems
+- Trees positioned in a basic grid with random offsets (looks chaotic)
+- No visual distinction between active and new users (everyone is L1)
+- No ground, sky, or environment (trees float in void)
+- No interactivity (can't click trees to view profiles)
+- Camera starts off-center
 
-## Solution Overview
-Build a dedicated password reset flow that works without requiring any login:
+---
 
-1. Create a **public password reset page** (`/password-reset-support`) that doesn't require authentication
-2. User enters their email address and new password (twice for confirmation)
-3. A secure edge function validates the request and sends a notification to gosat admins
-4. Gosat reviews and approves the reset via their admin dashboard/ChatApp
-5. Upon approval, the password is updated and user is redirected to login
+## Proposed Improvements
 
-## Implementation Steps
+### 1. Organic Circular/Spiral Layout
+Instead of a grid, arrange trees in concentric rings emanating from a central "World Tree" (community tree):
 
-### Step 1: Create Public Password Reset Request Page
-Create a new page at `/password-reset-support` that is publicly accessible (no auth required):
+**Layout Logic:**
+- **Center**: A large golden "Community Tree" representing the whole platform
+- **Inner Ring**: Top 10 contributors (largest, most vibrant trees)
+- **Second Ring**: Next 20 users
+- **Outer Rings**: Remaining users in expanding circles
 
-**New file: `src/pages/PasswordResetSupportPage.tsx`**
-- Form fields: Email, New Password, Confirm Password
-- Client-side validation (password match, minimum length)
-- Submit button that calls the edge function
-- Success state showing "Request submitted, gosat will review"
-- No authentication required to access this page
+This creates a natural "orchard" feel where the most active members are at the heart of the community.
 
-### Step 2: Create Edge Function for Password Reset Requests
-Create a new edge function to handle password reset requests securely:
+### 2. Enhanced Tree Visuals
+- **Multiple tree shapes**: Different canopy styles based on user type (rounded, pointed, layered)
+- **Level-based sizing**: Even L1 trees get slight variation based on XP within level
+- **Ambient particles**: Floating leaves, sparkles for high-level trees
+- **Shadows on ground**: Each tree casts a soft shadow
 
-**New file: `supabase/functions/password-reset-request/index.ts`**
-- Accepts: email, new password hash (never store plain text)
-- Validates email exists in the system
-- Creates a `password_reset_requests` record with:
-  - `email`
-  - `password_hash` (hashed new password)
-  - `status`: "pending"
-  - `created_at`
-  - `expires_at` (24 hours)
-- Sends notification to gosat admins (via activity feed or direct chat message)
-- Returns success without revealing if email exists (security)
+### 3. Environment Background
+Add visual atmosphere:
+- **Gradient sky**: Dark blue at top fading to forest green at horizon
+- **Ground plane**: Green/brown textured ground with grass hints
+- **Subtle clouds**: Drifting clouds in the background
+- **Day/night cycle**: Optional - based on real time
 
-### Step 3: Create Database Table for Password Reset Requests
-Create migration for the `password_reset_requests` table:
+### 4. Click-to-View Profile
+- Detect which tree was clicked
+- Show a popup card with:
+  - User's profile picture
+  - Display name
+  - Level & XP
+  - "View Profile" button linking to their profile page
 
+### 5. "Find My Tree" Button
+- Add a button that auto-pans and zooms to the current user's tree
+- Highlights their tree with a gentle glow pulse
+
+### 6. Legend/Key Panel
+Small overlay showing:
+- Tree size = Level
+- Color vibrancy = Activity
+- Golden glow = Top 10
+
+---
+
+## Technical Implementation
+
+### Files to Modify
+1. **`src/components/gamification/EternalForestLeaderboard.tsx`**
+   - Rewrite positioning algorithm from grid to spiral/circular
+   - Add environment drawing (sky gradient, ground)
+   - Improve tree rendering with shadows and variety
+   - Add click detection for tree interaction
+   - Add "Find My Tree" button
+   - Add selected tree popup overlay
+
+### New Positioning Algorithm
 ```text
-┌─────────────────────────────────┐
-│   password_reset_requests       │
-├─────────────────────────────────┤
-│ id: uuid (PK)                   │
-│ email: text (NOT NULL)          │
-│ password_hash: text (NOT NULL)  │
-│ status: text (pending/approved/ │
-│         rejected/expired)       │
-│ requested_at: timestamptz       │
-│ reviewed_by: uuid (FK->users)   │
-│ reviewed_at: timestamptz        │
-│ expires_at: timestamptz         │
-└─────────────────────────────────┘
+Trees arranged in concentric rings:
+
+         ○ ○ ○ ○ ○         ← Outer ring (newer users)
+       ○           ○
+     ○   ○ ○ ○ ○ ○   ○     ← Middle ring
+    ○  ○           ○  ○
+    ○ ○   ● ● ●   ○ ○     ← Inner ring (active users)
+    ○  ○  ●   ●  ○  ○
+    ○ ○   ● ★ ●   ○ ○     ★ = World Tree (center)
+    ○  ○  ●   ●  ○  ○
+    ○ ○   ● ● ●   ○ ○
+     ○   ○ ○ ○ ○ ○   ○
+       ○           ○
+         ○ ○ ○ ○ ○
 ```
 
-RLS: Only gosat/admin roles can read and update this table.
+### Ring Calculation
+- Ring 0: World Tree (center)
+- Ring 1: Users 1-8 (top contributors)
+- Ring 2: Users 9-24
+- Ring 3: Users 25-48
+- Each ring has `8 * ringNumber` positions evenly spaced
 
-### Step 4: Create Edge Function for Gosat Approval
-Create edge function for gosats to approve password reset:
+### Enhanced Tree Drawing
+- Draw ground shadow first (ellipse below trunk)
+- Trunk with wood grain texture
+- Multi-layered canopy (3 overlapping circles for depth)
+- Ambient glow for top performers
 
-**New file: `supabase/functions/password-reset-approve/index.ts`**
-- Accepts: request_id, action (approve/reject)
-- Validates caller is gosat/admin
-- If approved: Updates user's password using the stored hash via Supabase Admin API
-- Updates request status to "approved" or "rejected"
-- Returns success/failure
+### Click Detection
+- On canvas click, calculate which tree bounding box was hit
+- Store tree bounds during render for hit testing
+- Show profile card as React overlay (not canvas-drawn)
 
-### Step 5: Create Gosat Admin UI for Pending Resets
-Add a component/page for gosats to view and approve pending password reset requests:
+---
 
-**New file: `src/components/admin/PasswordResetApprovalPanel.tsx`**
-- Lists pending password reset requests
-- Shows email, requested time, expiry
-- Approve/Reject buttons
-- Only visible to gosat/admin users
-- Can be added to existing admin dashboard or as standalone page
+## Summary of Changes
 
-### Step 6: Update Login Page
-Update `src/pages/LoginPage.jsx`:
-- Change the "Go to Support Chat" button to navigate directly to `/password-reset-support`
-- Remove the failed anonymous login logic
-- Simple navigation: `navigate("/password-reset-support")`
+| Feature | Current | Proposed |
+|---------|---------|----------|
+| Layout | Random grid | Concentric rings with hierarchy |
+| Environment | Empty black | Sky gradient + ground |
+| Tree variety | All same shape | 3+ shapes based on level |
+| Interactivity | Drag/zoom only | Click to view profile |
+| Navigation | Manual | "Find My Tree" button |
+| Visual hierarchy | Minimal | Top users prominently centered |
 
-### Step 7: Add Route to App.tsx
-Add the public route for the password reset support page:
+---
 
-```jsx
-<Route path="/password-reset-support" element={<PasswordResetSupportPage />} />
-```
-
-No `ProtectedRoute` wrapper - this is a public page.
-
-## Security Considerations
-
-1. **Password Hashing**: Passwords are hashed client-side before sending to the edge function using a secure algorithm
-2. **Rate Limiting**: Implement rate limiting on the edge function to prevent abuse
-3. **Expiry**: Requests expire after 24 hours
-4. **Email Privacy**: Never reveal if an email exists in the system
-5. **Gosat Verification**: Only verified gosat/admin roles can approve resets
-6. **Audit Trail**: All approvals/rejections are logged with reviewer ID and timestamp
-
-## User Flow Diagram
-
-```text
-User Flow:
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│ Login Page  │────▶│ Forgot Password  │────▶│ Password Reset  │
-│             │     │ Modal            │     │ Support Page    │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                      │
-                                             Enter email +
-                                             new password (2x)
-                                                      │
-                                                      ▼
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│ Login Again │◀────│ Gosat Approves   │◀────│ Edge Function   │
-│             │     │ Reset            │     │ Stores Request  │
-└─────────────┘     └──────────────────┘     └─────────────────┘
-```
-
-## Files to Create/Modify
-
-| Action | File |
-|--------|------|
-| Create | `src/pages/PasswordResetSupportPage.tsx` |
-| Create | `supabase/functions/password-reset-request/index.ts` |
-| Create | `supabase/functions/password-reset-approve/index.ts` |
-| Create | `src/components/admin/PasswordResetApprovalPanel.tsx` |
-| Modify | `src/pages/LoginPage.jsx` - update button handler |
-| Modify | `src/App.tsx` - add public route |
-| Create | Database migration for `password_reset_requests` table |
-
-## Technical Notes
-
-- **No Anonymous Auth Required**: This solution bypasses the need for anonymous authentication entirely
-- **Secure by Design**: Gosats manually verify user identity before approving
-- **Audit Trail**: Complete tracking of who requested what and who approved
-- **Fallback**: If edge functions fail, clear error messages guide the user
+## Benefits
+- **Meaningful visualization**: Position reflects contribution level
+- **Beautiful aesthetic**: Feels like a real growing orchard
+- **Engaging**: Users want to "grow toward the center"
+- **Discoverable**: Easy to find and learn about community members
+- **Gamification boost**: Visual reward for leveling up (move closer to center)
