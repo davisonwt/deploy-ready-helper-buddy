@@ -162,10 +162,11 @@ export default function RegisterPage() {
 
         toast({
           title: "Welcome to sow2grow! 🌱",
-          description: "Please verify your account in ChatApp to continue.",
+          description: "Please set up your security questions to protect your account.",
         })
         
-        navigate("/chatapp")
+        // Navigate to security questions setup instead of chatapp
+        navigate("/security-questions-setup")
       } else {
         setError(result.error || "Registration failed")
       }
