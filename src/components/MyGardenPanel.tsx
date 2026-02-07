@@ -75,7 +75,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
     { href: '/products', title: 'Community Creations', subtitle: 'Everything in one place' },
     { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
-    { href: '/products?filter=music', title: 'Community Music', subtitle: 'Now inside Creations' },
+    { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
     { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
     { href: '/products?filter=ebook', title: 'Community Library', subtitle: 'E-books, courses, docs' },
     { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' },
