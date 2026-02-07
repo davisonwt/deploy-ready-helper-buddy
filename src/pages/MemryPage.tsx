@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
-  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees
+  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees, Book
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,11 +18,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { useProductBasket } from '@/contexts/ProductBasketContext';
 
 interface MemryPost {
   id: string;
   user_id: string;
-  content_type: 'photo' | 'video' | 'recipe' | 'music' | 'marketing_video' | 'new_product' | 'new_orchard';
+  content_type: 'photo' | 'video' | 'recipe' | 'music' | 'marketing_video' | 'new_product' | 'new_orchard' | 'new_book';
   media_url: string;
   thumbnail_url?: string;
   caption: string;
@@ -34,6 +35,9 @@ interface MemryPost {
   created_at: string;
   orchard_id?: string;
   product_id?: string;
+  book_id?: string;
+  product_price?: number;
+  product_title?: string;
   profiles?: {
     display_name: string;
     avatar_url: string;
@@ -43,7 +47,7 @@ interface MemryPost {
   user_liked?: boolean;
   user_bookmarked?: boolean;
   is_notification?: boolean;
-  notification_type?: 'new_product' | 'new_orchard' | 'marketing_video';
+  notification_type?: 'new_product' | 'new_orchard' | 'marketing_video' | 'new_book';
 }
 
 interface Comment {
@@ -59,6 +63,7 @@ interface Comment {
 
 export default function MemryPage() {
   const navigate = useNavigate();
+  const { addToBasket } = useProductBasket();
   const [posts, setPosts] = useState<MemryPost[]>([]);
   const [allPosts, setAllPosts] = useState<MemryPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -264,6 +269,8 @@ export default function MemryPage() {
           comments_count: 0,
           created_at: product.created_at || new Date().toISOString(),
           product_id: product.id,
+          product_price: product.price || 0,
+          product_title: product.title,
           is_notification: false,
           notification_type: 'new_product',
           profiles: profile ? {
@@ -314,14 +321,17 @@ export default function MemryPage() {
         return {
           id: `book-${book.id}`,
           user_id: book.sower_id || '',
-          content_type: 'new_product' as const,
+          content_type: 'new_book' as const,
           media_url: book.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
           caption: `📚 BOOK: ${book.title}`,
           likes_count: 0,
           comments_count: 0,
           created_at: book.created_at,
+          book_id: book.id,
+          product_price: book.bestowal_value || 0,
+          product_title: book.title,
           is_notification: false,
-          notification_type: 'new_product',
+          notification_type: 'new_book',
           profiles: profile ? {
             display_name: profile.display_name || 'Sower',
             avatar_url: profile.avatar_url || '',
@@ -816,7 +826,7 @@ export default function MemryPage() {
                     />
                     <p className="text-white/80 text-sm mt-4">🎵 Audio Track</p>
                   </div>
-                ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' ? (
+                ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center">
                     <img
                       src={currentPost.media_url}
@@ -829,11 +839,15 @@ export default function MemryPage() {
                         className={`px-4 py-2 text-sm font-bold ${
                           currentPost.content_type === 'new_product' 
                             ? 'bg-gradient-to-r from-emerald-500 to-teal-500' 
+                            : currentPost.content_type === 'new_book'
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
                             : 'bg-gradient-to-r from-amber-500 to-orange-500'
                         } text-white animate-pulse`}
                       >
                         {currentPost.content_type === 'new_product' ? (
                           <><ShoppingBag className="w-4 h-4 mr-2 inline" /> NEW SEED AVAILABLE</>
+                        ) : currentPost.content_type === 'new_book' ? (
+                          <><Book className="w-4 h-4 mr-2 inline" /> NEW BOOK AVAILABLE</>
                         ) : (
                           <><Trees className="w-4 h-4 mr-2 inline" /> NEW ORCHARD PLANTED</>
                         )}
@@ -1027,6 +1041,12 @@ export default function MemryPage() {
                             Music
                           </span>
                         )}
+                        {currentPost.content_type === 'new_book' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <Book className="w-3 h-3 inline mr-1" />
+                            Book
+                          </span>
+                        )}
                       </div>
                       <span className="text-white/70 text-xs">
                         @{currentPost.profiles?.username || 'sower'}
@@ -1062,18 +1082,67 @@ export default function MemryPage() {
                       size="lg"
                     >
                       <Gift className="w-5 h-5 mr-2" />
-                      Bestow Towards This Orchard
+                      Bestow & Get This Seed
                     </Button>
                   )}
 
                   {currentPost.content_type === 'new_product' && currentPost.product_id && (
                     <Button
-                      onClick={() => navigate(`/products`)}
+                      onClick={() => {
+                        // Add to basket and navigate to checkout
+                        const productId = currentPost.product_id?.replace('product-', '') || currentPost.product_id || '';
+                        addToBasket({
+                          id: productId,
+                          title: currentPost.product_title || currentPost.caption.replace('🌱 SEED: ', ''),
+                          price: currentPost.product_price || 0,
+                          cover_image_url: currentPost.media_url,
+                          sower_id: currentPost.user_id,
+                          bestowal_count: 1,
+                          sowers: {
+                            display_name: currentPost.profiles?.display_name || 'Sower'
+                          }
+                        });
+                        toast({
+                          title: "Added to basket! 🛒",
+                          description: "Redirecting to checkout..."
+                        });
+                        navigate('/products/basket');
+                      }}
                       className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
                       size="lg"
                     >
                       <Gift className="w-5 h-5 mr-2" />
                       Bestow & Get This Seed
+                    </Button>
+                  )}
+
+                  {currentPost.content_type === 'new_book' && currentPost.book_id && (
+                    <Button
+                      onClick={() => {
+                        // Add book to basket and navigate to checkout
+                        const bookId = currentPost.book_id?.replace('book-', '') || currentPost.book_id || '';
+                        addToBasket({
+                          id: bookId,
+                          title: currentPost.product_title || currentPost.caption.replace('📚 BOOK: ', ''),
+                          price: currentPost.product_price || 0,
+                          cover_image_url: currentPost.media_url,
+                          sower_id: currentPost.user_id,
+                          bestowal_count: 1,
+                          sowers: {
+                            display_name: currentPost.profiles?.display_name || 'Sower'
+                          }
+                        });
+                        toast({
+                          title: "Book added to basket! 📚",
+                          description: "Redirecting to checkout..."
+                        });
+                        navigate('/products/basket');
+                      }}
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg"
+                      size="lg"
+                    >
+                      <Book className="w-5 h-5 mr-2" />
+                      Bestow & Get This Book
                     </Button>
                   )}
 
