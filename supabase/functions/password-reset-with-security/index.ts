@@ -2,7 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 // Hash function matching the client-side implementation
@@ -32,7 +35,7 @@ Deno.serve(async (req) => {
       if (!email) {
         return new Response(
           JSON.stringify({ error: "Email is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -52,7 +55,7 @@ Deno.serve(async (req) => {
         // Security: Don't reveal if user exists - return generic message
         return new Response(
           JSON.stringify({ error: "If an account exists with this email, security questions would be shown. Please check your email address." }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -65,11 +68,11 @@ Deno.serve(async (req) => {
 
       if (securityError || !securityData) {
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: "Security questions not set up for this account. Please contact support for assistance.",
-            noQuestions: true 
+            noQuestions: true,
           }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -91,14 +94,14 @@ Deno.serve(async (req) => {
       if (!email || !answer1 || !answer2 || !answer3 || !newPassword) {
         return new Response(
           JSON.stringify({ error: "All fields are required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       if (newPassword.length < 8) {
         return new Response(
           JSON.stringify({ error: "Password must be at least 8 characters" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -117,7 +120,7 @@ Deno.serve(async (req) => {
       if (!targetUser) {
         return new Response(
           JSON.stringify({ error: "Account not found" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -131,7 +134,7 @@ Deno.serve(async (req) => {
       if (securityError || !securityData) {
         return new Response(
           JSON.stringify({ error: "Security questions not found for this account" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -151,7 +154,7 @@ Deno.serve(async (req) => {
         console.log(`Failed password reset attempt for ${email}: incorrect security answers`);
         return new Response(
           JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -182,7 +185,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ error: "Invalid action" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
