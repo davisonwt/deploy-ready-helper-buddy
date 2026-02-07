@@ -130,14 +130,14 @@ export default function MemryPage() {
 
   const fetchPosts = async () => {
     try {
-      // Fetch posts from database
+      // Fetch posts from memry_posts database
       const { data: dbPosts, error } = await supabase
         .from('memry_posts')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching posts:', error);
+        console.error('Error fetching memry posts:', error);
       }
 
       // Fetch marketing videos (approved ones with orchard_id)
@@ -147,32 +147,45 @@ export default function MemryPage() {
         .eq('status', 'approved')
         .not('orchard_id', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
 
-      // Fetch recent products (last 7 days as "new" notifications)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { data: recentProducts } = await supabase
+      // Fetch ALL products (seeds) - no date limit
+      const { data: allProducts } = await supabase
         .from('products')
         .select('*')
-        .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
 
-      // Fetch recent orchards (last 7 days as "new" notifications)
-      const { data: recentOrchards } = await supabase
+      // Fetch ALL orchards - no date limit
+      const { data: allOrchards } = await supabase
         .from('orchards')
         .select('*')
-        .gte('created_at', sevenDaysAgo.toISOString())
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
+
+      // Fetch ALL sower books
+      const { data: allBooks } = await supabase
+        .from('sower_books')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      // Fetch ALL music tracks
+      const { data: allMusic } = await supabase
+        .from('dj_music_tracks')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       // Get all unique user IDs for profile lookup
       const allUserIds = [
         ...(dbPosts || []).map(p => p.user_id),
-        ...(recentProducts || []).map(p => p.sower_id).filter(Boolean),
-        ...(recentOrchards || []).map(o => o.user_id).filter(Boolean)
+        ...(allProducts || []).map(p => p.sower_id).filter(Boolean),
+        ...(allOrchards || []).map(o => o.user_id).filter(Boolean),
+        ...(allBooks || []).map(b => b.sower_id).filter(Boolean),
+        ...(allMusic || []).map(m => m.dj_id).filter(Boolean)
       ].filter(Boolean) as string[];
 
       const uniqueUserIds = [...new Set(allUserIds)];
@@ -186,7 +199,7 @@ export default function MemryPage() {
         (profilesData || []).map(p => [p.user_id, p])
       );
 
-      // Transform memry_posts
+      // Transform memry_posts (photos, videos, recipes uploaded directly to Memry)
       const transformedPosts: MemryPost[] = (dbPosts || []).map(post => {
         const profile = profilesByUserId.get(post.user_id);
         return {
@@ -238,20 +251,20 @@ export default function MemryPage() {
         }
       }));
 
-      // Transform recent products to notification posts
-      const productPosts: MemryPost[] = (recentProducts || []).map(product => {
+      // Transform ALL products to posts
+      const productPosts: MemryPost[] = (allProducts || []).map(product => {
         const profile = product.sower_id ? profilesByUserId.get(product.sower_id) : null;
         return {
           id: `product-${product.id}`,
           user_id: product.sower_id || '',
           content_type: 'new_product' as const,
           media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
-          caption: `🌱 NEW SEED: ${product.title}`,
+          caption: `🌱 SEED: ${product.title}`,
           likes_count: product.like_count || 0,
           comments_count: 0,
           created_at: product.created_at || new Date().toISOString(),
           product_id: product.id,
-          is_notification: true,
+          is_notification: false,
           notification_type: 'new_product',
           profiles: profile ? {
             display_name: profile.display_name || 'Sower',
@@ -265,8 +278,8 @@ export default function MemryPage() {
         };
       });
 
-      // Transform recent orchards to notification posts
-      const orchardPosts: MemryPost[] = (recentOrchards || []).map(orchard => {
+      // Transform ALL orchards to posts
+      const orchardPosts: MemryPost[] = (allOrchards || []).map(orchard => {
         const profile = profilesByUserId.get(orchard.user_id);
         const coverImage = orchard.images && orchard.images.length > 0 
           ? orchard.images[0] 
@@ -276,12 +289,12 @@ export default function MemryPage() {
           user_id: orchard.user_id,
           content_type: 'new_orchard' as const,
           media_url: coverImage,
-          caption: `🌳 NEW ORCHARD: ${orchard.title}`,
+          caption: `🌳 ORCHARD: ${orchard.title}`,
           likes_count: orchard.like_count || 0,
           comments_count: 0,
           created_at: orchard.created_at,
           orchard_id: orchard.id,
-          is_notification: true,
+          is_notification: false,
           notification_type: 'new_orchard',
           profiles: profile ? {
             display_name: profile.display_name || 'Sower',
@@ -295,9 +308,76 @@ export default function MemryPage() {
         };
       });
 
+      // Transform ALL books to posts
+      const bookPosts: MemryPost[] = (allBooks || []).map(book => {
+        const profile = book.sower_id ? profilesByUserId.get(book.sower_id) : null;
+        return {
+          id: `book-${book.id}`,
+          user_id: book.sower_id || '',
+          content_type: 'new_product' as const,
+          media_url: book.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
+          caption: `📚 BOOK: ${book.title}`,
+          likes_count: 0,
+          comments_count: 0,
+          created_at: book.created_at,
+          is_notification: false,
+          notification_type: 'new_product',
+          profiles: profile ? {
+            display_name: profile.display_name || 'Sower',
+            avatar_url: profile.avatar_url || '',
+            username: profile.username || 'sower'
+          } : {
+            display_name: 'Sower',
+            avatar_url: '',
+            username: 'sower'
+          }
+        };
+      });
+
+      // Transform ALL music tracks to posts
+      const musicPosts: MemryPost[] = (allMusic || []).map(track => {
+        const profile = track.dj_id ? profilesByUserId.get(track.dj_id) : null;
+        return {
+          id: `music-${track.id}`,
+          user_id: track.dj_id || '',
+          content_type: 'music' as const,
+          media_url: track.file_url || track.preview_url || '',
+          caption: `🎵 MUSIC: ${track.track_title}`,
+          likes_count: 0,
+          comments_count: 0,
+          created_at: track.created_at,
+          is_notification: false,
+          profiles: profile ? {
+            display_name: profile.display_name || track.artist_name || 'Artist',
+            avatar_url: profile.avatar_url || '',
+            username: profile.username || 'artist'
+          } : {
+            display_name: track.artist_name || 'Artist',
+            avatar_url: '',
+            username: 'artist'
+          }
+        };
+      });
+
       // Combine all posts and sort by created_at
-      const allCombinedPosts = [...transformedPosts, ...videosPosts, ...productPosts, ...orchardPosts]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const allCombinedPosts = [
+        ...transformedPosts, 
+        ...videosPosts, 
+        ...productPosts, 
+        ...orchardPosts,
+        ...bookPosts,
+        ...musicPosts
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      console.log('Fetched posts:', {
+        memryPosts: transformedPosts.length,
+        videos: videosPosts.length,
+        products: productPosts.length,
+        orchards: orchardPosts.length,
+        books: bookPosts.length,
+        music: musicPosts.length,
+        total: allCombinedPosts.length
+      });
 
       setAllPosts(allCombinedPosts);
       setPosts(allCombinedPosts);
@@ -677,6 +757,29 @@ export default function MemryPage() {
         </motion.div>
 
         {/* Content Feed */}
+        {loading ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mx-auto mb-4"></div>
+              <p className="text-orange-800 font-medium">Loading memries...</p>
+            </div>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="h-full flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <Camera className="w-16 h-16 text-orange-400 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-orange-800 mb-2">No memries yet</h3>
+              <p className="text-orange-600 mb-4">Be the first to share a photo, video, or recipe with the community!</p>
+              <Button 
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-pink-500 to-orange-500 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Memry
+              </Button>
+            </div>
+          </div>
+        ) : (
         <AnimatePresence mode="wait">
           {currentPost && (
             <motion.div
@@ -985,6 +1088,7 @@ export default function MemryPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        )}
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-50 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
