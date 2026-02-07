@@ -242,8 +242,8 @@ export default function CommunityMusicLibraryPage() {
     }
   });
 
-  const allTracks = musicData.singles;
-  const availableAlbums = musicData.albums;
+  const allTracks = musicData?.singles ?? [];
+  const availableAlbums = musicData?.albums ?? [];
 
   const formatDuration = (seconds: number) => {
     if (!seconds) return '0:00';
