@@ -41,7 +41,7 @@ serve(async (req) => {
       return createErrorResponse('Missing required fields', 400, req);
     }
 
-    // Get product details
+    // Get product details including delivery type
     const { data: product, error: productError } = await supabase
       .from('products')
       .select('*, sowers:profiles!products_sower_id_fkey(*)')
@@ -52,13 +52,28 @@ serve(async (req) => {
       return createErrorResponse('Product not found', 404, req);
     }
 
+    // Determine if this is a digital product (immediate release) or physical (escrow)
+    const deliveryType = product.delivery_type || 'digital';
+    const isDigitalProduct = deliveryType === 'digital' || 
+                             product.type === 'doc' || 
+                             product.type === 'art' || 
+                             product.type === 'music';
+
     // Calculate distribution
     const tithingAmount = amount * 0.10; // 10% tithing
     const adminFee = amount * 0.05; // 5% admin fee
     const sowerAmount = amount * 0.70; // 70% to sower
     const productWhispersAmount = amount * 0.15; // 15% to product whispers
 
-    // Create product bestowal record
+    // Determine release status based on delivery type
+    const releaseStatus = isDigitalProduct ? 'released' : 'held';
+    const holdReason = isDigitalProduct ? null : 'awaiting_courier_pickup';
+
+    console.log(`📦 Product Bestowal: ${product.title}`);
+    console.log(`📦 Delivery Type: ${deliveryType} (isDigital: ${isDigitalProduct})`);
+    console.log(`📦 Release Status: ${releaseStatus}`);
+
+    // Create product bestowal record with appropriate release status
     const { data: bestowal, error: bestowalError } = await supabase
       .from('product_bestowals')
       .insert({
@@ -70,7 +85,10 @@ serve(async (req) => {
         sower_amount: sowerAmount,
         grower_amount: productWhispersAmount,
         status: 'completed',
-        payment_method: 'direct', // Product bestowals are direct (no payment gateway)
+        release_status: releaseStatus,
+        hold_reason: holdReason,
+        released_at: isDigitalProduct ? new Date().toISOString() : null,
+        payment_method: 'direct',
         payment_reference: `product-bestowal-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       })
       .select()
@@ -88,6 +106,65 @@ serve(async (req) => {
         bestowal_count: (product.bestowal_count || 0) + 1 
       })
       .eq('id', productId);
+
+    // Credit sower balance based on delivery type
+    if (isDigitalProduct) {
+      // DIGITAL: Immediate credit to available balance
+      console.log(`✅ DIGITAL PRODUCT: Crediting sower ${sowerId} with $${sowerAmount.toFixed(2)} (IMMEDIATE)`);
+      
+      // Get or create sower balance record
+      const { data: existingBalance } = await supabase
+        .from('sower_balances')
+        .select('*')
+        .eq('user_id', sowerId)
+        .single();
+
+      if (!existingBalance) {
+        await supabase.from('sower_balances').insert({
+          user_id: sowerId,
+          available_balance: sowerAmount,
+          pending_balance: 0,
+          total_earned: sowerAmount,
+        });
+      } else {
+        await supabase
+          .from('sower_balances')
+          .update({
+            available_balance: existingBalance.available_balance + sowerAmount,
+            total_earned: existingBalance.total_earned + sowerAmount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', sowerId);
+      }
+    } else {
+      // PHYSICAL: Add to pending balance until courier confirms pickup
+      console.log(`🔒 PHYSICAL PRODUCT: Holding $${sowerAmount.toFixed(2)} for sower ${sowerId} (ESCROW)`);
+      
+      const { data: existingBalance } = await supabase
+        .from('sower_balances')
+        .select('*')
+        .eq('user_id', sowerId)
+        .single();
+
+      if (!existingBalance) {
+        await supabase.from('sower_balances').insert({
+          user_id: sowerId,
+          available_balance: 0,
+          pending_balance: sowerAmount,
+          total_earned: 0, // Not earned until released
+        });
+      } else {
+        await supabase
+          .from('sower_balances')
+          .update({
+            pending_balance: existingBalance.pending_balance + sowerAmount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', sowerId);
+      }
+    }
+
+    const productTitle = product.title || 'Product';
 
     // Create payment transaction record for accounting
     await supabase

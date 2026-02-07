@@ -330,6 +330,8 @@ export type Database = {
           payment_status: string
           pocket_numbers: number[] | null
           pockets_count: number
+          release_status: string | null
+          released_at: string | null
           tx_signature: string | null
           updated_at: string
         }
@@ -352,6 +354,8 @@ export type Database = {
           payment_status?: string
           pocket_numbers?: number[] | null
           pockets_count: number
+          release_status?: string | null
+          released_at?: string | null
           tx_signature?: string | null
           updated_at?: string
         }
@@ -374,6 +378,8 @@ export type Database = {
           payment_status?: string
           pocket_numbers?: number[] | null
           pockets_count?: number
+          release_status?: string | null
+          released_at?: string | null
           tx_signature?: string | null
           updated_at?: string
         }
@@ -3291,10 +3297,15 @@ export type Database = {
           amount: number
           bestower_id: string | null
           created_at: string | null
+          delivery_confirmed_at: string | null
           grower_amount: number
+          hold_reason: string | null
           id: string
+          payment_method: string | null
           payment_reference: string | null
           product_id: string | null
+          release_status: string | null
+          released_at: string | null
           s2g_fee: number
           sower_amount: number
           sower_id: string | null
@@ -3304,10 +3315,15 @@ export type Database = {
           amount: number
           bestower_id?: string | null
           created_at?: string | null
+          delivery_confirmed_at?: string | null
           grower_amount: number
+          hold_reason?: string | null
           id?: string
+          payment_method?: string | null
           payment_reference?: string | null
           product_id?: string | null
+          release_status?: string | null
+          released_at?: string | null
           s2g_fee: number
           sower_amount: number
           sower_id?: string | null
@@ -3317,10 +3333,15 @@ export type Database = {
           amount?: number
           bestower_id?: string | null
           created_at?: string | null
+          delivery_confirmed_at?: string | null
           grower_amount?: number
+          hold_reason?: string | null
           id?: string
+          payment_method?: string | null
           payment_reference?: string | null
           product_id?: string | null
+          release_status?: string | null
+          released_at?: string | null
           s2g_fee?: number
           sower_amount?: number
           sower_id?: string | null
@@ -3462,6 +3483,7 @@ export type Database = {
           category: string | null
           cover_image_url: string | null
           created_at: string | null
+          delivery_type: string | null
           description: string | null
           download_count: number | null
           duration: number | null
@@ -3489,6 +3511,7 @@ export type Database = {
           category?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          delivery_type?: string | null
           description?: string | null
           download_count?: number | null
           duration?: number | null
@@ -3516,6 +3539,7 @@ export type Database = {
           category?: string | null
           cover_image_url?: string | null
           created_at?: string | null
+          delivery_type?: string | null
           description?: string | null
           download_count?: number | null
           duration?: number | null
