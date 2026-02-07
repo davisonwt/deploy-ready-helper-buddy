@@ -20,6 +20,17 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 
+const toHandle = (value?: string) => {
+  const v = (value || '').trim().toLowerCase();
+  if (!v) return 'sower';
+  const slug = v
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-_]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return slug || 'sower';
+};
+
 interface MemryPost {
   id: string;
   user_id: string;
@@ -148,7 +159,7 @@ export default function MemryPage() {
       // Fetch marketing videos (approved ones with orchard_id)
       const { data: marketingVideos } = await supabase
         .from('community_videos')
-        .select('*, profiles:uploader_profile_id(display_name, avatar_url, username)')
+        .select('id, uploader_id, video_url, thumbnail_url, title, like_count, comment_count, created_at, orchard_id')
         .eq('status', 'approved')
         .not('orchard_id', 'is', null)
         .order('created_at', { ascending: false })
@@ -157,7 +168,7 @@ export default function MemryPage() {
       // Fetch ALL products (seeds) - no date limit
       const { data: allProducts } = await supabase
         .from('products')
-        .select('*')
+        .select('*, sower:sowers!products_sower_id_fkey(user_id, display_name, logo_url)')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -171,7 +182,7 @@ export default function MemryPage() {
       // Fetch ALL sower books
       const { data: allBooks } = await supabase
         .from('sower_books')
-        .select('*')
+        .select('*, sower:sowers!sower_books_sower_id_fkey(user_id, display_name, logo_url)')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -179,29 +190,33 @@ export default function MemryPage() {
       // Fetch ALL music tracks
       const { data: allMusic } = await supabase
         .from('dj_music_tracks')
-        .select('*')
+        .select('*, dj:radio_djs!fk_dj_music_tracks_dj_id(user_id, dj_name, avatar_url)')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(50);
 
+      const products = (allProducts || []) as any[];
+      const books = (allBooks || []) as any[];
+      const music = (allMusic || []) as any[];
+
       // Get all unique user IDs for profile lookup
       const allUserIds = [
-        ...(dbPosts || []).map(p => p.user_id),
-        ...(allProducts || []).map(p => p.sower_id).filter(Boolean),
-        ...(allOrchards || []).map(o => o.user_id).filter(Boolean),
-        ...(allBooks || []).map(b => b.sower_id).filter(Boolean),
-        ...(allMusic || []).map(m => m.dj_id).filter(Boolean)
+        ...(dbPosts || []).map((p: any) => p.user_id),
+        ...products.map((p: any) => p.sower?.user_id).filter(Boolean),
+        ...(allOrchards || []).map((o: any) => o.user_id).filter(Boolean),
+        ...books.map((b: any) => b.sower?.user_id).filter(Boolean),
+        ...music.map((m: any) => m.dj?.user_id).filter(Boolean)
       ].filter(Boolean) as string[];
 
       const uniqueUserIds = [...new Set(allUserIds)];
       
       const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, avatar_url, username')
+        .from('public_profiles')
+        .select('user_id, display_name, avatar_url, username')
         .in('user_id', uniqueUserIds);
 
       const profilesByUserId = new Map(
-        (profilesData || []).map(p => [p.user_id, p])
+        (profilesData || []).map((p: any) => [p.user_id, p])
       );
 
       // Transform memry_posts (photos, videos, recipes uploaded directly to Memry)
@@ -233,34 +248,44 @@ export default function MemryPage() {
       });
 
       // Transform marketing videos to MemryPost format
-      const videosPosts: MemryPost[] = (marketingVideos || []).map(video => ({
-        id: `video-${video.id}`,
-        user_id: video.uploader_id,
-        content_type: 'marketing_video' as const,
-        media_url: video.video_url,
-        thumbnail_url: video.thumbnail_url,
-        caption: video.title || '',
-        likes_count: video.like_count || 0,
-        comments_count: video.comment_count || 0,
-        created_at: video.created_at,
-        orchard_id: video.orchard_id,
-        is_notification: false,
-        profiles: video.profiles ? {
-          display_name: video.profiles.display_name || 'Sower',
-          avatar_url: video.profiles.avatar_url || '',
-          username: video.profiles.username || 'sower'
-        } : {
-          display_name: 'Sower',
-          avatar_url: '',
-          username: 'sower'
-        }
-      }));
+      const videosPosts: MemryPost[] = (marketingVideos || []).map((video: any) => {
+        const profile = video.uploader_id ? profilesByUserId.get(video.uploader_id) : null;
+        const displayName = profile?.display_name || 'Sower';
+        const avatarUrl = profile?.avatar_url || '';
+        const username = profile?.username || toHandle(displayName);
+
+        return {
+          id: `video-${video.id}`,
+          user_id: video.uploader_id,
+          content_type: 'marketing_video' as const,
+          media_url: video.video_url,
+          thumbnail_url: video.thumbnail_url,
+          caption: video.title || '',
+          likes_count: video.like_count || 0,
+          comments_count: video.comment_count || 0,
+          created_at: video.created_at,
+          orchard_id: video.orchard_id,
+          is_notification: false,
+          profiles: {
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            username
+          }
+        } as MemryPost;
+      });
 
       // Transform ALL products to posts
-      const productPosts: MemryPost[] = (allProducts || []).map(product => {
-        const profile = product.sower_id ? profilesByUserId.get(product.sower_id) : null;
+      const productPosts: MemryPost[] = products.map((product: any) => {
+        const sowerUserId = product.sower?.user_id as string | undefined;
+        const profile = sowerUserId ? profilesByUserId.get(sowerUserId) : null;
+
+        const displayName = profile?.display_name || product.sower?.display_name || 'Sower';
+        const avatarUrl = profile?.avatar_url || product.sower?.logo_url || '';
+        const username = profile?.username || toHandle(displayName);
+
         return {
           id: `product-${product.id}`,
+          // NOTE: this is sowers.id (not profiles.user_id)
           user_id: product.sower_id || '',
           content_type: 'new_product' as const,
           media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
@@ -273,14 +298,10 @@ export default function MemryPage() {
           product_title: product.title,
           is_notification: false,
           notification_type: 'new_product',
-          profiles: profile ? {
-            display_name: profile.display_name || 'Sower',
-            avatar_url: profile.avatar_url || '',
-            username: profile.username || 'sower'
-          } : {
-            display_name: 'Sower',
-            avatar_url: '',
-            username: 'sower'
+          profiles: {
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            username
           }
         };
       });
@@ -316,10 +337,17 @@ export default function MemryPage() {
       });
 
       // Transform ALL books to posts
-      const bookPosts: MemryPost[] = (allBooks || []).map(book => {
-        const profile = book.sower_id ? profilesByUserId.get(book.sower_id) : null;
+      const bookPosts: MemryPost[] = books.map((book: any) => {
+        const sowerUserId = book.sower?.user_id as string | undefined;
+        const profile = sowerUserId ? profilesByUserId.get(sowerUserId) : null;
+
+        const displayName = profile?.display_name || book.sower?.display_name || 'Sower';
+        const avatarUrl = profile?.avatar_url || book.sower?.logo_url || '';
+        const username = profile?.username || toHandle(displayName);
+
         return {
           id: `book-${book.id}`,
+          // NOTE: this is sowers.id (not profiles.user_id)
           user_id: book.sower_id || '',
           content_type: 'new_book' as const,
           media_url: book.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
@@ -332,23 +360,26 @@ export default function MemryPage() {
           product_title: book.title,
           is_notification: false,
           notification_type: 'new_book',
-          profiles: profile ? {
-            display_name: profile.display_name || 'Sower',
-            avatar_url: profile.avatar_url || '',
-            username: profile.username || 'sower'
-          } : {
-            display_name: 'Sower',
-            avatar_url: '',
-            username: 'sower'
+          profiles: {
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            username
           }
         };
       });
 
       // Transform ALL music tracks to posts
-      const musicPosts: MemryPost[] = (allMusic || []).map(track => {
-        const profile = track.dj_id ? profilesByUserId.get(track.dj_id) : null;
+      const musicPosts: MemryPost[] = music.map((track: any) => {
+        const djUserId = track.dj?.user_id as string | undefined;
+        const profile = djUserId ? profilesByUserId.get(djUserId) : null;
+
+        const displayName = profile?.display_name || track.dj?.dj_name || track.artist_name || 'Artist';
+        const avatarUrl = profile?.avatar_url || track.dj?.avatar_url || '';
+        const username = profile?.username || toHandle(displayName);
+
         return {
           id: `music-${track.id}`,
+          // NOTE: this is radio_djs.id (not profiles.user_id)
           user_id: track.dj_id || '',
           content_type: 'music' as const,
           media_url: track.file_url || track.preview_url || '',
@@ -357,14 +388,10 @@ export default function MemryPage() {
           comments_count: 0,
           created_at: track.created_at,
           is_notification: false,
-          profiles: profile ? {
-            display_name: profile.display_name || track.artist_name || 'Artist',
-            avatar_url: profile.avatar_url || '',
-            username: profile.username || 'artist'
-          } : {
-            display_name: track.artist_name || 'Artist',
-            avatar_url: '',
-            username: 'artist'
+          profiles: {
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            username
           }
         };
       });
