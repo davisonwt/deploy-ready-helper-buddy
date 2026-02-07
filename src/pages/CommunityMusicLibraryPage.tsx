@@ -161,6 +161,73 @@ export default function CommunityMusicLibraryPage() {
         });
       }
 
+      // 3. Fetch from products table (Community Creations music)
+      const { data: productMusic, error: productError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          sowers (
+            user_id,
+            display_name,
+            logo_url
+          )
+        `)
+        .eq('type', 'music')
+        .order('created_at', { ascending: false });
+
+      if (productError) {
+        console.error('Error fetching product music:', productError);
+      } else if (productMusic) {
+        const sowerUserIds = [...new Set(productMusic.map(p => p.sowers?.user_id).filter(Boolean))];
+        const { data: sowerProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, username')
+          .in('user_id', sowerUserIds);
+        
+        const sowerProfileMap = new Map(sowerProfiles?.map(p => [p.user_id, p]) || []);
+
+        productMusic.forEach(product => {
+          const sower = product.sowers;
+          const profile = sower?.user_id ? sowerProfileMap.get(sower.user_id) : null;
+          
+          // Check if album based on title or category
+          const titleLower = (product.title || '').toLowerCase();
+          const categoryLower = (product.category || '').toLowerCase();
+          const isAlbum = titleLower.includes('album') || 
+                          titleLower.includes('vol') ||
+                          titleLower.includes('project') ||
+                          categoryLower.includes('album');
+          
+          // Singles are always 2 USDC minimum
+          const productPrice = isAlbum 
+            ? (product.price || 0) 
+            : Math.max(product.price || 0, SINGLE_PRICE);
+          
+          // Skip if already added from other sources (check by title to avoid duplicates)
+          const alreadyExists = tracks.some(t => 
+            t.track_title.toLowerCase() === product.title?.toLowerCase()
+          );
+          
+          if (!alreadyExists) {
+            tracks.push({
+              id: product.id,
+              track_title: product.title,
+              artist_name: sower?.display_name || profile?.display_name || 'Unknown Artist',
+              duration_seconds: product.duration || 0,
+              file_url: product.file_url,
+              preview_url: product.file_url, // Products use file_url for preview
+              price: productPrice,
+              isAlbum,
+              profiles: profile || (sower ? { username: sower.display_name, avatar_url: sower.logo_url } : null),
+              user_id: sower?.user_id,
+              created_at: product.created_at,
+              category: product.category,
+              cover_image_url: product.cover_image_url
+            });
+          }
+        });
+      }
+
       // Sort by created_at (newest first) and filter out albums
       return tracks
         .filter(t => !t.isAlbum) // Only show singles for album building
