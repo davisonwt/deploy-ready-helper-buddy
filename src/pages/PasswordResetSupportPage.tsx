@@ -40,6 +40,7 @@ export default function PasswordResetSupportPage() {
 
     setLoading(true);
     setError("");
+    setNoQuestions(false);
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("password-reset-with-security", {
@@ -337,12 +338,21 @@ export default function PasswordResetSupportPage() {
                 )}
               </Button>
 
-              <Alert className="bg-blue-50 border-blue-200">
-                <Shield className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-700 text-sm">
-                  You'll need to answer the security questions you set up during registration to reset your password.
-                </AlertDescription>
-              </Alert>
+              {noQuestions ? (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <Shield className="h-4 w-4 text-amber-700" />
+                  <AlertDescription className="text-amber-800 text-sm">
+                    This account hasnt set up security questions yet. For now, password resets for this account must be handled by support.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <Shield className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-700 text-sm">
+                    You'll need to answer the security questions you set up during registration to reset your password.
+                  </AlertDescription>
+                </Alert>
+              )}
             </form>
           </CardContent>
         </Card>
