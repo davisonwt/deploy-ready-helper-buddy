@@ -413,12 +413,11 @@ export default function LoginPage() {
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <MessageCircle className="h-5 w-5 text-blue-600" />
-                  <span className="font-medium text-blue-700">Contact Support</span>
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-700">Security Verification</span>
                 </div>
                 <p className="text-sm text-blue-600">
-                  To reset your password, please contact our support team through our chat system. 
-                  They will verify your identity and help you regain access to your account.
+                  You'll need to answer your security questions to verify your identity and reset your password.
                 </p>
               </div>
               
@@ -428,7 +427,7 @@ export default function LoginPage() {
                   className="flex-1 w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handlePasswordResetSupport}
                 >
-                  <MessageCircle className="h-4 w-4 mr-2" />
+                  <Lock className="h-4 w-4 mr-2" />
                   Reset My Password
                 </Button>
                 <Button

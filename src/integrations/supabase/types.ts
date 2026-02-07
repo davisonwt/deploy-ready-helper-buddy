@@ -6142,6 +6142,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_security_questions: {
+        Row: {
+          answer_1_hash: string
+          answer_2_hash: string
+          answer_3_hash: string
+          created_at: string
+          id: string
+          question_1: string
+          question_2: string
+          question_3: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_1_hash: string
+          answer_2_hash: string
+          answer_3_hash: string
+          created_at?: string
+          id?: string
+          question_1: string
+          question_2: string
+          question_3: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer_1_hash?: string
+          answer_2_hash?: string
+          answer_3_hash?: string
+          created_at?: string
+          id?: string
+          question_1?: string
+          question_2?: string
+          question_3?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           amount: number
@@ -7049,6 +7088,14 @@ export type Database = {
         }[]
       }
       get_safe_profile_fields: { Args: never; Returns: string[] }
+      get_security_questions_for_reset: {
+        Args: { user_email: string }
+        Returns: {
+          question_1: string
+          question_2: string
+          question_3: string
+        }[]
+      }
       get_session_token_secure: {
         Args: { session_id_param: string }
         Returns: string
