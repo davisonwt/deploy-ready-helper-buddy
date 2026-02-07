@@ -296,11 +296,15 @@ serve(async (req) => {
         updated_at: new Date().toISOString(),
       };
 
-      // For completed payments, mark as ready for distribution and update sower balance
+      // For completed payments, determine if immediate release or escrow hold
       if (paymentStatus === 'completed') {
+        // Orchards ALWAYS require courier pickup - hold funds in escrow
         updateData.hold_reason = 'awaiting_courier_pickup';
+        updateData.release_status = 'held';
         
-        // Calculate and credit sower's balance (grower gets 85% minus whisperer if active)
+        console.log('🔒 ESCROW: Orchard bestowal - funds HELD until courier confirms pickup');
+        
+        // Calculate amounts but add to PENDING balance (not available)
         if (growerUserId) {
           let sowerAmount = ipnData.price_amount * DISTRIBUTION.BASE_SOWER;
           
@@ -313,41 +317,37 @@ serve(async (req) => {
             .single();
           
           if (whispererAssignment && whispererAssignment.whisperers) {
-            // Calculate whisperer commission from the sower's 85%
             const whispererPercent = whispererAssignment.commission_percent / 100;
             const whispererAmount = ipnData.price_amount * whispererPercent;
             sowerAmount = ipnData.price_amount * DISTRIBUTION.BASE_SOWER - whispererAmount;
             
-            console.log(`💰 Whisperer ${whispererAssignment.whisperers.display_name} earns $${whispererAmount.toFixed(2)} (${whispererAssignment.commission_percent}%)`);
+            console.log(`💰 Whisperer ${whispererAssignment.whisperers.display_name} will earn $${whispererAmount.toFixed(2)} (HELD)`);
             
-            // Credit whisperer balance
-            const whispererUserId = whispererAssignment.whisperers.user_id;
-            await updateSowerBalance(supabase, whispererUserId, whispererAmount, 'add_available');
+            // Add to PENDING balance - will be released when courier confirms
+            await updateSowerBalance(supabase, whispererAssignment.whisperers.user_id, whispererAmount, 'add_pending');
             
-            // Record whisperer earning
+            // Record whisperer earning as pending
             await supabase.from('whisperer_earnings').insert({
               whisperer_id: whispererAssignment.whisperer_id,
               assignment_id: whispererAssignment.id,
               bestowal_id: bestowal.id,
               amount: whispererAmount,
               commission_percent: whispererAssignment.commission_percent,
-              status: 'processed',
-              processed_at: new Date().toISOString(),
+              status: 'pending', // Not processed yet - awaiting courier
+              processed_at: null,
             });
             
-            // Update assignment stats
             await supabase
               .from('product_whisperer_assignments')
               .update({
                 total_bestowals: (whispererAssignment.total_bestowals || 0) + 1,
-                total_earned: (whispererAssignment.total_earned || 0) + whispererAmount,
                 updated_at: new Date().toISOString(),
               })
               .eq('id', whispererAssignment.id);
           }
           
-          console.log(`💰 Crediting sower ${growerUserId} with $${sowerAmount.toFixed(2)}`);
-          await updateSowerBalance(supabase, growerUserId, sowerAmount, 'add_available');
+          console.log(`💰 Sower ${growerUserId} will receive $${sowerAmount.toFixed(2)} (HELD until courier pickup)`);
+          await updateSowerBalance(supabase, growerUserId, sowerAmount, 'add_pending');
         }
       }
 
@@ -366,9 +366,8 @@ serve(async (req) => {
       // Handle product/tithe/freewill payments
       console.log(`📦 Non-orchard payment received: ${orderId}`);
       
-      // For product payments, credit creators (85% minus whisperer if active)
+      // For product payments, check delivery type to determine escrow vs immediate
       if (orderId.startsWith('product_') && paymentStatus === 'completed') {
-        // Get product bestowal data from payment_audit_log or stored metadata
         const { data: auditLog } = await supabase
           .from('payment_audit_log')
           .select('metadata')
@@ -378,8 +377,21 @@ serve(async (req) => {
           .single();
         
         if (auditLog?.metadata?.product_items) {
-          // Credit each product creator
           for (const product of auditLog.metadata.product_items) {
+            // Get product delivery type
+            const { data: productData } = await supabase
+              .from('products')
+              .select('delivery_type, type')
+              .eq('id', product.id)
+              .single();
+            
+            // Determine if this is digital (immediate) or physical (escrow)
+            const deliveryType = productData?.delivery_type || 'digital';
+            const isDigital = deliveryType === 'digital' || 
+                             productData?.type === 'doc' || 
+                             productData?.type === 'art' || 
+                             productData?.type === 'music';
+            
             let creatorAmount = product.price * DISTRIBUTION.BASE_SOWER;
             
             // Check for whisperer assignment
@@ -390,30 +402,78 @@ serve(async (req) => {
               .eq('status', 'active')
               .single();
             
-            if (whispererAssignment && whispererAssignment.whisperers) {
-              const whispererPercent = whispererAssignment.commission_percent / 100;
-              const whispererAmount = product.price * whispererPercent;
-              creatorAmount = product.price * DISTRIBUTION.BASE_SOWER - whispererAmount;
+            if (isDigital) {
+              // DIGITAL PRODUCTS: Immediate release to sower
+              console.log(`✅ DIGITAL PRODUCT: ${product.id} - IMMEDIATE RELEASE`);
               
-              console.log(`💰 Whisperer earns $${whispererAmount.toFixed(2)} from product ${product.id}`);
+              // Update product bestowal status
+              await supabase
+                .from('product_bestowals')
+                .update({ 
+                  release_status: 'released',
+                  released_at: new Date().toISOString(),
+                })
+                .eq('product_id', product.id)
+                .eq('payment_reference', orderId);
               
-              // Credit whisperer
-              await updateSowerBalance(supabase, whispererAssignment.whisperers.user_id, whispererAmount, 'add_available');
+              if (whispererAssignment && whispererAssignment.whisperers) {
+                const whispererPercent = whispererAssignment.commission_percent / 100;
+                const whispererAmount = product.price * whispererPercent;
+                creatorAmount = product.price * DISTRIBUTION.BASE_SOWER - whispererAmount;
+                
+                console.log(`💰 Whisperer earns $${whispererAmount.toFixed(2)} (IMMEDIATE)`);
+                await updateSowerBalance(supabase, whispererAssignment.whisperers.user_id, whispererAmount, 'add_available');
+                
+                await supabase.from('whisperer_earnings').insert({
+                  whisperer_id: whispererAssignment.whisperer_id,
+                  assignment_id: whispererAssignment.id,
+                  bestowal_id: orderId,
+                  amount: whispererAmount,
+                  commission_percent: whispererAssignment.commission_percent,
+                  status: 'processed',
+                  processed_at: new Date().toISOString(),
+                });
+              }
               
-              // Record earning
-              await supabase.from('whisperer_earnings').insert({
-                whisperer_id: whispererAssignment.whisperer_id,
-                assignment_id: whispererAssignment.id,
-                bestowal_id: orderId,
-                amount: whispererAmount,
-                commission_percent: whispererAssignment.commission_percent,
-                status: 'processed',
-                processed_at: new Date().toISOString(),
-              });
+              console.log(`💰 Creator ${product.sower_id} receives $${creatorAmount.toFixed(2)} (IMMEDIATE)`);
+              await updateSowerBalance(supabase, product.sower_id, creatorAmount, 'add_available');
+              
+            } else {
+              // PHYSICAL PRODUCTS: Escrow until courier confirms
+              console.log(`🔒 PHYSICAL PRODUCT: ${product.id} - HELD IN ESCROW`);
+              
+              // Update product bestowal status
+              await supabase
+                .from('product_bestowals')
+                .update({ 
+                  release_status: 'held',
+                  hold_reason: 'awaiting_courier_pickup',
+                })
+                .eq('product_id', product.id)
+                .eq('payment_reference', orderId);
+              
+              if (whispererAssignment && whispererAssignment.whisperers) {
+                const whispererPercent = whispererAssignment.commission_percent / 100;
+                const whispererAmount = product.price * whispererPercent;
+                creatorAmount = product.price * DISTRIBUTION.BASE_SOWER - whispererAmount;
+                
+                console.log(`💰 Whisperer will earn $${whispererAmount.toFixed(2)} (HELD)`);
+                await updateSowerBalance(supabase, whispererAssignment.whisperers.user_id, whispererAmount, 'add_pending');
+                
+                await supabase.from('whisperer_earnings').insert({
+                  whisperer_id: whispererAssignment.whisperer_id,
+                  assignment_id: whispererAssignment.id,
+                  bestowal_id: orderId,
+                  amount: whispererAmount,
+                  commission_percent: whispererAssignment.commission_percent,
+                  status: 'pending',
+                  processed_at: null,
+                });
+              }
+              
+              console.log(`💰 Creator ${product.sower_id} will receive $${creatorAmount.toFixed(2)} (HELD until courier)`);
+              await updateSowerBalance(supabase, product.sower_id, creatorAmount, 'add_pending');
             }
-            
-            console.log(`💰 Crediting creator ${product.sower_id} with $${creatorAmount.toFixed(2)}`);
-            await updateSowerBalance(supabase, product.sower_id, creatorAmount, 'add_available');
           }
         }
       }
@@ -421,7 +481,7 @@ serve(async (req) => {
       // Log it in payment_transactions regardless
       bestowal = { 
         id: orderId, 
-        bestower_id: null // Will be updated from payment_audit_log if available
+        bestower_id: null
       };
     }
 
