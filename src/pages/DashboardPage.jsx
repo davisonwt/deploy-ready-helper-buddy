@@ -1019,7 +1019,7 @@ export default function DashboardPage() {
                 </Button>
               </Link>
 
-              {/* Offer Your Services */}
+              {/* Become a S2G Service Provider */}
               <Link to="/register-services">
                 <Button 
                   className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
@@ -1031,7 +1031,7 @@ export default function DashboardPage() {
                 >
                   <div className="text-center">
                     <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Offer Your Services</span>
+                    <span className="text-sm sm:text-base">Become a S2G Service Provider</span>
                   </div>
                 </Button>
               </Link>
