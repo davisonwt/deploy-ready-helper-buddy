@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ResponsiveLayout from "./components/layout/ResponsiveLayout";
@@ -156,6 +156,7 @@ const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
+import AnonymousSupportGate from "@/components/auth/AnonymousSupportGate";
 import { RequireVerification } from "./components/auth/RequireVerification";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./hooks/useAuth";
@@ -186,6 +187,33 @@ const LoadingFallback = () => (
     </CardContent>
   </Card>
 );
+
+// Legacy route redirect helper (preserves query/hash)
+const LegacyCommunicationsRedirect: React.FC<{ defaultHash?: string }> = ({ defaultHash }) => {
+  const location = useLocation();
+  const hash = location.hash || defaultHash || "";
+  return <Navigate to={`/communications-hub${location.search}${hash}`} replace />;
+};
+
+const CommunicationsHubEntry: React.FC = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const support = params.get("support");
+
+  if (support === "password-reset") {
+    return (
+      <AnonymousSupportGate>
+        <CommunicationsHub />
+      </AnonymousSupportGate>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <CommunicationsHub />
+    </ProtectedRoute>
+  );
+};
 
 const App = () => (
   <EnhancedErrorBoundary onError={(error) => {
@@ -426,13 +454,14 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Legacy alias: /communications -> /communications-hub (preserve query/hash) */}
+              <Route path="/communications" element={<LegacyCommunicationsRedirect />} />
+
               {/* Communications Hub - Unified Interface */}
-              <Route path="/communications-hub" element={
-                <ProtectedRoute>
-                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading Communications Hub...</div></div>}>
-                    <CommunicationsHub />
-                  </Suspense>
-                </ProtectedRoute>
+              <Route path="/communications-hub/*" element={
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading Communications Hub...</div></div>}>
+                  <CommunicationsHubEntry />
+                </Suspense>
               } />
               
               {/* ChatApp - Redirect to Communications Hub */}
