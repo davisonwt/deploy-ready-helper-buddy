@@ -81,12 +81,12 @@ export function WalletSetupPrompt({ variant = 'banner' }: WalletSetupPromptProps
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Link to="/wallet-settings">
-                <Button size="sm" className="gap-2">
+              <Button size="sm" className="gap-2" asChild>
+                <Link to="/wallet-settings">
                   Set Up Now
                   <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -118,12 +118,12 @@ export function WalletSetupPrompt({ variant = 'banner' }: WalletSetupPromptProps
               Configure your crypto wallet address to receive earnings from your seeds, orchards, and whisperer commissions.
             </p>
             <div className="flex gap-2">
-              <Link to="/wallet-settings">
-                <Button size="sm" className="gap-2">
+              <Button size="sm" className="gap-2" asChild>
+                <Link to="/wallet-settings">
                   Set Up Wallet
                   <ArrowRight className="h-3 w-3" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
