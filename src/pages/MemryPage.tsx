@@ -794,12 +794,12 @@ export default function MemryPage() {
               }}
             >
               {/* Background Image/Video/Music */}
-              <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700">
                 {currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video' ? (
                   <video
                     ref={videoRef}
                     src={currentPost.media_url}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     autoPlay
                     loop
                     muted={isMuted}
@@ -817,11 +817,11 @@ export default function MemryPage() {
                     <p className="text-white/80 text-sm mt-4">🎵 Audio Track</p>
                   </div>
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' ? (
-                  <div className="w-full h-full relative">
+                  <div className="w-full h-full relative flex items-center justify-center">
                     <img
                       src={currentPost.media_url}
                       alt={currentPost.caption}
-                      className="w-full h-full object-cover"
+                      className="max-w-full max-h-full object-contain"
                     />
                     {/* Notification badge overlay */}
                     <div className="absolute top-20 left-4 right-4 z-10">
@@ -841,14 +841,16 @@ export default function MemryPage() {
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={currentPost.media_url}
-                    alt={currentPost.caption}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img
+                      src={currentPost.media_url}
+                      alt={currentPost.caption}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 )}
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
               </div>
 
               {/* Right Side Actions */}
@@ -974,103 +976,128 @@ export default function MemryPage() {
                 )}
               </div>
 
-              {/* Bottom Info */}
+              {/* Bottom Info - Enhanced Sower Details */}
               <div className="absolute bottom-20 left-4 right-20 z-20">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
+                  className="bg-black/40 backdrop-blur-md rounded-2xl p-4"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-white font-bold text-lg drop-shadow">
-                      @{currentPost.profiles?.username || 'user'}
-                    </span>
-                    {currentPost.content_type === 'recipe' && (
-                      <span className="px-2 py-0.5 bg-orange-500 rounded-full text-xs text-white font-semibold">
-                        <ChefHat className="w-3 h-3 inline mr-1" />
-                        Recipe
+                  {/* Sower Profile Section */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="w-10 h-10 border-2 border-white/50">
+                      <AvatarImage src={currentPost.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
+                        {currentPost.profiles?.display_name?.[0] || 'S'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-bold text-base drop-shadow truncate">
+                          {currentPost.profiles?.display_name || 'Sower'}
+                        </span>
+                        {currentPost.content_type === 'recipe' && (
+                          <span className="px-2 py-0.5 bg-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <ChefHat className="w-3 h-3 inline mr-1" />
+                            Recipe
+                          </span>
+                        )}
+                        {currentPost.content_type === 'marketing_video' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <Video className="w-3 h-3 inline mr-1" />
+                            Marketing
+                          </span>
+                        )}
+                        {currentPost.content_type === 'new_product' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <ShoppingBag className="w-3 h-3 inline mr-1" />
+                            Seed
+                          </span>
+                        )}
+                        {currentPost.content_type === 'new_orchard' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <Trees className="w-3 h-3 inline mr-1" />
+                            Orchard
+                          </span>
+                        )}
+                        {currentPost.content_type === 'music' && (
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
+                            <Music className="w-3 h-3 inline mr-1" />
+                            Music
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-white/70 text-xs">
+                        @{currentPost.profiles?.username || 'sower'}
                       </span>
-                    )}
-                    {currentPost.content_type === 'marketing_video' && (
-                      <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white font-semibold">
-                        <Video className="w-3 h-3 inline mr-1" />
-                        Marketing
-                      </span>
-                    )}
-                    {currentPost.content_type === 'new_product' && (
-                      <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs text-white font-semibold">
-                        <ShoppingBag className="w-3 h-3 inline mr-1" />
-                        New Seed
-                      </span>
-                    )}
-                    {currentPost.content_type === 'new_orchard' && (
-                      <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-xs text-white font-semibold">
-                        <Trees className="w-3 h-3 inline mr-1" />
-                        New Orchard
-                      </span>
-                    )}
+                    </div>
                   </div>
                   
                   {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
-                    <h3 className="text-white font-bold text-xl mb-1 drop-shadow">
+                    <h3 className="text-white font-bold text-lg mb-1 drop-shadow">
                       {currentPost.recipe_title}
                     </h3>
                   )}
                   
-                  <p className="text-white/90 text-sm line-clamp-3 drop-shadow">
+                  <p className="text-white/90 text-sm line-clamp-2 drop-shadow mb-3">
                     {currentPost.caption}
                   </p>
 
                   {/* Recipe preview */}
                   {currentPost.content_type === 'recipe' && currentPost.recipe_ingredients && (
-                    <motion.div 
-                      className="mt-3 p-3 bg-white/20 backdrop-blur-sm rounded-xl"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
+                    <div className="mb-3 p-2 bg-white/10 rounded-lg">
                       <p className="text-white/80 text-xs">
                         📝 {currentPost.recipe_ingredients.slice(0, 3).join(' • ')}
                         {currentPost.recipe_ingredients.length > 3 && ' • ...'}
                       </p>
-                    </motion.div>
+                    </div>
                   )}
 
-                  {/* View buttons for special content types */}
+                  {/* Bestow buttons for special content types */}
                   {(currentPost.content_type === 'marketing_video' || currentPost.content_type === 'new_orchard') && currentPost.orchard_id && (
-                    <motion.div 
-                      className="mt-3"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
+                    <Button
+                      onClick={() => navigate(`/orchard/${currentPost.orchard_id}`)}
+                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
+                      size="lg"
                     >
-                      <Button
-                        onClick={() => navigate(`/orchard/${currentPost.orchard_id}`)}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold"
-                        size="sm"
-                      >
-                        <Trees className="w-4 h-4 mr-2" />
-                        View Orchard & Bestow
-                      </Button>
-                    </motion.div>
+                      <Gift className="w-5 h-5 mr-2" />
+                      Bestow Towards This Orchard
+                    </Button>
                   )}
 
                   {currentPost.content_type === 'new_product' && currentPost.product_id && (
-                    <motion.div 
-                      className="mt-3"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
+                    <Button
+                      onClick={() => navigate(`/products`)}
+                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
+                      size="lg"
                     >
-                      <Button
-                        onClick={() => navigate(`/products`)}
-                        className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold"
-                        size="sm"
-                      >
-                        <ShoppingBag className="w-4 h-4 mr-2" />
-                        View Product & Bestow
-                      </Button>
-                    </motion.div>
+                      <Gift className="w-5 h-5 mr-2" />
+                      Bestow & Get This Seed
+                    </Button>
+                  )}
+
+                  {currentPost.content_type === 'music' && (
+                    <Button
+                      onClick={() => navigate(`/community-music-library`)}
+                      className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold shadow-lg"
+                      size="lg"
+                    >
+                      <Gift className="w-5 h-5 mr-2" />
+                      Bestow & Get This Track
+                    </Button>
+                  )}
+
+                  {/* Generic donate for photos/videos/recipes */}
+                  {(currentPost.content_type === 'photo' || currentPost.content_type === 'video' || currentPost.content_type === 'recipe') && (
+                    <Button
+                      onClick={() => handleDonate(currentPost)}
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg"
+                      size="lg"
+                    >
+                      <Gift className="w-5 h-5 mr-2" />
+                      Support This Creator
+                    </Button>
                   )}
                 </motion.div>
               </div>
