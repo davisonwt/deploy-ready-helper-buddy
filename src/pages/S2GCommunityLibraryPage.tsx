@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Library, Loader2, FileText, GraduationCap, Image, Music, Book, Eye, Download, Heart } from 'lucide-react';
+import { Library, Loader2, FileText, GraduationCap, Image, Book, Eye, Download, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ export default function S2GCommunityLibraryPage() {
         .from('s2g_library_items')
         .select('*')
         .eq('is_public', true)
+        .neq('type', 'music') // Exclude music - it belongs in Community Music Library
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -135,7 +136,7 @@ export default function S2GCommunityLibraryPage() {
       case 'document': return <FileText className='w-5 h-5' />;
       case 'training_course': return <GraduationCap className='w-5 h-5' />;
       case 'art_asset': return <Image className='w-5 h-5' />;
-      case 'music': return <Music className='w-5 h-5' />;
+      case 'study': return <FileText className='w-5 h-5' />;
       default: return <FileText className='w-5 h-5' />;
     }
   };
@@ -146,7 +147,7 @@ export default function S2GCommunityLibraryPage() {
       case 'document': return 'Document';
       case 'training_course': return 'Training Course';
       case 'art_asset': return 'Art Asset';
-      case 'music': return 'Music';
+      case 'study': return 'Study';
       default: return type;
     }
   };
@@ -218,10 +219,10 @@ export default function S2GCommunityLibraryPage() {
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
-                Grow further, together. This is our community's vault of resources—a place to find and share training materials, e-books, templates, and creative documents.
+                Grow further, together. This is our community's vault of resources—a place to find and share e-books, courses, studies, documents, and creative assets.
               </p>
               <p className='text-white/70 text-sm'>
-                Preview available • Full access after bestowal
+                Preview available • Full access after bestowal • For music, visit the Community Music Library
               </p>
             </motion.div>
           </div>
@@ -237,7 +238,7 @@ export default function S2GCommunityLibraryPage() {
             >
               All Items
             </Button>
-            {['ebook', 'document', 'training_course', 'art_asset', 'music'].map((type) => (
+            {['ebook', 'document', 'training_course', 'art_asset', 'study'].map((type) => (
               <Button
                 key={type}
                 variant={selectedType === type ? 'default' : 'outline'}
