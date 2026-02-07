@@ -416,7 +416,7 @@ export default function LoginPage() {
               </div>
               
               <div className="flex gap-3">
-                <Link to="/communications?support=password-reset" className="flex-1">
+                <Link to="/communications-hub?support=password-reset" className="flex-1">
                   <Button
                     type="button"
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white"
