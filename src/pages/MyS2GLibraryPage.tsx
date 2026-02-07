@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Book, Upload, Loader2, FileText, GraduationCap, Image, Music, Plus } from 'lucide-react';
+import { Book, Upload, Loader2, FileText, GraduationCap, Image, Plus, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,8 @@ export default function MyS2GLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const { data: libraryItems, isLoading, refetch } = useQuery({
+  // Fetch library items from s2g_library_items (excluding music)
+  const { data: libraryItems = [], isLoading: libraryLoading } = useQuery({
     queryKey: ['my-s2g-library', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -24,6 +25,7 @@ export default function MyS2GLibraryPage() {
         .from('s2g_library_items')
         .select('*')
         .eq('user_id', user.id)
+        .neq('type', 'music') // Exclude music - it belongs in Music Library
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -32,17 +34,66 @@ export default function MyS2GLibraryPage() {
     enabled: !!user?.id
   });
 
-  const filteredItems = libraryItems?.filter(item => {
+  // Fetch books from sower_books table
+  const { data: sowerBooks = [], isLoading: booksLoading } = useQuery({
+    queryKey: ['my-sower-books', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      // First get the sower record for this user
+      const { data: sowerData } = await supabase
+        .from('sowers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (!sowerData) return [];
+      
+      const { data, error } = await supabase
+        .from('sower_books')
+        .select('*')
+        .eq('sower_id', sowerData.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Transform sower_books to match library item format
+      return (data || []).map(book => ({
+        id: book.id,
+        title: book.title,
+        description: book.description,
+        type: 'book',
+        price: book.bestowal_value || 0,
+        cover_image_url: book.cover_image_url,
+        file_url: null, // Physical books don't have file URL
+        is_public: book.is_public,
+        bestowal_count: 0,
+        download_count: 0,
+        created_at: book.created_at,
+        user_id: user.id,
+        is_physical_book: true
+      }));
+    },
+    enabled: !!user?.id
+  });
+
+  const isLoading = libraryLoading || booksLoading;
+
+  // Combine both sources
+  const allItems = [...libraryItems, ...sowerBooks];
+
+  const filteredItems = allItems?.filter(item => {
     return selectedType === 'all' || item.type === selectedType;
   }) || [];
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'ebook': return <Book className="w-5 h-5" />;
+      case 'book': return <BookOpen className="w-5 h-5" />;
       case 'document': return <FileText className="w-5 h-5" />;
       case 'training_course': return <GraduationCap className="w-5 h-5" />;
       case 'art_asset': return <Image className="w-5 h-5" />;
-      case 'music': return <Music className="w-5 h-5" />;
+      case 'study': return <FileText className="w-5 h-5" />;
       default: return <FileText className="w-5 h-5" />;
     }
   };
@@ -50,10 +101,11 @@ export default function MyS2GLibraryPage() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'ebook': return 'E-Book';
+      case 'book': return 'Physical Book';
       case 'document': return 'Document';
       case 'training_course': return 'Training Course';
       case 'art_asset': return 'Art Asset';
-      case 'music': return 'Music';
+      case 'study': return 'Study';
       default: return type;
     }
   };
@@ -144,6 +196,14 @@ export default function MyS2GLibraryPage() {
             All Items
           </Button>
           <Button
+            variant={selectedType === 'book' ? 'default' : 'outline'}
+            onClick={() => setSelectedType('book')}
+            className="backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Books
+          </Button>
+          <Button
             variant={selectedType === 'ebook' ? 'default' : 'outline'}
             onClick={() => setSelectedType('ebook')}
             className="backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30"
@@ -174,14 +234,6 @@ export default function MyS2GLibraryPage() {
           >
             <Image className="w-4 h-4 mr-2" />
             Art Assets
-          </Button>
-          <Button
-            variant={selectedType === 'music' ? 'default' : 'outline'}
-            onClick={() => setSelectedType('music')}
-            className="backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30"
-          >
-            <Music className="w-4 h-4 mr-2" />
-            Music
           </Button>
         </div>
 
