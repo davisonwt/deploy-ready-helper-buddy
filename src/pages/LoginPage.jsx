@@ -118,29 +118,11 @@ export default function LoginPage() {
     }
   }
 
-  const handlePasswordResetSupportChat = async () => {
-    setLoading(true)
-    setError("")
-
-    try {
-      // Support chat is behind ProtectedRoute; ensure the user can enter via anonymous session
-      if (!isAuthenticated) {
-        const result = await loginAnonymously()
-        if (!result.success) {
-          setError(result.error || "Guest access failed")
-          return
-        }
-      }
-
-      setShowForgotPassword(false)
-      setResetEmail("")
-      setResetMessage("")
-      navigate("/communications-hub?support=password-reset")
-    } catch (err) {
-      setError("An unexpected error occurred")
-    } finally {
-      setLoading(false)
-    }
+  const handlePasswordResetSupport = () => {
+    setShowForgotPassword(false)
+    setResetEmail("")
+    setResetMessage("")
+    navigate("/password-reset-support")
   }
 
   const handleForgotPassword = async (e) => {
@@ -444,20 +426,10 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   className="flex-1 w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={handlePasswordResetSupportChat}
-                  disabled={loading}
+                  onClick={handlePasswordResetSupport}
                 >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                      Opening Support Chat...
-                    </div>
-                  ) : (
-                    <>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Go to Support Chat
-                    </>
-                  )}
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Reset My Password
                 </Button>
                 <Button
                   type="button"

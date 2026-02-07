@@ -27,6 +27,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+const PasswordResetSupportPage = lazy(() => import("./pages/PasswordResetSupportPage"));
 
 // DEFERRED LOADING: All other pages lazy loaded
 const ChatApp = lazy(() => import("./pages/ChatApp"));
@@ -247,6 +248,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/password-reset-support" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <PasswordResetSupportPage />
+                </Suspense>
+              } />
               <Route path="/start-your-journey" element={<RegisterPage />} />
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
