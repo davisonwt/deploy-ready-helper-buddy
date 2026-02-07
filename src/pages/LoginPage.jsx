@@ -8,7 +8,7 @@ import { Badge } from "../components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
 import { useToast } from "../hooks/use-toast"
 import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield, CheckCircle } from "lucide-react"
+import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield, CheckCircle, MessageCircle } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -403,40 +403,28 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-bold text-blue-700 mb-4 text-center">Reset Password</h3>
             
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              {resetMessage && (
-                <div className={`p-3 rounded-lg text-sm text-center ${
-                  resetMessage.includes('sent') 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  {resetMessage}
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageCircle className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-700">Contact Support</span>
                 </div>
-              )}
-              
-              <div className="space-y-2">
-                <label htmlFor="resetEmail" className="text-sm font-medium text-gray-700">
-                  Email Address
-                </label>
-                <input
-                  id="resetEmail"
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300"
-                  placeholder="Enter your email"
-                  required
-                />
+                <p className="text-sm text-blue-600">
+                  To reset your password, please contact our support team through our chat system. 
+                  They will verify your identity and help you regain access to your account.
+                </p>
               </div>
               
               <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
-                  disabled={resetLoading}
-                >
-                  {resetLoading ? "Sending..." : "Send Reset Email"}
-                </Button>
+                <Link to="/communications?support=password-reset" className="flex-1">
+                  <Button
+                    type="button"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Go to Support Chat
+                  </Button>
+                </Link>
                 <Button
                   type="button"
                   variant="outline"
