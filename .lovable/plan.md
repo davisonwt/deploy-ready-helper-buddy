@@ -1,196 +1,207 @@
 
-# Community Drivers Registration Feature
+
+# S2G Driver Feature Enhancement Plan
 
 ## Overview
-Create a new section in sow2growapp.com where users without income can register their vehicles (car, truck, bike, van) to offer community services like deliveries, passenger transport, or hauling. Other community members ("sowers") can browse and hire these drivers.
+Enhance the Community Drivers feature with a prominent dashboard button, location-based registration, and a quote request system to allow sowers to request and receive quotes from drivers.
 
 ---
 
-## Feature Components
+## Current State Analysis
 
-### 1. Database Schema
-Create a new `community_drivers` table in Supabase to store vehicle registrations:
+### What Already Exists
+- **Registration form** at `/register-vehicle` with personal info, vehicle details, image upload, and no-income declaration
+- **Browse page** at `/community-drivers` with search and vehicle type filters
+- **Database table** `community_drivers` with user_id, contact info, vehicle_type, vehicle_description, vehicle_images, status
+
+### What's Missing
+- No button on dashboard to access the driver registration
+- No location information (country, town, area) for drivers
+- No quote request/response system for bookings
+
+---
+
+## Proposed Enhancements
+
+### 1. Dashboard "Become a S2G Driver" Button
+Add a new quick action button in the Quick Actions grid on the dashboard that:
+- Shows "Become a S2G Driver" for new users
+- Shows "My Driver Profile" for already-registered users
+- Uses a distinctive car/truck icon with community-friendly styling
+- Links to `/register-vehicle`
+
+**Location**: Inside the Quick Actions Card grid (line ~850-1003 in DashboardPage.jsx)
+
+### 2. Enhanced Registration Form with Location Fields
+Add a new step or extend Step 1 to include service area information:
+
+**New Fields:**
+- **Country** (dropdown with common countries, sorted by usage)
+- **Town/City** (text input with autocomplete if possible)
+- **Service Areas** (multi-select or text area for listing neighborhoods/areas they can service)
+- **Delivery Radius** (optional: km range they're willing to travel)
+
+### 3. Database Schema Updates
+Extend the `community_drivers` table with location columns:
 
 ```text
-Table: community_drivers
-+----------------------+-------------+--------------------------------+
-| Column               | Type        | Description                    |
-+----------------------+-------------+--------------------------------+
-| id                   | uuid (PK)   | Primary key                    |
-| user_id              | uuid        | Foreign key to auth.users      |
-| full_name            | text        | Driver's full name             |
-| contact_phone        | text        | Contact phone number           |
-| contact_email        | text        | Contact email                  |
-| vehicle_type         | text        | Car, Truck, Bike, Van, Other   |
-| vehicle_description  | text        | Vehicle details                |
-| vehicle_images       | text[]      | Array of image URLs (up to 3)  |
-| no_income_confirmed  | boolean     | Declaration checkbox           |
-| status               | text        | pending/approved/rejected      |
-| created_at           | timestamptz | Registration timestamp         |
-| updated_at           | timestamptz | Last update timestamp          |
-+----------------------+-------------+--------------------------------+
+New Columns:
++-------------------+-------------+--------------------------------+
+| Column            | Type        | Description                    |
++-------------------+-------------+--------------------------------+
+| country           | text        | Driver's country               |
+| city              | text        | Driver's city/town             |
+| service_areas     | text[]      | Array of areas they serve      |
+| delivery_radius_km| integer     | Max delivery distance (km)     |
++-------------------+-------------+--------------------------------+
 ```
 
-Row Level Security (RLS) policies:
-- Users can read all approved drivers (for browsing)
-- Users can only create/update their own registration
-- Admins can manage all registrations
+### 4. Quote Request System
+Create a booking flow where sowers can request quotes from drivers:
 
-### 2. Frontend Components
+**New Table: `driver_quote_requests`**
+```text
++-------------------+-------------+--------------------------------+
+| Column            | Type        | Description                    |
++-------------------+-------------+--------------------------------+
+| id                | uuid (PK)   | Primary key                    |
+| driver_id         | uuid        | FK to community_drivers        |
+| requester_id      | uuid        | FK to auth.users (sower)       |
+| pickup_location   | text        | Where to pick up               |
+| dropoff_location  | text        | Where to deliver               |
+| item_description  | text        | What needs transporting        |
+| preferred_date    | date        | When they need it              |
+| preferred_time    | text        | Morning/Afternoon/Evening      |
+| status            | text        | pending/quoted/accepted/declined/completed |
+| notes             | text        | Additional info                |
+| created_at        | timestamptz | Request timestamp              |
++-------------------+-------------+--------------------------------+
+```
 
-#### New Page: `/register-vehicle`
-Location: `src/pages/RegisterVehiclePage.tsx`
+**New Table: `driver_quotes`**
+```text
++-------------------+-------------+--------------------------------+
+| Column            | Type        | Description                    |
++-------------------+-------------+--------------------------------+
+| id                | uuid (PK)   | Primary key                    |
+| request_id        | uuid        | FK to driver_quote_requests    |
+| driver_id         | uuid        | FK to community_drivers        |
+| quote_amount      | decimal     | Quoted price                   |
+| currency          | text        | Currency (default: ZAR)        |
+| estimated_duration| text        | How long the job will take     |
+| message           | text        | Driver's message to sower      |
+| valid_until       | timestamptz | Quote expiry date              |
+| status            | text        | pending/accepted/rejected      |
+| created_at        | timestamptz | Quote timestamp                |
++-------------------+-------------+--------------------------------+
+```
 
-A multi-step form with:
-- **Step 1: Personal Information**
-  - Full Name (required)
-  - Contact Phone (required)
-  - Contact Email (auto-filled from logged-in user)
-  
-- **Step 2: Vehicle Information**
-  - Vehicle Type (dropdown: Car, Truck, Bike, Van, Other)
-  - Vehicle Description (textarea)
-  
-- **Step 3: Upload Vehicle Photos**
-  - Drag-and-drop zone for up to 3 images
-  - JPEG/PNG only, max 5MB each
-  - Live thumbnail previews
-  
-- **Step 4: Declaration & Submit**
-  - No-Income Declaration checkbox
-  - Terms acceptance
-  - Submit button
+### 5. Enhanced Driver Card with Quote Button
+Update the DriverCard component to show:
+- Driver's service area (country, city)
+- "Request Quote" button instead of just "Contact Driver"
+- Service areas tags
 
-#### New Page: `/community-drivers`
-Location: `src/pages/CommunityDriversPage.tsx`
+### 6. Quote Request Flow UI
 
-Browse and hire drivers:
-- Grid of driver cards with vehicle photos
-- Filter by vehicle type
-- Search by location/name
-- "Contact Driver" button (opens chat or shows contact info)
+**New Component: QuoteRequestDialog**
+- Popup form when sower clicks "Request Quote"
+- Fields: Pickup location, Dropoff location, Item description, Preferred date/time, Notes
+- Submit creates entry in `driver_quote_requests`
 
-#### New Components
-- `src/components/drivers/VehicleRegistrationForm.tsx` - Multi-step registration form
-- `src/components/drivers/DriverCard.tsx` - Display card for each driver
-- `src/components/drivers/VehicleImageUpload.tsx` - Image upload with previews
-- `src/components/drivers/DriverFilters.tsx` - Filtering controls
+**New Page: `/my-driver-requests` (for sowers)**
+- List of quote requests sent
+- Status tracking (pending, quoted, accepted)
+- View received quotes and accept/decline
 
-### 3. Backend: Edge Function
-Create `supabase/functions/notify-driver-registration/index.ts`
-
-Handles:
-- Sending confirmation email to the registering driver
-- Sending notification to admins about new registration
-- Uses existing Brevo email integration
-
-### 4. Storage
-Use existing `orchard-images` storage bucket for vehicle photos (organized in a `drivers/` subfolder).
-
----
-
-## Implementation Details
-
-### Authentication Check
-The registration page will be protected using the existing `ProtectedRoute` component, ensuring only logged-in users can access it.
-
-### Form Validation
-Using Zod schema validation:
-- Name: 2-100 characters, trimmed
-- Phone: Valid phone format
-- Email: Valid email format
-- Vehicle Description: 10-500 characters
-- Images: Max 3 files, each under 5MB, JPEG/PNG only
-- No-Income checkbox: Must be checked
-
-### Image Upload Flow
-1. User selects images (up to 3)
-2. Client-side validation (size, type)
-3. Preview thumbnails displayed
-4. On form submit, upload to Supabase Storage
-5. Store returned URLs in `vehicle_images` array
-
-### Duplicate Prevention
-- One registration per user (enforced by unique constraint on `user_id`)
-- If user already registered, show "Edit Registration" instead of "New Registration"
-
-### UI Design
-Following existing app patterns:
-- Tailwind CSS for styling
-- Card-based layout matching other forms
-- Responsive design (mobile-first)
-- Community-focused messaging with encouraging copy
-- Success/error toast notifications using sonner
+**New Page: `/driver-dashboard` (for drivers)**
+- List of incoming quote requests
+- Submit quotes with amount and message
+- Track accepted jobs
 
 ---
 
-## File Changes Summary
+## Implementation Summary
 
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/pages/RegisterVehiclePage.tsx` | Registration form page |
-| `src/pages/CommunityDriversPage.tsx` | Browse drivers page |
-| `src/components/drivers/VehicleRegistrationForm.tsx` | Multi-step form component |
-| `src/components/drivers/DriverCard.tsx` | Driver display card |
-| `src/components/drivers/VehicleImageUpload.tsx` | Image upload component |
-| `src/components/drivers/DriverFilters.tsx` | Filter controls |
-| `supabase/functions/notify-driver-registration/index.ts` | Email notification function |
+### Database Changes (Migration)
+1. Add location columns to `community_drivers` table
+2. Create `driver_quote_requests` table with RLS
+3. Create `driver_quotes` table with RLS
 
-### Modified Files
+### Frontend Changes
+
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add routes for `/register-vehicle` and `/community-drivers` |
+| `src/pages/DashboardPage.jsx` | Add "Become a S2G Driver" button in Quick Actions |
+| `src/components/drivers/VehicleRegistrationForm.tsx` | Add location fields (country, city, service areas) |
+| `src/components/drivers/DriverCard.tsx` | Show location info, add "Request Quote" button |
+| `src/components/drivers/QuoteRequestDialog.tsx` | **New** - Quote request form dialog |
+| `src/pages/CommunityDriversPage.tsx` | Add location filters |
+| `src/pages/DriverDashboardPage.tsx` | **New** - Driver's incoming requests & quote management |
+| `src/pages/MyDriverRequestsPage.tsx` | **New** - Sower's sent requests & received quotes |
 
-### Database Migration
-Create `community_drivers` table with RLS policies.
+### Backend Changes
+| File | Purpose |
+|------|---------|
+| `supabase/functions/notify-quote-request/index.ts` | **New** - Email driver when quote requested |
+| `supabase/functions/notify-quote-received/index.ts` | **New** - Email sower when quote received |
+
+---
+
+## User Flow Diagrams
+
+### Driver Registration Flow
+```text
+Dashboard → "Become a S2G Driver" → Registration Form
+                                          ↓
+                                   Step 1: Personal Info
+                                          ↓
+                                   Step 2: Location & Service Areas ← NEW
+                                          ↓
+                                   Step 3: Vehicle Details
+                                          ↓
+                                   Step 4: Upload Photos
+                                          ↓
+                                   Step 5: Declaration & Submit
+                                          ↓
+                                   Success → Community Drivers Page
+```
+
+### Quote Request Flow
+```text
+Sower browses /community-drivers
+        ↓
+Finds a driver → Clicks "Request Quote"
+        ↓
+Fills in pickup, dropoff, item, date
+        ↓
+Driver receives notification
+        ↓
+Driver submits quote with price
+        ↓
+Sower receives notification
+        ↓
+Sower accepts/declines quote
+        ↓
+If accepted → Contact exchange for final coordination
+```
 
 ---
 
 ## Technical Notes
 
-### Why Supabase (not Firestore)?
-This project uses Supabase as its primary backend for data persistence, authentication, and storage. While Firebase/Firestore is configured, the app's main data flows through Supabase. This feature will follow the same pattern.
+### Location Data
+- Use a simple dropdown for countries (top 20 African countries + common others)
+- City/town is a free-text field (no API needed)
+- Service areas stored as text array (allows multiple neighborhoods)
 
-### Email Integration
-Uses the existing `send_brevo_email` edge function already configured in the project with the `BREVO_API_KEY` secret.
+### RLS Policies for New Tables
+- `driver_quote_requests`: Requesters can create/view their own; drivers can view requests sent to them
+- `driver_quotes`: Drivers can create/view their own quotes; requesters can view quotes on their requests
 
-### Security Considerations
-- RLS policies ensure users can only modify their own registrations
-- Input validation on both client and server side
-- File type and size restrictions for uploads
-- No-income declaration stored for audit purposes
+### Existing Patterns Used
+- Form validation with Zod (matching VehicleRegistrationForm)
+- Toast notifications via sonner
+- Card-based layouts matching existing UI
+- Button styling following dashboard theme system
 
----
-
-## User Journey
-
-```text
-Logged-in User                                           System
-      |                                                     |
-      |---> Navigate to /register-vehicle ---------------->|
-      |                                                     |
-      |<--- Display multi-step form ----------------------<|
-      |                                                     |
-      |---> Fill personal info, vehicle details ---------->|
-      |                                                     |
-      |---> Upload up to 3 vehicle photos --------------->|
-      |                                                     |
-      |---> Check no-income declaration, submit ---------->|
-      |                                                     |
-      |                    [Validate & Save to Supabase]   |
-      |                    [Send confirmation email]        |
-      |                    [Notify admins]                  |
-      |                                                     |
-      |<--- Success message, redirect to /community-drivers<|
-      |                                                     |
-```
-
----
-
-## Encouraging Messaging Examples
-
-- Header: "Help Grow Our Community by Offering Your Vehicle for Gigs!"
-- Subtext: "Connect with fellow sowers who need deliveries, transport, or hauling services"
-- Success: "Welcome to the Community Drivers network! Your registration is under review."
-- CTA: "Start Earning While Helping Your Community"
