@@ -3477,6 +3477,7 @@ export type Database = {
           play_count: number | null
           price: number | null
           sower_id: string | null
+          status: string | null
           tags: string[] | null
           title: string
           type: string | null
@@ -3503,6 +3504,7 @@ export type Database = {
           play_count?: number | null
           price?: number | null
           sower_id?: string | null
+          status?: string | null
           tags?: string[] | null
           title: string
           type?: string | null
@@ -3529,6 +3531,7 @@ export type Database = {
           play_count?: number | null
           price?: number | null
           sower_id?: string | null
+          status?: string | null
           tags?: string[] | null
           title?: string
           type?: string | null

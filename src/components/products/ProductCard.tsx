@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Trash2, Loader2, PauseCircle, PlayCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
@@ -190,6 +191,46 @@ export default function ProductCard({ product, featured, showActions = false }: 
     navigate(`/products/edit/${product.id}`);
   };
 
+  const handlePause = async () => {
+    setUpdatingStatus(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ status: 'paused' })
+        .eq('id', product.id);
+
+      if (error) throw error;
+      toast.success('Product paused - hidden from marketplace');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error pausing product:', error);
+      toast.error('Failed to pause product');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleRelaunch = async () => {
+    setUpdatingStatus(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ status: 'active' })
+        .eq('id', product.id);
+
+      if (error) throw error;
+      toast.success('Product relaunched - now visible in marketplace');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error relaunching product:', error);
+      toast.error('Failed to relaunch product');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const isPaused = product.status === 'paused';
+
   return (
     <motion.div
       whileHover={{ y: -8 }}
@@ -293,25 +334,76 @@ export default function ProductCard({ product, featured, showActions = false }: 
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               {showActions && isOwner ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex gap-2 flex-1">
-                        <Button
-                          onClick={handleEdit}
-                          variant="outline"
-                          className="flex-1 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
+                      <div className="flex flex-col gap-2 flex-1">
+                        {/* Status Badge */}
+                        {isPaused && (
+                          <Badge variant="secondary" className="w-fit bg-yellow-500/20 text-yellow-200 border-yellow-400/50">
+                            <PauseCircle className="w-3 h-3 mr-1" />
+                            Paused
+                          </Badge>
+                        )}
+                        
+                        {/* Action Buttons Row 1 */}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleEdit}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          
+                          {isPaused ? (
+                            <Button
+                              onClick={handleRelaunch}
+                              disabled={updatingStatus}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 border-green-400/50 text-green-300 hover:bg-green-500/20 backdrop-blur-sm"
+                            >
+                              {updatingStatus ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <PlayCircle className="w-4 h-4 mr-1" />
+                                  Relaunch
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={handlePause}
+                              disabled={updatingStatus}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 border-yellow-400/50 text-yellow-300 hover:bg-yellow-500/20 backdrop-blur-sm"
+                            >
+                              {updatingStatus ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <PauseCircle className="w-4 h-4 mr-1" />
+                                  Pause
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {/* Delete Button Row */}
                         <Button
                           onClick={handleDelete}
                           disabled={deleting}
                           variant="outline"
-                          className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/20 backdrop-blur-sm"
+                          size="sm"
+                          className="w-full border-red-500/50 text-red-400 hover:bg-red-500/20 backdrop-blur-sm"
                         >
                           {deleting ? (
                             <>

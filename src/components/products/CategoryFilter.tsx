@@ -1,23 +1,27 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen } from 'lucide-react';
+import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen, PlayCircle, PauseCircle } from 'lucide-react';
 
 interface CategoryFilterProps {
   selectedCategory: string;
   selectedType: string;
   selectedFormat?: string; // 'all', 'single', 'album'
+  selectedStatus?: string; // 'all', 'active', 'paused'
   onCategoryChange: (category: string) => void;
   onTypeChange: (type: string) => void;
   onFormatChange?: (format: string) => void;
+  onStatusChange?: (status: string) => void;
 }
 
 export default function CategoryFilter({
   selectedCategory,
   selectedType,
   selectedFormat = 'all',
+  selectedStatus = 'all',
   onCategoryChange,
   onTypeChange,
-  onFormatChange
+  onFormatChange,
+  onStatusChange
 }: CategoryFilterProps) {
   const types = [
     { value: 'all', label: 'All', icon: Grid3x3 },
@@ -44,6 +48,12 @@ export default function CategoryFilter({
     { value: 'album', label: 'Albums', icon: Disc3 }
   ];
 
+  const statuses = [
+    { value: 'all', label: 'All', icon: Grid3x3 },
+    { value: 'active', label: 'Active', icon: PlayCircle },
+    { value: 'paused', label: 'Paused', icon: PauseCircle }
+  ];
+
   return (
     <div className="mb-12 space-y-6">
       {/* Type Filter */}
@@ -63,6 +73,26 @@ export default function CategoryFilter({
           </TabsList>
         </Tabs>
       </div>
+
+      {/* Status Filter - Only show if onStatusChange is provided (for owner pages) */}
+      {onStatusChange && (
+        <div className="flex justify-center">
+          <Tabs value={selectedStatus} onValueChange={onStatusChange} className="w-full max-w-md">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
+              {statuses.map(({ value, label, icon: Icon }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80"
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
       {/* Format Filter (Singles/Albums) - Only show for music type */}
       {selectedType === 'music' && onFormatChange && (
