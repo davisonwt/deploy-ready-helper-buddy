@@ -97,6 +97,10 @@ verify_jwt = false
 [functions.verify-chatapp]
 verify_jwt = false
 
+# Public password reset via security questions (must work while logged out)
+[functions.password-reset-with-security]
+verify_jwt = false
+
 [functions.distribute-bestowal]
 verify_jwt = true
 
