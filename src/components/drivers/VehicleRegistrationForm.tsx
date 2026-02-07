@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, ChevronLeft, ChevronRight, Loader2, User, Car, Image, FileCheck } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Loader2, User, Car, Image, FileCheck, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import VehicleImageUpload from './VehicleImageUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,10 +20,44 @@ import { toast } from 'sonner';
 const vehicleTypes = ['Car', 'Truck', 'Bike', 'Van', 'Other'] as const;
 type VehicleType = typeof vehicleTypes[number];
 
+const countries = [
+  'South Africa',
+  'Nigeria',
+  'Kenya',
+  'Ghana',
+  'Tanzania',
+  'Uganda',
+  'Ethiopia',
+  'Zimbabwe',
+  'Zambia',
+  'Mozambique',
+  'Botswana',
+  'Namibia',
+  'Rwanda',
+  'Malawi',
+  'Cameroon',
+  'Ivory Coast',
+  'Senegal',
+  'DRC',
+  'Angola',
+  'Morocco',
+  'United States',
+  'United Kingdom',
+  'Canada',
+  'Australia',
+  'Germany',
+  'Netherlands',
+  'Other',
+] as const;
+
 const formSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name too long'),
   contactPhone: z.string().min(10, 'Please enter a valid phone number').max(20),
   contactEmail: z.string().email('Please enter a valid email'),
+  country: z.string().min(1, 'Please select your country'),
+  city: z.string().min(2, 'Please enter your city/town').max(100),
+  serviceAreas: z.array(z.string()).min(1, 'Please add at least one service area'),
+  deliveryRadiusKm: z.number().min(1).max(500).optional(),
   vehicleType: z.string().min(1, 'Please select a vehicle type'),
   vehicleDescription: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Description too long'),
   noIncomeConfirmed: z.boolean().refine(val => val === true, {
@@ -37,9 +72,10 @@ type FormData = z.infer<typeof formSchema>;
 
 const steps = [
   { id: 1, title: 'Personal Info', icon: User },
-  { id: 2, title: 'Vehicle Details', icon: Car },
-  { id: 3, title: 'Upload Photos', icon: Image },
-  { id: 4, title: 'Confirm & Submit', icon: FileCheck },
+  { id: 2, title: 'Service Area', icon: MapPin },
+  { id: 3, title: 'Vehicle Details', icon: Car },
+  { id: 4, title: 'Upload Photos', icon: Image },
+  { id: 5, title: 'Confirm & Submit', icon: FileCheck },
 ];
 
 const VehicleRegistrationForm: React.FC = () => {
@@ -51,6 +87,7 @@ const VehicleRegistrationForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingRegistration, setExistingRegistration] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [newServiceArea, setNewServiceArea] = useState('');
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -58,6 +95,10 @@ const VehicleRegistrationForm: React.FC = () => {
       fullName: '',
       contactPhone: '',
       contactEmail: user?.email || '',
+      country: '',
+      city: '',
+      serviceAreas: [],
+      deliveryRadiusKm: undefined,
       vehicleType: undefined,
       vehicleDescription: '',
       noIncomeConfirmed: false,
@@ -92,6 +133,10 @@ const VehicleRegistrationForm: React.FC = () => {
           fullName: data.full_name,
           contactPhone: data.contact_phone,
           contactEmail: data.contact_email,
+          country: data.country || '',
+          city: data.city || '',
+          serviceAreas: data.service_areas || [],
+          deliveryRadiusKm: data.delivery_radius_km || undefined,
           vehicleType: data.vehicle_type,
           vehicleDescription: data.vehicle_description,
           noIncomeConfirmed: data.no_income_confirmed,
@@ -130,6 +175,21 @@ const VehicleRegistrationForm: React.FC = () => {
     return uploadedUrls;
   };
 
+  const addServiceArea = () => {
+    if (newServiceArea.trim() && newServiceArea.trim().length >= 2) {
+      const currentAreas = form.getValues('serviceAreas');
+      if (!currentAreas.includes(newServiceArea.trim())) {
+        form.setValue('serviceAreas', [...currentAreas, newServiceArea.trim()]);
+      }
+      setNewServiceArea('');
+    }
+  };
+
+  const removeServiceArea = (area: string) => {
+    const currentAreas = form.getValues('serviceAreas');
+    form.setValue('serviceAreas', currentAreas.filter(a => a !== area));
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!user) {
       toast.error('You must be logged in to register');
@@ -147,6 +207,10 @@ const VehicleRegistrationForm: React.FC = () => {
         full_name: data.fullName.trim(),
         contact_phone: data.contactPhone.trim(),
         contact_email: data.contactEmail.trim(),
+        country: data.country,
+        city: data.city.trim(),
+        service_areas: data.serviceAreas,
+        delivery_radius_km: data.deliveryRadiusKm || null,
         vehicle_type: data.vehicleType,
         vehicle_description: data.vehicleDescription.trim(),
         vehicle_images: uploadedImageUrls,
@@ -204,11 +268,13 @@ const VehicleRegistrationForm: React.FC = () => {
     if (currentStep === 1) {
       isValid = await form.trigger(['fullName', 'contactPhone', 'contactEmail']);
     } else if (currentStep === 2) {
+      isValid = await form.trigger(['country', 'city', 'serviceAreas']);
+    } else if (currentStep === 3) {
       isValid = await form.trigger(['vehicleType', 'vehicleDescription']);
     }
 
     if (isValid) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
 
@@ -220,30 +286,30 @@ const VehicleRegistrationForm: React.FC = () => {
     <Card className="border-border">
       {/* Progress Steps */}
       <CardHeader className="pb-4">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 overflow-x-auto">
           {steps.map((step, index) => (
             <React.Fragment key={step.id}>
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center flex-shrink-0">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors ${
                     currentStep >= step.id
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {currentStep > step.id ? (
-                    <Check className="h-5 w-5" />
+                    <Check className="h-4 w-4 sm:h-5 sm:w-5" />
                   ) : (
-                    <step.icon className="h-5 w-5" />
+                    <step.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   )}
                 </div>
-                <span className="text-xs mt-1 text-muted-foreground hidden sm:block">
+                <span className="text-xs mt-1 text-muted-foreground hidden sm:block text-center">
                   {step.title}
                 </span>
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`flex-1 h-1 mx-2 rounded transition-colors ${
+                  className={`flex-1 h-1 mx-1 sm:mx-2 rounded transition-colors min-w-4 ${
                     currentStep > step.id ? 'bg-primary' : 'bg-muted'
                   }`}
                 />
@@ -255,7 +321,7 @@ const VehicleRegistrationForm: React.FC = () => {
           {isEditing ? 'Edit Your Registration' : 'Register as a Community Driver'}
         </CardTitle>
         <CardDescription>
-          {steps[currentStep - 1].title} - Step {currentStep} of 4
+          {steps[currentStep - 1].title} - Step {currentStep} of 5
         </CardDescription>
       </CardHeader>
 
@@ -286,7 +352,7 @@ const VehicleRegistrationForm: React.FC = () => {
                     <FormItem>
                       <FormLabel>Contact Phone *</FormLabel>
                       <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
+                        <Input placeholder="+27 82 123 4567" {...field} />
                       </FormControl>
                       <FormDescription>
                         This will be shared with sowers who want to hire you
@@ -312,8 +378,121 @@ const VehicleRegistrationForm: React.FC = () => {
               </div>
             )}
 
-            {/* Step 2: Vehicle Information */}
+            {/* Step 2: Service Area (NEW) */}
             {currentStep === 2 && (
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {countries.map(country => (
+                            <SelectItem key={country} value={country}>
+                              {country}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City / Town *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Johannesburg, Cape Town" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="serviceAreas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Areas *</FormLabel>
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Add a neighborhood or area (e.g., Sandton, CBD)"
+                            value={newServiceArea}
+                            onChange={(e) => setNewServiceArea(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addServiceArea();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={addServiceArea} variant="secondary">
+                            Add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value.map((area, index) => (
+                            <Badge key={index} variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                              {area}
+                              <button
+                                type="button"
+                                onClick={() => removeServiceArea(area)}
+                                className="ml-1 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <FormDescription>
+                        List the neighborhoods or areas where you can provide services
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="deliveryRadiusKm"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Delivery Radius (km)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g., 50"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Optional: Maximum distance you're willing to travel
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Step 3: Vehicle Information */}
+            {currentStep === 3 && (
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -321,7 +500,7 @@ const VehicleRegistrationForm: React.FC = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Vehicle Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select your vehicle type" />
@@ -363,8 +542,8 @@ const VehicleRegistrationForm: React.FC = () => {
               </div>
             )}
 
-            {/* Step 3: Image Upload */}
-            {currentStep === 3 && (
+            {/* Step 4: Image Upload */}
+            {currentStep === 4 && (
               <VehicleImageUpload
                 images={images}
                 setImages={setImages}
@@ -373,13 +552,15 @@ const VehicleRegistrationForm: React.FC = () => {
               />
             )}
 
-            {/* Step 4: Declaration & Submit */}
-            {currentStep === 4 && (
+            {/* Step 5: Declaration & Submit */}
+            {currentStep === 5 && (
               <div className="space-y-6">
                 {/* Summary */}
                 <div className="bg-muted rounded-lg p-4 space-y-2">
                   <h4 className="font-semibold">Registration Summary</h4>
                   <p><span className="text-muted-foreground">Name:</span> {form.getValues('fullName')}</p>
+                  <p><span className="text-muted-foreground">Location:</span> {form.getValues('city')}, {form.getValues('country')}</p>
+                  <p><span className="text-muted-foreground">Service Areas:</span> {form.getValues('serviceAreas').join(', ')}</p>
                   <p><span className="text-muted-foreground">Vehicle:</span> {form.getValues('vehicleType')}</p>
                   <p><span className="text-muted-foreground">Photos:</span> {images.length + imageUrls.filter(u => !u.startsWith('blob:')).length} uploaded</p>
                 </div>
@@ -444,7 +625,7 @@ const VehicleRegistrationForm: React.FC = () => {
                 Previous
               </Button>
 
-              {currentStep < 4 ? (
+              {currentStep < 5 ? (
                 <Button type="button" onClick={nextStep}>
                   Next
                   <ChevronRight className="h-4 w-4 ml-2" />
