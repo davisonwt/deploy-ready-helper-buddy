@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Library, Loader2, FileText, GraduationCap, Image, Book, Eye, Download, Heart } from 'lucide-react';
+import { Library, Loader2, FileText, GraduationCap, Image, Book, BookOpen, Eye, Download, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,13 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import CommunityBookCard from '@/components/products/CommunityBookCard';
 import { launchConfetti } from '@/utils/confetti';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const { data: libraryItems, isLoading } = useQuery({
+  const { data: libraryItems, isLoading: libraryLoading } = useQuery({
     queryKey: ['s2g-community-library'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,6 +47,30 @@ export default function S2GCommunityLibraryPage() {
       return data || [];
     }
   });
+
+  // Public physical books (sower_books)
+  const { data: communityBooks = [], isLoading: booksLoading } = useQuery({
+    queryKey: ['community-books', 's2g-community-library'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sower_books')
+        .select(`
+          *,
+          sowers:sower_id (
+            user_id,
+            display_name,
+            logo_url
+          )
+        `)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const isPageLoading = libraryLoading || booksLoading;
 
   const { data: userAccess } = useQuery({
     queryKey: ['library-access', user?.id],
@@ -126,9 +151,17 @@ export default function S2GCommunityLibraryPage() {
     }
   };
 
-  const filteredItems = libraryItems?.filter(item => {
-    return selectedType === 'all' || item.type === selectedType;
-  }) || [];
+  const filteredDigitalItems = (libraryItems || []).filter(item => {
+    if (selectedType === 'all') return true;
+    if (selectedType === 'book') return false;
+    return item.type === selectedType;
+  });
+
+  const isEmpty = selectedType === 'book'
+    ? communityBooks.length === 0
+    : selectedType === 'all'
+      ? communityBooks.length === 0 && filteredDigitalItems.length === 0
+      : filteredDigitalItems.length === 0;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -152,7 +185,7 @@ export default function S2GCommunityLibraryPage() {
     }
   };
 
-  if (isLoading) {
+  if (isPageLoading) {
     return (
       <div className='min-h-screen flex items-center justify-center' style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
@@ -238,6 +271,14 @@ export default function S2GCommunityLibraryPage() {
             >
               All Items
             </Button>
+            <Button
+              variant={selectedType === 'book' ? 'default' : 'outline'}
+              onClick={() => setSelectedType('book')}
+              className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
+            >
+              <BookOpen className='w-5 h-5' />
+              <span className='ml-2'>Books</span>
+            </Button>
             {['ebook', 'document', 'training_course', 'art_asset', 'study'].map((type) => (
               <Button
                 key={type}
@@ -251,8 +292,8 @@ export default function S2GCommunityLibraryPage() {
             ))}
           </div>
 
-          {/* Library Items Grid */}
-          {filteredItems.length === 0 ? (
+          {/* Library Items */}
+          {isEmpty ? (
             <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30'>
               <CardContent className='p-12 text-center'>
                 <Library className='w-20 h-20 mx-auto text-white/70 mb-4' />
@@ -263,133 +304,155 @@ export default function S2GCommunityLibraryPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
-              {filteredItems.map((item) => {
-                const accessGranted = hasAccess(item.id);
-                return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    className='backdrop-blur-md bg-white/20 border border-white/30 rounded-xl overflow-hidden shadow-2xl'
-                  >
-                    <CardHeader className='p-4'>
-                      <div className='flex items-start justify-between mb-2'>
-                        <div className='flex items-center gap-2'>
-                          <div className='p-2 rounded-lg bg-white/20'>
-                            {getTypeIcon(item.type)}
-                          </div>
-                          <Badge variant='secondary' className='bg-white/30 text-white border-white/40'>
-                            {getTypeLabel(item.type)}
-                          </Badge>
-                        </div>
-                      </div>
-                      <CardTitle className='text-white line-clamp-2 mb-2'>{item.title}</CardTitle>
-                      {(item as any).profile && (
-                        <p className='text-white/70 text-sm mb-3'>
-                          by {(item as any).profile.display_name || 'Anonymous'}
-                        </p>
-                      )}
-                      
-                      {/* Bestowal Value - Prominently Displayed */}
-                      <div className='mt-3'>
-                        {item.price > 0 ? (
-                          <div className='bg-purple-500/20 border border-purple-400 rounded-lg p-3'>
-                            <p className='text-2xl font-bold text-white mb-1'>
-                              {formatCurrency(item.price)}
-                            </p>
-                            <p className='text-white/70 text-xs'>to bestow</p>
-                          </div>
-                        ) : (
-                          <Badge className='bg-blue-500 text-white'>Free</Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className='p-4 pt-0'>
-                      <div className='relative mb-4 rounded-lg overflow-hidden'>
-                        {item.cover_image_url ? (
-                          <>
-                            <img
-                              src={item.cover_image_url}
-                              alt={item.title}
-                              className='w-full h-48 object-cover'
-                            />
-                            {!accessGranted && (
-                              <div className='absolute inset-0 bg-black/60 flex items-center justify-center'>
-                                <div className='text-center'>
-                                  <Eye className='w-12 h-12 text-white mx-auto mb-2' />
-                                  <p className='text-white text-sm'>
-                                    {item.type === 'ebook' ? 'Preview Only' : item.type === 'music' || item.type === 'training_course' ? '30s Preview' : 'Preview Only'}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <GradientPlaceholder 
-                            type={item.type as any} 
-                            title={item.title}
-                            className="w-full h-48"
-                            size="lg"
-                          />
-                        )}
-                      </div>
-                      <p className='text-white/80 text-sm line-clamp-3 mb-4'>
-                        {item.description}
-                      </p>
-                      <div className='flex items-center justify-between text-sm text-white/70 mb-4'>
-                        <span>{item.bestowal_count || 0} bestowals</span>
-                        <span>{item.download_count || 0} downloads</span>
-                      </div>
-                      {accessGranted ? (
-                        <>
-                          {item.type === 'ebook' ? (
-                            <div className='space-y-2'>
-                              <Button
-                                className='w-full bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white'
-                                asChild
-                              >
-                                <a href={item.preview_url || item.file_url} target='_blank' rel='noopener noreferrer'>
-                                  <Eye className='w-4 h-4 mr-2' />
-                                  Read Preview
-                                </a>
-                              </Button>
-                              <Button
-                                className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
-                                asChild
-                              >
-                                <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
-                                  <Download className='w-4 h-4 mr-2' />
-                                  Download Full E-Book
-                                </a>
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
-                              asChild
-                            >
-                              <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
-                                <Download className='w-4 h-4 mr-2' />
-                                Download
-                              </a>
-                            </Button>
-                          )}
-                        </>
-                      ) : (
-                        <Button
-                          className='w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
-                          onClick={() => handleBestow(item)}
+            <div className='space-y-10'>
+              {(selectedType === 'all' || selectedType === 'book') && communityBooks.length > 0 && (
+                <section>
+                  {selectedType === 'all' && (
+                    <h2 className='text-2xl font-bold text-white mb-4'>Community Books</h2>
+                  )}
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                    {communityBooks.map((book: any) => (
+                      <CommunityBookCard key={book.id} book={{ ...book, sower: book.sowers }} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {selectedType !== 'book' && filteredDigitalItems.length > 0 && (
+                <section>
+                  {selectedType === 'all' && (
+                    <h2 className='text-2xl font-bold text-white mb-4'>Digital Library Seeds</h2>
+                  )}
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                    {filteredDigitalItems.map((item) => {
+                      const accessGranted = hasAccess(item.id);
+                      return (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.05 }}
+                          className='backdrop-blur-md bg-white/20 border border-white/30 rounded-xl overflow-hidden shadow-2xl'
                         >
-                          <Heart className='w-4 h-4 mr-2' />
-                          Bestow to Access
-                        </Button>
-                      )}
-                    </CardContent>
-                  </motion.div>
-                );
-              })}
+                          <CardHeader className='p-4'>
+                            <div className='flex items-start justify-between mb-2'>
+                              <div className='flex items-center gap-2'>
+                                <div className='p-2 rounded-lg bg-white/20'>
+                                  {getTypeIcon(item.type)}
+                                </div>
+                                <Badge variant='secondary' className='bg-white/30 text-white border-white/40'>
+                                  {getTypeLabel(item.type)}
+                                </Badge>
+                              </div>
+                            </div>
+                            <CardTitle className='text-white line-clamp-2 mb-2'>{item.title}</CardTitle>
+                            {(item as any).profile && (
+                              <p className='text-white/70 text-sm mb-3'>
+                                by {(item as any).profile.display_name || 'Anonymous'}
+                              </p>
+                            )}
+
+                            {/* Bestowal Value - Prominently Displayed */}
+                            <div className='mt-3'>
+                              {item.price > 0 ? (
+                                <div className='bg-purple-500/20 border border-purple-400 rounded-lg p-3'>
+                                  <p className='text-2xl font-bold text-white mb-1'>
+                                    {formatCurrency(item.price)}
+                                  </p>
+                                  <p className='text-white/70 text-xs'>to bestow</p>
+                                </div>
+                              ) : (
+                                <Badge className='bg-blue-500 text-white'>Free</Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className='p-4 pt-0'>
+                            <div className='relative mb-4 rounded-lg overflow-hidden'>
+                              {item.cover_image_url ? (
+                                <>
+                                  <img
+                                    src={item.cover_image_url}
+                                    alt={item.title}
+                                    className='w-full h-48 object-cover'
+                                  />
+                                  {!accessGranted && (
+                                    <div className='absolute inset-0 bg-black/60 flex items-center justify-center'>
+                                      <div className='text-center'>
+                                        <Eye className='w-12 h-12 text-white mx-auto mb-2' />
+                                        <p className='text-white text-sm'>
+                                          {item.type === 'ebook' ? 'Preview Only' : item.type === 'training_course' ? '30s Preview' : 'Preview Only'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <GradientPlaceholder
+                                  type={item.type as any}
+                                  title={item.title}
+                                  className='w-full h-48'
+                                  size='lg'
+                                />
+                              )}
+                            </div>
+                            <p className='text-white/80 text-sm line-clamp-3 mb-4'>
+                              {item.description}
+                            </p>
+                            <div className='flex items-center justify-between text-sm text-white/70 mb-4'>
+                              <span>{item.bestowal_count || 0} bestowals</span>
+                              <span>{item.download_count || 0} downloads</span>
+                            </div>
+                            {accessGranted ? (
+                              <>
+                                {item.type === 'ebook' ? (
+                                  <div className='space-y-2'>
+                                    <Button
+                                      className='w-full bg-gradient-to-r from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white'
+                                      asChild
+                                    >
+                                      <a href={item.preview_url || item.file_url} target='_blank' rel='noopener noreferrer'>
+                                        <Eye className='w-4 h-4 mr-2' />
+                                        Read Preview
+                                      </a>
+                                    </Button>
+                                    <Button
+                                      className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
+                                      asChild
+                                    >
+                                      <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
+                                        <Download className='w-4 h-4 mr-2' />
+                                        Download Full E-Book
+                                      </a>
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    className='w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white'
+                                    asChild
+                                  >
+                                    <a href={item.file_url} download target='_blank' rel='noopener noreferrer'>
+                                      <Download className='w-4 h-4 mr-2' />
+                                      Download
+                                    </a>
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              <Button
+                                className='w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white'
+                                onClick={() => handleBestow(item)}
+                              >
+                                <Heart className='w-4 h-4 mr-2' />
+                                Bestow to Access
+                              </Button>
+                            )}
+                          </CardContent>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </div>
           )}
         </div>
