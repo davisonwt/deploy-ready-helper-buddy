@@ -110,16 +110,12 @@ export default function MemryPage() {
     loadLikedPosts();
   }, []);
 
-  // Filter posts to only show loved ones in feed
+  // Show all posts in the feed - the "Home" tab should show everything
   useEffect(() => {
-    if (activeTab === 'feed') {
-      // Show only loved posts for the user's feed
-      const lovedPosts = allPosts.filter(post => likedPostIds.has(post.id) || post.user_liked);
-      setPosts(lovedPosts.length > 0 ? lovedPosts : allPosts);
-    } else {
-      setPosts(allPosts);
-    }
-  }, [activeTab, allPosts, likedPostIds]);
+    // Always show all posts in the feed (discovery mode)
+    // Users can like posts to curate their experience, but all posts are visible
+    setPosts(allPosts);
+  }, [allPosts]);
 
   const fetchUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
