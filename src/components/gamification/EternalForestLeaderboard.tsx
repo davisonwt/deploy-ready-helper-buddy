@@ -89,51 +89,74 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Load top 500 users from profiles table with xp/level fields
-      // Use type assertion since these columns may not be in generated types
-      const { data, error } = await (supabase
-        .from('profiles') as any)
-        .select('user_id, display_name, xp, level')
-        .order('xp', { ascending: false })
+      // Join user_points with profiles to get names and XP/level data
+      const { data: pointsData, error: pointsError } = await supabase
+        .from('user_points')
+        .select('user_id, total_points, level')
+        .order('total_points', { ascending: false })
         .limit(500);
 
-      if (error) {
-        console.error('Error loading forest:', error);
+      if (pointsError) {
+        console.error('Error loading user points:', pointsError);
         return;
       }
 
-      // Also get current user if not in top 500
+      // Get profile display names for these users
+      const userIds = pointsData?.map(p => p.user_id) || [];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds);
+
+      // Create a map for quick lookup
+      const profileMap = new Map(
+        (profilesData || []).map(p => [p.user_id, p.display_name])
+      );
+
+      // Also check if current user is in the list
       let currentUserData = null;
-      if (user) {
-        const { data: currentUser } = await (supabase
-          .from('profiles') as any)
-          .select('user_id, display_name, xp, level')
+      if (user && !pointsData?.some(p => p.user_id === user.id)) {
+        const { data: currentPoints } = await supabase
+          .from('user_points')
+          .select('user_id, total_points, level')
           .eq('user_id', user.id)
           .single();
 
-        if (currentUser && !data?.some((u: any) => u.user_id === user.id)) {
-          currentUserData = currentUser;
+        if (currentPoints) {
+          const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('user_id', user.id)
+            .single();
+          
+          currentUserData = {
+            ...currentPoints,
+            display_name: currentProfile?.display_name
+          };
         }
       }
 
-      const allUsers = currentUserData ? [...(data || []), currentUserData] : (data || []);
+      const allUsers = currentUserData 
+        ? [...(pointsData || []), currentUserData] 
+        : (pointsData || []);
 
       const forestUsers: UserTree[] = allUsers.map((u: any, i: number) => ({
         id: u.user_id || `user-${i}`,
-        name: u.display_name || `Sower #${i + 1}`,
+        name: profileMap.get(u.user_id) || u.display_name || `Sower #${i + 1}`,
         level: u.level || 1,
-        xp: u.xp || 0,
+        xp: u.total_points || 0,
         x: (i % 50) * 300 + Math.random() * 100,
         y: Math.floor(i / 50) * 400 + Math.random() * 200,
         targetY: 0,
       }));
 
+      console.log(`🌳 Eternal Forest: Loaded ${forestUsers.length} trees`);
       usersRef.current = forestUsers;
       setUsers(forestUsers);
       
-      // Initialize camera
+      // Initialize camera to center the view
       if (canvasRef.current) {
-        setCamera({ x: 0, y: canvasRef.current.height / 2, zoom: 1 });
+        setCamera({ x: canvasRef.current.width / 4, y: canvasRef.current.height / 2, zoom: 1 });
       }
     } catch (error) {
       console.error('Error loading forest:', error);
