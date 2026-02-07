@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { X, User, Trophy, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface TreeProfileCardProps {
   user: UserTree;
@@ -12,8 +12,6 @@ interface TreeProfileCardProps {
 }
 
 export function TreeProfileCard({ user, onClose, rank }: TreeProfileCardProps) {
-  const navigate = useNavigate();
-  
   const isTop10 = rank <= 10;
   const treeEmoji = user.level >= 20 ? '🌳' : user.level >= 10 ? '🌲' : '🌱';
   
@@ -72,12 +70,11 @@ export function TreeProfileCard({ user, onClose, rank }: TreeProfileCardProps) {
           </span>
         </div>
         
-        <Button 
-          className="w-full" 
-          onClick={() => navigate(`/profile/${user.id}`)}
-        >
-          <User className="h-4 w-4 mr-2" />
-          View Full Profile
+        <Button asChild className="w-full">
+          <Link to={`/sower/${user.id}`}>
+            <User className="h-4 w-4 mr-2" />
+            View Full Profile
+          </Link>
         </Button>
       </CardContent>
     </Card>
