@@ -78,7 +78,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
     { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
     { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
-    { href: '/products?filter=video', title: 'Marketing Videos', subtitle: 'All videos here now' },
+    
     { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
     { 
       onClick: () => {
