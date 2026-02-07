@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
-import { Music, Loader2, Play, Pause, Plus, Check, Users, Clock, ShoppingCart, X, Download } from 'lucide-react';
+import { Music, Loader2, Play, Pause, Plus, Check, Users, Clock, ShoppingCart, X, Download, Disc, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,7 +46,7 @@ export default function CommunityMusicLibraryPage() {
   const albumPricing = calculateAlbumPrice();
 
   // Fetch all community music tracks
-  const { data: allTracks = [], isLoading } = useQuery({
+  const { data: musicData = { singles: [], albums: [] }, isLoading } = useQuery({
     queryKey: ['community-music-library'],
     queryFn: async () => {
       const tracks: any[] = [];
@@ -105,7 +105,9 @@ export default function CommunityMusicLibraryPage() {
             user_id: dj?.user_id,
             created_at: track.created_at,
             genre: track.genre,
-            bpm: track.bpm
+            bpm: track.bpm,
+            tags: track.tags,
+            cover_image_url: (track as any).cover_image_url || dj?.avatar_url || null
           });
         });
       }
@@ -156,7 +158,9 @@ export default function CommunityMusicLibraryPage() {
             isAlbum,
             profiles: profile,
             user_id: item.user_id,
-            created_at: item.created_at
+            created_at: item.created_at,
+            tags: item.tags,
+            cover_image_url: item.cover_image_url
           });
         });
       }
@@ -228,12 +232,18 @@ export default function CommunityMusicLibraryPage() {
         });
       }
 
-      // Sort by created_at (newest first) and filter out albums
-      return tracks
-        .filter(t => !t.isAlbum) // Only show singles for album building
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Sort by created_at (newest first) and separate albums from singles
+      const sortedTracks = tracks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      return {
+        singles: sortedTracks.filter(t => !t.isAlbum),
+        albums: sortedTracks.filter(t => t.isAlbum)
+      };
     }
   });
+
+  const allTracks = musicData.singles;
+  const availableAlbums = musicData.albums;
 
   const formatDuration = (seconds: number) => {
     if (!seconds) return '0:00';
@@ -535,6 +545,107 @@ export default function CommunityMusicLibraryPage() {
                   })}
                 </div>
               )}
+
+              {/* Available Albums Section */}
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Disc className="w-6 h-6" />
+                  Available Albums
+                </h2>
+                {availableAlbums.length === 0 ? (
+                  <Card className="backdrop-blur-md bg-white/20 border-white/30">
+                    <CardContent className="p-8 text-center">
+                      <Disc className="w-12 h-12 mx-auto text-white/60 mb-4" />
+                      <h3 className="text-lg font-bold text-white">No Albums Available Yet</h3>
+                      <p className="text-white/70">Albums from sowers will appear here</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableAlbums.map((album) => {
+                      const isPlaying = playingId === album.id;
+                      const isLoadingTrack = loadingId === album.id;
+                      
+                      return (
+                        <motion.div
+                          key={album.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.02 }}
+                          className="backdrop-blur-md bg-white/15 border border-white/20 rounded-xl overflow-hidden hover:bg-white/25 transition-all"
+                        >
+                          <div className="flex">
+                            {/* Album Cover */}
+                            <div className="w-32 h-32 flex-shrink-0 bg-gradient-to-br from-purple-500/50 to-pink-500/50 flex items-center justify-center">
+                              {album.cover_image_url ? (
+                                <img 
+                                  src={album.cover_image_url} 
+                                  alt={album.track_title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Disc className="w-12 h-12 text-white/60" />
+                              )}
+                            </div>
+                            
+                            {/* Album Info */}
+                            <div className="flex-1 p-4 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-white truncate">{album.track_title}</h3>
+                                <p className="text-white/70 text-sm truncate">
+                                  {album.artist_name || album.profiles?.username || 'Unknown Artist'}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  {album.genre && (
+                                    <Badge variant="secondary" className="bg-white/10 text-white/80 text-xs">
+                                      {album.genre}
+                                    </Badge>
+                                  )}
+                                  {album.tags?.slice(0, 2).map((tag: string, i: number) => (
+                                    <Badge key={i} variant="outline" className="border-white/30 text-white/70 text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between mt-3">
+                                <span className="text-lg font-bold text-yellow-300">
+                                  {formatAmount(album.price)}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => handlePlay(album, e)}
+                                    disabled={isLoadingTrack}
+                                    className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 text-white"
+                                  >
+                                    {isLoadingTrack ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : isPlaying ? (
+                                      <Pause className="w-4 h-4" />
+                                    ) : (
+                                      <Play className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                                  >
+                                    <Download className="w-4 h-4 mr-1" />
+                                    Bestow
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Album Cart Sidebar */}
