@@ -79,7 +79,7 @@ export function useRoles(): UseRolesResult {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, first_name, last_name, verification_status, created_at')
+        .select('id, user_id, display_name, avatar_url, first_name, last_name, email, phone, location, verification_status, created_at, suspended')
         .order('created_at', { ascending: false })
 
       if (profilesError) {

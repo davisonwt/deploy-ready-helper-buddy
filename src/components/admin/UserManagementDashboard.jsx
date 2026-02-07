@@ -137,6 +137,38 @@ export function UserManagementDashboard() {
     }
   };
 
+  const handleSuspendUser = async (userId) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ suspended: true })
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      toast.success('User suspended successfully');
+      await loadUsers();
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      toast.error('Failed to suspend user');
+    }
+  };
+
+  const handleUnsuspendUser = async (userId) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ suspended: false })
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      toast.success('User unsuspended successfully');
+      await loadUsers();
+    } catch (error) {
+      console.error('Error unsuspending user:', error);
+      toast.error('Failed to unsuspend user');
+    }
+  };
+
   const getRoleBadge = (roles) => {
     if (!roles || roles.length === 0) return <Badge variant="secondary">User</Badge>;
     
@@ -306,19 +338,28 @@ export function UserManagementDashboard() {
                           </div>
                           <div>
                             <p className="font-medium">
-                              {user.display_name || `${user.first_name} ${user.last_name}` || 'Anonymous'}
+                              {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous'}
                             </p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {user.email || 'No email'}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">{user.email || 'No email'}</span>
+                          {user.phone && <span className="text-xs text-muted-foreground">{user.phone}</span>}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {getRoleBadge(user.user_roles)}
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(user)}
+                        {user.suspended ? (
+                          <Badge variant="destructive">Suspended</Badge>
+                        ) : user.verification_status === 'verified' ? (
+                          <Badge variant="default" className="bg-green-100 text-green-800">Verified</Badge>
+                        ) : (
+                          <Badge variant="secondary">Active</Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
@@ -329,9 +370,31 @@ export function UserManagementDashboard() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewUser(user)}
+                            title="View details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {user.suspended ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUnsuspendUser(user.user_id)}
+                              title="Unsuspend user"
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSuspendUser(user.user_id)}
+                              title="Suspend user"
+                              className="text-destructive hover:text-destructive/80"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -3591,17 +3591,20 @@ export type Database = {
           country: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           facebook_url: string | null
           first_name: string | null
           has_complete_billing_info: boolean | null
           id: string
           instagram_url: string | null
           is_chatapp_verified: boolean | null
+          last_login: string | null
           last_name: string | null
           location: string | null
           phone: string | null
           preferred_currency: string | null
           show_social_media: boolean | null
+          suspended: boolean | null
           tiktok_url: string | null
           timezone: string | null
           twitter_url: string | null
@@ -3624,17 +3627,20 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           facebook_url?: string | null
           first_name?: string | null
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          last_login?: string | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
           preferred_currency?: string | null
           show_social_media?: boolean | null
+          suspended?: boolean | null
           tiktok_url?: string | null
           timezone?: string | null
           twitter_url?: string | null
@@ -3657,17 +3663,20 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           facebook_url?: string | null
           first_name?: string | null
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
           is_chatapp_verified?: boolean | null
+          last_login?: string | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
           preferred_currency?: string | null
           show_social_media?: boolean | null
+          suspended?: boolean | null
           tiktok_url?: string | null
           timezone?: string | null
           twitter_url?: string | null
