@@ -1,77 +1,49 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { launchConfetti, launchSparkles, floatingScore } from '@/utils/confetti';
-
-// Define playSoundEffect locally if it doesn't exist in confetti utils
-const playSoundEffect = (sound: string, volume?: number) => {
-  try {
-    // Simple audio play implementation
-    const audio = new Audio(`/sounds/${sound}.mp3`);
-    audio.volume = volume || 0.5;
-    audio.play().catch(() => {});
-  } catch (e) {
-    // Silently fail if sound doesn't exist
-  }
-};
-
-interface UserTree {
-  id: string;
-  name: string;
-  level: number;
-  xp: number;
-  x: number;
-  y: number;
-  targetY: number;
-}
+import { Button } from '@/components/ui/button';
+import { Compass, ZoomIn, ZoomOut } from 'lucide-react';
+import { UserTree, TreeBounds, Camera, ForestConfig } from './eternal-forest/types';
+import { calculateForestLayout, getWorldTreePosition } from './eternal-forest/layoutUtils';
+import { drawEnvironment, drawClouds, drawWorldTree, drawTree, drawParticles } from './eternal-forest/drawingUtils';
+import { TreeProfileCard } from './eternal-forest/TreeProfileCard';
+import { ForestLegend } from './eternal-forest/ForestLegend';
+import { launchConfetti, floatingScore } from '@/utils/confetti';
 
 interface EternalForestLeaderboardProps {
   className?: string;
 }
 
+const FOREST_CONFIG: ForestConfig = {
+  centerX: 0,
+  centerY: 0,
+  ringSpacing: 200,
+  baseTreeSpacing: 100,
+};
+
 export function EternalForestLeaderboard({ className = '' }: EternalForestLeaderboardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [users, setUsers] = useState<UserTree[]>([]);
-  const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 1 });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 });
   const [dragging, setDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [selectedTree, setSelectedTree] = useState<UserTree | null>(null);
+  const [cardPosition, setCardPosition] = useState({ x: 0, y: 0 });
   const animationFrameRef = useRef<number>();
+  const treeBoundsRef = useRef<TreeBounds[]>([]);
   const usersRef = useRef<UserTree[]>([]);
 
   // Load forest data
   useEffect(() => {
     loadForest();
     
-    // Set up real-time subscription - use type assertion for table not in generated types
     const channel = supabase
-      .channel('forest')
+      .channel('forest-updates')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles', // Use profiles instead since user_progress may not exist
-        },
-        (payload: any) => {
-          const updated = usersRef.current.find((u) => u.id === payload.new?.user_id);
-          if (updated && payload.new) {
-            const oldLevel = updated.level;
-            updated.xp = payload.new.xp || 0;
-            updated.level = payload.new.level || Math.floor(Math.sqrt((payload.new.xp || 0) / 100));
-            
-            // TREE BURST EFFECT
-            if (updated.level > oldLevel) {
-              launchConfetti();
-              playSoundEffect('treeGrow', 0.6);
-              playSoundEffect('levelUp', 0.9);
-              floatingScore(updated.x, updated.y - 200);
-            } else {
-              playSoundEffect('treeGrow', 0.4);
-              floatingScore(updated.x, updated.y - 200);
-            }
-            
-            // Update state to trigger re-render
-            setUsers([...usersRef.current]);
-          }
+        { event: '*', schema: 'public', table: 'user_points' },
+        () => {
+          loadForest(); // Reload on any changes
         }
       )
       .subscribe();
@@ -86,10 +58,9 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
 
   const loadForest = async () => {
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Join user_points with profiles to get names and XP/level data
+      setCurrentUserId(user?.id || null);
+
       const { data: pointsData, error: pointsError } = await supabase
         .from('user_points')
         .select('user_id, total_points, level')
@@ -101,129 +72,135 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         return;
       }
 
-      // Get profile display names for these users
       const userIds = pointsData?.map(p => p.user_id) || [];
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, avatar_url')
         .in('user_id', userIds);
 
-      // Create a map for quick lookup
       const profileMap = new Map(
-        (profilesData || []).map(p => [p.user_id, p.display_name])
+        (profilesData || []).map(p => [p.user_id, { name: p.display_name, avatar: p.avatar_url }])
       );
 
-      // Also check if current user is in the list
-      let currentUserData = null;
-      if (user && !pointsData?.some(p => p.user_id === user.id)) {
-        const { data: currentPoints } = await supabase
-          .from('user_points')
-          .select('user_id, total_points, level')
-          .eq('user_id', user.id)
-          .single();
-
-        if (currentPoints) {
-          const { data: currentProfile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('user_id', user.id)
-            .single();
-          
-          currentUserData = {
-            ...currentPoints,
-            display_name: currentProfile?.display_name
-          };
-        }
-      }
-
-      const allUsers = currentUserData 
-        ? [...(pointsData || []), currentUserData] 
-        : (pointsData || []);
-
-      const forestUsers: UserTree[] = allUsers.map((u: any, i: number) => ({
+      // Build user list with current user flag
+      const rawUsers = (pointsData || []).map((u: any, i: number) => ({
         id: u.user_id || `user-${i}`,
-        name: profileMap.get(u.user_id) || u.display_name || `Sower #${i + 1}`,
+        name: profileMap.get(u.user_id)?.name || `Sower #${i + 1}`,
         level: u.level || 1,
         xp: u.total_points || 0,
-        x: (i % 50) * 300 + Math.random() * 100,
-        y: Math.floor(i / 50) * 400 + Math.random() * 200,
-        targetY: 0,
+        isCurrentUser: u.user_id === user?.id,
+        avatarUrl: profileMap.get(u.user_id)?.avatar,
       }));
 
-      console.log(`🌳 Eternal Forest: Loaded ${forestUsers.length} trees`);
+      // Calculate positions using ring layout
+      const forestUsers = calculateForestLayout(rawUsers, FOREST_CONFIG);
+
+      console.log(`🌳 Eternal Forest: Loaded ${forestUsers.length} trees in ring layout`);
       usersRef.current = forestUsers;
       setUsers(forestUsers);
-      
-      // Initialize camera to center the view
+
+      // Center camera on world tree
       if (canvasRef.current) {
-        setCamera({ x: canvasRef.current.width / 4, y: canvasRef.current.height / 2, zoom: 1 });
+        setCamera({
+          x: canvasRef.current.width / 2,
+          y: canvasRef.current.height / 2,
+          zoom: 0.8,
+        });
       }
     } catch (error) {
       console.error('Error loading forest:', error);
     }
   };
 
-  // Drawing functions
-  const drawTree = (ctx: CanvasRenderingContext2D, user: UserTree) => {
-    const height = 80 + user.level * 18;
-    const width = 40 + user.level * 6;
-    const brightness = Math.min(user.level / 30, 1);
-
-    // Trunk
-    ctx.fillStyle = `rgba(${139 + brightness * 100}, ${69 + brightness * 80}, 19, 1)`;
-    ctx.fillRect(user.x - width / 4, user.y - height, width / 2, height);
-
-    // Canopy
-    ctx.fillStyle = `hsla(${110 + brightness * 40}, 80%, ${40 + brightness * 30}%, 0.9)`;
-    ctx.beginPath();
-    ctx.arc(user.x, user.y - height - 30, width * 1.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Golden glow for top 10 (high level users)
-    if (user.level > 40) {
-      ctx.shadowBlur = 80;
-      ctx.shadowColor = '#fbbf24';
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(user.x, user.y - height - 30, width * 1.8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
+  // Find current user's tree and pan to it
+  const findMyTree = useCallback(() => {
+    const myTree = usersRef.current.find(u => u.isCurrentUser);
+    if (myTree && canvasRef.current) {
+      setCamera({
+        x: canvasRef.current.width / 2 - myTree.x * 1.2,
+        y: canvasRef.current.height / 2 - myTree.y * 1.2 + 100,
+        zoom: 1.2,
+      });
+      setSelectedTree(myTree);
+      setCardPosition({ x: canvasRef.current.width / 2, y: 100 });
     }
+  }, []);
 
-    // Name + level
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${user.name} • L${user.level}`, user.x, user.y + 20);
-  };
+  // Handle canvas click for tree selection
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (dragging) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left - camera.x) / camera.zoom;
+    const clickY = (e.clientY - rect.top - camera.y) / camera.zoom;
+
+    // Check if click hit any tree
+    const clickedTree = treeBoundsRef.current.find(bounds => {
+      return (
+        clickX >= bounds.x &&
+        clickX <= bounds.x + bounds.width &&
+        clickY >= bounds.y &&
+        clickY <= bounds.y + bounds.height
+      );
+    });
+
+    if (clickedTree) {
+      setSelectedTree(clickedTree.user);
+      setCardPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    } else {
+      setSelectedTree(null);
+    }
+  }, [camera, dragging]);
 
   // Animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || users.length === 0) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
+    let time = 0;
     const animate = () => {
+      time++;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Apply camera transform
+      // Draw environment (static, before camera transform)
+      drawEnvironment(ctx, canvas.width, canvas.height);
+      drawClouds(ctx, canvas.width, time);
+      drawParticles(ctx, canvas.width, canvas.height, time);
+
+      // Apply camera transform for forest elements
       ctx.save();
       ctx.translate(camera.x, camera.y);
       ctx.scale(camera.zoom, camera.zoom);
 
-      // Gentle floating animation
-      usersRef.current.forEach((u) => {
-        u.y += Math.sin(Date.now() * 0.001 + u.x) * 0.3;
+      // Draw World Tree at center
+      const worldTreePos = getWorldTreePosition(FOREST_CONFIG);
+      drawWorldTree(ctx, worldTreePos.x, worldTreePos.y, time);
+
+      // Draw all user trees (sorted by Y for proper layering)
+      const sortedUsers = [...usersRef.current].sort((a, b) => a.y - b.y);
+      const newBounds: TreeBounds[] = [];
+
+      sortedUsers.forEach((user, index) => {
+        const isTop10 = index < 10;
+        const isSelected = selectedTree?.id === user.id;
+        const bounds = drawTree(ctx, user, time, isTop10, isSelected);
+        newBounds.push(bounds);
       });
 
-      // Draw all trees
-      usersRef.current.forEach((user) => drawTree(ctx, user));
+      treeBoundsRef.current = newBounds;
 
       ctx.restore();
 
@@ -233,24 +210,12 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
     animate();
 
     return () => {
+      window.removeEventListener('resize', resizeCanvas);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [users, camera]);
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [camera, selectedTree]);
 
   // Mouse/touch controls
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -265,17 +230,33 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (dragging) {
       const deltaX = e.clientX - lastMousePos.x;
-      setCamera((prev) => ({ ...prev, x: prev.x - deltaX * 2 }));
+      const deltaY = e.clientY - lastMousePos.y;
+      setCamera(prev => ({
+        ...prev,
+        x: prev.x + deltaX,
+        y: prev.y + deltaY,
+      }));
       setLastMousePos({ x: e.clientX, y: e.clientY });
+      setSelectedTree(null); // Close card while dragging
     }
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    setCamera((prev) => ({
+    const zoomDelta = e.deltaY * -0.001;
+    setCamera(prev => ({
       ...prev,
-      zoom: Math.max(0.5, Math.min(3, prev.zoom - e.deltaY * 0.001)),
+      zoom: Math.max(0.3, Math.min(3, prev.zoom + zoomDelta)),
     }));
+  };
+
+  const zoomIn = () => setCamera(prev => ({ ...prev, zoom: Math.min(3, prev.zoom + 0.2) }));
+  const zoomOut = () => setCamera(prev => ({ ...prev, zoom: Math.max(0.3, prev.zoom - 0.2) }));
+
+  // Get rank for selected tree
+  const getTreeRank = (tree: UserTree): number => {
+    const sorted = [...usersRef.current].sort((a, b) => b.xp - a.xp);
+    return sorted.findIndex(u => u.id === tree.id) + 1;
   };
 
   return (
@@ -286,20 +267,72 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerUp}
         onWheel={handleWheel}
+        onClick={handleCanvasClick}
         style={{ cursor: dragging ? 'grabbing' : 'grab' }}
       />
-      
+
+      {/* Header */}
       <div className="fixed top-8 left-8 z-10 text-white pointer-events-none">
-        <h1 className="text-6xl font-black bg-gradient-to-r from-yellow-400 to-pink-500 bg-clip-text text-transparent">
+        <h1 className="text-5xl font-black bg-gradient-to-r from-yellow-400 via-green-400 to-emerald-500 bg-clip-text text-transparent drop-shadow-lg">
           Eternal Forest
         </h1>
-        <p className="text-2xl opacity-80">Every soul is a tree. Watch the garden grow.</p>
-        <p className="text-sm opacity-60 mt-2">
-          Drag to explore • Scroll to zoom • {users.length} trees growing
+        <p className="text-xl opacity-90 mt-1">Every soul is a tree. Watch the garden grow.</p>
+        <p className="text-sm opacity-70 mt-2">
+          Click trees to view • Drag to explore • Scroll to zoom • {users.length} souls growing
         </p>
       </div>
+
+      {/* Controls */}
+      <div className="fixed top-8 right-8 z-10 flex flex-col gap-2">
+        <Button
+          onClick={findMyTree}
+          variant="secondary"
+          className="bg-background/80 backdrop-blur-md hover:bg-background"
+        >
+          <Compass className="h-4 w-4 mr-2" />
+          Find My Tree
+        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={zoomIn}
+            variant="outline"
+            size="icon"
+            className="bg-background/80 backdrop-blur-md"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={zoomOut}
+            variant="outline"
+            size="icon"
+            className="bg-background/80 backdrop-blur-md"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <ForestLegend />
+
+      {/* Selected tree profile card */}
+      {selectedTree && (
+        <div
+          style={{
+            position: 'absolute',
+            left: Math.min(cardPosition.x, window.innerWidth - 300),
+            top: Math.min(cardPosition.y, window.innerHeight - 350),
+          }}
+        >
+          <TreeProfileCard
+            user={selectedTree}
+            rank={getTreeRank(selectedTree)}
+            onClose={() => setSelectedTree(null)}
+          />
+        </div>
+      )}
     </div>
   );
 }
-
