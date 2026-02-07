@@ -17,7 +17,7 @@ import {
   Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface SowerBalance {
   id: string;
@@ -37,6 +37,7 @@ interface SowerBalanceCardProps {
 
 export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [balance, setBalance] = useState<SowerBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -117,11 +118,15 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <p className="mb-2">Set up your payout wallet to start tracking earnings and receive payments.</p>
-              <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link to="/wallet-settings">
-                  <Settings className="h-4 w-4" />
-                  Set Up Wallet
-                </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                type="button"
+                onClick={() => navigate('/wallet-settings')}
+              >
+                <Settings className="h-4 w-4" />
+                Set Up Wallet
               </Button>
             </AlertDescription>
           </Alert>
@@ -173,12 +178,16 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
           )}
           {!hasWallet && (
             <div className="mt-3">
-              <Button variant="outline" size="sm" className="w-full gap-2" asChild>
-                <Link to="/wallet-settings">
-                  <Settings className="h-4 w-4" />
-                  Set Up Payout Wallet
-                </Link>
-              </Button>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="w-full gap-2"
+                 type="button"
+                 onClick={() => navigate('/wallet-settings')}
+               >
+                 <Settings className="h-4 w-4" />
+                 Set Up Payout Wallet
+               </Button>
             </div>
           )}
         </CardContent>
@@ -252,22 +261,29 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
                 {balance.wallet_address?.slice(0, 8)}...{balance.wallet_address?.slice(-6)}
               </span>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/wallet-settings">
-                <Settings className="h-4 w-4" />
-              </Link>
-            </Button>
+             <Button
+               variant="ghost"
+               size="sm"
+               type="button"
+               onClick={() => navigate('/wallet-settings')}
+             >
+               <Settings className="h-4 w-4" />
+             </Button>
           </div>
         ) : (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
               <span>Set up your payout wallet to withdraw earnings</span>
-              <Button variant="outline" size="sm" className="ml-2" asChild>
-                <Link to="/wallet-settings">
-                  Set Up
-                </Link>
-              </Button>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="ml-2"
+                 type="button"
+                 onClick={() => navigate('/wallet-settings')}
+               >
+                 Set Up
+               </Button>
             </AlertDescription>
           </Alert>
         )}

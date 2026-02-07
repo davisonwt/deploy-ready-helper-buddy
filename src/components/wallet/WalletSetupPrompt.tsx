@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Wallet, X, ArrowRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface WalletSetupPromptProps {
   variant?: 'banner' | 'card';
@@ -12,6 +12,7 @@ interface WalletSetupPromptProps {
 
 export function WalletSetupPrompt({ variant = 'banner' }: WalletSetupPromptProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
   const [hasWallet, setHasWallet] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,11 +82,14 @@ export function WalletSetupPrompt({ variant = 'banner' }: WalletSetupPromptProps
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button size="sm" className="gap-2" asChild>
-                <Link to="/wallet-settings">
-                  Set Up Now
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
+              <Button
+                size="sm"
+                type="button"
+                className="gap-2"
+                onClick={() => navigate('/wallet-settings')}
+              >
+                Set Up Now
+                <ArrowRight className="h-3 w-3" />
               </Button>
               <Button
                 variant="ghost"
@@ -118,11 +122,14 @@ export function WalletSetupPrompt({ variant = 'banner' }: WalletSetupPromptProps
               Configure your crypto wallet address to receive earnings from your seeds, orchards, and whisperer commissions.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" className="gap-2" asChild>
-                <Link to="/wallet-settings">
-                  Set Up Wallet
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
+              <Button
+                size="sm"
+                type="button"
+                className="gap-2"
+                onClick={() => navigate('/wallet-settings')}
+              >
+                Set Up Wallet
+                <ArrowRight className="h-3 w-3" />
               </Button>
               <Button
                 variant="ghost"
