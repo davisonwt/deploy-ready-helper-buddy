@@ -148,6 +148,8 @@ const MemryPage = lazy(() => import("./pages/MemryPage"));
 // Community Drivers
 const RegisterVehiclePage = lazy(() => import("./pages/RegisterVehiclePage"));
 const CommunityDriversPage = lazy(() => import("./pages/CommunityDriversPage"));
+const DriverDashboardPage = lazy(() => import("./pages/DriverDashboardPage"));
+const MyDriverRequestsPage = lazy(() => import("./pages/MyDriverRequestsPage"));
 
 // 364ttt - Weekly Torah Top Ten
 const TorahTopTenPage = lazy(() => import("./pages/TorahTopTenPage"));
@@ -790,6 +792,26 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <CommunityDriversPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/driver-dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <DriverDashboardPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/my-driver-requests" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <MyDriverRequestsPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>

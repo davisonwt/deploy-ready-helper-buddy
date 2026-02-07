@@ -1195,12 +1195,16 @@ export type Database = {
       }
       community_drivers: {
         Row: {
+          city: string | null
           contact_email: string
           contact_phone: string
+          country: string | null
           created_at: string
+          delivery_radius_km: number | null
           full_name: string
           id: string
           no_income_confirmed: boolean
+          service_areas: string[] | null
           status: string
           updated_at: string
           user_id: string
@@ -1209,12 +1213,16 @@ export type Database = {
           vehicle_type: string
         }
         Insert: {
+          city?: string | null
           contact_email: string
           contact_phone: string
+          country?: string | null
           created_at?: string
+          delivery_radius_km?: number | null
           full_name: string
           id?: string
           no_income_confirmed?: boolean
+          service_areas?: string[] | null
           status?: string
           updated_at?: string
           user_id: string
@@ -1223,12 +1231,16 @@ export type Database = {
           vehicle_type: string
         }
         Update: {
+          city?: string | null
           contact_email?: string
           contact_phone?: string
+          country?: string | null
           created_at?: string
+          delivery_radius_km?: number | null
           full_name?: string
           id?: string
           no_income_confirmed?: boolean
+          service_areas?: string[] | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -1766,6 +1778,116 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "session_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_quote_requests: {
+        Row: {
+          created_at: string
+          driver_id: string
+          dropoff_location: string
+          id: string
+          item_description: string
+          notes: string | null
+          pickup_location: string
+          preferred_date: string | null
+          preferred_time: string | null
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          dropoff_location: string
+          id?: string
+          item_description: string
+          notes?: string | null
+          pickup_location: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          dropoff_location?: string
+          id?: string
+          item_description?: string
+          notes?: string | null
+          pickup_location?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_quote_requests_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "community_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_quotes: {
+        Row: {
+          created_at: string
+          currency: string
+          driver_id: string
+          estimated_duration: string | null
+          id: string
+          message: string | null
+          quote_amount: number
+          request_id: string
+          status: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          driver_id: string
+          estimated_duration?: string | null
+          id?: string
+          message?: string | null
+          quote_amount: number
+          request_id: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          driver_id?: string
+          estimated_duration?: string | null
+          id?: string
+          message?: string | null
+          quote_amount?: number
+          request_id?: string
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_quotes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "community_drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_quotes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "driver_quote_requests"
             referencedColumns: ["id"]
           },
         ]

@@ -24,7 +24,8 @@ import {
   Shield,
   Loader2,
   Music,
-  Megaphone
+  Megaphone,
+  Car
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -996,6 +997,23 @@ export default function DashboardPage() {
                   <div className="text-center">
                     <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
                     <span className="text-sm sm:text-base">Become a Whisperer</span>
+                  </div>
+                </Button>
+              </Link>
+
+              {/* Become a S2G Driver */}
+              <Link to="/register-vehicle">
+                <Button 
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#fff',
+                    borderColor: '#10b981',
+                  }}
+                >
+                  <div className="text-center">
+                    <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                    <span className="text-sm sm:text-base">Become a S2G Driver</span>
                   </div>
                 </Button>
               </Link>
