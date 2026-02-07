@@ -101,6 +101,10 @@ verify_jwt = false
 [functions.password-reset-with-security]
 verify_jwt = false
 
+# Legacy user password reset request (unauthenticated)
+[functions.password-reset-request]
+verify_jwt = false
+
 [functions.distribute-bestowal]
 verify_jwt = true
 
