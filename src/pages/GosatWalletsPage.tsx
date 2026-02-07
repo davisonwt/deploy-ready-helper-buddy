@@ -21,7 +21,7 @@ export default function GosatWalletsPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2" style={{ color: currentTheme.textPrimary }}>Organization Wallets</h1>
         <p className="mb-6" style={{ color: currentTheme.textSecondary }}>
-          Manage organization Binance Pay wallets and distribution queue
+          Manage organization payment wallets and distribution queue
         </p>
 
         <Tabs defaultValue="overview" className="space-y-6">

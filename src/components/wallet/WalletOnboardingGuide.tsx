@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wallet, Download, CreditCard, ExternalLink, Info } from 'lucide-react';
+import { Wallet, Download, CreditCard, ExternalLink, Info, Banknote } from 'lucide-react';
 
 interface WalletOnboardingGuideProps {
   compact?: boolean;
@@ -14,17 +14,17 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
       <Alert className="mb-4">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <p className="font-semibold mb-2">Payments use Binance Pay</p>
+          <p className="font-semibold mb-2">Payments via NOWPayments</p>
           <p className="text-sm mb-2">
-            Use the Binance app with Binance Pay enabled and USDC in your funding wallet.
+            S2G uses NOWPayments for all payments. Pay with crypto, card, bank transfer, or PayPal.
           </p>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
+            onClick={() => window.open('https://nowpayments.io', '_blank')}
             className="mt-2"
           >
-            Open Binance Pay <ExternalLink className="ml-2 h-3 w-3" />
+            Learn about NOWPayments <ExternalLink className="ml-2 h-3 w-3" />
           </Button>
         </AlertDescription>
       </Alert>
@@ -39,73 +39,73 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
           Getting Started with Payments
         </CardTitle>
         <CardDescription>
-          Learn how to make bestowals using cryptocurrency
+          Learn how to make and receive bestowals
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Step 1: Download Wallet */}
-        <div className="space-y-2">
-          <div className="flex items-start gap-3">
-            <div className="rounded-full bg-primary/10 p-2 mt-1">
-              <Download className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">1. Enable Binance Pay in the Binance app</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                Install the Binance app, complete verification if required, then enable Binance Pay and set up your Pay ID.
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => window.open('https://www.binance.com/en/pay', '_blank')}
-                >
-                  Open Binance Pay <ExternalLink className="ml-2 h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 2: Fund Your Wallet */}
+        {/* Step 1: Making Payments */}
         <div className="space-y-2">
           <div className="flex items-start gap-3">
             <div className="rounded-full bg-primary/10 p-2 mt-1">
               <CreditCard className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">2. Add USDC to your Binance funding wallet</h3>
+              <h3 className="font-semibold text-base mb-1">1. Making Payments (Bestowing)</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                When you make a bestowal, you'll be redirected to NOWPayments where you can pay using:
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-4 mb-3">
+                <li>• <strong>Cryptocurrency</strong> - Bitcoin, Ethereum, USDC, and 200+ coins</li>
+                <li>• <strong>Credit/Debit Card</strong> - Visa, Mastercard, etc.</li>
+                <li>• <strong>Bank Transfer</strong> - SEPA, Wire transfer</li>
+                <li>• <strong>PayPal</strong> - Quick and easy</li>
+              </ul>
+              <p className="text-sm text-muted-foreground">
+                No account needed to pay - just complete the checkout!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 2: Receiving Payments */}
+        <div className="space-y-2">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2 mt-1">
+              <Banknote className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-base mb-1">2. Receiving Payments (Sowers)</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                You'll need USDC available to pay with Binance Pay.
+                To receive payouts from your seeds and orchards, you need to set up your payout wallet:
               </p>
               <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                <p className="font-semibold mb-1">💡 How to add funds:</p>
+                <p className="font-semibold mb-1">💡 Setting up your payout wallet:</p>
                 <ol className="space-y-1 ml-4 text-muted-foreground">
-                  <li>1. Deposit via card/bank, or transfer crypto to Binance</li>
-                  <li>2. Convert your balance to USDC (if needed)</li>
-                  <li>3. Ensure USDC is available in your Funding Wallet</li>
+                  <li>1. Go to <strong>My Wallet Settings</strong> in your profile</li>
+                  <li>2. Enter your crypto wallet address (for receiving USDC payouts)</li>
+                  <li>3. Your earnings will accumulate and you can request withdrawals</li>
+                  <li>4. Minimum withdrawal: $10 USD, Fee: 0.5%</li>
                 </ol>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Step 3: Connect and Pay */}
+        {/* Step 3: Viewing Balance */}
         <div className="space-y-2">
           <div className="flex items-start gap-3">
             <div className="rounded-full bg-primary/10 p-2 mt-1">
               <Wallet className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-base mb-1">3. Connect & Make Your First Bestowal</h3>
+              <h3 className="font-semibold text-base mb-1">3. Viewing Your Balance</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                When you're ready to make a bestowal:
+                Your earnings are tracked automatically:
               </p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                <li>• Open your Binance app</li>
-                <li>• Use Binance Pay to send USDC</li>
-                <li>• Select amount and confirm the transaction</li>
-                <li>• Your bestowal will be confirmed in seconds!</li>
+                <li>• <strong>Available Balance</strong> - Ready to withdraw</li>
+                <li>• <strong>Pending Balance</strong> - Processing (usually 24-48 hours)</li>
+                <li>• <strong>Total Earned</strong> - Lifetime earnings</li>
               </ul>
             </div>
           </div>
@@ -115,22 +115,15 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
         <div className="bg-muted/30 rounded-lg p-4 mt-6">
           <p className="text-sm font-semibold mb-2">Need Help?</p>
           <p className="text-sm text-muted-foreground mb-3">
-            If you're having trouble setting up your wallet or making payments, check out these resources:
+            Check out these resources for more information:
           </p>
           <div className="flex gap-2 flex-wrap">
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => window.open('https://www.binance.com/en/support/faq/binance-pay', '_blank')}
+              onClick={() => window.open('https://nowpayments.io/help', '_blank')}
             >
-              Binance Pay Help <ExternalLink className="ml-2 h-3 w-3" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('https://www.binance.com/en/usdc', '_blank')}
-            >
-              USDC Guide <ExternalLink className="ml-2 h-3 w-3" />
+              NOWPayments Help <ExternalLink className="ml-2 h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -139,8 +132,8 @@ export function WalletOnboardingGuide({ compact = false }: WalletOnboardingGuide
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            <strong>Security reminder:</strong> Never share your wallet's recovery phrase with anyone. 
-            The 364yhvh platform will never ask for your private keys or recovery phrase.
+            <strong>Security reminder:</strong> S2G never asks for your wallet's private keys or recovery phrase.
+            Only provide your public wallet address for receiving payouts.
           </AlertDescription>
         </Alert>
       </CardContent>

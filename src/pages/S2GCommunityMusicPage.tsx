@@ -280,26 +280,30 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    // Initiate Binance Pay for bestowal
+    // Initiate NOWPayments for bestowal
     try {
-      const { data, error } = await supabase.functions.invoke('create-binance-pay-order', {
+      const { data, error } = await supabase.functions.invoke('create-nowpayments-order', {
         body: {
-          libraryItemId: item.id,
           amount: item.price,
-          sowerId: item.user_id,
-          type: 'library_item'
+          paymentType: 'product',
+          productItems: [{
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            sower_id: item.user_id
+          }]
         }
       });
 
       if (error) {
-        console.error('Binance Pay order creation error:', error);
+        console.error('NOWPayments order creation error:', error);
         toast.error(error.message || 'Failed to initiate bestowal payment');
         return;
       }
 
-      if (data?.paymentUrl) {
-        window.open(data.paymentUrl, '_blank');
-        toast.info('Redirecting to Binance Pay. Complete payment to finalize your bestowal.');
+      if (data?.invoiceUrl) {
+        window.location.href = data.invoiceUrl;
+        toast.info('Redirecting to payment page...');
       } else {
         toast.error('Failed to get payment URL. Please try again.');
       }
