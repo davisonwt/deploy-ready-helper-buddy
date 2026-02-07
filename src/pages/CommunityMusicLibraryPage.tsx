@@ -327,6 +327,52 @@ export default function CommunityMusicLibraryPage() {
     }
   };
 
+  const handleBestowAlbum = async (album: any) => {
+    if (!user) {
+      toast.error('Please sign in to bestow');
+      return;
+    }
+
+    if (!album.price || album.price <= 0) {
+      toast.error('This album has no bestowal price set');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-nowpayments-order', {
+        body: {
+          amount: album.price,
+          paymentType: 'product',
+          productItems: [{
+            id: album.id,
+            title: album.track_title,
+            price: album.price,
+            sower_id: album.user_id
+          }]
+        }
+      });
+
+      if (error) {
+        console.error('Payment order creation error:', error);
+        toast.error(error.message || 'Failed to create payment order');
+        return;
+      }
+
+      if (data?.invoiceUrl) {
+        toast.info('Redirecting to payment...');
+        window.location.href = data.invoiceUrl;
+      } else {
+        toast.error('Failed to get payment URL');
+      }
+    } catch (error: any) {
+      console.error('Album bestowal error:', error);
+      toast.error('Bestowal failed. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!user) {
       toast.error('Please sign in to purchase');
@@ -589,13 +635,13 @@ export default function CommunityMusicLibraryPage() {
                             </div>
                             
                             {/* Album Info */}
-                            <div className="flex-1 p-4 flex flex-col justify-between">
-                              <div>
+                            <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                              <div className="min-w-0">
                                 <h3 className="font-bold text-white truncate">{album.track_title}</h3>
                                 <p className="text-white/70 text-sm truncate">
                                   {album.artist_name || album.profiles?.username || 'Unknown Artist'}
                                 </p>
-                                <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
                                   {album.genre && (
                                     <Badge variant="secondary" className="bg-white/10 text-white/80 text-xs">
                                       {album.genre}
@@ -609,17 +655,17 @@ export default function CommunityMusicLibraryPage() {
                                 </div>
                               </div>
                               
-                              <div className="flex items-center justify-between mt-3">
+                              <div className="flex items-center justify-between mt-3 gap-2 flex-wrap">
                                 <span className="text-lg font-bold text-yellow-300">
                                   {formatAmount(album.price)}
                                 </span>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-shrink-0">
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => handlePlay(album, e)}
                                     disabled={isLoadingTrack}
-                                    className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 text-white"
+                                    className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 text-white flex-shrink-0"
                                   >
                                     {isLoadingTrack ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -631,7 +677,8 @@ export default function CommunityMusicLibraryPage() {
                                   </Button>
                                   <Button
                                     size="sm"
-                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white flex-shrink-0"
+                                    onClick={() => handleBestowAlbum(album)}
                                   >
                                     <Download className="w-4 h-4 mr-1" />
                                     Bestow
