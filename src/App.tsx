@@ -133,6 +133,7 @@ const MusicLibraryPage = lazy(() =>
 const MyS2GLibraryPage = lazy(() => import("./pages/MyS2GLibraryPage"));
 const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPage"));
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
+const CommunityMusicLibraryPage = lazy(() => import("./pages/CommunityMusicLibraryPage"));
 const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
 const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
@@ -946,6 +947,13 @@ const App = () => (
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
                     <S2GCommunityMusicPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/community-music-library" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <CommunityMusicLibraryPage />
                   </Suspense>
                 </Layout>
               } />

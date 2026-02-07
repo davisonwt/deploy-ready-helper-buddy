@@ -6,6 +6,7 @@ interface AlbumTrack {
   artist_name: string | null;
   duration_seconds: number | null;
   file_url: string;
+  user_id?: string;
   profiles?: {
     username: string | null;
     avatar_url: string | null;

@@ -474,10 +474,11 @@ export default function ProductsPage() {
             All Creations
           </button>
           <button
-            onClick={() => handleFilter('music')}
-            className={`filter-btn ${activeFilter === 'music' ? 'active' : ''}`}
+            onClick={() => window.location.href = '/community-music-library'}
+            className="filter-btn"
           >
-            Music
+            <Music className="w-4 h-4 mr-1 inline" />
+            Community Music Library
           </button>
           <button
             onClick={() => handleFilter('ebook')}
