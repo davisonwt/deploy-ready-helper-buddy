@@ -24,10 +24,22 @@ export default function BestowalCheckout() {
   }, [basketItems]);
 
   // Calculate distribution breakdown
+  // Standard: 85% to sower, 10% tithe, 5% admin
+  // Whisperers only get a share if actually assigned (checked via product metadata)
+  const totalWhisperCommission = basketItems.reduce((acc, item) => {
+    const commission = (item as any).whisperer_commission;
+    if (commission && commission > 0) {
+      return acc + (Number(item.price) * (commission / 100));
+    }
+    return acc;
+  }, 0);
+  
+  const hasWhisperers = totalWhisperCommission > 0;
+  
   const tithingAmount = totalAmount * 0.10;
   const adminFee = totalAmount * 0.05;
-  const creatorsAmount = totalAmount * 0.70;
-  const whispersAmount = totalAmount * 0.15;
+  const creatorsAmount = totalAmount * 0.85 - totalWhisperCommission;
+  const whispersAmount = totalWhisperCommission;
 
   // Prepare product items for payment
   const productItems = basketItems.map(item => ({
@@ -127,20 +139,22 @@ export default function BestowalCheckout() {
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Tithing (10%)</span>
-            <span className="text-purple-400">${tithingAmount.toFixed(2)}</span>
+            <span className="text-primary/70">${tithingAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Admin Fee (5%)</span>
             <span>${adminFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>To Creators (70%)</span>
+            <span>To Creators ({hasWhisperers ? Math.round((creatorsAmount / totalAmount) * 100) : 85}%)</span>
             <span className="text-primary">${creatorsAmount.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>To Product Whispers (15%)</span>
-            <span className="text-accent">${whispersAmount.toFixed(2)}</span>
-          </div>
+          {hasWhisperers && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>To Product Whispers ({Math.round((whispersAmount / totalAmount) * 100)}%)</span>
+              <span className="text-accent">${whispersAmount.toFixed(2)}</span>
+            </div>
+          )}
           <Separator />
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
