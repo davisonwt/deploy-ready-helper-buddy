@@ -44,6 +44,7 @@ export default function MyProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedFormat, setSelectedFormat] = useState<string>('all'); // 'all', 'single', 'album'
+  const [selectedStatus, setSelectedStatus] = useState<string>('all'); // 'all', 'active', 'paused'
 
   const { data: products, isLoading, refetch } = useQuery({
     queryKey: ['my-products', user?.id],
@@ -84,7 +85,8 @@ export default function MyProductsPage() {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesType = selectedType === 'all' || product.type === selectedType;
     const matchesFormat = selectedFormat === 'all' || (selectedFormat === 'single' && !isAlbum(product)) || (selectedFormat === 'album' && isAlbum(product));
-    return matchesCategory && matchesType && matchesFormat;
+    const matchesStatus = selectedStatus === 'all' || (product.status || 'active') === selectedStatus;
+    return matchesCategory && matchesType && matchesFormat && matchesStatus;
   }) || [];
 
   if (isLoading) {
@@ -177,9 +179,11 @@ export default function MyProductsPage() {
                 selectedCategory={selectedCategory}
                 selectedType={selectedType}
                 selectedFormat={selectedFormat}
+                selectedStatus={selectedStatus}
                 onCategoryChange={setSelectedCategory}
                 onTypeChange={setSelectedType}
                 onFormatChange={setSelectedFormat}
+                onStatusChange={setSelectedStatus}
               />
 
               {/* Products Grid */}

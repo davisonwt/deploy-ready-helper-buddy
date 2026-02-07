@@ -24,7 +24,9 @@ import {
   Heart,
   Trash2,
   Sparkles,
-  Loader2
+  Loader2,
+  PauseCircle,
+  PlayCircle
 } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
@@ -56,10 +58,11 @@ export default function MyOrchardsPage() {
   const fetchOrchards = async () => {
     try {
       setLoading(true)
+      // Fetch ALL orchards for this user (any status) so they can manage paused ones too
       const { data, error } = await supabase
         .from('orchards')
         .select('*')
-        .eq('status', 'active')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
       if (error) throw error
       setOrchards(data || [])
@@ -126,21 +129,8 @@ export default function MyOrchardsPage() {
     // First process URLs to ensure they're public URLs
     const processedOrchards = processOrchardsUrls(orchards);
     
-  // Filter to show only user's own orchards - Debug logging
-    console.log('🔍 MyOrchards Debug:', {
-      userHasId: !!user?.id,
-      userId: user?.id,
-      totalOrchards: processedOrchards.length,
-      orchardUserIds: processedOrchards.map(o => ({ id: o.id, user_id: o.user_id, title: o.title }))
-    });
-    
-    let filtered = processedOrchards.filter(orchard => {
-      const isUserOrchard = orchard.user_id === user?.id;
-      if (!isUserOrchard) {
-        console.log(`❌ Orchard ${orchard.title} not owned by user:`, { orchard_user_id: orchard.user_id, current_user_id: user?.id });
-      }
-      return isUserOrchard;
-    })
+    // No need to filter by user_id since we already fetch only user's orchards
+    let filtered = processedOrchards;
     
     if (searchTerm) {
       filtered = filtered.filter(orchard => 
@@ -158,15 +148,9 @@ export default function MyOrchardsPage() {
       filtered = filtered.filter(orchard => orchard.category === selectedCategory)
     }
     
-    console.log('🖼️ MyOrchards URL Debug:', {
-      originalOrchards: orchards.length,
-      processedOrchards: processedOrchards.length,
-      userOrchards: filtered.length,
-      sampleImageURLs: filtered.slice(0, 2).map(o => ({ id: o.id, images: o.images }))
-    });
     
     setUserOrchards(filtered)
-  }, [orchards, user, searchTerm, statusFilter, selectedCategory])
+  }, [orchards, searchTerm, statusFilter, selectedCategory])
 
   const getCompletionPercentage = (orchard) => {
     const totalPockets = (orchard.intended_pockets && orchard.intended_pockets > 1) ? orchard.intended_pockets : orchard.total_pockets || 1;
@@ -546,53 +530,49 @@ export default function MyOrchardsPage() {
                         Created {new Date(orchard.created_at).toLocaleDateString()}
                       </div>
                       
-                      {/* TESTING BUTTONS - Change status for testing filters */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div className="border-t pt-2">
-                          <p className="text-xs text-gray-500 mb-2">Testing: Change Status</p>
-                          <div className="flex gap-1">
-                            <Button 
-                              size="xs" 
-                              onClick={() => handleChangeStatus(orchard.id, 'active')}
-                              className="text-xs bg-green-100 text-green-700 hover:bg-green-200 border-green-300"
-                            >
-                              Active
-                            </Button>
-                            <Button 
-                              size="xs" 
-                              onClick={() => handleChangeStatus(orchard.id, 'completed')}
-                              className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-300"
-                            >
-                              Completed
-                            </Button>
-                            <Button 
-                              size="xs" 
-                              onClick={() => handleChangeStatus(orchard.id, 'paused')}
-                              className="text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-300"
-                            >
-                              Paused
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                      
+                      {/* Pause/Relaunch and Action Buttons */}
                       <div className="flex flex-wrap gap-2 pt-2 mt-auto">
-                        <Link to={`/orchards/${orchard.id}`} className='flex-1 min-w-[100px]'>
+                        <Link to={`/orchards/${orchard.id}`} className='flex-1 min-w-[80px]'>
                           <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                             <Eye className='h-4 w-4 mr-1' />
                             View
                           </Button>
                         </Link>
-                        <Link to={`/edit-orchard/${orchard.id}`} className='flex-1 min-w-[100px]'>
+                        <Link to={`/edit-orchard/${orchard.id}`} className='flex-1 min-w-[80px]'>
                           <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                             <Edit className='h-4 w-4 mr-1' />
                             Edit
                           </Button>
                         </Link>
+                        
+                        {/* Pause/Relaunch Button */}
+                        {orchard.status === 'paused' ? (
                           <Button 
+                            variant='outline' 
+                            size='sm'
+                            onClick={() => handleChangeStatus(orchard.id, 'active')}
+                            className='flex-1 min-w-[100px] backdrop-blur-md bg-green-500/20 border-green-300/50 text-green-200 hover:bg-green-500/30'
+                          >
+                            <PlayCircle className='h-4 w-4 mr-1' />
+                            Relaunch
+                          </Button>
+                        ) : orchard.status === 'active' ? (
+                          <Button 
+                            variant='outline' 
+                            size='sm'
+                            onClick={() => handleChangeStatus(orchard.id, 'paused')}
+                            className='flex-1 min-w-[80px] backdrop-blur-md bg-yellow-500/20 border-yellow-300/50 text-yellow-200 hover:bg-yellow-500/30'
+                          >
+                            <PauseCircle className='h-4 w-4 mr-1' />
+                            Pause
+                          </Button>
+                        ) : null}
+                        
+                        {/* Share Button */}
+                        <Button 
                           variant='outline' 
                           size='sm'
-                          className='flex-1 min-w-[100px] backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
+                          className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
                           onClick={() => {
                             const url = `${window.location.origin}/animated-orchard/${orchard.id}`
                             navigator.clipboard.writeText(url)
@@ -601,17 +581,19 @@ export default function MyOrchardsPage() {
                         >
                           <Share2 className='h-4 w-4' />
                         </Button>
+                        
+                        {/* Delete Button */}
                         <Button 
                           variant='outline' 
                           size='sm'
                           onClick={() => handleDeleteOrchard(orchard.id)}
                           className='backdrop-blur-md bg-red-500/20 border-red-300/50 text-red-200 hover:bg-red-500/30'
                         >
-                        <Trash2 className='h-4 w-4' />
-                      </Button>
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
+                  </CardContent>
               </Card>
                     </CarouselItem>
                   ))}
