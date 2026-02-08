@@ -81,7 +81,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     
     { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
     { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
-    { href: '/sow2grow-calendar', title: 'Journal & Calendar', subtitle: 'Track your spiritual journey' },
+    { href: '/profile?tab=journal', title: 'Journal & Calendar', subtitle: 'Track your spiritual journey' },
     { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
     {
       onClick: () => {

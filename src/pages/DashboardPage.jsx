@@ -1038,7 +1038,7 @@ export default function DashboardPage() {
               </Link>
 
               {/* Journal & Calendar */}
-              <Link to="/sow2grow-calendar">
+              <Link to="/profile?tab=journal">
                 <Button 
                   className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
                   style={{
