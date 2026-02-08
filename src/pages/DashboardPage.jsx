@@ -26,7 +26,8 @@ import {
   Music,
   Megaphone,
   Car,
-  Wrench
+  Wrench,
+  BookOpen
 } from 'lucide-react'
 import { formatCurrency } from '../utils/formatters'
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
@@ -1032,6 +1033,23 @@ export default function DashboardPage() {
                   <div className="text-center">
                     <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
                     <span className="text-sm sm:text-base">Become a S2G Service Provider</span>
+                  </div>
+                </Button>
+              </Link>
+
+              {/* Journal & Calendar */}
+              <Link to="/sow2grow-calendar">
+                <Button 
+                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    borderColor: '#0A1931',
+                    color: 'white'
+                  }}
+                >
+                  <div className="text-center">
+                    <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                    <span className="text-sm sm:text-base">Journal & Calendar</span>
                   </div>
                 </Button>
               </Link>
