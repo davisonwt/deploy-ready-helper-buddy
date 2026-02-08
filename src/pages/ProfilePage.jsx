@@ -62,6 +62,13 @@ export default function ProfilePage() {
   useEffect(() => {
     setMounted(true)
     
+    // Check for tab query parameter
+    const searchParams = new URLSearchParams(location.search)
+    const tabParam = searchParams.get('tab')
+    if (tabParam && ['profile', 'journal', 'recipes'].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+    
     // Show message if redirected here for missing info
     if (location.state?.message) {
       toast({
@@ -71,7 +78,7 @@ export default function ProfilePage() {
       })
       setEditing(true) // Auto-enter edit mode
     }
-  }, [location.state, toast])
+  }, [location.state, location.search, toast])
   
   const [formData, setFormData] = useState({
     first_name: user?.first_name || "",
