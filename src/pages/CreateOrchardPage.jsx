@@ -693,7 +693,7 @@ const fetchOrchardById = async (oid) => {
       {/* Content Container */}
       <div className="relative z-10">
       {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white">
         <div className="flex items-center space-x-6">
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-create shadow-lg">
             {user?.avatar_url ? (
@@ -750,7 +750,7 @@ const fetchOrchardById = async (oid) => {
       
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#f8a5c2' }} className="flex items-center gap-2">
                 <Sprout className="h-5 w-5" style={{ color: '#f472b6' }} />
@@ -845,7 +845,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Orchard Type Selection */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#7dd3fc' }} className="flex items-center gap-2">
                 <Sprout className="h-5 w-5" style={{ color: '#38bdf8' }} />
@@ -854,7 +854,7 @@ const fetchOrchardById = async (oid) => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-sky-400 mb-4">
+                <label className="block text-sm font-medium text-gray-800 mb-4">
                   Choose your orchard type:
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -897,7 +897,7 @@ const fetchOrchardById = async (oid) => {
                 {/* Number of Pockets for Full Value Orchard */}
                 {formData.orchard_type === 'full_value' && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-sky-400 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       Number of Pockets
                     </label>
                     <Input
@@ -918,7 +918,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Financial Details */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#6ee7b7' }} className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" style={{ color: '#34d399' }} />
@@ -1105,7 +1105,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Purpose & Impact */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#c084fc' }} className="flex items-center gap-2">
                 <Heart className="h-5 w-5" style={{ color: '#a855f7' }} />
@@ -1175,7 +1175,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
 
           {/* Commission Marketing */}
-          <Card className="bg-white/90 backdrop-blur-sm border-blue-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-blue-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#3b82f6' }} className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -1219,7 +1219,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Media Upload */}
-          <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
+          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#fb923c' }} className="flex items-center gap-2">
                 <Camera className="h-5 w-5" style={{ color: '#f97316' }} />

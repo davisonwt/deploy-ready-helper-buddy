@@ -128,20 +128,20 @@ export default function CurrencyCalculator({ onUseAmount }) {
   const selectedCurrencyData = currencies.find(c => c.code === selectedCurrency)
 
   return (
-    <Card className="bg-blue-50/80 backdrop-blur-sm border-blue-200 shadow-lg">
+    <Card className="bg-blue-50 backdrop-blur-sm border-blue-200 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-blue-800 flex items-center gap-2">
+        <CardTitle className="text-blue-900 flex items-center gap-2">
           <Calculator className="h-5 w-5" />
           Currency Calculator
         </CardTitle>
-        <p className="text-sm text-blue-600">
+        <p className="text-sm text-blue-700">
           Convert your local currency to USDC for the seed value
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-blue-700 mb-2">
+             <label className="block text-sm font-medium text-blue-900 mb-2">
               Your Currency
             </label>
             <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
@@ -159,7 +159,7 @@ export default function CurrencyCalculator({ onUseAmount }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-blue-700 mb-2">
+            <label className="block text-sm font-medium text-blue-900 mb-2">
               Amount ({selectedCurrencyData?.symbol || selectedCurrency})
             </label>
             <Input
@@ -207,9 +207,9 @@ export default function CurrencyCalculator({ onUseAmount }) {
           </div>
         )}
 
-        <div className="text-xs text-gray-500 mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="font-medium text-yellow-800 mb-1">⚠️ Disclaimer:</p>
-          <p>Exchange rates are approximate and for estimation purposes only. 
+        <div className="text-xs text-yellow-900 mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+          <p className="font-medium text-yellow-900 mb-1">⚠️ Disclaimer:</p>
+          <p className="text-yellow-800">Exchange rates are approximate and for estimation purposes only. 
           Actual rates may vary. Please verify current exchange rates before finalizing your seed value.</p>
         </div>
       </CardContent>
