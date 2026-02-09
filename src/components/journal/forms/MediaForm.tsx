@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Image as ImageIcon, Mic, Video, X, Trash2, Play, Pause } from 'lucide-react'
+import { Image as ImageIcon, Mic, Video, Trash2, Pause } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Badge } from '../../ui/badge'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { saveJournalEntry } from '@/integrations/firebase/firestore'
-import { uploadUserPhoto, uploadVoiceNote, uploadVideo } from '@/integrations/firebase/storage'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -21,10 +17,8 @@ interface MediaFormProps {
 }
 
 export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaFormProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
 
   const [photos, setPhotos] = useState<string[]>([])
   const [photoFiles, setPhotoFiles] = useState<File[]>([])
@@ -49,44 +43,25 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
   const loadEntry = async () => {
     if (!user) return
     
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    
-    if (isFirebaseConfigured && firebaseUser) {
-      try {
-        const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          const entry = result.data
-          setPhotos(entry.photos || [])
-          setVoiceNotes(entry.voiceNotes || [])
-          setVideos(entry.videos || [])
+    try {
+      const { data } = await supabase
+        .from('journal_entries' as any)
+        .select('images, voice_notes, videos')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+      
+      if (data) {
+        setPhotos(((data as any).images || []) as string[])
+        setVideos(((data as any).videos || []) as string[])
+        if ((data as any).voice_notes) {
+          setVoiceNotes(((data as any).voice_notes as string[]).map((url: string) => ({ url, transcript: '', duration: 0 })))
         }
-      } catch (error) {
-        console.error('Error loading entry:', error)
       }
-    }
-    
-    if (supabaseUser) {
-      try {
-        const { data } = await supabase
-          .from('journal_entries' as any)
-          .select('images, voice_notes, videos')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .maybeSingle()
-        
-        if (data) {
-          setPhotos(((data as any).images || []) as string[])
-          setVideos(((data as any).videos || []) as string[])
-          if ((data as any).voice_notes) {
-            setVoiceNotes(((data as any).voice_notes as string[]).map((url: string) => ({ url, transcript: '', duration: 0 })))
-          }
-        }
-      } catch (error) {
-        // Entry doesn't exist yet
-      }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
@@ -103,11 +78,26 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     try {
       const uploadedUrls: string[] = []
       for (const file of photoFiles) {
-        const result = await uploadUserPhoto(user.uid, file)
-        if (result.success) {
-          uploadedUrls.push(result.url)
+        // Upload to Supabase Storage
+        const fileName = `${user.id}/${Date.now()}_${file.name}`
+        const { data, error } = await supabase.storage
+          .from('journal-media')
+          .upload(fileName, file)
+        
+        if (error) {
+          console.error('Upload error:', error)
+          continue
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('journal-media')
+          .getPublicUrl(fileName)
+        
+        if (urlData?.publicUrl) {
+          uploadedUrls.push(urlData.publicUrl)
         }
       }
+      
       setPhotos([...photos, ...uploadedUrls])
       setPhotoFiles([])
       toast({
@@ -143,9 +133,23 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
         if (user) {
           try {
             const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' })
-            const result = await uploadVoiceNote(user.uid, file)
-            if (result.success) {
-              setVoiceNotes([...voiceNotes, { url: result.url, transcript: '', duration: recordingTime }])
+            const fileName = `${user.id}/voice/${Date.now()}_${file.name}`
+            
+            const { error } = await supabase.storage
+              .from('journal-media')
+              .upload(fileName, file)
+            
+            if (error) {
+              console.error('Voice note upload error:', error)
+              return
+            }
+            
+            const { data: urlData } = supabase.storage
+              .from('journal-media')
+              .getPublicUrl(fileName)
+            
+            if (urlData?.publicUrl) {
+              setVoiceNotes([...voiceNotes, { url: urlData.publicUrl, transcript: '', duration: recordingTime }])
               toast({
                 title: 'Voice note recorded!',
                 description: 'Voice note saved successfully',
@@ -199,9 +203,23 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     try {
       const uploadedUrls: string[] = []
       for (const file of videoFiles) {
-        const result = await uploadVideo(user.uid, file)
-        if (result.success) {
-          uploadedUrls.push(result.url)
+        const fileName = `${user.id}/videos/${Date.now()}_${file.name}`
+        
+        const { error } = await supabase.storage
+          .from('journal-media')
+          .upload(fileName, file)
+        
+        if (error) {
+          console.error('Video upload error:', error)
+          continue
+        }
+        
+        const { data: urlData } = supabase.storage
+          .from('journal-media')
+          .getPublicUrl(fileName)
+        
+        if (urlData?.publicUrl) {
+          uploadedUrls.push(urlData.publicUrl)
         }
       }
       setVideos([...videos, ...uploadedUrls])
@@ -232,72 +250,49 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
 
     setSaving(true)
     
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     const time = getCreatorTime(selectedDate, 0, 0)
     
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      photos,
-      voiceNotes,
-      videos,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
     try {
-      if (isFirebaseConfigured && firebaseUser) {
-        await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+      const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+      
+      const { data: existingEntry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .single()
+      
+      const entryPayload = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        images: photos || [],
+        voice_notes: voiceNotes.map(v => v.url) || [],
+        videos: videos || [],
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
       }
       
-      if (supabaseUser) {
-        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
-        
-        const { data: existingEntry } = await supabase
+      if (existingEntry) {
+        await supabase
           .from('journal_entries')
-          .select('id')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-        
-        const entryPayload = {
-          user_id: supabaseUser.id,
-          yhwh_year: yhwhDate.year,
-          yhwh_month: yhwhDate.month,
-          yhwh_day: yhwhDate.day,
-          yhwh_weekday: yhwhDate.weekDay,
-          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
-          gregorian_date: gregorianDateStr,
-          images: photos || [],
-          voice_notes: voiceNotes.map(v => v.url) || [],
-          videos: videos || [],
-          part_of_yowm: time.part || null,
-          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
-          is_shabbat: yhwhDate.weekDay === 7,
-          is_tequvah: false,
-        }
-        
-        if (existingEntry) {
-          await supabase
-            .from('journal_entries')
-            .update(entryPayload)
-            .eq('id', existingEntry.id)
-        } else {
-          await supabase
-            .from('journal_entries')
-            .insert(entryPayload)
-        }
-        
-        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+          .update(entryPayload)
+          .eq('id', existingEntry.id)
+      } else {
+        await supabase
+          .from('journal_entries')
+          .insert(entryPayload)
       }
+      
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
       
       toast({
         title: 'Saved!',
@@ -449,4 +444,3 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
     </div>
   )
 }
-

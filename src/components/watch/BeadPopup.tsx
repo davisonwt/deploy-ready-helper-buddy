@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { getJournalEntry } from '@/integrations/firebase/firestore'
 import { supabase } from '@/integrations/supabase/client'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -56,9 +53,7 @@ function getFeastDayName(month: number, day: number): string | null {
 }
 
 export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
-  const user = firebaseUser || supabaseUser
+  const { user } = useAuth()
   const { toast } = useToast()
 
   const [journalEntry, setJournalEntry] = useState<any>(null)
@@ -84,30 +79,17 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
 
     setLoading(true)
     try {
-      const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .single()
 
-      if (isFirebaseConfigured && firebaseUser) {
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          setJournalEntry(result.data)
-          setLoading(false)
-          return
-        }
-      }
-
-      if (supabaseUser) {
-        const { data } = await supabase
-          .from('journal_entries')
-          .select('*')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-
-        if (data) {
-          setJournalEntry(data)
-        }
+      if (data) {
+        setJournalEntry(data)
       }
     } catch (error) {
       console.error('Error loading journal entry:', error)
@@ -134,13 +116,11 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
   }
 
   const handleDelete = async (type: string) => {
-    if (!supabaseUser || !journalEntry?.id) return
+    if (!user || !journalEntry?.id) return
     
     if (!confirm(`Are you sure you want to delete this ${type} entry?`)) return
 
     try {
-      // For simplicity, we'll just clear the content field for the specific type
-      // In a more complex setup, you might have separate tables for each type
       const { error } = await supabase
         .from('journal_entries')
         .update({ content: null })
