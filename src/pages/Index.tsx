@@ -202,39 +202,39 @@ function IndexContent() {
       <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12">
-            <Card className="text-center bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200 hover:shadow-lg transition-all duration-300">
+            <Card style={{ background: 'linear-gradient(to bottom right, #fce7f3, #fdf2f8)', color: '#1a1a1a' }} className="text-center border-pink-200 hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6 sm:p-8">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">scriptural giving</h3>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" style={{ color: '#4a3228' }}>scriptural giving</h3>
+                <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: '#5c4033' }}>
                   give with joy, not just duty,<br />
                   first fruits and love, your tithe of beauty.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-green-100 to-green-50 border-green-200 hover:shadow-lg transition-all duration-300">
+            <Card style={{ background: 'linear-gradient(to bottom right, #dcfce7, #f0fdf4)', color: '#1a1a1a' }} className="text-center border-green-200 hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6 sm:p-8">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community support</h3>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" style={{ color: '#4a3228' }}>community support</h3>
+                <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: '#5c4033' }}>
                   sowers sow, bestowers flow;<br />
                   shared harvest makes the body grow.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200 hover:shadow-lg transition-all duration-300">
+            <Card style={{ background: 'linear-gradient(to bottom right, #f3e8ff, #faf5ff)', color: '#1a1a1a' }} className="text-center border-purple-200 hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6 sm:p-8">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">s2g farm mall</h3>
-                <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
+                <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" style={{ color: '#4a3228' }}>s2g farm mall</h3>
+                <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: '#5c4033' }}>
                   each stall blooms, each hand gives;<br />
                   fruit shared fresh, the body lives.
                 </p>
