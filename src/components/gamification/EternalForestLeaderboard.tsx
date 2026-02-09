@@ -291,7 +291,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         <Button
           onClick={() => navigate('/dashboard')}
           variant="outline"
-          className="bg-background/80 backdrop-blur-md hover:bg-background"
+          className="bg-black/60 backdrop-blur-md hover:bg-black/80 text-white border-white/20"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
@@ -299,7 +299,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
         <Button
           onClick={findMyTree}
           variant="secondary"
-          className="bg-background/80 backdrop-blur-md hover:bg-background"
+          className="bg-black/60 backdrop-blur-md hover:bg-black/80 text-white border-white/20"
         >
           <Compass className="h-4 w-4 mr-2" />
           Find My Tree
@@ -309,7 +309,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
             onClick={zoomIn}
             variant="outline"
             size="icon"
-            className="bg-background/80 backdrop-blur-md"
+            className="bg-black/60 backdrop-blur-md hover:bg-black/80 text-white border-white/20"
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -317,7 +317,7 @@ export function EternalForestLeaderboard({ className = '' }: EternalForestLeader
             onClick={zoomOut}
             variant="outline"
             size="icon"
-            className="bg-background/80 backdrop-blur-md"
+            className="bg-black/60 backdrop-blur-md hover:bg-black/80 text-white border-white/20"
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
