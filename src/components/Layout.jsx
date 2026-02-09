@@ -44,7 +44,7 @@ import OnboardingTour from "./onboarding/OnboardingTour"
 import { VoiceCommands } from "./voice/VoiceCommands"
 import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
-import { SupportPanel } from "./SupportPanel"
+
 import { GosatPanel } from "./GosatPanel"
 import { YHVHDaysPanel } from "./YHVHDaysPanel"
 // Lazy load CommunityChatButton to avoid React initialization issues
@@ -105,7 +105,7 @@ function Layout({ children }) {
   const [showVoiceCommands, setShowVoiceCommands] = useState(false)
   const [isGardenOpen, setIsGardenOpen] = useState(false)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
-  const [isSupportOpen, setIsSupportOpen] = useState(false)
+  
   const [isGosatOpen, setIsGosatOpen] = useState(false)
   const [isYHVHDaysOpen, setIsYHVHDaysOpen] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -172,14 +172,6 @@ function Layout({ children }) {
       items: [
         { name: "Tithing", href: "/tithing", icon: HandHeart },
         { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
-      ]
-    },
-    {
-      name: "Support",
-      icon: Heart,
-      className: 'support-tour',
-      items: [
-        { name: "Support Us", href: "/support-us", icon: Heart }
       ]
     },
       ...(shouldShowAdminButton ? [{
@@ -402,41 +394,6 @@ function Layout({ children }) {
               >
                 <Cloud className="h-3 w-3 mr-1 flex-shrink-0" />
                 <span className="truncate text-center leading-tight">Let It Rain</span>
-              </button>
-
-              {/* Support Button */}
-              <button
-                onClick={() => setIsSupportOpen(true)}
-                className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
-                  hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                  ${isActive('/support-us') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
-                  support-tour
-                `}
-                style={{
-                  backgroundColor: isActive('/support-us') ? currentTheme.accent : currentTheme.secondaryButton,
-                  borderColor: isActive('/support-us') ? currentTheme.accent : currentTheme.cardBorder,
-                  color: currentTheme.textPrimary,
-                  borderRadius: '21px',
-                  boxShadow: isActive('/support-us')
-                    ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
-                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                  ringColor: currentTheme.accent,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive('/support-us')) {
-                    e.currentTarget.style.backgroundColor = currentTheme.accent;
-                    e.currentTarget.style.borderColor = currentTheme.accent;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive('/support-us')) {
-                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                    e.currentTarget.style.borderColor = currentTheme.cardBorder;
-                  }
-                }}
-              >
-                <Heart className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span className="truncate text-center leading-tight">Support</span>
               </button>
 
               {/* Gosat's Button - Only show if admin/gosat */}
@@ -840,8 +797,6 @@ function Layout({ children }) {
       {/* 364yhvh Days Panel */}
       <YHVHDaysPanel isOpen={isYHVHDaysOpen} onClose={() => setIsYHVHDaysOpen(false)} />
       
-      {/* Support Panel */}
-      <SupportPanel isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       
       {/* Gosat Panel */}
       <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />

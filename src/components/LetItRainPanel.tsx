@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { X, Cloud, HandHeart, Gift } from 'lucide-react'
+import { X, Cloud, HandHeart, Gift, Heart } from 'lucide-react'
 import { launchSparkles, floatingScore, playSoundEffect } from '@/utils/confetti'
 
 interface LetItRainPanelProps {
@@ -62,6 +62,7 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
     { href: '/tithing', title: 'Tithing', subtitle: 'Give 10% · Support the work', icon: HandHeart },
     { href: '/free-will-gifting', title: 'Free-Will Gifting', subtitle: 'Give as led · Any amount', icon: Gift },
     { href: '/364yhvh-orchards', title: 'Rain on Orchards', subtitle: 'Support community projects', icon: Cloud },
+    { href: '/support-us', title: 'Support Us', subtitle: 'Help grow the community', icon: Heart },
   ]
 
   const quickActions = [
