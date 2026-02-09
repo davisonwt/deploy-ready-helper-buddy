@@ -15,12 +15,17 @@ import {
   X,
   RefreshCw,
   Shield,
-  Clock
+  Clock,
+  Flag,
+  Ban
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoles } from '@/hooks/useRoles';
+import { GoSatAlertBadge } from './GoSatAlertBadge';
+import { FlaggedContentTab } from './FlaggedContentTab';
+import { ChatRoomMonitorTab } from './ChatRoomMonitorTab';
 
 interface ChatRoom {
   id: string;
@@ -36,14 +41,14 @@ interface ChatRoom {
 export function GoSatGhostAccessMonitor() {
   const { user } = useAuth();
   const { isAdminOrGosat } = useRoles();
-  const [activeTab, setActiveTab] = useState('chats');
+  const [activeTab, setActiveTab] = useState('flagged');
   const [loading, setLoading] = useState(true);
   const [chats, setChats] = useState<ChatRoom[]>([]);
   const [groups, setGroups] = useState<ChatRoom[]>([]);
   const [liveRooms, setLiveRooms] = useState<ChatRoom[]>([]);
   const [radioChannels, setRadioChannels] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<ChatRoom | null>(null);
+  const [flaggedCount, setFlaggedCount] = useState(0);
 
   useEffect(() => {
     if (!isAdminOrGosat) {
@@ -51,8 +56,24 @@ export function GoSatGhostAccessMonitor() {
       return;
     }
     fetchAllContent();
+    fetchFlaggedCount();
     setupRealtimeSubscriptions();
   }, [isAdminOrGosat, activeTab]);
+
+  const fetchFlaggedCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('content_flags')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      if (!error) {
+        setFlaggedCount(count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching flagged count:', error);
+    }
+  };
 
   const fetchAllContent = async () => {
     try {
@@ -140,25 +161,25 @@ export function GoSatGhostAccessMonitor() {
       )
       .subscribe();
 
-    // Subscribe to radio_slots changes
-    const radioChannel = supabase
-      .channel('gosat-ghost-monitor-radio')
+    // Subscribe to content_flags changes
+    const flagsChannel = supabase
+      .channel('gosat-ghost-monitor-flags')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'radio_slots',
+          table: 'content_flags',
         },
         () => {
-          fetchAllContent();
+          fetchFlaggedCount();
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(roomsChannel);
-      supabase.removeChannel(radioChannel);
+      supabase.removeChannel(flagsChannel);
     };
   };
 
@@ -190,97 +211,12 @@ export function GoSatGhostAccessMonitor() {
     }
   };
 
-  const renderContentList = (items: ChatRoom[]) => {
-    if (loading) {
-      return <div className="text-center py-8 text-gray-400">Loading...</div>;
-    }
-
-    if (items.length === 0) {
-      return <div className="text-center py-8 text-gray-400">No content found</div>;
-    }
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((item) => {
-          const isNew = new Date(item.created_at) > new Date(Date.now() - 3600000); // Last hour
-          const hasFlag = Math.random() > 0.9; // Simulated flag detection
-
-          return (
-            <Card
-              key={item.id}
-              className={`cursor-pointer transition-all hover:shadow-lg ${
-                hasFlag ? 'border-red-500 bg-red-50/10' : ''
-              } ${isNew ? 'ring-2 ring-amber-500/50' : ''}`}
-              onClick={() => setSelectedItem(item)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-sm mb-1 truncate">{item.name || 'Unnamed'}</h3>
-                    <p className="text-xs text-gray-400">
-                      {(item as any).creator?.display_name || (item as any).creator_name || 'Unknown'} • {new Date(item.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  {isNew && <Badge className="bg-amber-500 text-white text-xs">NEW</Badge>}
-                  {hasFlag && (
-                    <Badge className="bg-red-500 text-white text-xs ml-2">
-                      <AlertCircle className="w-3 h-3 mr-1" />
-                      FLAGGED
-                    </Badge>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-2 mt-3">
-                  <Users className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400">{item.participant_count || 0} participants</span>
-                </div>
-
-                {hasFlag && (
-                  <div className="mt-3 p-2 bg-red-500/20 rounded text-xs text-red-400 border border-red-500/30">
-                    Inappropriate Content Detected
-                  </div>
-                )}
-
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(item.id);
-                    }}
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    DELETE
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className="flex-1 text-xs bg-green-600 hover:bg-green-700"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleApprove(item.id);
-                    }}
-                  >
-                    <Check className="w-3 h-3 mr-1" />
-                    APPROVE
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    );
-  };
-
   if (!isAdminOrGosat) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Shield className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-400">GoSat access required</p>
+          <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">GoSat access required</p>
         </CardContent>
       </Card>
     );
@@ -292,19 +228,25 @@ export function GoSatGhostAccessMonitor() {
       <Card className="bg-gradient-to-r from-amber-500/20 to-purple-500/20 border-amber-500/30">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-amber-300 flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                GoSat's Ghost Access – Real-Time Community Oversight
-              </h2>
-              <p className="text-sm text-gray-300 mt-1">
-                Silently monitor & moderate every new chat, room, radio, or community created by users
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-amber-300 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  GoSat's Ghost Access – Real-Time Community Oversight
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Silently monitor & moderate every new chat, room, radio, or community created by users
+                </p>
+              </div>
+              <GoSatAlertBadge />
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchAllContent}
+              onClick={() => {
+                fetchAllContent();
+                fetchFlaggedCount();
+              }}
               className="border-amber-500/30 text-amber-300"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -315,14 +257,23 @@ export function GoSatGhostAccessMonitor() {
       </Card>
 
       {/* Lock Icon Notice */}
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-400 bg-gray-800/50 p-2 rounded">
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded">
         <Shield className="w-4 h-4" />
         <span>Users cannot see GoSat presence – 100% hidden monitoring</span>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="flagged" className="relative">
+            <Flag className="w-4 h-4 mr-2" />
+            Flagged Content
+            {flaggedCount > 0 && (
+              <Badge className="ml-2 bg-destructive text-destructive-foreground text-xs">
+                {flaggedCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="chats">
             <MessageSquare className="w-4 h-4 mr-2" />
             1-on-1 Chats ({chats.length})
@@ -345,23 +296,42 @@ export function GoSatGhostAccessMonitor() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="flagged" className="mt-4">
+          <FlaggedContentTab />
+        </TabsContent>
+
         <TabsContent value="chats" className="mt-4">
-          {renderContentList(chats)}
+          <ChatRoomMonitorTab 
+            rooms={chats} 
+            loading={loading} 
+            onDelete={handleDelete} 
+            onApprove={handleApprove} 
+          />
         </TabsContent>
 
         <TabsContent value="groups" className="mt-4">
-          {renderContentList(groups)}
+          <ChatRoomMonitorTab 
+            rooms={groups} 
+            loading={loading} 
+            onDelete={handleDelete} 
+            onApprove={handleApprove} 
+          />
         </TabsContent>
 
         <TabsContent value="rooms" className="mt-4">
-          {renderContentList(liveRooms)}
+          <ChatRoomMonitorTab 
+            rooms={liveRooms} 
+            loading={loading} 
+            onDelete={handleDelete} 
+            onApprove={handleApprove} 
+          />
         </TabsContent>
 
         <TabsContent value="radio" className="mt-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               {radioChannels.length === 0 ? 'No radio channels found' : `${radioChannels.length} radio channels`}
             </div>
           )}
@@ -369,9 +339,9 @@ export function GoSatGhostAccessMonitor() {
 
         <TabsContent value="announcements" className="mt-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               {announcements.length === 0 ? 'No announcements found' : `${announcements.length} announcements`}
             </div>
           )}
@@ -380,4 +350,3 @@ export function GoSatGhostAccessMonitor() {
     </div>
   );
 }
-

@@ -1491,6 +1491,54 @@ export type Database = {
           },
         ]
       }
+      content_flags: {
+        Row: {
+          ai_confidence: number | null
+          auto_action_taken: string | null
+          content_id: string
+          content_type: string
+          created_at: string
+          detected_terms: string[] | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string | null
+          user_id: string
+          violation_type: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          auto_action_taken?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string
+          detected_terms?: string[] | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity: string
+          status?: string | null
+          user_id: string
+          violation_type: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          auto_action_taken?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          detected_terms?: string[] | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string | null
+          user_id?: string
+          violation_type?: string
+        }
+        Relationships: []
+      }
       courier_deliveries: {
         Row: {
           bestowal_id: string
@@ -1990,6 +2038,41 @@ export type Database = {
           source_type?: string | null
         }
         Relationships: []
+      }
+      gosat_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          flag_id: string
+          id: string
+          is_read: boolean | null
+          priority: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          flag_id: string
+          id?: string
+          is_read?: boolean | null
+          priority?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          flag_id?: string
+          id?: string
+          is_read?: boolean | null
+          priority?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gosat_alerts_flag_id_fkey"
+            columns: ["flag_id"]
+            isOneToOne: false
+            referencedRelation: "content_flags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journal_entries: {
         Row: {
@@ -2692,6 +2775,33 @@ export type Database = {
           streak_days?: number | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      moderation_word_lists: {
+        Row: {
+          category: string
+          id: string
+          is_active: boolean | null
+          severity: string | null
+          updated_at: string
+          words: string[]
+        }
+        Insert: {
+          category: string
+          id?: string
+          is_active?: boolean | null
+          severity?: string | null
+          updated_at?: string
+          words?: string[]
+        }
+        Update: {
+          category?: string
+          id?: string
+          is_active?: boolean | null
+          severity?: string | null
+          updated_at?: string
+          words?: string[]
         }
         Relationships: []
       }
