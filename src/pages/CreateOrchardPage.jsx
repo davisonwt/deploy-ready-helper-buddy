@@ -861,7 +861,7 @@ const fetchOrchardById = async (oid) => {
                   <div 
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                       formData.orchard_type === 'standard' 
-                        ? 'border-green-500 bg-green-50' 
+                        ? 'border-green-500 bg-green-100' 
                         : 'border-gray-300 hover:border-green-400'
                     }`}
                     onClick={() => setFormData(prev => ({ ...prev, orchard_type: 'standard' }))}
@@ -870,10 +870,10 @@ const fetchOrchardById = async (oid) => {
                       <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
                         formData.orchard_type === 'standard' ? 'bg-green-500 border-green-500' : 'border-gray-400'
                       }`}></div>
-                      <h3 className="font-semibold text-gray-800">Standard Orchard</h3>
+                      <h3 className="font-semibold text-gray-900">Standard Orchard</h3>
                     </div>
-                     <p className="text-sm text-gray-600 mb-2">For larger seeds (over 100 USDC)</p>
-                     <p className="text-xs text-gray-500">Divided into 150 USDC pockets for multiple supporters</p>
+                     <p className="text-sm text-gray-700 mb-2">For larger seeds (over 100 USDC)</p>
+                     <p className="text-xs text-gray-600">Divided into 150 USDC pockets for multiple supporters</p>
                   </div>
                   
                   <div 
@@ -888,10 +888,10 @@ const fetchOrchardById = async (oid) => {
                       <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
                         formData.orchard_type === 'full_value' ? 'bg-green-500 border-green-500' : 'border-gray-400'
                       }`}></div>
-                      <h3 className="font-semibold text-gray-800">Full Value Orchard</h3>
+                      <h3 className="font-semibold text-gray-900">Full Value Orchard</h3>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">For smaller seeds (1 - 100 USDC)</p>
-                    <p className="text-xs text-gray-500">Each pocket contains the full seed value + fees</p>
+                    <p className="text-sm text-gray-700 mb-2">For smaller seeds (1 - 100 USDC)</p>
+                    <p className="text-xs text-gray-600">Each pocket contains the full seed value + fees</p>
                   </div>
                 </div>
                 {/* Number of Pockets for Full Value Orchard */}
