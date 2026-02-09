@@ -891,7 +891,7 @@ export default function MemryPage() {
               </div>
 
               {/* Right Side Actions */}
-              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-20">
+              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
                 {/* Profile */}
                 <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center">
                   <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
@@ -1014,7 +1014,7 @@ export default function MemryPage() {
               </div>
 
               {/* Bottom Info - Enhanced Sower Details */}
-              <div className="absolute bottom-20 left-4 right-20 z-20">
+              <div className="absolute bottom-28 left-4 right-20 z-40">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
