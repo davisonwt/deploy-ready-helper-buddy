@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Moon, X } from 'lucide-react'
+import { Moon } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Textarea } from '../../ui/textarea'
 import { Badge } from '../../ui/badge'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { saveJournalEntry } from '@/integrations/firebase/firestore'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -20,10 +17,8 @@ interface NotesFormProps {
 }
 
 export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesFormProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
 
   const [richText, setRichText] = useState('')
   const [dreamEntry, setDreamEntry] = useState('')
@@ -45,41 +40,21 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
   const loadEntry = async () => {
     if (!user) return
     
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    
-    // Load from Firebase
-    if (isFirebaseConfigured && firebaseUser) {
-      try {
-        const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          const entry = result.data
-          setRichText(entry.richText || '')
-          setDreamEntry(entry.dreamEntry || '')
-        }
-      } catch (error) {
-        console.error('Error loading entry:', error)
+    try {
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('content')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .single()
+      
+      if (data?.content) {
+        setRichText(data.content)
       }
-    }
-    
-    // Load from Supabase
-    if (supabaseUser) {
-      try {
-        const { data } = await supabase
-          .from('journal_entries')
-          .select('content')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-        
-        if (data?.content) {
-          setRichText(data.content)
-        }
-      } catch (error) {
-        // Entry doesn't exist yet
-      }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
@@ -94,71 +69,47 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
 
     setSaving(true)
     
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     const time = getCreatorTime(selectedDate, 0, 0)
     
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      richText,
-      dreamEntry,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
     try {
-      // Save to Firebase
-      if (isFirebaseConfigured && firebaseUser) {
-        await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+      const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+      
+      const { data: existingEntry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .single()
+      
+      const entryPayload = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        content: richText || '',
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
       }
       
-      // Save to Supabase
-      if (supabaseUser) {
-        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
-        
-        const { data: existingEntry } = await supabase
+      if (existingEntry) {
+        await supabase
           .from('journal_entries')
-          .select('id')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-        
-        const entryPayload = {
-          user_id: supabaseUser.id,
-          yhwh_year: yhwhDate.year,
-          yhwh_month: yhwhDate.month,
-          yhwh_day: yhwhDate.day,
-          yhwh_weekday: yhwhDate.weekDay,
-          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
-          gregorian_date: gregorianDateStr,
-          content: richText || '',
-          part_of_yowm: time.part || null,
-          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
-          is_shabbat: yhwhDate.weekDay === 7,
-          is_tequvah: false,
-        }
-        
-        if (existingEntry) {
-          await supabase
-            .from('journal_entries')
-            .update(entryPayload)
-            .eq('id', existingEntry.id)
-        } else {
-          await supabase
-            .from('journal_entries')
-            .insert(entryPayload)
-        }
-        
-        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+          .update(entryPayload)
+          .eq('id', existingEntry.id)
+      } else {
+        await supabase
+          .from('journal_entries')
+          .insert(entryPayload)
       }
+      
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
       
       toast({
         title: 'Saved!',
@@ -244,4 +195,3 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
     </div>
   )
 }
-
