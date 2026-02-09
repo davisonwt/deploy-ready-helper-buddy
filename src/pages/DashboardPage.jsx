@@ -849,8 +849,15 @@ export default function DashboardPage() {
           <CardHeader className="p-4 sm:p-5 md:p-6">
             <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-6">
+            
+            {/* CREATE & MANAGE Section */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: currentTheme.textSecondary }}>
+                <span className="w-6 h-0.5 rounded" style={{ backgroundColor: currentTheme.accent }}></span>
+                Create & Manage
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Link to="/create-orchard">
                 <Button 
                   className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
@@ -969,22 +976,111 @@ export default function DashboardPage() {
                 </Button>
               </Link>
 
-              {/* 364ttt - Torah Top Ten */}
-              <Link to="/364ttt">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-                    color: '#fff',
-                    borderColor: '#8b5cf6',
-                  }}
-                >
-                  <div className="text-center">
-                    <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">364ttt</span>
-                  </div>
-                </Button>
-              </Link>
+              </div>
+            </div>
+
+            {/* EXPLORE Section */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: currentTheme.textSecondary }}>
+                <span className="w-6 h-0.5 rounded" style={{ backgroundColor: currentTheme.accent }}></span>
+                Explore
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* 364ttt - Torah Top Ten */}
+                <Link to="/364ttt">
+                  <Button 
+                    className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                      color: '#fff',
+                      borderColor: '#8b5cf6',
+                    }}
+                  >
+                    <div className="text-center">
+                      <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">364ttt</span>
+                    </div>
+                  </Button>
+                </Link>
+
+                {/* Journal & Calendar */}
+                <Link to="/profile?tab=journal">
+                  <Button 
+                    className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                    style={{
+                      background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                      borderColor: '#0A1931',
+                      color: 'white'
+                    }}
+                  >
+                    <div className="text-center">
+                      <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">Journal & Calendar</span>
+                    </div>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* JOIN OUR TEAM Section */}
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: currentTheme.textSecondary }}>
+                <span className="w-6 h-0.5 rounded" style={{ backgroundColor: currentTheme.accent }}></span>
+                Join Our Team
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                {/* Become a Whisperer */}
+                <Link to="/become-whisperer">
+                  <Button 
+                    className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                    style={{
+                      background: currentTheme.primaryButton,
+                      color: currentTheme.textPrimary,
+                      borderColor: currentTheme.accent,
+                    }}
+                  >
+                    <div className="text-center">
+                      <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">Become a Whisperer</span>
+                    </div>
+                  </Button>
+                </Link>
+
+                {/* Become a S2G Driver */}
+                <Link to="/register-vehicle">
+                  <Button 
+                    className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      color: '#fff',
+                      borderColor: '#10b981',
+                    }}
+                  >
+                    <div className="text-center">
+                      <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">Become a S2G Driver</span>
+                    </div>
+                  </Button>
+                </Link>
+
+                {/* Become a S2G Service Provider */}
+                <Link to="/register-services">
+                  <Button 
+                    className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      color: '#fff',
+                      borderColor: '#f59e0b',
+                    }}
+                  >
+                    <div className="text-center">
+                      <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">Become a S2G Service Provider</span>
+                    </div>
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
               {/* Become a Whisperer */}
               <Link to="/become-whisperer">
@@ -1037,26 +1133,15 @@ export default function DashboardPage() {
                 </Button>
               </Link>
 
-              {/* Journal & Calendar */}
-              <Link to="/profile?tab=journal">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    borderColor: '#0A1931',
-                    color: 'white'
-                  }}
-                >
-                  <div className="text-center">
-                    <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Journal & Calendar</span>
-                  </div>
-                </Button>
-              </Link>
-
-            </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Floating Stats Button */}
+      <StatsFloatingButton />
+    </div>
+  )
+}
       </div>
       
       {/* Floating Stats Button */}

@@ -54,6 +54,8 @@ const LazyAuthButton = lazy(() => import("./firebase/AuthButtonWrapper").then(m 
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
+import { BackButton } from "./navigation/BackButton"
+import { MobileTabBar } from "./navigation/MobileTabBar"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -228,25 +230,30 @@ function Layout({ children }) {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-3 group dashboard-tour">
-              <div 
-                className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg"
-                style={{ borderColor: currentTheme.accent }}
-              >
-                <img 
-                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
-                  alt="sow2grow logo" 
-                  className="w-full h-full object-cover bg-transparent"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
-                  sow2grow
-                </h1>
-                <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
-              </div>
-            </Link>
+            {/* Back Button - shows on sub-pages */}
+            <div className="flex items-center gap-2">
+              <BackButton className="mr-2" />
+              
+              {/* Logo */}
+              <Link to="/dashboard" className="flex items-center space-x-3 group dashboard-tour">
+                <div 
+                  className="w-12 h-12 rounded-full overflow-hidden border-2 shadow-lg"
+                  style={{ borderColor: currentTheme.accent }}
+                >
+                  <img 
+                    src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                    alt="sow2grow logo" 
+                    className="w-full h-full object-cover bg-transparent"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
+                    sow2grow
+                  </h1>
+                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
+                </div>
+              </Link>
+            </div>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-2">
@@ -843,6 +850,9 @@ function Layout({ children }) {
       <Suspense fallback={null}>
         <CommunityChatButton />
       </Suspense>
+
+      {/* Mobile Tab Bar */}
+      <MobileTabBar onOpenGarden={() => setIsGardenOpen(true)} />
 
       {/* Your Progress Button & Modal */}
       <ProgressButton />

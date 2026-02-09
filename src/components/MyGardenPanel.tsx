@@ -1,7 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { X, ChevronDown } from 'lucide-react'
 import { launchSparkles, floatingScore, playSoundEffect } from '@/utils/confetti'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 interface MyGardenPanelProps {
   isOpen: boolean
@@ -63,37 +69,67 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
         closeGarden()
       }
 
-  // Garden cards - EXACTLY matching "My Content" dropdown items
-  const gardenCards = [
-    { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
-    { 
-      href: '/364yhvh-orchards', 
-      title: 'S2G Community Orchards', 
-      subtitle: '50+ projects need your rain',
-      badge: '2 new'
-    },
-    { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
-    { href: '/products', title: 'Community Creations', subtitle: 'Everything in one place' },
-    { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
-    { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
-    { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
-    { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
-    
-    { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
-    { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
-    { href: '/profile?tab=journal', title: 'Journal & Calendar', subtitle: 'Track your spiritual journey' },
-    { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
+  // Garden sections with collapsible groups
+  const gardenSections = [
     {
-      onClick: () => {
-        if (typeof window !== 'undefined' && window.startJitsi) {
-          window.startJitsi('GardenRadioLive');
+      id: 'my-content',
+      title: 'My Content',
+      emoji: '📦',
+      cards: [
+        { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
+        { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
+        { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
+        { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
+      ]
+    },
+    {
+      id: 'community',
+      title: 'Community',
+      emoji: '🌍',
+      cards: [
+        { 
+          href: '/364yhvh-orchards', 
+          title: 'S2G Community Orchards', 
+          subtitle: '50+ projects need your rain',
+          badge: '2 new'
+        },
+        { href: '/products', title: 'Community Creations', subtitle: 'Everything in one place' },
+        { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
+        { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
+      ]
+    },
+    {
+      id: 'services',
+      title: 'Services',
+      emoji: '🛠️',
+      cards: [
+        { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
+        { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
+        { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
+      ]
+    },
+    {
+      id: 'tools',
+      title: 'Tools',
+      emoji: '⚙️',
+      cards: [
+        { href: '/profile?tab=journal', title: 'Journal & Calendar', subtitle: 'Track your spiritual journey' },
+        {
+          onClick: () => {
+            if (typeof window !== 'undefined' && window.startJitsi) {
+              window.startJitsi('GardenRadioLive');
+            }
+            closeGarden();
+          },
+          title: 'Garden Radio Live', 
+          subtitle: 'Jump in now – 12 listening' 
         }
-        closeGarden();
-      },
-      title: 'Garden Radio Live', 
-      subtitle: 'Jump in now – 12 listening' 
+      ]
     }
   ]
+
+  // Default open sections
+  const [openSections, setOpenSections] = useState<string[]>(['my-content', 'community'])
 
   // Quick action routes - matching actual upload/create routes
   const quickActions = [
@@ -178,50 +214,74 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
               })}
             </div>
 
-            {/* Garden cards */}
-            <div className="space-y-5">
-              {gardenCards.map((card, index) => {
-                if (card.onClick) {
-                  // Handle onClick cards (like Garden Radio Live)
-                  return (
-                    <button
-                      key={index}
-                      onClick={card.onClick}
-                      className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl w-full text-left"
-                    >
-                      <div>
-                        <div className="font-semibold text-lg">{card.title}</div>
-                        <span className="text-teal-200 text-sm">{card.subtitle}</span>
-                      </div>
-                      {card.badge && (
-                        <span className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-4 py-2 rounded-full animate-bounce">
-                          {card.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                }
-                // Handle Link cards (normal navigation)
-                return (
-                  <Link
-                    key={index}
-                    to={card.href}
-                    onClick={closeGarden}
-                    className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl"
-                  >
-                    <div>
-                      <div className="font-semibold text-lg">{card.title}</div>
-                      <span className="text-teal-200 text-sm">{card.subtitle}</span>
-                    </div>
-                    {card.badge && (
-                      <span className="absolute top-4 right-4 bg-yellow-400 text-black text-xs font-bold px-4 py-2 rounded-full animate-bounce">
-                        {card.badge}
+            {/* Garden sections with accordion */}
+            <Accordion 
+              type="multiple" 
+              value={openSections}
+              onValueChange={setOpenSections}
+              className="space-y-3"
+            >
+              {gardenSections.map((section) => (
+                <AccordionItem 
+                  key={section.id} 
+                  value={section.id}
+                  className="border-0 bg-white/5 rounded-2xl overflow-hidden"
+                >
+                  <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-white/10 transition-colors [&[data-state=open]>svg]:rotate-180">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{section.emoji}</span>
+                      <span className="font-semibold text-lg">{section.title}</span>
+                      <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                        {section.cards.length}
                       </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3 pb-3">
+                    <div className="space-y-2">
+                      {section.cards.map((card, cardIndex) => {
+                        if (card.onClick) {
+                          return (
+                            <button
+                              key={cardIndex}
+                              onClick={card.onClick}
+                              className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-xl p-4 transition-all hover:scale-[1.02] shadow-lg w-full text-left"
+                            >
+                              <div>
+                                <div className="font-medium text-base">{card.title}</div>
+                                <span className="text-teal-200 text-xs">{card.subtitle}</span>
+                              </div>
+                              {card.badge && (
+                                <span className="bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full">
+                                  {card.badge}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        }
+                        return (
+                          <Link
+                            key={cardIndex}
+                            to={card.href}
+                            onClick={closeGarden}
+                            className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-xl p-4 transition-all hover:scale-[1.02] shadow-lg block"
+                          >
+                            <div>
+                              <div className="font-medium text-base">{card.title}</div>
+                              <span className="text-teal-200 text-xs">{card.subtitle}</span>
+                            </div>
+                            {card.badge && (
+                              <span className="bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full">
+                                {card.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
 
             {/* Daily Mystery Seed */}
             <div
