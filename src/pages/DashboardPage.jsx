@@ -1081,60 +1081,6 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </div>
-
-              {/* Become a Whisperer */}
-              <Link to="/become-whisperer">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: currentTheme.primaryButton,
-                    color: currentTheme.textPrimary,
-                    borderColor: currentTheme.accent,
-                  }}
-                >
-                  <div className="text-center">
-                    <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Become a Whisperer</span>
-                  </div>
-                </Button>
-              </Link>
-
-              {/* Become a S2G Driver */}
-              <Link to="/register-vehicle">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: '#fff',
-                    borderColor: '#10b981',
-                  }}
-                >
-                  <div className="text-center">
-                    <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Become a S2G Driver</span>
-                  </div>
-                </Button>
-              </Link>
-
-              {/* Become a S2G Service Provider */}
-              <Link to="/register-services">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: '#fff',
-                    borderColor: '#f59e0b',
-                  }}
-                >
-                  <div className="text-center">
-                    <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Become a S2G Service Provider</span>
-                  </div>
-                </Button>
-              </Link>
-              </div>
-            </div>
-
           </CardContent>
         </Card>
       </div>
