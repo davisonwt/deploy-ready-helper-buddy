@@ -750,7 +750,7 @@ const fetchOrchardById = async (oid) => {
       
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#f8a5c2' }} className="flex items-center gap-2">
                 <Sprout className="h-5 w-5" style={{ color: '#f472b6' }} />
@@ -845,7 +845,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Orchard Type Selection */}
-          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#7dd3fc' }} className="flex items-center gap-2">
                 <Sprout className="h-5 w-5" style={{ color: '#38bdf8' }} />
@@ -859,9 +859,10 @@ const fetchOrchardById = async (oid) => {
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div 
+                    style={{ backgroundColor: formData.orchard_type === 'standard' ? '#dcfce7' : '#ffffff' }}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                       formData.orchard_type === 'standard' 
-                        ? 'border-green-500 bg-green-100' 
+                        ? 'border-green-500' 
                         : 'border-gray-300 hover:border-green-400'
                     }`}
                     onClick={() => setFormData(prev => ({ ...prev, orchard_type: 'standard' }))}
@@ -877,9 +878,10 @@ const fetchOrchardById = async (oid) => {
                   </div>
                   
                   <div 
+                    style={{ backgroundColor: formData.orchard_type === 'full_value' ? '#dcfce7' : '#ffffff' }}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                       formData.orchard_type === 'full_value' 
-                        ? 'border-green-500 bg-green-50' 
+                        ? 'border-green-500' 
                         : 'border-gray-300 hover:border-green-400'
                     }`}
                     onClick={() => setFormData(prev => ({ ...prev, orchard_type: 'full_value' }))}
@@ -918,7 +920,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Financial Details */}
-          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#6ee7b7' }} className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" style={{ color: '#34d399' }} />
@@ -1105,7 +1107,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Purpose & Impact */}
-          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#c084fc' }} className="flex items-center gap-2">
                 <Heart className="h-5 w-5" style={{ color: '#a855f7' }} />
@@ -1175,7 +1177,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
 
           {/* Commission Marketing */}
-          <Card className="bg-white backdrop-blur-sm border-blue-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-blue-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#3b82f6' }} className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -1219,7 +1221,7 @@ const fetchOrchardById = async (oid) => {
           </Card>
           
           {/* Media Upload */}
-          <Card className="bg-white backdrop-blur-sm border-green-200 shadow-lg">
+          <Card style={{ backgroundColor: '#ffffff', color: '#1a1a1a' }} className="backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#fb923c' }} className="flex items-center gap-2">
                 <Camera className="h-5 w-5" style={{ color: '#f97316' }} />
