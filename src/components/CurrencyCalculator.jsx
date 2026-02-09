@@ -128,7 +128,7 @@ export default function CurrencyCalculator({ onUseAmount }) {
   const selectedCurrencyData = currencies.find(c => c.code === selectedCurrency)
 
   return (
-    <Card className="bg-blue-50 backdrop-blur-sm border-blue-200 shadow-lg">
+    <Card style={{ backgroundColor: '#eff6ff', color: '#1e3a5f' }} className="backdrop-blur-sm border-blue-200 shadow-lg">
       <CardHeader>
         <CardTitle className="text-blue-900 flex items-center gap-2">
           <Calculator className="h-5 w-5" />
