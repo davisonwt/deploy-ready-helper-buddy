@@ -1132,16 +1132,11 @@ export default function DashboardPage() {
                   </div>
                 </Button>
               </Link>
+              </div>
+            </div>
 
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Floating Stats Button */}
-      <StatsFloatingButton />
-    </div>
-  )
-}
       </div>
       
       {/* Floating Stats Button */}
