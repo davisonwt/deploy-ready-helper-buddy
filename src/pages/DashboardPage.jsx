@@ -986,7 +986,7 @@ export default function DashboardPage() {
                   >
                     <div className="text-center">
                       <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">364ttt</span>
+                      <span className="text-sm sm:text-base">Weekly 364 Torah Top Ten</span>
                     </div>
                   </Button>
                 </Link>
