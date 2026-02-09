@@ -40,7 +40,7 @@ import { getCreatorDateSync } from '@/utils/customCalendar'
 import { getDayInfo } from '@/utils/sacredCalendar'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
-import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
+// GoSatGhostAccessThumbnail removed from public dashboard - access via Admin Dashboard only
 import { StatsCards } from '@/components/dashboard/StatsCards'
 import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
 import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser'
@@ -823,19 +823,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card 
-            className="border shadow-xl backdrop-blur-xl overflow-hidden"
-            style={{
-              backgroundColor: currentTheme.cardBg,
-              borderColor: currentTheme.cardBorder,
-            }}
-          >
-            <CardContent className="p-0">
-              <div className="aspect-video w-full">
-                <GoSatGhostAccessThumbnail />
-              </div>
-            </CardContent>
-          </Card>
+          {/* GoSat Ghost Access removed from public dashboard - access via Admin Dashboard only */}
         </div>
 
         {/* Quick Actions */}

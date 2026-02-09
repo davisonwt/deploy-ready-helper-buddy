@@ -114,3 +114,7 @@ verify_jwt = false
 
 [functions.nowpayments-payout-webhook]
 verify_jwt = false
+
+# Content Moderation
+[functions.moderate-content]
+verify_jwt = false
