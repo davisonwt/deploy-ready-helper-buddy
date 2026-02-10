@@ -19,6 +19,7 @@ import {
   UserCheck,
   UserX,
   Ban,
+  Trash2,
   Activity,
   Calendar,
   Mail,
@@ -269,6 +270,39 @@ export function UserManagementDashboard() {
     } catch (error) {
       console.error('Error unsuspending user:', error);
       toast.error('Failed to unsuspend user');
+    }
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    const name = targetUser.display_name || targetUser.email || targetUser.user_id;
+    if (!confirm(`⚠️ DELETE USER ACCOUNT\n\nAre you sure you want to permanently delete "${name}"?\n\nThis will:\n• Remove their auth account\n• Delete their profile & data\n• They can re-register with the same email\n\nThis action CANNOT be undone.`)) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/admin-delete-user',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ target_user_id: targetUser.user_id }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to delete user');
+
+      toast.success('User account deleted successfully. They can re-register if they wish.');
+      await loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Failed to delete user');
     }
   };
 
@@ -526,6 +560,15 @@ export function UserManagementDashboard() {
                               <Ban className="h-4 w-4" />
                             </Button>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteUser(user)}
+                            title="Delete user account"
+                            className="text-destructive hover:text-destructive/80"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
