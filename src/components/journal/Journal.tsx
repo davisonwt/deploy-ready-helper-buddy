@@ -102,6 +102,14 @@ export default function Journal() {
 
       setRawEntries(data || []);
 
+      const safeArray = (val: any): any[] => {
+        if (Array.isArray(val)) return val;
+        if (typeof val === 'string') {
+          try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
+        }
+        return [];
+      };
+
       const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => ({
         id: entry.id,
         yhwhDate: {
@@ -117,8 +125,8 @@ export default function Journal() {
         }),
         content: entry.content,
         mood: entry.mood,
-        tags: entry.tags || [],
-        images: entry.images || [],
+        tags: safeArray(entry.tags),
+        images: safeArray(entry.images),
         createdAt: entry.created_at,
         updatedAt: entry.updated_at,
         partOfYowm: entry.part_of_yowm,

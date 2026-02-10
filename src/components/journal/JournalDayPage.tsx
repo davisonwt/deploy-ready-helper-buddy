@@ -33,14 +33,26 @@ const MOOD_CONFIG = {
 type MoodKey = keyof typeof MOOD_CONFIG;
 
 export default function JournalDayPage({ userId, date, onDateChange, entry, onSaved }: JournalDayPageProps) {
+  // Helper to safely parse array fields that might be strings, null, or actual arrays
+  const safeArray = (val: any): any[] => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try { 
+        const parsed = JSON.parse(val);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch { return []; }
+    }
+    return [];
+  };
+
   const [content, setContent] = useState(entry?.content || '');
   const [mood, setMood] = useState<MoodKey>((entry?.mood as MoodKey) || 'neutral');
-  const [tags, setTags] = useState(entry?.tags?.join(', ') || '');
+  const [tags, setTags] = useState(safeArray(entry?.tags).join(', '));
   const [gratitude, setGratitude] = useState(entry?.gratitude || '');
-  const [images, setImages] = useState<string[]>(entry?.images || []);
-  const [voiceNotes, setVoiceNotes] = useState<string[]>(entry?.voice_notes || []);
-  const [videos, setVideos] = useState<string[]>(entry?.videos || []);
-  const [recipes, setRecipes] = useState<any[]>(entry?.recipes || []);
+  const [images, setImages] = useState<string[]>(safeArray(entry?.images));
+  const [voiceNotes, setVoiceNotes] = useState<string[]>(safeArray(entry?.voice_notes));
+  const [videos, setVideos] = useState<string[]>(safeArray(entry?.videos));
+  const [recipes, setRecipes] = useState<any[]>(safeArray(entry?.recipes));
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -63,12 +75,12 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
   React.useEffect(() => {
     setContent(entry?.content || '');
     setMood((entry?.mood as MoodKey) || 'neutral');
-    setTags(entry?.tags?.join(', ') || '');
+    setTags(safeArray(entry?.tags).join(', '));
     setGratitude(entry?.gratitude || '');
-    setImages(entry?.images || []);
-    setVoiceNotes(entry?.voice_notes || []);
-    setVideos(entry?.videos || []);
-    setRecipes(entry?.recipes || []);
+    setImages(safeArray(entry?.images));
+    setVoiceNotes(safeArray(entry?.voice_notes));
+    setVideos(safeArray(entry?.videos));
+    setRecipes(safeArray(entry?.recipes));
     setActiveSection(null);
   }, [entry, date]);
 
@@ -225,7 +237,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
         images,
         voice_notes: voiceNotes,
         videos,
-        recipes: JSON.stringify(recipes),
+        recipes: recipes,
         part_of_yowm: 0,
         watch: 1,
         is_shabbat: yhwhDate.weekDay === 7,
