@@ -2735,13 +2735,6 @@ export type Database = {
             referencedRelation: "memry_comments"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "memry_comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "memry_posts"
-            referencedColumns: ["id"]
-          },
         ]
       }
       memry_likes: {
