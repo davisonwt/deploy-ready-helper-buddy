@@ -59,6 +59,8 @@ const formSchema = z.object({
   country: z.string().min(1, 'Please select a country'),
   city: z.string().min(2, 'Please enter your city/town'),
   service_areas: z.array(z.string()).min(1, 'Add at least one service area'),
+  service_radius: z.coerce.number().min(1).max(500).optional(),
+  distance_unit: z.enum(['km', 'miles']).optional(),
   hourly_rate: z.coerce.number().min(0, 'Rate must be positive').optional(),
   description: z.string().max(1000, 'Description too long').optional(),
   no_income_confirmed: z.boolean().refine(val => val === true, {
@@ -107,6 +109,8 @@ const ServiceProviderRegistrationForm: React.FC = () => {
       country: '',
       city: '',
       service_areas: [],
+      service_radius: undefined,
+      distance_unit: 'km' as const,
       hourly_rate: undefined,
       description: '',
       no_income_confirmed: false
@@ -142,6 +146,8 @@ const ServiceProviderRegistrationForm: React.FC = () => {
             country: data.country || '',
             city: data.city || '',
             service_areas: data.service_areas || [],
+            service_radius: data.service_radius || undefined,
+            distance_unit: (data.distance_unit as 'km' | 'miles') || 'km',
             hourly_rate: data.hourly_rate || undefined,
             description: data.description || '',
             no_income_confirmed: data.no_income_confirmed || false
@@ -352,6 +358,10 @@ const ServiceProviderRegistrationForm: React.FC = () => {
         country: data.country,
         city: data.city,
         service_areas: data.service_areas,
+        service_radius: data.service_radius 
+          ? (data.distance_unit === 'miles' ? Math.round(data.service_radius * 1.60934) : data.service_radius) 
+          : null,
+        distance_unit: data.distance_unit || 'km',
         hourly_rate: data.hourly_rate || null,
         description: data.description || null,
         portfolio_images: portfolioImages,
@@ -663,6 +673,52 @@ const ServiceProviderRegistrationForm: React.FC = () => {
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="service_radius"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Radius</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 30"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        value={field.value ?? ''}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Optional: Maximum distance you'll travel for jobs
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="distance_unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || 'km'}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-background border z-50">
+                        <SelectItem value="km">Kilometers (km)</SelectItem>
+                        <SelectItem value="miles">Miles</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         );
         
@@ -734,6 +790,9 @@ const ServiceProviderRegistrationForm: React.FC = () => {
                 <div><dt className="font-medium inline">Services:</dt> <dd className="inline">{[...form.watch('services_offered'), ...(form.watch('custom_services') || [])].join(', ')}</dd></div>
                 <div><dt className="font-medium inline">Location:</dt> <dd className="inline">{form.watch('city')}, {form.watch('country')}</dd></div>
                 <div><dt className="font-medium inline">Areas:</dt> <dd className="inline">{form.watch('service_areas').join(', ')}</dd></div>
+                {form.watch('service_radius') && (
+                  <div><dt className="font-medium inline">Service Radius:</dt> <dd className="inline">{form.watch('service_radius')} {form.watch('distance_unit') || 'km'}</dd></div>
+                )}
                 {form.watch('hourly_rate') && (
                   <div><dt className="font-medium inline">Rate:</dt> <dd className="inline">R{form.watch('hourly_rate')}/hr</dd></div>
                 )}

@@ -50,6 +50,9 @@ const countries = [
   'Other',
 ] as const;
 
+const distanceUnits = ['km', 'miles'] as const;
+type DistanceUnit = typeof distanceUnits[number];
+
 const formSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name too long'),
   contactPhone: z.string().min(10, 'Please enter a valid phone number').max(20),
@@ -57,7 +60,8 @@ const formSchema = z.object({
   country: z.string().min(1, 'Please select your country'),
   city: z.string().min(2, 'Please enter your city/town').max(100),
   serviceAreas: z.array(z.string()).min(1, 'Please add at least one service area'),
-  deliveryRadiusKm: z.number().min(1).max(500).optional(),
+  deliveryRadius: z.number().min(1).max(500).optional(),
+  distanceUnit: z.enum(distanceUnits).optional(),
   vehicleType: z.string().min(1, 'Please select a vehicle type'),
   vehicleDescription: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Description too long'),
   noIncomeConfirmed: z.boolean().refine(val => val === true, {
@@ -98,7 +102,8 @@ const VehicleRegistrationForm: React.FC = () => {
       country: '',
       city: '',
       serviceAreas: [],
-      deliveryRadiusKm: undefined,
+      deliveryRadius: undefined,
+      distanceUnit: 'km' as DistanceUnit,
       vehicleType: undefined,
       vehicleDescription: '',
       noIncomeConfirmed: false,
@@ -136,7 +141,8 @@ const VehicleRegistrationForm: React.FC = () => {
           country: data.country || '',
           city: data.city || '',
           serviceAreas: data.service_areas || [],
-          deliveryRadiusKm: data.delivery_radius_km || undefined,
+          deliveryRadius: data.delivery_radius_km || undefined,
+          distanceUnit: (data as any).distance_unit || 'km',
           vehicleType: data.vehicle_type,
           vehicleDescription: data.vehicle_description,
           noIncomeConfirmed: data.no_income_confirmed,
@@ -210,7 +216,10 @@ const VehicleRegistrationForm: React.FC = () => {
         country: data.country,
         city: data.city.trim(),
         service_areas: data.serviceAreas,
-        delivery_radius_km: data.deliveryRadiusKm || null,
+        delivery_radius_km: data.deliveryRadius 
+          ? (data.distanceUnit === 'miles' ? Math.round(data.deliveryRadius * 1.60934) : data.deliveryRadius) 
+          : null,
+        distance_unit: data.distanceUnit || 'km',
         vehicle_type: data.vehicleType,
         vehicle_description: data.vehicleDescription.trim(),
         vehicle_images: uploadedImageUrls,
@@ -466,28 +475,51 @@ const VehicleRegistrationForm: React.FC = () => {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="deliveryRadiusKm"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Delivery Radius (km)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="e.g., 50"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Optional: Maximum distance you're willing to travel
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="deliveryRadius"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Delivery Radius</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 50"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Optional: Maximum distance you're willing to travel
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="distanceUnit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || 'km'}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select unit" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-background border z-50">
+                            <SelectItem value="km">Kilometers (km)</SelectItem>
+                            <SelectItem value="miles">Miles</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 
@@ -561,6 +593,9 @@ const VehicleRegistrationForm: React.FC = () => {
                   <p><span className="text-muted-foreground">Name:</span> {form.getValues('fullName')}</p>
                   <p><span className="text-muted-foreground">Location:</span> {form.getValues('city')}, {form.getValues('country')}</p>
                   <p><span className="text-muted-foreground">Service Areas:</span> {form.getValues('serviceAreas').join(', ')}</p>
+                  {form.getValues('deliveryRadius') && (
+                    <p><span className="text-muted-foreground">Delivery Radius:</span> {form.getValues('deliveryRadius')} {form.getValues('distanceUnit') || 'km'}</p>
+                  )}
                   <p><span className="text-muted-foreground">Vehicle:</span> {form.getValues('vehicleType')}</p>
                   <p><span className="text-muted-foreground">Photos:</span> {images.length + imageUrls.filter(u => !u.startsWith('blob:')).length} uploaded</p>
                 </div>
