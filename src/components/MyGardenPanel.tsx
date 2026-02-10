@@ -107,6 +107,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
         { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
         { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
         { href: '/become-whisperer', title: 'Browse Whisperers', subtitle: 'Find marketing agents to grow your seeds' },
+        { href: '/ambassador-thumbnail', title: 'Become a S2G Ambassador', subtitle: 'Join our ambassador program' },
       ]
     },
     {

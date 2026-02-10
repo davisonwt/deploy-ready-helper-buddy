@@ -807,24 +807,7 @@ export default function DashboardPage() {
         </div>
 
 
-        {/* Marketing Thumbnails Section */}
-        <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
-          <Card 
-            className="border shadow-xl backdrop-blur-xl overflow-hidden"
-            style={{
-              backgroundColor: currentTheme.cardBg,
-              borderColor: currentTheme.cardBorder,
-            }}
-          >
-            <CardContent className="p-0">
-              <div className="aspect-video w-full">
-                <AmbassadorThumbnail />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* GoSat Ghost Access removed from public dashboard - access via Admin Dashboard only */}
-        </div>
+        {/* GoSat Ghost Access removed from public dashboard - access via Admin Dashboard only */}
 
         {/* Quick Actions */}
         <Card 
