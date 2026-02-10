@@ -67,6 +67,12 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
           startDate = new Date(0);
       }
 
+      const getDisplayName = (profile: any) => {
+        const name = profile?.display_name || 
+          `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim();
+        return name || null;
+      };
+
       let entries: LeaderboardEntry[] = [];
       
       if (selectedFilter === 'xp') {
@@ -81,23 +87,25 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
           const userIds = points.map(p => p.user_id);
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, display_name, avatar_url')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
             .in('user_id', userIds);
 
           const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-          entries = points.map((p, i) => {
-            const profile = profileMap.get(p.user_id);
-            return {
-              id: p.user_id,
-              rank: i + 1,
-              username: profile?.display_name || 'Anonymous',
-              avatar_url: profile?.avatar_url || undefined,
-              score: p.total_points || 0,
-              delta: 0,
-              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-            };
-          });
+          entries = points
+            .filter(p => getDisplayName(profileMap.get(p.user_id)))
+            .map((p, i) => {
+              const profile = profileMap.get(p.user_id);
+              return {
+                id: p.user_id,
+                rank: i + 1,
+                username: getDisplayName(profile)!,
+                avatar_url: profile?.avatar_url || undefined,
+                score: p.total_points || 0,
+                delta: 0,
+                badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+              };
+            });
         }
       } else if (selectedFilter === 'bestowals') {
         // Real bestowals data grouped by bestower
@@ -124,23 +132,25 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
         if (sortedIds.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, display_name, avatar_url')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
             .in('user_id', sortedIds.map(([id]) => id));
 
           const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-          entries = sortedIds.map(([id, score], i) => {
-            const profile = profileMap.get(id);
-            return {
-              id,
-              rank: i + 1,
-              username: profile?.display_name || 'Anonymous',
-              avatar_url: profile?.avatar_url || undefined,
-              score,
-              delta: 0,
-              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-            };
-          });
+          entries = sortedIds
+            .filter(([id]) => getDisplayName(profileMap.get(id)))
+            .map(([id, score], i) => {
+              const profile = profileMap.get(id);
+              return {
+                id,
+                rank: i + 1,
+                username: getDisplayName(profile)!,
+                avatar_url: profile?.avatar_url || undefined,
+                score,
+                delta: 0,
+                badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+              };
+            });
         }
       } else if (selectedFilter === 'followers') {
         // Real followers data grouped by following_id
@@ -166,23 +176,25 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
         if (sortedIds.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, display_name, avatar_url')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
             .in('user_id', sortedIds.map(([id]) => id));
 
           const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-          entries = sortedIds.map(([id, score], i) => {
-            const profile = profileMap.get(id);
-            return {
-              id,
-              rank: i + 1,
-              username: profile?.display_name || 'Anonymous',
-              avatar_url: profile?.avatar_url || undefined,
-              score,
-              delta: 0,
-              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-            };
-          });
+          entries = sortedIds
+            .filter(([id]) => getDisplayName(profileMap.get(id)))
+            .map(([id, score], i) => {
+              const profile = profileMap.get(id);
+              return {
+                id,
+                rank: i + 1,
+                username: getDisplayName(profile)!,
+                avatar_url: profile?.avatar_url || undefined,
+                score,
+                delta: 0,
+                badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+              };
+            });
         }
       } else if (selectedFilter === 'streak') {
         // Use level from user_points as streak indicator
@@ -197,23 +209,25 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
           const userIds = points.map(p => p.user_id);
           const { data: profiles } = await supabase
             .from('profiles')
-            .select('user_id, display_name, avatar_url')
+            .select('user_id, display_name, first_name, last_name, avatar_url')
             .in('user_id', userIds);
 
           const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-          entries = points.map((p, i) => {
-            const profile = profileMap.get(p.user_id);
-            return {
-              id: p.user_id,
-              rank: i + 1,
-              username: profile?.display_name || 'Anonymous',
-              avatar_url: profile?.avatar_url || undefined,
-              score: p.level || 1,
-              delta: 0,
-              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-            };
-          });
+          entries = points
+            .filter(p => getDisplayName(profileMap.get(p.user_id)))
+            .map((p, i) => {
+              const profile = profileMap.get(p.user_id);
+              return {
+                id: p.user_id,
+                rank: i + 1,
+                username: getDisplayName(profile)!,
+                avatar_url: profile?.avatar_url || undefined,
+                score: p.level || 1,
+                delta: 0,
+                badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+              };
+            });
         }
       }
 
