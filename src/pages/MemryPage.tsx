@@ -910,7 +910,7 @@ export default function MemryPage() {
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-gradient-to-b from-black/30 to-transparent"
+          className="fixed top-[56px] left-0 right-0 z-30 px-4 py-3 bg-gradient-to-b from-black/30 to-transparent"
         >
           <div className="flex items-center justify-between max-w-lg mx-auto">
             <div className="flex items-center gap-3">
