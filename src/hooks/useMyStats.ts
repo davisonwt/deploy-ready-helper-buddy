@@ -53,35 +53,49 @@ const fetcher = async (userId: string): Promise<StatsData> => {
     .eq('following_id', userId)
     .gte('created_at', today.toISOString());
 
-  // Get daily bestowals (today)
-  const { data: dailyBestowalsData, error: dailyBestowalsError } = await supabase
-    .from('bestowals')
-    .select('amount, orchards(id, title)')
-    .eq('bestower_id', userId)
-    .gte('created_at', today.toISOString());
+  // Get user's orchards first so we can find bestowals RECEIVED
+  const { data: userOrchards } = await supabase
+    .from('orchards')
+    .select('id, title')
+    .eq('user_id', userId);
 
-  if (dailyBestowalsError) {
-    console.error('Error fetching daily bestowals:', dailyBestowalsError);
+  const orchardIds = userOrchards?.map(o => o.id) || [];
+
+  // Get daily bestowals RECEIVED on user's orchards (today)
+  let dailyBestowals = 0;
+  let dailyBestowalsData: any[] = [];
+  if (orchardIds.length > 0) {
+    const { data, error: dailyBestowalsError } = await supabase
+      .from('bestowals')
+      .select('amount, orchards(id, title)')
+      .in('orchard_id', orchardIds)
+      .gte('created_at', today.toISOString());
+
+    if (dailyBestowalsError) {
+      console.error('Error fetching daily bestowals:', dailyBestowalsError);
+    }
+    dailyBestowalsData = data || [];
+    dailyBestowals = dailyBestowalsData.reduce((sum, b) => sum + (b.amount || 0), 0);
   }
 
-  const dailyBestowals = dailyBestowalsData?.reduce((sum, b) => sum + (b.amount || 0), 0) || 0;
-
-  // Get monthly bestowals
+  // Get monthly bestowals RECEIVED on user's orchards
   const firstDayOfMonth = new Date();
   firstDayOfMonth.setDate(1);
   firstDayOfMonth.setHours(0, 0, 0, 0);
 
-  const { data: monthlyBestowalsData, error: monthlyBestowalsError } = await supabase
-    .from('bestowals')
-    .select('amount')
-    .eq('bestower_id', userId)
-    .gte('created_at', firstDayOfMonth.toISOString());
+  let monthlyBestowals = 0;
+  if (orchardIds.length > 0) {
+    const { data: monthlyBestowalsData, error: monthlyBestowalsError } = await supabase
+      .from('bestowals')
+      .select('amount')
+      .in('orchard_id', orchardIds)
+      .gte('created_at', firstDayOfMonth.toISOString());
 
-  if (monthlyBestowalsError) {
-    console.error('Error fetching monthly bestowals:', monthlyBestowalsError);
+    if (monthlyBestowalsError) {
+      console.error('Error fetching monthly bestowals:', monthlyBestowalsError);
+    }
+    monthlyBestowals = monthlyBestowalsData?.reduce((sum, b) => sum + (b.amount || 0), 0) || 0;
   }
-
-  const monthlyBestowals = monthlyBestowalsData?.reduce((sum, b) => sum + (b.amount || 0), 0) || 0;
 
   // Get registered sowers count (total users)
   const { count: registeredSowers, error: sowersError } = await supabase
@@ -198,9 +212,9 @@ export function useMyStats() {
           event: '*',
           schema: 'public',
           table: 'bestowals',
-          filter: `bestower_id=eq.${user.id}`,
         },
         () => {
+          // Re-fetch on any bestowal change (could be received on user's orchards)
           mutate();
         }
       )
