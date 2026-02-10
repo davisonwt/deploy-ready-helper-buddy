@@ -441,13 +441,13 @@ export function UserManagementDashboard() {
       </Card>
 
       {/* Users Table */}
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-visible">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[1100px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
