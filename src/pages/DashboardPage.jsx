@@ -770,11 +770,9 @@ export default function DashboardPage() {
             
             {/* CREATE & MANAGE Section */}
             <div>
-              <h3 className="font-semibold uppercase tracking-wider mb-3 flex items-center gap-2 text-sm" style={{
+              <h3 className="font-semibold tracking-wider mb-3 flex items-center gap-2 text-sm" style={{
               color: currentTheme.textSecondary
-            }}>Create & Manage<span className="w-6 h-0.5 rounded" style={{
-                backgroundColor: currentTheme.accent
-              }}></span>
+            }}>
                 Create & Manage
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
@@ -877,7 +875,7 @@ export default function DashboardPage() {
 
             {/* EXPLORE Section */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{
+              <h3 className="text-sm font-semibold tracking-wider mb-3 flex items-center gap-2" style={{
               color: currentTheme.textSecondary
             }}>
                 <span className="w-6 h-0.5 rounded" style={{
@@ -918,7 +916,7 @@ export default function DashboardPage() {
 
             {/* JOIN OUR TEAM Section */}
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{
+              <h3 className="text-sm font-semibold tracking-wider mb-3 flex items-center gap-2" style={{
               color: currentTheme.textSecondary
             }}>
                 <span className="w-6 h-0.5 rounded" style={{
