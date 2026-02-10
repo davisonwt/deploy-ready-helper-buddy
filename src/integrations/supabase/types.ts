@@ -7437,6 +7437,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_xp: {
+        Args: { amount?: number; user_id_param: string }
+        Returns: Json
+      }
+      add_xp_to_current_user: { Args: { amount?: number }; Returns: Json }
       admin_delete_room: { Args: { target_room_id: string }; Returns: boolean }
       approve_join_request: { Args: { request_id: string }; Returns: boolean }
       approve_radio_schedule_slot: {

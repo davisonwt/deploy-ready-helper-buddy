@@ -169,6 +169,22 @@ export function useGamification() {
       fetchAchievements()
       fetchUserPoints()
       fetchNotifications()
+
+      // Subscribe to real-time XP updates
+      const channel = supabase
+        .channel(`user-xp-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'user_points', filter: `user_id=eq.${user.id}` },
+          () => {
+            fetchUserPoints()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     }
   }, [user])
 

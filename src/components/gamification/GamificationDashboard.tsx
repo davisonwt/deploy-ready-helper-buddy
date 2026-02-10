@@ -97,7 +97,12 @@ const GamificationDashboard = () => {
     }
   }
 
-  const levelProgress = userPoints ? ((userPoints.total_points % 1000) / 1000) * 100 : 0
+  const levelProgress = userPoints ? (() => {
+    const currentLevelThreshold = 50 * ((userPoints.level - 1) * (userPoints.level - 1));
+    const nextLevelThreshold = 50 * (userPoints.level * userPoints.level);
+    const range = nextLevelThreshold - currentLevelThreshold;
+    return range > 0 ? ((userPoints.total_points - currentLevelThreshold) / range) * 100 : 0;
+  })() : 0;
 
   return (
     <div className="space-y-6">
