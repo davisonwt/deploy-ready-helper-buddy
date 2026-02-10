@@ -156,12 +156,13 @@ export default function MyProductsPage() {
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
-                Manage your uploaded products, music, and digital content. Share your creativity with the community.
+                Manage your uploaded seeds — music, books, art, produce & digital content.
               </p>
               <Link to="/products/upload">
                 <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
-                  <Upload className="w-5 h-5 mr-2" />
-                  Upload New Product
+                   <Upload className="w-5 h-5 mr-2" />
+
+                  Upload New Seed
                 </Button>
               </Link>
             </motion.div>
@@ -225,14 +226,14 @@ export default function MyProductsPage() {
             <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
               <CardContent className='p-12 text-center'>
                 <Package className='w-20 h-20 mx-auto text-white/70 mb-4' />
-                <h3 className='text-2xl font-bold mb-2 text-white'>No Products Yet</h3>
+                <h3 className='text-2xl font-bold mb-2 text-white'>No Seeds Yet</h3>
                 <p className='text-white/70 mb-6'>
-                  Start sharing your creativity by uploading your first product
+                  Start sharing your creativity by uploading your first seed
                 </p>
                 <Link to="/products/upload">
                   <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                     <Plus className="w-5 h-5 mr-2" />
-                    Upload Your First Product
+                    Upload Your First Seed
                   </Button>
                 </Link>
               </CardContent>

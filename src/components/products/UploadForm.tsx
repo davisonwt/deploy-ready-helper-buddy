@@ -102,12 +102,13 @@ export default function UploadForm() {
       return;
     }
 
-    if (!coverImage || (releaseType === 'single' ? !mainFile : albumFiles.length === 0)) {
-      toast.error(releaseType === 'single' ? 'Please select both cover image and main file' : 'Please select a cover and at least one audio file for the album');
+    const isAlbum = formData.type === 'music' && releaseType === 'album';
+    if (!coverImage || (isAlbum ? albumFiles.length === 0 : !mainFile)) {
+      toast.error(isAlbum ? 'Please select a cover and at least one audio file for the album' : 'Please select both cover image and main file');
       return;
     }
 
-    if (releaseType === 'album' && albumFiles.length < 8) {
+    if (isAlbum && albumFiles.length < 8) {
       toast.error('Albums must have at least 8 tracks. Use single track upload for shorter releases.');
       return;
     }
@@ -115,7 +116,7 @@ export default function UploadForm() {
     // Check file size limits (Supabase object limit ~50MB per file)
     const perFileLimit = 50 * 1024 * 1024; // 50MB
 
-    if (releaseType === 'album') {
+    if (isAlbum) {
       const tooLarge = albumFiles.find((f) => f.size > perFileLimit);
       if (tooLarge) {
         toast.error(`Track "${tooLarge.name}" is ${(tooLarge.size / 1024 / 1024).toFixed(2)}MB and exceeds the 50MB per-file limit.`);
@@ -190,7 +191,7 @@ export default function UploadForm() {
       // Prepare main upload (single file or album manifest)
       let fileUrlPublic = '';
 
-      if (releaseType === 'album') {
+      if (isAlbum) {
         // Upload each track separately to avoid per-object 50MB limit
         const timestamp = Date.now();
         const baseDir = `products/${user.id}/${timestamp}`;
@@ -347,8 +348,8 @@ export default function UploadForm() {
     <div className="container max-w-3xl mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl">Upload Your Creation</CardTitle>
-          <CardDescription>Share your music, art, or files with the S2G community</CardDescription>
+          <CardTitle className="text-3xl">Upload New Seed</CardTitle>
+          <CardDescription>Share your seeds with the S2G community — music, books, art, produce & more</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -382,34 +383,39 @@ export default function UploadForm() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="music">Music</SelectItem>
+                      <SelectItem value="ebook">E-Book</SelectItem>
+                      <SelectItem value="book">Book (Physical)</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
-                      <SelectItem value="file">File</SelectItem>
+                      <SelectItem value="produce">Produce</SelectItem>
+                      <SelectItem value="file">File / Document</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div>
-                  <Label htmlFor="releaseType">Release Type *</Label>
-                  <Select value={releaseType} onValueChange={(value) => {
-                    setReleaseType(value as 'single' | 'album');
-                    setMainFile(null);
-                    setAlbumFiles([]);
-                    setZipFile(null);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Single or Album" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single Track</SelectItem>
-                      <SelectItem value="album">Album (8+ Tracks)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {releaseType === 'album' && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Albums must have 8+ songs. Upload as ZIP or select multiple files.
-                    </p>
-                  )}
-                </div>
+                {formData.type === 'music' && (
+                  <div>
+                    <Label htmlFor="releaseType">Release Type *</Label>
+                    <Select value={releaseType} onValueChange={(value) => {
+                      setReleaseType(value as 'single' | 'album');
+                      setMainFile(null);
+                      setAlbumFiles([]);
+                      setZipFile(null);
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Single or Album" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Single Track</SelectItem>
+                        <SelectItem value="album">Album (8+ Tracks)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {releaseType === 'album' && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Albums must have 8+ songs. Upload as ZIP or select multiple files.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="category">Category</Label>
@@ -499,9 +505,17 @@ export default function UploadForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="file">{releaseType === 'album' ? 'Album Tracks *' : 'Main File *'}</Label>
+                  <Label htmlFor="file">
+                    {formData.type === 'music' && releaseType === 'album' 
+                      ? 'Album Tracks *' 
+                      : formData.type === 'ebook' ? 'E-Book File (PDF, EPUB) *'
+                      : formData.type === 'book' ? 'Book Preview / Sample (PDF) *'
+                      : formData.type === 'produce' ? 'Product Photo *'
+                      : formData.type === 'art' ? 'Art File (Image, PDF) *'
+                      : 'Main File *'}
+                  </Label>
                   <div className="mt-2 space-y-2">
-                    {releaseType === 'album' && (
+                    {formData.type === 'music' && releaseType === 'album' && (
                       <>
                         <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                           <div className="text-center">
@@ -544,7 +558,7 @@ export default function UploadForm() {
                         ) : (
                           <>
                             <Music className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                            {releaseType === 'album' ? (
+                            {formData.type === 'music' && releaseType === 'album' ? (
                               <p className="text-sm text-muted-foreground">
                                 {albumFiles.length > 0 ? `${albumFiles.length} files selected` : 'Select Multiple Audio Files'}
                               </p>
@@ -560,8 +574,8 @@ export default function UploadForm() {
                         id="file"
                         type="file"
                         className="hidden"
-                        multiple={releaseType === 'album'}
-                        disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
+                        multiple={formData.type === 'music' && releaseType === 'album'}
+                        disabled={extractingZip || (formData.type === 'music' && releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
                           const files = e.target.files;
                           if (!files || files.length === 0) {
@@ -572,7 +586,7 @@ export default function UploadForm() {
                           // Immediately capture files before any async operations
                           const fileList = Array.from(files);
                           
-                          if (releaseType === 'album') {
+                          if (formData.type === 'music' && releaseType === 'album') {
                             // Validate and store files immediately
                             const validFiles = fileList.filter(file => {
                               if (!file) {
@@ -617,7 +631,7 @@ export default function UploadForm() {
                         }}
                       />
                     </label>
-                    {releaseType === 'album' && albumFiles.length > 0 && (
+                    {formData.type === 'music' && releaseType === 'album' && albumFiles.length > 0 && (
                       <>
                         <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
                           <div className="flex items-center justify-between mb-2">
@@ -721,7 +735,7 @@ export default function UploadForm() {
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Upload Product
+                  Upload Seed
                 </>
               )}
             </Button>
