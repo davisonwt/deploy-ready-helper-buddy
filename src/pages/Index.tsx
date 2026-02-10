@@ -122,17 +122,17 @@ function IndexContent() {
                 <button 
                   className="h-9 px-4 text-sm sm:h-10 sm:px-6 sm:text-base rounded-lg border transition-all duration-200"
                   style={{
-                    backgroundColor: currentTheme.primaryButton,
+                    background: currentTheme.primaryButton,
                     color: '#ffffff',
                     borderColor: currentTheme.accent,
                     boxShadow: `0 2px 4px ${currentTheme.shadow}`
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = currentTheme.primaryButtonHover;
+                    e.currentTarget.style.background = currentTheme.primaryButtonHover;
                     e.currentTarget.style.boxShadow = `0 4px 8px ${currentTheme.shadow}`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = currentTheme.primaryButton;
+                    e.currentTarget.style.background = currentTheme.primaryButton;
                     e.currentTarget.style.boxShadow = `0 2px 4px ${currentTheme.shadow}`;
                   }}
                 >
