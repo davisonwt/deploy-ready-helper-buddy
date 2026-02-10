@@ -174,11 +174,16 @@ export const userManagementColumns: ColumnDef<UserData>[] = [
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={() => onDelete?.(user.user_id)}
+              onClick={() => {
+                const name = user.display_name || user.email || user.user_id;
+                if (confirm(`⚠️ DELETE USER ACCOUNT\n\nAre you sure you want to permanently delete "${name}"?\n\nThis will:\n• Remove their auth account\n• Delete their profile & data\n• They can re-register with the same email\n\nThis action CANNOT be undone.`)) {
+                  onDelete?.(user.user_id);
+                }
+              }}
               className="text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete user
+              Delete account
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
