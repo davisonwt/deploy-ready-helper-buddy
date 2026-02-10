@@ -495,8 +495,8 @@ export default function MemryPage() {
 
         return {
           id: `product-${product.id}`,
-          // NOTE: this is sowers.id (not profiles.user_id)
-          user_id: product.sower_id || '',
+          // Use the actual auth user_id from sowers join, fallback to sower_id
+          user_id: sowerUserId || product.sower_id || '',
           content_type: 'new_product' as const,
           media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
           audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
@@ -558,8 +558,8 @@ export default function MemryPage() {
 
         return {
           id: `book-${book.id}`,
-          // NOTE: this is sowers.id (not profiles.user_id)
-          user_id: book.sower_id || '',
+          // Use the actual auth user_id from sowers join, fallback to sower_id
+          user_id: sowerUserId || book.sower_id || '',
           content_type: 'new_book' as const,
           media_url: book.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
           caption: `📚 BOOK: ${book.title}`,
@@ -590,8 +590,8 @@ export default function MemryPage() {
 
         return {
           id: `music-${track.id}`,
-          // NOTE: this is radio_djs.id (not profiles.user_id)
-          user_id: track.dj_id || '',
+          // Use the actual auth user_id from radio_djs join, fallback to dj_id
+          user_id: djUserId || track.dj_id || '',
           content_type: 'music' as const,
           media_url: track.file_url || track.preview_url || '',
           caption: `🎵 MUSIC: ${track.track_title}`,
