@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from '@/lib/zodResolver';
 import { z } from 'zod';
 import { Check, ChevronLeft, ChevronRight, Loader2, User, Car, Image, FileCheck, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
