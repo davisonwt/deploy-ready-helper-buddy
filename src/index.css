@@ -177,21 +177,45 @@ h3, h4, h5, h6, .heading-secondary {
   color: hsl(var(--heading-secondary));
 }
 
-/* Form control styles with new design system */
-input, select, textarea {
-  background-color: hsl(var(--input-bg));
-  color: hsl(var(--input-text));
-  border-color: hsl(var(--input-border));
+/* 
+ * Form control default styles.
+ * These use @layer base so Tailwind utility classes (e.g. text-light-beige, bg-olive-green) 
+ * can override them without needing !important.
+ */
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([role]),
+  select,
+  textarea {
+    background-color: hsl(var(--input-bg));
+    color: hsl(var(--input-text));
+    border-color: hsl(var(--input-border));
+    caret-color: hsl(var(--input-text));
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: hsl(var(--input-border-focus));
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--input-border-focus) / 0.2);
+  }
+
+  input::placeholder, textarea::placeholder, select::placeholder {
+    color: hsl(var(--input-placeholder));
+  }
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: hsl(var(--input-border-focus));
-  outline: none;
-  box-shadow: 0 0 0 2px hsl(var(--input-border-focus) / 0.2);
+/* Light form variant - for white/light background containers */
+.light-form input,
+.light-form select,
+.light-form textarea {
+  color: #1a1a1a !important;
+  background-color: #f8f9fa !important;
+  border-color: #d1d5db !important;
+  caret-color: #1a1a1a;
 }
 
-input::placeholder, textarea::placeholder, select::placeholder {
-  color: hsl(var(--input-placeholder));
+.light-form input::placeholder,
+.light-form textarea::placeholder {
+  color: #6b7280 !important;
 }
 
 /* Line clamp utilities */
