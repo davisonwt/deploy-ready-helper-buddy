@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,6 +71,82 @@ interface Comment {
     display_name: string;
     avatar_url: string;
   };
+}
+
+// 30-second looping audio preview for music posts on Memry feed
+function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [resolvedUrl, setResolvedUrl] = useState<string>('');
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const PREVIEW_DURATION = 30;
+
+  useEffect(() => {
+    let cancelled = false;
+    resolveAudioUrl(mediaUrl, { bucketForKeys: 'music-tracks' }).then(url => {
+      if (!cancelled) setResolvedUrl(url);
+    }).catch(() => {
+      if (!cancelled) setResolvedUrl(mediaUrl);
+    });
+    return () => { cancelled = true; };
+  }, [mediaUrl]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !resolvedUrl) return;
+
+    audio.src = resolvedUrl;
+    audio.load();
+    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      if (audio.currentTime >= PREVIEW_DURATION) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    };
+    const onEnded = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+      audio.pause();
+      audio.src = '';
+    };
+  }, [resolvedUrl]);
+
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) { audio.pause(); setPlaying(false); }
+    else { audio.play().then(() => setPlaying(true)).catch(() => {}); }
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+      <Music className="w-24 h-24 text-white/80 mb-6 animate-pulse" />
+      <audio ref={audioRef} preload="auto" crossOrigin="anonymous" className="hidden" />
+      <div className="flex items-center gap-4 bg-black/30 rounded-full px-6 py-3 backdrop-blur-sm">
+        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
+          {playing ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+        </button>
+        <div className="w-48 h-1.5 bg-white/30 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-white rounded-full transition-all"
+            style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }}
+          />
+        </div>
+        <span className="text-white text-xs font-mono">
+          {Math.floor(currentTime)}s / {PREVIEW_DURATION}s
+        </span>
+      </div>
+      <p className="text-white/80 text-sm mt-4">🎵 30s Preview • Looping</p>
+    </div>
+  );
 }
 
 export default function MemryPage() {
@@ -839,16 +916,7 @@ export default function MemryPage() {
                     playsInline
                   />
                 ) : currentPost.content_type === 'music' ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
-                    <Music className="w-24 h-24 text-white/80 mb-6" />
-                    <audio 
-                      src={currentPost.media_url} 
-                      controls 
-                      autoPlay
-                      className="w-4/5 max-w-sm"
-                    />
-                    <p className="text-white/80 text-sm mt-4">🎵 Audio Track</p>
-                  </div>
+                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center">
                     <img
