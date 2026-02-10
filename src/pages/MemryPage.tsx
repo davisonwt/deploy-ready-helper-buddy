@@ -38,6 +38,7 @@ interface MemryPost {
   content_type: 'photo' | 'video' | 'recipe' | 'music' | 'marketing_video' | 'new_product' | 'new_orchard' | 'new_book';
   media_url: string;
   thumbnail_url?: string;
+  audio_url?: string;
   caption: string;
   recipe_title?: string;
   recipe_ingredients?: string[];
@@ -79,25 +80,66 @@ function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: 
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const PREVIEW_DURATION = 30;
 
+  // Resolve the audio URL (handles bare keys + full Supabase URLs)
   useEffect(() => {
     let cancelled = false;
-    resolveAudioUrl(mediaUrl, { bucketForKeys: 'music-tracks' }).then(url => {
-      if (!cancelled) setResolvedUrl(url);
-    }).catch(() => {
-      if (!cancelled) setResolvedUrl(mediaUrl);
-    });
+    setLoadError(false);
+    console.log('[MusicPreview] Resolving URL for:', mediaUrl);
+
+    const resolve = async () => {
+      let urlToResolve = mediaUrl;
+
+      // Handle manifest.json files (album products)
+      if (mediaUrl.includes('manifest.json')) {
+        try {
+          const resp = await fetch(mediaUrl);
+          const manifest = await resp.json();
+          if (manifest.tracks && manifest.tracks.length > 0) {
+            urlToResolve = manifest.tracks[0].url;
+            console.log('[MusicPreview] Extracted first track from manifest:', urlToResolve);
+          }
+        } catch (err) {
+          console.warn('[MusicPreview] Could not parse manifest:', err);
+        }
+      }
+
+      try {
+        const url = await resolveAudioUrl(urlToResolve, { bucketForKeys: 'music-tracks' });
+        if (!cancelled) {
+          console.log('[MusicPreview] Resolved to:', url);
+          setResolvedUrl(url);
+        }
+      } catch {
+        if (!cancelled) setResolvedUrl(urlToResolve);
+      }
+    };
+
+    resolve();
     return () => { cancelled = true; };
   }, [mediaUrl]);
 
+  // Play audio once URL is resolved
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !resolvedUrl) return;
 
+    setLoadError(false);
     audio.src = resolvedUrl;
     audio.load();
-    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+
+    // Try autoplay (may be blocked by browser policy)
+    const playPromise = audio.play();
+    if (playPromise) {
+      playPromise
+        .then(() => setPlaying(true))
+        .catch((err) => {
+          console.warn('[MusicPreview] Autoplay blocked:', err.message);
+          setPlaying(false);
+        });
+    }
 
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
@@ -107,13 +149,20 @@ function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: 
       }
     };
     const onEnded = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
+    const onError = () => {
+      console.error('[MusicPreview] Audio load error for:', resolvedUrl);
+      setLoadError(true);
+      setPlaying(false);
+    };
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
       audio.pause();
       audio.src = '';
     };
@@ -121,30 +170,50 @@ function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: 
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio) return;
-    if (playing) { audio.pause(); setPlaying(false); }
-    else { audio.play().then(() => setPlaying(true)).catch(() => {}); }
+    if (!audio || !resolvedUrl) return;
+    if (playing) {
+      audio.pause();
+      setPlaying(false);
+    } else {
+      audio.play().then(() => setPlaying(true)).catch((err) => {
+        console.error('[MusicPreview] Play failed:', err);
+      });
+    }
   };
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
-      <Music className="w-24 h-24 text-white/80 mb-6 animate-pulse" />
+      <Music className={`w-24 h-24 text-white/80 mb-6 ${playing ? 'animate-pulse' : ''}`} />
       <audio ref={audioRef} preload="auto" crossOrigin="anonymous" className="hidden" />
-      <div className="flex items-center gap-4 bg-black/30 rounded-full px-6 py-3 backdrop-blur-sm">
-        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
-          {playing ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
-        </button>
-        <div className="w-48 h-1.5 bg-white/30 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-white rounded-full transition-all"
-            style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }}
-          />
-        </div>
-        <span className="text-white text-xs font-mono">
-          {Math.floor(currentTime)}s / {PREVIEW_DURATION}s
-        </span>
-      </div>
-      <p className="text-white/80 text-sm mt-4">🎵 30s Preview • Looping</p>
+      
+      {loadError ? (
+        <p className="text-white/70 text-sm">⚠️ Could not load audio</p>
+      ) : (
+        <>
+          <div className="flex items-center gap-4 bg-black/30 rounded-full px-6 py-3 backdrop-blur-sm">
+            <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
+              {playing ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+            </button>
+            <div className="w-48 h-1.5 bg-white/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all"
+                style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }}
+              />
+            </div>
+            <span className="text-white text-xs font-mono">
+              {Math.floor(currentTime)}s / {PREVIEW_DURATION}s
+            </span>
+          </div>
+          {!playing && currentTime === 0 && (
+            <p className="text-white text-base mt-4 font-semibold animate-bounce">
+              ▶ Tap Play to hear 30s preview
+            </p>
+          )}
+          {playing && (
+            <p className="text-white/80 text-sm mt-4">🎵 30s Preview • Looping</p>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -356,12 +425,17 @@ export default function MemryPage() {
         const avatarUrl = profile?.avatar_url || product.sower?.logo_url || '';
         const username = profile?.username || toHandle(displayName);
 
+        // Detect if this product is music-related
+        const isMusicProduct = (product.category || '').toLowerCase().includes('music') ||
+          (product.file_url || '').match(/\.(mp3|wav|ogg|m4a|flac)(\?|$)/i) != null;
+
         return {
           id: `product-${product.id}`,
           // NOTE: this is sowers.id (not profiles.user_id)
           user_id: product.sower_id || '',
           content_type: 'new_product' as const,
           media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
+          audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
           caption: `🌱 SEED: ${product.title}`,
           likes_count: product.like_count || 0,
           comments_count: 0,
@@ -924,6 +998,12 @@ export default function MemryPage() {
                       alt={currentPost.caption}
                       className="max-w-full max-h-full object-contain"
                     />
+                    {/* Audio preview overlay for music products */}
+                    {currentPost.audio_url && (
+                      <div className="absolute inset-0 flex items-center justify-center z-5">
+                        <MusicPreviewPlayer mediaUrl={currentPost.audio_url} caption={currentPost.caption} />
+                      </div>
+                    )}
                     {/* Notification badge overlay */}
                     <div className="absolute top-20 left-4 right-4 z-10">
                       <Badge 
