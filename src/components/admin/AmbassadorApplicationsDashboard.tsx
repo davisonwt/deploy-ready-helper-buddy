@@ -23,26 +23,33 @@ interface Application {
 export function AmbassadorApplicationsDashboard() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const fetchApplications = async () => {
     setLoading(true);
-    let query = (supabase as any)
-      .from('ambassador_applications')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      let query = supabase
+        .from('ambassador_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (filter !== 'all') {
-      query = query.eq('status', filter);
-    }
+      if (filter !== 'all') {
+        query = query.eq('status', filter);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching applications:', error);
-      toast.error('Failed to load applications');
-    } else {
-      setApplications(data || []);
+      console.log('📋 Ambassador applications query result:', { data, error, filter });
+
+      if (error) {
+        console.error('Error fetching applications:', error);
+        toast.error('Failed to load applications: ' + error.message);
+      } else {
+        setApplications(data || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Unexpected error loading applications');
     }
     setLoading(false);
   };
