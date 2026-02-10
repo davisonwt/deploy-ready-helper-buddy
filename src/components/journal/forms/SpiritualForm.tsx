@@ -41,7 +41,7 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
         .eq('yhwh_year', yhwhDate.year)
         .eq('yhwh_month', yhwhDate.month)
         .eq('yhwh_day', yhwhDate.day)
-        .single()
+        .maybeSingle()
       
       if (data) {
         // Load prophetic words if stored

@@ -262,7 +262,7 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
         .eq('yhwh_year', yhwhDate.year)
         .eq('yhwh_month', yhwhDate.month)
         .eq('yhwh_day', yhwhDate.day)
-        .single()
+        .maybeSingle()
       
       const entryPayload = {
         user_id: user.id,
