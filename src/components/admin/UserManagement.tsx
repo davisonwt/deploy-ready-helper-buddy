@@ -100,27 +100,39 @@ export default function UserManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // Note: In production, you might want to soft delete instead
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('user_id', userId);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/admin-delete-user',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ target_user_id: userId }),
+        }
+      );
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to delete user');
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
-        title: 'User deleted',
-        description: 'User has been deleted successfully'
+        title: 'User account deleted',
+        description: 'The user has been removed. They can re-register if they wish.',
       });
     },
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message
+        title: 'Error deleting user',
+        description: error.message,
       });
-    }
+    },
   });
 
   if (isLoading) {
