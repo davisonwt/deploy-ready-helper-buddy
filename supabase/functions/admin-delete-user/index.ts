@@ -104,18 +104,20 @@ Deno.serve(async (req) => {
     await adminClient.from("achievements").delete().eq("user_id", target_user_id);
 
     // Log the deletion as a security event
-    await adminClient.rpc("log_security_event_enhanced", {
-      event_type: "admin_user_deletion",
-      target_user_id: target_user_id,
-      event_details: {
-        deleted_by: callingUser.id,
-        deleted_email: targetUser.user?.email || "unknown",
-        timestamp: new Date().toISOString(),
-      },
-      severity_level: "warn",
-    }).catch(() => {
+    try {
+      await adminClient.rpc("log_security_event_enhanced", {
+        event_type: "admin_user_deletion",
+        target_user_id: target_user_id,
+        event_details: {
+          deleted_by: callingUser.id,
+          deleted_email: targetUser.user?.email || "unknown",
+          timestamp: new Date().toISOString(),
+        },
+        severity_level: "warn",
+      });
+    } catch (_) {
       // Non-critical, continue even if logging fails
-    });
+    }
 
     // Delete the auth user (this is the actual account deletion)
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(target_user_id);
