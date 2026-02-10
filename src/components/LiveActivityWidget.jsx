@@ -66,7 +66,7 @@ export default function LiveActivityWidget() {
       try {
         const [ambassadorRes, whispererRes, driverRes, serviceRes] = await Promise.all([
           supabase.from('ambassador_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('whisperers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('whisperers').select('id', { count: 'exact', head: true }).eq('is_active', false),
           supabase.from('community_drivers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('service_providers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         ])

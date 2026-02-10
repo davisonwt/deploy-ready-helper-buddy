@@ -140,7 +140,7 @@ export function UserManagementDashboard() {
     try {
       const [ambassadorRes, whispererRes, driverRes, serviceRes] = await Promise.all([
         supabase.from('ambassador_applications').select('user_id, status').eq('status', 'approved'),
-        supabase.from('whisperers').select('user_id, status'),
+        supabase.from('whisperers').select('user_id, is_active'),
         supabase.from('community_drivers').select('user_id, status').eq('status', 'approved'),
         supabase.from('service_providers').select('user_id, status').eq('status', 'approved'),
       ]);

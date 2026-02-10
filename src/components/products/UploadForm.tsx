@@ -336,9 +336,10 @@ export default function UploadForm() {
 
       toast.success('Product uploaded successfully!');
       navigate('/my-products');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Upload failed');
+      const msg = error?.message || error?.error_description || String(error);
+      toast.error(`Upload failed: ${msg}`);
     } finally {
       setUploading(false);
     }
@@ -480,6 +481,7 @@ export default function UploadForm() {
                       <input
                         id="cover"
                         type="file"
+                        accept="image/*"
                         className="hidden"
                         onChange={(e) => {
                           const files = e.target.files;
@@ -581,6 +583,14 @@ export default function UploadForm() {
                         id="file"
                         type="file"
                         className="hidden"
+                        accept={
+                          formData.type === 'music' ? 'audio/*,.mp3,.wav,.ogg,.m4a,.flac' :
+                          formData.type === 'ebook' ? '.pdf,.epub,.mobi' :
+                          formData.type === 'book' ? '.pdf,.epub,.jpg,.jpeg,.png' :
+                          formData.type === 'art' ? 'image/*,.pdf,.svg' :
+                          formData.type === 'produce' ? 'image/*' :
+                          undefined
+                        }
                         multiple={formData.type === 'music' && releaseType === 'album'}
                         disabled={extractingZip || (formData.type === 'music' && releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
