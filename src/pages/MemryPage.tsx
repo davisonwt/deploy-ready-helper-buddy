@@ -1330,40 +1330,14 @@ export default function MemryPage() {
                         return;
                       }
                       try {
-                        // Find or create direct chat room
-                        const { data: rows } = await supabase
-                          .from('chat_participants')
-                          .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
-                          .eq('chat_rooms.room_type', 'direct')
-                          .eq('chat_rooms.is_active', true)
-                          .in('user_id', [user.id, currentPost.user_id]);
+                        // Use RPC to find or create direct chat room
+                        const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+                          user1_id: user.id,
+                          user2_id: currentPost.user_id,
+                        });
+                        if (error) throw error;
 
-                        let roomId: string | null = null;
-                        if (rows && rows.length) {
-                          const counts: Record<string, number> = {};
-                          for (const r of rows as any[]) {
-                            if (!r?.room_id) continue;
-                            counts[r.room_id] = (counts[r.room_id] || 0) + 1;
-                          }
-                          roomId = Object.entries(counts).find(([, c]) => c >= 2)?.[0] || null;
-                        }
-
-                        if (!roomId) {
-                          const { data: room, error: roomErr } = await supabase
-                            .from('chat_rooms')
-                            .insert({ name: 'Direct Chat', room_type: 'direct', created_by: user.id, is_active: true })
-                            .select('id')
-                            .single();
-                          if (roomErr) throw roomErr;
-                          roomId = room.id;
-
-                          await supabase.from('chat_participants').upsert([
-                            { room_id: roomId, user_id: user.id, is_active: true },
-                            { room_id: roomId, user_id: currentPost.user_id, is_active: true }
-                          ], { onConflict: 'room_id,user_id' });
-                        }
-
-                        navigate(`/communications-hub?room=${roomId}#chats`);
+                        navigate(`/communications-hub?room=${roomId}`);
                       } catch (error) {
                         console.error('Error starting direct chat:', error);
                         toast({ title: "Error", description: "Could not start chat", variant: "destructive" });
