@@ -22,7 +22,8 @@ import {
   Activity,
   Calendar,
   Mail,
-  Phone
+  Phone,
+  Wallet
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
@@ -40,6 +41,8 @@ export function UserManagementDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [walletData, setWalletData] = useState({});
+  const [balanceData, setBalanceData] = useState({});
   const [userStats, setUserStats] = useState({
     total: 0,
     active: 0,
@@ -52,6 +55,7 @@ export function UserManagementDashboard() {
   useEffect(() => {
     loadUsers();
     loadUserStats();
+    loadWalletData();
   }, []);
 
   const loadUsers = async () => {
@@ -91,6 +95,70 @@ export function UserManagementDashboard() {
     } catch (error) {
       console.error('Error loading user stats:', error);
     }
+  };
+
+  const loadWalletData = async () => {
+    try {
+      // Load user wallets
+      const { data: wallets, error: walletsError } = await supabase
+        .from('user_wallets')
+        .select('user_id, wallet_type, wallet_address, is_active');
+
+      if (!walletsError && wallets) {
+        const walletMap = {};
+        wallets.forEach(w => {
+          if (!walletMap[w.user_id]) walletMap[w.user_id] = [];
+          walletMap[w.user_id].push(w);
+        });
+        setWalletData(walletMap);
+      }
+
+      // Load sower balances (payout wallets)
+      const { data: balances, error: balancesError } = await supabase
+        .from('sower_balances')
+        .select('user_id, wallet_address, wallet_type, available_balance, pending_balance, total_earned');
+
+      if (!balancesError && balances) {
+        const balanceMap = {};
+        balances.forEach(b => {
+          balanceMap[b.user_id] = b;
+        });
+        setBalanceData(balanceMap);
+      }
+    } catch (error) {
+      console.error('Error loading wallet data:', error);
+    }
+  };
+
+  const getWalletBadge = (userId) => {
+    const wallets = walletData[userId] || [];
+    const balance = balanceData[userId];
+    const hasPayoutWallet = balance?.wallet_address;
+    const activeWallets = wallets.filter(w => w.is_active);
+
+    if (!hasPayoutWallet && activeWallets.length === 0) {
+      return <Badge variant="secondary" className="text-xs">Not Set Up</Badge>;
+    }
+
+    const providers = [];
+    if (hasPayoutWallet) {
+      providers.push(balance.wallet_type || 'crypto');
+    }
+    activeWallets.forEach(w => {
+      const type = w.wallet_type || 'unknown';
+      if (!providers.includes(type)) providers.push(type);
+    });
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {providers.map(p => (
+          <Badge key={p} variant="default" className="text-xs bg-green-100 text-green-800">
+            <Wallet className="h-3 w-3 mr-1" />
+            {p}
+          </Badge>
+        ))}
+      </div>
+    );
   };
 
   const filteredUsers = users.filter(user => {
@@ -315,8 +383,11 @@ export function UserManagementDashboard() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Wallet</TableHead>
                   <TableHead>Roles</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Actions</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -324,7 +395,7 @@ export function UserManagementDashboard() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     </TableCell>
                   </TableRow>
@@ -348,6 +419,9 @@ export function UserManagementDashboard() {
                           <span className="font-medium text-foreground">{user.email || 'No email'}</span>
                           {user.phone && <span className="text-xs text-muted-foreground">{user.phone}</span>}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {getWalletBadge(user.user_id)}
                       </TableCell>
                       <TableCell>
                         {getRoleBadge(user.user_roles)}
@@ -482,7 +556,47 @@ export function UserManagementDashboard() {
                       <label className="text-sm font-medium">Location</label>
                       <p className="text-sm">{selectedUser.location || 'Not provided'}</p>
                     </div>
-                  </div>
+                    </div>
+                    
+                    {/* Wallet Info */}
+                    <div className="mt-4 border-t pt-4">
+                      <label className="text-sm font-medium flex items-center gap-1 mb-2">
+                        <Wallet className="h-4 w-4" /> Wallet / Payment Setup
+                      </label>
+                      <div className="space-y-2">
+                        {(() => {
+                          const wallets = walletData[selectedUser.user_id] || [];
+                          const balance = balanceData[selectedUser.user_id];
+                          const activeWallets = wallets.filter(w => w.is_active);
+                          
+                          if (!balance?.wallet_address && activeWallets.length === 0) {
+                            return <p className="text-sm text-muted-foreground">No wallet configured</p>;
+                          }
+
+                          return (
+                            <div className="space-y-2">
+                              {balance?.wallet_address && (
+                                <div className="bg-muted rounded-lg p-3 text-sm">
+                                  <p className="font-medium">Payout Wallet ({balance.wallet_type || 'crypto'})</p>
+                                  <p className="font-mono text-xs text-muted-foreground truncate">{balance.wallet_address}</p>
+                                  <div className="flex gap-4 mt-1 text-xs">
+                                    <span>Available: ${parseFloat(balance.available_balance || 0).toFixed(2)}</span>
+                                    <span>Pending: ${parseFloat(balance.pending_balance || 0).toFixed(2)}</span>
+                                    <span>Total Earned: ${parseFloat(balance.total_earned || 0).toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              )}
+                              {activeWallets.map(w => (
+                                <div key={w.wallet_type} className="bg-muted rounded-lg p-3 text-sm">
+                                  <p className="font-medium">{w.wallet_type}</p>
+                                  <p className="font-mono text-xs text-muted-foreground truncate">{w.wallet_address || 'No address'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   {selectedUser.bio && (
                     <div>
                       <label className="text-sm font-medium">Bio</label>
