@@ -246,6 +246,7 @@ export default function MemryPage() {
   const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
   const [discoverSearch, setDiscoverSearch] = useState('');
   const [discoverResults, setDiscoverResults] = useState<any[]>([]);
+  const [messageCountsByUser, setMessageCountsByUser] = useState<Record<string, number>>({});
   // New post state
   const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe' | 'music'>('photo');
   const [newPostCaption, setNewPostCaption] = useState('');
@@ -260,6 +261,7 @@ export default function MemryPage() {
     fetchUser();
     fetchPosts();
     loadLikedPosts();
+    fetchMessageCounts();
   }, []);
 
   // Show all posts in the feed - the "Home" tab should show everything
@@ -328,6 +330,24 @@ export default function MemryPage() {
 
   const saveLikedPosts = (ids: Set<string>) => {
     // No longer using localStorage - using database
+  };
+
+  const fetchMessageCounts = async () => {
+    try {
+      const { data } = await supabase
+        .from('activity_feed')
+        .select('user_id')
+        .eq('action_type', 'new_message');
+      if (data) {
+        const counts: Record<string, number> = {};
+        data.forEach(row => {
+          counts[row.user_id] = (counts[row.user_id] || 0) + 1;
+        });
+        setMessageCountsByUser(counts);
+      }
+    } catch (err) {
+      console.warn('Failed to load message counts:', err);
+    }
   };
 
   const fetchPosts = async () => {
@@ -1357,8 +1377,13 @@ export default function MemryPage() {
                     }}
                     className="flex flex-col items-center gap-1"
                   >
-                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
+                    <div className="relative w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
                       <MessageSquare className="w-5 h-5 text-white" />
+                      {(messageCountsByUser[currentPost.user_id] || 0) > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                          {messageCountsByUser[currentPost.user_id] > 99 ? '99+' : messageCountsByUser[currentPost.user_id]}
+                        </span>
+                      )}
                     </div>
                     <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>
                   </motion.button>
