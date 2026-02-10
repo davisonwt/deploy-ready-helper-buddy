@@ -74,6 +74,7 @@ export default function DashboardPage() {
     newFollowers: 0
   });
   const [activeUsers, setActiveUsers] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [error, setError] = useState(null);
   const [userRoles, setUserRoles] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(false);
@@ -444,7 +445,7 @@ export default function DashboardPage() {
       };
 
       // Execute all data fetching
-      Promise.all([fetchProfile(), fetchData(), fetchActiveUsers(), fetchUserBestowals(), fetchFollowerStats()]).catch(err => {
+      Promise.all([fetchProfile(), fetchData(), fetchActiveUsers(), fetchUserBestowals(), fetchFollowerStats(), fetchUnreadMessages()]).catch(err => {
         console.error('❌ Dashboard: Error in data fetching:', err);
         setError('Failed to load dashboard data');
       });
@@ -482,6 +483,35 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('❌ Dashboard: Error fetching follower stats:', error);
+    }
+  };
+  const fetchUnreadMessages = async () => {
+    if (!user?.id) return;
+    try {
+      // Get rooms user is a participant of
+      const { data: participantRooms } = await supabase
+        .from('chat_participants')
+        .select('room_id, joined_at')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (!participantRooms?.length) return;
+
+      // Count messages in those rooms not sent by user, from last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const roomIds = participantRooms.map(r => r.room_id);
+
+      const { count } = await supabase
+        .from('chat_messages')
+        .select('id', { count: 'exact', head: true })
+        .in('room_id', roomIds)
+        .neq('sender_id', user.id)
+        .gte('created_at', sevenDaysAgo.toISOString());
+
+      setUnreadMessages(count || 0);
+    } catch (error) {
+      console.error('Error fetching unread messages:', error);
     }
   };
   const fetchActiveUsers = async () => {
@@ -657,8 +687,14 @@ export default function DashboardPage() {
                         +{stats.newFollowers} new
                       </Badge>
                     )}
-                  </span>
-                </div>
+                    </span>
+                    {unreadMessages > 0 && (
+                      <Link to="/chat" className="text-xs sm:text-sm font-semibold flex items-center gap-1 no-underline" style={{ color: '#3b82f6' }}>
+                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {unreadMessages} new {unreadMessages === 1 ? 'message' : 'messages'}
+                      </Link>
+                    )}
+                  </div>
               </div>
             </div>
 
