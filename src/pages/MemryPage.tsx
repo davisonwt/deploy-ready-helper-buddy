@@ -4,7 +4,8 @@ import {
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
-  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees, Book
+  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees, Book,
+  UserPlus, UserCheck
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -239,6 +240,7 @@ export default function MemryPage() {
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
+  const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
 
   // New post state
   const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe' | 'music'>('photo');
@@ -274,6 +276,44 @@ export default function MemryPage() {
         .eq('user_id', user.id);
       if (likes) {
         setLikedPostIds(new Set(likes.map(l => l.post_id)));
+      }
+      // Load user's followed users
+      const { data: follows } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      if (follows) {
+        setFollowedUserIds(new Set(follows.map(f => f.following_id)));
+      }
+    }
+  };
+
+  const handleFollow = async (targetUserId: string) => {
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to follow", variant: "destructive" });
+      return;
+    }
+    if (targetUserId === user.id) return;
+
+    const isFollowing = followedUserIds.has(targetUserId);
+
+    // Optimistic update
+    setFollowedUserIds(prev => {
+      const next = new Set(prev);
+      if (isFollowing) next.delete(targetUserId);
+      else next.add(targetUserId);
+      return next;
+    });
+
+    if (isFollowing) {
+      await supabase.from('followers').delete().eq('follower_id', user.id).eq('following_id', targetUserId);
+      toast({ title: "Unfollowed" });
+    } else {
+      const { error } = await supabase.from('followers').insert({ follower_id: user.id, following_id: targetUserId, source_type: 'profile' });
+      if (error && error.code === '23505') {
+        toast({ title: "Already following" });
+      } else if (!error) {
+        toast({ title: "Following! 🌱", description: "You'll see their content in your feed" });
       }
     }
   };
@@ -1064,18 +1104,27 @@ export default function MemryPage() {
 
               {/* Right Side Actions */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
-                {/* Profile */}
-                <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center">
+                {/* Profile + Follow */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleFollow(currentPost.user_id)}
+                  className="flex flex-col items-center"
+                >
                   <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
                     <AvatarImage src={currentPost.profiles?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
                       {currentPost.profiles?.display_name?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="w-6 h-6 -mt-3 rounded-full bg-pink-500 flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-white" />
+                  <div className={`w-6 h-6 -mt-3 rounded-full flex items-center justify-center ${
+                    followedUserIds.has(currentPost.user_id) ? 'bg-emerald-500' : 'bg-pink-500'
+                  }`}>
+                    {followedUserIds.has(currentPost.user_id) 
+                      ? <UserCheck className="w-3.5 h-3.5 text-white" />
+                      : <UserPlus className="w-3.5 h-3.5 text-white" />
+                    }
                   </div>
-                </motion.div>
+                </motion.button>
 
                 {/* Love (Like) */}
                 <motion.button
@@ -1243,9 +1292,23 @@ export default function MemryPage() {
                           </span>
                         )}
                       </div>
-                      <span className="text-white/70 text-xs">
-                        @{currentPost.profiles?.username || 'sower'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/70 text-xs">
+                          @{currentPost.profiles?.username || 'sower'}
+                        </span>
+                        {user && currentPost.user_id !== user.id && (
+                          <button
+                            onClick={() => handleFollow(currentPost.user_id)}
+                            className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                              followedUserIds.has(currentPost.user_id)
+                                ? 'bg-white/20 text-white/80'
+                                : 'bg-pink-500 text-white'
+                            }`}
+                          >
+                            {followedUserIds.has(currentPost.user_id) ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
