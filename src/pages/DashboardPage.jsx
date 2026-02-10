@@ -25,6 +25,7 @@ import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser';
 import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt';
 import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
 import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
+import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 export default function DashboardPage() {
   const {
     user,
@@ -706,6 +707,11 @@ export default function DashboardPage() {
         {/* Top Sowers Teaser */}
         <div className="mb-6">
           <TopSowersTeaser />
+        </div>
+
+        {/* Seed Engagement - Loves & Comments */}
+        <div className="mb-6">
+          <SeedEngagementWidget theme={currentTheme} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
