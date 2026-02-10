@@ -235,7 +235,7 @@ export default function MemryPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'profile'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [donateAmount, setDonateAmount] = useState([5]);
@@ -244,7 +244,8 @@ export default function MemryPage() {
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
-
+  const [discoverSearch, setDiscoverSearch] = useState('');
+  const [discoverResults, setDiscoverResults] = useState<any[]>([]);
   // New post state
   const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe' | 'music'>('photo');
   const [newPostCaption, setNewPostCaption] = useState('');
@@ -1022,6 +1023,158 @@ export default function MemryPage() {
           </div>
         </motion.div>
 
+        {/* === DISCOVER TAB === */}
+        {activeTab === 'discover' && (
+          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+            <div className="max-w-lg mx-auto w-full space-y-4">
+              <Input
+                placeholder="Search users, sowers, content..."
+                value={discoverSearch}
+                onChange={async (e) => {
+                  const q = e.target.value;
+                  setDiscoverSearch(q);
+                  if (q.trim().length < 2) { setDiscoverResults([]); return; }
+                  const { data } = await supabase
+                    .from('public_profiles')
+                    .select('user_id, display_name, username, avatar_url')
+                    .or(`display_name.ilike.%${q}%,username.ilike.%${q}%`)
+                    .limit(20);
+                  setDiscoverResults(data || []);
+                }}
+                className="bg-white/80 border-orange-200 text-orange-900 placeholder:text-orange-400 rounded-full"
+              />
+              {discoverResults.length > 0 ? (
+                <div className="space-y-2">
+                  {discoverResults.map((u: any) => (
+                    <Link key={u.user_id} to={`/member/${u.user_id}`} className="flex items-center gap-3 p-3 bg-white/60 backdrop-blur rounded-xl no-underline">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={u.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
+                          {u.display_name?.[0] || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold text-orange-800 text-sm">{u.display_name || 'Sower'}</p>
+                        {u.username && <p className="text-xs text-orange-500">@{u.username}</p>}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : discoverSearch.trim().length >= 2 ? (
+                <p className="text-center text-orange-500 mt-8">No results found</p>
+              ) : (
+                <p className="text-center text-orange-400 mt-8">Type to search for users and content</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* === RECIPES TAB === */}
+        {activeTab === 'recipes' && (
+          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+            <div className="max-w-lg mx-auto w-full space-y-4">
+              <h2 className="text-xl font-bold text-orange-800">Community Recipes</h2>
+              {allPosts.filter(p => p.content_type === 'recipe').length === 0 ? (
+                <div className="text-center py-12">
+                  <ChefHat className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                  <p className="text-orange-600">No recipes shared yet</p>
+                  <Button onClick={() => { setNewPostType('recipe'); setShowCreateModal(true); }} className="mt-4 bg-gradient-to-r from-pink-500 to-orange-500 text-white">
+                    <Plus className="w-4 h-4 mr-2" /> Share a Recipe
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {allPosts.filter(p => p.content_type === 'recipe').map((recipe) => (
+                    <motion.div
+                      key={recipe.id}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        const idx = posts.findIndex(p => p.id === recipe.id);
+                        if (idx >= 0) { setCurrentPostIndex(idx); setActiveTab('feed'); }
+                      }}
+                      className="bg-white/60 backdrop-blur rounded-xl overflow-hidden cursor-pointer"
+                    >
+                      {recipe.media_url && (
+                        <img src={recipe.media_url} alt="" className="w-full h-28 object-cover" />
+                      )}
+                      <div className="p-2">
+                        <p className="text-sm font-semibold text-orange-800 line-clamp-2">{recipe.caption || 'Recipe'}</p>
+                        <p className="text-xs text-orange-500 mt-1">{recipe.profiles?.display_name}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* === PROFILE TAB === */}
+        {activeTab === 'profile' && (
+          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+            <div className="max-w-lg mx-auto w-full space-y-4">
+              {user ? (
+                <>
+                  <div className="flex items-center gap-4 p-4 bg-white/60 backdrop-blur rounded-2xl">
+                    <Avatar className="w-16 h-16 border-2 border-orange-300">
+                      <AvatarImage src={allPosts.find(p => p.user_id === user.id)?.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-xl">
+                        {user.email?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-bold text-lg text-orange-800">My Memries</h3>
+                      <p className="text-sm text-orange-500">{allPosts.filter(p => p.user_id === user.id).length} posts</p>
+                    </div>
+                  </div>
+                  {allPosts.filter(p => p.user_id === user.id).length === 0 ? (
+                    <div className="text-center py-12">
+                      <Camera className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                      <p className="text-orange-600">You haven't posted yet</p>
+                      <Button onClick={() => setShowCreateModal(true)} className="mt-4 bg-gradient-to-r from-pink-500 to-orange-500 text-white">
+                        <Plus className="w-4 h-4 mr-2" /> Create Your First Memry
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-1">
+                      {allPosts.filter(p => p.user_id === user.id).map((post) => (
+                        <motion.div
+                          key={post.id}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            const idx = posts.findIndex(p => p.id === post.id);
+                            if (idx >= 0) { setCurrentPostIndex(idx); setActiveTab('feed'); }
+                          }}
+                          className="aspect-square rounded-lg overflow-hidden cursor-pointer relative"
+                        >
+                          {post.content_type === 'video' ? (
+                            <video src={post.media_url} className="w-full h-full object-cover" muted />
+                          ) : (
+                            <img src={post.media_url || '/placeholder.svg'} alt="" className="w-full h-full object-cover" />
+                          )}
+                          {post.content_type === 'recipe' && (
+                            <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1">
+                              <ChefHat className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <User className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                  <p className="text-orange-600">Sign in to see your Memries</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* === FEED TAB (main content) === */}
+        {activeTab === 'feed' && (
+        <>
         {/* Content Feed */}
         {loading ? (
           <div className="h-full flex items-center justify-center">
@@ -1210,7 +1363,7 @@ export default function MemryPage() {
                           ], { onConflict: 'room_id,user_id' });
                         }
 
-                        navigate(`/chat?room=${roomId}`);
+                        navigate(`/communications-hub?room=${roomId}#chats`);
                       } catch (error) {
                         console.error('Error starting direct chat:', error);
                         toast({ title: "Error", description: "Could not start chat", variant: "destructive" });
@@ -1542,6 +1695,8 @@ export default function MemryPage() {
           )}
         </AnimatePresence>
         )}
+        </>
+        )}
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-50 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
@@ -1570,7 +1725,8 @@ export default function MemryPage() {
                 </div>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'create' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center p-2 ${activeTab === 'recipes' ? 'text-pink-400' : 'text-white/70'}`}
+                onClick={() => setActiveTab('recipes')}
               >
                 <ChefHat className="w-6 h-6" />
                 <span className="text-xs mt-1">Recipes</span>
