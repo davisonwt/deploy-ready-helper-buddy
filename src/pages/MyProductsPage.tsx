@@ -190,7 +190,7 @@ export default function MyProductsPage() {
               {/* Products Grid */}
               <section className='mb-16'>
                 <h2 className='text-3xl font-bold mb-6 text-white'>
-                  {selectedCategory === 'all' ? 'All Your Products' : `Your ${selectedCategory} Products`}
+                  {selectedCategory === 'all' ? 'All Your Seeds' : `Your ${selectedCategory} Seeds`}
                 </h2>
                 {filteredProducts.length === 0 ? (
                   <div className='text-center py-12'>
