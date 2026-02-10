@@ -641,11 +641,24 @@ export default function DashboardPage() {
               }}>
                   Ready to grow your orchard today?
                 </p>
-                <p className="text-xs sm:text-sm mt-1" style={{
-                color: currentTheme.textSecondary
-              }}>
-                  Payment Method: USDC (USD Coin)
-                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-xs sm:text-sm" style={{
+                  color: currentTheme.textSecondary
+                }}>
+                    Payment Method: USDC (USD Coin)
+                  </p>
+                  <span className="text-xs sm:text-sm font-semibold flex items-center gap-1" style={{
+                    color: currentTheme.accent
+                  }}>
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                    {stats.totalFollowers} {stats.totalFollowers === 1 ? 'Follower' : 'Followers'}
+                    {stats.newFollowers > 0 && (
+                      <Badge className="ml-1 text-[10px] px-1.5 py-0" style={{ backgroundColor: currentTheme.accent + '30', color: currentTheme.accent }}>
+                        +{stats.newFollowers} new
+                      </Badge>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
 
