@@ -48,13 +48,13 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
         .eq('yhwh_year', yhwhDate.year)
         .eq('yhwh_month', yhwhDate.month)
         .eq('yhwh_day', yhwhDate.day)
-        .single()
+        .maybeSingle()
       
       if (data?.content) {
         setRichText(data.content)
       }
     } catch (error) {
-      // Entry doesn't exist yet
+      console.error('Error loading entry:', error)
     }
   }
 
@@ -81,7 +81,7 @@ export function NotesForm({ selectedDate, yhwhDate, onClose, onSave }: NotesForm
         .eq('yhwh_year', yhwhDate.year)
         .eq('yhwh_month', yhwhDate.month)
         .eq('yhwh_day', yhwhDate.day)
-        .single()
+        .maybeSingle()
       
       const entryPayload = {
         user_id: user.id,

@@ -40,7 +40,7 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
         .eq('yhwh_year', yhwhDate.year)
         .eq('yhwh_month', yhwhDate.month)
         .eq('yhwh_day', yhwhDate.day)
-        .single()
+        .maybeSingle()
       
       if (data) {
         setPrayerRequests(Array.isArray(data.prayer_requests) ? data.prayer_requests as string[] : [])
