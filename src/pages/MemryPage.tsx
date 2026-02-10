@@ -1337,6 +1337,18 @@ export default function MemryPage() {
                         });
                         if (error) throw error;
 
+                        // Push notification to the content creator's dashboard
+                        await supabase.from('activity_feed').insert({
+                          user_id: currentPost.user_id,
+                          actor_id: user.id,
+                          action_type: 'new_message',
+                          content: `Someone sent you a message about your seed`,
+                          entity_type: 'chat_room',
+                          entity_id: roomId,
+                          mode_type: 'chatapp',
+                          metadata: { seed_id: currentPost.id, seed_caption: currentPost.caption?.slice(0, 100) }
+                        });
+
                         navigate(`/communications-hub?room=${roomId}`);
                       } catch (error) {
                         console.error('Error starting direct chat:', error);
