@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, BarChart3, Users, CreditCard, Shield, Award } from 'lucide-react';
+import { Settings, BarChart3, Users, CreditCard, Shield, Award, Megaphone, Car, Wrench } from 'lucide-react';
 import { UserManagementDashboard } from './UserManagementDashboard';
 import { AdminPaymentDashboard } from '../AdminPaymentDashboard';
 import { ContentModerationDashboard } from './ContentModerationDashboard';
 import { AmbassadorApplicationsDashboard } from './AmbassadorApplicationsDashboard';
+import { WhispererApplicationsDashboard } from './WhispererApplicationsDashboard';
+import { DriverApplicationsDashboard } from './DriverApplicationsDashboard';
+import { ServiceProviderApplicationsDashboard } from './ServiceProviderApplicationsDashboard';
 import BasicAnalytics from './BasicAnalytics';
 
 export default function AdminDashboard() {
@@ -28,7 +30,7 @@ export default function AdminDashboard() {
 
       {/* Main Dashboard */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="flex flex-wrap h-auto gap-1 p-2">
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Analytics
@@ -48,6 +50,18 @@ export default function AdminDashboard() {
           <TabsTrigger value="ambassadors" className="flex items-center gap-2">
             <Award className="h-4 w-4" />
             Ambassadors
+          </TabsTrigger>
+          <TabsTrigger value="whisperers" className="flex items-center gap-2">
+            <Megaphone className="h-4 w-4" />
+            Whisperers
+          </TabsTrigger>
+          <TabsTrigger value="drivers" className="flex items-center gap-2">
+            <Car className="h-4 w-4" />
+            Drivers
+          </TabsTrigger>
+          <TabsTrigger value="service-providers" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            Service Providers
           </TabsTrigger>
         </TabsList>
 
@@ -71,6 +85,18 @@ export default function AdminDashboard() {
 
         <TabsContent value="ambassadors" className="mt-6">
           <AmbassadorApplicationsDashboard />
+        </TabsContent>
+
+        <TabsContent value="whisperers" className="mt-6">
+          <WhispererApplicationsDashboard />
+        </TabsContent>
+
+        <TabsContent value="drivers" className="mt-6">
+          <DriverApplicationsDashboard />
+        </TabsContent>
+
+        <TabsContent value="service-providers" className="mt-6">
+          <ServiceProviderApplicationsDashboard />
         </TabsContent>
       </Tabs>
     </div>
