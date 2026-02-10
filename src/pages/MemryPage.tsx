@@ -1355,10 +1355,12 @@ export default function MemryPage() {
                           user1_id: user.id,
                           user2_id: currentPost.user_id,
                         });
+                        console.log('RPC result:', { roomId, error, userId: user.id, targetId: currentPost.user_id });
                         if (error) throw error;
+                        if (!roomId) throw new Error('No room ID returned');
 
-                        // Push notification to the content creator's dashboard
-                        await supabase.from('activity_feed').insert({
+                        // Push notification to the content creator's dashboard (non-blocking)
+                        supabase.from('activity_feed').insert({
                           user_id: currentPost.user_id,
                           actor_id: user.id,
                           action_type: 'new_message',
@@ -1367,12 +1369,14 @@ export default function MemryPage() {
                           entity_id: roomId,
                           mode_type: 'chatapp',
                           metadata: { seed_id: currentPost.id, seed_caption: currentPost.caption?.slice(0, 100) }
+                        }).then(({ error: feedErr }) => {
+                          if (feedErr) console.warn('Activity feed insert failed:', feedErr);
                         });
 
                         navigate(`/communications-hub?room=${roomId}`);
-                      } catch (error) {
+                      } catch (error: any) {
                         console.error('Error starting direct chat:', error);
-                        toast({ title: "Error", description: "Could not start chat", variant: "destructive" });
+                        toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
                       }
                     }}
                     className="flex flex-col items-center gap-1"
