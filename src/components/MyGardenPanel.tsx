@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { X, ChevronDown } from 'lucide-react'
 import { launchSparkles, floatingScore, playSoundEffect } from '@/utils/confetti'
+import { supabase } from '@/integrations/supabase/client'
 import {
   Accordion,
   AccordionContent,
@@ -16,24 +17,44 @@ interface MyGardenPanelProps {
 
 export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   const navigate = useNavigate()
+  const [serviceCounts, setServiceCounts] = useState({ drivers: 0, whisperers: 0, serviceProviders: 0 })
+
+  // Fetch approved service provider counts
+  const fetchServiceCounts = useCallback(async () => {
+    try {
+      const [driversRes, whisperersRes, providersRes] = await Promise.all([
+        supabase.from('community_drivers').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('whisperers').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('service_providers').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+      ])
+      setServiceCounts({
+        drivers: driversRes.count || 0,
+        whisperers: whisperersRes.count || 0,
+        serviceProviders: providersRes.count || 0,
+      })
+    } catch (err) {
+      console.error('Error fetching service counts:', err)
+    }
+  }, [])
 
   const closeGarden = () => {
     onClose()
     document.body.style.overflow = '' // Restore scrolling
   }
 
-  // Handle body scroll when panel opens/closes
+  // Handle body scroll and fetch data when panel opens/closes
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden' // Prevent background scrolling
+      document.body.style.overflow = 'hidden'
+      fetchServiceCounts()
     } else {
-      document.body.style.overflow = '' // Restore scrolling
+      document.body.style.overflow = ''
     }
     
     return () => {
       document.body.style.overflow = ''
     }
-  }, [isOpen])
+  }, [isOpen, fetchServiceCounts])
 
       const mysterySeed = () => {
         const gifts = [1, 2, 5, 10];
@@ -104,9 +125,30 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
       title: 'Services',
       emoji: '🛠️',
       cards: [
-        { href: '/community-drivers', title: 'S2G Community Drivers', subtitle: 'Find drivers for deliveries & transport' },
-        { href: '/community-services', title: 'S2G Community Services', subtitle: 'Find skilled service providers' },
-        { href: '/become-whisperer', title: 'Browse Whisperers', subtitle: 'Find marketing agents to grow your seeds' },
+        { 
+          href: '/community-drivers', 
+          title: 'S2G Community Drivers', 
+          subtitle: serviceCounts.drivers > 0 
+            ? `${serviceCounts.drivers} approved driver${serviceCounts.drivers !== 1 ? 's' : ''} available`
+            : 'Find drivers for deliveries & transport',
+          badge: serviceCounts.drivers > 0 ? `${serviceCounts.drivers} available` : undefined
+        },
+        { 
+          href: '/community-services', 
+          title: 'S2G Community Services', 
+          subtitle: serviceCounts.serviceProviders > 0 
+            ? `${serviceCounts.serviceProviders} service provider${serviceCounts.serviceProviders !== 1 ? 's' : ''} ready to help`
+            : 'Find skilled service providers',
+          badge: serviceCounts.serviceProviders > 0 ? `${serviceCounts.serviceProviders} available` : undefined
+        },
+        { 
+          href: '/become-whisperer', 
+          title: 'Browse Whisperers', 
+          subtitle: serviceCounts.whisperers > 0 
+            ? `${serviceCounts.whisperers} whisperer${serviceCounts.whisperers !== 1 ? 's' : ''} ready to promote`
+            : 'Find marketing agents to grow your seeds',
+          badge: serviceCounts.whisperers > 0 ? `${serviceCounts.whisperers} active` : undefined
+        },
         { href: '/ambassador-thumbnail', title: 'Become a S2G Ambassador', subtitle: 'Join our ambassador program' },
       ]
     },
