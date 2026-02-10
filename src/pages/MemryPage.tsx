@@ -697,12 +697,12 @@ export default function MemryPage() {
       // Fetch profiles for commenters
       const userIds = [...new Set(commentsData.map(c => c.user_id))];
       const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', userIds);
+        .from('public_profiles')
+        .select('user_id, display_name, username, avatar_url')
+        .in('user_id', userIds);
 
       const profilesMap = new Map(
-        (profilesData || []).map(p => [p.id, p])
+        (profilesData || []).map(p => [p.user_id, p])
       );
 
       const transformedComments: Comment[] = commentsData.map(c => {
@@ -713,10 +713,10 @@ export default function MemryPage() {
           content: c.content,
           created_at: c.created_at,
           profiles: profile ? {
-            display_name: profile.display_name || 'Anonymous',
+            display_name: profile.display_name || profile.username || 'Sower',
             avatar_url: profile.avatar_url || ''
           } : {
-            display_name: 'Anonymous',
+            display_name: 'Sower',
             avatar_url: ''
           }
         };
@@ -749,13 +749,23 @@ export default function MemryPage() {
       return;
     }
 
+    // Fetch current user's profile for display
+    const { data: myProfile } = await supabase
+      .from('public_profiles')
+      .select('display_name, avatar_url')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     // Add to local state
     const comment: Comment = {
       id: newCommentData.id,
       user_id: user.id,
       content: newComment.trim(),
       created_at: new Date().toISOString(),
-      profiles: { display_name: 'You', avatar_url: '' }
+      profiles: { 
+        display_name: myProfile?.display_name || 'You', 
+        avatar_url: myProfile?.avatar_url || '' 
+      }
     };
     
     setComments(prev => [...prev, comment]);
