@@ -69,10 +69,12 @@ interface Comment {
   user_id: string;
   content: string;
   created_at: string;
+  parent_comment_id?: string | null;
   profiles?: {
     display_name: string;
     avatar_url: string;
   };
+  replies?: Comment[];
 }
 
 // 30-second looping audio preview for music posts on Memry feed
@@ -232,6 +234,7 @@ export default function MemryPage() {
   const [selectedPost, setSelectedPost] = useState<MemryPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'profile'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -752,6 +755,7 @@ export default function MemryPage() {
           user_id: c.user_id,
           content: c.content,
           created_at: c.created_at,
+          parent_comment_id: (c as any).parent_comment_id || null,
           profiles: profile ? {
             display_name: profile.display_name || profile.username || 'Sower',
             avatar_url: profile.avatar_url || ''
@@ -761,7 +765,20 @@ export default function MemryPage() {
           }
         };
       });
-      setComments(transformedComments);
+
+      // Nest replies under parent comments
+      const topLevel = transformedComments.filter(c => !c.parent_comment_id);
+      const replies = transformedComments.filter(c => c.parent_comment_id);
+      for (const reply of replies) {
+        const parent = topLevel.find(c => c.id === reply.parent_comment_id);
+        if (parent) {
+          parent.replies = parent.replies || [];
+          parent.replies.push(reply);
+        } else {
+          topLevel.push(reply); // orphan reply, show at top level
+        }
+      }
+      setComments(topLevel);
     } else {
       setComments([]);
     }
@@ -770,13 +787,18 @@ export default function MemryPage() {
   const handleAddComment = async () => {
     if (!newComment.trim() || !user || !selectedPost) return;
     
+    const insertData: any = {
+      post_id: selectedPost.id,
+      user_id: user.id,
+      content: newComment.trim()
+    };
+    if (replyingTo) {
+      insertData.parent_comment_id = replyingTo.id;
+    }
+
     const { data: newCommentData, error } = await supabase
       .from('memry_comments')
-      .insert({
-        post_id: selectedPost.id,
-        user_id: user.id,
-        content: newComment.trim()
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -796,20 +818,30 @@ export default function MemryPage() {
       .eq('user_id', user.id)
       .maybeSingle();
 
-    // Add to local state
     const comment: Comment = {
       id: newCommentData.id,
       user_id: user.id,
       content: newComment.trim(),
       created_at: new Date().toISOString(),
+      parent_comment_id: replyingTo?.id || null,
       profiles: { 
         display_name: myProfile?.display_name || 'You', 
         avatar_url: myProfile?.avatar_url || '' 
       }
     };
     
-    setComments(prev => [...prev, comment]);
+    if (replyingTo) {
+      // Add reply nested under the parent
+      setComments(prev => prev.map(c => 
+        c.id === replyingTo.id 
+          ? { ...c, replies: [...(c.replies || []), comment] }
+          : c
+      ));
+    } else {
+      setComments(prev => [...prev, comment]);
+    }
     setNewComment('');
+    setReplyingTo(null);
     
     // Update comment count in posts
     setPosts(prev => prev.map(p => 
@@ -1691,36 +1723,88 @@ export default function MemryPage() {
           <ScrollArea className="max-h-[50vh] pr-4">
             <div className="space-y-4">
               {comments.map((comment) => (
-                <motion.div
-                  key={comment.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-3"
-                >
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={comment.profiles?.avatar_url} />
-                    <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
-                      {comment.profiles?.display_name?.[0] || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      <span className="font-bold text-orange-800">{comment.profiles?.display_name}</span>{' '}
-                      <span className="text-orange-700">{comment.content}</span>
-                    </p>
-                    <p className="text-xs text-orange-400 mt-1">Just now</p>
-                  </div>
-                  <button className="self-start">
-                    <Heart className="w-4 h-4 text-orange-300" />
-                  </button>
-                </motion.div>
+                <div key={comment.id}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex gap-3"
+                  >
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={comment.profiles?.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
+                        {comment.profiles?.display_name?.[0] || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        <span className="font-bold text-orange-800">{comment.profiles?.display_name}</span>{' '}
+                        <span className="text-orange-700">{comment.content}</span>
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-xs text-orange-400">Just now</p>
+                        {user && (
+                          <button
+                            onClick={() => {
+                              setReplyingTo(comment);
+                              setNewComment(`@${comment.profiles?.display_name} `);
+                            }}
+                            className="text-xs font-semibold text-orange-500 hover:text-orange-700"
+                          >
+                            Reply
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <button className="self-start">
+                      <Heart className="w-4 h-4 text-orange-300" />
+                    </button>
+                  </motion.div>
+
+                  {/* Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="ml-12 mt-2 space-y-3 border-l-2 border-orange-200 pl-3">
+                      {comment.replies.map((reply) => (
+                        <motion.div
+                          key={reply.id}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex gap-2"
+                        >
+                          <Avatar className="w-7 h-7">
+                            <AvatarImage src={reply.profiles?.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-teal-400 to-blue-400 text-white text-[10px]">
+                              {reply.profiles?.display_name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-xs">
+                              <span className="font-bold text-orange-800">{reply.profiles?.display_name}</span>{' '}
+                              <span className="text-orange-700">{reply.content}</span>
+                            </p>
+                            <p className="text-[10px] text-orange-400 mt-0.5">Just now</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </ScrollArea>
 
-          <div className="flex gap-2 mt-4 pt-4 border-t border-orange-200">
+          {/* Reply indicator */}
+          {replyingTo && (
+            <div className="flex items-center justify-between px-2 py-1 bg-orange-100 rounded-lg text-xs text-orange-700">
+              <span>Replying to <strong>{replyingTo.profiles?.display_name}</strong></span>
+              <button onClick={() => { setReplyingTo(null); setNewComment(''); }}>
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-2 pt-4 border-t border-orange-200">
             <Input
-              placeholder="Add a comment..."
+              placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}

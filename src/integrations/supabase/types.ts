@@ -2707,6 +2707,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          parent_comment_id: string | null
           post_id: string
           user_id: string
         }
@@ -2714,6 +2715,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          parent_comment_id?: string | null
           post_id: string
           user_id: string
         }
@@ -2721,10 +2723,18 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          parent_comment_id?: string | null
           post_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "memry_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "memry_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "memry_comments_post_id_fkey"
             columns: ["post_id"]
