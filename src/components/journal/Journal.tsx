@@ -286,23 +286,27 @@ export default function Journal() {
     const gregorianDateStr = selectedDate.toISOString().split('T')[0];
 
     try {
+      const partOfYowm = typeof time.part === 'number' ? Math.floor(time.part) : 0;
+      const watchValue = Math.max(1, Math.min(6, Math.floor(partOfYowm / 4) + 1));
+
       const entryData = {
         user_id: user.id,
         yhwh_year: yhwhDate.year,
         yhwh_month: yhwhDate.month,
         yhwh_day: yhwhDate.day,
-        yhwh_weekday: yhwhDate.weekDay,
-        yhwh_day_of_year: yhwhDate.dayOfYear,
+        yhwh_weekday: yhwhDate.weekDay || 1,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
         gregorian_date: gregorianDateStr,
         content,
         mood,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         images: [],
-        part_of_yowm: time.part,
-        watch: Math.floor(time.part / 4.5) + 1,
+        part_of_yowm: partOfYowm,
+        watch: watchValue,
         is_shabbat: yhwhDate.weekDay === 7,
-        is_tequvah: false, // Can be calculated or set manually
+        is_tequvah: false,
         feast: null,
+        updated_at: new Date().toISOString(),
       };
 
       if (selectedEntry) {
@@ -313,7 +317,10 @@ export default function Journal() {
           .eq('id', selectedEntry.id)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Journal update error:', error);
+          throw error;
+        }
       } else {
         // Create new entry (upsert to handle duplicates)
         const { error } = await supabase
@@ -322,7 +329,18 @@ export default function Journal() {
             onConflict: 'user_id,yhwh_year,yhwh_month,yhwh_day',
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Journal insert error:', error);
+          // Fallback: try plain insert if upsert fails
+          const { error: insertError } = await supabase
+            .from('journal_entries')
+            .insert(entryData);
+          
+          if (insertError) {
+            console.error('Journal insert fallback error:', insertError);
+            throw insertError;
+          }
+        }
       }
 
       // Reset form
@@ -332,9 +350,9 @@ export default function Journal() {
       setMood('neutral');
       setTags('');
       setSelectedDate(new Date());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save entry:', error);
-      alert('Failed to save entry. Please try again.');
+      alert(`Failed to save entry: ${error?.message || 'Unknown error'}. Please try again.`);
     }
   };
 

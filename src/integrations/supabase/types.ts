@@ -2144,7 +2144,9 @@ export type Database = {
           voice_notes: string[] | null
           watch: number | null
           yhwh_day: number
+          yhwh_day_of_year: number | null
           yhwh_month: number
+          yhwh_weekday: number | null
           yhwh_year: number
         }
         Insert: {
@@ -2168,7 +2170,9 @@ export type Database = {
           voice_notes?: string[] | null
           watch?: number | null
           yhwh_day: number
+          yhwh_day_of_year?: number | null
           yhwh_month: number
+          yhwh_weekday?: number | null
           yhwh_year: number
         }
         Update: {
@@ -2192,7 +2196,9 @@ export type Database = {
           voice_notes?: string[] | null
           watch?: number | null
           yhwh_day?: number
+          yhwh_day_of_year?: number | null
           yhwh_month?: number
+          yhwh_weekday?: number | null
           yhwh_year?: number
         }
         Relationships: []
