@@ -1108,20 +1108,20 @@ export default function MemryPage() {
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleFollow(currentPost.user_id)}
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center gap-1"
                 >
-                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg mb-1">
                     <AvatarImage src={currentPost.profiles?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
                       {currentPost.profiles?.display_name?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className={`w-6 h-6 -mt-3 rounded-full flex items-center justify-center ${
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md ${
                     followedUserIds.has(currentPost.user_id) ? 'bg-emerald-500' : 'bg-pink-500'
                   }`}>
                     {followedUserIds.has(currentPost.user_id) 
-                      ? <UserCheck className="w-3.5 h-3.5 text-white" />
-                      : <UserPlus className="w-3.5 h-3.5 text-white" />
+                      ? <UserCheck className="w-4 h-4 text-white" />
+                      : <UserPlus className="w-4 h-4 text-white" />
                     }
                   </div>
                 </motion.button>
