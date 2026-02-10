@@ -75,7 +75,7 @@ interface Comment {
 }
 
 // 30-second looping audio preview for music posts on Memry feed
-function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: string }) {
+function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaUrl: string; caption: string; transparent?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
@@ -182,7 +182,7 @@ function MusicPreviewPlayer({ mediaUrl, caption }: { mediaUrl: string; caption: 
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+    <div className={`w-full h-full flex flex-col items-center justify-center ${transparent ? '' : 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400'}`}>
       <Music className={`w-24 h-24 text-white/80 mb-6 ${playing ? 'animate-pulse' : ''}`} />
       <audio ref={audioRef} preload="auto" crossOrigin="anonymous" className="hidden" />
       
@@ -997,11 +997,18 @@ export default function MemryPage() {
                       src={currentPost.media_url}
                       alt={currentPost.caption}
                       className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (!target.dataset.fallback) {
+                          target.dataset.fallback = '1';
+                          target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                        }
+                      }}
                     />
                     {/* Audio preview overlay for music products */}
                     {currentPost.audio_url && (
                       <div className="absolute inset-0 flex items-center justify-center z-5">
-                        <MusicPreviewPlayer mediaUrl={currentPost.audio_url} caption={currentPost.caption} />
+                        <MusicPreviewPlayer mediaUrl={currentPost.audio_url} caption={currentPost.caption} transparent />
                       </div>
                     )}
                     {/* Notification badge overlay */}
