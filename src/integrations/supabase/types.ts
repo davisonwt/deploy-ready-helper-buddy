@@ -1246,6 +1246,7 @@ export type Database = {
           country: string | null
           created_at: string
           delivery_radius_km: number | null
+          distance_unit: string | null
           full_name: string
           id: string
           no_income_confirmed: boolean
@@ -1264,6 +1265,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           delivery_radius_km?: number | null
+          distance_unit?: string | null
           full_name: string
           id?: string
           no_income_confirmed?: boolean
@@ -1282,6 +1284,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           delivery_radius_km?: number | null
+          distance_unit?: string | null
           full_name?: string
           id?: string
           no_income_confirmed?: boolean
@@ -5609,12 +5612,14 @@ export type Database = {
           created_at: string
           custom_services: string[] | null
           description: string | null
+          distance_unit: string | null
           full_name: string
           hourly_rate: number | null
           id: string
           no_income_confirmed: boolean
           portfolio_images: string[] | null
           service_areas: string[] | null
+          service_radius: number | null
           services_offered: string[]
           status: string
           updated_at: string
@@ -5628,12 +5633,14 @@ export type Database = {
           created_at?: string
           custom_services?: string[] | null
           description?: string | null
+          distance_unit?: string | null
           full_name: string
           hourly_rate?: number | null
           id?: string
           no_income_confirmed?: boolean
           portfolio_images?: string[] | null
           service_areas?: string[] | null
+          service_radius?: number | null
           services_offered?: string[]
           status?: string
           updated_at?: string
@@ -5647,12 +5654,14 @@ export type Database = {
           created_at?: string
           custom_services?: string[] | null
           description?: string | null
+          distance_unit?: string | null
           full_name?: string
           hourly_rate?: number | null
           id?: string
           no_income_confirmed?: boolean
           portfolio_images?: string[] | null
           service_areas?: string[] | null
+          service_radius?: number | null
           services_offered?: string[]
           status?: string
           updated_at?: string
